@@ -1,0 +1,43 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: MyString
+  password_digest: MyString
+  role_id: 1
+  fullname: MyString
+  email: MyString
+  parent_id: 1
+  mru_directory_path: MyString
+  email_on_review: false
+  email_on_submission: false
+  email_on_review_of_review: false
+  is_new_user: false
+  master_permission_granted: false
+  handle: MyString
+  persistence_token: MyString
+  timezonepref: MyString
+  copy_of_emails: false
+  institution_id: 1
+  etc_icons_on_homepage: false
+  locale: 1
+
+two:
+  name: MyString
+  password_digest: MyString
+  role_id: 1
+  fullname: MyString
+  email: MyString
+  parent_id: 1
+  mru_directory_path: MyString
+  email_on_review: false
+  email_on_submission: false
+  email_on_review_of_review: false
+  is_new_user: false
+  master_permission_granted: false
+  handle: MyString
+  persistence_token: MyString
+  timezonepref: MyString
+  copy_of_emails: false
+  institution_id: 1
+  etc_icons_on_homepage: false
+  locale: 1
