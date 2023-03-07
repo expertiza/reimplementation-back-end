@@ -1,45 +1,108 @@
 ---
 openapi: 3.0.1
 info:
-  title: API V1
+  title: EXPERTIZA API V1
   version: v1
 paths:
   "/api/v1/roles":
     get:
       summary: list roles
+      tags:
+      - Roles
       responses:
         '200':
           description: successful
     post:
       summary: create role
+      tags:
+      - Roles
+      parameters: []
       responses:
-        '200':
-          description: successful
+        '201':
+          description: Created a role
+        '422':
+          description: invalid request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                parent_id:
+                  type: integer
+                default_page_id:
+                  type: integer
+              required:
+              - name
   "/api/v1/roles/{id}":
     parameters:
     - name: id
       in: path
-      description: id
+      description: id of the role
       required: true
       schema:
-        type: string
+        type: integer
     get:
       summary: show role
+      tags:
+      - Roles
       responses:
         '200':
           description: successful
     patch:
       summary: update role
+      tags:
+      - Roles
+      parameters: []
       responses:
         '200':
           description: successful
+        '422':
+          description: invalid request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                parent_id:
+                  type: integer
+                default_page_id:
+                  type: integer
+              required:
+              - name
     put:
       summary: update role
+      tags:
+      - Roles
+      parameters: []
       responses:
         '200':
           description: successful
+        '422':
+          description: invalid request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                parent_id:
+                  type: integer
+                default_page_id:
+                  type: integer
+              required:
+              - name
     delete:
       summary: delete role
+      tags:
+      - Roles
       responses:
         '200':
           description: successful
