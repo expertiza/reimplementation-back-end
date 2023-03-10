@@ -15,7 +15,7 @@ class FeedbackResponseMap < ResponseMap
     end
   end
 
-  def get_title
+  def title
     'Feedback'
   end
 

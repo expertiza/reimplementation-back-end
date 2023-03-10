@@ -21,11 +21,11 @@ class TeammateReviewResponseMap < ResponseMap
     nil
   end
 
-  def get_title
+  def title
     'Teammate Review'
   end
 
-  def get_reviewer
+  def reviewer
     AssignmentParticipant.find(reviewer_id)
   end
 

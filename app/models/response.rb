@@ -40,7 +40,7 @@ class Response < ApplicationRecord
 
   # return the responses for specified round
   # type parameter is a string that corresponds to Response Map subclasses i.e ReviewResponseMap
-  def self.get_responses_for_team_round(team, round, type)
+  def self.responses_for_team_round(team, round, type)
     responses = []
     if team.id
       maps = ResponseMap.where(reviewee_id: team.id, type: type)

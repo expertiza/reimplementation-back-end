@@ -21,7 +21,7 @@ class ResponseMap < ApplicationRecord
   end
 
   # Placeholder method, override in derived classes if required.
-  def get_all_versions
+  def all_versions
     []
   end
 

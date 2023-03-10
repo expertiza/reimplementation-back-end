@@ -94,13 +94,13 @@ class ReviewResponseMap < ResponseMap
 
 
   # E-1973 - returns the reviewer of the response, either a participant or a team
-  def get_reviewer
-    ReviewResponseMap.get_reviewer_with_id(assignment.id, reviewer_id)
+  def reviewer
+    reviewer_with_id(assignment.id, reviewer_id)
   end
 
   # E-1973 - gets the reviewer of the response, given the assignment and the reviewer id
   # the assignment is used to determine if the reviewer is a participant or a team
-  def self.get_reviewer_with_id(assignment_id, reviewer_id)
+  def self.reviewer_with_id(assignment_id, reviewer_id)
     assignment = Assignment.find(assignment_id)
     if assignment.team_reviewing_enabled
       return AssignmentTeam.find(reviewer_id)
@@ -112,7 +112,7 @@ class ReviewResponseMap < ResponseMap
   # wrap latest version of responses in each response map, together with the questionnaire_id
   # will be used to display the reviewer summary
   def self.final_versions_from_reviewer(assignment_id, reviewer_id)
-    reviewer = ReviewResponseMap.get_reviewer_with_id(assignment_id, reviewer_id)
+    reviewer = reviewer_with_id(assignment_id, reviewer_id)
     maps = ReviewResponseMap.where(reviewer_id: reviewer_id)
     assignment = Assignment.find(reviewer.parent_id)
     prepare_final_review_versions(assignment, maps)
@@ -125,7 +125,7 @@ class ReviewResponseMap < ResponseMap
         ResponseMap.select('DISTINCT reviewer_id').where('reviewed_object_id = ? and type = ? and calibrate_to = ?', id, type, 0)
       @reviewers = []
       response_maps_with_distinct_participant_id.each do |reviewer_id_from_response_map|
-        @reviewers << ReviewResponseMap.get_reviewer_with_id(assignment.id, reviewer_id_from_response_map.reviewer_id)
+        @reviewers << reviewer_with_id(assignment.id, reviewer_id_from_response_map.reviewer_id)
       end
       # we sort the reviewer by name here, using whichever class it is an instance of
       @reviewers = if assignment.team_reviewing_enabled
