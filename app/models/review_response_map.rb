@@ -92,20 +92,6 @@ class ReviewResponseMap < ResponseMap
     metareview_list
   end
 
-  # return the responses for specified round, for varying rubric feature -Yang
-  def self.get_responses_for_team_round(team, round)
-    responses = []
-    if team.id
-      maps = ResponseMap.where(reviewee_id: team.id, type: 'ReviewResponseMap')
-      maps.each do |map|
-        if map.response.any? && map.response.reject { |r| (r.round != round || !r.is_submitted) }.any?
-          responses << map.response.reject { |r| (r.round != round || !r.is_submitted) }.last
-        end
-      end
-      responses.sort! { |a, b| a.map.reviewer.fullname <=> b.map.reviewer.fullname }
-    end
-    responses
-  end
 
   # E-1973 - returns the reviewer of the response, either a participant or a team
   def get_reviewer

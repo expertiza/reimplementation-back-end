@@ -38,4 +38,21 @@ class Response < ApplicationRecord
     where(map_id: map.first.id).sort.first
   end
 
+  # return the responses for specified round
+  # type parameter is a string that corresponds to Response Map subclasses i.e ReviewResponseMap
+  def self.get_responses_for_team_round(team, round, type)
+    responses = []
+    if team.id
+      maps = ResponseMap.where(reviewee_id: team.id, type: type)
+      maps.each do |map|
+        if map.response.any? && map.response.reject { |r| (r.round != round || !r.is_submitted) }.any?
+          responses << map.response.reject { |r| (r.round != round || !r.is_submitted) }.last
+        end
+      end
+      responses.sort! { |a, b| a.map.reviewer.fullname <=> b.map.reviewer.fullname }
+    end
+    responses
+  end
+
+
 end
