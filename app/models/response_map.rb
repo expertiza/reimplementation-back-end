@@ -1,4 +1,5 @@
 class ResponseMap < ApplicationRecord
+  include Comparable
   extend Scoring
   has_many :response, foreign_key: 'map_id', dependent: :destroy, inverse_of: false
   belongs_to :reviewer, class_name: 'Participant', foreign_key: 'reviewer_id', inverse_of: false
@@ -9,10 +10,10 @@ class ResponseMap < ApplicationRecord
   end
 
 
-  def self.comparator(m1, m2)
-    if m1.version_num && m2.version_num
-      m2.version_num <=> m1.version_num
-    elsif m1.version_num
+  def <=>(m1, m2)
+    if version_num && m2.version_num
+      m2.version_num <=> version_num
+    elsif version_num
       -1
     else
       1

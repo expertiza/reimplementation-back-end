@@ -35,7 +35,7 @@ class Response < ApplicationRecord
   def self.reviewer_assessments_for(team, reviewer)
     # get_reviewer may return an AssignmentParticipant or an AssignmentTeam
     map = ResponseMap.where(reviewee_id: team.id, reviewer_id: reviewer.id)
-    where(map_id: map.first.id).sort { |m1, m2| comparator(m1, m2) }.first
+    where(map_id: map.first.id).sort.first
   end
 
 end
