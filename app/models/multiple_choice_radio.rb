@@ -1,0 +1,2 @@
+class MultipleChoiceRadio < QuizQuestion
+end
