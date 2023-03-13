@@ -164,3 +164,6 @@ CREATE TABLE `assignment_questionnaires` (
   CONSTRAINT `fk_aq_assignments_id` FOREIGN KEY (`assignment_id`) REFERENCES `assignments` (`id`),
   CONSTRAINT `fk_aq_questionnaire_id` FOREIGN KEY (`questionnaire_id`) REFERENCES `questionnaires` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=62953 DEFAULT CHARSET=latin1;
+
+-- needed for compatibility with FK constraint.
+ALTER TABLE assignments MODIFY id int(11);
