@@ -1,5 +1,4 @@
 class ResponseMap < ApplicationRecord
-  include Comparable
   extend Scoring
   has_many :response, foreign_key: 'map_id', dependent: :destroy, inverse_of: false
   belongs_to :reviewer, class_name: 'Participant', foreign_key: 'reviewer_id', inverse_of: false
@@ -9,16 +8,6 @@ class ResponseMap < ApplicationRecord
     id
   end
 
-
-  def <=>(m1, m2)
-    if version_num && m2.version_num
-      m2.version_num <=> version_num
-    elsif version_num
-      -1
-    else
-      1
-    end
-  end
 
   # Placeholder method, override in derived classes if required.
   def all_versions

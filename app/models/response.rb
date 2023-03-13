@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Response < ApplicationRecord
-
+  include Comparable
   # return latest versions of the responses
   def self.assessments_for(team)
     responses = []
@@ -53,6 +53,17 @@ class Response < ApplicationRecord
     end
     responses
   end
+
+  def <=>(other_response)
+    if version_num && other_response.version_num
+      other_response.version_num <=> version_num
+    elsif version_num
+      -1
+    else
+      1
+    end
+  end
+
 
 
 end
