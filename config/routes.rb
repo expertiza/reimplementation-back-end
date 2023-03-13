@@ -10,7 +10,9 @@ Rails.application.routes.draw do
       resources :assignments
       resources :questions do
         collection do
+          get :view
           get 'show/:id', to: 'questions#show', as: 'show'
+          delete 'delete/:id', to: 'questions#destroy', as: 'delete'
         end
       end
       resources :questionnaires, except: [:index] do
