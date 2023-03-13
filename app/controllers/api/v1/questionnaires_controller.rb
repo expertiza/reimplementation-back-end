@@ -37,6 +37,21 @@ class Api::V1::QuestionnairesController < ApplicationController
     
   end
 
+  # POST /api/v1/questionnaires/toggle_access/:id
+  def toggle_access
+    begin
+      questionnaire = Questionnaire.find(params[:id])
+    rescue
+      msg = "No such Questionnaire exists."
+      render json: msg
+    end
+    questionnaire.private = !questionnaire.private
+    questionnaire.save
+    access = questionnaire.private == true ? 'private' : 'public'
+    success_msg = "The questionnaire \"#{questionnaire.name}\" has been successfully made #{access}."
+    render json: success_msg
+  end
+
   private
   def questionnaire_params
     params.permit(:name, :instructor_id, :private, :min_question_score,

@@ -16,6 +16,7 @@ Rails.application.routes.draw do
           post 'update/:id', to: 'questionnaires#update', as: 'update'
           delete 'delete/:id', to: 'questionnaires#delete', as: 'delete'
           get 'show/:id', to: 'questionnaires#show', as: 'show'
+          post 'toggle_access/:id', to: 'questionnaires#toggle_access', as: 'toggle_access'
         end
       end
     end
