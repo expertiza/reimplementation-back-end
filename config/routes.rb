@@ -9,18 +9,14 @@ Rails.application.routes.draw do
       resources :users
       resources :assignments
       resources :questions
-      resources :questionnaires, only: %i[new create edit update] do
+      resources :questionnaires, except: [:index] do
         collection do
-          get 'copy/:id', to: 'questionnaires#copy', as: 'copy'
-          # get :select_questionnaire_type
-          # post :select_questionnaire_type
-          get :toggle_access
-          get 'show/:id' to: 'questionnaires#show' as: 'show'
           get :view
-          post :save_all_questions
-          get :delete
-          post :create_questionnaire
-        end  
+          post 'copy/:id', to: 'questionnaires#copy', as: 'copy'
+          post 'update/:id', to: 'questionnaires#update', as: 'update'
+          delete 'delete/:id', to: 'questionnaires#delete', as: 'delete'
+          get 'show/:id', to: 'questionnaires#show', as: 'show'
+        end
       end
     end
   end
