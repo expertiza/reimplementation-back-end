@@ -12,7 +12,7 @@ class Api::V1::QuestionnairesController < ApplicationController
       @questionnaire = Questionnaire.find(params[:id])
       render json: @questionnaire
     rescue
-      msg = "No such Questionnaire."
+      msg = "No such Questionnaire exists."
       render json: msg
     end
   end
