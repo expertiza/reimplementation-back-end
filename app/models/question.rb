@@ -1,5 +1,6 @@
 class Question < ApplicationRecord
     belongs_to :questionnaire # each question belongs to a specific questionnaire
+    has_many :question_advices, dependent: :destroy # for each question, there is separate advice about each possible score
     
     validates :seq, presence: true # user must define sequence for a question
     validates :seq, numericality: true # sequence must be numeric
@@ -27,6 +28,12 @@ class Question < ApplicationRecord
     RATINGS = [['Very Easy', 1], ['Easy', 2], ['Medium', 3], ['Difficult', 4], ['Very Difficult', 5]].freeze
     attr_accessor :checked
   
+
+    def delete
+      QuestionAdvice.where(question_id: id).find_each(&:destroy)
+      destroy
+    end
+
     # for quiz questions, we store 'TrueFalse', 'MultipleChoiceCheckbox', 'MultipleChoiceRadio' in the DB, and the full names are returned below
     def get_formatted_question_type
       question_type = self.question_type

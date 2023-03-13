@@ -114,5 +114,24 @@ CREATE TABLE `tree_folders` (
 LOCK TABLES `tree_folders` WRITE;
 /*!40000 ALTER TABLE `tree_folders` DISABLE KEYS */;
 INSERT INTO `tree_folders` VALUES (1,'Questionnaires','QuestionnaireTypeNode',NULL),(2,'Courses','CourseNode',NULL),(3,'Assignments','AssignmentNode',NULL),(4,'Review','QuestionnaireNode',1),(5,'Metareview','QuestionnaireNode',1),(6,'Author Feedback','QuestionnaireNode',1),(7,'Teammate Review','QuestionnaireNode',1),(8,'Assignment Survey','QuestionnaireNode',1),(9,'Global Survey','QuestionnaireNode',1),(10,'Course Survey','QuestionnaireNode',1),(11,'Bookmark Rating','QuestionnaireNode',1),(12,'Quiz','QuestionnaireNode',NULL);
-/*!40000 ALTER TABLE `tree_folders` ENABLE KEYS */;
+
 UNLOCK TABLES;
+
+DROP TABLE IF EXISTS `assignment_questionnaires`;
+
+CREATE TABLE `assignment_questionnaires` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `assignment_id` int(11) DEFAULT NULL,
+  `questionnaire_id` int(11) DEFAULT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `notification_limit` int(11) NOT NULL DEFAULT '15',
+  `questionnaire_weight` int(11) NOT NULL DEFAULT '0',
+  `used_in_round` int(11) DEFAULT NULL,
+  `dropdown` tinyint(1) DEFAULT '1',
+  PRIMARY KEY (`id`),
+  KEY `fk_aq_user_id` (`user_id`),
+  KEY `fk_aq_assignments_id` (`assignment_id`),
+  KEY `fk_aq_questionnaire_id` (`questionnaire_id`),
+  CONSTRAINT `fk_aq_assignments_id` FOREIGN KEY (`assignment_id`) REFERENCES `assignments` (`id`),
+  CONSTRAINT `fk_aq_questionnaire_id` FOREIGN KEY (`questionnaire_id`) REFERENCES `questionnaires` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=62953 DEFAULT CHARSET=latin1;
