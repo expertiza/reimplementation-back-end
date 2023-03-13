@@ -31,13 +31,6 @@ class Response < ApplicationRecord
     responses
   end
 
-  # return latest versions of the response given by reviewer
-  def self.reviewer_assessments_for(team, reviewer)
-    # get_reviewer may return an AssignmentParticipant or an AssignmentTeam
-    map = ResponseMap.where(reviewee_id: team.id, reviewer_id: reviewer.id)
-    where(map_id: map.first.id).sort.first
-  end
-
   # return the responses for specified round
   # type parameter is a string that corresponds to Response Map subclasses i.e ReviewResponseMap
   def self.responses_for_team_round(team, round, type)
