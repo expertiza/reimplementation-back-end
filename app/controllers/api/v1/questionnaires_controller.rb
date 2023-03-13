@@ -6,24 +6,33 @@ class Api::V1::QuestionnairesController < ApplicationController
     render json: @questionnaires
   end
 
-  # GET /api/v1/questionnaire/:id
+  # GET /api/v1/questionnaires/show/:id
   def show
-    @questionnaire = Questionnaire.find(params[:id])
-    render json: @questionnaire
+    begin
+      @questionnaire = Questionnaire.find(params[:id])
+      render json: @questionnaire
+    rescue
+      msg = "No such Questionnaire."
+      render json: msg
+    end
   end
 
-  # GET /api/v1/questionnaire/copy/:id
+  # POST /api/v1/questionnaires/copy/:id
   def copy
-    @questionnaire = Questionnaire.find(params[:id])
-    instructor_id = @questionnaire.instructor_id
-    @questionnaire = Questionnaire.copy_questionnaire_details(params, instructor_id)
-    p_folder = TreeFolder.find_by(name: @questionnaire.display_type)
+    begin
+      questionnaire = Questionnaire.find(params[:id])
+    rescue
+      msg = "No such Questionnaire to copy."
+      render json: msg
+    end
+    copy_questionnaire = Questionnaire.copy_questionnaire_details(questionnaire.id)
+    p_folder = TreeFolder.find_by(name: questionnaire.display_type)
     parent = FolderNode.find_by(node_object_id: p_folder.id)
-    QuestionnaireNode.find_or_create_by(parent_id: parent.id, node_object_id: @questionnaire.id)
-    undo_link("Copy of questionnaire #{@questionnaire.name} has been created successfully.")
-    render json: @questionnaire
+    QuestionnaireNode.find_or_create_by(parent_id: parent.id, node_object_id: questionnaire.id)
+    undo_link("Copy of questionnaire #{questionnaire.name} has been created successfully.")
+    render json: copy_questionnaire
   rescue StandardError
-    error_msg = 'The questionnaire was not able to be copied. Please check the original course for missing information.' + $ERROR_INFO.to_s
+    error_msg = 'The questionnaire was not able to be copied. Error:' + $ERROR_INFO.to_s
     render json: error_msg
     
   end

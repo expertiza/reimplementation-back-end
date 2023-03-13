@@ -4,7 +4,7 @@ class Question < ApplicationRecord
     validates :seq, presence: true # user must define sequence for a question
     validates :seq, numericality: true # sequence must be numeric
     validates :txt, length: { minimum: 0, allow_nil: false, message: "can't be nil" } # user must define text content for a question
-    validates :type, presence: true # user must define type for a question
+    validates :question_type, presence: true # user must define type for a question
     validates :break_before, presence: true
     
     # Class variables
@@ -29,13 +29,13 @@ class Question < ApplicationRecord
   
     # for quiz questions, we store 'TrueFalse', 'MultipleChoiceCheckbox', 'MultipleChoiceRadio' in the DB, and the full names are returned below
     def get_formatted_question_type
-      type = self.type
+      question_type = self.question_type
       statement = ''
-      if type == 'TrueFalse'
+      if question_type == 'TrueFalse'
         statement = 'True/False'
-      elsif type == 'MultipleChoiceCheckbox'
+      elsif question_type == 'MultipleChoiceCheckbox'
         statement = 'Multiple Choice - Checked'
-      elsif type == 'MultipleChoiceRadio'
+      elsif question_type == 'MultipleChoiceRadio'
         statement = 'Multiple Choice - Radio'
       end
       statement
@@ -44,7 +44,7 @@ class Question < ApplicationRecord
     # this method return questions (question_ids) in one assignment whose comments field are meaningful (ScoredQuestion and TextArea)
     def self.get_all_questions_with_comments_available(assignment_id)
       question_ids = []
-      questionnaires = Assignment.find(assignment_id).questionnaires.select { |questionnaire| questionnaire.type == 'ReviewQuestionnaire' }
+      questionnaires = Assignment.find(assignment_id).questionnaires.select { |questionnaire| questionnaire.questionnaire_type == 'ReviewQuestionnaire' }
       questionnaires.each do |questionnaire|
         questions = questionnaire.questions.select { |question| question.is_a?(ScoredQuestion) || question.instance_of?(TextArea) }
         questions.each { |question| question_ids << question.id }
@@ -75,7 +75,7 @@ class Question < ApplicationRecord
         question = Question.find_by(id: qid)
         attributes = {}
         attributes['txt'] = row[0].strip
-        attributes['type'] = row[1].strip
+        attributes['question_type'] = row[1].strip
         attributes['seq'] = row[2].strip.to_f
         attributes['size'] = row[3].strip
         attributes['break_before'] = row[4].strip
@@ -84,7 +84,7 @@ class Question < ApplicationRecord
       else
         attributes = {}
         attributes['txt'] = row[0].strip
-        attributes['type'] = row[1].strip
+        attributes['question_type'] = row[1].strip
         attributes['seq'] = row[2].strip.to_f
         attributes['size'] = row[3].strip
         # attributes["break_before"] = row[4].strip
@@ -95,14 +95,14 @@ class Question < ApplicationRecord
     end
   
     def self.export_fields(_options)
-      fields = ['Seq', 'Question', 'Type', 'Weight', 'text area size', 'max_label', 'min_label']
+      fields = ['Seq', 'Question', 'question_type', 'Weight', 'text area size', 'max_label', 'min_label']
       fields
     end
   
     def self.export(csv, parent_id, _options)
       questionnaire = Questionnaire.find(parent_id)
       questionnaire.questions.each do |question|
-        csv << [question.seq, question.txt, question.type,
+        csv << [question.seq, question.txt, question.question_type,
                 question.weight, question.size, question.max_label,
                 question.min_label]
       end

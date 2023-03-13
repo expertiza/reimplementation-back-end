@@ -11,7 +11,7 @@ CREATE TABLE `questionnaires` (
   `max_question_score` int(11) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `type` varchar(255) DEFAULT NULL,
+  `questionnaire_type` varchar(255) DEFAULT NULL,
   `display_type` varchar(255) DEFAULT NULL,
   `instruction_loc` text,
   PRIMARY KEY (`id`)
@@ -34,7 +34,7 @@ CREATE TABLE `questions` (
   `weight` int(11) DEFAULT NULL,
   `questionnaire_id` int(11) DEFAULT NULL,
   `seq` decimal(6,2) DEFAULT NULL,
-  `type` varchar(255) DEFAULT NULL,
+  `question_type` varchar(255) DEFAULT NULL,
   `size` varchar(255) DEFAULT '',
   `alternatives` varchar(255) DEFAULT NULL,
   `break_before` tinyint(1) DEFAULT '1',
@@ -48,7 +48,7 @@ CREATE TABLE `questions` (
 LOCK TABLES `questions` WRITE;
 
 INSERT INTO `questions` VALUES (1,'This is my first question.',1,1,1.00,'Criterion',NULL,NULL,1,NULL,NULL),
-(2,'This is my true/false question',1,1,2.00,'Checkbox',NULL,NULL,1,NULL,NULL),
+(2,'This is my true/false question',1,1,2.00,'Criterion',NULL,NULL,1,NULL,NULL),
 (3,'This is my last question.',1,1,3.00,'Criterion',NULL,NULL,1,NULL,NULL),
 (4,'This is my very last question',1,4,4.00,'Criterion',NULL,NULL,1,NULL,NULL),
 (5,'Do the page(s) stick to the topic?',1,4,5.00,'Criterion',NULL,NULL,1,NULL,NULL),

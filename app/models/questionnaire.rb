@@ -2,7 +2,7 @@ class Questionnaire < ApplicationRecord
     # for doc on why we do it this way,
     # see http://blog.hasmanythrough.com/2007/1/15/basic-rails-association-cardinality
     has_many :questions, dependent: :destroy # the collection of questions associated with this Questionnaire
-    belongs_to :instructor # the creator of this questionnaire
+    belongs_to :instructor, class_name: "Role" # the creator of this questionnaire
     has_many :assignments, through: :assignment_questionnaires
     
     validate :validate_questionnaire
@@ -25,7 +25,7 @@ class Questionnaire < ApplicationRecord
 
     # Does this questionnaire contain true/false questions?
     def true_false_questions?
-      questions.each { |question| return true if question.type == 'Checkbox' }
+      questions.each { |question| return true if question.question_type == 'Checkbox' }
       false
     end
    
@@ -37,29 +37,20 @@ class Questionnaire < ApplicationRecord
     end
   
     # clones the contents of a questionnaire, including the questions and associated advice
-    def self.copy_questionnaire_details(params, instructor_id)
-      orig_questionnaire = Questionnaire.find(params[:id])
-      questions = Question.where(questionnaire_id: params[:id])
-      questionnaire = orig_questionnaire.dup
-      questionnaire.instructor_id = instructor_id
-      questionnaire.name = 'Copy of ' + orig_questionnaire.name
-      questionnaire.created_at = Time.zone.now
-      questionnaire.save!
+    def self.copy_questionnaire_details(questionnaire_id)
+      original_questionnaire = Questionnaire.find(questionnaire_id)
+      questions = Question.where(questionnaire_id: questionnaire_id)
+      copy_questionnaire = original_questionnaire.dup
+      copy_questionnaire.name = 'Copy of ' + original_questionnaire.name
+      copy_questionnaire.created_at = Time.zone.now
+      copy_questionnaire.save!
       questions.each do |question|
         new_question = question.dup
-        new_question.questionnaire_id = questionnaire.id
-        new_question.size = '50,3' if (new_question.is_a?(Criterion) || new_question.is_a?(TextResponse)) && new_question.size.nil?
-        new_question.save!
-        advices = QuestionAdvice.where(question_id: question.id)
-        next if advices.empty?
-  
-        advices.each do |advice|
-          new_advice = advice.dup
-          new_advice.question_id = new_question.id
-          new_advice.save!
-        end
+        new_question.questionnaire_id = questionnaire_id
+        new_question.size = '50,3' # if (new_question.is_a?(Criterion) || new_question.is_a?(TextResponse)) && new_question.size.nil?
+        new_question.save! 
       end
-      questionnaire
+      copy_questionnaire
     end
   
     # validate the entries for this questionnaire
