@@ -55,20 +55,14 @@ class Api::V1::QuestionnairesController < ApplicationController
 
   # DELETE /api/v1/questionnaires/delete/:id
   def delete
-    begin
-      @questionnaire = Questionnaire.find(params[:id])
-    rescue
-      msg = "No such Questionnaire exists."
-      render json: msg
-    end
+    @questionnaire = Questionnaire.find(params[:id])
     begin
       name = @questionnaire.name
       # if this rubric is used by some assignment, flash error
       unless @questionnaire.assignments.empty?
-        error_msg = "The assignment <b>#{@questionnaire.assignments.first.try(:name)}</b> uses this questionnaire. Are sure you want to delete the assignment?"
+        error_msg = "The assignment #{@questionnaire.assignments.first.try(:name)} uses this questionnaire."
         render json: error_msg
       end
-
       questions = @questionnaire.questions
       # if this rubric had some answers, flash error
       questions.each do |question|
@@ -82,8 +76,8 @@ class Api::V1::QuestionnairesController < ApplicationController
         advices.each(&:delete)
         question.delete
       end
-      questionnaire_node = @questionnaire.questionnaire_node
-      questionnaire_node.delete
+      # questionnaire_node = @questionnaire.questionnaire_node
+      # questionnaire_node.delete
       @questionnaire.delete
       success_msg = "The questionnaire \"#{name}\" has been successfully deleted."
       render json: success_msg
