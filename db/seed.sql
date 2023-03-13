@@ -167,3 +167,25 @@ CREATE TABLE `assignment_questionnaires` (
 
 -- needed for compatibility with FK constraint.
 ALTER TABLE assignments MODIFY id int(11);
+
+DROP TABLE IF EXISTS `question_advices`;
+
+CREATE TABLE `question_advices` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `question_id` int(11) DEFAULT NULL,
+  `score` int(11) DEFAULT NULL,
+  `advice` text,
+  PRIMARY KEY (`id`),
+  KEY `fk_question_question_advices` (`question_id`),
+  CONSTRAINT `fk_question_question_advices` FOREIGN KEY (`question_id`) REFERENCES `questions` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8708 DEFAULT CHARSET=latin1;
+
+LOCK TABLES `question_advices` WRITE;
+
+INSERT INTO `question_advices` VALUES (1,1,1,'This answer is awful'),
+(2,1,2,'This answer is not so good.'),
+(3,1,3,'This answer is OK.'),
+(4,1,4,'This answer is pretty good'),
+(5,1,5,'This answer is perfect');
+
+UNLOCK TABLES;
