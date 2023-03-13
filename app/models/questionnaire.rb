@@ -14,21 +14,14 @@ class Questionnaire < ApplicationRecord
     DEFAULT_QUESTIONNAIRE_URL = 'http://www.courses.ncsu.edu/csc517'.freeze
     QUESTIONNAIRE_TYPES = ['ReviewQuestionnaire',
                            'MetareviewQuestionnaire',
-                           'Author FeedbackQuestionnaire',
                            'AuthorFeedbackQuestionnaire',
-                           'Teammate ReviewQuestionnaire',
                            'TeammateReviewQuestionnaire',
                            'SurveyQuestionnaire',
                            'AssignmentSurveyQuestionnaire',
-                           'Assignment SurveyQuestionnaire',
-                           'Global SurveyQuestionnaire',
                            'GlobalSurveyQuestionnaire',
-                           'Course SurveyQuestionnaire',
                            'CourseSurveyQuestionnaire',
-                           'Bookmark RatingQuestionnaire',
                            'BookmarkRatingQuestionnaire',
                            'QuizQuestionnaire'].freeze
-    has_paper_trail
 
     # Does this questionnaire contain true/false questions?
     def true_false_questions?

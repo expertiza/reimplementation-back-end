@@ -9,8 +9,21 @@ Rails.application.routes.draw do
       resources :users
       resources :assignments
       resources :questions
-      resources :questionnaires
+      resources :questionnaires, only: %i[new create edit update] do
+        collection do
+          get 'copy/:id', to: 'questionnaires#copy', as: 'copy'
+          # get :select_questionnaire_type
+          # post :select_questionnaire_type
+          get :toggle_access
+          get 'show/:id' to: 'questionnaires#show' as: 'show'
+          get :view
+          post :save_all_questions
+          get :delete
+          post :create_questionnaire
+        end  
+      end
     end
   end
+
 
 end
