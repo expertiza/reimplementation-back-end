@@ -1,5 +1,34 @@
 USE reimplementation_development;
 
+--
+-- Table structure for table `question_advices`
+--
+
+DROP TABLE IF EXISTS `question_advices`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `question_advices` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `question_id` int(11) DEFAULT NULL,
+  `score` int(11) DEFAULT NULL,
+  `advice` text,
+  PRIMARY KEY (`id`),
+  KEY `fk_question_question_advices` (`question_id`),
+  CONSTRAINT `fk_question_question_advices` FOREIGN KEY (`question_id`) REFERENCES `questions` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8708 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `question_advices`
+--
+
+LOCK TABLES `question_advices` WRITE;
+/*!40000 ALTER TABLE `question_advices` DISABLE KEYS */;
+INSERT INTO `question_advices` VALUES (1,1,1,'This answer is awful'),(2,1,2,'This answer is not so good.'),(3,1,3,'This answer is OK.'),(4,1,4,'This answer is pretty good'),(5,1,5,'This answer is perfect');
+/*!40000 ALTER TABLE `question_advices` ENABLE KEYS */;
+UNLOCK TABLES;
+
+
 DROP TABLE IF EXISTS `questionnaires`;
 
 CREATE TABLE `questionnaires` (

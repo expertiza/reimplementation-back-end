@@ -8,7 +8,11 @@ Rails.application.routes.draw do
       resources :roles
       resources :users
       resources :assignments
-      resources :questions
+      resources :questions do
+        collection do
+          get 'show/:id', to: 'questions#show', as: 'show'
+        end
+      end
       resources :questionnaires, except: [:index] do
         collection do
           get :view
