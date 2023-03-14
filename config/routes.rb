@@ -11,6 +11,7 @@ Rails.application.routes.draw do
       resources :questions do
         collection do
           get :view
+          post :add_new_questions
         end
       end
       resources :questionnaires, except: [:index] do
