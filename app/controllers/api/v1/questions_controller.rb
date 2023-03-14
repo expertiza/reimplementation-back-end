@@ -19,6 +19,7 @@ class Api::V1::QuestionsController < ApplicationController
 
   def new
     @question = Question.new
+    render json: @question
   end
 
   def create
