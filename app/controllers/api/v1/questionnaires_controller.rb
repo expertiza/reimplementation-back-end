@@ -16,6 +16,54 @@ class Api::V1::QuestionnairesController < ApplicationController
       render json: msg
     end
   end
+  
+  def new
+    if Questionnaire::QUESTIONNAIRE_TYPES.include?(params[:questionnaire][:type])
+      @questionnaire = Object.const_get(params[:model].split.join).new 
+      render json: { questionnaire: @questionnaire.as_json }, status: :ok
+    else
+      render json: { error: "Invalid model type" }, status: :unprocessable_entity
+    end
+  rescue StandardError => e
+    render json: { error: e.message }, status: :internal_server_error
+  end
+
+  def create
+    if params[:questionnaire][:name].blank?
+      render json: { error: 'A rubric or survey must have a title.' }, status: :unprocessable_entity
+    else
+      questionnaire_private = params[:questionnaire][:private] == 'true'
+      display_type = params[:questionnaire][:type].split('Questionnaire')[0]
+      begin
+        @questionnaire = Object.const_get(params[:questionnaire][:type]).new if Questionnaire::QUESTIONNAIRE_TYPES.include? params[:questionnaire][:type]
+      rescue StandardError => e
+        render json: { error: e.message }, status: :internal_server_error
+        return
+      end
+      begin
+        @questionnaire.private = questionnaire_private
+        @questionnaire.name = params[:questionnaire][:name]
+        #@questionnaire.instructor_id = session[:user].id
+        @questionnaire.min_question_score = params[:questionnaire][:min_question_score]
+        @questionnaire.max_question_score = params[:questionnaire][:max_question_score]
+        @questionnaire.type = params[:questionnaire][:type]
+        if %w[AuthorFeedback CourseSurvey TeammateReview GlobalSurvey AssignmentSurvey BookmarkRating].include?(display_type)
+          display_type = (display_type.split(/(?=[A-Z])/)).join('%')
+        end
+        @questionnaire.display_type = display_type
+        @questionnaire.instruction_loc = Questionnaire::DEFAULT_QUESTIONNAIRE_URL
+        @questionnaire.save
+        tree_folder = TreeFolder.where(['name like ?', @questionnaire.display_type]).first
+        parent = FolderNode.find_by(node_object_id: tree_folder.id)
+        QuestionnaireNode.create(parent_id: parent.id, node_object_id: @questionnaire.id, type: 'QuestionnaireNode')
+        render json: { questionnaire: @questionnaire.as_json, message: 'You have successfully created a questionnaire!' }, status: :created
+      rescue StandardError => e
+        render json: { error: e.message }, status: :internal_server_error
+      end
+    end
+  end
+
+
 
   # POST /api/v1/questionnaires/copy/:id
   def copy
