@@ -31,6 +31,36 @@ class Api::V1::QuestionsController < ApplicationController
     end
   end
 
+  def add_new_questions
+    questionnaire_id = params[:id] unless params[:id].nil?
+    puts "IN ADD NEW QUES!"
+    puts params.inspect
+    # If the questionnaire is being used in the active period of an assignment, delete existing responses before adding new questions
+    if Api::V1::AnswerHelper.check_and_delete_responses(questionnaire_id)
+      success_msg += 'You have successfully added a new question. Any existing reviews for the questionnaire have been deleted!'
+    else
+      success_msg += 'You have successfully added a new question.'
+    end
+
+    num_of_existed_questions = Questionnaire.find(questionnaire_id).questions.size
+    ((num_of_existed_questions + 1)..(num_of_existed_questions + params[:question][:total_num].to_i)).each do |i|
+      question = Object.const_get(params[:question][:type]).create(txt: '', questionnaire_id: questionnaire_id, seq: i, type: params[:question][:type], break_before: true)
+      if question.is_a? ScoredQuestion
+        question.weight = params[:question][:weight]
+        question.max_label = 'Strongly agree'
+        question.min_label = 'Strongly disagree'
+      end
+
+      question.size = '50, 3' # if question.is_a? Criterion
+      begin
+        question.save
+        render json: success_msg
+      rescue StandardError
+        render json: $ERROR_INFO
+      end
+    end
+  end
+
   # DELETE /api/v1/questions/delete/:id
   def destroy
     question = Question.find(params[:id])

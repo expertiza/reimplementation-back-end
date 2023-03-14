@@ -69,6 +69,9 @@ class Api::V1::QuestionnairesController < ApplicationController
   def copy
     begin
       questionnaire = Questionnaire.find(params[:id])
+      puts "IN COPY"
+      puts params.inspect
+      puts questionnaire
     rescue
       msg = "No such Questionnaire to copy."
       render json: msg
@@ -76,8 +79,8 @@ class Api::V1::QuestionnairesController < ApplicationController
     copy_questionnaire = Questionnaire.copy_questionnaire_details(questionnaire.id)
     # Are the next 3 lines needed?
     p_folder = TreeFolder.find_by(name: questionnaire.display_type)
-    parent = FolderNode.find_by(node_object_id: p_folder.id)
-    QuestionnaireNode.find_or_create_by(parent_id: parent.id, node_object_id: questionnaire.id)
+    parent = FolderNode.find_by(node_object_id: p_folder.id) if !p_folder.nil?
+    QuestionnaireNode.find_or_create_by(parent_id: parent.id, node_object_id: questionnaire.id) if !parent.nil?
     success_msg = "Copy of questionnaire #{questionnaire.name} has been created successfully."
     render json: success_msg
   rescue StandardError
