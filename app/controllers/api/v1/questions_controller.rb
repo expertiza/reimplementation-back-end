@@ -17,6 +17,19 @@ class Api::V1::QuestionsController < ApplicationController
     end
   end
 
+  def new
+    @question = Question.new
+  end
+
+  def create
+    @question = Question.new(question_params[:question])
+    if @question.save
+      render json: 'You have successfully created the question!'
+    else
+      render json: $ERROR_INFO
+    end
+  end
+
   # DELETE /api/v1/questions/delete/:id
   def destroy
     question = Question.find(params[:id])
