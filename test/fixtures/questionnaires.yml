@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: MyString
+  instructor_id: 1
+  private: false
+  min_question_score: 1
+  max_question_score: 1
+  type: 
+  display_type: MyString
+  instruction_loc: MyText
+
+two:
+  name: MyString
+  instructor_id: 1
+  private: false
+  min_question_score: 1
+  max_question_score: 1
+  type: 
+  display_type: MyString
+  instruction_loc: MyText
