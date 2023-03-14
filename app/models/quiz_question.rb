@@ -1,2 +1,2 @@
-class QuizQuestion < ApplicationRecord
+class QuizQuestion < Question
 end

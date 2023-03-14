@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_03_11_214056) do
+ActiveRecord::Schema[7.0].define(version: 2023_03_14_153211) do
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -65,6 +65,35 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_11_214056) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "questionnaires", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "name", limit: 64
+    t.integer "instructor_id", default: 0, null: false
+    t.boolean "private", default: false, null: false
+    t.integer "min_question_score", default: 0, null: false
+    t.integer "max_question_score"
+    t.string "type"
+    t.string "display_type"
+    t.text "instruction_loc"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "questions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.text "txt"
+    t.integer "weight"
+    t.decimal "seq", precision: 6, scale: 2
+    t.string "type"
+    t.string "size", default: ""
+    t.string "alternatives"
+    t.boolean "break_before", default: true
+    t.string "max_label", default: ""
+    t.string "min_label", default: ""
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "questionnaire_id", null: false
+    t.index ["questionnaire_id"], name: "fk_question_questionnaires"
+  end
+
   create_table "quiz_questions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -103,5 +132,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_11_214056) do
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "questions", "questionnaires"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
 end
