@@ -22,4 +22,19 @@ class QuizQuestion < Question
   def complete; end
 
   def view_completed_question; end
+
+  def isvalid(choice_info)
+    @valid = 'valid'
+    @valid = 'Please make sure all questions have text' if txt == ''
+    @correct_count = 0
+    choice_info.each_value do |value|
+      if (value[:txt] == '') || value[:txt].empty? || value[:txt].nil?
+        @valid = 'Please make sure every question has text for all options'
+        return @valid
+      end
+      @correct_count += 1 if value.key?(:iscorrect)
+    end
+    @valid = 'Please select a correct answer for all questions' if @correct_count.zero?
+    @valid
+  end
 end
