@@ -95,7 +95,7 @@ class ReviewResponseMap < ResponseMap
 
   # E-1973 - returns the reviewer of the response, either a participant or a team
   def reviewer
-    reviewer_with_id(assignment.id, reviewer_id)
+    ReviewResponseMap.reviewer_with_id(assignment.id, reviewer_id)
   end
 
   # E-1973 - gets the reviewer of the response, given the assignment and the reviewer id
@@ -153,7 +153,7 @@ class ReviewResponseMap < ResponseMap
     # @review_scores[reviewer_id][round][reviewee_id] = score for assignments using vary_rubric_by_rounds feature
   end
 
-  def email(defn, _participant, assignment)
+  def email(defn, assignment)
     defn[:body][:type] = 'Peer Review'
     AssignmentTeam.find(reviewee_id).users.each do |user|
       defn[:body][:obj_name] = assignment.name

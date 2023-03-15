@@ -7,7 +7,20 @@ class MockAssignment < Assignment
   def questionnaires
     MockQuestionaires.new
   end
+
+  def review_questionnaire_id(round, topic)
+    3
+  end
+
+  attr_accessor :team_reviewing_enabled
 end
+
+class MockAssignment2 < MockAssignment
+  def review_questionnaire_id(round)
+    2
+  end
+end
+
 
 # mocking the Questionaire class with arbitrary return values to support assertions in tests
 class MockQuestionaires
