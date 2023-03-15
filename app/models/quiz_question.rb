@@ -25,7 +25,7 @@ class QuizQuestion < Question
 
   def isvalid(choice_info)
     @valid = 'valid'
-    @valid = 'Please make sure all questions have text' if txt == ''
+    return @valid = 'Please make sure all questions have text' if txt == ''
     @correct_count = 0
     choice_info.each_value do |value|
       if (value[:txt] == '') || value[:txt].empty? || value[:txt].nil?

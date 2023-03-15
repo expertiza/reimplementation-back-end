@@ -75,9 +75,7 @@ class MultipleChoiceCheckbox < QuizQuestion
 
   def isvalid(choice_info)
     super
-    if @correct_count.zero?
-      @valid = 'Please select a correct answer for all questions'
-    elsif @correct_count == 1
+    if @correct_count == 1
       @valid = 'A multiple-choice checkbox question should have more than one correct answer.'
     end
     @valid
