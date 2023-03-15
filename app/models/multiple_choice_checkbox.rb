@@ -36,14 +36,42 @@ class MultipleChoiceCheckbox < QuizQuestion
     html.html_safe
     # safe_join(html)
   end
-
-  def complete
-
+ def complete
+    quiz_question_choices = QuizQuestionChoice.where(question_id: id)
+    html = '<label for="' + id.to_s + '">' + txt + '</label><br>'
+    # for i in 0..3
+    [0, 1, 2, 3].each do |i|
+      # txt = quiz_question_choices[i].txt
+      html += '<input name = ' + "\"#{id}[]\" "
+      html += 'id = ' + "\"#{id}" + '_' + "#{i + 1}\" "
+      html += 'value = ' + "\"#{quiz_question_choices[i].txt}\" "
+      html += 'type="checkbox"/>'
+      html += quiz_question_choices[i].txt.to_s
+      html += '</br>'
+    end
+    html
   end
 
   def view_completed_question(user_answer)
-   
+    quiz_question_choices = QuizQuestionChoice.where(question_id: id)
+    html = ''
+    quiz_question_choices.each do |answer|
+      html += '<b>' + answer.txt + '</b> -- Correct <br>' if answer.iscorrect
+    end
+    html += '<br>Your answer is:'
+    html += if user_answer[0].answer == 1
+              '<img src="/assets/Check-icon.png"/><br>'
+            else
+              '<img src="/assets/delete_icon.png"/><br>'
+            end
+    user_answer.each do |answer|
+      html += '<b>' + answer.comments.to_s + '</b><br>'
+    end
+    html += '<br><hr>'
+    html.html_safe
+    # safe_join(html)
   end
+
 
   def isvalid(choice_info)
     super

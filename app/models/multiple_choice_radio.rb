@@ -34,11 +34,4 @@ class MultipleChoiceRadio < QuizQuestion
     # safe_join(html)
   end
 
-  def complete
-   
-  end
-
-  def view_completed_question(user_answer)
-
-  end
 end
