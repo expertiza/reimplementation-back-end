@@ -35,6 +35,7 @@ end
 
 class MockReviewer
   attr_accessor :reviewer_id
+  attr_accessor :id
 end
 
 class MockTeammateReponse

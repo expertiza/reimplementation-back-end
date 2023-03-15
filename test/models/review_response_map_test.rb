@@ -3,6 +3,7 @@
 class MockAssignmentTeam
   attr_accessor :test_id
   attr_accessor :parent_id
+  attr_accessor :id
 end
 
 class MockAssignmentTeam
