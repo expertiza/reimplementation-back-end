@@ -1,6 +1,23 @@
 class QuizQuestion < Question
   has_many :quiz_question_choices, class_name: 'QuizQuestionChoice', foreign_key: 'question_id', inverse_of: false, dependent: :nullify
-  def edit; end
+  def edit 
+    # provide initial html to classes that extend QuizQuestion will add to
+    # (e.g. MultipleChoiceCheckbox, MultipleChoiceRadio, TrueFalse)
+
+    html = '<tr><td>'
+    html += '<textarea cols="100" name="question[' + id.to_s + '][txt]" '
+    html += 'id="question_' + id.to_s + '_txt">' + txt + '</textarea>'
+    html += '</td></tr>'
+
+    html += '<tr><td>'
+    html += 'Question Weight: '
+    html += '<input type="number" name="question_weights[' + id.to_s + '][txt]" '
+    html += 'id="question_wt_' + id.to_s + '_txt" '
+    html += 'value="' + weight.to_s + '" min="0" />'
+    html += '</td></tr>'
+    
+    html
+  end
 
   def view_question_text
     html = '<b>' + txt + '</b><br />'

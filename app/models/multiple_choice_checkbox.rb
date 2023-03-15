@@ -2,17 +2,7 @@ class MultipleChoiceCheckbox < QuizQuestion
   def edit
     quiz_question_choices = QuizQuestionChoice.where(question_id: id)
 
-    html = '<tr><td>'
-    html += '<textarea cols="100" name="question[' + id.to_s + '][txt]" '
-    html += 'id="question_' + id.to_s + '_txt">' + txt + '</textarea>'
-    html += '</td></tr>'
-
-    html += '<tr><td>'
-    html += 'Question Weight: '
-    html += '<input type="number" name="question_weights[' + id.to_s + '][txt]" '
-    html += 'id="question_wt_' + id.to_s + '_txt" '
-    html += 'value="' + weight.to_s + '" min="0" />'
-    html += '</td></tr>'
+    html = super
 
     # for i in 0..3
     [0, 1, 2, 3].each do |i|
