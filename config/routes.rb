@@ -10,7 +10,23 @@ Rails.application.routes.draw do
       resources :roles
       resources :users
       resources :assignments
-      resources :responses
+      resources :responses, only: %i[new create edit update] do
+        collection do
+          get :new_feedback
+          get :view
+          get :remove_hyperlink
+          get :save
+          get :redirect
+          get :show_calibration_results_for_student
+          post :custom_create
+          get :json
+          post :send_email
+          get :author
+          get :run_get_notification
+          post :edit
+          post :delete
+        end
+      end
     end
   end
 end
