@@ -1,16 +1,13 @@
 class Questionnaire < ApplicationRecord
-  validate :validate_questionnaire
-  validates :name, presence: true
-  validates :max_question_score, :min_question_score, numericality: true
 
-  def validate_questionnaire
-    # errors.add(:max_question_score, 'The maximum question score must be a non-zero positive integer.') if max_question_score < 1
-    # errors.add(:min_question_score, 'The minimum question score must be a positive integer.') if min_question_score < 0
-    # errors.add(:min_question_score, 'The minimum question score must be less than the maximum.') if min_question_score >= max_question_score
+  # need to add Active Record associations HERE
 
-    #break this up
-    results = Questionnaire.where('id <> ? and name = ? and instructor_id = ?', id, name, instructor_id)
-    errors.add(:name, 'Questionnaire names must be unique.') if results.present?
-    #does this match on name & instructor_id?
-  end
+  validates :name, presence: true, uniqueness: {message: 'Questionnaire names must be unique.'}
+  validates :min_question_score, numericality: true,
+            comparison: { greater_than_or_equal_to: 0, message: 'The minimum question score must be a positive integer.'}
+  validates :max_question_score, numericality: true
+  # validations to ensure max_question_score is both greater than min_question_score and greater than 0
+  validates_comparison_of :max_question_score, {greater_than: :min_question_score, message: 'The minimum question score must be less than the maximum.'}
+  validates_comparison_of :max_question_score, {greater_than: 0, message: 'The maximum question score must be a positive integer greater than 0.'}
+
 end
