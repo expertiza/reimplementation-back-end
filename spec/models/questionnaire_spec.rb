@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe Questionnaire, type: :model do
-    let(:questionnaire) { Questionnaire.create name: 'abc', private: 0, min_question_score: 0, max_question_score: 5, instructor_id: 1234 }
+  let(:questionnaire) { Questionnaire.create name: 'abc', private: 0, min_question_score: 0, max_question_score: 5, instructor_id: 1234 }
 
   describe "name" do
     it "presence is validated" do
