@@ -8,23 +8,17 @@ Rails.application.routes.draw do
       resources :roles
       resources :users
       resources :assignments
-      resources :questions do
+      resources :questionnaires do
         collection do
-          get :view
-          post :add_new_questions
+          post 'copy/:id', to: 'questionnaires#copy', as: 'copy'
+          get 'toggle_access/:id', to: 'questionnaires#toggle_access', as: 'toggle_access'
         end
       end
-      resources :questionnaires, except: [:index] do
+      resources :questions do
         collection do
-          get :view
-          post 'copy/:id', to: 'questionnaires#copy', as: 'copy'
-          post 'update/:id', to: 'questionnaires#update', as: 'update'
-          delete 'delete/:id', to: 'questionnaires#delete', as: 'delete'
-          post 'toggle_access/:id', to: 'questionnaires#toggle_access', as: 'toggle_access'
+          get :types
         end
       end
     end
   end
-
-
 end
