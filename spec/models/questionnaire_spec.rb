@@ -2,6 +2,8 @@ require 'rails_helper'
 
 RSpec.describe Questionnaire, type: :model do
   let(:questionnaire) { Questionnaire.create name: 'abc', private: 0, min_question_score: 0, max_question_score: 5, instructor_id: 1234 }
+  let(:question1) { build(:question, questionnaire: questionnaire, weight: 1, id: 1) }
+  let(:question2) { build(:question, questionnaire: questionnaire, weight: 2, id: 2) }
 
   describe "name" do
     it "presence is validated" do
@@ -66,4 +68,28 @@ RSpec.describe Questionnaire, type: :model do
       expect(questionnaire).to be_valid
     end
   end
+
+  describe "questionnaire" do
+    #should type be checkbox or true/false...
+    it 'when contains true/false questions' do
+      question1.type = 'Checkbox'
+      expect(questionnaire.has_true_false_questions).to eq(true)
+    end
+    it 'when does not contain true/false questions' do
+      expect(questionnaire.has_true_false_questions).to eq(false)
+    end
+    it 'when there are no associated questions' do
+      questionnaire2 = Questionnaire.create(name: 'questionnaire with no questions', min_question_score: 0, max_question_score: 5)
+      expect(questionnaire2.has_true_false_questions).to eq(false)
+    end
+  end
+
+  # describe "destroy correct associated records when questionnaire is deleted" do
+  #   it 'when questionnaire is deleted without assignments' do
+  #
+  #   end
+  #   it 'when questionnaire is deleted with assignments' do
+  #
+  #   end
+  # end
 end
