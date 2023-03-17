@@ -52,27 +52,6 @@ class MultipleChoiceCheckbox < QuizQuestion
     html
   end
 
-  def view_completed_question(user_answer)
-    quiz_question_choices = QuizQuestionChoice.where(question_id: id)
-    html = ''
-    quiz_question_choices.each do |answer|
-      html += '<b>' + answer.txt + '</b> -- Correct <br>' if answer.iscorrect
-    end
-    html += '<br>Your answer is:'
-    html += if user_answer[0].answer == 1
-              '<img src="/assets/Check-icon.png"/><br>'
-            else
-              '<img src="/assets/delete_icon.png"/><br>'
-            end
-    user_answer.each do |answer|
-      html += '<b>' + answer.comments.to_s + '</b><br>'
-    end
-    html += '<br><hr>'
-    html.html_safe
-    # safe_join(html)
-  end
-
-
   def isvalid(choice_info)
     super
     if @correct_count == 1
