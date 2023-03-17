@@ -48,4 +48,15 @@ module ResponseHelper
         @response = Response.create(map_id: @map.id, additional_comment: '', round: @current_round, is_submitted: 0)
       end
     end
+
+    def sortResponses(review_scores)
+      review_scores.sort do |m1, m2|
+        if m1.version_num.to_i && m2.version_num.to_i
+          m2.version_num.to_i <=> m1.version_num.to_i
+        else
+          m1.version_num ? -1 : 1
+        end
+      end
+      review_scores
+    end
   end

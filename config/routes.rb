@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  resources :response_maps
+  resources :team_response_maps
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

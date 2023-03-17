@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_03_06_064753) do
+ActiveRecord::Schema[7.0].define(version: 2023_03_16_232910) do
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -65,6 +65,16 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_06_064753) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "response_maps", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "reviewed_object_id", default: 0, null: false
+    t.integer "reviewer_id", default: 0, null: false
+    t.integer "reviewee_id", default: 0, null: false
+    t.string "type", default: "", null: false
+    t.boolean "calibrate_to", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "roles", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.bigint "parent_id"
@@ -72,6 +82,12 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_06_064753) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
+  end
+
+  create_table "team_response_maps", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.boolean "team_reviewing_enabled"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|

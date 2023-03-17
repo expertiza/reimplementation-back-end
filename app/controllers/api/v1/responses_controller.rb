@@ -7,6 +7,12 @@ class ResponsesController < ApplicationController
   
     before_action :authorize_show_calibration_results, only: %i[show_calibration_results_for_student]
     before_action :set_response, only: %i[update delete view]
+    before_action :set_content, only: %i[edit view]
+    before_action :assign_action_parameters, only: %i[edit new]
+
+    # Is this the right approach, making this a global variable
+    questions = sort_questions(@questionnaire.questions)
+
   
     # E2218: Method to check if that action is allowed for the user.
     def action_allowed?
@@ -82,28 +88,21 @@ class ResponsesController < ApplicationController
       @prev = Response.where(map_id: @map.id)
       @review_scores = @prev.to_a
       if @prev.present?
-        @sorted = @review_scores.sort do |m1, m2|
-          if m1.version_num.to_i && m2.version_num.to_i
-            m2.version_num.to_i <=> m1.version_num.to_i
-          else
-            m1.version_num ? -1 : 1
-          end
-        end
+        @sorted = sortResponses(@review_scores)
         @largest_version_num = @sorted[0]
       end
       # Added for E1973, team-based reviewing
       @map = @response.map
-      if @map.team_reviewing_enabled
-        @response = Lock.get_lock(@response, current_user, Lock::DEFAULT_TIMEOUT)
-        if @response.nil?
-          response_lock_action
-          return
-        end
-      end
+      # if @map.team_reviewing_enabled
+        # @response = Lock.get_lock(@response, current_user, Lock::DEFAULT_TIMEOUT)
+        # if @response.nil?
+        #   response_lock_action
+        #   return
+        # end
+      # end
   
       @modified_object = @response.response_id
-      # set more handy variables for the view
-      set_content
+
       @review_scores = []
       @review_questions.each do |question|
         @review_scores << Answer.where(response_id: @response.response_id, question_id: question.id).first
@@ -126,6 +125,7 @@ class ResponsesController < ApplicationController
   
         @response.update_attribute('additional_comment', params[:review][:comments])
         @questionnaire = questionnaire_from_response
+
         questions = sort_questions(@questionnaire.questions)
   
         # for some rubrics, there might be no questions but only file submission (Dr. Ayala's rubric)
@@ -165,29 +165,7 @@ class ResponsesController < ApplicationController
     end
   
     def author; end
-  
-    # This method is used to send email from a Reviewer to an Author.
-    # Email body and subject are inputted from Reviewer and passed to send_mail_to_author_reviewers method in MailerHelper.
-    def send_email
-      subject = params['send_email']['subject']
-      body = params['send_email']['email_body']
-      response = params['response']
-      email = params['email']
-  
-      respond_to do |format|
-        if subject.blank? || body.blank?
-          flash[:error] = 'Please fill in the subject and the email content.'
-          format.html { redirect_to controller: 'response', action: 'author', response: response, email: email }
-          format.json { head :no_content }
-        else
-          # make a call to method invoking the email process
-          MailerHelper.send_mail_to_author_reviewers(subject, body, email)
-          flash[:success] = 'Email sent to the author.'
-          format.html { redirect_to controller: 'student_task', action: 'list' }
-          format.json { head :no_content }
-        end
-      end
-    end
+
   
     def new_feedback
       review = Response.find(params[:id]) unless params[:id].nil?
@@ -206,7 +184,6 @@ class ResponsesController < ApplicationController
   
     # view response
     def view
-      set_content
     end
   
     def create
@@ -361,6 +338,8 @@ class ResponsesController < ApplicationController
     # This method is called within set_content and when the new_response flag is set to true
     # Depending on what type of response map corresponds to this response, the method gets the reference to the proper questionnaire
     # This is called after assign_instance_vars in the new method
+
+    # Can this be simplified anymore?
     def questionnaire_from_response_map
       case @map.type
       when 'ReviewResponseMap', 'SelfReviewResponseMap'
