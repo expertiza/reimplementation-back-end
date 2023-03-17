@@ -16,8 +16,9 @@ class SignUpSheetController < ApplicationController
   require 'rgl/topsort'
 
   def action_allowed?
+    allowed_actions = ['set_priority', 'sign_up', 'delete_signup', 'list', 'show_team', 'switch_original_topic_to_approved_suggested_topic', 'publish_approved_suggested_topic']
     case params[:action]
-    when 'set_priority', 'sign_up', 'delete_signup', 'list', 'show_team', 'switch_original_topic_to_approved_suggested_topic', 'publish_approved_suggested_topic'
+    when *allowed_actions
       (current_user_has_student_privileges? &&
         (%w[list].include? action_name) &&
         are_needed_authorizations_present?(params[:id], 'reader', 'submitter', 'reviewer')) ||
