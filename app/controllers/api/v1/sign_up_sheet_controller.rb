@@ -105,29 +105,7 @@ class SignUpSheetController < ApplicationController
     # Akshay - correctly changing the redirection url to topics tab in edit assignment view.
     redirect_to edit_assignment_path(params[:assignment_id]) + '#tabs-2'
   end
-
-  # This deletes all topics for the given assignment
-  # def delete_all_topics_for_assignment
-  #  topics = SignUpTopic.where(assignment_id: params[:assignment_id])
-  #  topics.each(&:destroy)
-  #  flash[:success] = 'All topics have been deleted successfully.'
-  #  respond_to do |format|
-  #    format.html { redirect_to edit_assignment_path(params[:assignment_id]) }
-  #    format.js {}
-  #  end
-  #end
-
-  # This deletes all selected topics for the given assignment
-  #def delete_all_selected_topics
-  #  load_all_selected_topics
-  #  @stopics.each(&:destroy)
-  #  flash[:success] = 'All selected topics have been deleted successfully.'
-  #  respond_to do |format|
-  #    format.html { redirect_to edit_assignment_path(params[:assignment_id]) + '#tabs-2' }
-  #    format.js {}
-  #  end
-  #end
-
+  
   def delete_topics
     if params[:assignment_id]
       topics = SignUpTopic.where(assignment_id: params[:assignment_id])
@@ -140,7 +118,7 @@ class SignUpSheetController < ApplicationController
       flash[:success] = 'All selected topics have been deleted successfully.'
       redirect_path = edit_assignment_path(params[:assignment_id]) + '#tabs-2'
     end
-    
+
     respond_to do |format|
       format.html { redirect_to redirect_path }
       format.js {}
