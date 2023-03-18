@@ -11,7 +11,7 @@ class Question < ApplicationRecord
   validates :type, presence: true # user must define type for a question
   validates :break_before, presence: true
 
-  has_paper_trail
+  #has_paper_trail
 
   # Class variables
   NUMERIC = 'Numeric'.freeze # Display string for NUMERIC questions
