@@ -1,4 +1,4 @@
-class QuestionsController < ApplicationController
+class Api::V1::QuestionsController < ApplicationController
   include AuthorizationHelper
   skip_before_action :verify_authenticity_token
   # A question is a single entry within a questionnaire
@@ -38,7 +38,7 @@ class QuestionsController < ApplicationController
   def create
     questionnaire_id = params[:id] unless params[:id].nil?
     # If the questionnaire is being used in the active period of an assignment, delete existing responses before adding new questions
-    if AnswerHelper.check_and_delete_responses(questionnaire_id)
+    if Api::V1::AnswerHelper.check_and_delete_responses(questionnaire_id)
       msg = 'You have successfully added a new question. Any existing reviews for the questionnaire have been deleted!'
     else
       msg = 'You have successfully added a new question.'
@@ -57,7 +57,7 @@ class QuestionsController < ApplicationController
     question.size = '30' if question.is_a? TextField
     begin
       question.save
-      render json: msg + question.inspect
+      render json: question, status: :created
     rescue StandardError
       render json: $ERROR_INFO, status: :not_found
     end
