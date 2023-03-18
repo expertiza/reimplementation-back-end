@@ -1,9 +1,42 @@
 require 'rails_helper'
 
 RSpec.describe Questionnaire, type: :model do
-  let(:questionnaire) { Questionnaire.create name: 'abc', private: 0, min_question_score: 0, max_question_score: 5, instructor_id: 1234 }
-  let(:question1) { build(:question, questionnaire: questionnaire, weight: 1, id: 1) }
-  let(:question2) { build(:question, questionnaire: questionnaire, weight: 2, id: 2) }
+  before :all do
+    m = ActiveRecord::Migration.new
+    m.verbose = false
+    m.create_table :questions do |t|
+      t.string :type
+      t.references :questionnaire, null: false, foreign_key: true
+    end
+    m.create_table :assignment_questionnaires do |t|
+      t.references :questionnaire, null: false, foreign_key: true
+      t.references :assignment, null: false, foreign_key: true
+    end
+    m.create_table :instructors do |t|
+      t.string :name
+    end
+  end
+
+  after :all do
+    m = ActiveRecord::Migration.new
+    m.verbose = false
+    m.drop_table :assignment_questionnaires
+    m.drop_table :instructors
+    m.drop_table :questions
+  end
+
+  let(:instructor) { Instructor.create(name: 'test instructor') }
+  let(:questionnaire) { Questionnaire.create(name: 'abc', private: 0, min_question_score: 0, max_question_score: 5, instructor_id: 1234) }
+  let(:question1) { Question.create questionnaire_id: questionnaire, type: "Dropdown" }
+  let(:question2) { Question.create questionnaire_id: questionnaire, type: "Checkbox" }
+
+  it "associated questions are dependent destroyed" do
+    expect(questionnaire).to have_many(:questions).dependent(:destroy)
+  end
+
+  it "associated assignment questionnaires are dependent destroyed" do
+    expect(questionnaire).to have_many(:assignment_questionnaires).dependent(:destroy)
+  end
 
   describe "name" do
     it "presence is validated" do
@@ -21,9 +54,11 @@ RSpec.describe Questionnaire, type: :model do
       should validate_uniqueness_of(:name).with_message('Questionnaire names must be unique.').case_insensitive
     end
     it 'when creating a questionnaire with a duplicate name' do
-      dupe_questionnaire = Questionnaire.create(name: 'abc', min_question_score: 0, max_question_score: 5)
-      dupe_questionnaire.valid?
-      expect(dupe_questionnaire.errors[:name]).to include('Questionnaire names must be unique.')
+      dupe_questionnaire1 = Questionnaire.create(name: 'dupe', min_question_score: 0, max_question_score: 10, instructor_id: 1234)
+      dupe_questionnaire2 = Questionnaire.create(name: 'dupe', min_question_score: 0, max_question_score: 10, instructor_id: 1234)
+      dupe_questionnaire2.valid?
+      expect(dupe_questionnaire1).to be_valid
+      expect(dupe_questionnaire2.errors[:name]).to include('Questionnaire names must be unique.')
     end
   end
 
@@ -70,12 +105,13 @@ RSpec.describe Questionnaire, type: :model do
   end
 
   describe "questionnaire" do
-    #should type be checkbox or true/false...
     it 'when contains true/false questions' do
-      question1.type = 'Checkbox'
+      allow(questionnaire).to receive(:questions).and_return([question1, question2])
       expect(questionnaire.has_true_false_questions).to eq(true)
     end
     it 'when does not contain true/false questions' do
+      allow(questionnaire).to receive(:questions).and_return([question1, question2])
+      question2.type = "Dropdown"
       expect(questionnaire.has_true_false_questions).to eq(false)
     end
     it 'when there are no associated questions' do
@@ -83,13 +119,4 @@ RSpec.describe Questionnaire, type: :model do
       expect(questionnaire2.has_true_false_questions).to eq(false)
     end
   end
-
-  # describe "destroy correct associated records when questionnaire is deleted" do
-  #   it 'when questionnaire is deleted without assignments' do
-  #
-  #   end
-  #   it 'when questionnaire is deleted with assignments' do
-  #
-  #   end
-  # end
 end

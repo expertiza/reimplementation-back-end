@@ -1,9 +1,9 @@
 class Questionnaire < ApplicationRecord
   has_many :questions, dependent: :destroy
-  belongs_to :instructor # the creator of this questionnaire
+  # belongs_to :instructor # the creator of this questionnaire
   has_many :assignment_questionnaires, dependent: :destroy
   has_many :assignments, through: :assignment_questionnaires
-  has_one :questionnaire_node, foreign_key: 'node_object_id', dependent: :destroy, inverse_of: :questionnaire
+  # has_one :questionnaire_node, foreign_key: 'node_object_id', dependent: :destroy, inverse_of: :questionnaire
 
   validates :name, presence: true, uniqueness: {message: 'Questionnaire names must be unique.'}
   validates :min_question_score, numericality: true,
@@ -34,18 +34,8 @@ class Questionnaire < ApplicationRecord
                          'QuizQuestionnaire'].freeze
   #has_paper_trail
 
-  # Returns true if this questionnaire contains true/false questions
+  # Returns true if this questionnaire contains any true/false questions
   def has_true_false_questions
-    questions.each { |question| return true if question.type == 'Checkbox' }
-    false
+    questions.any? { |question| question.type == 'Checkbox'}
   end
-
-  # def delete
-  #   # associated question records and questionnaire node record will delete automatically based on active record association
-  #   # the following is already implemented in the controller...
-  #   assignments.each do |assignment|
-  #     raise "The assignment #{assignment.name} uses this questionnaire.
-  #           Do you want to <A href='../assignment/delete/#{assignment.id}'>delete</A> the assignment?"
-  #   end
-  # end
 end
