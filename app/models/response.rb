@@ -245,7 +245,7 @@ end
 
 module ScoreHelper
   # Computes the total score awarded for a review
-  def aggregate_questionnaire_score
+  def calculate_total_score
     # only count the scorable questions, only when the answer is not nil
     # we accept nil as answer for scorable questions, and they will not be counted towards the total score
     sum = 0
