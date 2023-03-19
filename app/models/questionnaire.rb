@@ -34,13 +34,14 @@ class Questionnaire < ApplicationRecord
                          'QuizQuestionnaire'].freeze
   #has_paper_trail
 
-  # Returns true if this questionnaire contains any true/false questions
+  # Returns true if this questionnaire contains any true/false questions, otherwise returns false
   def has_true_false_questions
     questions.any? { |question| question.type == 'Checkbox'}
   end
 
+  # actions that will occur if questionnaire is deleted
   def delete
-    # associated question records and questionnaire node record will delete automatically based on active record association
+    # associated question records and questionnaire node record have dependent: :destroy configured on active record association
     assignments.each do |assignment|
       raise "The assignment #{assignment.name} uses this questionnaire.
             Do you want to <A href='../assignment/delete/#{assignment.id}'>delete</A> the assignment?"
@@ -48,6 +49,8 @@ class Questionnaire < ApplicationRecord
     destroy
   end
 
+  # finds the max possible score by adding the weight of each question together and multiplying it by the questionnaire's max question score,
+  # which determines the max possible score for each question associated to the questionnaires
   def max_possible_score
     questions_weight_sum = questions.sum { |question| question.weight}
     max_score = questions_weight_sum * max_question_score
