@@ -1,4 +1,6 @@
 require 'swagger_helper'
+
+# Test for normal behaviors
 describe QuizQuestion do
   let(:quiz_question) { QuizQuestion.new }
   let(:quiz_question_choice1) { QuizQuestionChoice.new }
@@ -26,6 +28,11 @@ describe QuizQuestion do
   describe '#get_formatted_question_type' do
     it 'returns the type' do
       expect(quiz_question.get_formatted_question_type).to eq('Multiple Choice - Radio')
+    end
+  end
+  describe '#isvalid' do
+    it 'returns whether or not the quiz question and its choices are valid' do
+      expect(quiz_question.isvalid(quiz_question.quiz_question_choices)).to eq('valid')
     end
   end
 end
