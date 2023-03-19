@@ -31,10 +31,10 @@ RSpec.describe Questionnaire, type: :model do
   end
 
   let(:instructor) { Instructor.create(name: 'test instructor') }
-  let(:questionnaire) { Questionnaire.create(name: 'abc', private: 0, min_question_score: 0, max_question_score: 5, instructor_id: instructor.id) }
-  let(:question1) { Question.create questionnaire_id: questionnaire, type: "Dropdown", weight: 2 }
-  let(:question2) { Question.create questionnaire_id: questionnaire, type: "Checkbox", weight: 5 }
-  let(:questionnaire_node) { QuestionnaireNode.create node_object_id: questionnaire }
+  let(:questionnaire) { build_stubbed(:questionnaire, instructor_id: instructor.id) }
+  let(:question1) { build_stubbed(:question, questionnaire_id: questionnaire) }
+  let(:question2) { build_stubbed(:question, questionnaire_id: questionnaire, type: "Checkbox", weight: 5) }
+  let(:questionnaire_node) { build_stubbed(:questionnaire_node, node_object_id: questionnaire) }
 
   it "associated questions are dependent destroyed" do
     expect(questionnaire).to have_many(:questions).dependent(:destroy)
@@ -128,10 +128,11 @@ RSpec.describe Questionnaire, type: :model do
 
   describe "destroy correct associated records when questionnaire is deleted" do
     it 'when questionnaire is deleted without assignments' do
-      allow(questionnaire).to receive(:questions).and_return([question1, question2])
-      allow(questionnaire).to receive(:questionnaire_node).and_return([questionnaire_node])
-      expect { questionnaire.delete }.to change(Questionnaire, :count).by(-1)
-      expect(questionnaire.delete).to be_truthy
+      del_questionnaire = create(:questionnaire, instructor_id: instructor.id)
+      allow(del_questionnaire).to receive(:questions).and_return([question1, question2])
+      allow(del_questionnaire).to receive(:questionnaire_node).and_return([questionnaire_node])
+      expect { del_questionnaire.delete }.to change(Questionnaire, :count).by(-1)
+      expect(del_questionnaire.delete).to be_truthy
     end
     it 'when questionnaire is deleted with assignments' do
       assignment = Assignment.create()
