@@ -7,8 +7,8 @@ describe MultipleChoiceCheckbox do
   let(:multiple_choice3) { QuizQuestionChoice.new }
   let(:multiple_choice4) { QuizQuestionChoice.new }
   before(:each) do
-    quiz_question.quiz_question_choices = [multiple_choice1, multiple_choice2, multiple_choice3, multiple_choice4]
-    quiz_question.txt = 'Question Text'
+    multiple_choice_question.quiz_question_choices = [multiple_choice1, multiple_choice2, multiple_choice3, multiple_choice4]
+    multiple_choice_question.txt = 'Question Text'
     allow(multiple_choice_question).to receive(:type).and_return('MultipleChoiceCheckbox')
     allow(multiple_choice1).to receive(:txt).and_return('Choice 1')
     allow(multiple_choice1).to receive(:iscorrect?).and_return(true)
