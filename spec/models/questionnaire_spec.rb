@@ -129,9 +129,17 @@ RSpec.describe Questionnaire, type: :model do
   describe "destroy correct associated records when questionnaire is deleted" do
     it 'when questionnaire is deleted without assignments' do
       del_questionnaire = create(:questionnaire, instructor_id: instructor.id)
-      allow(del_questionnaire).to receive(:questions).and_return([question1, question2])
-      allow(del_questionnaire).to receive(:questionnaire_node).and_return([questionnaire_node])
+      del_question1 = Question.create(questionnaire_id: del_questionnaire)
+      del_question2 = Question.create(questionnaire_id: del_questionnaire)
+      del_questionnaire_node = QuestionnaireNode.create(node_object_id: del_questionnaire)
+      allow(del_questionnaire).to receive(:questions).and_return([del_question1, del_question2])
+      allow(del_questionnaire).to receive(:questionnaire_node).and_return([del_questionnaire_node])
+      # confirm questionnaire is destroyed
       expect { del_questionnaire.delete }.to change(Questionnaire, :count).by(-1)
+      # confirm associated records are correctly removed
+      expect { del_question1.reload }.to raise_error(ActiveRecord::RecordNotFound)
+      expect { del_question2.reload }.to raise_error(ActiveRecord::RecordNotFound)
+      expect { del_questionnaire_node.reload }.to raise_error(ActiveRecord::RecordNotFound)
       expect(del_questionnaire.delete).to be_truthy
     end
     it 'when questionnaire is deleted with assignments' do

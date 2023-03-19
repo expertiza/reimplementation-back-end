@@ -41,7 +41,8 @@ class Questionnaire < ApplicationRecord
 
   # actions that will occur if questionnaire is deleted
   def delete
-    # associated question records and questionnaire node record have dependent: :destroy configured on active record association
+    # associated question records and questionnaire node record will be automatically deleted because
+    # dependent: :destroy is configured on the active record associations
     assignments.each do |assignment|
       raise "The assignment #{assignment.name} uses this questionnaire.
             Do you want to <A href='../assignment/delete/#{assignment.id}'>delete</A> the assignment?"
