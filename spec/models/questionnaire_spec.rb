@@ -61,8 +61,8 @@ RSpec.describe Questionnaire, type: :model do
       should validate_uniqueness_of(:name).with_message('Questionnaire names must be unique.').case_insensitive
     end
     it 'when creating a questionnaire with a duplicate name' do
-      dupe_questionnaire1 = Questionnaire.create(name: 'dupe', min_question_score: 0, max_question_score: 10, instructor_id: instructor)
-      dupe_questionnaire2 = Questionnaire.create(name: 'dupe', min_question_score: 0, max_question_score: 10, instructor_id: instructor)
+      dupe_questionnaire1 = Questionnaire.create(name: 'dupe', min_question_score: 0, max_question_score: 10, instructor_id: instructor.id)
+      dupe_questionnaire2 = Questionnaire.create(name: 'dupe', min_question_score: 0, max_question_score: 10, instructor_id: instructor.id)
       dupe_questionnaire2.valid?
       expect(dupe_questionnaire1).to be_valid
       expect(dupe_questionnaire2.errors[:name]).to include('Questionnaire names must be unique.')
@@ -105,6 +105,7 @@ RSpec.describe Questionnaire, type: :model do
     end
     it 'when min question score and max question score are valid' do
       questionnaire.name = 'valid questionnaire'
+      questionnaire.instructor = instructor
       questionnaire.min_question_score = 1
       questionnaire.max_question_score = 10
       expect(questionnaire).to be_valid
@@ -129,12 +130,14 @@ RSpec.describe Questionnaire, type: :model do
 
   describe "destroy correct associated records when questionnaire is deleted" do
     it 'when questionnaire is deleted without assignments' do
+      questionnaire.instructor = instructor
       allow(questionnaire).to receive(:questions).and_return([question1, question2])
       allow(questionnaire).to receive(:questionnaire_node).and_return([questionnaire_node])
       expect { questionnaire.delete }.to change(Questionnaire, :count).by(-1)
       expect(questionnaire.delete).to be_truthy
     end
     it 'when questionnaire is deleted with assignments' do
+      questionnaire.instructor = instructor
       assignment = Assignment.create()
       assignment_questionnaire = AssignmentQuestionnaire.create(questionnaire_id: questionnaire, assignment: assignment)
       allow(questionnaire).to receive(:questions).and_return([question1, question2])
