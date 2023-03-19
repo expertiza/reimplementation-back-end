@@ -1,6 +1,5 @@
 require 'swagger_helper'
 
-# Test for normal behaviors
 describe QuizQuestion do
   let(:quiz_question) { QuizQuestion.new }
   let(:quiz_question_choice1) { QuizQuestionChoice.new }
@@ -31,8 +30,11 @@ describe QuizQuestion do
     end
   end
   describe '#isvalid' do
-    it 'returns whether or not the quiz question and its choices are valid' do
-      expect(quiz_question.isvalid(quiz_question.quiz_question_choices)).to eq('valid')
+    context 'when the question and its choices have valid text' do
+      it 'returns "valid"' do
+        questions = { '1' => { txt: 'question text', iscorrect: '1' }, '2' => { txt: 'question text', iscorrect: '1' }, '3' => { txt: 'question text', iscorrect: '0' }, '4' => { txt: 'question text', iscorrect: '0' } }
+        expect(quiz_question.isvalid(questions)).to eq('valid')
+      end
     end
   end
 end
