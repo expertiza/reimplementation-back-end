@@ -31,7 +31,7 @@ RSpec.describe Questionnaire, type: :model do
   end
 
   let(:instructor) { Instructor.create(name: 'test instructor') }
-  let(:questionnaire) { Questionnaire.create(name: 'abc', private: 0, min_question_score: 0, max_question_score: 5, instructor_id: instructor) }
+  let(:questionnaire) { Questionnaire.create(name: 'abc', private: 0, min_question_score: 0, max_question_score: 5, instructor_id: instructor.id) }
   let(:question1) { Question.create questionnaire_id: questionnaire, type: "Dropdown", weight: 2 }
   let(:question2) { Question.create questionnaire_id: questionnaire, type: "Checkbox", weight: 5 }
   let(:questionnaire_node) { QuestionnaireNode.create node_object_id: questionnaire }
@@ -54,7 +54,6 @@ RSpec.describe Questionnaire, type: :model do
     end
     it 'when name is valid' do
       questionnaire.name = 'valid questionnaire'
-      questionnaire.instructor = instructor
       expect(questionnaire).to be_valid
     end
     it "uniqueness is validated" do
@@ -105,7 +104,6 @@ RSpec.describe Questionnaire, type: :model do
     end
     it 'when min question score and max question score are valid' do
       questionnaire.name = 'valid questionnaire'
-      questionnaire.instructor = instructor
       questionnaire.min_question_score = 1
       questionnaire.max_question_score = 10
       expect(questionnaire).to be_valid
@@ -130,15 +128,12 @@ RSpec.describe Questionnaire, type: :model do
 
   describe "destroy correct associated records when questionnaire is deleted" do
     it 'when questionnaire is deleted without assignments' do
-      questionnaire.instructor_id = instructor
-      del_questionnaire = Questionnaire.create(name: 'delete me', instructor_id: instructor, min_question_score: 0, max_question_score: 5)
-      # allow(questionnaire).to receive(:questions).and_return([question1, question2])
-      # allow(questionnaire).to receive(:questionnaire_node).and_return([questionnaire_node])
-      expect { del_questionnaire.delete }.to change(Questionnaire, :count).by(-1)
-      expect(del_questionnaire.delete).to be_truthy
+      allow(questionnaire).to receive(:questions).and_return([question1, question2])
+      allow(questionnaire).to receive(:questionnaire_node).and_return([questionnaire_node])
+      expect { questionnaire.delete }.to change(Questionnaire, :count).by(-1)
+      expect(questionnaire.delete).to be_truthy
     end
     it 'when questionnaire is deleted with assignments' do
-      questionnaire.instructor = instructor
       assignment = Assignment.create()
       allow(questionnaire).to receive(:questions).and_return([question1, question2])
       allow(questionnaire).to receive(:questionnaire_node).and_return([questionnaire_node])
@@ -161,7 +156,7 @@ RSpec.describe Questionnaire, type: :model do
     it 'scenario 3' do
       # adding a third question to scenario 1
       question3 = Question.create(questionnaire_id: questionnaire, type: "Dropdown", weight: 4 )
-      #changing the max_question_score on questionnaire
+      # adding a change to the max_question_score on questionnaire
       questionnaire.max_question_score = 10
       allow(questionnaire).to receive(:questions).and_return([question1, question2, question3])
       expect(questionnaire.max_possible_score).to eq(110)
