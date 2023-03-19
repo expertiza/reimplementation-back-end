@@ -58,7 +58,7 @@ describe QuizQuestion do
   describe '#isvalid' do
     context 'when no choices are correct' do
       it 'returns "Please select a correct answer for all questions"' do
-        questions = { '1' => { txt: 'question text', iscorrect: '0' }, '2' => { txt: '', iscorrect: '0' }, '3' => { txt: 'question text', iscorrect: '0' }, '4' => { txt: 'question text', iscorrect: '0' } }
+        questions = { '1' => { txt: 'question text', iscorrect: '0' }, '2' => { txt: 'question text', iscorrect: '0' }, '3' => { txt: 'question text', iscorrect: '0' }, '4' => { txt: 'question text', iscorrect: '0' } }
         expect(quiz_question.isvalid(questions)).to eq('Please select a correct answer for all questions')
       end
     end
