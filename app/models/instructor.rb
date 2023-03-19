@@ -1,3 +1,3 @@
 class Instructor < ApplicationRecord
-  has_many :questionnaire
+  has_many :questionnaires
 end
