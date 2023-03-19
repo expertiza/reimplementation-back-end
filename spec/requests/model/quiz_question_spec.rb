@@ -32,8 +32,7 @@ describe QuizQuestion do
   describe '#isvalid' do
     context 'when the question and its choices have valid text' do
       it 'returns "valid"' do
-        # questions = { '1' => { txt: 'question text', iscorrect: '1' }, '2' => { txt: 'question text', iscorrect: '1' }, '3' => { txt: 'question text', iscorrect: '0' }, '4' => { txt: 'question text', iscorrect: '0' } }
-        questions = quiz_question.quiz_question_choices
+        questions = { '1' => { txt: 'question text', iscorrect: '1' }, '2' => { txt: 'question text', iscorrect: '1' }, '3' => { txt: 'question text', iscorrect: '0' }, '4' => { txt: 'question text', iscorrect: '0' } }
         expect(quiz_question.isvalid(questions)).to eq('valid')
       end
     end
@@ -43,7 +42,7 @@ describe QuizQuestion do
       it 'returns "Please make sure all questions have text"' do
         let(:no_text_question) {QuizQuestion.new}
         allow(no_text_question).to receive(:txt).and_return('')
-        questions = quiz_question.quiz_question_choices
+        questions = { '1' => { txt: 'question text', iscorrect: '1' }, '2' => { txt: 'question text', iscorrect: '1' }, '3' => { txt: 'question text', iscorrect: '0' }, '4' => { txt: 'question text', iscorrect: '0' } }
         expect(no_text_question.isvalid(questions)).to eq('Please make sure all questions have text')
       end
     end
