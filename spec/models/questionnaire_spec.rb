@@ -130,19 +130,19 @@ RSpec.describe Questionnaire, type: :model do
 
   describe "destroy correct associated records when questionnaire is deleted" do
     it 'when questionnaire is deleted without assignments' do
-      questionnaire.instructor = instructor
-      allow(questionnaire).to receive(:questions).and_return([question1, question2])
-      allow(questionnaire).to receive(:questionnaire_node).and_return([questionnaire_node])
-      expect { questionnaire.delete }.to change(Questionnaire, :count).by(-1)
-      expect(questionnaire.delete).to be_truthy
+      questionnaire.instructor_id = instructor
+      del_questionnaire = Questionnaire.create(name: 'delete me', instructor_id: instructor, min_question_score: 0, max_question_score: 5)
+      # allow(questionnaire).to receive(:questions).and_return([question1, question2])
+      # allow(questionnaire).to receive(:questionnaire_node).and_return([questionnaire_node])
+      expect { del_questionnaire.delete }.to change(Questionnaire, :count).by(-1)
+      expect(del_questionnaire.delete).to be_truthy
     end
     it 'when questionnaire is deleted with assignments' do
       questionnaire.instructor = instructor
       assignment = Assignment.create()
-      assignment_questionnaire = AssignmentQuestionnaire.create(questionnaire_id: questionnaire, assignment: assignment)
       allow(questionnaire).to receive(:questions).and_return([question1, question2])
       allow(questionnaire).to receive(:questionnaire_node).and_return([questionnaire_node])
-      allow(questionnaire).to receive(:assignment_questionnaires).and_return([assignment_questionnaire])
+      allow(questionnaire).to receive(:assignments).and_return([assignment])
       expect { questionnaire.delete }.to raise_error(RuntimeError)
     end
   end
