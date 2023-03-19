@@ -25,6 +25,16 @@ application up and running.
 * ```rake db:create```
 * ```rake db:migrate```
 
+### Swagger Tests
+```rails rswag:specs:swaggerize```
+
+Runs Swagger API Document creation
+
+Creates a .yaml file.
+
+Run ```rails s```
+
+Documentation page - ```<host-name>/api-docs```
 ### Add more ...
 * How to run the test suite
 
