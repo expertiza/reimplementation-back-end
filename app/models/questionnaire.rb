@@ -49,7 +49,7 @@ class Questionnaire < ApplicationRecord
     destroy
   end
 
-  # finds the max possible score by adding the weight of each question together and multiplying it by the questionnaire's max question score,
+  # finds the max possible score by adding the weight of each question together and multiplying that sum by the questionnaire's max question score,
   # which determines the max possible score for each question associated to the questionnaires
   def max_possible_score
     questions_weight_sum = questions.sum { |question| question.weight}
