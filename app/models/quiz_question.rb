@@ -1,7 +1,15 @@
 class QuizQuestion < Question
   has_many :quiz_question_choices, class_name: 'QuizQuestionChoice', foreign_key: 'question_id', inverse_of: false, dependent: :nullify
+
+  #TODO: first pass at loading quiz question choices in the super to be available to all methods
+  #      needs testing before using
+  after_initialize :load_choices
+  def load_choices
+    @quiz_question_choices = QuizQuestionChoice.where(question_id: id)
+  end
+
   def edit 
-    # provide initial html to classes that extend QuizQuestion will add to
+    # provide initial html to classes that extend QuizQuestion will add to based on type
     # (e.g. MultipleChoiceCheckbox, MultipleChoiceRadio, TrueFalse)
 
     html = '<tr><td>'
