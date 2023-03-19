@@ -121,7 +121,7 @@ RSpec.describe Questionnaire, type: :model do
       expect(questionnaire.has_true_false_questions).to eq(false)
     end
     it 'when there are no associated questions' do
-      questionnaire2 = Questionnaire.create(name: 'questionnaire with no questions', min_question_score: 0, max_question_score: 5)
+      questionnaire2 = build(:questionnaire, name: 'questionnaire with no questions', min_question_score: 0, max_question_score: 5)
       expect(questionnaire2.has_true_false_questions).to eq(false)
     end
   end
@@ -135,7 +135,7 @@ RSpec.describe Questionnaire, type: :model do
       expect(del_questionnaire.delete).to be_truthy
     end
     it 'when questionnaire is deleted with assignments' do
-      assignment = Assignment.create()
+      assignment = build(:assignment)
       allow(questionnaire).to receive(:questions).and_return([question1, question2])
       allow(questionnaire).to receive(:questionnaire_node).and_return([questionnaire_node])
       allow(questionnaire).to receive(:assignments).and_return([assignment])
@@ -150,13 +150,13 @@ RSpec.describe Questionnaire, type: :model do
     end
     it 'scenario 2' do
       # adding a third question to scenario 1
-      question3 = Question.create(questionnaire_id: questionnaire, type: "Dropdown", weight: 4 )
+      question3 = build_stubbed(:question, questionnaire_id: questionnaire, type: "Dropdown", weight: 4 )
       allow(questionnaire).to receive(:questions).and_return([question1, question2, question3])
       expect(questionnaire.max_possible_score).to eq(55)
     end
     it 'scenario 3' do
       # adding a third question to scenario 1
-      question3 = Question.create(questionnaire_id: questionnaire, type: "Dropdown", weight: 4 )
+      question3 = build_stubbed(:question, questionnaire_id: questionnaire, type: "Dropdown", weight: 4 )
       # adding a change to the max_question_score on questionnaire
       questionnaire.max_question_score = 10
       allow(questionnaire).to receive(:questions).and_return([question1, question2, question3])

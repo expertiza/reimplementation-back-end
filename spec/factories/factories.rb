@@ -13,5 +13,8 @@ FactoryBot.define do
 
   factory :questionnaire_node do
   end
+
+  factory :assignment do
+  end
 end
 
