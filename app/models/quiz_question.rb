@@ -91,7 +91,7 @@ def complete
         @valid = 'Please make sure every question has text for all options'
         return @valid
       end
-      @correct_count += 1 if value.key?(:iscorrect)
+      @correct_count += 1 if value[:iscorrect]
     end
     @valid = 'Please select a correct answer for all questions' if @correct_count.zero?
     @valid
