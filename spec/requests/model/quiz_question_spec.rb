@@ -38,9 +38,9 @@ describe QuizQuestion do
     end
   end
   describe '#isvaid' do
+    let(:no_text_question) {QuizQuestion.new}
     context 'when the question itself does not have txt' do
       it 'returns "Please make sure all questions have text"' do
-        let(:no_text_question) {QuizQuestion.new}
         allow(no_text_question).to receive(:txt).and_return('')
         questions = { '1' => { txt: 'question text', iscorrect: '1' }, '2' => { txt: 'question text', iscorrect: '1' }, '3' => { txt: 'question text', iscorrect: '0' }, '4' => { txt: 'question text', iscorrect: '0' } }
         expect(no_text_question.isvalid(questions)).to eq('Please make sure all questions have text')
