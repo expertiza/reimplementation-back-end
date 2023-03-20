@@ -8,13 +8,16 @@
 # Hence each topic has a field called assignment_id which points which can be used to identify the assignment that this topic belongs
 # to
 
-class SignUpSheetController < ApplicationController
+class Api::V1::SignUpSheetController < ApplicationController
   include AuthorizationHelper
-
+  before_action :verify_post_method, only: %i[destroy create update]
   require 'rgl/adjacency'
   require 'rgl/dot'
   require 'rgl/topsort'
-
+  def index
+    output = {'the controller works' => 'yes'}.to_json
+    render :json => output
+  end
   def action_allowed?
     allowed_actions = ['set_priority', 'sign_up', 'delete_signup', 'list', 'show_team', 'switch_original_topic_to_approved_suggested_topic', 'publish_approved_suggested_topic']
     case params[:action]
@@ -34,8 +37,8 @@ class SignUpSheetController < ApplicationController
   include DeadlineHelper
 
   # GETs should be safe (see http://www.w3.org/2001/tag/doc/whenToUseGet.html)
-  verify method: :post, only: %i[destroy create update],
-         redirect_to: { action: :list }
+  #verify method: :post, only: %i[destroy create update],
+  #       redirect_to: { action: :list }
 
   def controller_locale
     locale_for_student
@@ -514,5 +517,13 @@ class SignUpSheetController < ApplicationController
 
   def delete_signup_for_topic(assignment_id, topic_id, user_id)
     SignUpTopic.reassign_topic(user_id, assignment_id, topic_id)
+  end
+
+
+  private
+  def verify_post_method
+    unless request.post?
+      redirect_to root_path, alert: 'Invalid request method'
+    end
   end
 end
