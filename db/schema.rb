@@ -10,7 +10,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_03_06_064753) do
+ActiveRecord::Schema[7.0].define(version: 2023_03_15_183454) do
+  create_table "answers", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "instance_id", null: false
+    t.integer "question_id", null: false
+    t.integer "questionnaire_type_id", null: false
+    t.integer "answer"
+    t.text "comments"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["question_id"], name: "fk_score_questions"
+  end
+
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -61,6 +72,44 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_06_064753) do
     t.boolean "has_badge"
     t.boolean "allow_selecting_additional_reviews_after_1st_round"
     t.integer "sample_assignment_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "questionnaires", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "name", limit: 64
+    t.integer "instructor_id", default: 0, null: false
+    t.boolean "private", default: false, null: false
+    t.integer "min_question_score", default: 0, null: false
+    t.integer "max_question_score"
+    t.integer "default_num_choices"
+    t.integer "type_id", default: 1, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "type"
+    t.string "display_type"
+    t.index ["type_id"], name: "fk_questionnaire_type"
+  end
+
+  create_table "questions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.text "txt"
+    t.boolean "true_false"
+    t.integer "weight"
+    t.integer "questionnaire_id"
+    t.float "seq"
+    t.string "type"
+    t.string "size"
+    t.string "alternatives"
+    t.boolean "break_before", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["questionnaire_id"], name: "fk_question_questionnaires"
+  end
+
+  create_table "quiz_question_choices", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "question_id"
+    t.text "txt"
+    t.boolean "iscorrect", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
