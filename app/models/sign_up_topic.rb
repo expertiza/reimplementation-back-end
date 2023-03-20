@@ -26,8 +26,9 @@ class SignUpTopic < ApplicationRecord
     sign_up_topic.save
   end
 
-  def delete_topic()
-    p "Delete topic"
+  def delete_topic(name)
+    sign_up_topic = SignUpTopic.where(name: name).first
+    sign_up_topic.destroy
   end
 
   def format_for_display()
