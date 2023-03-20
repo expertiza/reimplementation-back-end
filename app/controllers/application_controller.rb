@@ -17,6 +17,7 @@ class ApplicationController < ActionController::API
   end
 
   def undo_link(message)
+    return true
     # version = Version.where('whodunnit = ?', session[:user].id).last
     # return unless version.try(:created_at) && Time.now.in_time_zone - version.created_at < 5.0
     #
