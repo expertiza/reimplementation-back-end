@@ -1,4 +1,7 @@
 class TextArea < TextResponse
+  # TextArea class if for text questions that have a height and width sized textbox (Adjustable)
+
+  # this method decide what to display while user is viewing a filled out a questionnaire
   def complete(count, answer = nil)
     if size.nil?
       cols = '70'
@@ -16,6 +19,7 @@ class TextArea < TextResponse
     html.html_safe
   end
 
+  # this method decide what to display while user is filing out a questionnaire
   def view_completed_question(count, answer)
     html = '<b>' + count.to_s + '. ' + txt + '</b><BR/>'
     html += '&nbsp;' * 8 + answer.comments.gsub('^p', '').gsub(/\n/, '<BR/>') + '<BR/><BR/>'
