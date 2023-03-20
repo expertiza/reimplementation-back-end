@@ -114,10 +114,12 @@ class Api::V1::SignUpSheetController < ApplicationController
   def delete_all_topics_for_assignment
     topics = SignUpTopic.where(assignment_id: params[:assignment_id])
     topics.each(&:destroy)
-    flash[:success] = 'All topics have been deleted successfully.'
+    #flash[:success] = 'All topics have been deleted successfully.'
     respond_to do |format|
-      format.html { redirect_to edit_assignment_path(params[:assignment_id]) }
-      format.js {}
+      output = {'the controller works for deleting all topics' => 'yes'}.to_json
+      format.json {render :json => output}
+      #format.html { redirect_to edit_assignment_path(params[:assignment_id]) }
+      #format.js {}
     end
   end
 
@@ -125,10 +127,13 @@ class Api::V1::SignUpSheetController < ApplicationController
   def delete_all_selected_topics
     load_all_selected_topics
     @stopics.each(&:destroy)
-    flash[:success] = 'All selected topics have been deleted successfully.'
+    error
+    #flash[:success] = 'All selected topics have been deleted successfully.'
     respond_to do |format|
-      format.html { redirect_to edit_assignment_path(params[:assignment_id]) + '#tabs-2' }
-      format.js {}
+      output = {'the controller works for deleting selected topics' => 'yes'}.to_json
+      format.json {render :json => output}
+      #format.json { redirect_to edit_assignment_path(params[:assignment_id],format: :json) + '#tabs-2' }
+      #format.js {}
     end
   end
 

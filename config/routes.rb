@@ -13,6 +13,7 @@ Rails.application.routes.draw do
       #resources :sign_up_sheets
       resources :sign_up_sheet do
         collection do
+          get :load_all_selected_topics
           get :add_signup_topics
           get :add_signup_topics_staggered
           get :delete_signup
