@@ -1,4 +1,7 @@
 class TextField < TextResponse
+  # TextField class is for text questions that are only 1 line
+
+  # this method decide what to display while user is viewing a filled out a questionnaire
   def complete(count, answer = nil)
     html = '<p style="width: 80%;">'
     html += '<label for="responses_' + count.to_s + '" >' + txt + '&nbsp;&nbsp;</label>'
@@ -10,6 +13,7 @@ class TextField < TextResponse
     html.html_safe
   end
 
+  # this method decide what to display while user is filing out a questionnaire
   def view_completed_question(count, answer)
     if (type == 'TextField') && (break_before == true)
       html = '<b>' + count.to_s + '. ' + txt + '</b>'
