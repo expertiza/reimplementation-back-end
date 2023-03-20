@@ -1,4 +1,5 @@
 class ApplicationController < ActionController::API
+  include ActionController::MimeResponds
 
   def locale_for_student
     return true
