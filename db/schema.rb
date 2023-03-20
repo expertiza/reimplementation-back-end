@@ -98,5 +98,15 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_06_064753) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "sign_up_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "name"
+    t.integer "max_choosers"
+    t.string "category"
+    t.string "topic_identifier"
+    t.string "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
 end
