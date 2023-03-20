@@ -5,28 +5,7 @@ class Criterion < ScoredQuestion
 
   # This method returns what to display if an instructor (etc.) is creating or editing a questionnaire (questionnaires_controller.rb)
   def edit(_count)
-    html = '<td align="center"><a rel="nofollow" data-method="delete" href="/questions/' + id.to_s + '">Remove</a></td>'
-
-    html += '<td><input size="6" value="' + seq.to_s + '" name="question[' + id.to_s + '][seq]"'
-    html += ' id="question_' + id.to_s + '_seq" type="text"></td>'
-
-    html += '<td><textarea cols="50" rows="1" name="question[' + id.to_s + '][txt]"'
-    html += ' id="question_' + id.to_s + '_txt" placeholder="Edit question content here">' + txt + '</textarea></td>'
-
-    html += '<td><input size="10" disabled="disabled" value="' + type + '" name="question[' + id.to_s + '][type]"'
-    html += ' id="question_' + id.to_s + '_type" type="text"></td>'
-
-    html += '<td><input size="2" value="' + weight.to_s
-    html += '" name="question[' + id.to_s + '][weight]" id="question_' + id.to_s + '_weight" type="text"></td>'
-
-    html += '<td>text area size <input size="3" value="' + size.to_s
-    html += '" name="question[' + id.to_s + '][size]" id="question_' + id.to_s + '_size" type="text"></td>'
-
-    html += '<td> max_label <input size="10" value="' + max_label.to_s + '" name="question[' + id.to_s
-    html += '][max_label]" id="question_' + id.to_s + '_max_label" type="text">  min_label <input size="12" value="' + min_label.to_s
-    html += '" name="question[' + id.to_s + '][min_label]" id="question_' + id.to_s + '_min_label" type="text"></td>'
-
-    safe_join(['<tr>'.html_safe, '</tr>'.html_safe], html.html_safe)
+    render partial: 'questionnaire/edit/topics'
   end
 
   # This method returns what to display if an instructor (etc.) is viewing a questionnaire
