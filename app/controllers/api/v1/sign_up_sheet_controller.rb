@@ -249,8 +249,11 @@ class Api::V1::SignUpSheetController < ApplicationController
     # Always use team_id ACS
     # s = Signupsheet.new
     # Team lazy initialization: check whether the user already has a team for this assignment
-    flash[:error] = "You've already signed up for a topic!" unless SignUpSheet.signup_team(@assignment.id, @user_id, params[:topic_id])
-    redirect_to action: 'list', id: params[:id]
+    SignUpSheet.signup_team(@assignment.id, @user_id, params[:topic_id]) ? render json: {message: "Sign up success" }, status: 200 : render json: {message: "You've already signed up for a topic!" }, status: :unprocessable_entity
+    #flash[:error] = "You've already signed up for a topic!" unless SignUpSheet.signup_team(@assignment.id, @user_id, params[:topic_id])
+
+    #render
+    #redirect_to action: 'list', id: params[:id]
   end
 
   # routes to new page to specficy student
@@ -259,22 +262,26 @@ class Api::V1::SignUpSheetController < ApplicationController
   def signup_as_instructor_action
     user = User.find_by(name: params[:username])
     if user.nil? # validate invalid user
-      flash[:error] = 'That student does not exist!'
+      #flash[:error] = 'That student does not exist!'
+      render json: {message: 'That student does not exist!'}, status: :unprocessable_entity
     else
       if AssignmentParticipant.exists? user_id: user.id, parent_id: params[:assignment_id]
         if SignUpSheet.signup_team(params[:assignment_id], user.id, params[:topic_id])
-          flash[:success] = 'You have successfully signed up the student for the topic!'
-          ExpertizaLogger.info LoggerMessage.new(controller_name, '', 'Instructor signed up student for topic: ' + params[:topic_id].to_s)
+          #flash[:success] = 'You have successfully signed up the student for the topic!'
+          #ExpertizaLogger.info LoggerMessage.new(controller_name, '', 'Instructor signed up student for topic: ' + params[:topic_id].to_s)
+          render json: {message: 'You have successfully signed up the student for the topic!',log: {controller_name: controller_name, user_id: '', message: 'Instructor signed up student for topic: ' + params[:topic_id].to_s }}, status: :created
         else
-          flash[:error] = 'The student has already signed up for a topic!'
-          ExpertizaLogger.info LoggerMessage.new(controller_name, '', 'Instructor is signing up a student who already has a topic')
+          #flash[:error] = 'The student has already signed up for a topic!'
+          #ExpertizaLogger.info LoggerMessage.new(controller_name, '', 'Instructor is signing up a student who already has a topic')
+          render json: {message: 'The student has already signed up for a topic!',log: {controller_name: controller_name, user_id: '', message: 'Instructor is signing up a student who already has a topic' }}, status: :unprocessable_entity
         end
       else
-        flash[:error] = 'The student is not registered for the assignment!'
-        ExpertizaLogger.info LoggerMessage.new(controller_name, '', 'The student is not registered for the assignment: ' << user.id)
+        #flash[:error] = 'The student is not registered for the assignment!'
+        #ExpertizaLogger.info LoggerMessage.new(controller_name, '', 'The student is not registered for the assignment: ' << user.id)
+        render json: {message: 'The student is not registered for the assignment!',log: {controller_name: controller_name, user_id: '', message: 'The student is not registered for the assignment: ' << user.id }}, status: :unprocessable_entity
       end
     end
-    redirect_to controller: 'assignments', action: 'edit', id: params[:assignment_id]
+    #redirect_to controller: 'assignments', action: 'edit', id: params[:assignment_id]
   end
 
   # this function is used to delete a previous signup
@@ -311,17 +318,20 @@ class Api::V1::SignUpSheetController < ApplicationController
     participant = AssignmentParticipant.find_by(user_id: user.id, parent_id: assignment.id)
     drop_topic_deadline = assignment.due_dates.find_by(deadline_type_id: 6)
     if !participant.team.submitted_files.empty? || !participant.team.hyperlinks.empty?
-      flash[:error] = 'The student has already submitted their work, so you are not allowed to remove them.'
-      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].id, 'Drop failed for already submitted work: ' + params[:topic_id].to_s)
+      #flash[:error] = 'The student has already submitted their work, so you are not allowed to remove them.'
+      #ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].id, 'Drop failed for already submitted work: ' + params[:topic_id].to_s)
+      render json: {message: 'The student has already submitted their work, so you are not allowed to remove them.' ,log: {controller_name: controller_name, user_id: session[:user].id, message: 'Drop failed for already submitted work: ' + params[:topic_id].to_s }}, status: :unprocessable_entity
     elsif !drop_topic_deadline.nil? && (Time.now > drop_topic_deadline.due_at)
-      flash[:error] = 'You cannot drop a student after the drop topic deadline!'
-      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].id, 'Drop failed for ended work: ' + params[:topic_id].to_s)
+      #flash[:error] = 'You cannot drop a student after the drop topic deadline!'
+      #ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].id, 'Drop failed for ended work: ' + params[:topic_id].to_s)
+      render json: {message: 'You cannot drop a student after the drop topic deadline!' ,log: {controller_name: controller_name, user_id: session[:user].id, message: 'Drop failed for ended work: ' + params[:topic_id].to_s }}, status: :unprocessable_entity
     else
       delete_signup_for_topic(assignment.id, params[:topic_id], participant.user_id)
       flash[:success] = 'You have successfully dropped the student from the topic!'
       ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].id, 'Student has been dropped from the topic: ' + params[:topic_id].to_s)
+      render json: {message: 'You have successfully dropped the student from the topic!' ,log: {controller_name: controller_name, user_id: session[:user].id, message: 'Student has been dropped from the topic: ' + params[:topic_id].to_s}}, status: 200
     end
-    redirect_to controller: 'assignments', action: 'edit', id: assignment.id
+    #redirect_to controller: 'assignments', action: 'edit', id: assignment.id
   end
 
   def set_priority
@@ -413,7 +423,8 @@ class Api::V1::SignUpSheetController < ApplicationController
         end
       end
     end
-    redirect_to_assignment_edit(params[:assignment_id])
+    render json: topics, status: :updated
+    #redirect_to_assignment_edit(params[:assignment_id])
   end
 
   # This method is called when a student click on the trumpet icon. So this is a bad method name. --Yang
@@ -435,6 +446,7 @@ class Api::V1::SignUpSheetController < ApplicationController
       end
       # @team_members = find_team_members(topic)
     end
+    render json: @results, status: 200
   end
 
   def switch_original_topic_to_approved_suggested_topic
@@ -447,9 +459,11 @@ class Api::V1::SignUpSheetController < ApplicationController
     # Check if this sign up topic exists
     if SignUpTopic.exists?(id: params[:topic_id])
       SignUpTopic.find_by(id: params[:topic_id]).update_attribute(:private_to, nil)
+      render json: SignUpTopic.find_by(id: params[:topic_id]), status: 200
     else
       # Else flash an error
-      flash[:error] = 'Signup topic does not exist.'
+      render json: {message: 'Signup topic does not exist.'}, status: :unprocessable_entity
+      #flash[:error] = 'Signup topic does not exist.'
     end
 
     # Change to dynamic finder method to prevent sql injection
