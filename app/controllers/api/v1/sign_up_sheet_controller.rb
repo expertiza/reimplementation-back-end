@@ -22,12 +22,13 @@ class Api::V1::SignUpSheetController < ApplicationController
     allowed_actions = ['set_priority', 'sign_up', 'delete_signup', 'list', 'show_team', 'switch_original_topic_to_approved_suggested_topic', 'publish_approved_suggested_topic']
     case params[:action]
     when *allowed_actions
-      (current_user_has_student_privileges? &&
+      has_student_privileges = (current_user_has_student_privileges? &&
         (%w[list].include? action_name) &&
         are_needed_authorizations_present?(params[:id], 'reader', 'submitter', 'reviewer')) ||
         current_user_has_student_privileges?
+      render json: has_student_privileges
     else
-      current_user_has_ta_privileges?
+      render json: current_user_has_ta_privileges?
     end
   end
 
@@ -73,8 +74,9 @@ class Api::V1::SignUpSheetController < ApplicationController
     if @topic
       @topic.destroy
       undo_link("The topic: \"#{@topic.topic_name}\" has been successfully deleted. ")
+      render json: nil,  status: "The topic: \"#{@topic.topic_name}\" has been successfully deleted. "
     else
-      flash[:error] = 'The topic could not be deleted.'
+      render json: @topic.error, status: 'The topic could not be deleted.'
     end
     # Akshay - redirect to topics tab if there are still any topics left, otherwise redirect to
     # assignment's edit page
@@ -104,10 +106,11 @@ class Api::V1::SignUpSheetController < ApplicationController
       @topic.save
       undo_link("The topic: \"#{@topic.topic_name}\" has been successfully updated. ")
     else
-      flash[:error] = 'The topic could not be updated.'
+      render json: :error, status: 'The topic could not be updated.'
     end
     # Akshay - correctly changing the redirection url to topics tab in edit assignment view.
-    redirect_to edit_assignment_path(params[:assignment_id]) + '#tabs-2'
+    render json: @topic
+    #redirect_to edit_assignment_path(params[:assignment_id]) + '#tabs-2'
   end
 
   # This deletes all topics for the given assignment
@@ -115,31 +118,34 @@ class Api::V1::SignUpSheetController < ApplicationController
     topics = SignUpTopic.where(assignment_id: params[:assignment_id])
     topics.each(&:destroy)
     #flash[:success] = 'All topics have been deleted successfully.'
-    respond_to do |format|
-      output = {'the controller works for deleting all topics' => 'yes'}.to_json
-      format.json {render :json => output}
+    render json: 'All topics have been deleted successfully.', status: 200
+    #respond_to do |format|
+      #output = {'the controller works for deleting all topics' => 'yes'}.to_json
+
       #format.html { redirect_to edit_assignment_path(params[:assignment_id]) }
       #format.js {}
-    end
+    #end
   end
 
   # This deletes all selected topics for the given assignment
   def delete_all_selected_topics
     load_all_selected_topics
     @stopics.each(&:destroy)
-    error
+    render json: {message: 'All selected topics have been deleted successfully.'}, status: 200
+    #error
     #flash[:success] = 'All selected topics have been deleted successfully.'
-    respond_to do |format|
-      output = {'the controller works for deleting selected topics' => 'yes'}.to_json
-      format.json {render :json => output}
+    #respond_to do |format|
+    #output = {'the controller works for deleting selected topics' => 'yes'}.to_json
+    # format.json {render :json => output}
       #format.json { redirect_to edit_assignment_path(params[:assignment_id],format: :json) + '#tabs-2' }
       #format.js {}
-    end
+    #end
   end
 
   # This loads all selected topics based on all the topic identifiers selected for that assignment into stopics variable
   def load_all_selected_topics
     @stopics = SignUpTopic.where(assignment_id: params[:assignment_id], topic_identifier: params[:topic_ids])
+    render json: @stopics, status: 200
   end
 
   # This displays a page that lists all the available topics for an assignment.
@@ -147,7 +153,7 @@ class Api::V1::SignUpSheetController < ApplicationController
   # Also contains links to delete topics and modify the deadlines for individual topics. Staggered means that different topics can have different deadlines.
   def add_signup_topics
     load_add_signup_topics(params[:id])
-    SignUpSheet.add_signup_topic(params[:id])
+    render json: SignUpSheet.add_signup_topic(params[:id]), status: 200
   end
 
   def add_signup_topics_staggered
@@ -281,17 +287,20 @@ class Api::V1::SignUpSheetController < ApplicationController
     # If there is no drop topic deadline, student can drop topic at any time (if all the submissions are deleted)
     # If there is a drop topic deadline, student cannot drop topic after this deadline.
     if !participant.team.submitted_files.empty? || !participant.team.hyperlinks.empty?
-      flash[:error] = 'You have already submitted your work, so you are not allowed to drop your topic.'
-      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].id, 'Dropping topic for already submitted a work: ' + params[:topic_id].to_s)
+      #flash[:error] = 'You have already submitted your work, so you are not allowed to drop your topic.'
+      #ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].id, 'Dropping topic for already submitted a work: ' + params[:topic_id].to_s)
+      render json: {message: 'You have already submitted your work, so you are not allowed to drop your topic.',log: {controller_name: controller_name, user_id: session[:user].id, message: 'Dropping topic for already submitted a work: ' + params[:topic_id].to_s }}, status: :unprocessable_entity
     elsif !drop_topic_deadline.nil? && (Time.now > drop_topic_deadline.due_at)
-      flash[:error] = 'You cannot drop your topic after the drop topic deadline!'
-      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].id, 'Dropping topic for ended work: ' + params[:topic_id].to_s)
+      #flash[:error] = 'You cannot drop your topic after the drop topic deadline!'
+      #ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].id, 'Dropping topic for ended work: ' + params[:topic_id].to_s)
+      render json: {message: 'You cannot drop your topic after the drop topic deadline!' ,log: {controller_name: controller_name, user_id: session[:user].id, message: 'Dropping topic for ended work: ' + params[:topic_id].to_s }}, status: :unprocessable_entity
     else
       delete_signup_for_topic(assignment.id, params[:topic_id], session[:user].id)
-      flash[:success] = 'You have successfully dropped your topic!'
-      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].id, 'Student has dropped the topic: ' + params[:topic_id].to_s)
+      #flash[:success] = 'You have successfully dropped your topic!'
+      #ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].id, 'Student has dropped the topic: ' + params[:topic_id].to_s)
+      render json: {message: 'You have successfully dropped your topic!' ,log: {controller_name: controller_name, user_id: session[:user].id, message: 'Student has dropped the topic: ' + params[:topic_id].to_s}}, status: 200
     end
-    redirect_to action: 'list', id: params[:id]
+    #redirect_to action: 'list', id: params[:id]
   end
 
   def delete_signup_as_instructor
