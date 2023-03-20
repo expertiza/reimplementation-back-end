@@ -114,9 +114,33 @@ paths:
       responses:
         '200':
           description: successful
-  "/api/v1/sign_up_sheet/delete_signup":
+  "/api/v1/sign_up_sheet/load_all_selected_topics":
     get:
-      summary: list the sheet
+      summary: list the topics
+      tags:
+      - SignUpSheet
+      responses:
+        '200':
+          description: successful
+  "/api/v1/sign_up_sheet/delete_all_selected_topics":
+    post:
+      summary: test for all selected topics
+      tags:
+      - SignUpSheet
+      responses:
+        '200':
+          description: successful
+  "/api/v1/sign_up_sheet/delete_all_topics_for_assignment":
+    post:
+      summary: test to delete topics
+      tags:
+      - SignUpSheet
+      responses:
+        '200':
+          description: successful
+  "/api/v1/sign_up_sheet/add_signup_topics":
+    get:
+      summary: test to add topics
       tags:
       - SignUpSheet
       responses:

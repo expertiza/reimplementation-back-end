@@ -115,31 +115,33 @@ class Api::V1::SignUpSheetController < ApplicationController
     topics = SignUpTopic.where(assignment_id: params[:assignment_id])
     topics.each(&:destroy)
     #flash[:success] = 'All topics have been deleted successfully.'
-    respond_to do |format|
-      output = {'the controller works for deleting all topics' => 'yes'}.to_json
-      format.json {render :json => output}
-      #format.html { redirect_to edit_assignment_path(params[:assignment_id]) }
-      #format.js {}
-    end
+    render json: {message: 'All topics have been deleted successfully.'}, status: 200
+    #respond_to do |format|
+    #output = {'the controller works for deleting all topics' => 'yes'}.to_json
+
+    #format.html { redirect_to edit_assignment_path(params[:assignment_id]) }
+    #format.js {}
+    #end
   end
 
   # This deletes all selected topics for the given assignment
   def delete_all_selected_topics
     load_all_selected_topics
     @stopics.each(&:destroy)
-    error
+    render json: {message: 'All selected topics have been deleted successfully.'}, status: 200
     #flash[:success] = 'All selected topics have been deleted successfully.'
-    respond_to do |format|
-      output = {'the controller works for deleting selected topics' => 'yes'}.to_json
-      format.json {render :json => output}
+    #respond_to do |format|
+    #  output = {'the controller works for deleting selected topics' => 'yes'}.to_json
+    #  format.json {render :json => output}
       #format.json { redirect_to edit_assignment_path(params[:assignment_id],format: :json) + '#tabs-2' }
       #format.js {}
-    end
+    #end
   end
 
   # This loads all selected topics based on all the topic identifiers selected for that assignment into stopics variable
   def load_all_selected_topics
     @stopics = SignUpTopic.where(assignment_id: params[:assignment_id], topic_identifier: params[:topic_ids])
+    render json: {message: 'All topics have been loaded successfully.'}, status: 200
   end
 
   # This displays a page that lists all the available topics for an assignment.
