@@ -5,10 +5,12 @@
 #   git config --global core.excludesfile '~/.gitignore_global'
 
 .idea/
-config/database.yml
 
 # Ignore bundler config.s
 /.bundle
+
+# Ignore database files.
+database/*
 
 # Ignore all logfiles and tempfiles.
 /log/*
@@ -30,3 +32,6 @@ config/database.yml
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
+
+# Ignore the lock file.
+Gemfile.lock
