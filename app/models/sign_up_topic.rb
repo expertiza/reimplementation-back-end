@@ -8,8 +8,14 @@ class SignUpTopic < ApplicationRecord
     p "TBD: Query for finding avilable slots goes here."
   end
 
-  def create_topic()
-    p "Create topic"
+  def create_topic(name, max_choosers, category, topic_identifier, description)
+    sign_up_topic = SignUpTopic.new
+    sign_up_topic.name = name
+    sign_up_topic.max_choosers = max_choosers
+    sign_up_topic.category = category
+    sign_up_topic.topic_identifier = topic_identifier
+    sign_up_topic.description = description
+    sign_up_topic.save
   end
 
   def update_topic()
