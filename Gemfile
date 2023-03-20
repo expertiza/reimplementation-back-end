@@ -32,6 +32,7 @@ group :development, :test do
   gem 'debug', platforms: %i[mri mingw x64_mingw]
   gem 'rubocop'
   gem 'simplecov', require: false, group: :test
+  gem "sqlite3", "~> 1.6"
 end
 
 group :development do
@@ -39,4 +40,3 @@ group :development do
   gem 'spring'
 end
 
-gem "sqlite3", "~> 1.6"
