@@ -1,7 +1,8 @@
 class TextResponse < Question
+  # Text response is a subclass of Question that has specifics for text based questions
   validates :size, presence: true
 
-  # This method returns what to display if an instructor (etc.) is creating or editing a questionnaire (questionnaires_controller.rb)
+  # This method returns what to display if an instructor (etc.) is creating or editing a questionnaire (questionnaires_controller.rb
   def edit(_count)
     html = '<tr>'
     html += '<td align="center"><a rel="nofollow" data-method="delete" href="/questions/' + id.to_s + '">Remove</a></td>'
@@ -25,7 +26,9 @@ class TextResponse < Question
     html.html_safe
   end
 
+  # This method returns what to display when viewing a filled out questionnaire
   def complete; end
 
+  # This method returns what to display while user is filling out questionnaire
   def view_completed_question; end
 end
