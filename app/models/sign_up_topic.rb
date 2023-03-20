@@ -19,7 +19,7 @@ class SignUpTopic < ApplicationRecord
   end
 
   def update_topic(name, max_choosers, category, description)
-    sign_up_topic  SignUpTopic.where(name: name).first
+    sign_up_topic = SignUpTopic.where(name: name).first
     sign_up_topic.max_choosers = max_choosers
     sign_up_topic.category = category
     sign_up_topic.description = description
