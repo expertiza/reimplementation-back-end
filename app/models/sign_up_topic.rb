@@ -4,8 +4,9 @@ class SignUpTopic < ApplicationRecord
   validates :name, :max_choosers, presence: true
   validates :topic_identifier, length: { maximum: 10 }
 
-  def self.find_available_slots?()
-    p "TBD: Query for finding avilable slots goes here."
+  def self.find_if_topic_available?()
+    # NOTE: Use counter_cache:true in sign_up_team to get the count of has_many relations.
+    return @sign_up_team.size < max_choosers
   end
 
   def create_topic(name, max_choosers, category, topic_identifier, description)
@@ -31,11 +32,13 @@ class SignUpTopic < ApplicationRecord
     sign_up_topic.destroy
   end
 
-  def format_for_display()
-    p "Format for display"
+  def self.format_for_display()
+    contents_for_display = ''
+    contents_for_display += topic_identifier.to_s + ' - '
+    topic_display + topic_name
   end
 
   def update_waitlisted_users()
-    p "Update waitlisted users"
+    # TODO: This can be done after the waitlist model is built.
   end
 end
