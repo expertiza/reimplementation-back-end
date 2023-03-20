@@ -3,10 +3,13 @@ class FeedbackResponseMap < ResponseMap
   belongs_to :review, class_name: 'Response', foreign_key: 'reviewed_object_id'
   belongs_to :reviewer, class_name: 'AssignmentParticipant', dependent: :destroy
 
+  # get the assignment instance associated with the the instance of this feedback_response_map
+  # this instance is associated with a review instance hence the lookup is chained
   def assignment
     review.map.assignment
   end
 
+  # get review html for the associated review instance
   def show_review
     if review
       review.display_as_html
@@ -15,23 +18,27 @@ class FeedbackResponseMap < ResponseMap
     end
   end
 
+  # getter for title. All response map types have a unique title
   def title
     'Feedback'
   end
 
-  def questionnaire
+
+  # get the questionaries associated with this instance of the feedback response map
+  # the response map belongs to an assignment hence this is a convenience function for getting the questionaires
+  def questionnaires
     assignment.questionnaires.find_by(type: 'AuthorFeedbackQuestionnaire')
   end
 
+  # get the reviewee of this map instance
   def contributor
     review.map.reviewee
   end
 
-  def self.feedback_response_report(id, _type)
-    # Example query
-    # SELECT distinct reviewer_id FROM response_maps where type = 'FeedbackResponseMap' and
-    # reviewed_object_id in (select id from responses where
-    # map_id in (select id from response_maps where reviewed_object_id = 722 and type = 'ReviewResponseMap'))
+
+  # get a feedback response report a given review object. This provides ability to see all feedback response for a review
+  # @param id is the review object id
+  def self.feedback_response_report(id)
     @review_response_map_ids = ReviewResponseMap.where(['reviewed_object_id = ?', id]).pluck('id')
     teams = AssignmentTeam.includes([:users]).where(parent_id: id)
     @authors = []
@@ -76,11 +83,11 @@ class FeedbackResponseMap < ResponseMap
   end
 
   # Send emails for author feedback
-  # Refactored from email method in response.rb
-  def email(defn, assignment)
-    defn[:body][:type] = 'Author Feedback'
-    # reviewee is a response, reviewer is a participant
-    # we need to track back to find the original reviewer on whose work the author comments
+  # @param email_command is a command object which will be fully hydrated in this function an dpassed to the mailer service
+  # email_command should be initialized to a nested hash which invoking this function {body: {}}
+  # @param assignment is the assignment instance for which the email is related to
+  def send_email(email_command, assignment)
+    email_command[:body][:type] = 'Author Feedback'
     response_id_for_original_feedback = reviewed_object_id
     response_for_original_feedback = Response.find response_id_for_original_feedback
     response_map_for_original_feedback = ResponseMap.find response_for_original_feedback.map_id
@@ -88,12 +95,12 @@ class FeedbackResponseMap < ResponseMap
 
     participant = AssignmentParticipant.find(original_reviewer_participant_id)
 
-    defn[:body][:obj_name] = assignment.name
+    email_command[:body][:obj_name] = assignment.name
 
     user = User.find(participant.user_id)
 
-    defn[:to] = user.email
-    defn[:body][:first_name] = user.fullname
-    ApplicationMailer.sync_message(defn).deliver
+    email_command[:to] = user.email
+    email_command[:body][:first_name] = user.fullname
+    ApplicationMailer.sync_message(email_command).deliver
   end
 end

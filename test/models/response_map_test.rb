@@ -23,7 +23,7 @@ class ResponseMapTest < ActiveSupport::TestCase
 
   test "show_feedback" do
     sut = ResponseMap.new
-    assert_equal nil, sut.show_feedback(nil)
+    assert_equal nil, sut.show_feedback
   end
 
   test "metareviewed_by?" do

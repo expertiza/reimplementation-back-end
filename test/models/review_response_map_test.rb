@@ -30,7 +30,7 @@ class ReviewResponseMapTest < ActiveSupport::TestCase
   end
 
   test "export_fields" do
-    assert_equal ['contributor', 'reviewed by'], ReviewResponseMap.export_fields(nil)
+    assert_equal ['contributor', 'reviewed by'], ReviewResponseMap.export_fields
   end
 
   test "show_feedback returning nil when there is no response" do
@@ -68,7 +68,7 @@ class ReviewResponseMapTest < ActiveSupport::TestCase
     assignment_team.test_id = 'testId'
     Assignment.stub :find, assignment do
       AssignmentTeam.stub :find, assignment_team do
-        assert_equal 'testId', ReviewResponseMap.reviewer_with_id(assignment.id, 3).test_id
+        assert_equal 'testId', ReviewResponseMap.reviewer_by_id(assignment.id, 3).test_id
       end
     end
   end
@@ -96,7 +96,7 @@ class ReviewResponseMapTest < ActiveSupport::TestCase
     defn = {body: {}}
     AssignmentTeam.stub :find, assignmentTeam do
       ApplicationMailer.stub :sync_message, MockMail.new do
-        sut.email(defn, assignment)
+        sut.send_email(defn, assignment)
         assert_equal 'Peer Review', defn[:body][:type]
       end
     end

@@ -120,7 +120,7 @@ class TeammateReviewResponseMapTest < ActiveSupport::TestCase
     AssignmentParticipant.stub :find, participant do
       User.stub :find, user do
         ApplicationMailer.stub :sync_message, MockMail.new do
-          sut.email(defn, assignment)
+          sut.send_email(defn, assignment)
           assert_equal 'Teammate Review', defn[:body][:type]
           assert_equal "test case assignment", defn[:body][:obj_name]
         end

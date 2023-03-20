@@ -41,7 +41,7 @@ class FeedbackResponseMapTest < ActiveSupport::TestCase
   test "questionnaire" do
     sut = FeedbackResponseMap.new
     sut.review = MockResponse.new
-    assert_equal [1,2,3], sut.questionnaire
+    assert_equal [1,2,3], sut.questionnaires
   end
 
   test "contributor" do
@@ -69,7 +69,7 @@ class FeedbackResponseMapTest < ActiveSupport::TestCase
         AssignmentParticipant.stub :find, participant do
           User.stub :find, user do
             ApplicationMailer.stub :sync_message, MockMail.new do
-              sut.email(defn, assignment)
+              sut.send_email(defn, assignment)
               assert_equal 'Author Feedback', defn[:body][:type]
             end
           end

@@ -2,8 +2,10 @@
 
 class Response < ApplicationRecord
   include Comparable
-  # return latest versions of the responses
-  def self.assessments_for(team)
+  # @return latest versions of responses for a given team
+  # @return emtpy collection if a team is not defined
+  # @param team is an instance of team or participant
+  def self.assessments_for_team(team)
     responses = []
     if team
       @array_sort = []
@@ -31,8 +33,10 @@ class Response < ApplicationRecord
     responses
   end
 
-  # return the responses for specified round
-  # type parameter is a string that corresponds to Response Map subclasses i.e ReviewResponseMap
+  # @return the responses for specified team round
+  # @param type is a string that corresponds to Response Map subclasses i.e ReviewResponseMap
+  # @param team is an instane of participant or team
+  # @param round is integer that corresponds to the response round
   def self.responses_for_team_round(team, round, type)
     responses = []
     if team.id
@@ -47,6 +51,8 @@ class Response < ApplicationRecord
     responses
   end
 
+  # implement rocket so that responses can be compared using response version numbers
+  # @param other_response is another instance of response to compare with "this" instance
   def <=>(other_response)
     if version_num && other_response.version_num
       other_response.version_num <=> version_num
@@ -56,7 +62,4 @@ class Response < ApplicationRecord
       1
     end
   end
-
-
-
 end
