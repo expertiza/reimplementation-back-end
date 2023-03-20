@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_03_19_230116) do
+ActiveRecord::Schema[7.0].define(version: 2023_03_19_232713) do
   create_table "answers", force: :cascade do |t|
     t.integer "question_id", default: 0, null: false
     t.integer "response_id"
@@ -73,7 +73,26 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_19_230116) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "participants", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "questionnaires", force: :cascade do |t|
+    t.integer "assignment_id"
+    t.integer "max_question_score"
+    t.index ["assignment_id"], name: "fk_questionnaires_assignment"
+  end
+
   create_table "questions", force: :cascade do |t|
+    t.integer "questionnaire_id"
+    t.integer "weight"
+    t.index ["questionnaire_id"], name: "fk_question_questionnaires"
+  end
+
+  create_table "response_maps", force: :cascade do |t|
+    t.integer "reviewer_id", default: 0, null: false
+    t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 
   create_table "responses", force: :cascade do |t|
