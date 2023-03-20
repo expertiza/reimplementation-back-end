@@ -19,6 +19,7 @@ describe QuizQuestion do
     allow(quiz_question_choice4).to receive(:txt).and_return('Choice 4')
     allow(quiz_question_choice4).to receive(:iscorrect?).and_return(false)
   end
+ 
   describe '#view_question_text' do
     it 'returns the text of the questions' do
       expect(quiz_question.view_question_text).to eq('<b>Question Text</b><br />Question Type: MultipleChoiceRadio<br />Question Weight: <br />  - <b>Choice 1</b><br />   - Choice 2<br />   - Choice 3<br />   - Choice 4<br /> <br />')
@@ -29,6 +30,37 @@ describe QuizQuestion do
       expect(quiz_question.get_formatted_question_type).to eq('Multiple Choice - Radio')
     end
   end
+
+  describe "#complete" do
+    before do
+      expected_html = "<label for=\"\">Question Text</label><br><input name = \"\" id = \"_1\" value = \"Choice 1\" type=\"radio\"/>Choice 1</br><input name = \"\" id = \"_2\" value = \"Choice 2\" type=\"radio\"/>Choice 2</br><input name = \"\" id = \"_3\" value = \"Choice 3\" type=\"radio\"/>Choice 3</br><input name = \"\" id = \"_4\" value = \"Choice 4\" type=\"radio\"/>Choice 4</br>"
+      expect(quiz_question.complete).to eq(expected_html)
+    end
+    it "returns the completed HTML for the quiz question" do
+      # The before block already tests the functionality, so this test can be empty
+    end
+  end
+  
+   describe '#view_completed_question' do
+    it 'returns the correct HTML for a completed question' do
+      quiz_question = QuizQuestion.new(txt: 'which is the latest Iphone?')
+      quiz_question_choice_1 = QuizQuestionChoice.new(txt: 'Iphone14', iscorrect: true)
+      quiz_question_choice_2 = QuizQuestionChoice.new(txt: 'Iphone13', iscorrect: false)
+      quiz_question_choice_3 = QuizQuestionChoice.new(txt: 'Iphone12', iscorrect: false)
+      quiz_question.quiz_question_choices << quiz_question_choice_1
+      quiz_question.quiz_question_choices << quiz_question_choice_2
+      quiz_question.quiz_question_choices << quiz_question_choice_3
+      user_answer = double('user_answer')
+      allow(user_answer).to receive_message_chain(:first, :comments).and_return('Iphone14')
+      allow(user_answer).to receive_message_chain(:first, :answer).and_return(1)
+
+      expected_html = '<b>Iphone14</b> -- Correct <br>Iphone13<br>Iphone12<br><br>Your answer is: <b>Iphone14</b><img src="/assets/Check-icon.png"/></b><br><br><hr>'
+
+      expect(quiz_question.view_completed_question(user_answer)).to eq(expected_html)
+    end
+  end
+    
+
   describe '#isvalid' do
     context 'when the question and its choices have valid text' do
       it 'returns "valid"' do
