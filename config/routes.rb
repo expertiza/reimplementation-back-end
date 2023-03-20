@@ -10,6 +10,10 @@ Rails.application.routes.draw do
       resources :roles
       resources :users
       resources :assignments
+      resources :questionnaires
+      resources :questions
+      resources :questionnaire_nodes
+      resources :assignment_questionnaires
     end
   end
 end

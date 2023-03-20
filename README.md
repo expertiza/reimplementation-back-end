@@ -1,5 +1,12 @@
 # Expertiza Backend Re-Implementation
 
+Wiki page: https://expertiza.csc.ncsu.edu/index.php/CSC/ECE_517_Spring_2023_-_E2319._Reimplement_questionnaire.rb
+
+To run tests:
+```
+rspec ./spec/models/questionnaire_spec.rb
+```
+
 This README would normally document whatever steps are necessary to get the
 application up and running.
 
