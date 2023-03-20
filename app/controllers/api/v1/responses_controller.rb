@@ -1,4 +1,4 @@
-class ResponsesController < ApplicationController
+class Api::V1::ResponsesController < ApplicationController
     include AuthorizationHelper
     include ResponseHelper
   
