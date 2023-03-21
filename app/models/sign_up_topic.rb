@@ -21,6 +21,7 @@ class SignUpTopic < ApplicationRecord
     sign_up_topic.topic_identifier = topic_identifier
     sign_up_topic.description = description
     sign_up_topic.save
+    return sign_up_topic
   end
 
   # Update max choosers | category | description based on name i.e., primary key.
@@ -31,6 +32,7 @@ class SignUpTopic < ApplicationRecord
     sign_up_topic.category = category
     sign_up_topic.description = description
     sign_up_topic.save
+    return sign_up_topic
   end
 
   # Delete topic based on primary key i.e., name of topic.
@@ -43,8 +45,7 @@ class SignUpTopic < ApplicationRecord
   # Format the given active record for display.
   def format_for_display()
     contents_for_display = ''
-    contents_for_display += topic_identifier.to_s + ' - '
-    topic_display + topic_name
+    contents_for_display += topic_identifier.to_s + ' - ' + name.to_s
   end
 
   # Send update to all waitlisted users regarding waitlist changes.
