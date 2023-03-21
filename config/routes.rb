@@ -23,8 +23,6 @@ Rails.application.routes.draw do
         collection do
           get :load_all_selected_topics
           get :add_signup_topics
-          post :create_topic
-          post :update_topic
           post :delete_all_topics_for_assignment
           post :delete_all_selected_topics
         end

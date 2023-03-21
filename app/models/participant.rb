@@ -1,7 +1,6 @@
 class Participant < ApplicationRecord
-  include Scoring
-  include ParticipantsHelper
-  has_paper_trail
+  #include Scoring
+  #include ParticipantsHelper
   belongs_to :user
   belongs_to :topic, class_name: 'SignUpTopic', inverse_of: false
   belongs_to :assignment, foreign_key: 'parent_id', inverse_of: false
@@ -13,7 +12,7 @@ class Participant < ApplicationRecord
   has_many :badges, through: :awarded_badges
   has_one :review_grade, dependent: :destroy
   validates :grade, numericality: { allow_nil: true }
-  has_paper_trail
+
   delegate :course, to: :assignment
   delegate :current_stage, to: :assignment
   delegate :stage_deadline, to: :assignment
