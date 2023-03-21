@@ -21,6 +21,7 @@ class SignUpTopic < ApplicationRecord
     sign_up_topic.topic_identifier = topic_identifier
     sign_up_topic.description = description
     sign_up_topic.save
+    return sign_up_topic
   end
 
   # Update max choosers | category | description based on name i.e., primary key.
