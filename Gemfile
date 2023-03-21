@@ -37,6 +37,7 @@ group :development, :test do
   gem 'rspec-rails'
   gem 'rswag-specs'
   gem "sqlite3", "~> 1.6"
+  gem "rspec", "~> 3.12"
 end
 
 group :development do
