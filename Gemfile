@@ -33,7 +33,7 @@ group :development, :test do
   gem 'rubocop'
   gem 'simplecov', require: false, group: :test
   gem "sqlite3", "~> 1.6"
-  gem "rspec", "~> 3.12"
+  gem 'rspec-rails', '~> 5.0.0'
 end
 
 group :development do
