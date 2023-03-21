@@ -34,6 +34,13 @@ RSpec.describe SignUpTopic, type: :model do
       expect(updated_record.category).to eq("category2")
       expect(updated_record.description).to eq("desc2")
     end
+
+    it "deletes record via name" do
+      original_record = SignUpTopic.create_topic("temp", 10, "category", "id", "desc")
+      SignUpTopic.delete_topic("temp")
+      deleted_record = SignUpTopic.where(name: "temp")
+      expect(deleted_record.empty?)
+    end
   end
 
 end
