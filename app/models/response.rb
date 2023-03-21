@@ -314,7 +314,7 @@ class Response < ApplicationRecord
     end
     code
   end
-  def self.sortResponses(review_scores)
+  def self.sortReviews(review_scores)
     review_scores.sort do |m1, m2|
       if m1.version_num.to_i && m2.version_num.to_i
         m2.version_num.to_i <=> m1.version_num.to_i
