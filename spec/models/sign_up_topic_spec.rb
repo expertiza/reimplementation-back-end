@@ -10,6 +10,6 @@ RSpec.describe SignUpTopic, type: :model do
   end
 
   it "creates valid sign up topic" do
-    expect(SignUpTopic.new(name: "temp", max_choosers: 10).to be_valid
+    expect(SignUpTopic.new(name: "temp", max_choosers: 10)).to be_valid
   end
 end
