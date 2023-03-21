@@ -6,14 +6,14 @@ class SignUpTopic < ApplicationRecord
 
   # Find if a topic is available for further selection. Topic is considered available if the
   # total number of teams assigned to the topic are less than the maximum choosers allowed.
-  def self.find_if_topic_available?()
+  def find_if_topic_available?()
     # NOTE: Use counter_cache:true in sign_up_team to get the count of has_many relations.
     return @sign_up_team.size < max_choosers
   end
 
   # Create topic for signing up. Requires name, maximum allowed, category, topic and 
   # bried description to be shown in the sign-up sheet.
-  def create_topic(name, max_choosers, category, topic_identifier, description)
+  def self.create_topic(name, max_choosers, category, topic_identifier, description)
     sign_up_topic = SignUpTopic.new
     sign_up_topic.name = name
     sign_up_topic.max_choosers = max_choosers
@@ -25,7 +25,7 @@ class SignUpTopic < ApplicationRecord
 
   # Update max choosers | category | description based on name i.e., primary key.
   # NOTE: Save cannot be done on instance methods.
-  def update_topic(name, max_choosers, category, description)
+  def self.update_topic(name, max_choosers, category, description)
     sign_up_topic = SignUpTopic.where(name: name).first
     sign_up_topic.max_choosers = max_choosers
     sign_up_topic.category = category
@@ -35,20 +35,20 @@ class SignUpTopic < ApplicationRecord
 
   # Delete topic based on primary key i.e., name of topic.
   # NOTE: Destroy cannot be done on instance methods.
-  def delete_topic(name)
+  def self.delete_topic(name)
     sign_up_topic = SignUpTopic.where(name: name).first
     sign_up_topic.destroy
   end
 
   # Format the given active record for display.
-  def self.format_for_display()
+  def format_for_display()
     contents_for_display = ''
     contents_for_display += topic_identifier.to_s + ' - '
     topic_display + topic_name
   end
 
   # Send update to all waitlisted users regarding waitlist changes.
-  def update_waitlisted_users()
+  def self.update_waitlisted_users()
     # TODO: This can be done after the waitlist model is built.
   end
 end
