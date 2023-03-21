@@ -32,6 +32,7 @@ class SignUpTopic < ApplicationRecord
     sign_up_topic.category = category
     sign_up_topic.description = description
     sign_up_topic.save
+    return sign_up_topic
   end
 
   # Delete topic based on primary key i.e., name of topic.
