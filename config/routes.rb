@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :courses
   resources :response_maps
   resources :team_response_maps
   mount Rswag::Ui::Engine => '/api-docs'

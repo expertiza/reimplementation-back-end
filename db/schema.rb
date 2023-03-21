@@ -66,11 +66,11 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_16_232910) do
   end
 
   create_table "response_maps", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.integer "reviewed_object_id", default: 0, null: false
-    t.integer "reviewer_id", default: 0, null: false
-    t.integer "reviewee_id", default: 0, null: false
-    t.string "type", default: "", null: false
-    t.boolean "calibrate_to", default: false
+    t.integer "reviewed_object_id"
+    t.integer "reviewer_id"
+    t.integer "reviewee_id"
+    t.string "type"
+    t.boolean "calibrate_to"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

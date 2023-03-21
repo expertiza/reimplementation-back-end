@@ -1,7 +1,7 @@
 require "rails_helper"
 
-describe ResponsesController do
-  let(:assignment) { build(:assignment, instructor_id: 6, id: 1) }
+RSpec.describe 'Responses API' do
+  let(:assignment) { FactoryBot.build(:assignment, instructor_id: 6, id: 1) }
   let(:instructor) { build(:instructor, id: 6) }
   let(:participant) { build(:participant, id: 1, user_id: 6, assignment: assignment) }
   let(:review_response) { build(:response, id: 1, map_id: 1) }
