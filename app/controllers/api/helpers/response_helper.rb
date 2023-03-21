@@ -82,4 +82,35 @@ module ResponseHelper
         end
       end
     end
+    def redirect
+      error_id = params[:error_msg]
+      message_id = params[:msg]
+      flash[:error] = error_id unless error_id&.empty?
+      flash[:note] = message_id unless message_id&.empty?
+      @map = Response.find_by(map_id: params[:id])
+      case params[:return]
+      when 'feedback'
+        redirect_to controller: 'grades', action: 'view_my_scores', id: @map.reviewer.id
+      when 'teammate'
+        redirect_to view_student_teams_path student_id: @map.reviewer.id
+      when 'instructor'
+        redirect_to controller: 'grades', action: 'view', id: @map.response_map.assignment.id
+      when 'assignment_edit'
+        redirect_to controller: 'assignments', action: 'edit', id: @map.response_map.assignment.id
+      when 'selfreview'
+        redirect_to controller: 'submitted_content', action: 'edit', id: @map.response_map.reviewer_id
+      when 'survey'
+        redirect_to controller: 'survey_deployment', action: 'pending_surveys'
+      when 'bookmark'
+        bookmark = Bookmark.find(@map.response_map.reviewee_id)
+        redirect_to controller: 'bookmarks', action: 'list', id: bookmark.topic_id
+      when 'ta_review' # Page should be directed to list_submissions if TA/instructor performs the review
+        redirect_to controller: 'assignments', action: 'list_submissions', id: @map.response_map.assignment.id
+      else
+        # if reviewer is team, then we have to get the id of the participant from the team
+        # the id in reviewer_id is of an AssignmentTeam
+        reviewer_id = @map.response_map.reviewer.get_logged_in_reviewer_id(current_user.try(:id))
+        redirect_to controller: 'student_review', action: 'list', id: reviewer_id
+      end
+    end
   end
