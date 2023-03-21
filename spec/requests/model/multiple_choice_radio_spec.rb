@@ -31,7 +31,7 @@ describe MultipleChoiceRadio do
     end
 
     describe '#edit' do
-        it 'returns the correct HTML question when editing a multiple choice quiz question' do
+        it 'returns the correct HTML question when editing a multiple choice radio question' do
             id = quiz_question.id
             txt = quiz_question.txt
             weight = quiz_question.weight
