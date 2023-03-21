@@ -7,6 +7,9 @@ class SignUpTopic < ApplicationRecord
   # Find if a topic is available for further selection. Topic is considered available if the
   # total number of teams assigned to the topic are less than the maximum choosers allowed.
   def find_if_topic_available?()
+    if @sign_up_team == nil
+      return true
+    end
     # NOTE: Use counter_cache:true in sign_up_team to get the count of has_many relations.
     return @sign_up_team.size < max_choosers
   end
