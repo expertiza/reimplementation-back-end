@@ -1,5 +1,5 @@
 class SignUpTopic < ApplicationRecord
-  has_many: :sign_up_team
+  has_many :sign_up_team
 
   validates :name, :max_choosers, presence: true
   validates :topic_identifier, length: { maximum: 10 }
