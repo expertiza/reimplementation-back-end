@@ -23,12 +23,18 @@ class Api::V1::SignUpSheetController < ApplicationController
   end
 
   def sign_up
+    #needs dummy data.
     @assignment = AssignmentParticipant.find(params[:id]).assignment
     @user_id = session[:user].id
     # Always use team_id ACS
     # s = Signupsheet.new
     # Team lazy initialization: check whether the user already has a team for this assignment
-    SignUpSheet.signup_team(@assignment.id, @user_id, params[:topic_id]) == true ? render json: {message: "Sign up success" }, status: 200 : render json: {message: "You've already signed up for a topic!" }, status: :unprocessable_entity
+    if SignUpSheet.signup_team(@assignment.id, @user_id, params[:topic_id]) == true
+      render json: {message: "Sign up success" }, status: 200
+    else
+      render json: {message: "You've already signed up for a topic!" }, status: :unprocessable_entity
+    end
+
   end
 
   def signup_as_instructor_action
@@ -99,8 +105,8 @@ class Api::V1::SignUpSheetController < ApplicationController
       render json: {message: 'You cannot drop a student after the drop topic deadline!' ,log: {controller_name: controller_name, user_id: session[:user].id, message: 'Drop failed for ended work: ' + params[:topic_id].to_s }}, status: :unprocessable_entity
     else
       delete_signup_for_topic(assignment.id, params[:topic_id], participant.user_id)
-      flash[:success] = 'You have successfully dropped the student from the topic!'
-      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].id, 'Student has been dropped from the topic: ' + params[:topic_id].to_s)
+      #flash[:success] = 'You have successfully dropped the student from the topic!'
+      #ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].id, 'Student has been dropped from the topic: ' + params[:topic_id].to_s)
       render json: {message: 'You have successfully dropped the student from the topic!' ,log: {controller_name: controller_name, user_id: session[:user].id, message: 'Student has been dropped from the topic: ' + params[:topic_id].to_s}}, status: 200
     end
     #redirect_to controller: 'assignments', action: 'edit', id: assignment.id

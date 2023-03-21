@@ -10,11 +10,16 @@
 
 class Api::V1::SignUpTopicController < ApplicationController
 
+  def index
+  end
+
   # This method is used to create signup topics
   # In this code params[:id] is the assignment id and not topic id. The intuition is
   # that assignment id will virtually be the signup sheet id as well as we have assumed
   # that every assignment will have only one signup sheet
-  def create
+  def create_topic
+    #need data for test to pass
+    #render json: {message: "The topic: has been created successfully. "}, status: :created
     topic = SignUpTopic.where(topic_name: params[:topic][:topic_name], assignment_id: params[:id]).first
     if topic.nil?
       @sign_up_topic = SignUpTopic.new
@@ -43,7 +48,7 @@ class Api::V1::SignUpTopicController < ApplicationController
   end
 
   # updates the database tables to reflect the new values for the assignment. Used in conjunction with edit
-  def update
+  def update_topic
     @topic = SignUpTopic.find(params[:id])
     if @topic
       @topic.topic_identifier = params[:topic][:topic_identifier]
@@ -58,7 +63,7 @@ class Api::V1::SignUpTopicController < ApplicationController
     else
       render json: :error, status: 'The topic could not be updated.'
     end
-    # Akshay - correctly changing the redirection url to topics tab in edit assignment view.
+    #orrectly changing the redirection url to topics tab in edit assignment view.
     render json: @topic, status: :updated
     #redirect_to edit_assignment_path(params[:assignment_id]) + '#tabs-2'
   end
@@ -66,7 +71,7 @@ class Api::V1::SignUpTopicController < ApplicationController
 
   # This method is used to delete signup topics
   # Renaming delete method to destroy for rails 4 compatible
-  def destroy
+  def destroy_topic
     @topic = SignUpTopic.find(params[:id])
     assignment = Assignment.find(params[:assignment_id])
     if @topic
@@ -89,6 +94,7 @@ class Api::V1::SignUpTopicController < ApplicationController
   # This loads all selected topics based on all the topic identifiers selected for that assignment into stopics variable
   def load_all_selected_topics
     @stopics = SignUpTopic.where(assignment_id: params[:assignment_id], topic_identifier: params[:topic_ids])
+    #render json: {message: 'All selected topics have been deleted successfully.'}, status: 200
   end
 
   # This deletes all selected topics for the given assignment
