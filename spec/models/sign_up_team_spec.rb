@@ -26,9 +26,6 @@ RSpec.describe SignUpTeam, type: :model do
       created_record_team=SignUpTeam.create_sign_up_team(true, "id", "teams_id")
       team = SignUpTeam.where(teams_id: "teams_id").first
       expect(team).to_not eq(created_record_team)
-      # SignUpTeam.delete_sign_up_team("teams_id")
-      # deleted_record = SignUpTeam.where(teams_id: "teams_id")
-      # expect(deleted_record.empty?)
     end
 
     it "updates record via teams_id" do 
@@ -38,11 +35,6 @@ RSpec.describe SignUpTeam, type: :model do
       created_record_team=SignUpTeam.create_sign_up_team(true, "id", "teams_id")
       team = SignUpTeam.where(teams_id: "teams_id").first
       expect(team).to_not eq(created_record_team)
-
     end
-
-
   end
-  
-
 end
