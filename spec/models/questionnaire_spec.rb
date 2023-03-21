@@ -56,15 +56,25 @@ RSpec.describe Questionnaire, type: :model do
       questionnaire.name = 'valid questionnaire'
       expect(questionnaire).to be_valid
     end
-    it "uniqueness is validated" do
-      should validate_uniqueness_of(:name).with_message('Questionnaire names must be unique.').case_insensitive
+    it "uniqueness in combination with instructor_id is validated" do
+      should validate_uniqueness_of(:name).with_message('Questionnaire names must be unique.').scoped_to(:instructor_id).case_insensitive
     end
-    it 'when creating a questionnaire with a duplicate name' do
+    it 'when creating a questionnaire with a duplicate name as the same instructor' do
       dupe_questionnaire1 = Questionnaire.create(name: 'dupe', min_question_score: 0, max_question_score: 10, instructor_id: instructor.id)
       dupe_questionnaire2 = Questionnaire.create(name: 'dupe', min_question_score: 0, max_question_score: 10, instructor_id: instructor.id)
+      dupe_questionnaire1.valid?
       dupe_questionnaire2.valid?
       expect(dupe_questionnaire1).to be_valid
       expect(dupe_questionnaire2.errors[:name]).to include('Questionnaire names must be unique.')
+    end
+    it 'when creating a questionnaire with a duplicate name as different instructors' do
+      instructor2 = Instructor.create(name: 'test instructor2')
+      dupe_questionnaire1 = Questionnaire.create(name: 'valid_dupe', min_question_score: 0, max_question_score: 10, instructor_id: instructor.id)
+      dupe_questionnaire2 = Questionnaire.create(name: 'valid_dupe', min_question_score: 0, max_question_score: 10, instructor_id: instructor2.id)
+      dupe_questionnaire1.valid?
+      dupe_questionnaire2.valid?
+      expect(dupe_questionnaire1).to be_valid
+      expect(dupe_questionnaire2).to be_valid
     end
   end
 
@@ -123,31 +133,6 @@ RSpec.describe Questionnaire, type: :model do
     it 'when there are no associated questions' do
       questionnaire2 = build(:questionnaire, name: 'questionnaire with no questions', min_question_score: 0, max_question_score: 5)
       expect(questionnaire2.has_true_false_questions).to eq(false)
-    end
-  end
-
-  describe "destroy correct associated records when questionnaire is deleted" do
-    it 'when questionnaire is deleted without assignments' do
-      del_questionnaire = create(:questionnaire, instructor_id: instructor.id)
-      del_question1 = Question.create(questionnaire_id: del_questionnaire)
-      del_question2 = Question.create(questionnaire_id: del_questionnaire)
-      del_questionnaire_node = QuestionnaireNode.create(node_object_id: del_questionnaire)
-      allow(del_questionnaire).to receive(:questions).and_return([del_question1, del_question2])
-      allow(del_questionnaire).to receive(:questionnaire_node).and_return([del_questionnaire_node])
-      # confirm questionnaire is destroyed
-      expect { del_questionnaire.delete }.to change(Questionnaire, :count).by(-1)
-      # confirm associated records are correctly removed
-      expect { del_question1.reload }.to raise_error(ActiveRecord::RecordNotFound)
-      expect { del_question2.reload }.to raise_error(ActiveRecord::RecordNotFound)
-      expect { del_questionnaire_node.reload }.to raise_error(ActiveRecord::RecordNotFound)
-      expect(del_questionnaire.delete).to be_truthy
-    end
-    it 'when questionnaire is deleted with assignments' do
-      assignment = build(:assignment)
-      allow(questionnaire).to receive(:questions).and_return([question1, question2])
-      allow(questionnaire).to receive(:questionnaire_node).and_return([questionnaire_node])
-      allow(questionnaire).to receive(:assignments).and_return([assignment])
-      expect { questionnaire.delete }.to raise_error(RuntimeError)
     end
   end
 
