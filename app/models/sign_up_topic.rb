@@ -12,7 +12,7 @@ class SignUpTopic < ApplicationRecord
   end
 
   # Create topic for signing up. Requires name, maximum allowed, category, topic and 
-  # bried description to be shown in the sign-up sheet.
+  # brief description to be shown in the sign-up sheet.
   def self.create_topic(name, max_choosers, category, topic_identifier, description)
     sign_up_topic = SignUpTopic.new
     sign_up_topic.name = name
