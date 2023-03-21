@@ -38,9 +38,9 @@ RSpec.describe 'SignUpTopicController API', type: :request do
     end
   end
 
-  path '/api/v1/sign_up_topics' do
+  path '/api/v1/sign_up_topics/{id}' do
 
-    patch('update a new topic in the sheet') do
+    put('update a new topic in the sheet') do
       tags 'SignUpTopic'
       consumes 'application/json'
       parameter name: :sign_up_topic, in: :body, schema: {
