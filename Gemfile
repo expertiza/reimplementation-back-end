@@ -6,6 +6,8 @@ ruby '3.2.1'
 gem 'mysql2', '~> 0.5.5'
 gem 'puma', '~> 5.0'
 gem 'rails', '~> 7.0.4', '>= 7.0.4.2'
+gem 'rswag-api'
+gem 'rswag-ui'
 
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 # gem "jbuilder"
@@ -32,8 +34,8 @@ group :development, :test do
   gem 'debug', platforms: %i[mri mingw x64_mingw]
   gem 'rubocop'
   gem 'simplecov', require: false, group: :test
-  gem "sqlite3", "~> 1.6"
-  gem 'rspec-rails', '~> 5.0.0'
+  gem 'rspec-rails'
+  gem 'rswag-specs'
 end
 
 group :development do
