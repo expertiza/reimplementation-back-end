@@ -40,9 +40,8 @@ class Api::V1::SignUpTopicsController < ApplicationController
   # parameter is then replaced in the data base. For example, a name can be inputted differently
   # with a unique ID to update a record.
   def update
-    #@sign_up_topic = SignUpTopic.where(topic_name: params[:sign_up_topic][:topic_name], assignment_id: params[:sign_up_topic][:assignment_id]).first
     if @sign_up_topic.update(sign_up_topic_params)
-      render json: {message: "The topic: \"#{@sign_up_topic.topic_name}\" has been updated successfully. "}, status: :created
+      render json: {message: "The topic: \"#{@sign_up_topic.topic_name}\" has been updated successfully. "}, status: :updated
     else
       render json: @sign_up_topic.errors, status: :unprocessable_entity
     end
