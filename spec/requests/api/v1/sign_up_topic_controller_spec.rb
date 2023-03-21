@@ -58,7 +58,7 @@ RSpec.describe 'SignUpTopicController API', type: :request do
             }
           }
         },
-        required: [ 'topic_identifier', 'topic_name', 'max_choosers', 'category', 'assignment_id','micropayment' ]
+        required: [ 'topic_identifier', 'topic_name', 'category', 'assignment_id']
       }
       response(200, 'successful') do
         let(:topic) { { topic_identifier: 1 } }
