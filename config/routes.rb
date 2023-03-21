@@ -19,11 +19,11 @@ Rails.application.routes.draw do
           post :signup_as_instructor_action
         end
       end
-      resources :sign_up_topic ,:only => [:create, :destroy] do
+      resources :sign_up_topics do
         collection do
           get :load_all_selected_topics
           get :add_signup_topics
-          get :create_topic
+          post :create_topic
           post :update_topic
           post :delete_all_topics_for_assignment
           post :delete_all_selected_topics

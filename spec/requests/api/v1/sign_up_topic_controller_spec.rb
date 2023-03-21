@@ -2,14 +2,30 @@ require 'swagger_helper'
 
 RSpec.describe 'SignUpTopicController API', type: :request do
 
-  path '/api/v1/sign_up_topic/create_topic' do
+  path '/api/v1/sign_up_topics' do
 
-  get('check if sheet can be access via index') do
+    post('check if sheet can be access via index') do
      tags 'SignUpTopic'
-     produces 'application/json'
-
+     consumes 'application/json'
+     parameter name: :topic, in: :body, schema: {
+       type: :object,
+       properties: {
+         topic: {
+           type: :object,
+           properties: {
+               topic_identifier: { type: :integer },
+               topic_name: { type: :string },
+               max_choosers: { type: :integer },
+               category: {type: :string},
+               assignment_id: {type: :integer},
+               micropayment: {type: :integer}
+           }
+         }
+       },
+       required: [ 'topic_identifier', 'topic_name', 'max_choosers', 'category', 'assignment_id','micropayment' ]
+     }
       response(200, 'successful') do
-
+        let(:topic) { { topic_identifier: 1 } }
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {

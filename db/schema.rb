@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_03_19_214030) do
+ActiveRecord::Schema[7.0].define(version: 2023_03_21_155856) do
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -79,6 +79,29 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_19_214030) do
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
   end
 
+  create_table "sign_up_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "topic_identifier"
+    t.string "category"
+    t.string "topic_name"
+    t.integer "max_choosers"
+    t.bigint "assignment_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "index_sign_up_topics_on_assignment_id"
+  end
+
+  create_table "signed_up_teams", id: false, charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "topic_id"
+    t.integer "team_id"
+    t.binary "is_waitlisted", limit: 1
+    t.integer "preference_priority_number"
+  end
+
+  create_table "test_sign_ups", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "password_digest"
@@ -104,4 +127,5 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_19_214030) do
   end
 
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
+  add_foreign_key "sign_up_topics", "assignments"
 end
