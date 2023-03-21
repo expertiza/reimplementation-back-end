@@ -49,16 +49,16 @@ module ResponseHelper
       end
     end
 
-    def sortResponses(review_scores)
-      review_scores.sort do |m1, m2|
-        if m1.version_num.to_i && m2.version_num.to_i
-          m2.version_num.to_i <=> m1.version_num.to_i
-        else
-          m1.version_num ? -1 : 1
-        end
-      end
-      review_scores
-    end
+    # def sortResponses(review_scores)
+    #   review_scores.sort do |m1, m2|
+    #     if m1.version_num.to_i && m2.version_num.to_i
+    #       m2.version_num.to_i <=> m1.version_num.to_i
+    #     else
+    #       m1.version_num ? -1 : 1
+    #     end
+    #   end
+    #   review_scores
+    # end
 
      # This method is used to send email from a Reviewer to an Author.
     # Email body and subject are inputted from Reviewer and passed to send_mail_to_author_reviewers method in MailerHelper.

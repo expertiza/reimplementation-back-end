@@ -48,7 +48,7 @@ class Api::V1::ResponsesController < ApplicationController
       @prev = Response.where(map_id: @map.id)
       @review_scores = @prev.to_a
       if @prev.present?
-        @sorted = sortResponses(@review_scores)
+        @sorted = Response.sortResponses(@review_scores)
         @largest_version_num = @sorted[0]
       end
       # Added for E1973, team-based reviewing
