@@ -41,7 +41,7 @@ class Api::V1::SignUpTopicsController < ApplicationController
       topic.category = params[:sign_up_topic][:category]
       # topic.assignment_id = params[:id]
       topic.save
-      render json: {message: "The topic: \"#{@sign_up_topic.topic_name}\" has been created previously and was updated successfully. "}, status: :created
+      render json: {message: "The topic: \"#{topic.topic_name}\" has been created previously and was updated successfully. "}, status: :created
     end
   end
 
