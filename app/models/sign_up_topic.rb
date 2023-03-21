@@ -45,8 +45,7 @@ class SignUpTopic < ApplicationRecord
   # Format the given active record for display.
   def format_for_display()
     contents_for_display = ''
-    contents_for_display += topic_identifier.to_s + ' - '
-    topic_display + topic_name
+    contents_for_display += topic_identifier.to_s + ' - ' + name.to_s
   end
 
   # Send update to all waitlisted users regarding waitlist changes.

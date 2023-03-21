@@ -41,6 +41,13 @@ RSpec.describe SignUpTopic, type: :model do
       deleted_record = SignUpTopic.where(name: "temp")
       expect(deleted_record.empty?)
     end
+
+    it "checks formatting of records" do
+      record = SignUpTopic.create_topic("temp", 10, "category", "id", "desc")
+      formatted_value = record.format_for_display()
+      expected_value = "id - temp"
+      expect(formatted_value).to eq(expected_value)
+    end
   end
 
 end
