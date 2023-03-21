@@ -13,53 +13,13 @@ class Api::V1::ResponsesController < ApplicationController
     # Is this the right approach, making this a global variable
     questions = sort_questions(@questionnaire.questions)
 
-  
-    # E2218: Method to check if that action is allowed for the user.
-    def action_allowed?
-      response = user_id = nil
-      action = params[:action]
-      # Initialize response and user id if action is edit or delete or update or view.
-      if %w[edit delete update view].include?(action)
-        response = Response.find(params[:id])
-        user_id = response.map.reviewer.user_id if response.map.reviewer
-      end
-      case action
-      when 'edit'
-        # If response has been submitted, no further editing allowed.
-        return false if response.is_submitted
-  
-        # Else, return true if the user is a reviewer for that response.
-        current_user_is_reviewer?(response.map, user_id)
-  
-      # Deny access to anyone except reviewer & author's team
-      when 'delete', 'update'
-        current_user_is_reviewer?(response.map, user_id)
-      when 'view'
-        response_edit_allowed?(response.map, user_id)
-      else
-        user_logged_in?
-      end
-    end
-  
-    # E2218: Method to authorize if the reviewer can view the calibration results
-    # When user manipulates the URL, the user should be authorized
-    def authorize_show_calibration_results
-      response_map = ResponseMap.find(params[:review_response_map_id])
-      user_id = response_map.reviewer.user_id if response_map.reviewer
-      # Deny access to the calibration result page if the current user is not a reviewer.
-      unless current_user_is_reviewer?(response_map, user_id)
-        flash[:error] = 'You are not allowed to view this calibration result'
-        redirect_to controller: 'student_review', action: 'list', id: user_id
-      end
-    end
-  
     # GET /response/json?response_id=xx
     def json
       response_id = params[:response_id] if params.key?(:response_id)
       response = Response.find(response_id)
       render json: response
     end
-  
+
     # E2218: Method to delete a response.
     def delete
       # The locking was added for E1973, team-based reviewing. See lock.rb for details
