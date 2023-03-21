@@ -10,19 +10,26 @@ describe QuizQuestion do
     quiz_question.quiz_question_choices = [quiz_question_choice1, quiz_question_choice2, quiz_question_choice3, quiz_question_choice4]
     quiz_question.txt = 'Question Text'
     allow(quiz_question).to receive(:type).and_return('MultipleChoiceRadio')
+    allow(quiz_question).to receive(:id).and_return(99)
+    allow(quiz_question).to receive(:weight).and_return(5)
     allow(quiz_question_choice1).to receive(:txt).and_return('Choice 1')
+    allow(quiz_question_choice1).to receive(:question_id).and_return(99)
     allow(quiz_question_choice1).to receive(:iscorrect?).and_return(true)
     allow(quiz_question_choice2).to receive(:txt).and_return('Choice 2')
+    allow(quiz_question_choice2).to receive(:question_id).and_return(99)
     allow(quiz_question_choice2).to receive(:iscorrect?).and_return(false)
     allow(quiz_question_choice3).to receive(:txt).and_return('Choice 3')
+    allow(quiz_question_choice3).to receive(:question_id).and_return(99)
     allow(quiz_question_choice3).to receive(:iscorrect?).and_return(false)
     allow(quiz_question_choice4).to receive(:txt).and_return('Choice 4')
+    allow(quiz_question_choice4).to receive(:question_id).and_return(99)
     allow(quiz_question_choice4).to receive(:iscorrect?).and_return(false)
   end
  
   describe '#view_question_text' do
     it 'returns the text of the questions' do
-      expect(quiz_question.view_question_text).to eq('<b>Question Text</b><br />Question Type: MultipleChoiceRadio<br />Question Weight: <br />  - <b>Choice 1</b><br />   - Choice 2<br />   - Choice 3<br />   - Choice 4<br /> <br />')
+      weight = quiz_question.weight
+      expect(quiz_question.view_question_text).to eq('<b>Question Text</b><br />Question Type: MultipleChoiceRadio<br />Question Weight: ' + weight.to_s + '<br />  - <b>Choice 1</b><br />   - Choice 2<br />   - Choice 3<br />   - Choice 4<br /> <br />')
     end
   end
   describe '#get_formatted_question_type' do
@@ -33,7 +40,8 @@ describe QuizQuestion do
 
   describe "#complete" do
     before do
-      expected_html = "<label for=\"\">Question Text</label><br><input name = \"\" id = \"_1\" value = \"Choice 1\" type=\"radio\"/>Choice 1</br><input name = \"\" id = \"_2\" value = \"Choice 2\" type=\"radio\"/>Choice 2</br><input name = \"\" id = \"_3\" value = \"Choice 3\" type=\"radio\"/>Choice 3</br><input name = \"\" id = \"_4\" value = \"Choice 4\" type=\"radio\"/>Choice 4</br>"
+      id = quiz_question.id
+      expected_html = "<label for=\"" + id.to_s + "\">Question Text</label><br><input name = \"" + id.to_s + "\" id = \"" + id.to_s + "_1\" value = \"Choice 1\" type=\"radio\"/>Choice 1</br><input name = \"" + id.to_s + "\" id = \"" + id.to_s + "_2\" value = \"Choice 2\" type=\"radio\"/>Choice 2</br><input name = \"" + id.to_s + "\" id = \"" + id.to_s + "_3\" value = \"Choice 3\" type=\"radio\"/>Choice 3</br><input name = \"" + id.to_s + "\" id = \"" + id.to_s + "_4\" value = \"Choice 4\" type=\"radio\"/>Choice 4</br>"
       expect(quiz_question.complete).to eq(expected_html)
     end
     it "returns the completed HTML for the quiz question" do
@@ -60,6 +68,28 @@ describe QuizQuestion do
     end
   end
     
+  describe '#edit' do
+    it 'returns the correct HTML question prefix when editing a question' do
+      id = quiz_question.id
+      txt = quiz_question.txt
+      weight = quiz_question.weight
+
+      expected_html = '<tr><td>'
+      expected_html += '<textarea cols="100" name="question[' + id.to_s + '][txt]" '
+      expected_html += 'id="question_' + id.to_s + '_txt">' + txt + '</textarea>'
+      expected_html += '</td></tr>'
+  
+      expected_html += '<tr><td>'
+      expected_html += 'Question Weight: '
+      expected_html += '<input type="number" name="question_weights[' + id.to_s + '][txt]" '
+      expected_html += 'id="question_wt_' + id.to_s + '_txt" '
+      expected_html += 'value="' + weight.to_s + '" min="0" />'
+      expected_html += '</td></tr>'
+
+      expect(quiz_question.edit()).to eq(expected_html)
+    end
+  end
+
 
   describe '#isvalid' do
     context 'when the question and its choices have valid text' do
