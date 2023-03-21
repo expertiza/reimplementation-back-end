@@ -10,7 +10,9 @@ class TextArea < TextResponse
       cols = size.split(',')[0]
       rows = size.split(',')[1]
     end
+    # This displays a Text string that will go above the text box
     html = '<p><label for="responses_' + count.to_s + '">' + txt + '</label></p>'
+    # This creates the actual textbox itself and will display whatever comments associated with this questions within it
     html += '<input id="responses_' + count.to_s + '_score" name="responses[' + count.to_s + '][score]" type="hidden" value="">'
     html += '<p><textarea cols="' + cols + '" rows="' + rows + '" id="responses_' + count.to_s + '_comments" name="responses[' + count.to_s + '][comment]" class="tinymce">'
     html += answer.comments unless answer.nil?
