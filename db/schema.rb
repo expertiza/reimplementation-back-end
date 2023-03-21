@@ -84,6 +84,16 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_21_015321) do
     t.index ["teams_id"], name: "index_sign_up_teams_on_teams_id"
   end
 
+  create_table "sign_up_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "name"
+    t.integer "max_choosers"
+    t.string "category"
+    t.string "topic_identifier"
+    t.string "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -109,16 +119,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_21_015321) do
     t.integer "institution_id"
     t.boolean "etc_icons_on_homepage"
     t.integer "locale"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "sign_up_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.string "name"
-    t.integer "max_choosers"
-    t.string "category"
-    t.string "topic_identifier"
-    t.string "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

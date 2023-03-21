@@ -36,8 +36,6 @@ group :development, :test do
   gem 'simplecov', require: false, group: :test
   gem 'rspec-rails'
   gem 'rswag-specs'
-  gem "sqlite3", "~> 1.6"
-  gem 'rspec-rails', '~> 5.0.0'
 end
 
 group :development do
