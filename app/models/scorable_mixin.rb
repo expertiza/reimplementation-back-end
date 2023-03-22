@@ -41,8 +41,7 @@ module Scorable
 
   def questionnaire_by_answer(answer)
     if answer.nil?
-      # there is small possibility that the answers is empty: when the questionnaire only have 1 question and it is a upload file question
-      # the reason is that for this question type, there is no answer record, and this question is handled by a different form
+      # Answers can be nil in cases such as "Upload File" being the only question.
       map = ResponseMap.find(map_id)
       # E-1973 either get the assignment from the participant or the map itself
       assignment = if map.is_a? ReviewResponseMap
@@ -51,7 +50,7 @@ module Scorable
                      Participant.find(map.reviewer_id).assignment
                    end
       questionnaire = Questionnaire.find(assignment.review_questionnaire_id)
-    else # for all the cases except the case that  file submission is the only question in the rubric.
+    else
       questionnaire = Question.find(answer.question_id).questionnaire
     end
     questionnaire
