@@ -44,11 +44,3 @@ Documentation page - ```<host-name>/api-docs```
 https://user-images.githubusercontent.com/100992314/226822121-39cbd1a7-2724-4ca7-8052-a25fa7b67fea.mp4
 
 
-### Add more ...
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
