@@ -106,19 +106,137 @@ paths:
       responses:
         '200':
           description: successful
-  "/api/v1/sign_up_sheet":
-    get:
-      summary: check if sheet can be access via index
+  "/api/v1/sign_up_sheet/signup_as_instructor_action":
+    post:
+      summary: check if sheet can be updated via instructor
       tags:
       - SignUpSheet
       responses:
         '200':
           description: successful
-  "/api/v1/sign_up_sheet/delete_signup":
+  "/api/v1/sign_up_sheet/sign_up":
     get:
-      summary: list the sheet
+      summary: list the topics
       tags:
       - SignUpSheet
+      responses:
+        '200':
+          description: successful
+  "/api/v1/sign_up_topics":
+    post:
+      summary: create a new topic in the sheet
+      tags:
+      - SignUpTopic
+      parameters: []
+      responses:
+        '200':
+          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sign_up_topic:
+                  type: object
+                  properties:
+                    topic_identifier:
+                      type: integer
+                    topic_name:
+                      type: string
+                    max_choosers:
+                      type: integer
+                    category:
+                      type: string
+                    assignment_id:
+                      type: integer
+                    micropayment:
+                      type: integer
+              required:
+              - topic_identifier
+              - topic_name
+              - max_choosers
+              - category
+              - assignment_id
+              - micropayment
+  "/api/v1/sign_up_topics/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id of the sign up topic
+      required: true
+      schema:
+        type: integer
+    put:
+      summary: update a new topic in the sheet
+      tags:
+      - SignUpTopic
+      parameters: []
+      responses:
+        '200':
+          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sign_up_topic:
+                  type: object
+                  properties:
+                    topic_identifier:
+                      type: integer
+                    topic_name:
+                      type: string
+                    max_choosers:
+                      type: integer
+                    category:
+                      type: string
+                    assignment_id:
+                      type: integer
+                    micropayment:
+                      type: integer
+              required:
+              - topic_identifier
+              - topic_name
+              - category
+              - assignment_id
+    delete:
+      summary: delete sign up topic
+      tags:
+      - SignUpTopic
+      responses:
+        '200':
+          description: successful
+  "/api/v1/sign_up_topics/load_all_selected_topics":
+    get:
+      summary: list the topics
+      tags:
+      - SignUpTopic
+      responses:
+        '200':
+          description: successful
+  "/api/v1/sign_up_topics/delete_all_selected_topics":
+    post:
+      summary: test for all selected topics
+      tags:
+      - SignUpTopic
+      responses:
+        '200':
+          description: successful
+  "/api/v1/sign_up_topics/delete_all_topics_for_assignment":
+    post:
+      summary: test to delete topics
+      tags:
+      - SignUpTopic
+      responses:
+        '200':
+          description: successful
+  "/api/v1/sign_up_topic/update_topic":
+    post:
+      summary: test to delete topics
+      tags:
+      - SignUpTopic
       responses:
         '200':
           description: successful
