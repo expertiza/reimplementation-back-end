@@ -11,7 +11,7 @@ class Question < ApplicationRecord
   validates :type, presence: true # user must define type for a question
   validates :break_before, presence: true
 
-  #has_paper_trail
+  # has_paper_trail
 
   # Class variables
   NUMERIC = 'Numeric'.freeze # Display string for NUMERIC questions
@@ -53,30 +53,30 @@ class Question < ApplicationRecord
     statement
   end
 
-#   # Placeholder methods, override in derived classes if required.
-#   # this method decide what to display if an instructor (etc.) is creating or editing a questionnaire
-#   def edit
-#     nil
-#   end
-#
-#   # this method decide what to display if an instructor (etc.) is viewing a questionnaire
-#   def view_question_text
-#     nil
-#   end
-#
-#   # this method decide what to display if a student is filling out a questionnaire
-#   def view_completed_question
-#     nil
-#   end
-#
-#   # this method decide what to display if a student is viewing a filled-out questionnaire
-#   def complete
-#     nil
-#   end
-#
-#   def self.compute_question_score
-#     0
-#   end
+  # Placeholder methods, override in derived classes if required.
+  # this method decides what to display if an instructor (etc.) is creating or editing a questionnaire
+  def edit
+    nil
+  end
+
+  # this method decide what to display if an instructor (etc.) is viewing a questionnaire
+  def view_question_text
+    nil
+  end
+
+  # this method decide what to display if a student is filling out a questionnaire
+  def view_completed_question
+    nil
+  end
+
+  # this method decide what to display if a student is viewing a filled-out questionnaire
+  def complete
+    nil
+  end
+
+  def self.compute_question_score
+    0
+  end
 
   # This method returns questions (question_ids) in one assignment whose comments field are meaningful (ScoredQuestion and TextArea)
   def self.questions_with_comments(assignment_id)

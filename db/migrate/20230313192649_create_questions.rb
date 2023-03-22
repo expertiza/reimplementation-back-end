@@ -10,6 +10,8 @@ class CreateQuestions < ActiveRecord::Migration[7.0]
       t.column 'size', :string
       t.column 'alternatives', :string
       t.column 'break_before', :boolean, default: true
+      t.column 'max_label', :string, default: ''
+      t.column 'min_label', :string, default: ''
 
       t.timestamps
     end

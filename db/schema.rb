@@ -101,6 +101,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_15_183454) do
     t.string "size"
     t.string "alternatives"
     t.boolean "break_before", default: true
+    t.string "max_label", default: ""
+    t.string "min_label", default: ""
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["questionnaire_id"], name: "fk_question_questionnaires"
@@ -109,7 +111,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_15_183454) do
   create_table "quiz_question_choices", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.integer "question_id"
     t.text "txt"
-    t.boolean "iscorrect", default: false
+    t.boolean "correct", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
