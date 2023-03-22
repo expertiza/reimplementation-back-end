@@ -5,11 +5,14 @@ class Questionnaire < ApplicationRecord
   has_many :assignments, through: :assignment_questionnaires
   has_one :questionnaire_node, foreign_key: 'node_object_id', dependent: :destroy, inverse_of: :questionnaire
 
-  validates :name, presence: true, uniqueness: {message: 'Questionnaire names must be unique.'}
+  # ensures name is present and that the name + instructor_id combination is unique
+  validates :name, presence: true, uniqueness: { scope: :instructor_id, message: 'Questionnaire names must be unique.'}
+  # ensures that the min_question_score is a number greater than or equal to 0
   validates :min_question_score, numericality: true,
             comparison: { greater_than_or_equal_to: 0, message: 'The minimum question score must be a positive integer.'}
+  # ensures that the max_question_score is a number
   validates :max_question_score, numericality: true
-  # validations to ensure max_question_score is  greater than both min_question_score and 0
+  # ensures that max_question_score is  greater than both min_question_score and 0
   validates_comparison_of :max_question_score, {greater_than: :min_question_score, message: 'The minimum question score must be less than the maximum.'}
   validates_comparison_of :max_question_score, {greater_than: 0, message: 'The maximum question score must be a positive integer greater than 0.'}
 
@@ -37,17 +40,6 @@ class Questionnaire < ApplicationRecord
   # Returns true if this questionnaire contains any true/false questions, otherwise returns false
   def has_true_false_questions
     questions.any? { |question| question.type == 'Checkbox'}
-  end
-
-  # actions that will occur if questionnaire is deleted
-  def delete
-    # associated question records and questionnaire node record will be automatically deleted because
-    # dependent: :destroy is configured on the active record associations
-    assignments.each do |assignment|
-      raise "The assignment #{assignment.name} uses this questionnaire.
-            Do you want to <A href='../assignment/delete/#{assignment.id}'>delete</A> the assignment?"
-    end
-    destroy
   end
 
   # finds the max possible score by adding the weight of each question together and multiplying that sum by the questionnaire's max question score,
