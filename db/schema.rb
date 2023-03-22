@@ -15,6 +15,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_19_232713) do
     t.integer "question_id", default: 0, null: false
     t.integer "response_id"
     t.integer "answer"
+    t.text "comments"
     t.index ["question_id"], name: "fk_score_questions"
     t.index ["response_id"], name: "fk_score_response"
   end
@@ -74,8 +75,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_19_232713) do
   end
 
   create_table "participants", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "questionnaires", force: :cascade do |t|
@@ -91,11 +90,13 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_19_232713) do
   end
 
   create_table "response_maps", force: :cascade do |t|
+    t.integer "reviewed_object_id", default: 0, null: false
     t.integer "reviewer_id", default: 0, null: false
     t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 
   create_table "responses", force: :cascade do |t|
+    t.text "additional_comment"
   end
 
   create_table "roles", force: :cascade do |t|
