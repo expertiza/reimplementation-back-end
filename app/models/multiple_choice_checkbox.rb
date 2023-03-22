@@ -14,16 +14,16 @@ class MultipleChoiceCheckbox < QuizQuestion
     html += "value=\"#{weight.to_s}\" min=\"0\" />"
     html += '</td></tr>'
 
-    # for i in 0..3
+    # Four choices
     [0, 1, 2, 3].each do |i|
       html += '<tr><td>'
 
-      html += "<input type=\"hidden\" name=\"quiz_question_choices[#{id.to_s}][MultipleChoiceCheckbox][#{(i + 1).to_s}][iscorrect]\" "
-      html += "id=\"quiz_question_choices_#{id.to_s}_MultipleChoiceCheckbox_#{(i + 1).to_s}_iscorrect\" value=\"0\" />"
+      html += "<input type=\"hidden\" name=\"quiz_question_choices[#{id.to_s}][MultipleChoiceCheckbox][#{(i + 1).to_s}][correct]\" "
+      html += "id=\"quiz_question_choices_#{id.to_s}_MultipleChoiceCheckbox_#{(i + 1).to_s}_correct\" value=\"0\" />"
 
-      html += "<input type=\"checkbox\" name=\"quiz_question_choices[#{id.to_s}][MultipleChoiceCheckbox][#{(i + 1).to_s}][iscorrect]\" "
-      html += "id=\"quiz_question_choices_#{id.to_s}_MultipleChoiceCheckbox_#{(i + 1).to_s}_iscorrect\" value=\"1\" "
-      html += 'checked="checked" ' if quiz_question_choices[i].iscorrect
+      html += "<input type=\"checkbox\" name=\"quiz_question_choices[#{id.to_s}][MultipleChoiceCheckbox][#{(i + 1).to_s}][correct]\" "
+      html += "id=\"quiz_question_choices_#{id.to_s}_MultipleChoiceCheckbox_#{(i + 1).to_s}_correct\" value=\"1\" "
+      html += 'checked="checked" ' if quiz_question_choices[i].correct
       html += '/>'
 
       html += "<input type=\"text\" name=\"quiz_question_choices[#{id.to_s}][MultipleChoiceCheckbox][#{(i + 1).to_s}][txt]\" "
@@ -34,15 +34,13 @@ class MultipleChoiceCheckbox < QuizQuestion
     end
 
     html.html_safe
-    # safe_join(html)
   end
 
   def complete
     quiz_question_choices = QuizQuestionChoice.where(question_id: id)
     html = "<label for=\"#{id.to_s}\">#{txt}</label><br>"
-    # for i in 0..3
+    # Four choices
     [0, 1, 2, 3].each do |i|
-      # txt = quiz_question_choices[i].txt
       html += "<input name = \"#{id}[]\" "
       html += "id = \"#{id}_#{i + 1}\" "
       html += "value = \"#{quiz_question_choices[i].txt}\" "
@@ -57,7 +55,7 @@ class MultipleChoiceCheckbox < QuizQuestion
     quiz_question_choices = QuizQuestionChoice.where(question_id: id)
     html = ''
     quiz_question_choices.each do |answer|
-      html += "<b>#{answer.txt}</b> -- Correct <br>" if answer.iscorrect
+      html += "<b>#{answer.txt}</b> -- Correct <br>" if answer.correct
     end
     html += '<br>Your answer is:'
     html += if user_answer[0].answer == 1
@@ -70,22 +68,19 @@ class MultipleChoiceCheckbox < QuizQuestion
     end
     html += '<br><hr>'
     html.html_safe
-    # safe_join(html)
   end
 
   def is_valid(choice_info)
     valid = 'valid'
     valid = 'Please make sure all questions have text' if txt == ''
     correct_count = 0
-    # choice_info.each do |_idx, value|
     choice_info.each_value do |value|
       if value[:txt] == ''
         valid = 'Please make sure every question has text for all options'
         break
       end
-      correct_count += 1 if value[:iscorrect] == 1.to_s
+      correct_count += 1 if value[:correct] == 1.to_s
     end
-    # if correct_count == 0
     if correct_count.zero?
       valid = 'Please select a correct answer for all questions'
     elsif correct_count == 1

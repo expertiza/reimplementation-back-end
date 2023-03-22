@@ -2,7 +2,7 @@ class Questionnaire < ApplicationRecord
   # for doc on why we do it this way,
   # see http://blog.hasmanythrough.com/2007/1/15/basic-rails-association-cardinality
   has_many :questions, dependent: :destroy # the collection of questions associated with this Questionnaire
-  belongs_to :instructor # the creator of this questionnaire
+  # belongs_to :instructor # the creator of this questionnaire
   # has_many :assignment_questionnaires, dependent: :destroy
   # has_many :assignments, through: :assignment_questionnaires
   # has_one :questionnaire_node, foreign_key: 'node_object_id', dependent: :destroy, inverse_of: :questionnaire
@@ -30,7 +30,7 @@ class Questionnaire < ApplicationRecord
                          'Bookmark RatingQuestionnaire',
                          'BookmarkRatingQuestionnaire',
                          'QuizQuestionnaire'].freeze
-  #has_paper_trail
+  # has_paper_trail
 
   def get_weighted_score(assignment, scores)
     # create symbol for "varying rubrics" feature -Yang
@@ -79,7 +79,7 @@ class Questionnaire < ApplicationRecord
     results[0].max_score
   end
 
-  # clones the contents of a questionnaire, including the questions and associated advice
+  # Copy the contents of a questionnaire
   def self.copy_questionnaire_details(params, instructor_id)
     orig_questionnaire = Questionnaire.find(params[:id])
     questions = Question.where(questionnaire_id: params[:id])

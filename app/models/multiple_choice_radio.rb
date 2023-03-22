@@ -14,13 +14,13 @@ class MultipleChoiceRadio < QuizQuestion
     html += 'value="' + weight.to_s + '" min="0" />'
     html += '</td></tr>'
 
-    # for i in 0..3
+    # Four choices
     [0, 1, 2, 3].each do |i|
       html += '<tr><td>'
 
       html += '<input type="radio" name="quiz_question_choices[' + id.to_s + '][MultipleChoiceRadio][correctindex]" '
       html += 'id="quiz_question_choices_' + id.to_s + '_MultipleChoiceRadio_correctindex_' + (i + 1).to_s + '" value="' + (i + 1).to_s + '" '
-      html += 'checked="checked" ' if quiz_question_choices[i].iscorrect
+      html += 'checked="checked" ' if quiz_question_choices[i].correct
       html += '/>'
 
       html += '<input type="text" name="quiz_question_choices[' + id.to_s + '][MultipleChoiceRadio][' + (i + 1).to_s + '][txt]" '
@@ -31,15 +31,13 @@ class MultipleChoiceRadio < QuizQuestion
     end
 
     html.html_safe
-    # safe_join(html)
   end
 
   def complete
     quiz_question_choices = QuizQuestionChoice.where(question_id: id)
     html = '<label for="' + id.to_s + '">' + txt + '</label><br>'
-    # for i in 0..3
+    # Four choices
     [0, 1, 2, 3].each do |i|
-      # txt = quiz_question_choices[i].txt
       html += '<input name = ' + "\"#{id}\" "
       html += 'id = ' + "\"#{id}" + '_' + "#{i + 1}\" "
       html += 'value = ' + "\"#{quiz_question_choices[i].txt}\" "
@@ -55,7 +53,7 @@ class MultipleChoiceRadio < QuizQuestion
 
     html = ''
     quiz_question_choices.each do |answer|
-      html += if answer.iscorrect
+      html += if answer.correct
                 '<b>' + answer.txt + '</b> -- Correct <br>'
               else
                 answer.txt + '<br>'
@@ -72,7 +70,6 @@ class MultipleChoiceRadio < QuizQuestion
     html += '</b>'
     html += '<br><br><hr>'
     html.html_safe
-    # safe_join(html)
   end
 
   def is_valid(choice_info)
@@ -84,7 +81,7 @@ class MultipleChoiceRadio < QuizQuestion
         valid = 'Please make sure every question has text for all options'
         break
       end
-      correct_count += 1 if value.key?(:iscorrect)
+      correct_count += 1 if value[:correct] == 1.to_s
     end
     valid = 'Please select a correct answer for all questions' if correct_count.zero?
     valid

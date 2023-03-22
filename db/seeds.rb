@@ -6,12 +6,17 @@
 #   movies = Movie.create([{ name: "Star Wars" }, { name: "Lord of the Rings" }])
 #   Character.create(name: "Luke", movie: movies.first)
 
-# Creating questions for testing
-Questionnaire.create!(name: 'Testing', instructor_id: 1, private: 'false', min_question_score: 0, max_question_score: 10, default_num_choices: 4, type_id: 1)
-Question.create!(type: 'Checkbox', seq: 2.0, txt: 'test text for checkbox 1', weight: 11, questionnaire_id: 1, size: 10, alternatives: '')
-Question.create!(type: 'Checkbox', seq: 3.0, txt: 'test text for checkbox 2', weight: 12, questionnaire_id: 1, size: 10, alternatives: '')
-Question.create!(type: 'Checkbox', seq: 4.0, txt: 'test text for checkbox 3', weight: 13, questionnaire_id: 1, size: 10, alternatives: '')
+# Create questions for testing
+Questionnaire.destroy_all # Clear the table
+Question.destroy_all # Clear the table
+Questionnaire.create!(id: 1, name: 'Testing', instructor_id: 1, private: 'false', min_question_score: 0, max_question_score: 10, default_num_choices: 4, type_id: 1)
+Question.create!(id: 1, type: 'Checkbox', seq: 2.0, txt: 'test text for checkbox 1', weight: 11, questionnaire_id: 1, size: 10, alternatives: '')
+Question.create!(id: 2, type: 'Checkbox', seq: 3.0, txt: 'test text for checkbox 2', weight: 12, questionnaire_id: 1, size: 10, alternatives: '')
+Question.create!(id: 3, type: 'Checkbox', seq: 4.0, txt: 'test text for checkbox 3', weight: 13, questionnaire_id: 1, size: 10, alternatives: '')
 
+# Create a role for testing
+Role.destroy_all # Clear the table
+Role.create!(id: 123, name: 'Test User')
 # Role.create!(name: 'Unregistered user')
 # Role.create!(name: 'Student')
 # Role.create!(name: 'Teaching Assistant')

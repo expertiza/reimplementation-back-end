@@ -8,7 +8,7 @@ class QuizQuestion < Question
     html += 'Question Weight: ' + weight.to_s + '<br />'
     if quiz_question_choices
       quiz_question_choices.each do |choices|
-        html += if choices.iscorrect?
+        html += if choices.correct?
                   '  - <b>' + choices.txt + '</b><br /> '
                 else
                   '  - ' + choices.txt + '<br /> '
