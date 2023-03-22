@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 
-module ReviewHelper
+module ReviewCommentMixin
 
   def self.volume_of_review_comments(assignment_id, reviewer_id)
     comments, counter,
       @comments_in_round, @counter_in_round = Response.concatenate_all_review_comments(assignment_id, reviewer_id)
-    num_rounds = @comments_in_round.count - 1 # ignore nil element (index 0)
+    # Index 0 is a nil element that can be ignored in the round count
+    num_rounds = @comments_in_round.count - 1
 
     overall_avg_vol = (Lingua::EN::Readability.new(comments).num_words / (counter.zero? ? 1 : counter)).round(0)
     review_comments_volume = []

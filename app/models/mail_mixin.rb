@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module MailHelper
+module MailMixin
 
   # only two types of responses more should be added
   def email(partial = 'new_submission')

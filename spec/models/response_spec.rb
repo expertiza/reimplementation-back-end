@@ -68,7 +68,7 @@ RSpec.describe Response, type: :model do
                                          [nil, 'Answer text', 'Answer textLGTM', ''],
                                          [nil, 1, 1, 0]
                                        ])
-      expect(ReviewHelper.volume_of_review_comments(1, 1)).to eq([1, 2, 2, 0])
+      expect(ReviewCommentMixin.volume_of_review_comments(1, 1)).to eq([1, 2, 2, 0])
     end
   end
 

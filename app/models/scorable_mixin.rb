@@ -1,21 +1,19 @@
 # frozen_string_literal: true
 
-module ScoreHelper
-  # Computes the total score awarded for a review
+module Scorable
+  # Computes the total points awarded for all scores on the instance
   def calculate_total_score
-    # only count the scorable questions, only when the answer is not nil
-    # we accept nil as answer for scorable questions, and they will not be counted towards the total score
+    # Only count the scorable questions, only when the answer is not nil (we accept nil as
+    # answer for scorable questions, and they will not be counted towards the total score)
     sum = 0
     scores.each do |s|
       question = Question.find(s.question_id)
-      # For quiz responses, the weights will be 1 or 0, depending on if correct
       sum += s.answer * question.weight unless s.answer.nil? || !question.is_a?(ScoredQuestion)
     end
     sum
   end
 
-  # bug fixed
-  # Returns the average score for this response as an integer (0-100)
+  # Returns the average score across all of the instances scores as an integer (0-100)
   def average_score
     if maximum_score.zero?
       'N/A'
@@ -24,9 +22,9 @@ module ScoreHelper
     end
   end
 
-  # Returns the maximum possible score for this response
+  # Returns the maximum possible total score for all scores on the instance
   def maximum_score
-    # only count the scorable questions, only when the answer is not nil (we accept nil as
+    # Only count the scorable questions, only when the answer is not nil (we accept nil as
     # answer for scorable questions, and they will not be counted towards the total score)
     total_weight = 0
     scores.each do |s|
