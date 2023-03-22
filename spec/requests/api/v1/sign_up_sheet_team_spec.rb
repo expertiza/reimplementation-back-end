@@ -1,6 +1,6 @@
 require 'swagger_helper'
 
-RSpec.describe 'SignUpSheetController API', type: :request do
+RSpec.describe 'SignUpTeamController API', type: :request do
   #Work in progress
   # path '/api/v1/sign_up_sheet/signup_as_instructor_action' do
   #
