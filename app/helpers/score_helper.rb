@@ -41,40 +41,6 @@ module ScoreHelper
     total_weight * questionnaire.max_question_score
   end
 
-  # only two types of responses more should be added
-  # def email(partial = 'new_submission')
-  #   defn = {}
-  #   defn[:body] = {}
-  #   defn[:body][:partial_name] = partial
-  #   response_map = ResponseMap.find map_id
-  #   participant = Participant.find(response_map.reviewer_id)
-  #   # parent is used as a common variable name for either an assignment or course depending on what the questionnaire is associated with
-  #   parent = if response_map.survey?
-  #              response_map.survey_parent
-  #            else
-  #              Assignment.find(participant.parent_id)
-  #            end
-  #   defn[:subject] = 'A new submission is available for ' + parent.name
-  #   response_map.email(defn, participant, parent)
-  # end
-  #
-  # def self.volume_of_review_comments(assignment_id, reviewer_id)
-  #   comments, counter,
-  #     @comments_in_round, @counter_in_round = Response.concatenate_all_review_comments(assignment_id, reviewer_id)
-  #   num_rounds = @comments_in_round.count - 1 # ignore nil element (index 0)
-  #
-  #   overall_avg_vol = (Lingua::EN::Readability.new(comments).num_words / (counter.zero? ? 1 : counter)).round(0)
-  #   review_comments_volume = []
-  #   review_comments_volume.push(overall_avg_vol)
-  #   (1..num_rounds).each do |round|
-  #     num = Lingua::EN::Readability.new(@comments_in_round[round]).num_words
-  #     den = (@counter_in_round[round].zero? ? 1 : @counter_in_round[round])
-  #     avg_vol_in_round = (num / den).round(0)
-  #     review_comments_volume.push(avg_vol_in_round)
-  #   end
-  #   review_comments_volume
-  # end
-
   def questionnaire_by_answer(answer)
     if answer.nil?
       # there is small possibility that the answers is empty: when the questionnaire only have 1 question and it is a upload file question
