@@ -4,7 +4,7 @@ module ReviewCommentMixin
 
   def self.volume_of_review_comments(assignment_id, reviewer_id)
     comments, counter,
-      @comments_in_round, @counter_in_round = Response.concatenate_all_review_comments(assignment_id, reviewer_id)
+      @comments_in_round, @counter_in_round = Response.get_all_review_comments(assignment_id, reviewer_id)
     # Index 0 is a nil element that can be ignored in the round count
     num_rounds = @comments_in_round.count - 1
 
