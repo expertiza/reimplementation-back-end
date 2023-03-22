@@ -100,9 +100,6 @@ class Participant < ApplicationRecord
       tcsv.push(part.handle) if options['handle'] == 'true'
       csv << tcsv
     end
-  end
-
-  def self.export_fields(options)
     fields = []
     fields.push('name', 'full name', 'email') if options['personal_details'] == 'true'
     fields.push('role') if options['role'] == 'true'
