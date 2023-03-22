@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_03_06_064753) do
+ActiveRecord::Schema[7.0].define(version: 2023_03_21_231834) do
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -65,6 +65,11 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_06_064753) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "instructors", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "roles", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.bigint "parent_id"
@@ -72,6 +77,26 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_06_064753) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
+  end
+
+  create_table "sign_up_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "topic_identifier"
+    t.string "category"
+    t.string "topic_name"
+    t.integer "max_choosers"
+    t.bigint "assignment_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "index_sign_up_topics_on_assignment_id"
+  end
+
+  create_table "signed_up_teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "topic_id", default: 0, null: false
+    t.integer "team_id", default: 0, null: false
+    t.boolean "is_waitlisted", default: false, null: false
+    t.integer "preference_priority_number"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -99,4 +124,5 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_06_064753) do
   end
 
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
+  add_foreign_key "sign_up_topics", "assignments"
 end
