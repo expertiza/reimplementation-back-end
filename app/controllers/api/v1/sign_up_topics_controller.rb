@@ -50,7 +50,11 @@ class Api::V1::SignUpTopicsController < ApplicationController
   # DELETE /sign_up_topics/1
   # The method selects and deletes the topic based on the id provided.
   def destroy
-    @sign_up_topic.destroy
+    if @sign_up_topic.destroy
+      render json: {message: "The topic has been deleted successfully. "}, status: :deleted
+    else
+      render json: @sign_up_topic.errors, status: :unprocessable_entity
+    end
   end
 
   #the method loads all the selected topics

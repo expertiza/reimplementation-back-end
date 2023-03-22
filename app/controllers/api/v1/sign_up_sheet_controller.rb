@@ -10,18 +10,7 @@
 
 class Api::V1::SignUpSheetController < ApplicationController
 
-  def create
-
-  end
-
-  def update
-
-  end
-
-  def destroy
-
-  end
-
+  #Work in progress
   def sign_up
     #needs dummy data.
     @assignment = AssignmentParticipant.find(params[:id]).assignment
@@ -34,9 +23,9 @@ class Api::V1::SignUpSheetController < ApplicationController
     else
       render json: {message: "You've already signed up for a topic!" }, status: :unprocessable_entity
     end
-
   end
 
+  #Work in progress
   def signup_as_instructor_action
     user = User.find_by(name: params[:username])
     if user.nil? # validate invalid user
@@ -62,6 +51,7 @@ class Api::V1::SignUpSheetController < ApplicationController
     #redirect_to controller: 'assignments', action: 'edit', id: params[:assignment_id]
   end
 
+  #Work in progress
   # this function is used to delete a previous signup
   def delete_signup
     participant = AssignmentParticipant.find(params[:id])
@@ -88,6 +78,7 @@ class Api::V1::SignUpSheetController < ApplicationController
     #redirect_to action: 'list', id: params[:id]
   end
 
+  #Work in progress
   def delete_signup_as_instructor
     # find participant using assignment using team and topic ids
     team = Team.find(params[:id])
