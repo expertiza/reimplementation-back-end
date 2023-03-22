@@ -131,6 +131,16 @@ RSpec.describe 'SignUpTopicController API', type: :request do
 
   path '/api/v1/sign_up_topics/load_all_selected_topics' do
     get('list the topics') do
+      parameter name: 'assignment_id', in: :query, type: :integer, description: 'Assignment ID'
+      parameter name: 'topic_ids', in: :query, type: :integer, description: 'Topic ID'
+      # consumes 'application/json'
+      # parameter name: :sign_up_topic, in: :body, schema: {
+      #   type: :object,
+      #   properties: {
+      #     assignment_id: {type: :integer},
+      #     topic_identifier: { type: :integer }
+      #   }
+      # }
       tags 'SignUpTopic'
       produces 'application/json'
       response(200, 'successful') do
@@ -148,7 +158,15 @@ RSpec.describe 'SignUpTopicController API', type: :request do
   end
 
   path '/api/v1/sign_up_topics/delete_all_selected_topics' do
-    post('test for all selected topics') do
+    delete('test for all selected topics') do
+      consumes 'application/json'
+      parameter name: :sign_up_topic, in: :body, schema: {
+        type: :object,
+        properties: {
+          assignment_id: {type: :integer},
+          topic_ids: { type: :integer }
+        }
+      }
       tags 'SignUpTopic'
       produces 'application/json'
       response(200, 'successful') do
@@ -166,7 +184,14 @@ RSpec.describe 'SignUpTopicController API', type: :request do
   end
 
   path '/api/v1/sign_up_topics/delete_all_topics_for_assignment' do
-    post('test to delete topics') do
+    delete('test to delete topics') do
+      consumes 'application/json'
+      parameter name: :sign_up_topic, in: :body, schema: {
+        type: :object,
+        properties: {
+          assignment_id: {type: :integer}
+        }
+      }
       tags 'SignUpTopic'
       produces 'application/json'
       response(200, 'successful') do

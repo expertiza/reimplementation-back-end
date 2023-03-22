@@ -1,7 +1,7 @@
 class Api::V1::SignUpTopicsController < ApplicationController
   before_action :set_sign_up_topic, only: %i[ show update destroy ]
   #runs
-  before_action :load_all_selected_topics, only: [:delete_all_selected_topics]
+  #before_action :load_all_selected_topics, only: [:delete_all_selected_topics]
   # GET /sign_up_topics
   def index
     @sign_up_topics = SignUpTopic.all
@@ -41,7 +41,7 @@ class Api::V1::SignUpTopicsController < ApplicationController
   # with a unique ID to update a record.
   def update
     if @sign_up_topic.update(sign_up_topic_params)
-      render json: {message: "The topic: \"#{@sign_up_topic.topic_name}\" has been updated successfully. "}, status: :updated
+      render json: {message: "The topic: \"#{@sign_up_topic.topic_name}\" has been updated successfully. "}, status: 200
     else
       render json: @sign_up_topic.errors, status: :unprocessable_entity
     end
@@ -51,7 +51,7 @@ class Api::V1::SignUpTopicsController < ApplicationController
   # The method selects and deletes the topic based on the id provided.
   def destroy
     if @sign_up_topic.destroy
-      render json: {message: "The topic has been deleted successfully. "}, status: :deleted
+      render json: {message: "The topic has been deleted successfully. "}, status: 200
     else
       render json: @sign_up_topic.errors, status: :unprocessable_entity
     end
@@ -60,20 +60,21 @@ class Api::V1::SignUpTopicsController < ApplicationController
   #the method loads all the selected topics
   def load_all_selected_topics
     @stopics = SignUpTopic.where(assignment_id: params[:assignment_id], topic_identifier: params[:topic_ids])
-    render json: {message: 'All selected topics have been loaded successfully.'}, status: 200
+    render json: {message: 'All selected topics have been loaded successfully.', sign_up_topics: @stopics}, status: 200 and return @stopics
   end
   #this method deletes all selected topics
   def delete_all_selected_topics
-    load_all_selected_topics
-    @stopics.each(&:destroy)
-    render json: {message: 'All selected topics have been deleted successfully.'}, status: 200
+    #load_all_selected_topics
+    @stopics = SignUpTopic.where(assignment_id: params[:assignment_id], topic_identifier: params[:topic_ids])
+    @stopics.each(&:delete)
+    render json: {message: 'All selected topics have been deleted successfully.', sign_up_topics: @stopics }, status: 200
   end
 
   # This deletes all topics for the given assignment
   def delete_all_topics_for_assignment
     topics = SignUpTopic.where(assignment_id: params[:assignment_id])
     topics.each(&:destroy)
-    render json: {message: 'All topics have been deleted successfully.'}, status: 200
+    render json: {message: 'All topics have been deleted successfully.', sign_up_topics: topics}, status: 200
   end
 
 
