@@ -1,5 +1,5 @@
 class Response < ApplicationRecord
-  include Scorable
+  include ScorableMixin
   include MailMixin
   include ReviewCommentMixin
 

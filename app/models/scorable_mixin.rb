@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Scorable
+module ScorableMixin
   # Computes the total points awarded for all scores on the instance
   def calculate_total_score
     # Only count the scorable questions, only when the answer is not nil (we accept nil as
