@@ -208,4 +208,3 @@ RSpec.describe 'SignUpTopicController API', type: :request do
     end
   end
 end
-
