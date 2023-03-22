@@ -69,42 +69,6 @@ class Participant < ApplicationRecord
     end
   end
 
-  # send email to team's reviewers in case a new submission is made
-  def mail_assigned_reviewers
-    # Find review mappings for the work done by this participant's team
-    mappings = ResponseMap.where(reviewed_object_id: self.assignment.id,
-                                 reviewee_id: self.team.id,
-                                 type: 'ReviewResponseMap')
-    unless mappings.nil?
-      mappings.each do |mapping|
-        reviewer = mapping.reviewer.user
-        prepared_mail = MailerHelper.send_mail_to_assigned_reviewers(reviewer, self, mapping)
-        prepared_mail.deliver_now
-      end
-    end
-  end
-
-  def able_to_review
-    can_review
-  end
-
-  def email(pw, home_page)
-    user = User.find_by(id: user_id)
-    assignment = Assignment.find_by(id: self.assignment.id)
-
-    Mailer.sync_message(
-      recipients: user.email,
-      subject: "You have been registered as a participant in the Assignment #{assignment.name}",
-      body: {
-        home_page: home_page,
-        first_name: ApplicationHelper.get_user_first_name(user),
-        name: user.name,
-        password: pw,
-        partial_name: 'register'
-      }
-    ).deliver
-  end
-
   # Get authorization from permissions.
   def authorization
     authorization = 'participant'
