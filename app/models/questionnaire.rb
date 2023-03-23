@@ -49,7 +49,7 @@ class Questionnaire < ApplicationRecord
     max_score = questions_weight_sum * max_question_score
   end
 
-  # Clones the given
+  # Clones the given questionnaire with details on Questions and Question Advice
   def self.copy_questionnaire_details(params, instructor_id)
     questionnaire_id = params[:id]
     orig_questionnaire = Questionnaire.find(questionnaire_id)
