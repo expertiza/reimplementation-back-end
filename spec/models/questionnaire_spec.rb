@@ -37,7 +37,7 @@ RSpec.describe Questionnaire, type: :model do
   let(:questionnaire_node) { build_stubbed(:questionnaire_node, node_object_id: questionnaire) }
   let(:questionnaire2) { build(:questionnaire, id: 2, type: 'MetareviewQuestionnaire') }
   let(:assignment) { build_stubbed(:assignment, id: 1, name: 'no assignment') }
-  let(:assignment_questionnaire1) { build_stubbed(:assignment_questionnaires, id: 1, assignment_id: 1, questionnaire_id: 2) }
+  let(:assignment_questionnaire1) { build_stubbed(:assignment_questionnaire, id: 1, assignment_id: 1, questionnaire_id: 2) }
 
   it "associated questions are dependent destroyed" do
     expect(questionnaire).to have_many(:questions).dependent(:destroy)
