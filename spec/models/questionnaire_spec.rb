@@ -164,11 +164,10 @@ RSpec.describe Questionnaire, type: :model do
     context 'when there are no rounds' do
       it 'just uses the symbol with no round' do
         allow(AssignmentQuestionnaire).to receive(:find_by).with(assignment_id: 1, questionnaire_id: 2).and_return(assignment_questionnaire1)
-        allow(assignment_questionnaire1).to receive(:used_in_round).and_return(nil)
-        allow(questionnaire2).to receive(:symbol).and_return('symbol')
+        allow(questionnaire2).to receive(:symbol).and_return('a')
         allow(questionnaire2).to receive(:assignment_questionnaires).and_return(assignment_questionnaire1)
         allow(assignment_questionnaire1).to receive(:find_by).with(assignment_id: 1).and_return(assignment_questionnaire1)
-        scores = { 'symbol' => { scores: { avg: 90 } } }
+        scores = { 'a' => { scores: { avg: 90 } } }
         expect(questionnaire2.get_weighted_score(assignment, scores)).to eq(90)
       end
     end
