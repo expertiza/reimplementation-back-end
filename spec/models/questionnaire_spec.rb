@@ -13,6 +13,11 @@ RSpec.describe Questionnaire, type: :model do
       t.references :questionnaire, null: false, foreign_key: true
       t.references :assignment, null: false, foreign_key: true
     end
+    m.create_table :question_advice do |t|
+      t.integer :score
+      t.text :advice
+      t.references :questionnaire, null: false, foreign_key: true
+    end
     m.create_table :instructors do |t|
       t.string :name
     end
