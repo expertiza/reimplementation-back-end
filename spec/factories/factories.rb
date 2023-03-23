@@ -16,5 +16,9 @@ FactoryBot.define do
 
   factory :assignment do
   end
+
+  factory :assignment_questionnaires do
+    used_in_round nil
+  end
 end
 
