@@ -111,5 +111,21 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_12_012728) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "assignment_questionnaires", id: :integer, force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1" do |t|
+    t.integer "assignment_id"
+    t.integer "questionnaire_id"
+    t.integer "user_id"
+    t.integer "notification_limit", default: 15, null: false
+    t.integer "questionnaire_weight", default: 0, null: false
+    t.integer "used_in_round"
+    t.boolean "dropdown", default: true
+    t.integer "topic_id"
+    t.integer "duty_id"
+    t.index ["assignment_id"], name: "fk_aq_assignments_id"
+    t.index ["duty_id"], name: "index_assignment_questionnaires_on_duty_id"
+    t.index ["questionnaire_id"], name: "fk_aq_questionnaire_id"
+    t.index ["user_id"], name: "fk_aq_user_id"
+  end
+
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
 end

@@ -37,6 +37,20 @@ class Questionnaire < ApplicationRecord
                          'QuizQuestionnaire'].freeze
   #has_paper_trail
 
+
+
+  def get_weighted_score(assignment, scores)
+    used_in_round = AssignmentQuestionnaire.find_by(assignment_id: assignment.id, questionnaire_id: id)&.used_in_round
+    questionnaire_symbol = used_in_round ? "#{symbol}#{used_in_round}".to_sym : symbol
+    calculate_weighted_score(assignment, questionnaire_symbol, scores)
+  end
+
+  def calculate_weighted_score(assignment, symbol, scores)
+    aq = assignment_questionnaires.find_by(assignment_id: assignment.id)
+    avg_score = scores.dig(symbol, :scores, :avg)
+    avg_score.nil? ? 0 : (avg_score * aq.questionnaire_weight / 100.0)
+  end
+
   # Returns true if this questionnaire contains any true/false questions, otherwise returns false
   def has_true_false_questions
     questions.any? { |question| question.type == 'Checkbox'}

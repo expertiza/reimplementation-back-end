@@ -35,6 +35,9 @@ RSpec.describe Questionnaire, type: :model do
   let(:question1) { build_stubbed(:question, questionnaire_id: questionnaire) }
   let(:question2) { build_stubbed(:question, questionnaire_id: questionnaire, type: "Checkbox", weight: 5) }
   let(:questionnaire_node) { build_stubbed(:questionnaire_node, node_object_id: questionnaire) }
+  let(:questionnaire2) { build(:questionnaire, id: 2, type: 'MetareviewQuestionnaire') }
+  let(:assignment) { build_stubbed(:assignment, id: 1, name: 'no assignment', participants: [participant], teams: [team]) }
+  let(:assignment_questionnaire1) { build_stubbed(:assignment_questionnaire, id: 1, assignment_id: 1, questionnaire_id: 2) }
 
   it "associated questions are dependent destroyed" do
     expect(questionnaire).to have_many(:questions).dependent(:destroy)
@@ -143,17 +146,33 @@ RSpec.describe Questionnaire, type: :model do
     end
     it 'scenario 2' do
       # adding a third question to scenario 1
-      question3 = build_stubbed(:question, questionnaire_id: questionnaire, type: "Dropdown", weight: 4 )
+      question3 = build_stubbed(:question, questionnaire_id: questionnaire, type: "Dropdown", weight: 4)
       allow(questionnaire).to receive(:questions).and_return([question1, question2, question3])
       expect(questionnaire.max_possible_score).to eq(55)
     end
     it 'scenario 3' do
       # adding a third question to scenario 1
-      question3 = build_stubbed(:question, questionnaire_id: questionnaire, type: "Dropdown", weight: 4 )
+      question3 = build_stubbed(:question, questionnaire_id: questionnaire, type: "Dropdown", weight: 4)
       # adding a change to the max_question_score on questionnaire
       questionnaire.max_question_score = 10
       allow(questionnaire).to receive(:questions).and_return([question1, question2, question3])
       expect(questionnaire.max_possible_score).to eq(110)
     end
   end
+
+  describe '#get_weighted_score' do
+    context 'when there are no rounds' do
+      it 'just uses the symbol with no round' do
+        allow(AssignmentQuestionnaire).to receive(:find_by).with(assignment_id: 1, questionnaire_id: 2).and_return(assignment_questionnaire1)
+        allow(assignment_questionnaire1).to receive(:used_in_round).and_return(nil)
+        allow(questionnaire2).to receive(:symbol).and_return('symbol')
+        allow(questionnaire2).to receive(:assignment_questionnaires).and_return(assignment_questionnaire1)
+        allow(assignment_questionnaire1).to receive(:find_by).with(assignment_id: 1).and_return(assignment_questionnaire1)
+        scores = { 'symbol' => { scores: { avg: 90 } } }
+        expect(questionnaire2.get_weighted_score(assignment, scores)).to eq(90)
+      end
+    end
+  end
+
+
 end
