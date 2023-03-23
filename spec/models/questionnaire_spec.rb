@@ -136,6 +136,14 @@ RSpec.describe Questionnaire, type: :model do
     end
   end
 
+
+  it 'allowing calls from copy_questionnaire_details' do
+    allow(Questionnaire).to receive(:find).with('1').and_return(questionnaire)
+    allow(Question).to receive(:where).with(questionnaire_id: '1').and_return([Question])
+    question_advice = build(:question_advice)
+    allow(QuestionAdvice).to receive(:where).with(question_id: 1).and_return([question_advice])
+  end
+
   describe "questionnaire max possible score" do
     it 'scenario 1' do
       allow(questionnaire).to receive(:questions).and_return([question1, question2])
