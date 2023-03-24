@@ -17,6 +17,6 @@ COPY . .
 RUN gem update --system && gem install bundler:2.4.7
 RUN bundle install
 
-EXPOSE 3000
+EXPOSE 4000
 
 CMD ["bash"]

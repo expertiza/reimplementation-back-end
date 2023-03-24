@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_03_06_064753) do
+ActiveRecord::Schema[7.0].define(version: 2023_03_15_185139) do
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -61,6 +61,12 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_06_064753) do
     t.boolean "has_badge"
     t.boolean "allow_selecting_additional_reviews_after_1st_round"
     t.integer "sample_assignment_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "institutions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
