@@ -3,7 +3,7 @@ version: '3.1'
 services:
   app:
     build: .
-    command: rails s -b 0.0.0.0
+    command: tail -f /dev/null
     environment:
       RAILS_ENV: development
       DATABASE_URL: mysql2://root:expertiza@db:3306/reimplementation?
