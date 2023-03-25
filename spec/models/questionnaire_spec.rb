@@ -13,10 +13,10 @@ RSpec.describe Questionnaire, type: :model do
       t.references :questionnaire, null: false, foreign_key: true
       t.references :assignment, null: false, foreign_key: true
     end
-    m.create_table :question_advice do |t|
+    m.create_table :question_advices do |t|
       t.integer :score
       t.text :advice
-      t.references :questionnaire, null: false, foreign_key: true
+      t.references :question, null: false, foreign_key: true
     end
     m.create_table :instructors do |t|
       t.string :name
@@ -29,6 +29,7 @@ RSpec.describe Questionnaire, type: :model do
   after :all do
     m = ActiveRecord::Migration.new
     m.verbose = false
+    m.drop_table :question_advices
     m.drop_table :questions
     m.drop_table :assignment_questionnaires
     m.drop_table :instructors

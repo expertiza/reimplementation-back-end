@@ -12,10 +12,10 @@ FactoryBot.define do
     weight {2}
   end
 
-  factory :question_advice, class: QuestionAdvice do
+  factory :question_advice do
     question { Question.first || association(:question) }
-    score 5
-    advice 'LGTM'
+    score {5}
+    advice {'LGTM'}
   end
 
   factory :questionnaire_node do
