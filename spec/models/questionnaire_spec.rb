@@ -15,6 +15,11 @@ RSpec.describe Questionnaire, type: :model do
       t.references :questionnaire, null: false, foreign_key: true
       t.references :assignment, null: false, foreign_key: true
     end
+    m.create_table :question_advices do |t|
+      t.integer :score
+      t.text :advice
+      t.references :question, null: false, foreign_key: true
+    end
     m.create_table :instructors do |t|
       t.string :name
     end
@@ -26,6 +31,7 @@ RSpec.describe Questionnaire, type: :model do
   after :all do
     m = ActiveRecord::Migration.new
     m.verbose = false
+    m.drop_table :question_advices
     m.drop_table :questions
     m.drop_table :assignment_questionnaires
     m.drop_table :instructors
@@ -139,6 +145,14 @@ RSpec.describe Questionnaire, type: :model do
       questionnaire2 = build(:questionnaire, name: 'questionnaire with no questions', min_question_score: 0, max_question_score: 5)
       expect(questionnaire2.has_true_false_questions).to eq(false)
     end
+  end
+
+
+  it 'allowing calls from copy_questionnaire_details' do
+    allow(Questionnaire).to receive(:find).with('1').and_return(questionnaire)
+    allow(Question).to receive(:where).with(questionnaire_id: '1').and_return([Question])
+    question_advice = build(:question_advice)
+    allow(QuestionAdvice).to receive(:where).with(question_id: 1).and_return([question_advice])
   end
 
   describe "questionnaire max possible score" do
