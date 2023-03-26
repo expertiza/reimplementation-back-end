@@ -1,11 +1,8 @@
 class Role < ApplicationRecord
   # Describes the role of an admin/instructor/student.
-  validates :name, presence: true, uniqueness: true
-
+  validates :name, presence: true, uniqueness: true, allow_blank: false
   belongs_to :parent, class_name: 'Role', optional: true
   has_many :users, dependent: :nullify
-
-  attr_reader :superadministrator, :administrator, :instructor, :ta, :student
 
   STUDENT = find_by_name('Student')
   INSTRUCTOR = find_by_name('Instructor')
@@ -13,12 +10,12 @@ class Role < ApplicationRecord
   TEACHING_ASSISTANT = find_by_name('Teaching Assistant')
   SUPER_ADMINISTRATOR = find_by_name('Super Administrator')
 
-  def super_admin?
+  def super_administrator?
     name['Super Administrator']
   end
 
-  def admin?
-    name['Administrator'] || super_admin?
+  def administrator?
+    name['Administrator'] || super_administrator?
   end
 
   def instructor?
