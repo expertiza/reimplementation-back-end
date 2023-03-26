@@ -69,7 +69,6 @@ RSpec.describe Questionnaire, type: :model do
     end
     it 'when name is valid' do
       questionnaire.name = 'valid questionnaire'
-      questionnaire.instructor_id = instructor.id
       expect(questionnaire).to be_valid
     end
     it "uniqueness in combination with instructor_id is validated" do
