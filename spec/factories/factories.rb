@@ -24,5 +24,7 @@ FactoryBot.define do
   factory :assignment do
   end
 
+  factory :assignment_questionnaire do
+  end
 end
 

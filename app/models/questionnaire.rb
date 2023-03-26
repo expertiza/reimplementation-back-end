@@ -35,7 +35,26 @@ class Questionnaire < ApplicationRecord
                          'Bookmark RatingQuestionnaire',
                          'BookmarkRatingQuestionnaire',
                          'QuizQuestionnaire'].freeze
-  #has_paper_trail
+  # has_paper_trail
+
+
+
+  def get_weighted_score(assignment, scores)
+    # sets used_in_round to true if the associated Assignment Questionnaire has a value in the used_in_round column
+    used_in_round = AssignmentQuestionnaire.find_by(assignment_id: assignment.id, questionnaire_id: id)&.used_in_round
+    # sets symbol based on whether the associated Assignment Questionnaire has a value in the used_in_round column
+    questionnaire_symbol = used_in_round ? "#{symbol}#{used_in_round}".to_sym : symbol
+    calculate_weighted_score(assignment, questionnaire_symbol, scores)
+  end
+
+  def calculate_weighted_score(assignment, symbol, scores)
+    # finds the associated assignment questionnaire and records the questionnaire_weight value
+    aq = AssignmentQuestionnaire.find_by(assignment_id: assignment.id, questionnaire_id: id)
+    # finds average score based on scores passed in parameter
+    avg_score = scores.dig(symbol, :scores, :avg)
+    # calculates weighted score
+    avg_score.nil? ? 0 : (avg_score * aq.questionnaire_weight / 100.0)
+  end
 
   # Returns true if this questionnaire contains any true/false questions, otherwise returns false
   def has_true_false_questions
@@ -100,5 +119,10 @@ class Questionnaire < ApplicationRecord
     cloned_advice.save!
 
     cloned_advice
+  end
+  
+  # default symbol value for calculating weight
+  def symbol
+    'symbol'.to_sym
   end
 end
