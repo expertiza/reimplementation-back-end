@@ -22,6 +22,9 @@ RSpec.describe Questionnaire, type: :model do
     end
     m.create_table :instructors do |t|
       t.string :name
+      t.string :fullname
+      t.string :email
+      t.string :password
     end
     m.create_table :questionnaire_nodes do |t|
       t.integer :node_object_id
@@ -38,7 +41,8 @@ RSpec.describe Questionnaire, type: :model do
     m.drop_table :questionnaire_nodes
   end
 
-  let(:instructor) { Instructor.create(name: 'test instructor') }
+  let(:role) { build_stubbed(:role) }
+  let(:instructor) { Instructor.create(name: 'testinstructor', email: 'test@test.com', fullname: 'Test Instructor', password: '123456', role: role) }
   let(:questionnaire) { build_stubbed(:questionnaire, instructor_id: instructor.id) }
   let(:question1) { build_stubbed(:question, questionnaire_id: questionnaire) }
   let(:question2) { build_stubbed(:question, questionnaire_id: questionnaire, type: "Checkbox", weight: 5) }
@@ -65,6 +69,7 @@ RSpec.describe Questionnaire, type: :model do
     end
     it 'when name is valid' do
       questionnaire.name = 'valid questionnaire'
+      questionnaire.instructor_id = instructor.id
       expect(questionnaire).to be_valid
     end
     it "uniqueness in combination with instructor_id is validated" do
@@ -79,7 +84,9 @@ RSpec.describe Questionnaire, type: :model do
       expect(dupe_questionnaire2.errors[:name]).to include('Questionnaire names must be unique.')
     end
     it 'when creating a questionnaire with a duplicate name as different instructors' do
-      instructor2 = Instructor.create(name: 'test instructor2')
+      instructor2 = Instructor.create(id: 1002, name: 'testinstructortwo', email: 'test@test.com', fullname: 'Test Instructor2', password: '123456', role: role)
+      instructor2.valid?
+      expect(instructor2).to be_valid
       dupe_questionnaire1 = Questionnaire.create(name: 'valid_dupe', min_question_score: 0, max_question_score: 10, instructor_id: instructor.id)
       dupe_questionnaire2 = Questionnaire.create(name: 'valid_dupe', min_question_score: 0, max_question_score: 10, instructor_id: instructor2.id)
       dupe_questionnaire1.valid?
