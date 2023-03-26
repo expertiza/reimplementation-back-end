@@ -10,6 +10,8 @@ RSpec.describe Questionnaire, type: :model do
       t.integer :weight
     end
     m.create_table :assignment_questionnaires do |t|
+      t.integer :used_in_round
+      t.integer :questionnaire_weight
       t.references :questionnaire, null: false, foreign_key: true
       t.references :assignment, null: false, foreign_key: true
     end
@@ -37,7 +39,7 @@ RSpec.describe Questionnaire, type: :model do
   let(:questionnaire_node) { build_stubbed(:questionnaire_node, node_object_id: questionnaire) }
   let(:questionnaire2) { build(:questionnaire, id: 2, type: 'MetareviewQuestionnaire') }
   let(:assignment) { build_stubbed(:assignment, id: 1, name: 'no assignment') }
-  let(:assignment_questionnaire1) { build_stubbed(:assignment_questionnaire, id: 1, assignment_id: 1, questionnaire_id: 2) }
+  let(:assignment_questionnaire1) { build_stubbed(:assignment_questionnaire, questionnaire_weight: 100, id: 1, assignment_id: 1, questionnaire_id: 2, used_in_round: nil) }
 
   it "associated questions are dependent destroyed" do
     expect(questionnaire).to have_many(:questions).dependent(:destroy)
@@ -164,14 +166,14 @@ RSpec.describe Questionnaire, type: :model do
     context 'when there are no rounds' do
       it 'just uses the symbol with no round' do
         allow(AssignmentQuestionnaire).to receive(:find_by).with(assignment_id: 1, questionnaire_id: 2).and_return(assignment_questionnaire1)
+        allow(assignment_questionnaire1).to receive(:used_in_round).and_return(nil)
         allow(questionnaire2).to receive(:symbol).and_return('a')
         allow(questionnaire2).to receive(:assignment_questionnaires).and_return(assignment_questionnaire1)
-        allow(assignment_questionnaire1).to receive(:find_by).with(assignment_id: 1).and_return(assignment_questionnaire1)
-        scores = { 'a' => { scores: { avg: 90 } } }
-        expect(questionnaire2.get_weighted_score(assignment, scores)).to eq(90)
+        allow(AssignmentQuestionnaire).to receive(:find_by).with(assignment_id: 1, questionnaire_id: 2).and_return(assignment_questionnaire1)
+        scores = { 'a' => { scores: { avg: 100 } } }
+        expect(questionnaire2.get_weighted_score(assignment, scores)).to eq(100)
       end
     end
   end
-
 
 end
