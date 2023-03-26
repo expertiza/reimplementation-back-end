@@ -1,5 +1,6 @@
 class Questionnaire < ApplicationRecord
-  has_many :questions, dependent: :destroy
+  # Holds all information about a Questionnaire created by an Instructor
+  has_many :questions, dependent: :destroy # the collection of questions associated with this Questionnaire
   belongs_to :instructor # the creator of this questionnaire
   has_many :assignment_questionnaires, dependent: :destroy
   has_many :assignments, through: :assignment_questionnaires

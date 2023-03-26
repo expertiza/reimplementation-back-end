@@ -1,4 +1,5 @@
 class User < ApplicationRecord
+  # Describes the User role behavior
   has_secure_password
   validates :name, presence: true
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
