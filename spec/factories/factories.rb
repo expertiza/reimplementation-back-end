@@ -26,5 +26,8 @@ FactoryBot.define do
 
   factory :assignment_questionnaire do
   end
-end
 
+  factory :role do
+    name { 'name' }
+  end
+end
