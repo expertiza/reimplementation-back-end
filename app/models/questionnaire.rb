@@ -36,7 +36,7 @@ class Questionnaire < ApplicationRecord
                          'Bookmark RatingQuestionnaire',
                          'BookmarkRatingQuestionnaire',
                          'QuizQuestionnaire'].freeze
-  # has_paper_trail
+  has_paper_trail
 
 
 
