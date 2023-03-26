@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_03_12_012728) do
+ActiveRecord::Schema[7.0].define(version: 2023_03_15_185139) do
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -74,6 +74,10 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_12_012728) do
     t.string "type"
     t.string "display_type"
     t.text "instruction_loc"
+  end
+
+  create_table "institutions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
