@@ -1,25 +1,22 @@
 # Expertiza Backend Re-Implementation
 
+Wiki page: https://expertiza.csc.ncsu.edu/index.php/CSC/ECE_517_Spring_2023_-_E2319._Reimplement_questionnaire.rb
+
+To run tests:
+```
+rspec ./spec/models/questionnaire_spec.rb
+```
+
 This README would normally document whatever steps are necessary to get the
 application up and running.
 
 Things you may want to cover:
-
 * Ruby version - 3.2.1
-
-## Development Environment
-
-### Prerequisites
-- Verify that [Docker Desktop](https://www.docker.com/products/docker-desktop/) is installed and running.
-- [Download](https://www.jetbrains.com/ruby/download/) RubyMine
-- Make sure that the Docker plugin [is enabled](https://www.jetbrains.com/help/ruby/docker.html#enable_docker).
-
-### Video Tutorial
-
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=BHniRaZ0_JE
-" target="_blank"><img src="http://img.youtube.com/vi/BHniRaZ0_JE/maxresdefault.jpg" 
-alt="IMAGE ALT TEXT HERE" width="560" height="315" border="10" /></a>
-
-### Database Credentials
-- username: root
-- password: expertiza 
+* System dependencies
+* Configuration
+* Database creation
+* Database initialization
+* How to run the test suite
+* Services (job queues, cache servers, search engines, etc.)
+* Deployment instructions
+* ...
