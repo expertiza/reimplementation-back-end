@@ -40,6 +40,7 @@ class MultipleChoiceCheckbox < QuizQuestion
     html
   end
 
+  # check if the format of the question and its options are correct
   def isvalid(choice_info)
     super
     if @correct_count == 1

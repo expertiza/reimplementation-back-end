@@ -26,6 +26,7 @@ class QuizQuestion < Question
     html
   end
 
+  # display the question and its choices to user
   def view_question_text
     html = '<b>' + txt + '</b><br />'
     html += 'Question Type: ' + type + '<br />'
@@ -81,6 +82,7 @@ def complete
     html.html_safe
   end
 
+  # Check if the format of the question and its choices are correct
   def isvalid(choice_info)
     @valid = 'valid'
     return @valid = 'Please make sure all questions have text' if txt == ''
