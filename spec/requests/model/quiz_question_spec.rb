@@ -125,4 +125,12 @@ describe QuizQuestion do
       end
     end
   end
+  describe '#isvalid' do
+    context 'when there are more than one correct choices' do
+      it 'returns "Please select only one correct answer for all questions"' do
+        questions = questions = { '1' => { txt: 'question text', iscorrect: true }, '2' => { txt: 'question text', iscorrect: false }, '3' => { txt: 'question text', iscorrect: false }, '4' => { txt: 'question text', iscorrect: true } }
+        expect(quiz_question.isvalid(questions)).to eq('Please select only one correct answer for all questions')
+      end
+    end
+  end
 end

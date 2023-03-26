@@ -93,6 +93,7 @@ def complete
       @correct_count += 1 if value[:iscorrect]
     end
     @valid = 'Please select a correct answer for all questions' if @correct_count.zero?
+    @valid = 'Please select only one correct answer for all questions' if @correct_count > 1
     @valid
   end
 end
