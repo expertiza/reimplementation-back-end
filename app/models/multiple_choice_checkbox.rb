@@ -46,6 +46,7 @@ class MultipleChoiceCheckbox < QuizQuestion
     if @correct_count == 1
       @valid = 'A multiple-choice checkbox question should have more than one correct answer.'
     end
+    @valid = 'valid' if @correct_count > 1
     @valid
   end
 end
