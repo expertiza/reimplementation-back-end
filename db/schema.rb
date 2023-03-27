@@ -105,4 +105,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_15_185139) do
   end
 
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
+
 end
+
