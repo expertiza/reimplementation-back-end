@@ -1,9 +1,9 @@
 class Question < ApplicationRecord
   belongs_to :questionnaire # each question belongs to a specific questionnaire
-  # belongs_to :review_of_review_score # ditto
-  # has_many :question_advices, dependent: :destroy # for each question, there is separate advice about each possible score
-  # has_many :signup_choices # ?? this may reference signup type questionnaires
-  # has_many :answers, dependent: :destroy
+  #belongs_to :review_of_review_score # ditto
+  has_many :question_advices, dependent: :destroy # for each question, there is separate advice about each possible score
+  #has_many :signup_choices # ?? this may reference signup type questionnaires
+  has_many :answers, dependent: :destroy
 
   validates :seq, presence: true # user must define sequence for a question
   validates :seq, numericality: true # sequence must be numeric
@@ -39,21 +39,22 @@ class Question < ApplicationRecord
   end
 
   # for quiz questions, we store 'TrueFalse', 'MultipleChoiceCheckbox', 'MultipleChoiceRadio' in the DB, and the full names are returned below
-  def get_formatted_question_type
+  def formatted_question_type
     type = self.type
     statement = ''
-    if type == 'TrueFalse'
+    case type
+    when 'TrueFalse'
       statement = 'True/False'
-    elsif type == 'MultipleChoiceCheckbox'
+    when 'MultipleChoiceCheckbox'
       statement = 'Multiple Choice - Checked'
-    elsif type == 'MultipleChoiceRadio'
+    when 'MultipleChoiceRadio'
       statement = 'Multiple Choice - Radio'
     end
     statement
   end
 
   # Placeholder methods, override in derived classes if required.
-  # this method decide what to display if an instructor (etc.) is creating or editing a questionnaire
+  # this method decides what to display if an instructor (etc.) is creating or editing a questionnaire
   def edit
     nil
   end
@@ -77,8 +78,8 @@ class Question < ApplicationRecord
     0
   end
 
-  # this method return questions (question_ids) in one assignment whose comments field are meaningful (ScoredQuestion and TextArea)
-  def self.get_all_questions_with_comments_available(assignment_id)
+  # This method returns questions (question_ids) in one assignment whose comments field are meaningful (ScoredQuestion and TextArea)
+  def self.questions_with_comments(assignment_id)
     question_ids = []
     questionnaires = Assignment.find(assignment_id).questionnaires.select { |questionnaire| questionnaire.type == 'ReviewQuestionnaire' }
     questionnaires.each do |questionnaire|
@@ -106,7 +107,7 @@ class Question < ApplicationRecord
       end
     end
 
-    if qid > 0
+    if qid.positive?
       # question = Question.find_by_id(qid)
       question = Question.find_by(id: qid)
       attributes = {}
