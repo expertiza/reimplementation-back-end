@@ -1,0 +1,18 @@
+.F
+
+Failures:
+
+  1) api/v1/questions /api/v1/questions post created returns a 201 response
+     Failure/Error: num_of_existed_questions = Questionnaire.find(questionnaire_id).questions.size
+
+     ActiveRecord::RecordNotFound:
+       Couldn't find Questionnaire without an ID
+     # ./app/controllers/api/v1/questions_controller.rb:26:in `create'
+
+Finished in 0.22971 seconds (files took 2.86 seconds to load)
+2 examples, 1 failure
+
+Failed examples:
+
+rspec ./spec/requests/api/v1/questions_spec.rb:83 # api/v1/questions /api/v1/questions post created returns a 201 response
+

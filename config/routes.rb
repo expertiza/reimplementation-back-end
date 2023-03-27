@@ -7,13 +7,16 @@ Rails.application.routes.draw do
   # root "articles#index"
   namespace :api do
     namespace :v1 do
+      resources :institutions
       resources :roles
-      resources :users
+      resources :users do
+        get 'institution/:id', on: :collection, action: :institution_users
+        get ':id/managed', on: :collection, action: :managed_users
+      end
       resources :assignments
       
       resources :questionnaires do
         collection do
-          post 'update/:id', to: 'questionnaires#update', as: 'update'
           post 'copy/:id', to: 'questionnaires#copy', as: 'copy'
           get 'toggle_access/:id', to: 'questionnaires#toggle_access', as: 'toggle_access'
         end
@@ -23,6 +26,7 @@ Rails.application.routes.draw do
         collection do
           #put 'update/:id', to: 'questions#update', as: 'update'
           get :types
+          delete 'delete_all/:id', to:'questions#delete_all', as: 'delete_all'
         end
       end
     end

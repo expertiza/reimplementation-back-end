@@ -4,6 +4,248 @@ info:
   title: EXPERTIZA API V1
   version: v1
 paths:
+  "/api/v1/questionnaires":
+    get:
+      summary: list questionnaires
+      tags:
+      - Questionnaires
+      responses:
+        '200':
+          description: successful
+    post:
+      summary: create questionnaire
+      tags:
+      - Questionnaires
+      parameters: []
+      responses:
+        '201':
+          description: created
+        '422':
+          description: unprocessable entity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                questionnaire_type:
+                  type: string
+                private:
+                  type: boolean
+                min_question_score:
+                  type: integer
+                max_question_score:
+                  type: integer
+                instructor_id:
+                  type: integer
+              required:
+              - id
+              - name
+              - questionnaire_type
+              - private
+              - min_question_score
+              - max_question_score
+              - instructor_id
+  "/api/v1/questionnaires/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: show questionnaire
+      tags:
+      - Questionnaires
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not_found
+    put:
+      summary: update questionnaire
+      tags:
+      - Questionnaires
+      parameters: []
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+        '422':
+          description: unprocessable entity
+          content:
+            application/json:
+              schema:
+                type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                min_question_score:
+                  type: integer
+    delete:
+      summary: delete questionnaire
+      tags:
+      - Questionnaires
+      responses:
+        '204':
+          description: successful
+        '404':
+          description: not found
+  "/api/v1/questionnaires/toggle_access/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: toggle access
+      tags:
+      - Questionnaires
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+  "/api/v1/questionnaires/copy/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: copy questionnaire
+      tags:
+      - Questionnaires
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+  "/api/v1/questions":
+    get:
+      summary: list questions
+      tags:
+      - Questions
+      responses:
+        '200':
+          description: successful
+    post:
+      summary: create question
+      tags:
+      - Questions
+      parameters: []
+      responses:
+        '201':
+          description: created
+        '404':
+          description: questionnaire id not found
+        '422':
+          description: unprocessable entity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                weight:
+                  type: integer
+                questionnaire_id:
+                  type: integer
+                break_before:
+                  type: boolean
+                txt:
+                  type: string
+                question_type:
+                  type: string
+              required:
+              - weight
+              - questionnaire_id
+              - break_before
+              - txt
+              - question_type
+  "/api/v1/questions/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: show question
+      tags:
+      - Questions
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not_found
+    put:
+      summary: update question
+      tags:
+      - Questions
+      parameters: []
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+        '422':
+          description: unprocessable entity
+          content:
+            application/json:
+              schema:
+                type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                break_before:
+                  type: boolean
+                seq:
+                  type: integer
+    delete:
+      summary: delete question
+      tags:
+      - Questions
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+  "/api/v1/questions/delete_all/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    delete:
+      summary: delete all questions
+      tags:
+      - Questions
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+  "/api/v1/questions/types":
+    get:
+      summary: question types
+      tags:
+      - Questions
+      responses:
+        '200':
+          description: successful
   "/api/v1/roles":
     get:
       summary: list roles

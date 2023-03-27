@@ -1,0 +1,71 @@
+.......F.
+
+Failures:
+
+  1) api/v1/questionnaires /api/v1/questionnaires/{id} delete successful returns a 204 response
+     Failure/Error: Parser.new(source, **(opts||{})).parse
+
+     JSON::ParserError:
+       unexpected token at ''
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/3.2.0/json/common.rb:216:in `parse'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/3.2.0/json/common.rb:216:in `parse'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rswag-specs-2.8.0/lib/rswag/specs/response_validator.rb:70:in `validate_body!'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rswag-specs-2.8.0/lib/rswag/specs/response_validator.rb:20:in `validate!'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rswag-specs-2.8.0/lib/rswag/specs/example_helpers.rb:30:in `assert_response_matches_metadata'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rswag-specs-2.8.0/lib/rswag/specs/example_group_helpers.rb:135:in `block in run_test!'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example.rb:263:in `instance_exec'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example.rb:263:in `block in run'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example.rb:511:in `block in with_around_and_singleton_context_hooks'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example.rb:468:in `block in with_around_example_hooks'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/hooks.rb:486:in `block in run'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/hooks.rb:626:in `block in run_around_example_hooks_for'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example.rb:352:in `call'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-rails-6.0.1/lib/rspec/rails/adapters.rb:75:in `block (2 levels) in <module:MinitestLifecycleAdapter>'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example.rb:457:in `instance_exec'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example.rb:457:in `instance_exec'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/hooks.rb:390:in `execute_with'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/hooks.rb:628:in `block (2 levels) in run_around_example_hooks_for'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example.rb:352:in `call'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/hooks.rb:629:in `run_around_example_hooks_for'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/hooks.rb:486:in `run'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example.rb:468:in `with_around_example_hooks'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example.rb:511:in `with_around_and_singleton_context_hooks'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example.rb:259:in `run'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example_group.rb:646:in `block in run_examples'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example_group.rb:642:in `map'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example_group.rb:642:in `run_examples'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example_group.rb:607:in `run'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example_group.rb:608:in `block in run'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example_group.rb:608:in `map'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example_group.rb:608:in `run'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example_group.rb:608:in `block in run'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example_group.rb:608:in `map'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example_group.rb:608:in `run'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example_group.rb:608:in `block in run'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example_group.rb:608:in `map'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/example_group.rb:608:in `run'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/runner.rb:121:in `block (3 levels) in run_specs'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/runner.rb:121:in `map'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/runner.rb:121:in `block (2 levels) in run_specs'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/configuration.rb:2070:in `with_suite_hooks'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/runner.rb:116:in `block in run_specs'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/reporter.rb:74:in `report'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/runner.rb:115:in `run_specs'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/runner.rb:89:in `run'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/runner.rb:71:in `run'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/lib/rspec/core/runner.rb:45:in `invoke'
+     # /home/vchheda/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.0/gems/rspec-core-3.12.1/exe/rspec:4:in `<top (required)>'
+     # /home/vchheda/.rbenv/versions/3.2.1/bin/rspec:25:in `load'
+     # /home/vchheda/.rbenv/versions/3.2.1/bin/rspec:25:in `<main>'
+     # 
+     #   Showing full backtrace because every line was filtered out.
+     #   See docs for RSpec::Configuration#backtrace_exclusion_patterns and
+     #   RSpec::Configuration#backtrace_inclusion_patterns for more information.
+
+Finished in 0.41717 seconds (files took 2.68 seconds to load)
+9 examples, 1 failure
+
+Failed examples:
+
+rspec ./spec/requests/api/v1/questionnaires_spec.rb:207 # api/v1/questionnaires /api/v1/questionnaires/{id} delete successful returns a 204 response
+
