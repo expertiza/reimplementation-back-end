@@ -22,8 +22,8 @@ Rails.application.routes.draw do
       end
       resources :sign_up_topics do
         collection do
-          get :load_all_selected_topics
-          get :add_signup_topics
+          get :filter
+          delete :filter, to: 'sign_up_topics#delete_filter'
           delete :delete_all_topics_for_assignment
           delete :delete_all_selected_topics
         end
