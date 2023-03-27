@@ -106,22 +106,6 @@ paths:
       responses:
         '200':
           description: successful
-  "/api/v1/sign_up_sheet/signup_as_instructor_action":
-    post:
-      summary: check if sheet can be updated via instructor
-      tags:
-      - SignUpSheet
-      responses:
-        '200':
-          description: successful
-  "/api/v1/sign_up_sheet/sign_up":
-    get:
-      summary: list the topics
-      tags:
-      - SignUpSheet
-      responses:
-        '200':
-          description: successful
   "/api/v1/sign_up_topics":
     post:
       summary: create a new topic in the sheet
@@ -129,29 +113,30 @@ paths:
       - SignUpTopic
       parameters: []
       responses:
-        '200':
-          description: successful
+        '201':
+          description: Success
+        '404':
+          description: Not Found
+        '422':
+          description: Invalid Request
       requestBody:
         content:
           application/json:
             schema:
               type: object
               properties:
-                sign_up_topic:
-                  type: object
-                  properties:
-                    topic_identifier:
-                      type: integer
-                    topic_name:
-                      type: string
-                    max_choosers:
-                      type: integer
-                    category:
-                      type: string
-                    assignment_id:
-                      type: integer
-                    micropayment:
-                      type: integer
+                topic_identifier:
+                  type: integer
+                topic_name:
+                  type: string
+                max_choosers:
+                  type: integer
+                category:
+                  type: string
+                assignment_id:
+                  type: integer
+                micropayment:
+                  type: integer
               required:
               - topic_identifier
               - topic_name
@@ -175,27 +160,28 @@ paths:
       responses:
         '200':
           description: successful
+        '404':
+          description: Not Found
+        '422':
+          description: Invalid Request
       requestBody:
         content:
           application/json:
             schema:
               type: object
               properties:
-                sign_up_topic:
-                  type: object
-                  properties:
-                    topic_identifier:
-                      type: integer
-                    topic_name:
-                      type: string
-                    max_choosers:
-                      type: integer
-                    category:
-                      type: string
-                    assignment_id:
-                      type: integer
-                    micropayment:
-                      type: integer
+                topic_identifier:
+                  type: integer
+                topic_name:
+                  type: string
+                max_choosers:
+                  type: integer
+                category:
+                  type: string
+                assignment_id:
+                  type: integer
+                micropayment:
+                  type: integer
               required:
               - topic_identifier
               - topic_name
@@ -208,38 +194,49 @@ paths:
       responses:
         '200':
           description: successful
-  "/api/v1/sign_up_topics/load_all_selected_topics":
+  "/api/v1/sign_up_topics/filter":
     get:
-      summary: list the topics
+      summary: Get topics based on Assignment ID and Topic Identifiers filter
+      parameters:
+      - name: assignment_id
+        in: query
+        description: Assignment ID
+        required: true
+        schema:
+          type: integer
+      - name: topic_ids[]
+        in: query
+        description: Topic Identifiers
+        collectionFormat: multi
+        schema:
+          type: array
       tags:
       - SignUpTopic
       responses:
         '200':
           description: successful
-  "/api/v1/sign_up_topics/delete_all_selected_topics":
-    post:
-      summary: test for all selected topics
+    delete:
+      summary: Delete based on Assignment ID and Topic identifier filter
+      parameters: []
       tags:
       - SignUpTopic
       responses:
         '200':
-          description: successful
-  "/api/v1/sign_up_topics/delete_all_topics_for_assignment":
-    post:
-      summary: test to delete topics
-      tags:
-      - SignUpTopic
-      responses:
-        '200':
-          description: successful
-  "/api/v1/sign_up_topic/update_topic":
-    post:
-      summary: test to delete topics
-      tags:
-      - SignUpTopic
-      responses:
-        '200':
-          description: successful
+          description: Success
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                assignment_id:
+                  type: integer
+                topic_ids:
+                  type: array
+                  items:
+                    type: string
+              required:
+              - assignment_id
 servers:
 - url: http://{defaultHost}
   variables:

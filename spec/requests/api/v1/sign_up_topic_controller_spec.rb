@@ -171,7 +171,7 @@ RSpec.describe 'SignUpTopicController API', type: :request do
       end
     end
   end
-
+  #test 4 - to load topics based on assignment and topic ID.
   path '/api/v1/sign_up_topics/filter' do
     get('Get topics based on Assignment ID and Topic Identifiers filter') do
       parameter name: 'assignment_id', in: :query, type: :integer, description: 'Assignment ID', required: true
@@ -191,7 +191,7 @@ RSpec.describe 'SignUpTopicController API', type: :request do
         run_test!
       end
     end
-    
+    #test 5 - to load topics based on assignment and topic ID.
     delete('Delete based on Assignment ID and Topic identifier filter') do
       consumes 'application/json'
       parameter name: :sign_up_topic, in: :body, schema: {
