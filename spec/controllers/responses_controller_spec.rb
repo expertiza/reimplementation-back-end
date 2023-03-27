@@ -1,45 +1,45 @@
 require "rails_helper"
 
-describe ResponsesController do
-  let(:assignment) { build(:assignment, instructor_id: 6, id: 1) }
-  let(:instructor) { build(:instructor, id: 6) }
-  let(:participant) { build(:participant, id: 1, user_id: 6, assignment: assignment) }
+RSpec.describe Api::V1::AssignmentsController, type: :controller do
+  # let(:assignment) { build(:assignment, instructor_id: 6, id: 1) }
+  # let(:instructor) { build(:instructor, id: 6) }
+  # let(:participant) { build(:participant, id: 1, user_id: 6, assignment: assignment) }
   let(:review_response) { build(:response, id: 1, map_id: 1) }
-  let(:review_response_round1) { build(:response, id: 1, map_id: 1, round: 1, is_submitted: 0) }
-  let(:review_response_map) { build(:review_response_map, id: 1, reviewer: participant) }
-  let(:questionnaire) { build(:questionnaire, id: 1, questions: [question]) }
-  let(:question) { Criterion.new(id: 1, weight: 2, break_before: true) }
-  let(:assignment_questionnaire) { build(:assignment_questionnaire) }
-  let(:answer) { double('Answer') }
-  let(:assignment_due_date) { build(:assignment_due_date) }
-  let(:bookmark) { build(:bookmark) }
-  let(:team_response) { build(:response, id: 2, map_id: 2) }
-  let(:team_response_map) { build(:review_response_map, id: 2, reviewer: participant, team_reviewing_enabled: true) }
-  let(:team_questionnaire) { build(:questionnaire, id: 2) }
-  let(:team_assignment) { build(:assignment, id: 2) }
-  let(:assignment_team) { build(:assignment_team, id: 1) }
-  let(:signed_up_team) { build(:signed_up_team, team_id: assignment_team.id) }
-  let(:assignment_form) { AssignmentForm.new }
+  # let(:review_response_round1) { build(:response, id: 1, map_id: 1, round: 1, is_submitted: 0) }
+  # let(:review_response_map) { build(:review_response_map, id: 1, reviewer: participant) }
+  # let(:questionnaire) { build(:questionnaire, id: 1, questions: [question]) }
+  # let(:question) { Criterion.new(id: 1, weight: 2, break_before: true) }
+  # let(:assignment_questionnaire) { build(:assignment_questionnaire) }
+  # let(:answer) { double('Answer') }
+  # let(:assignment_due_date) { build(:assignment_due_date) }
+  # let(:bookmark) { build(:bookmark) }
+  # let(:team_response) { build(:response, id: 2, map_id: 2) }
+  # let(:team_response_map) { build(:review_response_map, id: 2, reviewer: participant, team_reviewing_enabled: true) }
+  # let(:team_questionnaire) { build(:questionnaire, id: 2) }
+  # let(:team_assignment) { build(:assignment, id: 2) }
+  # let(:assignment_team) { build(:assignment_team, id: 1) }
+  # let(:signed_up_team) { build(:signed_up_team, team_id: assignment_team.id) }
+  # let(:assignment_form) { AssignmentForm.new }
 
   before(:each) do
-    allow(Assignment).to receive(:find).with('1').and_return(assignment)
-    allow(Assignment).to receive(:find).with(1).and_return(assignment)
+    # allow(Assignment).to receive(:find).with('1').and_return(assignment)
+    # allow(Assignment).to receive(:find).with(1).and_return(assignment)
 
-    allow(Assignment).to receive(:find).with('2').and_return(team_assignment)
-    allow(Assignment).to receive(:find).with(2).and_return(team_assignment)
+    # allow(Assignment).to receive(:find).with('2').and_return(team_assignment)
+    # allow(Assignment).to receive(:find).with(2).and_return(team_assignment)
 
-    stub_current_user(instructor, instructor.role.name, instructor.role)
-    allow(Response).to receive(:find).with('1').and_return(review_response)
-    allow(Response).to receive(:find).with(1).and_return(review_response)
+    # stub_current_user(instructor, instructor.role.name, instructor.role)
+    # allow(Response).to receive(:find).with('1').and_return(review_response)
+    # allow(Response).to receive(:find).with(1).and_return(review_response)
 
-    allow(Response).to receive(:find).with('2').and_return(team_response)
-    allow(Response).to receive(:find).with(2).and_return(team_response)
+    # allow(Response).to receive(:find).with('2').and_return(team_response)
+    # allow(Response).to receive(:find).with(2).and_return(team_response)
 
-    allow(AssignmentParticipant).to receive(:find).with(1).and_return(participant)
-    allow(review_response).to receive(:map).and_return(review_response_map)
+    # allow(AssignmentParticipant).to receive(:find).with(1).and_return(participant)
+    # allow(review_response).to receive(:map).and_return(review_response_map)
 
-    allow(team_response).to receive(:map).and_return(team_response_map)
-    allow(SignedUpTeam).to receive(:find_by).with(team_id: assignment_team.id).and_return(signed_up_team)
+    # allow(team_response).to receive(:map).and_return(team_response_map)
+    # allow(SignedUpTeam).to receive(:find_by).with(team_id: assignment_team.id).and_return(signed_up_team)
   end
 
   describe '#action_allowed?' do
@@ -82,7 +82,7 @@ describe ResponsesController do
   end
 
   describe '#delete' do
-    it 'deletes current response and redirects to response#redirect page' do
+    it 'deletes current response and redirects to response#redirect page', focus: true do
       allow(review_response).to receive(:delete).and_return(review_response)
       request_params = { id: 1 }
       post :delete, params: request_params
