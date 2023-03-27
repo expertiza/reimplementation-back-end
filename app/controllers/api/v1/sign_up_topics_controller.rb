@@ -1,16 +1,10 @@
 class Api::V1::SignUpTopicsController < ApplicationController
   before_action :set_sign_up_topic, only: %i[ show update destroy ]
-  #runs
-  #before_action :load_all_selected_topics, only: [:delete_all_selected_topics]
+
   # GET /sign_up_topics
   def index
     @sign_up_topics = SignUpTopic.all
     render json: @sign_up_topics
-  end
-
-  # GET /sign_up_topics/1
-  def show
-    render json: @sign_up_topic
   end
 
   # POST /sign_up_topics
@@ -18,14 +12,9 @@ class Api::V1::SignUpTopicsController < ApplicationController
   # params[:sign_up_topic][:topic_identifier] follows a json format
   # The method takes inputs and outputs the if the topic creation was sucessfull.
   def create
-      @sign_up_topic = SignUpTopic.new
-      @sign_up_topic.topic_identifier = params[:sign_up_topic][:topic_identifier]
-      @sign_up_topic.topic_name = params[:sign_up_topic][:topic_name]
-      @sign_up_topic.max_choosers = params[:sign_up_topic][:max_choosers]
-      @sign_up_topic.category = params[:sign_up_topic][:category]
-      @sign_up_topic.assignment_id = params[:sign_up_topic][:assignment_id]
+      @sign_up_topic = SignUpTopic.new(sign_up_topic_params)
       @assignment = Assignment.find(params[:sign_up_topic][:assignment_id])
-      @sign_up_topic.micropayment = params[:sign_up_topic][:micropayment] if @assignment.microtask?
+      @sign_up_topic.micropayment = params[:micropayment] if @assignment.microtask?
       if @sign_up_topic.save
         #undo_link "The topic: \"#{@sign_up_topic.topic_name}\" has been created successfully. "
         render json: {message: "The topic: \"#{@sign_up_topic.topic_name}\" has been created successfully. "}, status: :created
@@ -36,9 +25,7 @@ class Api::V1::SignUpTopicsController < ApplicationController
   end
 
   # PATCH/PUT /sign_up_topics/1
-  # the update function takes inputs as parameters which are similar to the create functionality, and the updated
-  # parameter is then replaced in the data base. For example, a name can be inputted differently
-  # with a unique ID to update a record.
+  # updates parameters present in sign_up_topic_params.
   def update
     if @sign_up_topic.update(sign_up_topic_params)
       render json: {message: "The topic: \"#{@sign_up_topic.topic_name}\" has been updated successfully. "}, status: 200
@@ -57,26 +44,31 @@ class Api::V1::SignUpTopicsController < ApplicationController
     end
   end
 
-  #the method loads all the selected topics
-  def load_all_selected_topics
-    @stopics = SignUpTopic.where(assignment_id: params[:assignment_id], topic_identifier: params[:topic_ids])
-    render json: {message: 'All selected topics have been loaded successfully.', sign_up_topics: @stopics}, status: 200 and return @stopics
+  # filters topics based on assignment id (required) and topic identifiers (optional)
+  def filter
+    if params[:assignment_id].nil?
+      render json: {message: 'Assignment ID is required!' }, status: :unprocessable_entity
+    elsif params[:topic_ids].nil?
+      @stopics = SignUpTopic.where(assignment_id: params[:assignment_id])
+    else
+      @stopics = SignUpTopic.where(assignment_id: params[:assignment_id], topic_identifier: params[:topic_ids])
+    end
+    render json: {message: 'All selected topics have been loaded successfully.', sign_up_topics: @stopics}, status: 200
   end
-  #this method deletes all selected topics
-  def delete_all_selected_topics
-    #load_all_selected_topics
-    @stopics = SignUpTopic.where(assignment_id: params[:assignment_id], topic_identifier: params[:topic_ids])
+
+  # this method deletes all selected topics
+  def delete_filter
+    #filters topics based on assignment id (required) and topic identifiers (optional)
+    if params[:assignment_id].nil?
+      render json: {message: 'Assignment ID is required!' }, status: :unprocessable_entity
+    elsif params[:topic_ids].empty?
+      @stopics = SignUpTopic.where(assignment_id: params[:assignment_id])
+    else
+      @stopics = SignUpTopic.where(assignment_id: params[:assignment_id], topic_identifier: params[:topic_ids])
+    end
     @stopics.each(&:delete)
     render json: {message: 'All selected topics have been deleted successfully.', sign_up_topics: @stopics }, status: 200
   end
-
-  # This deletes all topics for the given assignment
-  def delete_all_topics_for_assignment
-    topics = SignUpTopic.where(assignment_id: params[:assignment_id])
-    topics.each(&:destroy)
-    render json: {message: 'All topics have been deleted successfully.', sign_up_topics: topics}, status: 200
-  end
-
 
   private
     # Use callbacks to share common setup or constraints between actions.
