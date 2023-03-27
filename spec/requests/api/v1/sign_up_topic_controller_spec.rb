@@ -5,23 +5,23 @@ RSpec.describe 'SignUpTopicController API', type: :request do
   #test 1 to check if a topic can be created sucessfully.
   path '/api/v1/sign_up_topics' do
     post('create a new topic in the sheet') do
-     tags 'SignUpTopic'
-     consumes 'application/json'
-     #inputs are from the sign up topic table with properties as ID, name, choosers
-     # assignment ID and micropayment
-     parameter name: :sign_up_topic, in: :body, schema: {
-       type: :object,
-       properties: {
-         topic_identifier: { type: :integer },
-         topic_name: { type: :string },
-         max_choosers: { type: :integer },
-         category: {type: :string},
-         assignment_id: {type: :integer},
-         micropayment: {type: :integer}
-       },
-       #the test will require these inputs to pass
-       required: [ 'topic_identifier', 'topic_name', 'max_choosers', 'category', 'assignment_id','micropayment' ]
-     }
+      tags 'SignUpTopic'
+      consumes 'application/json'
+      #inputs are from the sign up topic table with properties as ID, name, choosers
+      # assignment ID and micropayment
+      parameter name: :sign_up_topic, in: :body, schema: {
+        type: :object,
+        properties: {
+          topic_identifier: { type: :integer },
+          topic_name: { type: :string },
+          max_choosers: { type: :integer },
+          category: {type: :string},
+          assignment_id: {type: :integer},
+          micropayment: {type: :integer}
+        },
+        #the test will require these inputs to pass
+        required: [ 'topic_identifier', 'topic_name', 'max_choosers', 'category', 'assignment_id','micropayment' ]
+      }
       response(201, 'Success') do
         let(:topic) { { topic_identifier: 1 } }
         after do |example|
@@ -33,28 +33,28 @@ RSpec.describe 'SignUpTopicController API', type: :request do
         end
         run_test!
       end
-     response(404, 'Not Found') do
-       let(:topic) { { topic_identifier: 1 } }
-       after do |example|
-         example.metadata[:response][:content] = {
-           'application/json' => {
-             example: JSON.parse(response.body, symbolize_names: true)
-           }
-         }
-       end
-       run_test!
-     end
-     response(422, 'Invalid Request') do
-       let(:topic) { { topic_identifier: 1 } }
-       after do |example|
-         example.metadata[:response][:content] = {
-           'application/json' => {
-             example: JSON.parse(response.body, symbolize_names: true)
-           }
-         }
-       end
-       run_test!
-     end
+      response(404, 'Not Found') do
+        let(:topic) { { topic_identifier: 1 } }
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+      response(422, 'Invalid Request') do
+        let(:topic) { { topic_identifier: 1 } }
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
     end
   end
   # TEST 2 to update a new topic in the sheet
@@ -67,13 +67,13 @@ RSpec.describe 'SignUpTopicController API', type: :request do
       consumes 'application/json'
       parameter name: :sign_up_topic, in: :body, schema: {
         type: :object,
-          properties: {
-            topic_identifier: { type: :integer },
-            topic_name: { type: :string },
-            max_choosers: { type: :integer },
-            category: {type: :string},
-            assignment_id: {type: :integer},
-            micropayment: {type: :integer}
+        properties: {
+          topic_identifier: { type: :integer },
+          topic_name: { type: :string },
+          max_choosers: { type: :integer },
+          category: {type: :string},
+          assignment_id: {type: :integer},
+          micropayment: {type: :integer}
         },
         required: [ 'topic_identifier', 'topic_name', 'category', 'assignment_id']
       }
