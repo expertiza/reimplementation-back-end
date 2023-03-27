@@ -43,7 +43,7 @@ class QuizQuestion < Question
     end
     html.html_safe
   end
-
+#display options for users to select from
 def complete
     quiz_question_choices = self.quiz_question_choices
     html = '<label for="' + id.to_s + '">' + txt + '</label><br>'
@@ -57,7 +57,7 @@ def complete
     end
     html
   end
-
+#displays the question and the user's answer, and indicates whether the answer was correct or not
   def view_completed_question(user_answer)
     quiz_question_choices = self.quiz_question_choices
 
