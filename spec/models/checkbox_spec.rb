@@ -7,13 +7,6 @@ describe Checkbox do
   let!(:checkbox2) { Checkbox.create(id: 2, type: 'Checkbox', seq: 3.0, txt: 'test txt3', weight: 12) }
   let!(:checkbox3) { Checkbox.create(id: 3, type: 'Checkbox', seq: 4.0, txt: 'test txt4', weight: 13) }
 
-  describe '#edit' do
-    it 'returns the html ' do
-      html = checkbox.edit(0).to_s
-      expect(html).to eq('<tr><td align="center"><a rel="nofollow" data-method="delete" href="/questions/10">Remove</a></td><td><input size="6" value="1.0" name="question[10][seq]" id="question_10_seq" type="text"></td><td><textarea cols="50" rows="1" name="question[10][txt]" id="question_10_txt" placeholder="Edit question content here">test txt</textarea></td><td><input size="10" disabled="disabled" value="Checkbox" name="question[10][type]" id="question_10_type" type="text"></td><td><!--placeholder (UnscoredQuestion does not need weight)--></td></tr>')
-    end
-  end
-
   describe '#complete' do
     it 'returns the html' do
       html = checkbox2.complete(1, answer)

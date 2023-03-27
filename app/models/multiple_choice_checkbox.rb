@@ -1,45 +1,12 @@
 class MultipleChoiceCheckbox < QuizQuestion
   def edit
-    quiz_question_choices = QuizQuestionChoice.where(question_id: id)
-
-    html = '<tr><td>'
-    html += "<textarea cols=\"100\" name=\"question[#{id.to_s}][txt]\" "
-    html += "id=\"question_#{id.to_s}_txt\">#{txt}</textarea>"
-    html += '</td></tr>'
-
-    html += '<tr><td>'
-    html += 'Question Weight: '
-    html += "<input type=\"number\" name=\"question_weights[#{id.to_s}][txt]\" "
-    html += "id=\"question_wt_#{id.to_s}_txt\" "
-    html += "value=\"#{weight.to_s}\" min=\"0\" />"
-    html += '</td></tr>'
-
-    # Four choices
-    [0, 1, 2, 3].each do |i|
-      html += '<tr><td>'
-
-      html += "<input type=\"hidden\" name=\"quiz_question_choices[#{id.to_s}][MultipleChoiceCheckbox][#{(i + 1).to_s}][correct]\" "
-      html += "id=\"quiz_question_choices_#{id.to_s}_MultipleChoiceCheckbox_#{(i + 1).to_s}_correct\" value=\"0\" />"
-
-      html += "<input type=\"checkbox\" name=\"quiz_question_choices[#{id.to_s}][MultipleChoiceCheckbox][#{(i + 1).to_s}][correct]\" "
-      html += "id=\"quiz_question_choices_#{id.to_s}_MultipleChoiceCheckbox_#{(i + 1).to_s}_correct\" value=\"1\" "
-      html += 'checked="checked" ' if quiz_question_choices[i].correct
-      html += '/>'
-
-      html += "<input type=\"text\" name=\"quiz_question_choices[#{id.to_s}][MultipleChoiceCheckbox][#{(i + 1).to_s}][txt]\" "
-      html += "id=\"quiz_question_choices_#{id.to_s}_MultipleChoiceCheckbox_#{(i + 1).to_s}_txt\" "
-      html += "value=\"#{quiz_question_choices[i].txt}\" size=\"40\" />"
-
-      html += '</td></tr>'
-    end
-
-    html.html_safe
+    render partial: 'questionnaire/edit/edit_multi_checkbox'
   end
 
   def complete
     quiz_question_choices = QuizQuestionChoice.where(question_id: id)
     html = "<label for=\"#{id.to_s}\">#{txt}</label><br>"
-    # Four choices
+    # Four answer choices
     [0, 1, 2, 3].each do |i|
       html += "<input name = \"#{id}[]\" "
       html += "id = \"#{id}_#{i + 1}\" "

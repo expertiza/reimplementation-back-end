@@ -3,22 +3,7 @@ class Dropdown < UnscoredQuestion
   validates :alternatives, presence: true
 
   def edit(_count)
-    html = "<td align=\"center\"><a rel=\"nofollow\" data-method=\"delete\" href=\"/questions/#{id.to_s}\">Remove</a></td>"
-
-    html += "<td><input size=\"6\" value=\"#{seq.to_s}"
-    html += "\" name=\"question[#{id.to_s}][seq]\" id=\"question_#{id.to_s}_seq\" type=\"text\"></td>"
-
-    html += "<td><textarea cols=\"50\" rows=\"1\" name=\"question[#{id.to_s}][txt]\""
-    html += " id=\"question_#{id.to_s}_txt\" placeholder=\"Edit question content here\">#{txt}</textarea></td>"
-
-    html += "<td><input size=\"10\" disabled=\"disabled\" value=\"#{type}"
-    html += "\" name=\"question[#{id.to_s}][type]\" id=\"question_#{id.to_s}_type\" type=\"text\"></td>"
-
-    html += '<td><!--placeholder (UnscoredQuestion does not need weight)--></td>'
-    html += "<td> alternatives <input size=\"8\" value=\"#{alternatives}"
-    html += "\" name=\"question[#{id.to_s}][alternatives]\" id=\"question_#{id.to_s}_alternatives\" type=\"text\"></td>"
-
-    safe_join(['<tr>'.html_safe, '</tr>'.html_safe], html.html_safe)
+    render partial: 'questionnaire/edit/edit_dropdown'
   end
 
   def view_question_text
