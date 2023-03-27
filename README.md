@@ -3,6 +3,9 @@
 This README would normally document whatever steps are necessary to get the
 application up and running.
 
+### Design Document
+https://expertiza.csc.ncsu.edu/index.php/CSC/ECE_517_Spring_2023_-_E2316._Reimplement_sign_up_sheet_controller.rb
+
 ### System Dependencies
 * Ruby version - 3.2.1
 * Mysql2 (gem) - 0.5.5
@@ -35,11 +38,9 @@ Creates a .yaml file.
 Run ```rails s```
 
 Documentation page - ```<host-name>/api-docs```
-### Add more ...
-* How to run the test suite
 
-* Services (job queues, cache servers, search engines, etc.)
+### Testing
 
-* Deployment instructions
+https://user-images.githubusercontent.com/100992314/226822121-39cbd1a7-2724-4ca7-8052-a25fa7b67fea.mp4
 
-* ...
+
