@@ -1,4 +1,4 @@
-describe 'scale' do
+describe 'Scale' do
   let(:questionnaire) { Questionnaire.new min_question_score: 0, max_question_score: 5 }
   let(:scale) { Scale.new id: 1, type: 'Scale', seq: 1.0, txt: 'test txt', weight: 1, questionnaire: questionnaire }
   let(:answer) { Answer.new answer: 8 }
