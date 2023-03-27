@@ -2,6 +2,9 @@
 
 module ReviewCommentMixin
 
+  # Determine the average size of review comments in each round
+  # the first entry in the returned list is the overall average
+  # word count.
   def self.volume_of_review_comments(assignment_id, reviewer_id)
     comments, counter,
       @comments_in_round, @counter_in_round = Response.get_all_review_comments(assignment_id, reviewer_id)

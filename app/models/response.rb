@@ -5,6 +5,9 @@ class Response < ApplicationRecord
 
   has_many :scores, class_name: 'Answer', foreign_key: 'response_id', dependent: :destroy, inverse_of: false
 
+  # Get a collection of all comments across all rounds of a review
+  # as well as a count of the total number of comments. Returns the
+  # above information both for totals and in a list per-round.
   def self.get_all_review_comments(assignment_id, reviewer_id)
     comments = ''
     counter = 0
@@ -13,6 +16,8 @@ class Response < ApplicationRecord
     assignment = Assignment.find(assignment_id)
     question_ids = Question.get_all_questions_with_comments_available(assignment_id)
 
+    # Since reviews can have multiple rounds we need to iterate over all of them
+    # to build our response.
     ReviewResponseMap.where(reviewed_object_id: assignment_id, reviewer_id: reviewer_id).find_each do |response_map|
       (1..assignment.num_review_rounds + 1).each do |round|
         @comments_in_round[round] = ''
