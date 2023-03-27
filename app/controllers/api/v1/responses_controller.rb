@@ -2,8 +2,8 @@ class Api::V1::ResponsesController < ApplicationController
     include AuthorizationHelper
     include ResponseHelper
   
-    helper :submitted_content
-    helper :file
+    # helper :submitted_content
+    # helper :file
   
     before_action :authorize_show_calibration_results, only: %i[show_calibration_results_for_student]
     before_action :set_response, only: %i[update delete view]
@@ -11,7 +11,7 @@ class Api::V1::ResponsesController < ApplicationController
     before_action :assign_action_parameters, only: %i[edit new]
 
     # Is this the right approach, making this a global variable
-    questions = sort_questions(@questionnaire.questions)
+    # questions = sort_questions(@questionnaire.questions)
 
     # GET /response/json?response_id=xx
     def json

@@ -19,4 +19,4 @@ RSpec.describe 'ResponsesController' do
       expect(response).not_to redirect_to('api/v1/response/redirect?id=2&msg=The+response+was+deleted.')
     end
   end
-  end
+end
