@@ -8,6 +8,7 @@ RSpec.describe Questionnaire, type: :model do
       t.string :type
       t.references :questionnaire, null: false, foreign_key: true
       t.integer :weight
+      t.string :size
     end
     m.create_table :assignment_questionnaires do |t|
       t.integer :used_in_round
@@ -153,12 +154,22 @@ RSpec.describe Questionnaire, type: :model do
     end
   end
 
-
-  it 'allowing calls from copy_questionnaire_details' do
-    allow(Questionnaire).to receive(:find).with('1').and_return(questionnaire)
-    allow(Question).to receive(:where).with(questionnaire_id: '1').and_return([Question])
-    question_advice = build(:question_advice)
-    allow(QuestionAdvice).to receive(:where).with(question_id: 1).and_return([question_advice])
+  describe 'self.copy_questionnaire_details' do
+    it 'allowing calls from copy_questionnaire_details' do
+      questionnaire_to_be_cloned = Questionnaire.create(name: 'clone me', min_question_score: 0, max_question_score: 10, instructor_id: instructor.id)
+      criterion_q = Criterion.create(questionnaire_id: questionnaire_to_be_cloned.id)
+      question_to_clone = Question.create(questionnaire_id: questionnaire_to_be_cloned.id)
+      allow(questionnaire_to_be_cloned).to receive(:questions).and_return([criterion_q, question_to_clone])
+      question_advice = QuestionAdvice.create(question_id: criterion_q.id)
+      allow(criterion_q).to receive(:question_advices).and_return([question_advice])
+      params = { id: questionnaire_to_be_cloned.id }
+      cloned_questionnaire = Questionnaire.copy_questionnaire_details(params, questionnaire_to_be_cloned.instructor_id)
+      expect(cloned_questionnaire).to be_a(Questionnaire)
+      expect(Questionnaire.find_by(id: cloned_questionnaire.id)).to be_truthy
+      expect(cloned_questionnaire.questions.count).to eq(2)
+      expect(Criterion.find_by(questionnaire_id: cloned_questionnaire.id).size).to eq('50,3')
+      expect(QuestionAdvice.joins(:question).where('questions.questionnaire_id = ?', cloned_questionnaire).count).to eq (1)
+    end
   end
 
   describe "questionnaire max possible score" do
