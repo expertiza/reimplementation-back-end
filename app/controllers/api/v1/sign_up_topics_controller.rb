@@ -45,6 +45,7 @@ class Api::V1::SignUpTopicsController < ApplicationController
   end
 
   # filters topics based on assignment id (required) and topic identifiers (optional)
+  # follows a restful API and is called on the GET call.
   def filter
     if params[:assignment_id].nil?
       render json: {message: 'Assignment ID is required!' }, status: :unprocessable_entity
@@ -56,7 +57,9 @@ class Api::V1::SignUpTopicsController < ApplicationController
     render json: {message: 'All selected topics have been loaded successfully.', sign_up_topics: @stopics}, status: 200
   end
 
-  # this method deletes all selected topics
+  # this method deletes all selected topics (follows a restful approach )
+  # the method below is called when a delete call is made to filter
+  # assignment id IN COMBINATION with the topic id DELETES the topics
   def delete_filter
     #filters topics based on assignment id (required) and topic identifiers (optional)
     if params[:assignment_id].nil?
