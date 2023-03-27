@@ -1,5 +1,7 @@
 class MultipleChoiceRadio < QuizQuestion
 
+  # return HTML shown to admins when editing multiple choice radio
+  # extends the html prefix from QuizQuestion and displays four choices a radio selection
   def edit
     html = super
 

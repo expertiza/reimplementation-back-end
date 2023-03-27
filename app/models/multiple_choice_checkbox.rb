@@ -1,4 +1,7 @@
 class MultipleChoiceCheckbox < QuizQuestion
+
+  # return HTML shown to admins when editing multiple choice checkbox
+  # extends the html prefix from QuizQuestion and displays four choices as checkboxes
   def edit
     html = super
 

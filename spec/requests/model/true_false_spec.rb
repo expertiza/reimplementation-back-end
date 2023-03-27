@@ -4,6 +4,8 @@ describe TrueFalse do
     let(:quiz_question_choice2) { QuizQuestionChoice.new }
     let(:quiz_question_choice3) { QuizQuestionChoice.new }
     let(:quiz_question_choice4) { QuizQuestionChoice.new }
+
+    # create TrueFalse object with associated QuizQuestionChoices used in tests within this file
     before(:each) do
       quiz_question.quiz_question_choices = [quiz_question_choice1, quiz_question_choice2]
       quiz_question.txt = 'Question Text'

@@ -7,6 +7,7 @@ class QuizQuestion < Question
     @quiz_question_choices = QuizQuestionChoice.where(question_id: id)
   end
 
+  # return HTML shown to admins when editing quiz question
   def edit 
     # provide initial html to classes that extend QuizQuestion will add to based on type
     # (e.g. MultipleChoiceCheckbox, MultipleChoiceRadio, TrueFalse)

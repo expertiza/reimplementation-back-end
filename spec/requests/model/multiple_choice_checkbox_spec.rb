@@ -6,6 +6,8 @@ describe MultipleChoiceCheckbox do
   let(:multiple_choice2) { QuizQuestionChoice.new }
   let(:multiple_choice3) { QuizQuestionChoice.new }
   let(:multiple_choice4) { QuizQuestionChoice.new }
+
+  # create MultipleChoiceCheckbox object with associated QuizQuestionChoices used in tests within this file
   before(:each) do
     multiple_choice_question.quiz_question_choices = [multiple_choice1, multiple_choice2, multiple_choice3, multiple_choice4]
     multiple_choice_question.txt = 'Question Text'

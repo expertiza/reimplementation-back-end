@@ -1,4 +1,7 @@
 class TrueFalse < QuizQuestion
+
+  # return HTML shown to admins when editing multiple choice radio
+  # extends the html prefix from QuizQuestion and displays two choices as true/false radio selection
   def edit
     html = super
 
