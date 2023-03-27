@@ -4,6 +4,188 @@ info:
   title: EXPERTIZA API V1
   version: v1
 paths:
+  "/api/v1/participants/index/{model}/{id}":
+    parameters:
+    - name: model
+      in: path
+      description: Course or Assignment
+      required: true
+      schema:
+        type: string
+    - name: id
+      in: path
+      description: id of the course or assignment
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: list participants
+      tags:
+      - Participants
+      responses:
+        '200':
+          description: ok
+        '422':
+          description: invalid request
+  "/api/v1/participants/{model}/{id}":
+    parameters:
+    - name: model
+      in: path
+      description: Course or Assignment
+      required: true
+      schema:
+        type: string
+    - name: id
+      in: path
+      description: id of the course or assignment
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: create participant
+      tags:
+      - Participants
+      parameters: []
+      responses:
+        '404':
+          description: resource not found
+        '200':
+          description: ok
+        '201':
+          description: created
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: object
+                  properties:
+                    name: string
+                participant:
+                  type: object
+                  properties:
+                    can_submit: boolean
+                    can_review: boolean
+                    can_take_quiz: boolean
+  "/api/v1/participants/update_handle/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id of the participant
+      required: true
+      schema:
+        type: integer
+    patch:
+      summary: update the handle of the assignment participant
+      tags:
+      - Participants
+      parameters: []
+      responses:
+        '200':
+          description: ok
+        '422':
+          description: invalid request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                participant:
+                  type: object
+                  properties:
+                    handle: string
+  "/api/v1/participants/update_authorization/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id of the participant
+      required: true
+      schema:
+        type: integer
+    patch:
+      summary: 'update the authorization of the participant '
+      tags:
+      - Participants
+      parameters: []
+      responses:
+        '200':
+          description: ok
+        '422':
+          description: invalid request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                participant:
+                  type: object
+                  properties:
+                    can_submit: boolean
+                    can_review: boolean
+                    can_take_quiz: boolean
+  "/api/v1/participants/inherit/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id of the assignment
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: inherit participants from course to assignment
+      tags:
+      - Participants
+      responses:
+        '422':
+          description: invalid request
+        '404':
+          description: resource not found
+        '200':
+          description: ok
+        '201':
+          description: created
+  "/api/v1/participants/bequeath/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id of the assignment
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: bequeaths participants from assignment to course
+      tags:
+      - Participants
+      responses:
+        '422':
+          description: invalid request
+        '404':
+          description: resource not found
+        '200':
+          description: ok
+        '201':
+          description: created
+  "/api/v1/participants/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id of the participant
+      required: true
+      schema:
+        type: integer
+    delete:
+      summary: delete participant
+      tags:
+      - Participants
+      responses:
+        '422':
+          description: invalid request
+        '200':
+          description: ok
   "/api/v1/roles":
     get:
       summary: list roles

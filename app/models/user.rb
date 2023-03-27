@@ -9,6 +9,8 @@ class User < ApplicationRecord
   validates :password, length: { minimum: 6 }, presence: true, allow_nil: true
   validates :fullname, presence: true, length: { maximum: 50 }
 
+  has_many :participants
+  has_many :assignment_participants
   belongs_to :role
   belongs_to :institution, optional: true
   belongs_to :parent, class_name: 'User', optional: true
