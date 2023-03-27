@@ -1,5 +1,5 @@
 FactoryBot.define do
-    factory :assignment, class: Assignment do
+    factory :assignment do
         # Help multiple factory-created assignments get unique names
         # Let the first created assignment have the name 'final2' to avoid breaking some fragile existing tests
         name { (Assignment.last ? ('assignment' + (Assignment.last.id + 1).to_s) : 'final2').to_s }
