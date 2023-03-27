@@ -1,0 +1,40 @@
+version: '3.1'
+
+services:
+  app:
+    build: .
+    command: tail -f /dev/null
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: mysql2://root:expertiza@db:3306/reimplementation?
+      CACHE_STORE: redis://redis:6380/0
+    ports:
+      - "4000:4000"
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_USER: dev
+      MYSQL_PASSWORD: expertiza
+      MYSQL_ROOT_PASSWORD: expertiza
+    ports:
+      - "3306:3306"
+    volumes:
+      - expertiza-mysql:/var/lib/mysql2/data
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6380:6380"
+    volumes:
+      - expertiza-redis:/var/lib/redis/data
+
+volumes:
+  expertiza-mysql:
+  expertiza-redis:

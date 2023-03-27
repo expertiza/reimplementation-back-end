@@ -3,44 +3,27 @@
 This README would normally document whatever steps are necessary to get the
 application up and running.
 
-### Design Document
-https://expertiza.csc.ncsu.edu/index.php/CSC/ECE_517_Spring_2023_-_E2316._Reimplement_sign_up_sheet_controller.rb
+Things you may want to cover:
 
-### System Dependencies
 * Ruby version - 3.2.1
-* Mysql2 (gem) - 0.5.5
 
-### Configuration
-* Changed database username, password
-* Renamed yml file
+## Development Environment
 
-### Database Initialization
-* Install MySQL
-  * Mac - ``` brew install mysql ```
-* Install gem mysql2
-* ```bundle install ```
-* Start MySQL Server - ``` mysql.server start ```
-* Login as root
-  * Create new user - ``` CREATE USER '<username>'@'localhost' IDENTIFIED BY '<password>'; ```
-  * Grant privileges - ``` GRANT CREATE, ALTER, DROP, INSERT, UPDATE, DELETE, SELECT, REFERENCES, RELOAD on *.* TO '<username>'@'localhost' WITH GRANT OPTION; ```
-
-### Database initialization
-* ```rake db:create```
-* ```rake db:migrate```
-
-### Swagger Tests
-```rails rswag:specs:swaggerize```
-
-Runs Swagger API Document creation
-
-Creates a .yaml file.
-
-Run ```rails s```
-
-Documentation page - ```<host-name>/api-docs```
-
-### Testing
-
-https://user-images.githubusercontent.com/100992314/226822121-39cbd1a7-2724-4ca7-8052-a25fa7b67fea.mp4
+### Prerequisites
+- Verify that [Docker Desktop](https://www.docker.com/products/docker-desktop/) is installed and running.
+- [Download](https://www.jetbrains.com/ruby/download/) RubyMine
+- Make sure that the Docker plugin [is enabled](https://www.jetbrains.com/help/ruby/docker.html#enable_docker).
 
 
+### Instructions
+Tutorial: [Docker Compose as a remote interpreter](https://www.jetbrains.com/help/ruby/using-docker-compose-as-a-remote-interpreter.html)
+
+### Video Tutorial
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=BHniRaZ0_JE
+" target="_blank"><img src="http://img.youtube.com/vi/BHniRaZ0_JE/maxresdefault.jpg" 
+alt="IMAGE ALT TEXT HERE" width="560" height="315" border="10" /></a>
+
+### Database Credentials
+- username: root
+- password: expertiza 
