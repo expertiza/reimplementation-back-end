@@ -49,70 +49,70 @@ RSpec.describe 'Responses API', type: :request do
     end
   end
   
-  #   delete('delete Response') do
-  #     tags 'Responses'
+    delete('delete Response') do
+      tags 'Responses'
 
-  #     parameter name: 'id', in: :query, type: :string, description: 'Response Map ID', required: true
+      parameter name: 'id', in: :query, type: :string, description: 'Response Map ID', required: true
 
-  #     # let(:response_map) {[instance_double(ResponseMap)]}
+      # let(:response_map) {[instance_double(ResponseMap)]}
 
-  #     let(:id) { "1" }
+      let(:id) { "1" }
 
-  #     before do
-  #       response_map_instance = instance_double(ResponseMap)
+      before do
+        response_map_instance = instance_double(ResponseMap)
 
-  #       # response_map_instance.id = 1
-  #       allow(ResponseMap).to receive(:find).with(id).and_return(response_map_instance)
+        # response_map_instance.id = 1
+        allow(ResponseMap).to receive(:find).with(id).and_return(response_map_instance)
         
-  #     end
+      end
 
-  #     # parameter name: :id, in: :body, schema: {
-  #     #    type: :object,
-  #     #    properties: {
-  #     #     #  id: { type: :integer },
-  #     #     map_id: { type: :integer},
-  #     #     additional_comment: {type: :text},
-  #     #     created_at: { type: :string, format: :date_time },
-  #     #     updated_at: { type: :string, format: :date_time },
-  #     #     version_num: {type: :integer},
-  #     #     round: {type: :integer},
-  #     #     is_submitted: {type: :boolean},
-  #     #     visibility: {type: :string},
-  #     #   },
-  #     #    required: [ 'id' ]
-  #     #  }
-  #     response(200, 'successful') do
-  #       let(:assignment) { build(:assignment, instructor_id: 6, id: 1) }
-  #       let(:instructor) { build(:instructor, id: 6) }
-  #       let(:participant) { build(:participant, id: 1, user_id: 6, assignment: assignment) }   
-  #       let(:review_response_map) { build(:review_response_map, id: 1, reviewer: participant)}
-  #       let(:id) { 1 }
+      # parameter name: :id, in: :body, schema: {
+      #    type: :object,
+      #    properties: {
+      #     #  id: { type: :integer },
+      #     map_id: { type: :integer},
+      #     additional_comment: {type: :text},
+      #     created_at: { type: :string, format: :date_time },
+      #     updated_at: { type: :string, format: :date_time },
+      #     version_num: {type: :integer},
+      #     round: {type: :integer},
+      #     is_submitted: {type: :boolean},
+      #     visibility: {type: :string},
+      #   },
+      #    required: [ 'id' ]
+      #  }
+      response(200, 'successful') do
+        let(:assignment) { build(:assignment, instructor_id: 6, id: 1) }
+        let(:instructor) { build(:instructor, id: 6) }
+        let(:participant) { build(:participant, id: 1, user_id: 6, assignment: assignment) }   
+        let(:review_response_map) { build(:review_response_map, id: 1, reviewer: participant)}
+        let(:id) { 1 }
   
 
-  #       after do |example|
-  #         example.metadata[:response][:content] = {
-  #           'application/json' => {
-  #             example: JSON.parse(response.body, symbolize_names: true)
-  #           }
-  #         }
-  #       end
-  #       run_test!
-  #     end
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
 
-  #     response(404, 'not found') do
-  #       let(:id) { 'invalid_id' }
+      response(404, 'not found') do
+        let(:id) { 'invalid_id' }
 
-  #       after do |example|
-  #         example.metadata[:response][:content] = {
-  #           'application/json' => {
-  #             example: JSON.parse(response.body, symbolize_names: true)
-  #           }
-  #         }
-  #       end
-  #       run_test!
-  #     end
-  #   end
-  # end
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+    end
+  end
 
 
 end
