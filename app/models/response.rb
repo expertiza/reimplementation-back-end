@@ -3,6 +3,7 @@ class Response < ApplicationRecord
   include MailMixin
   include ReviewCommentMixin
 
+  belongs_to :response_map, class_name: 'ResponseMap', foreign_key: 'map_id', inverse_of: false
   has_many :scores, class_name: 'Answer', foreign_key: 'response_id', dependent: :destroy, inverse_of: false
 
   # Get a collection of all comments across all rounds of a review
@@ -75,5 +76,10 @@ class Response < ApplicationRecord
   def self.get_latest_response(assignment, reviewer, reviewee)
     map_id = ResponseMap.find_by(assignment: assignment, reviewer: reviewer, reviewee: reviewee)
     Response.where(map_id: map_id).last
+  end
+
+  def self.get_all_responses(assignment, reviewer, reviewee)
+    map_id = ResponseMap.find_by(assignment: assignment, reviewer: reviewer, reviewee: reviewee)
+    Response.where(map_id: map_id).all
   end
 end
