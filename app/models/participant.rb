@@ -1,6 +1,9 @@
 class Participant < ApplicationRecord
   include Scoring
   include ParticipantsHelper
+  
+  # the various associations for the model is being made
+  #paper trail is used to keep track of the changes that are made to the code (does not affect the codebase in anyway)
   has_paper_trail
   belongs_to :user
   belongs_to :topic, class_name: 'SignUpTopic', inverse_of: false
@@ -12,6 +15,7 @@ class Participant < ApplicationRecord
   has_many :awarded_badges, dependent: :destroy
   has_many :badges, through: :awarded_badges
   has_one :review_grade, dependent: :destroy
+  #validation to ensure grade is of type numerical or nil
   validates :grade, numericality: { allow_nil: true }
   has_paper_trail
   delegate :course, to: :assignment
@@ -26,7 +30,8 @@ class Participant < ApplicationRecord
   # since the column's type is VARCHAR(255), other string constants should be
   # defined here to add different duty titles
   DUTY_MENTOR = 'mentor'.freeze
-
+  
+  # finds team of the user
   def team
     TeamsUser.find_by(user: user).try(:team)
   end
@@ -48,13 +53,15 @@ class Participant < ApplicationRecord
   end
 
   def delete(force = nil)
-    maps = ResponseMap.where('reviewee_id = ? or reviewer_id = ?', id, id)
-
+    maps = ResponseMap.where('reviewee_id = ? or reviewer_id = ?', id, id) #finds if the participant is either a reviewer or reviewee of an assignment
+    #if that is the case, then association exist and therefore participant cannot be deleted
     raise 'Associations exist for this participant.' unless force || (maps.blank? && team.nil?)
 
-    leave_team(maps)
+    leave_team(maps) #to delete the participant
   end
 
+  #leave_team method deletes a participant from a team. But, to do so, a team has to be present. 
+  #First it checks if team exists and them compares the team user id with the participant user id to delete that participant.
   def leave_team(maps)
     maps && maps.each(&:destroy)
     if team
@@ -73,8 +80,11 @@ class Participant < ApplicationRecord
   # Get authorization from permissions.
   def authorization
     authorization = 'participant'
-    authorization = 'reader' if !can_submit && can_review && can_take_quiz
+    #if the pariticpant cannot submit assignments, but can review them, and take quiz, then they are authorized as readers
+    authorization = 'reader' if !can_submit && can_review && can_take_quiz 
+    #if the participant can submit assignments but cannot review them or cannot take quiz, they are just a submitter
     authorization = 'submitter' if can_submit && !can_review && !can_take_quiz
+    #if the participant can not submit assignment but can review them and also not be able to take quiz, then they are reviewers.
     authorization = 'reviewer' if !can_submit && can_review && !can_take_quiz
     authorization
   end
