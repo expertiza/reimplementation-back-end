@@ -57,16 +57,24 @@ class Response < ApplicationRecord
     code.html_safe
   end
 
-  def self.avg_scores_and_count_for_prev_reviews(existing_responses, current_response)
-    scores_assigned = []
+  def self.prev_reviews_count(existing_responses, current_response)
     count = 0
     existing_responses.each do |existing_response|
       unless existing_response.id == current_response.id # the current_response is also in existing_responses array
         count += 1
+      end
+    end
+    count
+  end
+
+  def self.prev_reviews_avg_scores(existing_responses, current_response)
+    scores_assigned = []
+    existing_responses.each do |existing_response|
+      unless existing_response.id == current_response.id # the current_response is also in existing_responses array
         scores_assigned << existing_response.aggregate_questionnaire_score.to_f / existing_response.maximum_score
       end
     end
-    [scores_assigned.sum / scores_assigned.size.to_f, count]
+    scores_assigned.sum / scores_assigned.size.to_f
   end
 
   def notify_instructor_on_difference
