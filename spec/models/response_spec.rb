@@ -87,4 +87,24 @@ RSpec.describe Response, type: :model do
       expect(Response.get_all_review_comments(1, 1)).to eq(['Answer textAnswer textLGTM', 2, [nil, 'Answer text', 'Answer textLGTM', ''], [nil, 1, 1, 0]])
     end
   end
+
+  describe ".prev_reviews_count" do
+    context 'when current response is not in current response array' do
+      it 'returns the count of previous reviews' do
+        allow(response).to receive(:aggregate_questionnaire_score).and_return(96)
+        allow(response).to receive(:maximum_score).and_return(100)
+        expect(Response.prev_reviews_count([response], double('Response', id: 6))).to eq(1)
+      end
+    end
+  end
+
+  describe ".prev_reviews_avg_scores" do
+    context 'when current response is not in current response array' do
+      it 'returns the average score of previous reviews' do
+        allow(response).to receive(:aggregate_questionnaire_score).and_return(96)
+        allow(response).to receive(:maximum_score).and_return(100)
+        expect(Response.prev_reviews_avg_scores([response], double('Response', id: 6))).to eq(0.96)
+      end
+    end
+  end
 end

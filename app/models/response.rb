@@ -77,6 +77,19 @@ class Response < ApplicationRecord
     scores_assigned.sum / scores_assigned.size.to_f
   end
 
+  # Computes the total score awarded for a review
+  def aggregate_questionnaire_score
+    # only count the scorable questions, only when the answer is not nil
+    # we accept nil as answer for scorable questions, and they will not be counted towards the total score
+    sum = 0
+    scores.each do |s|
+      question = Question.find(s.question_id)
+      # For quiz responses, the weights will be 1 or 0, depending on if correct
+      sum += s.answer * question.weight unless s.answer.nil? || !question.is_a?(ScoredQuestion)
+    end
+    sum
+  end
+
   def notify_instructor_on_difference
     response_map = map
     reviewer_participant_id = response_map.reviewer_id
