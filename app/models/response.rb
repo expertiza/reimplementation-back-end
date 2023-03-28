@@ -71,4 +71,9 @@ class Response < ApplicationRecord
     end
     sum
   end
+
+  def self.get_latest_response(assignment, reviewer, reviewee)
+    map_id = ResponseMap.find_by(assignment: assignment, reviewer: reviewer, reviewee: reviewee)
+    Response.where(map_id: map_id).last
+  end
 end
