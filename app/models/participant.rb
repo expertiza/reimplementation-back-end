@@ -57,7 +57,8 @@ class Participant < ApplicationRecord
 
   def leave_team(maps)
     maps && maps.each(&:destroy)
-    team.teams_users.each { |teams_user| teams_user.destroy if teams_user.user_id == id }
+    if team
+      team.teams_users.each { |teams_user| teams_user.destroy if teams_user.user_id == id }
     destroy
   end
 
