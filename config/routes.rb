@@ -13,7 +13,7 @@ Rails.application.routes.draw do
       resources :roles
       resources :users
       resources :assignments
-      resources :responses, only: %i[new create edit update] do
+      resources :responses, only: %i[new create edit update delete] do
         collection do
           get :new_feedback
           get :view

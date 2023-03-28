@@ -21,7 +21,7 @@ class Api::V1::ResponsesController < ApplicationController
     end
 
     # E2218: Method to delete a response.
-    def delete
+    def destroy
       # The locking was added for E1973, team-based reviewing. See lock.rb for details
       if @map.team_reviewing_enabled
         @response = Lock.get_lock(@response, current_user, Lock::DEFAULT_TIMEOUT)
@@ -123,8 +123,6 @@ class Api::V1::ResponsesController < ApplicationController
       init_answers(questions)
       render action: 'response'
     end
-  
-    def author; end
 
   
     def new_feedback
@@ -152,15 +150,18 @@ class Api::V1::ResponsesController < ApplicationController
         map_id = params[:map_id]
       end # pass map_id as a hidden field in the review form
       @map = ResponseMap.find(map_id)
-      if params[:review][:questionnaire_id]
-        @questionnaire = Questionnaire.find(params[:review][:questionnaire_id])
-        @round = params[:review][:round]
-      else
-        @round = nil
-      end
+
+      # if params[:review][:questionnaire_id]
+      #   @questionnaire = Questionnaire.find(params[:review][:questionnaire_id])
+      #   @round = params[:review][:round]
+      # else
+      
+      @round = nil
+      # end
       is_submitted = (params[:isSubmit] == 'Yes')
       # There could be multiple responses per round, when re-submission is enabled for that round.
       # Hence we need to pick the latest response.
+
       @response = Response.where(map_id: @map.id, round: @round.to_i).order(created_at: :desc).first
       if @response.nil?
         @response = Response.create(map_id: @map.id, additional_comment: params[:review][:comments],
@@ -190,8 +191,8 @@ class Api::V1::ResponsesController < ApplicationController
     def save
       @map = ResponseMap.find(params[:id])
       @return = params[:return]
-      @map.save
-      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, 'Response was successfully saved')
+      @map.savedef
+      # ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, 'Response was successfully saved')
       redirect_to action: 'redirect', id: @map.map_id, return: params.permit(:return)[:return], msg: params.permit(:msg)[:msg], error_msg: params.permit(:error_msg)[:error_msg]
     end
 

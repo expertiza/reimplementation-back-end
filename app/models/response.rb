@@ -5,7 +5,7 @@ class Response < ApplicationRecord
   # Added for E1973. A team review will have a lock on it so only one user at a time may edit it.
   include Lockable
   include ResponseAnalytic
-  include Scoring
+  # include Scoring
 
   belongs_to :response_map, class_name: 'ResponseMap', foreign_key: 'map_id', inverse_of: false
 
