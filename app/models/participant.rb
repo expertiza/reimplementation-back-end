@@ -101,23 +101,25 @@ class Participant < ApplicationRecord
 
   # Provide export functionality for Assignment Participants and Course Participants
   def self.export(csv, parent_id, options)
-    where(parent_id: parent_id).find_each do |part|
-      user = part.user
-      tcsv = export_function(parent_id,options)
-      csv << tcsv
+      where(parent_id: parent_id).find_each do |part|
+        tcsv = []
+        user = part.user
+        tcsv.push(user.name, user.fullname, user.email) if options['personal_details'] == 'true'
+        tcsv.push(user.role.name) if options['role'] == 'true'
+        tcsv.push(user.parent.name) if options['parent'] == 'true'
+        tcsv.push(user.email_on_submission, user.email_on_review, user.email_on_review_of_review) if options['email_options'] == 'true'
+        tcsv.push(part.handle) if options['handle'] == 'true'
+        csv << tcsv
+      end
     end
-    fields = export_function(parent_id,options)
-    fields
-  end
- 
-  # export function used in self.export - DRY principle
-  def export_function(parent_id,options)
-    arr=[]
-    arr.push('name', 'full name', 'email') if options['personal_details'] == 'true'
-    arr.push('role') if options['role'] == 'true'
-    arr.push('parent') if options['parent'] == 'true'
-    arr.push('email on submission', 'email on review', 'email on metareview') if options['email_options'] == 'true'
-    arr.push('handle') if options['handle'] == 'true'
-    return arr
-  end
+  
+    def self.export_fields(options)
+      fields = []
+      fields.push('name', 'full name', 'email') if options['personal_details'] == 'true'
+      fields.push('role') if options['role'] == 'true'
+      fields.push('parent') if options['parent'] == 'true'
+      fields.push('email on submission', 'email on review', 'email on metareview') if options['email_options'] == 'true'
+      fields.push('handle') if options['handle'] == 'true'
+      fields
+    end
 end
