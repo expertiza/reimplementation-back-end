@@ -107,4 +107,17 @@ RSpec.describe Response, type: :model do
       end
     end
   end
+
+  describe ".get_latest_response" do
+    it "returns the latest response by a particular reviewer" do
+      reviewee = Participant.create!
+      reviewer = Participant.create!
+      response_map = ReviewResponseMap.create!(assignment: assignment, reviewer: reviewer, reviewee: reviewee)
+
+      response1 = Response.create!(response_map: response_map)
+      response2 = Response.create!(response_map: response_map)
+
+      expect(Response.get_latest_response(assignment, reviewer, reviewee)).to eq(response2)
+    end
+  end
 end

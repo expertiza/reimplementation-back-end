@@ -92,11 +92,14 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_19_232713) do
   create_table "response_maps", force: :cascade do |t|
     t.integer "reviewed_object_id", default: 0, null: false
     t.integer "reviewer_id", default: 0, null: false
+    t.integer "reviewee_id", default: 0, null: false
     t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 
   create_table "responses", force: :cascade do |t|
+    t.integer "map_id", default: 0, null: false
     t.text "additional_comment"
+    t.index ["map_id"], name: "fk_response_response_map"
   end
 
   create_table "roles", force: :cascade do |t|
