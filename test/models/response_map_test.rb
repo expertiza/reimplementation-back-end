@@ -52,6 +52,20 @@ class ResponseMapTest < ActiveSupport::TestCase
     end
   end
 
+  test "assign_metareviewer_for_round_two" do
+    sut = ResponseMap.new
+    sut.id = 2
+    sut.reviewer = Participant.new
+    sut.reviewer.id = 2
+    metaReviewer = MockReviewer.new
+    metaReviewer.id = 3
+    result = MockMetareviewResponseMap.new
+    result.id = 2
+    MetareviewResponseMap.stub :create, result do
+      assert_equal 2, sut.assign_metareviewer(metaReviewer).id
+    end
+  end
+
   test "survey?" do
     sut = ResponseMap.new
     assert_equal false, sut.survey?

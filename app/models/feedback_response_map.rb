@@ -3,6 +3,14 @@ class FeedbackResponseMap < ResponseMap
   belongs_to :review, class_name: 'Response', foreign_key: 'reviewed_object_id'
   belongs_to :reviewer, class_name: 'AssignmentParticipant', dependent: :destroy
 
+  # class variables
+  @review_response_map_ids # stores the ids of the response map
+  @temp_response_map_ids = [] # stores the ids before the rounds are classified
+  @all_review_response_ids_round_one = [] # Feedback response from round 1
+  @all_review_response_ids_round_two = [] # Feedback response from round 2
+  @all_review_response_ids_round_three = [] # Feedback response from round 3
+  @all_review_response_ids = [] # stores the ids of the reviewers response
+
   # get the assignment instance associated with the the instance of this feedback_response_map
   # this instance is associated with a review instance hence the lookup is chained
   def assignment
@@ -35,6 +43,32 @@ class FeedbackResponseMap < ResponseMap
     review.map.reviewee
   end
 
+  # finds the responses for round one, two, and three along with response ids
+  # @param id is the review object id
+  def self.latest_feedback(id)
+    @temp_review_responses = Response.where(['map_id IN (?)', @review_response_map_ids]).order('created_at DESC')
+    # we need to pick the latest version of review for each round
+
+    if Assignment.find(id).vary_by_round?
+
+      @temp_review_responses.each do |response|
+        next if @temp_response_map_ids.include? response.map_id.to_s + response.round.to_s
+
+        @temp_response_map_ids << response.map_id.to_s + response.round.to_s
+        @all_review_response_ids_round_one << response.id if response.round == 1
+        @all_review_response_ids_round_two << response.id if response.round == 2
+        @all_review_response_ids_round_three << response.id if response.round == 3
+      end
+    else
+
+      @temp_review_responses.each do |response|
+        unless @temp_response_map_ids.include? response.map_id
+          @temp_response_map_ids << response.map_id
+          @all_review_response_ids << response.id
+        end
+      end
+    end
+  end
 
   # get a feedback response report a given review object. This provides ability to see all feedback response for a review
   # @param id is the review object id
@@ -49,30 +83,9 @@ class FeedbackResponseMap < ResponseMap
       end
     end
 
-    @temp_review_responses = Response.where(['map_id IN (?)', @review_response_map_ids]).order('created_at DESC')
-    # we need to pick the latest version of review for each round
-    @temp_response_map_ids = []
-    if Assignment.find(id).vary_by_round?
-      @all_review_response_ids_round_one = []
-      @all_review_response_ids_round_two = []
-      @all_review_response_ids_round_three = []
-      @temp_review_responses.each do |response|
-        next if @temp_response_map_ids.include? response.map_id.to_s + response.round.to_s
+    # Finds the reviews from round one, two and three
+    self.latest_feedback(id)
 
-        @temp_response_map_ids << response.map_id.to_s + response.round.to_s
-        @all_review_response_ids_round_one << response.id if response.round == 1
-        @all_review_response_ids_round_two << response.id if response.round == 2
-        @all_review_response_ids_round_three << response.id if response.round == 3
-      end
-    else
-      @all_review_response_ids = []
-      @temp_review_responses.each do |response|
-        unless @temp_response_map_ids.include? response.map_id
-          @temp_response_map_ids << response.map_id
-          @all_review_response_ids << response.id
-        end
-      end
-    end
     # @feedback_response_map_ids = ResponseMap.where(["reviewed_object_id IN (?) and type = ?", @all_review_response_ids, type]).pluck("id")
     # @feedback_responses = Response.where(["map_id IN (?)", @feedback_response_map_ids]).pluck("id")
     if Assignment.find(id).vary_by_round?
