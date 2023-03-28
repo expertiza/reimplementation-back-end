@@ -40,6 +40,7 @@ class Response < ApplicationRecord
     [comments, counter, @comments_in_round, @counter_in_round]
   end
 
+  # Gets the number of previous reviews
   def self.prev_reviews_count(existing_responses, current_response)
     count = 0
     existing_responses.each do |existing_response|
@@ -50,6 +51,7 @@ class Response < ApplicationRecord
     count
   end
 
+  # Gets the average score of all previous reviews
   def self.prev_reviews_avg_scores(existing_responses, current_response)
     scores_assigned = []
     existing_responses.each do |existing_response|
@@ -73,11 +75,13 @@ class Response < ApplicationRecord
     sum
   end
 
+  # Gets the latest response made by a reviewer for a reviewee
   def self.get_latest_response(assignment, reviewer, reviewee)
     map_id = ResponseMap.find_by(assignment: assignment, reviewer: reviewer, reviewee: reviewee)
     Response.where(map_id: map_id).last
   end
 
+  # Gets all of the responses made by a reviewer for a reviewee
   def self.get_all_responses(assignment, reviewer, reviewee)
     map_id = ResponseMap.find_by(assignment: assignment, reviewer: reviewer, reviewee: reviewee)
     Response.where(map_id: map_id).all
