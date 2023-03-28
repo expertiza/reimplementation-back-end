@@ -120,4 +120,17 @@ RSpec.describe Response, type: :model do
       expect(Response.get_latest_response(assignment, reviewer, reviewee)).to eq(response2)
     end
   end
+
+  describe ".get_all_responses" do
+    it "returns all responses by a particular reviewer" do
+      reviewee = Participant.create!
+      reviewer = Participant.create!
+      response_map = ReviewResponseMap.create!(assignment: assignment, reviewer: reviewer, reviewee: reviewee)
+
+      response1 = Response.create!(response_map: response_map)
+      response2 = Response.create!(response_map: response_map)
+
+      expect(Response.get_all_responses(assignment, reviewer, reviewee)).to eq([response1, response2])
+    end
+  end
 end
