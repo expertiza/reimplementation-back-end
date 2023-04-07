@@ -1,0 +1,2 @@
+class Waitlist < ApplicationRecord
+end
