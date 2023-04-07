@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_04_07_194848) do
+ActiveRecord::Schema[7.0].define(version: 2023_04_07_214139) do
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -80,7 +80,17 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_07_194848) do
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
   end
 
-  create_table "sign_up_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "signed_up_teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "preference_priority_number"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "sign_up_topic_id", null: false
+    t.bigint "team_id", null: false
+    t.index ["sign_up_topic_id"], name: "index_signed_up_teams_on_sign_up_topic_id"
+    t.index ["team_id"], name: "index_signed_up_teams_on_team_id"
+  end
+
+  create_table "signup_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.integer "max_choosers"
     t.string "category"
@@ -90,17 +100,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_07_194848) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "assignment_id", null: false
-    t.index ["assignment_id"], name: "index_sign_up_topics_on_assignment_id"
-  end
-
-  create_table "signed_up_teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.integer "preference_priority_number"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.bigint "sign_up_topic_id", null: false
-    t.bigint "team_id", null: false
-    t.index ["sign_up_topic_id"], name: "index_signed_up_teams_on_sign_up_topic_id"
-    t.index ["team_id"], name: "index_signed_up_teams_on_team_id"
+    t.index ["assignment_id"], name: "index_signup_topics_on_assignment_id"
   end
 
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -143,9 +143,9 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_07_194848) do
   end
 
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
-  add_foreign_key "sign_up_topics", "assignments"
-  add_foreign_key "signed_up_teams", "sign_up_topics"
+  add_foreign_key "signed_up_teams", "signup_topics", column: "sign_up_topic_id"
   add_foreign_key "signed_up_teams", "teams"
-  add_foreign_key "waitlists", "sign_up_topics"
+  add_foreign_key "signup_topics", "assignments"
   add_foreign_key "waitlists", "signed_up_teams"
+  add_foreign_key "waitlists", "signup_topics", column: "sign_up_topic_id"
 end
