@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_04_07_194033) do
+ActiveRecord::Schema[7.0].define(version: 2023_04_07_194422) do
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -97,6 +97,10 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_07_194033) do
     t.integer "preference_priority_number"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "sign_up_topic_id", null: false
+    t.bigint "team_id", null: false
+    t.index ["sign_up_topic_id"], name: "index_signed_up_teams_on_sign_up_topic_id"
+    t.index ["team_id"], name: "index_signed_up_teams_on_team_id"
   end
 
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -136,4 +140,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_07_194033) do
 
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
   add_foreign_key "sign_up_topics", "assignments"
+  add_foreign_key "signed_up_teams", "sign_up_topics"
+  add_foreign_key "signed_up_teams", "teams"
 end
