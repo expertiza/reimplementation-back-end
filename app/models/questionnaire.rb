@@ -32,6 +32,7 @@ class Questionnaire < ApplicationRecord
                          'QuizQuestionnaire'].freeze
   # has_paper_trail
 
+  # Returns the weighted score after calculations are done.
   def get_weighted_score(assignment, scores)
     # create symbol for "varying rubrics" feature -Yang
     round = AssignmentQuestionnaire.find_by(assignment_id: assignment.id, questionnaire_id: id).used_in_round
@@ -43,6 +44,7 @@ class Questionnaire < ApplicationRecord
     compute_weighted_score(questionnaire_symbol, assignment, scores)
   end
 
+  # Adds weight to the score from the assignment.
   def compute_weighted_score(symbol, assignment, scores)
     aq = assignment_questionnaires.find_by(assignment_id: assignment.id)
     if scores[symbol][:scores][:avg].nil?
@@ -58,6 +60,7 @@ class Questionnaire < ApplicationRecord
     false
   end
 
+  # Remove the assignment chosen by the user.
   def delete
     assignments.each do |assignment|
       raise "The assignment #{assignment.name} uses this questionnaire.
@@ -72,6 +75,7 @@ class Questionnaire < ApplicationRecord
     destroy
   end
 
+  # Returns the max score from the database table.
   def max_possible_score
     results = Questionnaire.joins('INNER JOIN questions ON questions.questionnaire_id = questionnaires.id')
                            .select('SUM(questions.weight) * questionnaires.max_question_score as max_score')

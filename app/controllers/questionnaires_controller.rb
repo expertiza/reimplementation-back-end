@@ -36,16 +36,20 @@ class QuestionnairesController < ApplicationController
     redirect_to action: 'list', controller: 'tree_display'
   end
 
+  # Retrieve the questionnaire to view.
+  # GET /questionnaires/:id
   def view
     @questionnaire = Questionnaire.find(params[:id])
   end
 
+  # Creates a new questionnaire if the questionnaire type exists in the list of valid questionnaires (in questionnaire.rb).
   def new
     @questionnaire = Object.const_get(params[:model].split.join).new if Questionnaire::QUESTIONNAIRE_TYPES.include? params[:model].split.join
   rescue StandardError
     flash[:error] = $ERROR_INFO
   end
 
+  # Creates the questionnaire with information (questionnaire fields) from the form which was filled out by the user.
   def create
     if params[:questionnaire][:name].blank?
       flash[:error] = 'A rubric or survey must have a title.'
@@ -86,6 +90,7 @@ class QuestionnairesController < ApplicationController
     end
   end
 
+  # Creates the questionnaire and then redirects to the list of created questionnaires.
   def create_questionnaire
     @questionnaire = Object.const_get(params[:questionnaire][:type]).new(questionnaire_params)
     # Create Quiz content has been moved to Quiz Questionnaire Controller
@@ -104,6 +109,7 @@ class QuestionnairesController < ApplicationController
     session[:return_to] = request.original_url
   end
 
+  # Updates the questionnaire with the information from the form filled out by the user.
   def update
     # If 'Add' or 'Edit/View advice' is clicked, redirect appropriately
     if params[:add_new_questions]
@@ -316,11 +322,13 @@ class QuestionnairesController < ApplicationController
     end
   end
 
+  # Only allow a list of trusted parameters through.
   def questionnaire_params
     params.require(:questionnaire).permit(:name, :instructor_id, :private, :min_question_score,
                                           :max_question_score, :type, :display_type, :instruction_loc)
   end
 
+  # Only allow a list of trusted parameters through.
   def question_params
     params.require(:question).permit(:txt, :weight, :questionnaire_id, :seq, :type, :size,
                                      :alternatives, :break_before, :max_label, :min_label)

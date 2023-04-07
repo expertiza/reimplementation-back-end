@@ -22,11 +22,11 @@ class UploadFile < Question
     html.html_safe
   end
 
+  # Returns what to display for uploading a file.
   def complete(count, answer = nil)
-    # Use "app/views/submitted_content/_submitted_files.html.erb" partial.
   end
 
+  # Returns what to display if a student is viewing a filled-out questionnaire.
   def view_completed_question(count, files)
-    # Use "display_directory_tree" method in "app/helpers/submitted_content_helper.rb"
   end
 end

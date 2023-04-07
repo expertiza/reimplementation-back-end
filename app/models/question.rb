@@ -33,12 +33,13 @@ class Question < ApplicationRecord
   RATINGS = [['Very Easy', 1], ['Easy', 2], ['Medium', 3], ['Difficult', 4], ['Very Difficult', 5]].freeze
   attr_accessor :checked
 
+  # Delete the question.
   def delete
     QuestionAdvice.where(question_id: id).find_each(&:destroy)
     destroy
   end
 
-  # for quiz questions, we store 'TrueFalse', 'MultipleChoiceCheckbox', 'MultipleChoiceRadio' in the DB, and the full names are returned below
+  # For quiz questions, we store 'TrueFalse', 'MultipleChoiceCheckbox', 'MultipleChoiceRadio' in the DB, and the full names are returned below
   def formatted_question_type
     type = self.type
     statement = ''
@@ -54,26 +55,27 @@ class Question < ApplicationRecord
   end
 
   # Placeholder methods, override in derived classes if required.
-  # this method decides what to display if an instructor (etc.) is creating or editing a questionnaire
+  # This method decides what to display if an instructor (etc.) is creating or editing a questionnaire.
   def edit
     nil
   end
 
-  # this method decide what to display if an instructor (etc.) is viewing a questionnaire
+  # This method decide what to display if an instructor (etc.) is viewing a questionnaire.
   def view_question_text
     nil
   end
 
-  # this method decide what to display if a student is filling out a questionnaire
+  # This method decide what to display if a student is filling out a questionnaire.
   def view_completed_question
     nil
   end
 
-  # this method decide what to display if a student is viewing a filled-out questionnaire
+  # This method decide what to display if a student is viewing a filled-out questionnaire.
   def complete
     nil
   end
 
+  # This method computes the question score.
   def self.compute_question_score
     0
   end
@@ -89,12 +91,12 @@ class Question < ApplicationRecord
     question_ids
   end
 
+  # Imports an existing questionnaire given by the user.
   def self.import(row, _row_header, _session, q_id = nil)
     if row.length != 5
       raise ArgumentError,  'Not enough items: expect 3 columns: your login name, your full name' \
                             '(first and last name, not separated with the delimiter), and your email.'
     end
-    # questionnaire = Questionnaire.find_by_id(_id)
     questionnaire = Questionnaire.find_by(id: q_id)
     raise ArgumentError, 'Questionnaire Not Found' if questionnaire.nil?
 
@@ -108,7 +110,6 @@ class Question < ApplicationRecord
     end
 
     if qid.positive?
-      # question = Question.find_by_id(qid)
       question = Question.find_by(id: qid)
       attributes = {}
       attributes['txt'] = row[0].strip
@@ -124,18 +125,19 @@ class Question < ApplicationRecord
       attributes['type'] = row[1].strip
       attributes['seq'] = row[2].strip.to_f
       attributes['size'] = row[3].strip
-      # attributes["break_before"] = row[4].strip
       question = Question.new(attributes)
       question.questionnaire_id = q_id
       question.save
     end
   end
 
+  # Exports an array of the question model fields.
   def self.export_fields(_options)
     fields = ['Seq', 'Question', 'Type', 'Weight', 'text area size', 'max_label', 'min_label']
     fields
   end
 
+  # Exports questionnaire to a CSV file.
   def self.export(csv, parent_id, _options)
     questionnaire = Questionnaire.find(parent_id)
     questionnaire.questions.each do |question|
