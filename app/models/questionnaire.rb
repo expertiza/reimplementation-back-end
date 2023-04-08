@@ -2,11 +2,6 @@ class Questionnaire < ApplicationRecord
   # for doc on why we do it this way,
   # see http://blog.hasmanythrough.com/2007/1/15/basic-rails-association-cardinality
   has_many :questions, dependent: :destroy # the collection of questions associated with this Questionnaire
-  # belongs_to :instructor # the creator of this questionnaire
-  # has_many :assignment_questionnaires, dependent: :destroy
-  # has_many :assignments, through: :assignment_questionnaires
-  # has_one :questionnaire_node, foreign_key: 'node_object_id', dependent: :destroy, inverse_of: :questionnaire
-
   validate :validate_questionnaire
   validates :name, presence: true
   validates :max_question_score, :min_question_score, numericality: true
