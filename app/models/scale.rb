@@ -60,7 +60,8 @@ class Scale < ScoredQuestion
     html += '<td width="10%"></td></tr></table><br/>'
     html.html_safe
   end
-
+  
+  #checki if the questionnaire is completed
   def view_completed_question(count, answer, questionnaire_max)
     html = '<b>' + count.to_s + '. ' + txt + '</b><BR/><BR/>'
     html += '<B>Score:</B> <FONT style="BACKGROUND-COLOR:gold">' + answer.answer.to_s + '</FONT> out of <B>' + questionnaire_max.to_s + '</B></TD>'
