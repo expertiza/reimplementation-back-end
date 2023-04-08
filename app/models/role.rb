@@ -12,22 +12,27 @@ class Role < ApplicationRecord
   TEACHING_ASSISTANT = find_by_name('Teaching Assistant')
   SUPER_ADMINISTRATOR = find_by_name('Super Administrator')
 
+  #checking to see if the user has the role of "Super Administrator"
   def super_admin?
     name['Super Administrator']
   end
 
+  #checking to see if the user has the role of "Administrator or super_admin"
   def admin?
     name['Administrator'] || super_admin?
   end
 
+  #checking to see if the user has the role of "instructor"
   def instructor?
     name['Instructor']
   end
 
+  #checking to see if the user has the role of "ta"
   def ta?
     name['Teaching Assistant']
   end
 
+  #checking to see if the user has the role of "Student"
   def student?
     name['Student']
   end
