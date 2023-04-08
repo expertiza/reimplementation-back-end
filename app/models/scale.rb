@@ -20,6 +20,7 @@ class Scale < ScoredQuestion
     html.html_safe
   end
 
+  # Returns what to display for the complete scale question
   def complete(count, questionnaire_min, questionnaire_max, answer = nil)
     html = '<div><label for="responses_' + count.to_s + '">' + txt + '</label></div>'
     html += '<input id="responses_' + count.to_s + '_score" name="responses[' + count.to_s + '][score]" type="hidden"'
