@@ -47,10 +47,15 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
         end
       end
     end
-
     
     post('create questionnaire') do
       tags 'Questionnaires'
+      let(:role) { Role.create(name: 'Instructor', parent_id: nil, default_page_id: nil) }
+    
+      let(:instructor) do 
+        role
+        Instructor.create(id:1, name: 'testinstructor', email: 'test@test.com', fullname: 'Test Instructor', password: '123456', role: role) 
+      end
       let(:valid_questionnaire_params) do
         {
           name: 'Test Questionnaire',
@@ -58,7 +63,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
           private: false,
           min_question_score: 0,
           max_question_score: 5,
-          instructor_id: instructor.id
+          instructor_id: 1
         }
       end
 
@@ -69,7 +74,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
           private: false,
           min_question_score: 0,
           max_question_score: 5,
-          instructor_id: instructor.id
+          instructor_id: 1
         }
       end
 

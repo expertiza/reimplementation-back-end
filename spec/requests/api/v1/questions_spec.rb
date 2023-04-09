@@ -275,8 +275,8 @@ RSpec.describe 'api/v1/questions', type: :request do
       tags 'Questions'
       produces 'application/json'
 
-      # delete request on /api/v1/questions/{id} returns 200 succesful response when it deletes question with given question id present in the database
-      response(200, 'successful') do
+      # delete request on /api/v1/questions/{id} returns 204 succesful response when it deletes question with given question id present in the database
+      response(204, 'successful') do
         run_test! do
           expect(Question.exists?(id)).to eq(false)
         end

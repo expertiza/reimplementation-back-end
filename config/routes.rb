@@ -7,12 +7,8 @@ Rails.application.routes.draw do
   # root "articles#index"
   namespace :api do
     namespace :v1 do
-      resources :institutions
       resources :roles
-      resources :users do
-        get 'institution/:id', on: :collection, action: :institution_users
-        get ':id/managed', on: :collection, action: :managed_users
-      end
+      resources :users
       resources :assignments
       
       resources :questionnaires do

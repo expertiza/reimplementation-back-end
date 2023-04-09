@@ -5,5 +5,5 @@ class Instructor < User
     User.where(parent_id: id).to_a
   end
   
-  
+
 end
