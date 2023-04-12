@@ -14,23 +14,39 @@ RSpec.describe Waitlist, type: :model do
     end
   end
 
-  describe "Test functionality" do
+  describe "This tests functionality of the waitlist" do
+
+    def add_entry_to_waitlist()
+      waitlist = Waitlist.new(
+        signup_topic_id: topic["id"], 
+        signed_up_team_id: team["id"])
+      waitlist.save
+      return waitlist
+    end
+
     it "Returns count of teams waitlisted for given topic" do
-      # TODO: check count of waitlisted teams
+      expect(add_entry_to_waitlist()).to be_valid
+
+      actual_count_for_topic = Waitlist.count_waitlisted_teams(topic["id"])
+      expected_count_for_topic = 1
+      expect(actual_count_for_topic).to eq(expected_count_for_topic)
     end
 
     it "Removes teams from waitlist" do
       # TODO: remove a team from waitlist
     end
 
+    # This test uses the factories to create a signed_up_team and signup_topic which then gets added to the 
     it "Add teams to waitlist" do
-      # TODO: adds teams to waitlist.
-      waitlist = Waitlist.new(signup_topic_id: topic["id"], signed_up_team_id: team["id"])
-      expect(waitlist).to be_valid
+      expect(add_entry_to_waitlist()).to be_valid
     end
 
+    # This test adds a team to the waitlist and then queries for it to check for query response.
     it "Get waitlisted teams" do
-      # TODO: return list of waitlisted teams.
+      expect(add_entry_to_waitlist()).to be_valid
+
+      teams = Waitlist.get_waitlisted_teams(topic["id"])
+      expect(teams).to include(team["id"])
     end
   end
 end
