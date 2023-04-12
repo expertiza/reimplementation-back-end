@@ -19,7 +19,7 @@ Rails.application.routes.draw do
       resources :sign_up_topics do
         collection do
           get :filter
-          delete 'api/v1/sign_up_topics/:assignment_id(/:topic_id)', to: 'sign_up_topics#destroy'
+          delete '/', to: 'sign_up_topics#destroy'
           # delete :filter, to: 'sign_up_topics#delete_filter'
           # delete :delete_all_topics_for_assignment
           # delete :delete_all_selected_topics
