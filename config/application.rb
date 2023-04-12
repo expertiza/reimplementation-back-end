@@ -24,5 +24,8 @@ module Reimplementation
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
     config.cache_store = :redis_store, ENV['CACHE_STORE'], { expires_in: 3.days, raise_errors: false }
+    config.session_store :cookie_store, key: '_interslice_session'
+    config.middleware.use ActionDispatch::Cookies
+    config.middleware.use config.session_store, config.session_options
   end
 end

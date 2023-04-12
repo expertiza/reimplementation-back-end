@@ -4,6 +4,14 @@ info:
   title: EXPERTIZA API V1
   version: v1
 paths:
+  "/api/v1/account_requests":
+    get:
+      summary: List Account Requests
+      tags:
+      - Account Requests
+      responses:
+        '200':
+          description: successful
   "/api/v1/institutions":
     get:
       summary: list institutions
@@ -196,6 +204,47 @@ paths:
       responses:
         '204':
           description: successful
+  "/api/v1/users":
+    parameters:
+    - name: role
+      in: query
+      type: string
+      description: Role of the User
+      required: true
+      schema:
+        type: string
+        default: Student
+        enum:
+        - Student
+        - Instructor
+        - Administrator
+        - Super-Administrator
+        - Unregistered user
+        - Teaching Assistant
+    post:
+      summary: create users and log in
+      tags:
+      - Create Users and Log In
+      parameters: []
+      responses:
+        '201':
+          description: Created a user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                fullname:
+                  type: string
+                email:
+                  type: string
+              required:
+              - name
+              - fullname
+              - email
 servers:
 - url: http://{defaultHost}
   variables:

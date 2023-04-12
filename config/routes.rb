@@ -14,6 +14,7 @@ Rails.application.routes.draw do
         get ':id/managed', on: :collection, action: :managed_users
       end
       resources :assignments
+      resources :account_requests
     end
   end
 end
