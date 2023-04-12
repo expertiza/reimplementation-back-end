@@ -36,8 +36,8 @@ group :development, :test do
   gem 'simplecov', require: false, group: :test
   gem 'rspec-rails'
   gem 'rswag-specs'
-  gem "shoulda", "~> 4.0"
   gem "factory_bot", "~> 6.2"
+  gem 'shoulda-matchers', '~> 5.0'
 end
 
 group :development do
