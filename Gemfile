@@ -36,6 +36,8 @@ group :development, :test do
   gem 'simplecov', require: false, group: :test
   gem 'rspec-rails'
   gem 'rswag-specs'
+  gem "shoulda", "~> 4.0"
+  gem "factory_bot", "~> 6.2"
 end
 
 group :development do
@@ -43,6 +45,3 @@ group :development do
   gem 'spring'
 end
 
-gem "shoulda", "~> 4.0"
-
-gem "factory_bot", "~> 6.2"
