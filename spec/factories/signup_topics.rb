@@ -7,6 +7,6 @@ FactoryBot.define do
     topic_identifier {"topic_identifier_1"}
     description {"description_1"}
     link {"link_1"}
-    assignment_id {1}
+    association :assignment
   end
 end
