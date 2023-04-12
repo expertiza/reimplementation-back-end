@@ -36,9 +36,12 @@ group :development, :test do
   gem 'simplecov', require: false, group: :test
   gem 'rspec-rails'
   gem 'rswag-specs'
+  gem "factory_bot_rails", "~> 6.2"
+  gem 'shoulda-matchers', '~> 5.0'
 end
 
 group :development do
   # Speed up commands on slow machines / big apps [https://github.com/rails/spring]
   gem 'spring'
 end
+
