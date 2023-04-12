@@ -10,7 +10,7 @@ class Waitlist < ApplicationRecord
     # TODO: Remove teams from the waitlist.
   end
 
-  def self.add_teams_to_waitlist()
+  def self.add_teams_to_waitlist(topic_id, team_id)
     # TODO: Add teams to the waitlist.
   end
 

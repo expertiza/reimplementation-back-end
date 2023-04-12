@@ -20,11 +20,13 @@ RSpec.describe Waitlist, type: :model do
     end
 
     it "Removes teams from waitlist" do
-      # TODOD: remove a team from waitlist
+      # TODO: remove a team from waitlist
     end
 
     it "Add teams to waitlist" do
       # TODO: adds teams to waitlist.
+      waitlist = Waitlist.new(signup_topic_id: topic["id"], signed_up_team_id: team["id"])
+      expect(waitlist).to be_valid
     end
 
     it "Get waitlisted teams" do
