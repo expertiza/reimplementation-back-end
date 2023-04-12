@@ -18,8 +18,11 @@ class Api::V1::UsersController < ApplicationController
   def create
     # Add default password for a user if the password is not provided
     params[:user][:password] ||= 'password'
+    params[:user][:role_id] = Role.where(name: params[:role]).first.id
     @user = User.new(user_params)
     if @user.save
+      # Store user id in session variable for simple swagger auth without using extra gems
+      session[:user_id] = @user.id
       render json: @user, status: :created
     else
       render json: @user.errors, status: :unprocessable_entity

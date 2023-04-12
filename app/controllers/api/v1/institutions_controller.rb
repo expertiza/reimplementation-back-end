@@ -18,7 +18,7 @@ class Api::V1::InstitutionsController < ApplicationController
   def create
     @institution = Institution.new(institution_params)
     if @institution.save
-      render json: @institution, status: :created, location: @institution
+      render json: @institution, status: :created
     else
       render json: @institution.errors, status: :unprocessable_entity
     end
@@ -28,7 +28,7 @@ class Api::V1::InstitutionsController < ApplicationController
   def update
     @institution = Institution.find(params[:id])
     if @institution.update(institution_params)
-      render json: @institution, status: :ok, location: @institution
+      render json: @institution, status: :ok
     else
       render json: @institution.errors, status: :unprocessable_entity
     end
