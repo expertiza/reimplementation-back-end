@@ -2,8 +2,8 @@ class Waitlist < ApplicationRecord
   belongs_to :signup_topic
   belongs_to :signed_up_team
 
-  def self.count_waitlisted_team()
-    # TODO: Return the count of waitlisted teams.
+  def self.count_waitlisted_teams(topic_id)
+    return Waitlist.where(sign_up_topic_id: topic_id).count
   end
 
   def self.remove_teams_from_waitlist()
