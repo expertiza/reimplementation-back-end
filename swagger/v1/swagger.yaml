@@ -4,6 +4,96 @@ info:
   title: EXPERTIZA API V1
   version: v1
 paths:
+  "/api/v1/institutions":
+    get:
+      summary: list institutions
+      tags:
+      - Institutions
+      responses:
+        '200':
+          description: successful
+    post:
+      summary: create institution
+      tags:
+      - Institutions
+      parameters: []
+      responses:
+        '201':
+          description: Created a institution
+        '422':
+          description: invalid request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+              - name
+  "/api/v1/institutions/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id of the institution
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: show institution
+      tags:
+      - Institutions
+      responses:
+        '200':
+          description: successful
+    patch:
+      summary: update institution
+      tags:
+      - Institutions
+      parameters: []
+      responses:
+        '200':
+          description: successful
+        '422':
+          description: invalid request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+              - name
+    put:
+      summary: update institution
+      tags:
+      - Institutions
+      parameters: []
+      responses:
+        '200':
+          description: successful
+        '422':
+          description: invalid request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+              - name
+    delete:
+      summary: delete institution
+      tags:
+      - Institutions
+      responses:
+        '200':
+          description: successful
   "/api/v1/roles":
     get:
       summary: list roles
@@ -104,7 +194,7 @@ paths:
       tags:
       - Roles
       responses:
-        '200':
+        '204':
           description: successful
 servers:
 - url: http://{defaultHost}
