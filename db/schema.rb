@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_03_15_185139) do
+ActiveRecord::Schema[7.0].define(version: 2023_04_12_020156) do
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -71,6 +71,18 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_15_185139) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "invitations", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "assignment_id"
+    t.integer "from_id"
+    t.integer "to_id"
+    t.string "reply_status", limit: 1
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "fk_invitation_assignments"
+    t.index ["from_id"], name: "fk_invitationfrom_users"
+    t.index ["to_id"], name: "fk_invitationto_users"
+  end
+
   create_table "roles", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.bigint "parent_id"
@@ -88,17 +100,17 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_15_185139) do
     t.string "email"
     t.integer "parent_id"
     t.string "mru_directory_path"
-    t.boolean "email_on_review"
-    t.boolean "email_on_submission"
-    t.boolean "email_on_review_of_review"
-    t.boolean "is_new_user"
-    t.boolean "master_permission_granted"
+    t.boolean "email_on_review", default: false
+    t.boolean "email_on_submission", default: false
+    t.boolean "email_on_review_of_review", default: false
+    t.boolean "is_new_user", default: true
+    t.boolean "master_permission_granted", default: false
     t.string "handle"
     t.string "persistence_token"
     t.string "timezonepref"
-    t.boolean "copy_of_emails"
+    t.boolean "copy_of_emails", default: false
     t.integer "institution_id"
-    t.boolean "etc_icons_on_homepage"
+    t.boolean "etc_icons_on_homepage", default: false
     t.integer "locale"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
