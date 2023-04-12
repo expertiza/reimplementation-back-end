@@ -21,7 +21,7 @@ class Api::V1::UsersController < ApplicationController
     params[:user][:role_id] = Role.where(name: params[:role]).first.id
     @user = User.new(user_params)
     if @user.save
-      print('bjhbhjb', @user.id)
+      # Store user id in session variable for simple swagger auth without using extra gems
       session[:user_id] = @user.id
       render json: @user, status: :created
     else

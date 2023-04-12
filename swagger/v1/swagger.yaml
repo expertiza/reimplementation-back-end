@@ -7,6 +7,147 @@ paths:
   "/api/v1/account_requests":
     get:
       summary: List Account Requests
+      parameters:
+      - name: history
+        in: query
+        type: boolean
+        description: Show previosuly approved or rejected account requests
+        required: true
+        schema:
+          type: boolean
+          default: false
+          enum:
+          - true
+          - false
+      tags:
+      - Account Requests
+      responses:
+        '200':
+          description: successful
+    post:
+      summary: Create Account Request
+      tags:
+      - Account Requests
+      parameters: []
+      responses:
+        '201':
+          description: Created an Account Request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                fullname:
+                  type: string
+                email:
+                  type: string
+                self_introduction:
+                  type: string
+                role_id:
+                  type: integer
+                institution_id:
+                  type: integer
+              required:
+              - name
+              - fullname
+              - email
+              - self_introduction
+              - role_id
+              - institution_id
+  "/api/v1/account_requests/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id of the Account Request
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Show Account Request
+      tags:
+      - Account Requests
+      responses:
+        '200':
+          description: successful
+    patch:
+      summary: Update Account Request
+      tags:
+      - Account Requests
+      parameters: []
+      responses:
+        '200':
+          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                fullname:
+                  type: string
+                email:
+                  type: string
+                self_introduction:
+                  type: string
+                role_id:
+                  type: integer
+                institution_id:
+                  type: integer
+                status:
+                  type: string
+                  example: Approved
+              required:
+              - name
+              - fullname
+              - email
+              - self_introduction
+              - role_id
+              - institution_id
+              - status
+    put:
+      summary: Update Account Request
+      tags:
+      - Account Requests
+      parameters: []
+      responses:
+        '200':
+          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                fullname:
+                  type: string
+                email:
+                  type: string
+                self_introduction:
+                  type: string
+                role_id:
+                  type: integer
+                institution_id:
+                  type: integer
+                status:
+                  type: string
+                  example: Approved
+              required:
+              - name
+              - fullname
+              - email
+              - self_introduction
+              - role_id
+              - institution_id
+              - status
+    delete:
+      summary: Delete Account Request
       tags:
       - Account Requests
       responses:
@@ -205,27 +346,33 @@ paths:
         '204':
           description: successful
   "/api/v1/users":
-    parameters:
-    - name: role
-      in: query
-      type: string
-      description: Role of the User
-      required: true
-      schema:
-        type: string
-        default: Student
-        enum:
-        - Student
-        - Instructor
-        - Administrator
-        - Super-Administrator
-        - Unregistered user
-        - Teaching Assistant
-    post:
-      summary: create users and log in
+    get:
+      summary: List Users
       tags:
-      - Create Users and Log In
-      parameters: []
+      - Users
+      responses:
+        '200':
+          description: successful
+    post:
+      summary: Create User and Log In with it
+      tags:
+      - Users
+      parameters:
+      - name: role
+        in: query
+        type: string
+        description: Role of the User
+        required: true
+        schema:
+          type: string
+          default: Student
+          enum:
+          - Student
+          - Instructor
+          - Administrator
+          - Super-Administrator
+          - Unregistered user
+          - Teaching Assistant
       responses:
         '201':
           description: Created a user
