@@ -19,7 +19,7 @@ class SignupTopic < ApplicationRecord
     if !signuptopic.destroy
       raise 'Failed to destroy SignUpTopic'+signuptopic.topic_identifier
     end
-    
+
   end
 
   # Method used to update the attributes that includes max_choosers, descriptions, category to the SignupTopic
@@ -29,7 +29,8 @@ class SignupTopic < ApplicationRecord
 
   # Method used to retrieve participants in signed up team of particular topic.
   def find_team_participants(topic_identifier_, team_id_)
-
+    topic_id = SignedUpTeam.find_by(topic_identifier: topic_identifier_).id
+    SignedUpTeam.where(topic_identifier: topic_id, team_id: team_id_).team
   end
 
   # Method used to return number of available slots for teams to sign up for the topic.
