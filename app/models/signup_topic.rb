@@ -42,7 +42,8 @@ class SignupTopic < ApplicationRecord
 
   # Method used to return the number of slots filled for the topic.
   def count_filled_slots(topic_id)
-
+    topic_id = SignupTopic.find_by(topic_identifier: topic_id)
+    SignedUpTeam.where(topic_identifier: topic_id).count(:team_id)
   end
 
   # Method used to remove team from the topic and delegate changes to waitlist.
