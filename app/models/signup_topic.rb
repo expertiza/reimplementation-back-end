@@ -60,7 +60,7 @@ class SignupTopic < ApplicationRecord
 
   # Method used to retrieve all signed up teams for the specified topic
   def get_assigned_teams(topic_identifier_)
-
+    SignupTopic.find_by(topic_identifier: topic_identifier_).signed_up_teams
   end
 
   # Method used to serialize the generated output to JSON for API requests/responses.
