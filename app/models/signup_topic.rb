@@ -35,7 +35,9 @@ class SignupTopic < ApplicationRecord
 
   # Method used to return number of available slots for teams to sign up for the topic.
   def count_available_slots(topic_id)
-
+    filled_slots = count_filled_slots(topic_id)
+    total_slots = SignupTopic.find_by(topic_identifier: topic_id).max_choosers
+    total_slots - filled_slots
   end
 
   # Method used to return the number of slots filled for the topic.
