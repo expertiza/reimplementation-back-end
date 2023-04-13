@@ -53,7 +53,9 @@ class SignupTopic < ApplicationRecord
 
   # Method used to validate if the topic is assigned to signed up team
   def is_assigned_to_team(topic_identifier_, team_id_)
-
+    signuptopic = SignupTopic.find_by(topic_identifier: topic_identifier_)
+    _hasassignedtopic = signuptopic.signed_up_teams.where(team_id: team_id_).count
+    _hasassignedtopic.positive?
   end
 
   # Method used to retrieve all signed up teams for the specified topic
