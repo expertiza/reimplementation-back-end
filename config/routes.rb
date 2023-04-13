@@ -14,6 +14,9 @@ Rails.application.routes.draw do
         get ':id/managed', on: :collection, action: :managed_users
       end
       resources :assignments
+      resources :invitations do
+        get '/:user_id/:assignment_id/', on: :collection, action: :list_all_invitations_for_user_assignment
+      end
     end
   end
 end
