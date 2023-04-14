@@ -15,6 +15,8 @@ Rails.application.routes.draw do
       end
       resources :assignments
       resources :account_requests
+      get '/pending_request', controller: :account_requests, action: :pending_request
+      get '/processed_request', controller: :account_requests, action: :processed_request
     end
   end
 end
