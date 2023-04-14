@@ -63,4 +63,8 @@ class SignupTopic < ApplicationRecord
 
   end
 
+  def find_if_topic_available
+    return true
+  end
+
 end
