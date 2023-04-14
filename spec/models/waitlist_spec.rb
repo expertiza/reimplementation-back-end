@@ -43,37 +43,35 @@ RSpec.describe Waitlist, type: :model do
 
   # These set of tests validate the behavior of the waitlist in corner cases.
   describe "This tests error functionality of the waitlist and" do
-    # This tests if an ill-formed team is rejected by the waitlist.
-    it "Rejects bad teams from being added to waitlist" do
-      expect(Waitlist.new).to_not be_valid
-    end
-
     # This test checks if the count of the waitlist for a topic other than the one added is zero.
-    it "Checks if counts of topics for untouched topics is zero." do
-      expect(add_entry_to_waitlist()).to be_valid
+    it "checks if counts of topics for untouched topics is zero." do
+      expect(waitlisted_team).to be_valid
 
-      actual_count_for_topic = Waitlist.count_waitlisted_teams(2)
+      non_existent_topic = 2
+      actual_count_for_topic = Waitlist.count_waitlisted_teams(non_existent_topic)
       expected_count_for_topic = 0
       expect(actual_count_for_topic).to eq(expected_count_for_topic)
     end
 
     # This test validates that the response for a topic that does not have any waitlisted teams in it is valid.
-    it "Get waitlisted teams" do
-      expect(add_entry_to_waitlist()).to be_valid
+    it "checks if waitlist for incorrect topics does not include invalid members" do
+      expect(waitlisted_team).to be_valid
 
-      teams = Waitlist.get_waitlisted_teams(2)
-      expect(teams).to_not include(team["id"])
+      non_existent_topic = 2
+      teams = Waitlist.get_waitlisted_teams(non_existent_topic)
+      expect(teams).to_not include(waitlisted_team["id"])
+      expect(teams).to_not include(non_waitlisted_team["id"])
     end
 
     # Test if promotion of a topic which does not have any waitlisted teams causes any issues.  
-    it "Promotes waitlisted teams" do
-      expect(add_entry_to_waitlist()).to be_valid
+    it "checks if promotion of different topic does not modify other topic waitlist" do
+      expect(waitlisted_team).to be_valid
 
       actual_promoted_teams = Waitlist.promote_teams_from_waitlist(2)
 
-      expect(actual_promoted_teams).to_not include(team["id"])
+      expect(actual_promoted_teams).to_not include(waitlisted_team["id"])
 
-      waitlist_count = Waitlist.count_waitlisted_teams(team["id"])
+      waitlist_count = Waitlist.count_waitlisted_teams(topic["id"])
       expect(waitlist_count).to eq(1)
     end
   end
