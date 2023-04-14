@@ -4,26 +4,23 @@ info:
   title: EXPERTIZA API V1
   version: v1
 paths:
-  "/api/v1/account_requests":
+  "/api/v1/pending_request":
     get:
-      summary: List Account Requests
-      parameters:
-      - name: history
-        in: query
-        type: boolean
-        description: Show previosuly approved or rejected account requests
-        required: true
-        schema:
-          type: boolean
-          default: false
-          enum:
-          - true
-          - false
+      summary: List Pending Account Requests
       tags:
       - Account Requests
       responses:
         '200':
-          description: successful
+          description: List Pending Account Requests
+  "/api/v1/processed_request":
+    get:
+      summary: List Processed Account Requests
+      tags:
+      - Account Requests
+      responses:
+        '200':
+          description: List Processed Account Requests
+  "/api/v1/account_requests":
     post:
       summary: Create Account Request
       tags:
@@ -31,7 +28,10 @@ paths:
       parameters: []
       responses:
         '201':
-          description: Created an Account Request
+          description: Created an Account Request with valid parameters
+        '422':
+          description: Create an Account Request whose email already exists in Users
+            table
       requestBody:
         content:
           application/json:
@@ -71,7 +71,7 @@ paths:
       - Account Requests
       responses:
         '200':
-          description: successful
+          description: Retrieve a specific account request with valid id
     patch:
       summary: Update Account Request
       tags:
@@ -79,35 +79,19 @@ paths:
       parameters: []
       responses:
         '200':
-          description: successful
+          description: Reject account request
+        '422':
+          description: Invalid status in Patch
       requestBody:
         content:
           application/json:
             schema:
               type: object
               properties:
-                name:
-                  type: string
-                fullname:
-                  type: string
-                email:
-                  type: string
-                self_introduction:
-                  type: string
-                role_id:
-                  type: integer
-                institution_id:
-                  type: integer
                 status:
                   type: string
                   example: Approved
               required:
-              - name
-              - fullname
-              - email
-              - self_introduction
-              - role_id
-              - institution_id
               - status
     put:
       summary: Update Account Request
@@ -116,42 +100,26 @@ paths:
       parameters: []
       responses:
         '200':
-          description: successful
+          description: Reject account request
+        '422':
+          description: Invalid status in Patch
       requestBody:
         content:
           application/json:
             schema:
               type: object
               properties:
-                name:
-                  type: string
-                fullname:
-                  type: string
-                email:
-                  type: string
-                self_introduction:
-                  type: string
-                role_id:
-                  type: integer
-                institution_id:
-                  type: integer
                 status:
                   type: string
                   example: Approved
               required:
-              - name
-              - fullname
-              - email
-              - self_introduction
-              - role_id
-              - institution_id
               - status
     delete:
       summary: Delete Account Request
       tags:
       - Account Requests
       responses:
-        '200':
+        '204':
           description: successful
   "/api/v1/institutions":
     get:
@@ -345,53 +313,6 @@ paths:
       responses:
         '204':
           description: successful
-  "/api/v1/users":
-    get:
-      summary: List Users
-      tags:
-      - Users
-      responses:
-        '200':
-          description: successful
-    post:
-      summary: Create User and Log In with it
-      tags:
-      - Users
-      parameters:
-      - name: role
-        in: query
-        type: string
-        description: Role of the User
-        required: true
-        schema:
-          type: string
-          default: Student
-          enum:
-          - Student
-          - Instructor
-          - Administrator
-          - Super-Administrator
-          - Unregistered user
-          - Teaching Assistant
-      responses:
-        '201':
-          description: Created a user
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                fullname:
-                  type: string
-                email:
-                  type: string
-              required:
-              - name
-              - fullname
-              - email
 servers:
 - url: http://{defaultHost}
   variables:
