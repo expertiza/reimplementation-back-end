@@ -1,5 +1,4 @@
 Rails.application.routes.draw do
-  resources :courses
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
@@ -15,6 +14,14 @@ Rails.application.routes.draw do
         get ':id/managed', on: :collection, action: :managed_users
       end
       resources :assignments
+      resources :courses do
+        member do
+          post '/add_ta' => 'courses#add_ta'
+          get '/tas' => 'courses#view_tas'
+          post '/remove_ta' => 'courses#remove_ta'
+          get '/copy' =>'courses#copy'
+        end
+      end
     end
   end
 end
