@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_04_15_003423) do
+ActiveRecord::Schema[7.0].define(version: 2023_04_15_011209) do
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -93,6 +93,14 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_15_003423) do
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
   end
 
+  create_table "ta_mappings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "course_id", null: false
+    t.integer "ta_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["course_id"], name: "index_ta_mappings_on_course_id"
+  end
+
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "password_digest"
@@ -119,4 +127,5 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_15_003423) do
 
   add_foreign_key "courses", "institutions"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
+  add_foreign_key "ta_mappings", "courses"
 end
