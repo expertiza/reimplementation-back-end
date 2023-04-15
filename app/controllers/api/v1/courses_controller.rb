@@ -1,4 +1,4 @@
-class CoursesController < ApplicationController
+class Api::V1::CoursesController < ApplicationController
   before_action :set_course, only: %i[ show update destroy ]
 
   # GET /courses
@@ -36,6 +36,26 @@ class CoursesController < ApplicationController
   # DELETE /courses/1
   def destroy
     @course.destroy
+  end
+
+  # Adds a Teaching Assistant to the course
+  def add_ta
+
+  end
+
+  # Displays all Teaching Assistants for the course
+  def view_tas
+
+  end
+
+  # Removes Teaching Assistant from the course
+  def remove_ta
+
+  end
+
+  # Creates a copy of the course
+  def copy
+
   end
 
   private
