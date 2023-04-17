@@ -79,11 +79,8 @@ class SignupTopic < ApplicationRecord
 
   end
 
-  def find_if_topic_available
-    return true
-  end
 
-  def is_available()
+  def is_available
     if count_available_slots.positive?
       return true
     end
