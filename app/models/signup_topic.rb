@@ -21,8 +21,25 @@ class SignupTopic < ApplicationRecord
   end
 
   # Method used to update the attributes that includes max_choosers, descriptions, category to the SignupTopic
-  def update_topic(maxChoosers, description, category)
-
+  def update_topic(maxChoosers = nil , description = nil, category = nil)
+    need_to_update = false
+    SignupTopic.Transaction do
+      if !category.nil?
+        self.category = category
+        need_to_update = true
+      end
+      if !description.nil?
+        self.description = description
+        need_to_update = true
+      end
+      if !maxChoosers.nil? && maxChoosers > self.max_choosers
+        count_teams_to_promote = maxChoosers - self.max_choosers
+        Waitlist.promote_teams_from_waitlist(self.id, count_teams_to_promote)
+        self.max_choosers = maxChoosers
+        need_to_update
+      end
+      self.save! if need_to_update
+    end
   end
 
   # Method used to retrieve participants in signed up team of particular topic.
