@@ -84,7 +84,10 @@ class SignupTopic < ApplicationRecord
   end
 
   def is_available()
-    return true
+    if count_available_slots.positive?
+      return true
+    end
+    return false
   end
 
 end
