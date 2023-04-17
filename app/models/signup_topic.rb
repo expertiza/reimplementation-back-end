@@ -5,18 +5,19 @@ class SignupTopic < ApplicationRecord
 
   # Method used to destroy the topic from the table and also
   # cascading deletes performed in both SignUpTeams and Waitlist and team with error handling
-  def destroy_topic()
+  def destroy_topic
 
-    signed_up_teams.each do |signupteam|
-      if !signupteam.destroy
-        raise 'Failed to destroy SignUpTeams'+signupteam.team_id.to_s
+    SignupTopic.Transaction do
+      self.signed_up_teams.each do |signupteam|
+        if !signupteam.destroy
+          raise 'Failed to destroy SignUpTeams'+signupteam.team_id.to_s
+        end
+      end
+
+      if !self.destroy
+        raise 'Failed to destroy SignUpTopic'+self.id.to_s
       end
     end
-
-    if !destroy
-      raise 'Failed to destroy SignUpTopic'+@id
-    end
-
   end
 
   # Method used to update the attributes that includes max_choosers, descriptions, category to the SignupTopic
