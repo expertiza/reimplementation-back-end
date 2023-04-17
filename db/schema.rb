@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_04_12_190512) do
+ActiveRecord::Schema[7.0].define(version: 2023_04_14_202838) do
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -86,6 +86,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_12_190512) do
     t.datetime "updated_at", null: false
     t.bigint "signup_topic_id", null: false
     t.bigint "team_id", null: false
+    t.boolean "is_waitlisted", default: false
     t.index ["signup_topic_id"], name: "index_signed_up_teams_on_signup_topic_id"
     t.index ["team_id"], name: "index_signed_up_teams_on_team_id"
   end
@@ -133,19 +134,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_12_190512) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "waitlists", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.bigint "signup_topic_id", null: false
-    t.bigint "signed_up_team_id", null: false
-    t.index ["signed_up_team_id"], name: "index_waitlists_on_signed_up_team_id"
-    t.index ["signup_topic_id"], name: "index_waitlists_on_signup_topic_id"
-  end
-
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
   add_foreign_key "signed_up_teams", "signup_topics"
   add_foreign_key "signed_up_teams", "teams"
   add_foreign_key "signup_topics", "assignments"
-  add_foreign_key "waitlists", "signed_up_teams"
-  add_foreign_key "waitlists", "signup_topics"
 end

@@ -17,15 +17,25 @@ RSpec.describe SignedUpTeam, type: :model do
 
   describe "Test Functionality" do
     it "Returns the team participants for a signed_up_topic" do
-      expect(signed_up_team.find_team_participants()).to eq(true)
+      expect(signed_up_team.get_team_participants()).to eq(true)
     end
 
-    it "Signs up a team for the topic" do
-      expect(SignedUpTeam.create_signed_up_team(topic["id"],signed_up_team["id"])).to eq(true)
+    it "Signs up a team for the topic if the topic is available" do
+      expect(SignedUpTeam.create_signed_up_team(topic["id"],team["id"])).to eq(true)
+    end
+
+    it 'creates a signed up team if the topic is available' do
+      expect { SignedUpTeam.create_signed_up_team(topic['id'], team['id']) }.to change(SignedUpTeam, :count).by(1)
     end
 
     it "Deletes the signed_up_team for the topic assigned" do
       expect(SignedUpTeam.delete_signed_up_team(signed_up_team["id"])).to eq(true)
     end
+
+    it 'deletes the signed up team for a topic and delegates any required changes' do
+      expect(signed_up_team).to be_valid
+      expect { SignedUpTeam.delete_signed_up_team(signed_up_team["id"]) }.to change(SignedUpTeam, :count).by(-1)
+    end
+    
   end
 end

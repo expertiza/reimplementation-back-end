@@ -42,7 +42,7 @@ class SignupTopic < ApplicationRecord
 
   # Method used to remove team from the topic and delegate changes to waitlist.
   def release_topic(team_id)
-
+    return true
   end
 
   # Method used to validate if the topic is assigned to signed up team
@@ -63,6 +63,10 @@ class SignupTopic < ApplicationRecord
   end
 
   def find_if_topic_available
+    return true
+  end
+
+  def is_available()
     return true
   end
 
