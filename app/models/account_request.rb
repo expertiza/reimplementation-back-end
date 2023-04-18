@@ -7,9 +7,8 @@ class AccountRequest < ApplicationRecord
     
     validates :name, presence: true, length: { maximum: 50, message: 'is too long' },
                      uniqueness: { case_sensitive: false, message: 'Account with this name has already been requested' }
-    VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i.freeze
     validates :email, presence: true, length: { maximum: 255, message: 'is too long' },
-                      format: { with: VALID_EMAIL_REGEX, message: 'format is wrong' },
+                      format: { with: URI::MailTo::EMAIL_REGEXP, message: 'format is wrong' },
                       uniqueness: { case_sensitive: false, message: 'Account with this emaill has already been requested' }
   
     validates :fullname, presence: true, length: { maximum: 100, message: 'is too long' }
