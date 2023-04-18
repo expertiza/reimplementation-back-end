@@ -2,7 +2,10 @@ class Api::V1::InvitationsController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :invite_not_found
 
   # GET /api/v1/invitations
-  def index; end
+  def index
+    @invitations = Invitation.all
+    render json: @invitations
+  end
 
   # POST /api/v1/invitations/
   def create; end

@@ -44,7 +44,17 @@ class Invitation < ApplicationRecord
   def self.invited?(invitee_user_id, invited_user_id, assignment_id); end
 
   # This will override the default as_json method in the ApplicationRecord class and specify
-  def as_json(options = {}); end
+  def as_json(options = {})
+    super(options.merge({
+                          only: %i[id reply_status created_at updated_at],
+                          include: {
+                            assignment: { only: %i[id name] },
+                            from_user: { only: %i[id name fullname email] },
+                            to_user: { only: %i[id name fullname email] }
+                          }
+                        })).tap do |hash|
+    end
+  end
 
   def set_defaults; end
 
