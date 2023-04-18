@@ -1,12 +1,12 @@
 class Api::V1::AccountRequestsController < ApplicationController
 
-  # GET /pending_request
+  # GET /account_requests/pending
   def pending_request
     @account_requests = AccountRequest.where(status: 'Under Review').order('created_at DESC')
     render json: @account_requests, status: :ok
   end
 
-  # GET /processed_request
+  # GET /account_requests/processed
   def processed_request
     @account_requests = AccountRequest.where.not(status: 'Under Review').order('updated_at DESC')
     render json: @account_requests, status: :ok
@@ -68,13 +68,7 @@ class Api::V1::AccountRequestsController < ApplicationController
 
   # Create a new user if account request is approved
   def create_approved_user
-    @new_user = User.new
-    @new_user.name = @account_request.name
-    @new_user.role_id = @account_request.role_id
-    @new_user.institution_id = @account_request.institution_id
-    @new_user.fullname = @account_request.fullname
-    @new_user.email = @account_request.email
-    @new_user.password = 'password'
+    @new_user = User.new(name: @account_request.name, role_id: @account_request.role_id, institution_id: @account_request.institution_id, fullname: @account_request.fullname, email: @account_request.email, password: 'password')
     if @new_user.save
       render json: { success: 'Account Request Approved and User successfully created.', user: @new_user}, status: :ok
     else

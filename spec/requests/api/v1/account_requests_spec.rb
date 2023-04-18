@@ -2,7 +2,7 @@ require 'swagger_helper'
 
 RSpec.describe 'Account Requests API', type: :request do
 
-  path '/api/v1/pending_request' do
+  path '/api/v1/account_requests/pending' do
 
     get('List Pending Account Requests') do
       tags 'Account Requests'
@@ -22,7 +22,7 @@ RSpec.describe 'Account Requests API', type: :request do
     end
   end
 
-  path '/api/v1/processed_request' do
+  path '/api/v1/account_requests/processed' do
 
     get('List Processed Account Requests') do
       tags 'Account Requests'
@@ -64,6 +64,34 @@ RSpec.describe 'Account Requests API', type: :request do
         let(:role) { Role.create(name: 'Student') }
         let(:institution) { Institution.create(name: 'North Carolina State University') }
         let(:account_request) { { name: 'useracc', fullname: 'User Account 1', email: 'useracc1@gmail.com', self_introduction: 'User 1 Intro', role_id: role.id, institution_id: institution.id } }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+
+      response(422, 'Create an Account Request with missing parameters') do
+        let(:role) { Role.create(name: 'Student') }
+        let(:institution) { Institution.create(name: 'North Carolina State University') }
+        let(:account_request) { { self_introduction: 'User 1 Intro', role_id: role.id, institution_id: institution.id } }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+
+      response(422, 'Create an Account Request with invalid parameters') do
+        let(:account_request) { { name: 'useracc', fullname: 'User Account 1', email: 'useracc1', self_introduction: 'User 1 Intro', role_id: 0, institution_id: 1 } }
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -131,21 +159,6 @@ RSpec.describe 'Account Requests API', type: :request do
       end
     end
 
-
-
-    response(422, 'Create an Account Request with INVALID params') do
-        let(:account_request) { { name: 'useracc', fullname: 'User Account 1', email: 'useracc1', self_introduction: 'User 1', role_id: 0, institution_id: 1 } }
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
-        run_test!
-      end
-
     patch('Update Account Request') do
       tags 'Account Requests'
       consumes 'application/json'
@@ -210,24 +223,6 @@ RSpec.describe 'Account Requests API', type: :request do
         end
         run_test!
       end
-
-
-      response(422, 'Create an Account Request with missing parameters') do
-
-        let(:role) { Role.create(name: 'Student') }
-        let(:institution) { Institution.create(name: 'North Carolina State University') }
-        let(:account_request) { { self_introduction: 'User 1 Intro', role_id: role.id, institution_id: institution.id } }
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
-        run_test!
-      end
-
 
       response(200, 'Reject account request') do
 

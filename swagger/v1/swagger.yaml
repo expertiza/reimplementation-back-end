@@ -4,7 +4,7 @@ info:
   title: EXPERTIZA API V1
   version: v1
 paths:
-  "/api/v1/pending_request":
+  "/api/v1/account_requests/pending":
     get:
       summary: List Pending Account Requests
       tags:
@@ -12,7 +12,7 @@ paths:
       responses:
         '200':
           description: List Pending Account Requests
-  "/api/v1/processed_request":
+  "/api/v1/account_requests/processed":
     get:
       summary: List Processed Account Requests
       tags:
