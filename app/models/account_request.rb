@@ -6,6 +6,7 @@ class AccountRequest < ApplicationRecord
     before_save { name }
     
     validates :name, presence: true, length: { maximum: 50, message: 'is too long' },
+                     format: { with: /\A[a-z]+\z/, message: 'must be in lowercase' },
                      uniqueness: { case_sensitive: false, message: 'Account with this name has already been requested' }
     validates :email, presence: true, length: { maximum: 255, message: 'is too long' },
                       format: { with: URI::MailTo::EMAIL_REGEXP, message: 'format is wrong' },
