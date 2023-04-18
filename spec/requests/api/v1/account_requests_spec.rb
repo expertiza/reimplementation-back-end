@@ -211,6 +211,24 @@ RSpec.describe 'Account Requests API', type: :request do
         run_test!
       end
 
+
+      response(422, 'Create an Account Request with missing parameters') do
+
+        let(:role) { Role.create(name: 'Student') }
+        let(:institution) { Institution.create(name: 'North Carolina State University') }
+        let(:account_request) { { self_introduction: 'User 1 Intro', role_id: role.id, institution_id: institution.id } }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+
+
       response(200, 'Reject account request') do
 
         before do
