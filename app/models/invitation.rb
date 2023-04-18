@@ -4,12 +4,16 @@ class Invitation < ApplicationRecord
   belongs_to :assignment, class_name: 'Assignment', foreign_key:   'assignment_id'
   validates :reply_status, presence: true, length: { maximum: 1 }
   validates_inclusion_of :reply_status, in: %w[W A R], allow_nil: false
+  validates :assignment_id, uniqueness: {
+    scope: %i[from_id to_id reply_status],
+    message: 'You cannot have duplicate invitations'
+  }
   validate :to_from_cant_be_same
 
   # validate if the to_id and from_id are same
   def to_from_cant_be_same
     if self.from_id == self.to_id
-      errors.add(:from_id, "to and from users should be different")
+      errors.add(:from_id, 'to and from users should be different')
     end
   end
 

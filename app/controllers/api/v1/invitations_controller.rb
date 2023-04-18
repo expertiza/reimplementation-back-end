@@ -8,7 +8,15 @@ class Api::V1::InvitationsController < ApplicationController
   end
 
   # POST /api/v1/invitations/
-  def create; end
+  def create
+    params[:invitation][:reply_status] ||= 'W'
+    @invitation = Invitation.new(invite_params)
+    if @invitation.save
+      render json: @invitation, status: :created
+    else
+      render json: @invitation.errors, status: :unprocessable_entity
+    end
+  end
 
   # GET /api/v1/invitations/:id
   def show; end
@@ -41,8 +49,9 @@ class Api::V1::InvitationsController < ApplicationController
   def check_team_before_accept; end
 
   # only allow a list of valid invite params
-  def invite_params; end
-
+  def invite_params
+    params.require(:invitation).permit(:id, :assignment_id, :from_id, :to_id, :reply_status)
+  end
   # helper method used when invite is not found
   def invite_not_found; end
 

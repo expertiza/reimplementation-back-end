@@ -1,15 +1,15 @@
 FactoryBot.define do
 
   factory :user do
-    sequence(:name) { |n| n = n % 3; "student206#{n + 4}" }
-    email { "joe@gmail.com" }
+    sequence(:name) { |n| "#{Faker::Name.name}".delete(" \t\r\n").downcase }
+    sequence(:email) { |n| "#{Faker::Internet.email}"}
     password { "blahblahblah" }
-    sequence(:fullname) { |n| n = n % 3; "206#{n + 4}, student" }
+    sequence(:fullname) { |n| "#{Faker::Name.name}#{Faker::Name.name}".downcase  }
     role factory: :role
   end
 
   factory :role do
-    name { "Student" }
+    name { Faker::Name.name}
   end
 
   factory :assignment do
