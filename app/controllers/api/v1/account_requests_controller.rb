@@ -20,6 +20,10 @@ class Api::V1::AccountRequestsController < ApplicationController
     else
       render json: @account_request.errors, status: :unprocessable_entity
     end
+  rescue ActiveRecord::RecordNotFound => e
+    render json: { error: e.message }, status: :not_found
+  rescue ActionController::ParameterMissing => e
+    render json: { error: e.message }, status: :parameter_missing
   rescue StandardError => e
     render json: { error: e.message }, status: :unprocessable_entity
   end
@@ -41,6 +45,8 @@ class Api::V1::AccountRequestsController < ApplicationController
     else
       render json: @account_request, status: :ok
     end
+  rescue ActiveRecord::RecordNotFound => e
+    render json: { error: e.message }, status: :not_found
   rescue StandardError => e
     render json: { error: e.message }, status: :unprocessable_entity
   end
