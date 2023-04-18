@@ -133,8 +133,8 @@ RSpec.describe 'Account Requests API', type: :request do
 
 
 
-    response(422, 'Create an Account Request with invalid parameters') do
-        let(:account_request) { { name: 'useracc', fullname: 'User Account 1', email: 'useracc1', self_introduction: 'User 1 Intro', role_id: 0, institution_id: 1 } }
+    response(422, 'Create an Account Request with INVALID params') do
+        let(:account_request) { { name: 'useracc', fullname: 'User Account 1', email: 'useracc1', self_introduction: 'User 1', role_id: 0, institution_id: 1 } }
 
         after do |example|
           example.metadata[:response][:content] = {
