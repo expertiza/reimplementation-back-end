@@ -19,7 +19,12 @@ class Api::V1::InvitationsController < ApplicationController
   end
 
   # GET /api/v1/invitations/:id
-  def show; end
+  def show
+    @invitation = Invitation.find(params[:id])
+    render json: @invitation, status: :ok
+  rescue ActiveRecord::RecordNotFound => e
+    render json: { error: e.message }, status: :not_found
+  end
 
   # PATCH /api/v1/invitations/:id
   def update; end
@@ -52,7 +57,10 @@ class Api::V1::InvitationsController < ApplicationController
   def invite_params
     params.require(:invitation).permit(:id, :assignment_id, :from_id, :to_id, :reply_status)
   end
+
   # helper method used when invite is not found
-  def invite_not_found; end
+  def invite_not_found
+    render json: { error: "Invitation with id #{params[:id]} not found" }, status: :not_found
+  end
 
 end

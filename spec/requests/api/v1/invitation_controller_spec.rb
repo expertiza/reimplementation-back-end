@@ -5,6 +5,7 @@ RSpec.describe 'Invitations API', type: :request do
   let(:user1) { create :user, name: "rohitgeddam" }
   let(:user2) { create :user, name: "superman" }
   let(:invalid_user) { build :user, name: "INVALID"}
+  let(:invitation) { create :invitation, from_user: user1, to_user: user2, assignment: assignment}
   let(:assignment) { create(:assignment) }
 
   path '/api/v1/invitations' do
@@ -117,4 +118,43 @@ RSpec.describe 'Invitations API', type: :request do
     end
 
   end
+
+
+  path '/api/v1/invitations/{id}' do
+    parameter name: 'id', in: :path, type: :integer, description: 'id of the invitation'
+
+    get('show invitation') do
+      tags 'Invitations'
+      response(200, 'show request with valid invitation id') do
+        let(:id) { invitation.id }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+
+    end
+
+    get('show invitation') do
+      tags 'Invitations'
+      response(404, 'show request with invalid invitation id') do
+        let(:id) { "INVALID" }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+    end
+  end
+
 end
