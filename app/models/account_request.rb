@@ -11,7 +11,7 @@ class AccountRequest < ApplicationRecord
                       format: { with: URI::MailTo::EMAIL_REGEXP, message: 'format is wrong' },
                       uniqueness: { case_sensitive: false, message: 'Account with this emaill has already been requested' }
   
-    validates :fullname, presence: true, length: { maximum: 100, message: 'is too long' }
+    validates :FullName, presence: true, length: { maximum: 100, message: 'is too long' }
 
     validate :validate_user_exists, on: :create
 

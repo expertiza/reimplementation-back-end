@@ -40,11 +40,11 @@ paths:
               properties:
                 name:
                   type: string
-                fullname:
+                FullName:
                   type: string
                 email:
                   type: string
-                self_introduction:
+                introduction:
                   type: string
                 role_id:
                   type: integer
@@ -52,9 +52,9 @@ paths:
                   type: integer
               required:
               - name
-              - fullname
+              - FullName
               - email
-              - self_introduction
+              - introduction
               - role_id
               - institution_id
   "/api/v1/account_requests/{id}":

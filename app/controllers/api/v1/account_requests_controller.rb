@@ -63,12 +63,12 @@ class Api::V1::AccountRequestsController < ApplicationController
     elsif !['Approved', 'Rejected'].include?(params[:account_request][:status])
       raise StandardError, 'Status can only be Approved or Rejected'
     end
-    params.require(:account_request).permit(:name, :fullname, :email, :status, :self_introduction, :role_id, :institution_id)
+    params.require(:account_request).permit(:name, :FullName, :email, :status, :introduction, :role_id, :institution_id)
   end
 
   # Create a new user if account request is approved
   def create_approved_user
-    @new_user = User.new(name: @account_request.name, role_id: @account_request.role_id, institution_id: @account_request.institution_id, fullname: @account_request.fullname, email: @account_request.email, password: 'password')
+    @new_user = User.new(name: @account_request.name, role_id: @account_request.role_id, institution_id: @account_request.institution_id, fullname: @account_request.FullName, email: @account_request.email, password: 'password')
     if @new_user.save
       render json: { success: 'Account Request Approved and User successfully created.', user: @new_user}, status: :ok
     else
