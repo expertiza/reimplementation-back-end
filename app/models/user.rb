@@ -1,4 +1,5 @@
 class User < ApplicationRecord
+  # Describes the User role behavior
   has_secure_password
   after_initialize :set_defaults
 

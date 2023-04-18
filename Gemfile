@@ -8,6 +8,7 @@ gem 'puma', '~> 5.0'
 gem 'rails', '~> 7.0.4', '>= 7.0.4.2'
 gem 'rswag-api'
 gem 'rswag-ui'
+gem 'paper_trail'
 
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 # gem "jbuilder"
@@ -36,6 +37,11 @@ group :development, :test do
   gem 'simplecov', require: false, group: :test
   gem 'rspec-rails'
   gem 'rswag-specs'
+  gem 'factory_bot_rails'
+end
+
+group :test do
+  gem 'shoulda-matchers', '~> 5.0'
 end
 
 group :development do

@@ -1,4 +1,5 @@
 class Role < ApplicationRecord
+  # Describes the role of an admin/instructor/student.
   validates :name, presence: true, uniqueness: true, allow_blank: false
   belongs_to :parent, class_name: 'Role', optional: true
   has_many :users, dependent: :nullify
