@@ -252,5 +252,79 @@ RSpec.describe 'Invitations API', type: :request do
       end
     end
   end
-end
 
+  path '/api/v1/invitations/{user_id}/{assignment_id}' do
+    parameter name: 'user_id', in: :path, type: :integer, description: 'id of user'
+    parameter name: 'assignment_id', in: :path, type: :integer, description: 'id of assignment'
+
+    get('show all invitation with valid user and assignment') do
+      tags 'Invitations'
+      response(200, 'show all invitations for the user for an assignment') do
+        let(:user_id) { user1.id }
+        let(:assignment_id) { assignment.id }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+    end
+
+    get('show invitation with invalid user and assignment') do
+      tags 'Invitations'
+      response(404, 'show all invitations for the user for an assignment') do
+        let(:user_id) { 'INVALID' }
+        let(:assignment_id) { assignment.id }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+    end
+
+
+    get('show invitation with user and invalid assignment') do
+      tags 'Invitations'
+      response(404, 'show all invitations for the user for an assignment') do
+        let(:user_id) { user1.id }
+        let(:assignment_id) { 'INVALID' }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+    end
+
+    get('show invitation with invalid user and invalid assignment') do
+      tags 'Invitations'
+      response(404, 'show all invitations for the user for an assignment') do
+        let(:user_id) { 'INVALID' }
+        let(:assignment_id) { 'INVALID' }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+    end
+
+  end
+end

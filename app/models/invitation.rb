@@ -4,7 +4,7 @@ class Invitation < ApplicationRecord
   WAITING_STATUS = 'W'
   belongs_to :to_user, class_name: 'User', foreign_key: 'to_id', inverse_of: false
   belongs_to :from_user, class_name: 'User', foreign_key: 'from_id', inverse_of: false
-  belongs_to :assignment, class_name: 'Assignment', foreign_key:   'assignment_id'
+  belongs_to :assignment, class_name: 'Assignment', foreign_key: 'assignment_id'
   validates :reply_status, presence: true, length: { maximum: 1 }
   validates_inclusion_of :reply_status, in: [ACCEPT_STATUS, REJECT_STATUS, WAITING_STATUS], allow_nil: false
   validates :assignment_id, uniqueness: {

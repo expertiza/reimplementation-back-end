@@ -51,7 +51,24 @@ class Api::V1::InvitationsController < ApplicationController
   end
 
   # GET /invitations/:user_id/:assignment_id
-  def list_all_invitations_for_user_assignment; end
+  def list_all_invitations_for_user_assignment
+    begin
+      @user = User.find(params[:user_id])
+    rescue ActiveRecord::RecordNotFound => e
+      render json: { error: e.message }, status: :not_found
+      return
+    end
+
+    begin
+      @assignment = Assignment.find(params[:assignment_id])
+    rescue ActiveRecord::RecordNotFound => e
+      render json: { error: e.message }, status: :not_found
+      return
+    end
+
+    @invitations = Invitation.where(to_id: @user.id).where(assignment_id: @assignment.id)
+    render json: @invitations, status: :ok
+  end
 
   private
 
