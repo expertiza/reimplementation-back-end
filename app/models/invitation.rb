@@ -49,7 +49,9 @@ class Invitation < ApplicationRecord
   end
 
   # This method handles all that need to be done upon an invitation retraction.
-  def self.retract_invitation(invite_id, logged_in_user); end
+  def self.retract_invitation(invitation, logged_in_user)
+    invitation.destroy
+  end
 
   # check if the user is invited
   def self.invited?(invitee_user_id, invited_user_id, assignment_id); end

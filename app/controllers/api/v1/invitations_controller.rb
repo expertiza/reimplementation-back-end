@@ -44,7 +44,11 @@ class Api::V1::InvitationsController < ApplicationController
   end
 
   # DELETE /api/v1/invitations/:id
-  def delete; end
+  def destroy
+    @invitation = Invitation.find(params[:id])
+    Invitation.retract_invitation(@invitation, nil)
+    render json: { message: "Invitation with id #{params[:id]}, retracted" }, status: :ok
+  end
 
   # GET /invitations/:user_id/:assignment_id
   def list_all_invitations_for_user_assignment; end

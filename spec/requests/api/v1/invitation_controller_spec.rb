@@ -205,6 +205,51 @@ RSpec.describe 'Invitations API', type: :request do
         end
         run_test!
       end
+
+      response(404, 'Update status with invalid invitation_id') do
+        let(:id) { invitation.id + 10 }
+        let(:invitation_status) { { reply_status: 'A' } }
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+
+      delete('delete invitation with valid invite id') do
+        tags 'Invitation'
+        response(200, 'successful') do
+          let(:id) { invitation.id }
+
+          after do |example|
+            example.metadata[:response][:content] = {
+              'application/json' => {
+                example: JSON.parse(response.body, symbolize_names: true)
+              }
+            }
+          end
+          run_test!
+        end
+      end
+
+      delete('delete invitation with invalid invite id') do
+        tags 'Invitation'
+        response(404, 'successful') do
+          let(:id) { invitation.id + 100 }
+
+          after do |example|
+            example.metadata[:response][:content] = {
+              'application/json' => {
+                example: JSON.parse(response.body, symbolize_names: true)
+              }
+            }
+          end
+          run_test!
+        end
+      end
     end
   end
 end
