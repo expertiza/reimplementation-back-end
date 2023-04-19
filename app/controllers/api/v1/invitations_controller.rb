@@ -9,7 +9,7 @@ class Api::V1::InvitationsController < ApplicationController
 
   # POST /api/v1/invitations/
   def create
-    params[:invitation][:reply_status] ||= 'W'
+    params[:invitation][:reply_status] ||= Invitation::WAITING_STATUS
     @invitation = Invitation.new(invite_params)
     if @invitation.save
       render json: @invitation, status: :created
@@ -27,7 +27,21 @@ class Api::V1::InvitationsController < ApplicationController
   end
 
   # PATCH /api/v1/invitations/:id
-  def update; end
+  def update
+    @invite_id = params[:id]
+    @invitation = Invitation.find(@invite_id)
+    case params[:reply_status]
+    when Invitation::ACCEPT_STATUS
+      Invitation.accept_invitation(@invitation, nil)
+      render json: @invitation, status: :ok
+    when Invitation::REJECT_STATUS
+      Invitation.decline_invitation(@invitation, nil)
+      render json: @invitation, status: :ok
+    else
+      render json: @invitation.errors, status: :unprocessable_entity
+    end
+
+  end
 
   # DELETE /api/v1/invitations/:id
   def delete; end

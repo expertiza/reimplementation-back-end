@@ -1,9 +1,12 @@
 class Invitation < ApplicationRecord
+  ACCEPT_STATUS = 'A'
+  REJECT_STATUS = 'R'
+  WAITING_STATUS = 'W'
   belongs_to :to_user, class_name: 'User', foreign_key: 'to_id', inverse_of: false
   belongs_to :from_user, class_name: 'User', foreign_key: 'from_id', inverse_of: false
   belongs_to :assignment, class_name: 'Assignment', foreign_key:   'assignment_id'
   validates :reply_status, presence: true, length: { maximum: 1 }
-  validates_inclusion_of :reply_status, in: %w[W A R], allow_nil: false
+  validates_inclusion_of :reply_status, in: [ACCEPT_STATUS, REJECT_STATUS, WAITING_STATUS], allow_nil: false
   validates :assignment_id, uniqueness: {
     scope: %i[from_id to_id reply_status],
     message: 'You cannot have duplicate invitations'
@@ -36,10 +39,14 @@ class Invitation < ApplicationRecord
   # team and topics that the old team signed up for will be deleted.
   # Then invites the user that accepted the invite sent will be removed.
   # Last the users team entry will be added to the TeamsUser table and their assigned topic is updated
-  def self.accept_invitation(invite_id, logged_in_user); end
+  def self.accept_invitation(invitation, logged_in_user)
+    invitation.update(reply_status: ACCEPT_STATUS)
+  end
 
   # This method handles all that needs to be done upon an user decline an invitation.
-  def self.decline_invitation(invite_id, logged_in_user); end
+  def self.decline_invitation(invitation, logged_in_user)
+    invitation.update(reply_status: REJECT_STATUS)
+  end
 
   # This method handles all that need to be done upon an invitation retraction.
   def self.retract_invitation(invite_id, logged_in_user); end
