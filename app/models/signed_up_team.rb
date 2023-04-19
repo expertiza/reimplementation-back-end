@@ -1,0 +1,2 @@
+class SignedUpTeam < ApplicationRecord
+end
