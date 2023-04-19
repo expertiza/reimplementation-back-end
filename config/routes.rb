@@ -16,6 +16,7 @@ Rails.application.routes.draw do
       resources :assignments
       #added routes for signup topics
       # resources :sign_up_topics
+      resources :signed_up_teams
       resources :sign_up_topics do
         collection do
           get :filter

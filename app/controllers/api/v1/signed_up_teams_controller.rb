@@ -10,6 +10,7 @@ class Api::V1::SignedUpTeamsController < ApplicationController
   end
 
   def update
+    @signed_up_team = SignedUpTeam.find(params[:id])
     if @signed_up_team.update(signed_up_teams_params)
       render json: {message: "The team has been updated successfully. "}, status: 200
     else
