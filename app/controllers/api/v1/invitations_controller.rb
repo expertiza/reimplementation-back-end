@@ -10,8 +10,9 @@ class Api::V1::InvitationsController < ApplicationController
   # POST /api/v1/invitations/
   def create
     params[:invitation][:reply_status] ||= Invitation::WAITING_STATUS
-    @invitation = Invitation.new(invite_params)
+    @invitation = Invitation.invitation_factory(invite_params)
     if @invitation.save
+      @invitation.send_invite_email
       render json: @invitation, status: :created
     else
       render json: @invitation.errors, status: :unprocessable_entity

@@ -25,10 +25,16 @@ class Invitation < ApplicationRecord
 
   # Return a new invitation
   # params = :assignment_id, :to_id, :from_id, :reply_status
-  def invitation_factory(params); end
+  def self.invitation_factory(params)
+    Invitation.new(params)
+  end
 
   # send invite email
-  def send_invite_email; end
+  def send_invite_email
+    InvitationSentMailer.with(invitation: self)
+                        .send_invitation_email
+                        .deliver_later
+  end
 
   # Remove all invites sent by a user for an assignment.
   def self.remove_users_sent_invites_for_assignment(user_id, assignment_id); end
