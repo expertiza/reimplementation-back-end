@@ -1,7 +1,10 @@
 class Invitation < ApplicationRecord
+  after_initialize :set_defaults
+
   ACCEPT_STATUS = 'A'
   REJECT_STATUS = 'R'
   WAITING_STATUS = 'W'
+
   belongs_to :to_user, class_name: 'User', foreign_key: 'to_id', inverse_of: false
   belongs_to :from_user, class_name: 'User', foreign_key: 'from_id', inverse_of: false
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'assignment_id'
@@ -15,9 +18,9 @@ class Invitation < ApplicationRecord
 
   # validate if the to_id and from_id are same
   def to_from_cant_be_same
-    if self.from_id == self.to_id
-      errors.add(:from_id, 'to and from users should be different')
-    end
+    return unless from_id == to_id
+
+    errors.add(:from_id, 'to and from users should be different')
   end
 
   # Return a new invitation
@@ -69,6 +72,8 @@ class Invitation < ApplicationRecord
     end
   end
 
-  def set_defaults; end
+  def set_defaults
+    self.reply_status ||= WAITING_STATUS
+  end
 
 end
