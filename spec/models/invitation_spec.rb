@@ -6,6 +6,18 @@ RSpec.describe Invitation, type: :model do
   let(:invalid_user) { build :user, name: 'INVALID' }
   let(:assignment) { create(:assignment) }
 
+  it 'is invited? false' do
+    invitation = Invitation.create(to_id: user1.id, from_id: user2.id, assignment_id: assignment.id)
+    truth = Invitation.invited?(user1.id, user2.id, assignment.id)
+    expect(truth).to eq(false)
+  end
+
+  it 'is invited? true' do
+    invitation = Invitation.create(to_id: user1.id, from_id: user2.id, assignment_id: assignment.id)
+    truth = Invitation.invited?(user2.id, user1.id, assignment.id)
+    expect(truth).to eq(true)
+  end
+
   it 'is default reply_status set to WAITING' do
     invitation = Invitation.new(to_id: user1.id, from_id: user2.id, assignment_id: assignment.id)
     expect(invitation.reply_status).to eq('W')

@@ -57,7 +57,14 @@ class Invitation < ApplicationRecord
   end
 
   # check if the user is invited
-  def self.invited?(invitee_user_id, invited_user_id, assignment_id); end
+  def self.invited?(from_id, to_id, assignment_id)
+    @invitations_count = Invitation.where(to_id: to_id)
+                                   .where(from_id: from_id)
+                                   .where(assignment_id: assignment_id)
+                                   .where(reply_status: WAITING_STATUS)
+                                   .count
+    @invitations_count > 0
+  end
 
   # This will override the default as_json method in the ApplicationRecord class and specify
   def as_json(options = {})
