@@ -221,16 +221,8 @@ RSpec.describe 'Invitations API', type: :request do
 
       delete('delete invitation with valid invite id') do
         tags 'Invitations'
-        response(200, 'successful') do
+        response(204, 'no content') do
           let(:id) { invitation.id }
-
-          after do |example|
-            example.metadata[:response][:content] = {
-              'application/json' => {
-                example: JSON.parse(response.body, symbolize_names: true)
-              }
-            }
-          end
           run_test!
         end
       end
