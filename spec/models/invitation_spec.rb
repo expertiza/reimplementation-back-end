@@ -1,41 +1,49 @@
 require 'rails_helper'
 
 RSpec.describe Invitation, type: :model do
-  let(:user1) { build(:user, id: 4, name: 'no name', fullname: 'no two') }
-  let(:user2) { build(:user, id: 5, name: 'no name 2', fullname: 'no two 2') }
-  let(:assignment) { build(:assignment)}
+  let(:user1) { create :user, name: 'rohitgeddam' }
+  let(:user2) { create :user, name: 'superman' }
+  let(:invalid_user) { build :user, name: 'INVALID' }
+  let(:assignment) { create(:assignment) }
 
-  after(:each) do
-    ActionMailer::Base.deliveries.clear
+  it 'is default reply_status set to WAITING' do
+    invitation = Invitation.new(to_id: user1.id, from_id: user2.id, assignment_id: assignment.id)
+    expect(invitation.reply_status).to eq('W')
   end
 
-  it "is valid with valid attributes" do
-    invitation = Invitation.new(to_user: user1, from_user: user2, assignment: assignment, reply_status: 'W')
+  it 'is valid with valid attributes' do
+    invitation = Invitation.new(to_id: user1.id, from_id: user2.id, assignment_id: assignment.id,
+                                reply_status: Invitation::WAITING_STATUS)
     expect(invitation).to be_valid
   end
 
-  it "is invalid with same from and to attribute" do
-    invitation = Invitation.new(to_user: user1, from_user: user1, assignment: assignment, reply_status: 'W')
+  it 'is invalid with same from and to attribute' do
+    invitation = Invitation.new(to_id: user1.id, from_id: user1.id, assignment_id: assignment.id,
+                                reply_status: Invitation::WAITING_STATUS)
     expect(invitation).to_not be_valid
   end
 
-  it "is invalid with invalid to user attribute" do
-    invitation = Invitation.new(to_user: nil, from_user: user2, assignment: assignment, reply_status: 'W')
+  it 'is invalid with invalid to user attribute' do
+    invitation = Invitation.new(to_id: 'INVALID', from_id: user2.id, assignment_id: assignment.id,
+                                reply_status: Invitation::WAITING_STATUS)
     expect(invitation).to_not be_valid
   end
 
-  it "is invalid with invalid from user attribute" do
-    invitation = Invitation.new(to_user: user1, from_user: nil, assignment: assignment, reply_status: 'W')
+  it 'is invalid with invalid from user attribute' do
+    invitation = Invitation.new(to_id: user1.id, from_id: 'INVALID', assignment_id: assignment.id,
+                                reply_status: Invitation::WAITING_STATUS)
     expect(invitation).to_not be_valid
   end
 
-  it "is invalid with invalid assignment attribute" do
-    invitation = Invitation.new(to_user: user1, from_user: user2, assignment: nil, reply_status: 'W')
+  it 'is invalid with invalid assignment attribute' do
+    invitation = Invitation.new(to_id: user1.id, from_id: user2.id, assignment_id: 'INVALID',
+                                reply_status: Invitation::WAITING_STATUS)
     expect(invitation).to_not be_valid
   end
 
-  it "is invalid with invalid reply_status attribute" do
-    invitation = Invitation.new(to_user: user1, from_user: user2, assignment: assignment, reply_status: 'X')
+  it 'is invalid with invalid reply_status attribute' do
+    invitation = Invitation.new(to_id: user1.id, from_id: user2.id, assignment_id: 'INVALID',
+                                reply_status: 'X')
     expect(invitation).to_not be_valid
   end
 end
