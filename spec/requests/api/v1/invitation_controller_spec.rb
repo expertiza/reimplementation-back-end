@@ -229,7 +229,7 @@ RSpec.describe 'Invitations API', type: :request do
 
       delete('delete invitation with invalid invite id') do
         tags 'Invitations'
-        response(404, 'successful') do
+        response(404, 'not found') do
           let(:id) { invitation.id + 100 }
 
           after do |example|
@@ -268,7 +268,7 @@ RSpec.describe 'Invitations API', type: :request do
 
     get('show invitation with invalid user and assignment') do
       tags 'Invitations'
-      response(404, 'show all invitations for the user for an assignment') do
+      response(404, 'not found') do
         let(:user_id) { 'INVALID' }
         let(:assignment_id) { assignment.id }
 
@@ -286,7 +286,7 @@ RSpec.describe 'Invitations API', type: :request do
 
     get('show invitation with user and invalid assignment') do
       tags 'Invitations'
-      response(404, 'show all invitations for the user for an assignment') do
+      response(404, 'not found') do
         let(:user_id) { user1.id }
         let(:assignment_id) { 'INVALID' }
 
@@ -303,7 +303,7 @@ RSpec.describe 'Invitations API', type: :request do
 
     get('show invitation with invalid user and invalid assignment') do
       tags 'Invitations'
-      response(404, 'show all invitations for the user for an assignment') do
+      response(404, 'not found') do
         let(:user_id) { 'INVALID' }
         let(:assignment_id) { 'INVALID' }
 
