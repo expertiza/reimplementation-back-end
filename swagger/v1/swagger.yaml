@@ -106,6 +106,49 @@ paths:
       responses:
         '200':
           description: successful
+  "/api/v1/sign_up_topics":
+    get:
+      summary: Get sign-up topics
+      parameters:
+      - name: assignment_id
+        in: query
+        description: Assignment ID
+        required: true
+        schema:
+          type: integer
+      - name: topic_identifier
+        in: query
+        description: Topic Identifier
+        required: false
+        schema:
+          type: string
+      tags:
+      - SignUpTopic
+      responses:
+        '200':
+          description: successful
+    delete:
+      summary: Delete sign-up topics
+      parameters:
+      - name: assignment_id
+        in: query
+        description: Assignment ID
+        required: true
+        schema:
+          type: integer
+      - name: topic_ids
+        in: query
+        items:
+          type: string
+        description: Topic Identifiers to delete
+        required: false
+        schema:
+          type: array
+      tags:
+      - SignUpTopic
+      responses:
+        '200':
+          description: successful
 servers:
 - url: http://{defaultHost}
   variables:
