@@ -1,9 +1,9 @@
 class Invitation < ApplicationRecord
   after_initialize :set_defaults
 
-  ACCEPT_STATUS = 'A'
-  REJECT_STATUS = 'R'
-  WAITING_STATUS = 'W'
+  ACCEPT_STATUS = 'A'.freeze
+  REJECT_STATUS = 'R'.freeze
+  WAITING_STATUS = 'W'.freeze
 
   belongs_to :to_user, class_name: 'User', foreign_key: 'to_id', inverse_of: false
   belongs_to :from_user, class_name: 'User', foreign_key: 'from_id', inverse_of: false
@@ -29,6 +29,16 @@ class Invitation < ApplicationRecord
     Invitation.new(params)
   end
 
+  # check if the user is invited
+  def self.invited?(from_id, to_id, assignment_id)
+    @invitations_count = Invitation.where(to_id:)
+                                   .where(from_id:)
+                                   .where(assignment_id:)
+                                   .where(reply_status: WAITING_STATUS)
+                                   .count
+    @invitations_count.positive?
+  end
+
   # send invite email
   def send_invite_email
     InvitationSentMailer.with(invitation: self)
@@ -37,39 +47,29 @@ class Invitation < ApplicationRecord
   end
 
   # Remove all invites sent by a user for an assignment.
-  def self.remove_users_sent_invites_for_assignment(user_id, assignment_id); end
+  def remove_users_sent_invites_for_assignment(user_id, assignment_id); end
 
   # After a users accepts an invite, the teams_users table needs to be updated.
   # NOTE: Depends on TeamUser model, which is not implemented yet.
-  def self.update_users_topic_after_invite_accept(inviter_user_id, invited_user_id, assignment_id); end
+  def update_users_topic_after_invite_accept(inviter_user_id, invited_user_id, assignment_id); end
 
   # This method handles all that needs to be done upon a user accepting an invitation.
   # First the users previous team is deleted if they were the only member of that
   # team and topics that the old team signed up for will be deleted.
   # Then invites the user that accepted the invite sent will be removed.
   # Last the users team entry will be added to the TeamsUser table and their assigned topic is updated
-  def self.accept_invitation(invitation, logged_in_user)
-    invitation.update(reply_status: ACCEPT_STATUS)
+  def accept_invitation(logged_in_user)
+    update(reply_status: ACCEPT_STATUS)
   end
 
   # This method handles all that needs to be done upon an user decline an invitation.
-  def self.decline_invitation(invitation, logged_in_user)
-    invitation.update(reply_status: REJECT_STATUS)
+  def decline_invitation(logged_in_user)
+    update(reply_status: REJECT_STATUS)
   end
 
   # This method handles all that need to be done upon an invitation retraction.
-  def self.retract_invitation(invitation, logged_in_user)
-    invitation.destroy
-  end
-
-  # check if the user is invited
-  def self.invited?(from_id, to_id, assignment_id)
-    @invitations_count = Invitation.where(to_id: to_id)
-                                   .where(from_id: from_id)
-                                   .where(assignment_id: assignment_id)
-                                   .where(reply_status: WAITING_STATUS)
-                                   .count
-    @invitations_count > 0
+  def retract_invitation(logged_in_user)
+    destroy
   end
 
   # This will override the default as_json method in the ApplicationRecord class and specify

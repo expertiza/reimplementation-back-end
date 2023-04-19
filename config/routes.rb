@@ -15,7 +15,7 @@ Rails.application.routes.draw do
       end
       resources :assignments
       resources :invitations do
-        get '/:user_id/:assignment_id/', on: :collection, action: :list_all_invitations_for_user_assignment
+        get '/:user_id/:assignment_id/', on: :collection, action: :invitations_for_user_assignment
       end
     end
   end

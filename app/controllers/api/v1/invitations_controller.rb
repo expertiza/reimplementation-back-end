@@ -33,10 +33,10 @@ class Api::V1::InvitationsController < ApplicationController
     @invitation = Invitation.find(@invite_id)
     case params[:reply_status]
     when Invitation::ACCEPT_STATUS
-      Invitation.accept_invitation(@invitation, nil)
+      @invitation.accept_invitation( nil)
       render json: @invitation, status: :ok
     when Invitation::REJECT_STATUS
-      Invitation.decline_invitation(@invitation, nil)
+      @invitation.decline_invitation( nil)
       render json: @invitation, status: :ok
     else
       render json: @invitation.errors, status: :unprocessable_entity
@@ -47,12 +47,12 @@ class Api::V1::InvitationsController < ApplicationController
   # DELETE /api/v1/invitations/:id
   def destroy
     @invitation = Invitation.find(params[:id])
-    Invitation.retract_invitation(@invitation, nil)
+    @invitation.retract_invitation(nil)
     render json: { message: "Invitation with id #{params[:id]}, retracted" }, status: :ok
   end
 
   # GET /invitations/:user_id/:assignment_id
-  def list_all_invitations_for_user_assignment
+  def invitations_for_user_assignment
     begin
       @user = User.find(params[:user_id])
     rescue ActiveRecord::RecordNotFound => e
