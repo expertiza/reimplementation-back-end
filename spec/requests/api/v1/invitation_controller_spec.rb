@@ -157,7 +157,7 @@ RSpec.describe 'Invitations API', type: :request do
     end
 
     patch('update invitation') do
-      tags 'Invitation'
+      tags 'Invitations'
       consumes 'application/json'
       parameter name: :invitation_status, in: :body, schema: {
         type: :object,
@@ -220,7 +220,7 @@ RSpec.describe 'Invitations API', type: :request do
       end
 
       delete('delete invitation with valid invite id') do
-        tags 'Invitation'
+        tags 'Invitations'
         response(200, 'successful') do
           let(:id) { invitation.id }
 
@@ -236,7 +236,7 @@ RSpec.describe 'Invitations API', type: :request do
       end
 
       delete('delete invitation with invalid invite id') do
-        tags 'Invitation'
+        tags 'Invitations'
         response(404, 'successful') do
           let(:id) { invitation.id + 100 }
 
