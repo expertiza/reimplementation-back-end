@@ -18,7 +18,7 @@ class SignupTopic < ApplicationRecord
   # Method used to update the attributes that includes max_choosers, descriptions, category to the SignupTopic
   def update_topic(maxChoosers = nil , description = nil, category = nil)
     need_to_update = false
-    SignupTopic.Transaction do
+    self.transaction do
       if !category.nil?
         self.category = category
         need_to_update = true
@@ -31,7 +31,7 @@ class SignupTopic < ApplicationRecord
         count_teams_to_promote = maxChoosers - self.max_choosers
         Waitlist.promote_teams_from_waitlist(self.id, count_teams_to_promote)
         self.max_choosers = maxChoosers
-        need_to_update
+        need_to_update = true
       end
       self.save! if need_to_update
     end
