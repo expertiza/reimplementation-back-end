@@ -3,7 +3,7 @@ require 'rails_helper'
 RSpec.describe SignupTopic, type: :model do
   let (:topic) { create(:signup_topic) }
   let (:team) { create(:team) }
-  let (:signed_up_team) { create(:signed_up_team, team: team) }
+  let (:signed_up_team) { create(:signed_up_team, team: team, signup_topic:topic) }
 
   describe "Test Associations" do
     it "belongs to the assignment" do
