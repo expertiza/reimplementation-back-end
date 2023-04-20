@@ -79,8 +79,8 @@ class SignupTopic < ApplicationRecord
   end
 
   # Method used to serialize the generated output to JSON for API requests/responses.
-  def serialize_to_json
-
+  def to_json
+    SignupTopicSerializer.new(self).serializable_hash.to_json
   end
 
 
