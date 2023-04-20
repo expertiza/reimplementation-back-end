@@ -58,7 +58,7 @@ RSpec.describe SignupTopic, type: :model do
 
     it "Returns JSON object that holds the signup topic data" do
       expect(SignedUpTeam.create_signed_up_team(topic["id"], team["id"])).to eq(true)
-      print(topic.to_json)
+      print(topic.as_json)
     end
 
     it "Destroy the topic and delegates any required changes" do
