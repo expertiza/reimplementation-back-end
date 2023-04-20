@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_03_15_185139) do
+ActiveRecord::Schema[7.0].define(version: 2023_04_20_210611) do
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -80,6 +80,43 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_15_185139) do
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
   end
 
+  create_table "sign_up_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "topic_identifier"
+    t.string "category"
+    t.string "topic_name"
+    t.integer "max_choosers"
+    t.bigint "assignment_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "index_sign_up_topics_on_assignment_id"
+  end
+
+  create_table "signed_up_teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "topic_id", default: 0, null: false
+    t.integer "team_id", default: 0, null: false
+    t.boolean "is_waitlisted", default: false, null: false
+    t.integer "preference_priority_number"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["topic_id"], name: "fk_signed_up_users_sign_up_topics"
+  end
+
+  create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "team_name"
+  end
+
+  create_table "teams_users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "team_id"
+    t.integer "user_id"
+    t.integer "duty_id"
+    t.string "pair_programming_status", limit: 1
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["duty_id"], name: "index_teams_users_on_duty_id"
+    t.index ["team_id"], name: "fk_users_teams"
+    t.index ["user_id"], name: "fk_teams_users"
+  end
+
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "password_digest"
@@ -105,6 +142,5 @@ ActiveRecord::Schema[7.0].define(version: 2023_03_15_185139) do
   end
 
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
-
+  add_foreign_key "sign_up_topics", "assignments"
 end
-

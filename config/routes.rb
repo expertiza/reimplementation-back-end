@@ -15,12 +15,20 @@ Rails.application.routes.draw do
       end
       resources :assignments
       #added routes for signup topics
+      # resources :sign_up_topics
+      resources :signed_up_teams do
+        collection do
+          post '/sign_up', to: 'signed_up_teams#sign_up'
+          post '/sign_up/student', to: 'signed_up_teams#sign_up_student'
+        end
+      end
       resources :sign_up_topics do
         collection do
           get :filter
-          delete :filter, to: 'sign_up_topics#delete_filter'
-          delete :delete_all_topics_for_assignment
-          delete :delete_all_selected_topics
+          delete '/', to: 'sign_up_topics#destroy'
+          # delete :filter, to: 'sign_up_topics#delete_filter'
+          # delete :delete_all_topics_for_assignment
+          # delete :delete_all_selected_topics
         end
       end
     end

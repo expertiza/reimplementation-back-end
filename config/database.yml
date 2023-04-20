@@ -1,18 +1,42 @@
+#default: &default
+#  adapter: mysql2
+#  encoding: utf8mb4
+#  pool: <%#= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+#  port: 3306
+#  socket: /var/run/mysqld/mysqld.sock
+
+#development:
+#  <<: *default
+#  url: <%#= ENV['DATABASE_URL'].gsub('?', '_development?') %>
+
+#test:
+#  <<: *default
+#  url: <%#= ENV['DATABASE_URL'].gsub('?', '_test?') %>
+
+#production:
+#  <<: *default
+#  url: <%#= ENV['DATABASE_URL'].gsub('?', '_production?') %>
+
+
 default: &default
   adapter: mysql2
   encoding: utf8mb4
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  port: 3306
-  socket: /var/run/mysqld/mysqld.sock
+  username: root
+  password: root
 
 development:
   <<: *default
-  url: <%= ENV['DATABASE_URL'].gsub('?', '_development?') %>
+  database: reimplementation_development
 
 test:
   <<: *default
-  url: <%= ENV['DATABASE_URL'].gsub('?', '_test?') %>
+  database: reimplementation_test
 
 production:
   <<: *default
-  url: <%= ENV['DATABASE_URL'].gsub('?', '_production?') %>
+  database: reimplementation_production
+  username: reimplementation
+  password: <%= ENV["REIMPLEMENTATION_DATABASE_PASSWORD"] %>>
+
+
