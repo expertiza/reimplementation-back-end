@@ -42,7 +42,7 @@ class SignupTopic < ApplicationRecord
   end
 
   # Method used to retrieve participants in signed up team of particular topic.
-  def find_team_participants(team_id)
+  def get_team_participants(team_id)
     self.signed_up_teams.find(team_id).team
   end
 
