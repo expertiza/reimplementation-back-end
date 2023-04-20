@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_04_19_211218) do
+ActiveRecord::Schema[7.0].define(version: 2023_04_20_210611) do
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -71,11 +71,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_19_211218) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "instructors", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "roles", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.bigint "parent_id"
@@ -103,10 +98,23 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_19_211218) do
     t.integer "preference_priority_number"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["topic_id"], name: "fk_signed_up_users_sign_up_topics"
   end
 
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "team_name"
+  end
+
+  create_table "teams_users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "team_id"
+    t.integer "user_id"
+    t.integer "duty_id"
+    t.string "pair_programming_status", limit: 1
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["duty_id"], name: "index_teams_users_on_duty_id"
+    t.index ["team_id"], name: "fk_users_teams"
+    t.index ["user_id"], name: "fk_teams_users"
   end
 
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
