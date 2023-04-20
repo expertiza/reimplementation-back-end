@@ -68,8 +68,8 @@ class SignupTopic < ApplicationRecord
   # Method used to validate if the topic is assigned to signed up team
   def is_assigned_to_team(team_id)
 
-    hasassignedtopic = signed_up_teams.find(team_id)
-    !hasassignedtopic.nil?
+    has_assigned_topic = signed_up_teams.find(team_id)
+    !has_assigned_topic.nil?
   end
 
   # Method used to retrieve all signed up teams for the specified topic
