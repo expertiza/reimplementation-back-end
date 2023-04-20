@@ -1,6 +1,5 @@
 class SignupTopic < ApplicationRecord
   belongs_to :assignment
-  belongs_to :waitlist, counter_cache: true
   has_many :signed_up_teams, counter_cache: true
 
   # Method used to destroy the topic from the table and also
