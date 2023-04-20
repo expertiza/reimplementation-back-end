@@ -43,7 +43,7 @@ class SignupTopic < ApplicationRecord
 
   # Method used to retrieve participants in signed up team of particular topic.
   def get_team_participants(team_id)
-    self.signed_up_teams.find(team_id).team
+    self.signed_up_teams.find(team_id).get_team_participants
   end
 
   # Method used to return number of available slots for teams to sign up for the topic.
