@@ -36,7 +36,8 @@ class Api::V1::SignedUpTeamsController < ApplicationController
   def sign_up_student
     user_id = params[:user_id]
     topic_id = params[:topic_id]
-    team_id = TeamUser.find(user_id: user_id)
+    @teams_user = TeamsUser.where(user_id: user_id).first
+    team_id = @teams_user.team_id
     create(topic_id, team_id)
   end
 
