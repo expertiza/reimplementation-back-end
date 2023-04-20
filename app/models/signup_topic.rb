@@ -55,7 +55,7 @@ class SignupTopic < ApplicationRecord
   # Method used to remove team from the topic and delegate changes to waitlist.
   def release_team(team_id)
     team_to_be_released = self.signed_up_teams.find(team_id)
-    if !team_to_be_released.destroy!
+    if !team_to_be_released.destroy
       return false
     end
     return true
@@ -64,8 +64,8 @@ class SignupTopic < ApplicationRecord
   # Method used to validate if the topic is assigned to signed up team
   def is_assigned_to_team(team_id)
 
-    hasassignedtopic = signed_up_teams.find(team_id).count
-    hasassignedtopic.positive?
+    hasassignedtopic = signed_up_teams.find(team_id)
+    !hasassignedtopic.nil?
   end
 
   # Method used to retrieve all signed up teams for the specified topic
