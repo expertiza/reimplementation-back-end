@@ -6,16 +6,12 @@ class SignupTopic < ApplicationRecord
   # cascading deletes performed in both SignUpTeams and Waitlist and team with error handling
   def destroy_topic
 
-    SignupTopic.Transaction do
+    self.transaction do
       self.signed_up_teams.each do |signupteam|
-        if !signupteam.destroy
-          raise 'Failed to destroy SignUpTeams'+signupteam.team_id.to_s
-        end
+        signupteam.destroy!
       end
 
-      if !self.destroy
-        raise 'Failed to destroy SignUpTopic'+self.id.to_s
-      end
+      self.destroy!
     end
   end
 
