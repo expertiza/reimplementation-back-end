@@ -4,6 +4,112 @@ info:
   title: EXPERTIZA API V1
   version: v1
 paths:
+  "/api/v1/invitations":
+    get:
+      summary: list invitations
+      tags:
+      - Invitations
+      responses:
+        '200':
+          description: List all Invitations
+    post:
+      summary: create invitation
+      tags:
+      - Invitations
+      parameters: []
+      responses:
+        '201':
+          description: Create an invitation with valid parameters
+        '422':
+          description: Create an invitation with same to user and from user parameters
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                assignment_id:
+                  type: integer
+                from_id:
+                  type: integer
+                to_id:
+                  type: integer
+                reply_status:
+                  type: string
+              required:
+              - assignment_id
+              - from_id
+              - to_id
+  "/api/v1/invitations/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id of the invitation
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: show invitation
+      tags:
+      - Invitations
+      responses:
+        '200':
+          description: Show invitation with valid invitation id
+        '404':
+          description: Show invitation with invalid invitation id
+    patch:
+      summary: update invitation
+      tags:
+      - Invitations
+      parameters: []
+      responses:
+        '200':
+          description: Reject invite successfully
+        '422':
+          description: Update invitation with invalid reply_status
+        '404':
+          description: Update status with invalid invitation_id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reply_status:
+                  type: string
+              required: []
+    delete:
+      summary: Delete invitation with invalid invite id
+      tags:
+      - Invitations
+      responses:
+        '204':
+          description: no content
+        '404':
+          description: not found
+  "/api/v1/invitations/{user_id}/{assignment_id}":
+    parameters:
+    - name: user_id
+      in: path
+      description: id of user
+      required: true
+      schema:
+        type: integer
+    - name: assignment_id
+      in: path
+      description: id of assignment
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Show invitation with invalid user and invalid assignment
+      tags:
+      - Invitations
+      responses:
+        '200':
+          description: Show all invitations for the user for an assignment
+        '404':
+          description: not found
   "/api/v1/roles":
     get:
       summary: list roles

@@ -15,7 +15,7 @@ class Api::V1::InvitationsController < ApplicationController
       @invitation.send_invite_email
       render json: @invitation, status: :created
     else
-      render json: @invitation.errors, status: :unprocessable_entity
+      render json: { error: @invitation.errors }, status: :unprocessable_entity
     end
   end
 
