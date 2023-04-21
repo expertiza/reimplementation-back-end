@@ -18,7 +18,7 @@ Rails.application.routes.draw do
         member do
           post '/add_ta' => 'courses#add_ta'
           get '/tas' => 'courses#view_tas'
-          post '/remove_ta' => 'courses#remove_ta'
+          post '/remove_ta/:ta_id' => 'courses#remove_ta'
           get '/copy' =>'courses#copy'
         end
       end
