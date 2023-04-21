@@ -2,25 +2,53 @@ require 'swagger_helper'
 
 RSpec.describe 'Account Requests API', type: :request do
 
+ # path '/api/v1/account_requests/pending' do
+
+  #  get('List Pending Account Requests') do
+   #   tags 'Account Requests'
+    #  produces 'application/json'
+
+     # response(200, 'List Pending Account Requests') do
+
+      #  after do |example|
+       #   example.metadata[:response][:content] = {
+        #    'application/json' => {
+         #     example: JSON.parse(response.body, symbolize_names: true)
+          #  }
+          #}
+        #end
+        #run_test!
+      #end
+    #end
+  #end 
+  
   path '/api/v1/account_requests/pending' do
+  get 'List Pending Account Requests' do
+    tags 'Account Requests'
+    produces 'application/json'
 
-    get('List Pending Account Requests') do
-      tags 'Account Requests'
-      produces 'application/json'
-
-      response(200, 'List Pending Account Requests') do
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
+    response '200', 'List Pending Account Requests' do
+      schema type: :object,
+        properties: {
+          example: {
+            type: :array,
+            items: {
+              type: :object,
+              properties: {
+                id: { type: :integer },
+                name: { type: :string },
+                status: { type: :string }
+              },
+              required: [ 'id', 'name', 'status' ]
             }
           }
-        end
-        run_test!
-      end
+        }
+
+      let(:example) { JSON.parse(response.body, symbolize_names: true) }
+      run_test!
     end
   end
+end
 
   path '/api/v1/account_requests/processed' do
     get('List Processed Account Requests') do
