@@ -24,22 +24,7 @@ RSpec.describe 'Account Requests API', type: :request do
 
   path '/api/v1/account_requests/processed' do
 
-    get('List Processed Account Requests') do
-      tags 'Account Requests'
-      produces 'application/json'
-
-      response(200, 'List Processed Account Requests') do
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
-        run_test!
-      end
-    end
+   
   end
 
   path '/api/v1/account_requests' do
