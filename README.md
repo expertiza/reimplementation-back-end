@@ -3,8 +3,10 @@
 This README would normally document whatever steps are necessary to get the
 application up and running.
 
-This document serves as a guide to help you get the application up and running as quickly and smoothly as possible. Below, we've listed some important points that you may want to take note of:
-Ruby version: The application requires Ruby version 3.2.1 to function properly. Make sure to have this installed before attempting to run the application.
+Things you may want to cover:
+
+* Ruby version - 3.2.1
+
 ## Development Environment
 
 ### Prerequisites
