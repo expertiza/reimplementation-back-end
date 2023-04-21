@@ -1,3 +1,5 @@
+include ActionController::Flash
+
 class Api::V1::CoursesController < ApplicationController
   before_action :set_course, only: %i[ show update destroy ]
 
@@ -40,32 +42,75 @@ class Api::V1::CoursesController < ApplicationController
 
   # Adds a Teaching Assistant to the course
   def add_ta
+    @course = Course.find(params[:id])
+    @user = User.find_by(id: params[:user][:id])
+    if @user.nil?
+      return render json: { status: "error", message: "The user inputted " + params[:user][:id] + " does not exist" }, status: :bad_request
+    elsif !TaMapping.where(ta_id: @user.id, course_id: @course.id).empty?
+      return render json: { status: "error", message: "The user inputted " + params[:user][:id] + " is already a TA for this course." }, status: :bad_request
+    else
+      @ta_mapping = TaMapping.create(ta_id: @user.id, course_id: @course.id)
+      @user.role = Role.find_by name: 'Teaching Assistant'
+      @user.save
+    end
 
+    if @ta_mapping.save
+      render json: @ta_mapping.slice(:course_id, :ta_id), status: :created
+    else
+      render json: @ta_mapping.errors, status: :unprocessable_entity
+    end
   end
 
   # Displays all Teaching Assistants for the course
   def view_tas
-
+    @course = Course.find(params[:id])
+    @ta_mappings = @course.ta_mappings
+    @users = User.where(id: @ta_mappings.pluck(:ta_id))
+    render json: @users
   end
 
   # Removes Teaching Assistant from the course
   def remove_ta
+    # @ta_mapping = TaMapping.find(params[:id])
+    @ta_mapping = TaMapping.find_by(course_id: params[:id], ta_id: params[:ta_id])
+    @ta = User.find(@ta_mapping.ta_id)
+    puts(@ta.id)
+    # if the user is not a TA for any other course, then the role should be changed to student
+    other_ta_mappings_num = TaMapping.where(ta_id: params[:ta_id]).size - 1
+    if other_ta_mappings_num.zero?
+      @role_id = Role.find_by(name: 'Student').id
+      @ta.assign_attributes(role_id: @role_id)
+      @ta.save
+      @test = User.all
+      return render json: @test
 
+    end
+    @ta_mapping.destroy
+    render json: { message: "The TA " + @ta.name + " has been removed." }, status: :ok
   end
 
   # Creates a copy of the course
   def copy
-
+    existing_course = Course.find(params[:id])
+    @new_course = Course.new()
+    @new_course = existing_course.dup
+    @new_course.directory_path = @new_course.directory_path + '_copy'
+    if @new_course.save
+      render json: { message: "The course " + existing_course.name + " has been successfully copied" }
+    else
+      render json: { message: "The course was not able to be copied" }
+    end
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_course
-      @course = Course.find(params[:id])
-    end
 
-    # Only allow a list of trusted parameters through.
-    def course_params
-      params.require(:course).permit(:name, :directory_path, :info, :private, :instructor_id)
-    end
+  # Use callbacks to share common setup or constraints between actions.
+  def set_course
+    @course = Course.find(params[:id])
+  end
+
+  # Only allow a list of trusted parameters through.
+  def course_params
+    params.require(:course).permit(:name, :directory_path, :info, :private, :instructor_id)
+  end
 end
