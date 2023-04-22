@@ -11,6 +11,7 @@ class Node < ApplicationRecord
   def children(sortvar = nil, sortorder = nil, user_id = nil, show = nil, parent_id = nil, search = nil); end
 
   def partial_name
+    self.class.table + '_actions'
   end
 
   def self.leaf?
