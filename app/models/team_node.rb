@@ -9,8 +9,10 @@ nodes.where('teams.parent_id = ?', parent_id) if parent_id
   end
 
   def name(_ip_address = nil)
+    Team.find(node_object_id).name
   end
 
   def children(_sortvar = nil, _sortorder = nil, _user_id = nil, _parent_id = nil, _search = nil)
+    TeamUserNode.get(node_object_id)
   end
 end

@@ -14,11 +14,14 @@ class QuestionnaireTypeNode < FolderNode
   end
 
   def partial_name
+    'questionnaire_type_actions'
   end
 
   def name
+    TreeFolder.find(node_object_id).name
   end
 
   def children(sortvar = nil, sortorder = nil, user_id = nil, show = nil, _parent_id = nil, search = nil)
+    QuestionnaireNode.get(sortvar, sortorder, user_id, show, node_object_id, search)
   end
 end

@@ -2,6 +2,7 @@ class TeamUserNode < Node
   belongs_to :node_object, class_name: 'TeamsUser'
 
   def name(ip_address = nil)
+    TeamsUser.find(node_object_id).name(ip_address)
   end
 
   def self.get(parent_id)

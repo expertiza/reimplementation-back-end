@@ -33,19 +33,24 @@ sortorder = 'ASC' if sortorder.nil?
   end
 
   def name
+    Questionnaire.find_by(id: node_object_id).try(:name)
   end
 
 
   def instructor_id
+    Questionnaire.find_by(id: node_object_id).try(:instructor_id)
   end
 
   def private?
+    Questionnaire.find_by(id: node_object_id).try(:private)
   end
 
   def creation_date
+    Questionnaire.find_by(id: node_object_id).try(:created_at)
   end
 
   def modified_date
+    Questionnaire.find_by(id: node_object_id).try(:updated_at)
   end
 
   def self.leaf?
