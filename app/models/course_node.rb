@@ -13,37 +13,27 @@ s
   def self.get(_sortvar = 'name', _sortorder = 'desc', user_id = nil, show = nil, _parent_id = nil, _search = nil)
     sortvar = 'created_at'
     if Course.column_names.include? sortvar
-      includes(:course).where([get_course_query_conditions(show, user_id), get_courses_managed_by_user(user_id)])
+      includes(:course).where([get_privacy_clause(show, user_id)])
                        .order("courses.#{sortvar} desc")
     end
   end
 
-  def self.get_course_query_conditions(show = nil, user_id = nil)
+  def self.get_privacy_clause(show = nil, user_id = nil)
     query_user = User.find_by(id: user_id)
 
     if query_user && query_user.teaching_assistant?
-      if show
-        "courses.id in (?)"
-      else
-        "((courses.private = 0 and courses.instructor_id != #{user_id}) or courses.instructor_id = #{user_id})"
-      end
+      clause = "courses.id in (#{Ta.get_mapped_courses(user_id)})"
     else
-      if show
-        "courses.instructor_id = #{user_id}"
-      else
-        "(courses.private = 0 or courses.instructor_id = #{user_id})"
-      end
+      clause = "courses.instructor_id = #{user_id}"
+    end
+
+    if show
+      clause
+    else
+      "(courses.private = 0 or #{clause})"
     end
   end
 
-  def self.get_courses_managed_by_user(user_id = nil)
-    current_user = User.find(user_id)
-    if current_user.teaching_assistant?
-      Ta.get_mapped_courses(user_id)
-    else
-      user_id
-    end
-  end
 
   def self.parent_id
     folder = TreeFolder.find_by(name: 'Courses')
