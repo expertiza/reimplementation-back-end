@@ -99,6 +99,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_15_011209) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["course_id"], name: "index_ta_mappings_on_course_id"
+    t.index ["ta_id"], name: "fk_ta_mapping_users"
   end
 
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
