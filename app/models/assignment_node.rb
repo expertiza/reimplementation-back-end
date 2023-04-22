@@ -31,24 +31,34 @@ class AssignmentNode < Node
     true
   end
 
+  # With this functionality, a database lookup of Assignemnt is performed
+  # if not stored in an object variable. Once search is performed, store it
+  # Otherwise,  we use the existing cached Assignment extract a specific parameter
+  def cached_assignment_lookup(parameter)
+    if !@assignment_node
+      @assignment_node = Assignment.find_by(id: node_object_id)
+    end
+    @assignment_node.try(parameter)
+  end
+
   def name
-    @assign_node ? @assign_node.name : Assignment.find_by(id: node_object_id).try(:name)
+    cached_assignment_lookup(:name)
   end
 
   def directory
-    @assign_node ? @assign_node.directory_path : Assignment.find_by(id: node_object_id).try(:directory_path)
+    cached_assignment_lookup(:directory_path)
   end
 
   def creation_date
-    @assign_node ? @assign_node.created_at : Assignment.find_by(id: node_object_id).try(:created_at)
+    cached_assignment_lookup(:created_at)
   end
 
   def modified_date
-    @assign_node ? @assign_node.updated_at : Assignment.find_by(id: node_object_id).try(:updated_at)
+    cached_assignment_lookup(:updated_at)
   end
 
   def course_id
-    @assign_node ? @assign_node.course_id : Assignment.find_by(id: node_object_id).try(:course_id)
+    cached_assignment_lookup(:course_id)
   end
 
   def belongs_to_course?
@@ -56,34 +66,34 @@ class AssignmentNode < Node
   end
 
   def instructor_id
-    @assign_node ? @assign_node.instructor_id : Assignment.find_by(id: node_object_id).try(:instructor_id)
+    cached_assignment_lookup(:instructor_id)
   end
 
   def institution_id
-    Assignment.find_by(id: node_object_id).try(:institution_id)
+    cached_assignment_lookup(:institution_id)
   end
 
   def private?
-    Assignment.find_by(id: node_object_id).try(:private)
+    cached_assignment_lookup(:private4)
   end
 
   def max_team_size
-    Assignment.find_by(id: node_object_id).try(:max_team_size)
+    cached_assignment_lookup(:max_team_size)
   end
 
   def topic_bidding?
-    # TODO
+    cached_assignment_lookup(:is_intelligent)
   end
 
   def require_quiz?
-    Assignment.find_by(id: node_object_id).try(:require_quiz)
+    cached_assignment_lookup(:require_quiz)
   end
 
   def allow_suggestions?
-    Assignment.find_by(id: node_object_id).try(:allow_suggestions)
+    cached_assignment_lookup(:allow_suggestions)
   end
 
   def teams
-    TeamNode.get(node_object_id)s
+    TeamNode.get(node_object_id)
   end
 end

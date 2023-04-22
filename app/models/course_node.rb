@@ -38,12 +38,11 @@ s
 
   def self.get_courses_managed_by_user(user_id = nil)
     current_user = User.find(user_id)
-    values = if current_user.teaching_assistant? == false
-               user_id
-             else
-               Ta.get_mapped_courses(user_id)
-             end
-    values
+    if current_user.teaching_assistant?
+      Ta.get_mapped_courses(user_id)
+    else
+      user_id
+    end
   end
 
   def self.parent_id
@@ -57,32 +56,39 @@ s
     AssignmentNode.get(sortvar, sortorder, user_id, show, node_object_id, search)
   end
 
+  def cached_course_lookup(parameter)
+    if !@course_node
+      @course_node = Course.find_by(id: node_object_id)
+    end
+    @course_node.try(parameter)
+  end
+
   def name
-    Course.find_by(id: node_object_id).try(:name)
+    cached_course_lookup(:name)
   end
 
   def directory
-    Course.find_by(id: node_object_id).try(:directory_path)
+    cached_course_lookup(:directory)
   end
 
   def creation_date
-    Course.find_by(id: node_object_id).try(:created_at)
+    cached_course_lookup(:created_at)
   end
 
   def modified_date
-    Course.find_by(id: node_object_id).try(:updated_at)
+    cached_course_lookup(:updated_at)
   end
 
   def private?
-    Course.find_by(id: node_object_id).try(:private)
+    cached_course_lookup(:private)
   end
 
   def instructor_id
-    Course.find_by(id: node_object_id).try(:instructor_id)
+    cached_course_lookup(:instructor_id)
   end
 
   def institution_id
-    Course.find_by(id: node_object_id).try(:institutions_id)
+    cached_course_lookup(:institutions_id)
   end
 
   def teams
@@ -90,6 +96,6 @@ s
   end
 
   def survey_distribution_id
-    Course.find_by(id: node_object_id).try(:survey_distribution_id)
+    cached_course_lookup(:survey_distribution_id)
   end
 end
