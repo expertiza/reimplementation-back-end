@@ -47,28 +47,29 @@ class Invitation < ApplicationRecord
   end
 
   # Remove all invites sent by a user for an assignment.
-  def remove_users_sent_invites_for_assignment(user_id, assignment_id); end
+  def remove_users_sent_invites_for_assignment(_user_id, _assignment_id); end
 
   # After a users accepts an invite, the teams_users table needs to be updated.
   # NOTE: Depends on TeamUser model, which is not implemented yet.
-  def update_users_topic_after_invite_accept(inviter_user_id, invited_user_id, assignment_id); end
+  def update_users_topic_after_invite_accept(_inviter_user_id, _invited_user_id, _assignment_id); end
 
   # This method handles all that needs to be done upon a user accepting an invitation.
-  # First the users previous team is deleted if they were the only member of that
+  # Expected functionality: First the users previous team is deleted if they were the only member of that
   # team and topics that the old team signed up for will be deleted.
   # Then invites the user that accepted the invite sent will be removed.
-  # Last the users team entry will be added to the TeamsUser table and their assigned topic is updated
-  def accept_invitation(logged_in_user)
+  # Last the users team entry will be added to the TeamsUser table and their assigned topic is updated.
+  # For now it simply updates the invitation's reply_status.
+  def accept_invitation(_logged_in_user)
     update(reply_status: ACCEPT_STATUS)
   end
 
   # This method handles all that needs to be done upon an user decline an invitation.
-  def decline_invitation(logged_in_user)
+  def decline_invitation(_logged_in_user)
     update(reply_status: REJECT_STATUS)
   end
 
   # This method handles all that need to be done upon an invitation retraction.
-  def retract_invitation(logged_in_user)
+  def retract_invitation(_logged_in_user)
     destroy
   end
 
@@ -88,5 +89,4 @@ class Invitation < ApplicationRecord
   def set_defaults
     self.reply_status ||= WAITING_STATUS
   end
-
 end
