@@ -11,7 +11,7 @@ paths:
       - Invitations
       responses:
         '200':
-          description: List all Invitations
+          description: Success
     post:
       summary: create invitation
       tags:
@@ -19,9 +19,9 @@ paths:
       parameters: []
       responses:
         '201':
-          description: Create an invitation with valid parameters
+          description: Create successful
         '422':
-          description: Create an invitation with same to user and from user parameters
+          description: Invalid request
       requestBody:
         content:
           application/json:
@@ -54,9 +54,9 @@ paths:
       - Invitations
       responses:
         '200':
-          description: Show invitation with valid invitation id
+          description: Show invitation
         '404':
-          description: Show invitation with invalid invitation id
+          description: Not found
     patch:
       summary: update invitation
       tags:
@@ -64,11 +64,11 @@ paths:
       parameters: []
       responses:
         '200':
-          description: Reject invite successfully
+          description: Update successful
         '422':
-          description: Update invitation with invalid reply_status
+          description: Invalid request
         '404':
-          description: Update status with invalid invitation_id
+          description: Not found
       requestBody:
         content:
           application/json:
@@ -79,14 +79,14 @@ paths:
                   type: string
               required: []
     delete:
-      summary: Delete invitation with invalid invite id
+      summary: Delete invitation
       tags:
       - Invitations
       responses:
         '204':
-          description: no content
+          description: Delete successful
         '404':
-          description: not found
+          description: Not found
   "/api/v1/invitations/{user_id}/{assignment_id}":
     parameters:
     - name: user_id
@@ -102,14 +102,14 @@ paths:
       schema:
         type: integer
     get:
-      summary: Show invitation with invalid user and invalid assignment
+      summary: Show all invitation for the given user and assignment
       tags:
       - Invitations
       responses:
         '200':
           description: Show all invitations for the user for an assignment
         '404':
-          description: not found
+          description: Not found
   "/api/v1/roles":
     get:
       summary: list roles
