@@ -3,8 +3,9 @@ class CourseNode < Node
   belongs_to :node_object, class_name: 'Course', foreign_key: 'node_object_id'
 
   def self.create_course_node(course)
+    
   end
-
+s
   def self.get(_sortvar = 'name', _sortorder = 'desc', user_id = nil, show = nil, _parent_id = nil, _search = nil)
     sortvar = 'created_at'
     if Course.column_names.include? sortvar
