@@ -16,7 +16,7 @@ Rails.application.routes.draw do
       resources :assignments
       resources :courses do
         member do
-          post '/add_ta' => 'courses#add_ta'
+          get '/add_ta/:ta_id' => 'courses#add_ta'
           get '/tas' => 'courses#view_tas'
           post '/remove_ta/:ta_id' => 'courses#remove_ta'
           get '/copy' =>'courses#copy'
