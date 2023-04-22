@@ -6,6 +6,42 @@ RSpec.describe Invitation, type: :model do
   let(:invalid_user) { build :user, name: 'INVALID' }
   let(:assignment) { create(:assignment) }
 
+
+  it 'is invitation_factory returning new Invitation' do
+    invitation = Invitation.invitation_factory(to_id: user1.id, from_id: user2.id, assignment_id: assignment.id)
+    expect(invitation).to be_valid
+  end
+
+  it 'sends a invitation email' do
+    invitation = Invitation.create(to_id: user1.id, from_id: user2.id, assignment_id: assignment.id)
+    expect do
+      invitation.send_invite_email
+    end.to have_enqueued_job.on_queue('default').exactly(:once)
+  end
+
+  it 'accepts invitation and change reply_status to Accept(A)' do
+    invitation = Invitation.create(to_id: user1.id, from_id: user2.id, assignment_id: assignment.id)
+    invitation.accept_invitation(nil)
+    expect(invitation.reply_status).to eq(Invitation::ACCEPT_STATUS)
+  end
+
+  it 'rejects invitation and change reply_status to Reject(R)' do
+    invitation = Invitation.create(to_id: user1.id, from_id: user2.id, assignment_id: assignment.id)
+    invitation.decline_invitation(nil)
+    expect(invitation.reply_status).to eq(Invitation::REJECT_STATUS)
+  end
+
+  it 'retracts invitation' do
+    invitation = Invitation.create(to_id: user1.id, from_id: user2.id, assignment_id: assignment.id)
+    invitation.retract_invitation(nil)
+    expect { invitation.reload }.to raise_error(ActiveRecord::RecordNotFound)
+  end
+
+  it 'as_json works as expected' do
+    invitation = Invitation.create(to_id: user1.id, from_id: user2.id, assignment_id: assignment.id)
+    expect(invitation.as_json).to include('to_user', 'from_user', 'assignment', 'reply_status', 'id')
+  end
+
   it 'is invited? false' do
     invitation = Invitation.create(to_id: user1.id, from_id: user2.id, assignment_id: assignment.id)
     truth = Invitation.invited?(user1.id, user2.id, assignment.id)
