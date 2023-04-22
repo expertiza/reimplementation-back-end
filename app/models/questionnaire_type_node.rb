@@ -3,6 +3,14 @@ class QuestionnaireTypeNode < FolderNode
   belongs_to :node_object, class_name: 'TreeFolder', inverse_of: false
 
   def self.get(_sortvar = nil, _sortorder = nil, _user_id = nil, _show = nil, _parent_id = nil, _search = nil)
+    parent = TreeFolder.find_by(name: 'Questionnaires')
+    folders = TreeFolder.where(parent_id: parent.id)
+    nodes = []
+    folders.each do |folder|
+      node = FolderNode.find_by(node_object_id: folder.id)
+      nodes << node if node
+    end
+    nodes
   end
 
   def partial_name
