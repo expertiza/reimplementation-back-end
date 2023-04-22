@@ -30,9 +30,9 @@ class Participant < ApplicationRecord
     # defined here to add different duty titles
     DUTY_MENTOR = 'mentor'.freeze
   
-    # finds team of the user
+    # finds team of the participant
     def team
-      TeamsUser.find_by(user: user).try(:team)
+        TeamsParticipant.find_by(participant_id: id).try(:team)
     end
   
     def responses
