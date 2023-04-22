@@ -30,50 +30,46 @@ class Participant < ApplicationRecord
     # defined here to add different duty titles
     DUTY_MENTOR = 'mentor'.freeze
   
-    # finds team of the participant
+    # finds team of the participant 
     def team
         TeamsParticipant.find_by(participant_id: id).try(:team)
     end
   
     def responses
-      response_maps.map(&:response)
+        response_maps.map(&:response)
     end
   
     def name(ip_address = nil)
-      user.name(ip_address)
+        user.name(ip_address)
     end
   
     def fullname(ip_address = nil)
-      user.fullname(ip_address)
+        user.fullname(ip_address)
     end
   
     def handle(ip_address = nil)
-      User.anonymized_view?(ip_address) ? 'handle' : self[:handle]
+        User.anonymized_view?(ip_address) ? 'handle' : self[:handle]
     end
   
     def delete(force = nil)
-      maps = ResponseMap.where('reviewee_id = ? or reviewer_id = ?', id, id) #finds if the participant is either a reviewer or reviewee of an assignment
-      #if that is the case, then association exist and therefore participant cannot be deleted
-      raise 'Associations exist for this participant.' unless force || (maps.blank? && team.nil?)
-  
-      leave_team(maps) #to delete the participant
-    end
-  
-    #leave_team method deletes a participant from a team. But, to do so, a team has to be present. 
-    #First it checks if team exists and them compares the team user id with the participant user id to delete that participant.
-    def leave_team(maps)
-      maps && maps.each(&:destroy)
-      if team
-        team.teams_users.each { |teams_user| teams_user.destroy if teams_user.user_id == id }
-      destroy
+        # find if the participant is either a reviewer or reviewee of an assignment
+        maps = ResponseMap.where('reviewee_id = ? or reviewer_id = ?', id, id)  
+        # raise if associations exist for the participant unless force
+        raise 'Associations exist for this participant.' unless force || (maps.blank? && team.nil?)
+
+        # delete response maps associated with the participant
+        maps && maps.destroy_all
+        # remove the participant from the team
+        team && team.teams_participants.find_by(participant_id: id).destroy   
+        destroy
     end
   
     def topic_name
-      if topic.nil? || topic.topic_name.empty?
-        '<center>&#8212;</center>' # em dash
-      else
-        topic.topic_name
-      end
+        if topic.nil? || topic.topic_name.empty?
+            '<center>&#8212;</center>' # em dash
+        else
+            topic.topic_name
+        end
     end
   
     # Get authorization from permissions.

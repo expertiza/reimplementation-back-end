@@ -78,15 +78,14 @@ class Api::V1::ParticipantsController < ApplicationController
     end
 
     # destroys a participant from an assignment or a course
-    # DELETE /participants/:id
+    # DELETE /participants/:id?force={}
     def destroy
         participant = Participant.find(params[:id].to_i)
-        if on_team?(participant)
-          render json: { error: "This participant is on a team" }, status: :unprocessable_entity
-        elsif participant.destroy
+        begin
+            participant.delete(params[:query][:force])
             render json: { message: "#{participant.user.name} was successfully removed as a participant" }, status: :ok
-        else
-            render json: { error: "Failed to remove participant" }, status: :unprocessable_entity
+        rescue => e
+            render json: { error: e }, status: :unprocessable_entity
         end
     end
       
@@ -103,11 +102,6 @@ class Api::V1::ParticipantsController < ApplicationController
     end
     
     private
-
-    # checks whether a participant belongs to a team.
-    def on_team?(participant)
-        participant.team.present?
-    end
 
     # copies existing participants from source to target
     def copy_participants_from_source_to_target(assignment_id, direction)
