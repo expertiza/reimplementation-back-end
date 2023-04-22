@@ -88,14 +88,15 @@ class Participant < ApplicationRecord
       authorization
     end
   
-    # Sort a set of participants based on their user names.
-    # Please make sure there is no duplicated participant in this input array.
-    # There should be a more beautiful way to handle this, though.  -Yang
-    def self.sort_by_name(participants)
-      users = []
-      participants.each { |p| users << p.user }
-      users.sort! { |a, b| a.name.downcase <=> b.name.downcase } # Sort the users based on the name
-      participants.sort_by { |p| users.map(&:id).index(p.user_id) }
+    # Sort participants based on their id or associated user_name.
+    # Make sure there is no duplicated participant in this input array.
+    def self.sort_participants(participants, sort_by)
+        if sort_by == "id"
+            participants.sort_by { |p| p.id }
+        elsif sort_by == "name"
+            participants.sort_by { |p| p.user.name.downcase }
+        else
+            raise ArgumentError, "Invalid sort parameter. Please use 'id' or 'name'."
     end
   
     # Provide export functionality for Assignment Participants and Course Participants
