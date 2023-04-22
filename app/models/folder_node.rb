@@ -5,17 +5,17 @@ class FolderNode < Node
   def self.get(_sortvar = nil, _sortorder = nil, _user_id = nil, _show = nil, _parent_id = nil, _search = nil)
   end
 
-  def get_name
+  def name
   end
 
-  def get_partial_name
+  def partial_name
 
   end
 
-  def get_child_type
+  def child_type
   end
 
-  def get_children(sortvar = nil, sortorder = nil, user_id = nil, show = nil, parent_id = nil, search = nil)
+  def children(sortvar = nil, sortorder = nil, user_id = nil, show = nil, parent_id = nil, search = nil)
 
   end
 end

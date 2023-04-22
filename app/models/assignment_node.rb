@@ -4,10 +4,6 @@ class AssignmentNode < Node
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'node_object_id'
   belongs_to :node_object, class_name: 'Assignment', foreign_key: 'node_object_id'
 
-  def self.table
-    'assignments'
-  end
-
   def self.get(sortvar = nil, sortorder = nil, user_id = nil, show = nil, parent_id = nil, _search = nil)
 
   end
@@ -16,23 +12,23 @@ class AssignmentNode < Node
     true
   end
 
-  def get_name
+  def name
 
   end
 
-  def get_directory
+  def directory
 
   end
 
-  def get_creation_date
+  def creation_date
 
   end
 
-  def get_modified_date
+  def modified_date
 
   end
 
-  def get_course_id
+  def course_id
 
   end
 
@@ -40,23 +36,23 @@ class AssignmentNode < Node
 
   end
 
-  def get_instructor_id
+  def instructor_id
 
   end
 
-  def get_institution_id
+  def institution_id
 
   end
 
-  def get_private
+  def private
 
   end
 
-  def get_max_team_size
+  def max_team_size
 
   end
 
-  def is_intelligent?
+  def topic_bidding?
 
   end
 
@@ -68,7 +64,7 @@ class AssignmentNode < Node
 
   end
 
-  def get_teams
+  def teams
 
   end
 end

@@ -5,10 +5,6 @@ class CourseNode < Node
   def self.create_course_node(course)
   end
 
-  def self.table
-  end
-
-
   def self.get(_sortvar = 'name', _sortorder = 'desc', user_id = nil, show = nil, _parent_id = nil, _search = nil)
 
   end
@@ -21,38 +17,38 @@ class CourseNode < Node
 
   end
 
-  def self.get_parent_id
+  def self.parent_id
 
   end
 
 
-  def get_children(sortvar = nil, sortorder = nil, user_id = nil, show = nil, _parent_id = nil, search = nil)
+  def children(sortvar = nil, sortorder = nil, user_id = nil, show = nil, _parent_id = nil, search = nil)
   end
 
-  def get_name
+  def name
   end
 
-  def get_directory
+  def directory
   end
 
-  def get_creation_date
+  def creation_date
   end
 
-  def get_modified_date
+  def modified_date
   end
 
   def private?
   end
 
-  def get_instructor_id
+  def instructor_id
   end
 
-  def get_institution_id
+  def institution_id
   end
 
-  def get_teams
+  def teams
   end
 
-  def get_survey_distribution_id
+  def survey_distribution_id
   end
 end
