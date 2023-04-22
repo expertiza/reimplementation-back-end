@@ -22,7 +22,7 @@ class QuestionnaireNode < Node
   def modified_date
   end
 
-  def is_leaf
+  def self.leaf?
     true
   end
 end

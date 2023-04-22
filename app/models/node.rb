@@ -8,26 +8,22 @@ class Node < ApplicationRecord
 
   def self.get(_sortvar = nil, _sortorder = nil, _user_id = nil, _show = nil, _parent_id = nil, _search = nil); end
 
-  def get_children(sortvar = nil, sortorder = nil, user_id = nil, show = nil, parent_id = nil, search = nil); end
+  def children(sortvar = nil, sortorder = nil, user_id = nil, show = nil, parent_id = nil, search = nil); end
 
-  def get_partial_name
+  def partial_name
   end
 
-
-  def is_leaf
+  def self.leaf?
     false
   end
 
+  def name; end
 
-  def self.table; end
+  def directory; end
 
-  def get_name; end
+  def creation_date; end
 
-  def get_directory; end
+  def modified_date; end
 
-  def get_creation_date; end
-
-  def get_modified_date; end
-
-  def get_child_type; end
+  def child_type; end
 end

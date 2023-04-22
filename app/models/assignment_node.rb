@@ -8,7 +8,7 @@ class AssignmentNode < Node
 
   end
 
-  def is_leaf
+  def self.leaf?
     true
   end
 
@@ -44,7 +44,7 @@ class AssignmentNode < Node
 
   end
 
-  def private
+  def private?
 
   end
 

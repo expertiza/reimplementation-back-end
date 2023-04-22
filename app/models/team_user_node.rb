@@ -7,7 +7,7 @@ class TeamUserNode < Node
   def self.get(parent_id)
   end
 
-  def is_leaf
+  def self.leaf?
     true
   end
 end
