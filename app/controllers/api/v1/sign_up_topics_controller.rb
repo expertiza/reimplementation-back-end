@@ -30,7 +30,6 @@ class Api::V1::SignUpTopicsController < ApplicationController
       else
         render json: {message: @sign_up_topic.errors}, status: :unprocessable_entity
       end
-
   end
 
   # PATCH/PUT /sign_up_topics/1
@@ -66,7 +65,7 @@ class Api::V1::SignUpTopicsController < ApplicationController
     end
 
     if @sign_up_topics.each(&:delete)
-      render json: {message: "The topic has been deleted successfully. "}, status: :ok
+      render json: {message: "The topic has been deleted successfully. "}, status: :no_content
     else
       render json: @sign_up_topic.errors, status: :unprocessable_entity
     end

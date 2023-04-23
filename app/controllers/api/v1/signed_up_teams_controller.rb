@@ -1,13 +1,15 @@
 class Api::V1::SignedUpTeamsController < ApplicationController
 
   def index
+    puts params[:topic_id]
     @sign_up_topic = SignUpTopic.find(params[:topic_id])
     @signed_up_team = SignedUpTeam.find_team_participants(@sign_up_topic.assignment_id)
     render json: @signed_up_team
   end
   def create(topic_id, team_id)
     @sign_up_topic = SignUpTopic.where(assignment_id: topic_id).first
-    @signed_up_team = SignedUpTeam.new()
+    puts @sign_up_topic
+    @signed_up_team = SignedUpTeam.new
     @signed_up_team.topic_id = @sign_up_topic.id
     @signed_up_team.team_id = team_id
     if @signed_up_team.save
@@ -44,7 +46,7 @@ class Api::V1::SignedUpTeamsController < ApplicationController
   def destroy
     @signed_up_team = SignedUpTeam.find(params[:id])
     if @signed_up_team.drop_team
-      render json: {message: 'Signed up teams was deleted successfully!'}, status: 200
+      render json: {message: 'Signed up teams was deleted successfully!'}, status: :no_content
     else
       render json: @signed_up_team.errors, status: :unprocessable_entity
     end
