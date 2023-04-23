@@ -12,7 +12,7 @@ RSpec.describe Invitation, type: :model do
     expect(invitation).to be_valid
   end
 
-  it 'sends a invitation email' do
+  it 'sends an invitation email' do
     invitation = Invitation.create(to_id: user1.id, from_id: user2.id, assignment_id: assignment.id)
     expect do
       invitation.send_invite_email

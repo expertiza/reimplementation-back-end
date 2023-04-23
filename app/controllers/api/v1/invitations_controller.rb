@@ -73,18 +73,22 @@ class Api::V1::InvitationsController < ApplicationController
 
   private
 
-  # This method will check if the invited user exists.
+  # This method will check if the invited user exists.Additionally, this
+  # method will also check if the sender himself is participating in the given assignment
+  # before they can send an invitation.
   def check_invited_user_before_invitation; end
 
   # This method will check if the invited user is a participant in the assignment.
+  # Currently there is no association between assignment and users therefore this method is not implemented yet.
   def check_participant_before_invitation; end
 
   # This method will check if the team meets the joining requirement before sending an invite.
   # NOTE: This method depends on TeamUser and AssignmentTeam, which is not implemented yet.
   def check_team_before_invitation; end
 
-  # This method will check if the team meets the joining requirements
-  # when an invitation is being accepted
+  # This method will check if the team meets the joining requirements when an invitation
+  # is being accepted for example check if the invite's team is still existing,
+  # and have available slot to add the invitee.
   # NOTE: This method depends on AssignmentParticipant and AssignmentTeam
   # which is not implemented yet.
   def check_team_before_accept; end
