@@ -46,9 +46,6 @@ class Invitation < ApplicationRecord
                         .deliver_later
   end
 
-  # Remove all invites sent by a user for an assignment.
-  def remove_users_sent_invites_for_assignment(_user_id, _assignment_id); end
-
   # After a users accepts an invite, the teams_users table needs to be updated.
   # NOTE: Depends on TeamUser model, which is not implemented yet.
   def update_users_topic_after_invite_accept(_inviter_user_id, _invited_user_id, _assignment_id); end
