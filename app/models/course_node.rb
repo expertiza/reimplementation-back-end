@@ -9,7 +9,7 @@ class CourseNode < Node
     @course_node.parent_id = parent_id if parent_id
     @course_node.save
   end
-s
+
   def self.get(_sortvar = 'name', _sortorder = 'desc', user_id = nil, show = nil, _parent_id = nil)
     sortvar = 'created_at'
     if Course.column_names.include? sortvar
@@ -18,6 +18,9 @@ s
     end
   end
 
+  # Generate the contents of a WHERE clause that accounts for course privacy and user permissions.
+  # user_id: The user being used in the query, used for permission lookup.
+  # show: If false, include all public courses as well.
   def self.get_privacy_clause(show = nil, user_id = nil)
     query_user = User.find_by(id: user_id)
 
@@ -42,13 +45,21 @@ s
     AssignmentNode.get(sortvar, sortorder, user_id, show, node_object_id, search)
   end
 
-  def cached_course_lookup(parameter)
-    if !@course_node
-      @course_node = Course.find_by(id: node_object_id)
-    end
-    @course_node.try(parameter)
+  def teams
+    TeamNode.get(node_object_id)
   end
 
+  # Lookup a specific parameter on the object's course database object.
+  # This method uses a cached object to reduce database lookups on subsequent calls.
+  # parameter is a symbol representing the property being queried.
+  def cached_course_lookup(parameter)
+    if !@cached_course
+      @cached_course = Course.find_by(id: node_object_id)
+    end
+    @cached_course.try(parameter)
+  end
+
+  # Property lookup methods for the attached database object
   def name
     cached_course_lookup(:name)
   end
@@ -75,10 +86,6 @@ s
 
   def institution_id
     cached_course_lookup(:institutions_id)
-  end
-
-  def teams
-    TeamNode.get(node_object_id)
   end
 
   def survey_distribution_id

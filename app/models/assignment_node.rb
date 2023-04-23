@@ -10,6 +10,9 @@ class AssignmentNode < Node
     includes(:assignment).where([conditions]).order("assignments.#{sortvar} #{sortorder}")
   end
 
+  # Generate the contents of a WHERE clause that accounts for assignment privacy and user permissions.
+  # user_id: The user being used in the query, used for permission lookup.
+  # show: If false, include all public assignments as well.
   def self.get_privacy_clause(show, user_id)
     query_user = User.find_by(id: user_id)
 
@@ -26,9 +29,13 @@ class AssignmentNode < Node
     true
   end
 
-  # With this functionality, a database lookup of Assignemnt is performed
-  # if not stored in an object variable. Once search is performed, store it
-  # Otherwise,  we use the existing cached Assignment extract a specific parameter
+  def teams
+    TeamNode.get(node_object_id)
+  end
+
+  # Lookup a specific parameter on the object's assignment database object.
+  # This method uses a cached object to reduce database lookups on subsequent calls.
+  # parameter is a symbol representing the property being queried.
   def cached_assignment_lookup(parameter)
     if !@cached_assignment
       @cached_assignment = Assignment.find_by(id: node_object_id)
@@ -36,6 +43,7 @@ class AssignmentNode < Node
     @cached_assignment.try(parameter)
   end
 
+  # Property lookup methods for the attached database object
   def name
     cached_assignment_lookup(:name)
   end
@@ -57,7 +65,7 @@ class AssignmentNode < Node
   end
 
   def belongs_to_course?
-    !get_course_id.nil?
+    !course_id.nil?
   end
 
   def instructor_id
@@ -86,9 +94,5 @@ class AssignmentNode < Node
 
   def allow_suggestions?
     cached_assignment_lookup(:allow_suggestions)
-  end
-
-  def teams
-    TeamNode.get(node_object_id)
   end
 end

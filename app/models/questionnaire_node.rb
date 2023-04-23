@@ -15,6 +15,9 @@ class QuestionnaireNode < Node
       %w[ASC DESC asc desc].include?(sortorder))
   end
 
+  # Generate the contents of a WHERE clause that accounts for questionnaire privacy and user permissions.
+  # user_id: The user being used in the query, used for permission lookup.
+  # show: If false, include all public questionnaires as well.
   def self.get_privacy_clause(show = nil, user_id = nil)
     query_user = User.find_by(id: user_id)
 
@@ -27,6 +30,13 @@ class QuestionnaireNode < Node
     show ? clause : "(questionnaires.private = 0 or #{clause})"
   end
 
+  def self.leaf?
+    true
+  end
+
+  # Lookup a specific parameter on the object's questionnaire database object.
+  # This method uses a cached object to reduce database lookups on subsequent calls.
+  # parameter is a symbol representing the property being queried.
   def cached_questionnaire_lookup(parameter)
     if !@cached_questionnaire
       @cached_questionnaire = Questionnaire.find_by(id: node_object_id)
@@ -34,7 +44,7 @@ class QuestionnaireNode < Node
     @cached_questionnaire.try(parameter)
   end
 
-
+  # Property lookup methods for the attached database object
   def name
     cached_questionnaire_lookup(:name)
   end
@@ -53,9 +63,5 @@ class QuestionnaireNode < Node
 
   def modified_date
     cached_questionnaire_lookup(:updated_at)
-  end
-
-  def self.leaf?
-    true
   end
 end
