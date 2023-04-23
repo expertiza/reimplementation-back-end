@@ -5,22 +5,6 @@ class QuestionnairesController < ApplicationController
   # Each Questionnaire contains zero or more questions (Question)
   # Generally a questionnaire is associated with an assignment (Assignment)
 
-
-  # Check role access for edit questionnaire
-=begin
-  def action_allowed?
-    case params[:action]
-    when 'edit'
-      @questionnaire = Questionnaire.find(params[:id])
-      current_user_has_admin_privileges? ||
-        (current_user_is_a?('Instructor') && current_user_id?(@questionnaire.try(:instructor_id))) ||
-        (current_user_is_a?('Teaching Assistant') && session[:user].instructor_id == @questionnaire.try(:instructor_id))
-    else
-      current_user_has_student_privileges?
-    end
-  end
-=end
-
   # Create a clone of the given questionnaire, copying all associated
   # questions. The name and creator are updated.
   def copy
@@ -126,16 +110,14 @@ class QuestionnairesController < ApplicationController
         @questionnaire.update_attributes(questionnaire_params)
 
         # Save all questions
-        unless params[:question].nil?
-          params[:question].each_pair do |k, v|
-            @question = Question.find(k)
+        params[:question]&.each_pair do |k, v|
+          @question = Question.find(k)
             # example of 'v' value
             # {"seq"=>"1.0", "txt"=>"WOW", "weight"=>"1", "size"=>"50,3", "max_label"=>"Strong agree", "min_label"=>"Not agree"}
-            v.each_pair do |key, value|
-              @question.send(key + '=', value) unless @question.send(key) == value
-            end
-            @question.save
+          v.each_pair do |key, value|
+            @question.send(key + '=', value) unless @question.send(key) == value
           end
+          @question.save
         end
         flash[:success] = 'The questionnaire has been successfully updated!'
       rescue StandardError
@@ -157,11 +139,10 @@ class QuestionnairesController < ApplicationController
         end
 
         questions = @questionnaire.questions
-        # if this rubric had some answers, flash error
         questions.each do |question|
+          # if this rubric had some answers, flash error
           raise 'There are responses based on this rubric, we suggest you do not delete it.' unless question.answers.empty?
-        end
-        questions.each do |question|
+
           advices = question.question_advices
           advices.each(&:delete)
           question.delete
@@ -187,70 +168,6 @@ class QuestionnairesController < ApplicationController
     redirect_to controller: 'tree_display', action: 'list'
   end
 
-  # Zhewei: This method is used to add new questions when editing questionnaire.
-  def add_new_questions
-    questionnaire_id = params[:id] unless params[:id].nil?
-    # If the questionnaire is being used in the active period of an assignment, delete existing responses before adding new questions
-    if AnswerHelper.check_and_delete_responses(questionnaire_id)
-      flash[:success] = 'You have successfully added a new question. Any existing reviews for the questionnaire have been deleted!'
-    else
-      flash[:success] = 'You have successfully added a new question.'
-    end
-
-    num_of_existed_questions = Questionnaire.find(questionnaire_id).questions.size
-    ((num_of_existed_questions + 1)..(num_of_existed_questions + params[:question][:total_num].to_i)).each do |i|
-      question = Object.const_get(params[:question][:type]).create(txt: '', questionnaire_id: questionnaire_id, seq: i, type: params[:question][:type], break_before: true)
-      if question.is_a? ScoredQuestion
-        question.weight = params[:question][:weight]
-        question.max_label = 'Strongly agree'
-        question.min_label = 'Strongly disagree'
-      end
-
-      question.size = '50, 3' if question.is_a? Criterion
-      question.size = '50, 3' if question.is_a? Cake
-      question.alternatives = '0|1|2|3|4|5' if question.is_a? Dropdown
-      question.size = '60, 5' if question.is_a? TextArea
-      question.size = '30' if question.is_a? TextField
-
-      begin
-        question.save
-      rescue StandardError
-        flash[:error] = $ERROR_INFO
-      end
-    end
-    redirect_to edit_questionnaire_path(questionnaire_id.to_sym)
-  end
-
-  # Zhewei: This method is used to save all questions in current questionnaire.
-  def save_all_questions
-    questionnaire_id = params[:id]
-    begin
-      if params[:save]
-        params[:question].each_pair do |k, v|
-          @question = Question.find(k)
-          # example of 'v' value
-          # {"seq"=>"1.0", "txt"=>"WOW", "weight"=>"1", "size"=>"50,3", "max_label"=>"Strong agree", "min_label"=>"Not agree"}
-          v.each_pair do |key, value|
-            @question.send(key + '=', value) unless @question.send(key) == value
-          end
-
-          @question.save
-          flash[:success] = 'All questions have been successfully saved!'
-        end
-      end
-    rescue StandardError
-      flash[:error] = $ERROR_INFO
-    end
-
-    if params[:view_advice]
-      redirect_to controller: 'advice', action: 'edit_advice', id: params[:id]
-    elsif questionnaire_id
-      redirect_to edit_questionnaire_path(questionnaire_id.to_sym)
-    end
-  end
-
-  private
-
   # save questionnaire object after create or edit
   def save
     @questionnaire.save!
@@ -258,79 +175,9 @@ class QuestionnairesController < ApplicationController
     undo_link("Questionnaire \"#{@questionnaire.name}\" has been updated successfully. ")
   end
 
-  # save questions that have been added to a questionnaire
-  def save_new_questions(questionnaire_id)
-    if params[:new_question]
-      # The new_question array contains all the new questions
-      # that should be saved to the database
-      params[:new_question].keys.each_with_index do |question_key, index|
-        q = Question.new
-        q.txt = params[:new_question][question_key]
-        q.questionnaire_id = questionnaire_id
-        q.type = params[:question_type][question_key][:type]
-        q.seq = question_key.to_i
-        if @questionnaire.type == 'QuizQuestionnaire'
-          # using the weight user enters when creating quiz
-          weight_key = "question_#{index + 1}"
-          q.weight = params[:question_weights][weight_key.to_sym]
-        end
-        q.save unless q.txt.strip.empty?
-      end
-    end
-  end
-
-  # delete questions from a questionnaire
-  # @param [Object] questionnaire_id
-  def delete_questions(questionnaire_id)
-    # Deletes any questions that, as a result of the edit, are no longer in the questionnaire
-    questions = Question.where('questionnaire_id = ?', questionnaire_id)
-    @deleted_questions = []
-    questions.each do |question|
-      should_delete = true
-      unless question_params.nil?
-        params[:question].each_key do |question_key|
-          should_delete = false if question_key.to_s == question.id.to_s
-        end
-      end
-
-      next unless should_delete
-
-      question.question_advices.each(&:destroy)
-      # keep track of the deleted questions
-      @deleted_questions.push(question)
-      question.destroy
-    end
-  end
-
-  # Handles questions whose wording changed as a result of the edit
-  # @param [Object] questionnaire_id
-  def save_questions(questionnaire_id)
-    delete_questions questionnaire_id
-    save_new_questions questionnaire_id
-
-    if params[:question]
-      params[:question].keys.each do |question_key|
-        if params[:question][question_key][:txt].strip.empty?
-          # question text is empty, delete the question
-          Question.delete(question_key)
-        else
-          # Update existing question.
-          question = Question.find(question_key)
-          Rails.logger.info(question.errors.messages.inspect) unless question.update_attributes(params[:question][question_key])
-        end
-      end
-    end
-  end
-
   # Only allow a list of trusted parameters through.
   def questionnaire_params
     params.require(:questionnaire).permit(:name, :instructor_id, :private, :min_question_score,
                                           :max_question_score, :type, :display_type, :instruction_loc)
-  end
-
-  # Only allow a list of trusted parameters through.
-  def question_params
-    params.require(:question).permit(:txt, :weight, :questionnaire_id, :seq, :type, :size,
-                                     :alternatives, :break_before, :max_label, :min_label)
   end
 end

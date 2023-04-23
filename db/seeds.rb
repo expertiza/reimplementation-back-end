@@ -23,3 +23,6 @@ Role.create!(id: 123, name: 'Test User')
 # Role.create!(name: 'Instructor')
 # Role.create!(name: 'Administrator')
 # Role.create!(name: 'Super Administrator')
+
+AssignmentQuestionnaire.destroy_all
+AssignmentQuestionnaire.create!(id: 1, assignment_id: 1, questionnaire_id: 1, user_id: 123, notification_limit: 15, questionnaire_weight: 100, dropdown: 1)
