@@ -40,7 +40,12 @@ class Api::V1::SignedUpTeamsController < ApplicationController
   def sign_up
     team_id = params[:team_id]
     topic_id = params[:topic_id]
-    SignedUpTeam.create_signed_up_team(topic_id, team_id)
+    @signed_up_team = SignedUpTeam.create_signed_up_team(topic_id, team_id)
+    if @signed_up_team
+      render json: {message: "Signed up team successful!"}, status: :created
+   else
+      render json: {message: @signed_up_team.errors}, status: :unprocessable_entity
+   end
   end
 
   # Method for signing up as student
