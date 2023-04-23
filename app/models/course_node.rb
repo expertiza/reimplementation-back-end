@@ -10,7 +10,7 @@ class CourseNode < Node
     @course_node.save
   end
 s
-  def self.get(_sortvar = 'name', _sortorder = 'desc', user_id = nil, show = nil, _parent_id = nil, _search = nil)
+  def self.get(_sortvar = 'name', _sortorder = 'desc', user_id = nil, show = nil, _parent_id = nil)
     sortvar = 'created_at'
     if Course.column_names.include? sortvar
       includes(:course).where([get_privacy_clause(show, user_id)])
@@ -27,11 +27,7 @@ s
       clause = "courses.instructor_id = #{user_id}"
     end
 
-    if show
-      clause
-    else
-      "(courses.private = 0 or #{clause})"
-    end
+    show ? clause : "(courses.private = 0 or #{clause})"
   end
 
 
