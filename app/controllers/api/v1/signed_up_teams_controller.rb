@@ -1,5 +1,7 @@
 class Api::V1::SignedUpTeamsController < ApplicationController
 
+  # Returns signed up topics using sign_up_topic assignment id
+  # Retrieves sign_up_topic using topic_id as a parameter
   def index
     # puts params[:topic_id]
     @sign_up_topic = SignUpTopic.find(params[:topic_id])
@@ -33,16 +35,20 @@ class Api::V1::SignedUpTeamsController < ApplicationController
     end
   end
 
-  #Sign up using
+  # Sign up using parameters: team_id and topic_id
+  # Calls model method create_signed_up_team
   def sign_up
     team_id = params[:team_id]
     topic_id = params[:topic_id]
     SignedUpTeam.create_signed_up_team(topic_id, team_id)
   end
 
-  #Method for signing up as student
+  # Method for signing up as student
+  # Params : topic_id
+  # Get team_id using model method get_team_participants
+  # Call create_signed_up_team Model method
   def sign_up_student
-    user_id = params[:user_id]
+    # user_id = params[:user_id]
     topic_id = params[:topic_id]
     team_id = SignedUpTeam.get_team_participants
     # @teams_user = TeamsUser.where(user_id: user_id).first
@@ -51,6 +57,7 @@ class Api::V1::SignedUpTeamsController < ApplicationController
     # create(topic_id, team_id)
   end
 
+  # Delete signed_up team. Calls method delete_signed_up_team from the model.
   def destroy
     @signed_up_team = SignedUpTeam.find(params[:id])
     if @signed_up_team.delete_signed_up_team
