@@ -58,8 +58,13 @@ class Api::V1::SignedUpTeamsController < ApplicationController
     team_id = SignedUpTeam.get_team_participants
     # @teams_user = TeamsUser.where(user_id: user_id).first
     # team_id = @teams_user.team_id
-    SignedUpTeam.create_signed_up_team(topic_id, team_id)
+    @signed_up_team = SignedUpTeam.create_signed_up_team(topic_id, team_id)
     # create(topic_id, team_id)
+    if @signed_up_team
+      render json: {message: "Signed up team successful!"}, status: :created
+    else
+      render json: {message: @signed_up_team.errors}, status: :unprocessable_entity
+    end
   end
 
   # Delete signed_up team. Calls method delete_signed_up_team from the model.
