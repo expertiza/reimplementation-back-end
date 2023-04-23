@@ -1,4 +1,4 @@
-class TeammateReviewResponseMap < ResponseMap
+class TeammateReviewResponseMap < ResponseMaps
   belongs_to :reviewee, class_name: 'Participant', foreign_key: 'reviewee_id'
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'reviewed_object_id'
 
@@ -48,6 +48,12 @@ class TeammateReviewResponseMap < ResponseMap
   # email_command should be initialized to a nested hash which invoking this function {body: {}}
   # @param assignment is the assignment instance for which the email is related to
   def send_email(email_command, assignment)
-    TeammateReviewEmailSendingMethod.send_email(email_command, assignment)
+    email_command[:body][:type] = 'Teammate Review'
+    participant = AssignmentParticipant.find(reviewee_id)
+    email_command[:body][:obj_name] = assignment.name
+    user = User.find(participant.user_id)
+    email_command[:body][:first_name] = user.fullname
+    email_command[:to] = user.email
+    ApplicationMailer.sync_message(email_command).deliver
   end
 end
