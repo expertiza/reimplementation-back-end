@@ -16,7 +16,7 @@ class AssignmentNode < Node
   def self.get_privacy_clause(show, user_id)
     query_user = User.find_by(id: user_id)
 
-    if query_user.teaching_assistant?
+    if query_user && query_user.teaching_assistant?
       clause = "assignments.course_id in (#{Ta.get_mapped_courses(user_id)})"
     else
       clause = "assignments.instructor_id = #{user_id}"

@@ -9,10 +9,10 @@ class QuestionnaireNode < Node
       name.gsub!(/[^\w]/, '')
       conditions += " and questionnaires.type = \"#{name}\""
     end
-      sortvar = 'name' if sortvar.nil? || (sortvar == 'directory_path')
-      sortorder ||= 'ASC'
-      (includes(:questionnaire).where([conditions, values]).order("questionnaires.#{sortvar} #{sortorder}") if Questionnaire.column_names.include?(sortvar) &&
-      %w[ASC DESC asc desc].include?(sortorder))
+    sortvar = 'name' if sortvar.nil? || (sortvar == 'directory_path')
+    sortorder ||= 'ASC'
+    (includes(:questionnaire).where([conditions, values]).order("questionnaires.#{sortvar} #{sortorder}") if Questionnaire.column_names.include?(sortvar) &&
+    %w[ASC DESC asc desc].include?(sortorder))
   end
 
   # Generate the contents of a WHERE clause that accounts for questionnaire privacy and user permissions.

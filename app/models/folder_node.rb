@@ -12,7 +12,7 @@ class FolderNode < Node
 
   def partial_name
     if parent_id.nil?
-      get_name.downcase + '_folder_actions'
+      name.downcase + '_folder_actions'
     else
       'questionnaire_types_actions'
     end
@@ -24,6 +24,6 @@ class FolderNode < Node
 
   def children(sortvar = nil, sortorder = nil, user_id = nil, show = nil, parent_id = nil, search = nil)
     parent_id = folder.id unless folder.parent_id.nil?
-    Object.const_get(get_child_type).get(sortvar, sortorder, user_id, show, parent_id, search)
+    Object.const_get(child_type).get(sortvar, sortorder, user_id, show, parent_id, search)
   end
 end
