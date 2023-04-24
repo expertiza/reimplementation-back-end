@@ -77,7 +77,7 @@ class AssignmentNode < Node
   end
 
   def private?
-    cached_assignment_lookup(:private4)
+    cached_assignment_lookup(:private)
   end
 
   def max_team_size
