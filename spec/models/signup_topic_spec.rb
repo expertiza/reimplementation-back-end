@@ -53,7 +53,7 @@ RSpec.describe SignupTopic, type: :model do
 
     it "Returns all the signed up teams for the topic" do
       expect(SignedUpTeam.create_signed_up_team(topic["id"], team["id"])).to eq(true)
-      expect(topic.get_assigned_teams.count).to eq(1)
+      expect(topic.get_assigned_teams.collect { |signed_team| signed_team.team_id }).to eq([team.id])
     end
 
     it "Returns JSON object that holds the signup topic data" do
