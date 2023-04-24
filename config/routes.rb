@@ -19,7 +19,7 @@ Rails.application.routes.draw do
       resources :signed_up_teams do
         collection do
           post '/sign_up', to: 'signed_up_teams#sign_up'
-          post '/sign_up/student', to: 'signed_up_teams#sign_up_student'
+          post '/sign_up_student', to: 'signed_up_teams#sign_up_student'
         end
       end
       resources :sign_up_topics do

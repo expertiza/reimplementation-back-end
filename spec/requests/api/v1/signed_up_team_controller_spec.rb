@@ -34,12 +34,40 @@ describe 'SignedUpTeams API' do
         run_test!
       end
     end
+    end
+
+    path '/api/v1/signed_up_teams/sign_up_student' do
+    post 'Creates a signed up team by student' do
+      tags 'SignedUpTeams'
+      consumes 'application/json'
+      produces 'application/json'
+      parameter name: :topic_id, in: :body, schema: {
+        type: :object,
+        properties: {
+          # team_id: { type: :integer },
+          topic_id: { type: :integer },
+        },
+        required: %w[topic_id]
+      }
+
+      let(:team_id) { team.id }
+
+      response '201', 'signed up team created' do
+        let(:team_id) { team.id }
+        run_test!
+      end
+
+      response '422', 'invalid request' do
+        let(:team_id) { nil }
+        run_test!
+      end
+    end
+    end
 
 
-  end
 
   path '/api/v1/signed_up_teams' do
-    parameter name: :topic_id, in: :path, type: :integer, required: true
+    parameter name: 'topic_id', in: :query, type: :integer, description: 'Assignment ID', required: true
 
     let(:team) { create(:team) }
     let(:signed_up_team) { create(:signed_up_team, team: team) }
