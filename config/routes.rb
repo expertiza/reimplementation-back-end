@@ -7,6 +7,16 @@ Rails.application.routes.draw do
   # root "articles#index"
   namespace :api do
     namespace :v1 do
+      get 'badges/index'
+      get 'badges/show'
+      get 'badges/create'
+      get 'badges/update'
+      get 'badges/destroy'
+      get 'duties/index'
+      get 'duties/show'
+      get 'duties/create'
+      get 'duties/update'
+      get 'duties/destroy'
       resources :institutions
       resources :roles
       resources :users do
