@@ -7,18 +7,23 @@ Things you may want to cover:
 
 * Ruby version - 3.2.1
 
-* System dependencies
+## Development Environment
 
-* Configuration
+### Prerequisites
+- Verify that [Docker Desktop](https://www.docker.com/products/docker-desktop/) is installed and running.
+- [Download](https://www.jetbrains.com/ruby/download/) RubyMine
+- Make sure that the Docker plugin [is enabled](https://www.jetbrains.com/help/ruby/docker.html#enable_docker).
 
-* Database creation
 
-* Database initialization
+### Instructions
+Tutorial: [Docker Compose as a remote interpreter](https://www.jetbrains.com/help/ruby/using-docker-compose-as-a-remote-interpreter.html)
 
-* How to run the test suite
+### Video Tutorial
 
-* Services (job queues, cache servers, search engines, etc.)
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=BHniRaZ0_JE
+" target="_blank"><img src="http://img.youtube.com/vi/BHniRaZ0_JE/maxresdefault.jpg" 
+alt="IMAGE ALT TEXT HERE" width="560" height="315" border="10" /></a>
 
-* Deployment instructions
-
-* ...
+### Database Credentials
+- username: root
+- password: expertiza 
