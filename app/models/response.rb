@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Response < ApplicationRecord
+  belongs_to :response_map, class_name: 'ResponseMap', foreign_key: 'map_id', inverse_of: false
 
   def significant_difference?
     map_class = map.class
