@@ -9,27 +9,14 @@ class Api::V1::SignedUpTeamsController < ApplicationController
     render json: @signed_up_team
   end
 
-
   # Implemented by signed_up_team.rb (Model) --> create_signed_up_team
-  # This implementation was for the purpose of our understanding
-  def create #(topic_id, team_id)
-    # @sign_up_topic = SignUpTopic.where(assignment_id: topic_id).first
-    # puts @sign_up_topic
-    # @signed_up_team = SignedUpTeam.new
-    # @signed_up_team.topic_id = @sign_up_topic.id
-    # @signed_up_team.team_id = team_id
-    # if @signed_up_team.save
-    #   render json: {message: "Signed up team successful!"}, status: :created
-    # else
-    #   render json: {message: @signed_up_team.errors}, status: :unprocessable_entity
-    # end
-  end
+  def create; end
 
-  #Update signed_up_team using parameters.
+  # Update signed_up_team using parameters.
   def update
     @signed_up_team = SignedUpTeam.find(params[:id])
     if @signed_up_team.update(signed_up_teams_params)
-      render json: {message: "The team has been updated successfully. "}, status: 200
+      render json: { message: "The team has been updated successfully. " }, status: 200
     else
       render json: @signed_up_team.errors, status: :unprocessable_entity
     end
@@ -42,9 +29,9 @@ class Api::V1::SignedUpTeamsController < ApplicationController
     topic_id = params[:topic_id]
     @signed_up_team = SignedUpTeam.create_signed_up_team(topic_id, team_id)
     if @signed_up_team
-      render json: {message: "Signed up team successful!"}, status: :created
+      render json: { message: "Signed up team successful!" }, status: :created
     else
-      render json: {message: @signed_up_team.errors}, status: :unprocessable_entity
+      render json: { message: @signed_up_team.errors }, status: :unprocessable_entity
     end
   end
 
@@ -61,9 +48,9 @@ class Api::V1::SignedUpTeamsController < ApplicationController
     @signed_up_team = SignedUpTeam.create_signed_up_team(topic_id, team_id)
     # create(topic_id, team_id)
     if @signed_up_team
-      render json: {message: "Signed up team successful!"}, status: :created
+      render json: { message: "Signed up team successful!" }, status: :created
     else
-      render json: {message: @signed_up_team.errors}, status: :unprocessable_entity
+      render json: { message: @signed_up_team.errors }, status: :unprocessable_entity
     end
   end
 
@@ -71,14 +58,14 @@ class Api::V1::SignedUpTeamsController < ApplicationController
   def destroy
     @signed_up_team = SignedUpTeam.find(params[:id])
     if SignedUpTeam.delete_signed_up_team(@signed_up_team.team_id)
-      render json: {message: 'Signed up teams was deleted successfully!'}, status: :ok
+      render json: { message: 'Signed up teams was deleted successfully!' }, status: :ok
     else
       render json: @signed_up_team.errors, status: :unprocessable_entity
     end
   end
 
-
   private
+
   def signed_up_teams_params
     params.require(:signed_up_team).permit(:topic_id, :team_id, :is_waitlisted, :preference_priority_number)
   end

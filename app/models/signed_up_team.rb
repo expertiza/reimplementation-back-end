@@ -1,4 +1,5 @@
 class SignedUpTeam < ApplicationRecord
+
   # belongs_to :sign_up_topic
   # belongs_to :team
 
@@ -8,13 +9,13 @@ class SignedUpTeam < ApplicationRecord
     # return team.get_team_participants()
   end
 
-  #This is a class method responsible for creating a SignedUpTeam instance with given topic_id and team_id by checking the condition if topic is available to choose.
+  # This is a class method responsible for creating a SignedUpTeam instance with given topic_id and team_id by checking the condition if topic is available to choose.
   def self.create_signed_up_team(topic_id, team_id)
 
     return true
   end
 
-  #This is a class method responsible for deleting a SignedUpTeam instance for a topic and delegating any changes required in topic
+  # This is a class method responsible for deleting a SignedUpTeam instance for a topic and delegating any changes required in topic
   def self.delete_signed_up_team(team_id)
     # signed_up_team = SignedUpTeam.find(team_id)
     # topic_release_status = signed_up_team.sign_up_topic.release_team(signed_up_team.id)
@@ -24,13 +25,12 @@ class SignedUpTeam < ApplicationRecord
     #   return true
     # else
     #   return false
-      true
-    end
-
+    true
+  end
 
   def self.find_team_participants(assignment_id)
-    #assignment_id
-    { data:[
+    # assignment_id
+    { data: [
       {
         "id": 123,
         "topic_identifier": "E2333",
@@ -99,6 +99,6 @@ class SignedUpTeam < ApplicationRecord
           }
         ]
       }
-    ]}
+    ] }
   end
-  end
+end

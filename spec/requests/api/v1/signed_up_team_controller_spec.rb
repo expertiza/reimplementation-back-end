@@ -34,9 +34,10 @@ describe 'SignedUpTeams API' do
         run_test!
       end
     end
-    end
+  end
 
-    path '/api/v1/signed_up_teams/sign_up_student' do
+  path '/api/v1/signed_up_teams/sign_up_student' do
+    parameter name: 'user_id', in: :query, type: :integer, description: 'User ID', required: true
     post 'Creates a signed up team by student' do
       tags 'SignedUpTeams'
       consumes 'application/json'
@@ -62,12 +63,10 @@ describe 'SignedUpTeams API' do
         run_test!
       end
     end
-    end
-
-
+  end
 
   path '/api/v1/signed_up_teams' do
-    parameter name: 'topic_id', in: :query, type: :integer, description: 'Assignment ID', required: true
+    parameter name: 'topic_id', in: :query, type: :integer, description: 'Topic ID', required: true
 
     let(:team) { create(:team) }
     let(:signed_up_team) { create(:signed_up_team, team: team) }
@@ -85,7 +84,7 @@ describe 'SignedUpTeams API' do
                  is_waitlisted: { type: :boolean },
                  preference_priority_number: { type: :integer }
                },
-               required: [ 'id', 'topic_id', 'team_id', 'is_waitlisted', 'preference_priority_number']
+               required: ['id', 'topic_id', 'team_id', 'is_waitlisted', 'preference_priority_number']
 
         run_test!
       end
@@ -95,7 +94,7 @@ describe 'SignedUpTeams API' do
         run_test!
       end
     end
-    end
+  end
 
   path '/api/v1/signed_up_teams/{id}' do
     parameter name: :id, in: :path, type: :integer, required: true
@@ -139,4 +138,4 @@ describe 'SignedUpTeams API' do
       end
     end
   end
-  end
+end
