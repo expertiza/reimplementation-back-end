@@ -24,3 +24,8 @@ Metrics/AbcSize:
   Max: 20
   Exclude:
     - 'db/**/*.rb'
+Style/StringLiterals:
+  Enabled: true
+  EnforcedStyle: single_quotes
+  Exclude:
+      - 'db/**/*.rb'
