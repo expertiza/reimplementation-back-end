@@ -138,38 +138,17 @@ class ReviewResponseMap < ResponseMap
   # get a review response report a given review object. This provides ability to see all feedback response for a review
   # @param id is the review object id
   def self.review_response_report(id, assignment, type, review_user)
-    if review_user.nil?
-      # This is not a search, so find all reviewers for this assignment
-      response_maps_with_distinct_participant_id =
-        ResponseMap.select('DISTINCT reviewer_id').where('reviewed_object_id = ? and type = ? and calibrate_to = ?', id, type, 0)
-      @reviewers = []
-      response_maps_with_distinct_participant_id.each do |reviewer_id_from_response_map|
-        @reviewers << reviewer_with_id(assignment.id, reviewer_id_from_response_map.reviewer_id)
-      end
-      # we sort the reviewer by name here, using whichever class it is an instance of
-      @reviewers = if assignment.team_reviewing_enabled
-                     Team.sort_by_name(@reviewers)
-                   else
-                     Participant.sort_by_name(@reviewers)
-                   end
-    else
-      # This is a search, so find reviewers by user's full name
-      user_ids = User.select('DISTINCT id').where('fullname LIKE ?', '%' + review_user[:fullname] + '%')
-      # E1973 - we use a separate query depending on if the reviewer is a team or participant
-      if assignment.team_reviewing_enabled
-        reviewer_participants = AssignmentTeam.where('id IN (?) and parent_id = ?', team_ids, assignment.id)
-        @reviewers = []
-        reviewer_participants.each do |participant|
-          unless @reviewers.include? participant.team
-            @reviewers << participant.team
-          end
-        end
-      else
-        @reviewers = AssignmentParticipant.where('user_id IN (?) and parent_id = ?', user_ids, assignment.id)
-      end
+    # This is not a search, so find all reviewers for this assignment
+    response_maps_with_distinct_participant_id =
+      ResponseMap.select('DISTINCT reviewer_id').where('reviewed_object_id = ? and type = ? and calibrate_to = ?', id, type, 0)
+
+    # Create an iterator object
+    iterator = ReviewResponseReportIterator.new(response_maps_with_distinct_participant_id, assignment, type)
+
+    # Yield the reviewers to the block
+    iterator.each do |reviewer|
+      yield reviewer
     end
-    # @review_scores[reviewer_id][reviewee_id] = score for assignments not using vary_rubric_by_rounds feature
-    # @review_scores[reviewer_id][round][reviewee_id] = score for assignments using vary_rubric_by_rounds feature
   end
 
   # Send emails for review response

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# references to sut refer to the "system under test". This is the target class for the unit test
 
 require 'test_helper'
 
@@ -15,6 +16,7 @@ class MockAssignment < Assignment
   attr_accessor :team_reviewing_enabled
 end
 
+# alternate mock implementation for Assignment, which can be used in unit tests
 class MockAssignment2 < MockAssignment
   def review_questionnaire_id(round)
     2
@@ -29,14 +31,19 @@ class MockQuestionaires
   end
 end
 
+# mock implementation for Questionaire class, which can be be used as dependency in unit tests
 class MockQuestionaire
   attr_accessor :questionnaire_id
 end
+
+# mock implementation for Reviewer class, which can be be used as dependency in unit tests
 
 class MockReviewer
   attr_accessor :reviewer_id
   attr_accessor :id
 end
+
+# mock implementation for TeammateResponse class, which can be be used as dependency in unit tests
 
 class MockTeammateReponse
   def where(query, id)
@@ -44,20 +51,26 @@ class MockTeammateReponse
   end
 end
 
-class MockParticipant
+
+# mock implementation for Participant class, which can be be used as dependency in unit tests
+class MockParticipant < Participant
   attr_accessor :user_id
 end
+
+# mock implementation for Mailer class, which can be be used as dependency in unit tests
 
 class MockMail
   attr_accessor :deliver
 end
 
 class TeammateReviewResponseMapTest < ActiveSupport::TestCase
+  # verifies that the instance method returns the proper title for teammate review response maps
   test "title" do
     sut = TeammateReviewResponseMap.new
     assert_equal "Teammate Review", sut.title
   end
 
+  # verifies that the instance method returns the correct questionaire for the associated assignment
   test "questionaire" do
     sut = TeammateReviewResponseMap.new
     sut.assignment = MockAssignment.new
@@ -65,6 +78,7 @@ class TeammateReviewResponseMapTest < ActiveSupport::TestCase
     assert_equal [1,2,3], sut.questionnaire
   end
 
+  # verifies that the instance method returns the correct questionaire for the associated assignment and duty questionaier does not apply
   test "questionnaire_by_duty with nil duty questionaire" do
     sut = TeammateReviewResponseMap.new
     sut.assignment = MockAssignment.new
@@ -74,6 +88,7 @@ class TeammateReviewResponseMapTest < ActiveSupport::TestCase
     end
   end
 
+  # verifies that the instance method returns the correct questionaire for the associated assignment and duty questionaire exists
   test "questionnaire_by_duty with not nil duty questionaire" do
     sut = TeammateReviewResponseMap.new
     sut.assignment = MockAssignment.new
@@ -88,11 +103,13 @@ class TeammateReviewResponseMapTest < ActiveSupport::TestCase
     end
   end
 
+  # verfies that the instance method returns the participant who performed the review
   test "contributor" do
     sut = TeammateReviewResponseMap.new
-    assert_equal nil, sut.contributor
+    assert_nil sut.contributor
   end
 
+  # verifies that the instance method returns the correct participant for an associated assignment
   test "reviewer" do
     sut = TeammateReviewResponseMap.new
     reviewer = MockReviewer.new
@@ -102,12 +119,14 @@ class TeammateReviewResponseMapTest < ActiveSupport::TestCase
     end
   end
 
+  # verfies that the class method returns the correct report for a given response map id
   test "teammate_response_report" do
     TeammateReviewResponseMap.stub :select, MockTeammateReponse.new do
       assert_equal 3, TeammateReviewResponseMap.teammate_response_report(2)
     end
   end
 
+  # verfies that the instance method creates the correct email command body to be sent to the application mailer
   test "email" do
     sut = TeammateReviewResponseMap.new
     defn = {body: {}}

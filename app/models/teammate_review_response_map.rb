@@ -45,15 +45,11 @@ class TeammateReviewResponseMap < ResponseMap
 
   # Send emails for review response
   # @param email_command is a command object which will be fully hydrated in this function an dpassed to the mailer service
-  # email_command should be initialized to a nested hash which invoking this function {body: {}}
+  # command should be initialized to a nested hash which invoking this function {body: {}}
   # @param assignment is the assignment instance for which the email is related to
-  def send_email(email_command, assignment)
-    email_command[:body][:type] = 'Teammate Review'
-    participant = AssignmentParticipant.find(reviewee_id)
-    email_command[:body][:obj_name] = assignment.name
-    user = User.find(participant.user_id)
-    email_command[:body][:first_name] = user.fullname
-    email_command[:to] = user.email
-    ApplicationMailer.sync_message(email_command).deliver
+  def send_email(command, assignment)
+    mail = TeammateReviewEmailSendingMethod.new(command, assignment, reviewee_id)
+
+    mail.accept(TeammateReviewEmailVisitor.new)
   end
 end
