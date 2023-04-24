@@ -1,4 +1,4 @@
-class TeammateReviewResponseMap < ResponseMaps
+class TeammateReviewResponseMap < ResponseMap
   belongs_to :reviewee, class_name: 'Participant', foreign_key: 'reviewee_id'
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'reviewed_object_id'
 
