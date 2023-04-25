@@ -12,25 +12,28 @@ class SignedUpTeam < ApplicationRecord
     signup_topic = SignupTopic.find(topic_id)
 
     if signup_topic.is_available() == false
-      return false
+      signed_up_team = SignedUpTeam.create!({:signup_topic_id => topic_id, :team_id => team_id, :is_waitlisted => true })
+    else
+      signed_up_team = SignedUpTeam.create!({:signup_topic_id => topic_id, :team_id => team_id})
     end
-
-    signed_up_team = SignedUpTeam.create!({:signup_topic_id => topic_id, :team_id => team_id})
-
     return true
   end
 
   # This is a class method responsible for deleting a SignedUpTeam instance for a topic and delegating any changes required in topic.
-  def self.delete_signed_up_team(team_id)
-    signed_up_team = SignedUpTeam.find(team_id)
-    topic_release_status = signed_up_team.signup_topic.release_team(signed_up_team.id)
+  # def self.delete_signed_up_team(team_id)
+  #   signed_up_team = SignedUpTeam.find(team_id)
+  #   topic_release_status = signed_up_team.signup_topic.release_team(signed_up_team.id)
 
-    if topic_release_status == true
-      signed_up_team.destroy
-      return true
-    else
-      return false
-    end
+  #   if topic_release_status == true
+  #     signed_up_team.destroy
+  #     return true
+  #   else
+  #     return false
+  #   end
 
+  # This method overrides the default destory method to trigger signup topic and waitlist related updates.
+  def destroy
+    self.signup_topic.release_team(self.id)
+    super()
   end
 end
