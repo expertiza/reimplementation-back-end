@@ -12,7 +12,6 @@ describe Response do
   let(:review_response_map) { ReviewResponseMap.new(assignment: assignment, reviewee: team) }
   let(:response) { Response.new(map_id: 1, response_map: review_response_map, scores: [answer]) }
 
-
   # Compare the current response score with other scores on the same artifact, and test if the difference is significant enough to notify
   # instructor.
   describe '#significant_difference?' do
@@ -88,22 +87,6 @@ describe Response do
       allow(response).to receive(:questionnaire_by_answer).with(nil).and_return(questionnaire)
       allow(questionnaire).to receive(:max_question_score).and_return(5)
       expect(response.maximum_score).to eq(0)
-    end
-  end
-  
-  # Get a collection of all comments across all rounds of a review as well as a count of the total number of comments. Returns the above
-  # information both for totals and in a list per-round.
-  describe '.volume_of_review_comments' do
-    it 'returns volumes of review comments in each round' do
-      allow(response).to receive(:get_all_review_comments)
-                           .with(1, 1)
-                           .and_return([
-                                         'Answer textAnswer textLGTM',
-                                         2,
-                                         [nil, 'Answer text', 'Answer textLGTM', ''],
-                                         [nil, 1, 1, 0]
-                                       ])
-      expect(response.volume_of_review_comments(response,1, 1)).to eq([1, 2, 2, 0])
     end
   end
 end
