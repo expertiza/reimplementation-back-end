@@ -94,6 +94,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_24_183357) do
 
   create_table "participants", force: :cascade do |t|
     t.integer "user_id"
+    t.integer "parent_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "fk_participant_users"
@@ -124,6 +125,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_24_183357) do
 
   create_table "responses", force: :cascade do |t|
     t.integer "map_id", default: 0, null: false
+    t.text "additional_comment"
     t.boolean "is_submitted", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
