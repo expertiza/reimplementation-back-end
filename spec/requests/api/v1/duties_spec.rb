@@ -1,39 +1,46 @@
-require 'rails_helper'
+RSpec.describe Api::V1::DutiesController, type: :controller do
+  let(:assignment) { create(:assignment) }
+  let(:user) { create(:user) }
 
-RSpec.describe "Api::V1::Duties", type: :request do
-  describe "GET /index" do
-    it "returns http success" do
-      get "/api/v1/duties/index"
-      expect(response).to have_http_status(:success)
+  before { sign_in(user) }
+
+  describe 'GET #index' do
+    let!(:duties) { create_list(:duty, 3, assignment: assignment) }
+
+    it 'returns a success response' do
+      get :index, params: { assignment_id: assignment.id }
+      expect(response).to be_successful
+    end
+
+    it 'assigns duties' do
+      get :index, params: { assignment_id: assignment.id }
+      expect(assigns(:duties)).to eq(duties)
     end
   end
 
-  describe "GET /show" do
-    it "returns http success" do
-      get "/api/v1/duties/show"
-      expect(response).to have_http_status(:success)
+  describe 'GET #show' do
+    let(:duty) { create(:duty, assignment: assignment) }
+
+    it 'returns a success response' do
+      get :show, params: { assignment_id: assignment.id, id: duty.id }
+      expect(response).to be_successful
+    end
+
+    it 'assigns duty' do
+      get :show, params: { assignment_id: assignment.id, id: duty.id }
+      expect(assigns(:duty)).to eq(duty)
     end
   end
 
-  describe "GET /create" do
-    it "returns http success" do
-      get "/api/v1/duties/create"
-      expect(response).to have_http_status(:success)
+  describe 'GET #new' do
+    it 'returns a success response' do
+      get :new, params: { assignment_id: assignment.id }
+      expect(response).to be_successful
+    end
+
+    it 'assigns a new duty' do
+      get :new, params: { assignment_id: assignment.id }
+      expect(assigns(:duty)).to be_a_new(Duty)
     end
   end
-
-  describe "GET /update" do
-    it "returns http success" do
-      get "/api/v1/duties/update"
-      expect(response).to have_http_status(:success)
-    end
-  end
-
-  describe "GET /destroy" do
-    it "returns http success" do
-      get "/api/v1/duties/destroy"
-      expect(response).to have_http_status(:success)
-    end
-  end
-
 end
