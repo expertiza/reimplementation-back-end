@@ -12,6 +12,11 @@ class ResponseMap < ApplicationRecord
     Response.where(map_id: map_id).all
   end
 
+  # returns the assignment related to the response map
+  def response_assignment
+    return Participant.find(self.reviewer_id).assignment
+  end
+
   def self.assessments_for(team)
     responses = []
     # stime = Time.now
