@@ -21,7 +21,7 @@ RSpec.describe SignupTopic, type: :model do
     end
 
     it "Updates the attributes of the sign up topic" do
-      expect(topic.update_topic(2, "adfa", "category")).to eq(true)
+      expect(topic.update_topic(2, "desc2", "category2")).to eq(true)
     end
 
     it "Returns number of available slots for teams to sign up for the topic" do
@@ -40,7 +40,7 @@ RSpec.describe SignupTopic, type: :model do
     end
 
     it "Method used to release team from the topic" do
-      topic.release_team(signed_up_team.id)
+      expect(topic.release_team).to eq([])
     end
 
     it "Method used to validate if the topic is assigned to signed up team" do
