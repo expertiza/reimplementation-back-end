@@ -43,4 +43,18 @@ RSpec.describe Api::V1::DutiesController, type: :controller do
       expect(assigns(:duty)).to be_a_new(Duty)
     end
   end
+
+  describe 'GET #edit' do
+    let(:duty) { create(:duty, assignment: assignment) }
+
+    it 'returns a success response' do
+      get :edit, params: { assignment_id: assignment.id, id: duty.id }
+      expect(response).to be_successful
+    end
+
+    it 'assigns duty' do
+      get :edit, params: { assignment_id: assignment.id, id: duty.id }
+      expect(assigns(:duty)).to eq(duty)
+    end
+  end
 end
