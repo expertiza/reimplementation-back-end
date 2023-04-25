@@ -9,6 +9,8 @@ module ScorableHelper
 
     sum = 0
     question_ids = scores.map(&:question_id)
+
+    # We use find with order here to ensure that the list of questions we get is in the same order as that of question_ids
     questions = Question.find_with_order(question_ids)
 
     scores.each_with_index do |score, idx|
@@ -33,7 +35,10 @@ module ScorableHelper
     # answer for scorable questions, and they will not be counted towards the total score)
     total_weight = 0
     question_ids = scores.map(&:question_id)
+
+    # We use find with order here to ensure that the list of questions we get is in the same order as that of question_ids
     questions = Question.find_with_order(question_ids)
+
     scores.each_with_index do |score, idx|
       total_weight += questions[idx].weight unless score.answer.nil? || !questions[idx].is_a?(ScoredQuestion)
     end
