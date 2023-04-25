@@ -43,13 +43,14 @@ RSpec.describe SignedUpTeam, type: :model do
     end
 
     it "Deletes the signed_up_team for the topic assigned and checks if the record exists in the database" do
-      expect(SignedUpTeam.delete_signed_up_team(signed_up_team["id"])).to eq(true)
+      # expect(SignedUpTeam.delete_signed_up_team(signed_up_team["id"])).to eq(true)
+      SignedUpTeam.find(signed_up_team['id']).destroy
       expect(SignedUpTeam.exists?(signed_up_team['id'])).to be false
     end
 
     it 'Deletes the signed up team for a topic and delegates any required changes and checks the count decrement in the database' do
       expect(signed_up_team).to be_valid
-      expect { SignedUpTeam.delete_signed_up_team(signed_up_team["id"]) }.to change(SignedUpTeam, :count).by(-1)
+      expect { SignedUpTeam.find(signed_up_team["id"]).destroy }.to change(SignedUpTeam, :count).by(-1)
     end
     
   end

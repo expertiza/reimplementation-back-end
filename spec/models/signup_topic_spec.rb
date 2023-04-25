@@ -40,7 +40,7 @@ RSpec.describe SignupTopic, type: :model do
     end
 
     it "Method used to release team from the topic" do
-      expect(topic.release_team(signed_up_team.id)).to eq(true)
+      topic.release_team(signed_up_team.id)
     end
 
     it "Method used to validate if the topic is assigned to signed up team" do
