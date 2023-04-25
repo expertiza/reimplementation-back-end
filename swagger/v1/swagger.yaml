@@ -33,6 +33,8 @@ paths:
         type: string
     get:
       summary: view_tas course
+      tags:
+      - Courses
       responses:
         '200':
           description: successful
@@ -50,7 +52,7 @@ paths:
       required: true
       schema:
         type: string
-    post:
+    get:
       summary: remove_ta course
       tags:
       - Courses
@@ -67,12 +69,16 @@ paths:
         type: string
     get:
       summary: copy course
+      tags:
+      - Courses
       responses:
         '200':
           description: successful
   "/api/v1/courses":
     get:
       summary: list courses
+      tags:
+      - Courses
       responses:
         '200':
           description: successful
@@ -115,6 +121,8 @@ paths:
         type: string
     get:
       summary: show course
+      tags:
+      - Courses
       responses:
         '200':
           description: successful
@@ -170,6 +178,8 @@ paths:
               required: []
     delete:
       summary: delete course
+      tags:
+      - Courses
       responses:
         '200':
           description: successful

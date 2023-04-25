@@ -51,7 +51,8 @@ class Api::V1::CoursesController < ApplicationController
       return render json: { status: "error", message: "The user inputted " + params[:ta_id].to_s + " is already a TA for this course." }, status: :bad_request
     else
       @ta_mapping = TaMapping.create(ta_id: @user.id, course_id: @course.id)
-      @user.role = Role.find_by name: 'Teaching Assistant'
+      @role_id = Role.find_by(name: 'Teaching Assistant').id
+      @user.update_attribute(:role_id, @role_id)
       @user.save
     end
 
@@ -72,7 +73,6 @@ class Api::V1::CoursesController < ApplicationController
 
   # Removes Teaching Assistant from the course
   def remove_ta
-    # @ta_mapping = TaMapping.find(params[:id])
     @ta_mapping = TaMapping.find_by(course_id: params[:id], ta_id: params[:ta_id])
     if @ta_mapping.nil?
       return render json: { status: "error", message: "No TA mapping found for the specified course and TA" }, status: :not_found
@@ -82,11 +82,7 @@ class Api::V1::CoursesController < ApplicationController
     other_ta_mappings_num = TaMapping.where(ta_id: params[:ta_id]).size - 1
     if other_ta_mappings_num.zero?
       @role_id = Role.find_by(name: 'Student').id
-      @ta.assign_attributes(role_id: @role_id)
-      @ta.save
-      @test = User.all
-      return render json: @test
-
+      @ta.update_attribute(:role_id, @role_id)
     end
     @ta_mapping.destroy
     render json: { message: "The TA " + @ta.name + " has been removed." }, status: :ok

@@ -6,15 +6,9 @@ class Course < ApplicationRecord
   has_many :ta_mappings, dependent: :destroy
   has_many :tas, through: :ta_mappings
 
-  #returns the submission directory for the course
+  # returns the submission directory for the course
   def path
     raise 'Path can not be created as the course must be associated with an instructor.' if instructor_id.nil?
-    Rails.root + '/' + Institution.find(institution_id).name.gsub(" ", "") +'/'+ User.find(instructor_id).name.gsub(" ", "") + '/' + directory_path + '/'
+    Rails.root + '/' + Institution.find(institution_id).name.gsub(" ", "") + '/' + User.find(instructor_id).name.gsub(" ", "") + '/' + directory_path + '/'
   end
-
-  #returns tas associated with the course
-  def get_tas
-
-  end
-
 end
