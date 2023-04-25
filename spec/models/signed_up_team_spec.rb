@@ -3,7 +3,8 @@ require 'rails_helper'
 RSpec.describe SignedUpTeam, type: :model do
   let (:topic) {create(:signup_topic)}
   let (:team) {create(:team)}
-  let (:signed_up_team) {create(:signed_up_team, team:team, signup_topic:topic)}
+  let (:signed_up_team) {create(:signed_up_team, team:team, signup_topic:topic)}  
+  
 
   describe "Test Associations" do
     it "belongs to the sign up topic" do
@@ -21,8 +22,20 @@ RSpec.describe SignedUpTeam, type: :model do
     end
 
     it "Signs up a team for the topic if the topic is available and checks if the record exists in the database" do
+      expect(SignedUpTeam.all.count). to eq(0)
       expect(SignedUpTeam.create_signed_up_team(topic["id"],team["id"])).to eq(true)
-      expect(SignedUpTeam.exists?(signed_up_team['id'])).to be true 
+      expect(SignedUpTeam.all.count). to eq(1)      
+    end
+
+    it "Waitlists a team for the topic if the topic is not available and checks if the record exists in the database" do
+      expect(SignedUpTeam.create_signed_up_team(topic["id"], team["id"])).to be true
+      
+      expect(Waitlist.count_waitlisted_teams(topic["id"])).to eq(0)
+      
+      team2 = Team.create
+      expect(SignedUpTeam.create_signed_up_team(topic["id"], team2["id"])).to be true
+
+      expect(Waitlist.count_waitlisted_teams(topic["id"])).to eq(1)
     end
 
     it 'Creates a signed up team if the topic is available and checks the count increment in the database' do

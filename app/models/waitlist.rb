@@ -15,4 +15,9 @@ class Waitlist
 
     return promoted_ids
   end
+
+  # Returns the IDs of the teams which are on the waitlist for the chosen topic.
+  def self.get_waitlisted_teams(topic_id)
+    return SignedUpTeam.where(signup_topic_id: topic_id).pluck(:id)
+  end
 end

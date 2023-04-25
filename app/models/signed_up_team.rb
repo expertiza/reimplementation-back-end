@@ -12,11 +12,10 @@ class SignedUpTeam < ApplicationRecord
     signup_topic = SignupTopic.find(topic_id)
 
     if signup_topic.is_available() == false
-      return false
+      signed_up_team = SignedUpTeam.create!({:signup_topic_id => topic_id, :team_id => team_id, :is_waitlisted => true })
+    else
+      signed_up_team = SignedUpTeam.create!({:signup_topic_id => topic_id, :team_id => team_id})
     end
-
-    signed_up_team = SignedUpTeam.create!({:signup_topic_id => topic_id, :team_id => team_id})
-
     return true
   end
 
