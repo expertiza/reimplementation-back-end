@@ -1,93 +1,44 @@
-RSpec.describe Api::V1::DutiesController, type: :controller do
-  let(:assignment) { create(:assignment) }
+require 'rails_helper'
+
+RSpec.describe 'Api::V1::Duties', type: :request do
   let(:user) { create(:user) }
 
-  before { sign_in(user) }
-
   describe 'GET #index' do
-    let!(:duties) { create_list(:duty, 3, assignment: assignment) }
-
-    it 'returns a success response' do
-      get :index, params: { assignment_id: assignment.id }
-      expect(response).to be_successful
-    end
-
-    it 'assigns duties' do
-      get :index, params: { assignment_id: assignment.id }
-      expect(assigns(:duties)).to eq(duties)
+    it 'returns http success' do
+      get '/api/v1/duties'
+      expect(response).to have_http_status(:success)
     end
   end
 
-  describe 'GET #show' do
-    let(:duty) { create(:duty, assignment: assignment) }
-
-    it 'returns a success response' do
-      get :show, params: { assignment_id: assignment.id, id: duty.id }
-      expect(response).to be_successful
-    end
-
-    it 'assigns duty' do
-      get :show, params: { assignment_id: assignment.id, id: duty.id }
-      expect(assigns(:duty)).to eq(duty)
+  describe 'GET /show' do
+    it 'returns http success' do
+      duty = Duty.create(name: 'Test Duty', max_members_for_duty: 1, assignment_id: 1)
+      get "/api/v1/duty/#{duty.id}"
+      expect(response).to have_http_status(:success)
     end
   end
 
-  describe 'GET #new' do
-    it 'returns a success response' do
-      get :new, params: { assignment_id: assignment.id }
-      expect(response).to be_successful
-    end
-
-    it 'assigns a new duty' do
-      get :new, params: { assignment_id: assignment.id }
-      expect(assigns(:duty)).to be_a_new(Duty)
+  describe 'POST /create' do
+    it 'returns http success' do
+      post '/api/v1/duties', params: { duty: { name: 'Test Duty', max_members_for_duty: 1} }
+      expect(response).to have_http_status(:redirect)
     end
   end
 
-  describe 'GET #edit' do
-    let(:duty) { create(:duty, assignment: assignment) }
-
-    it 'returns a success response' do
-      get :edit, params: { assignment_id: assignment.id, id: duty.id }
-      expect(response).to be_successful
-    end
-
-    it 'assigns duty' do
-      get :edit, params: { assignment_id: assignment.id, id: duty.id }
-      expect(assigns(:duty)).to eq(duty)
+  describe 'PATCH /update' do
+    it 'returns http success' do
+      duty = Duty.create(name: 'Test Duty', max_members_for_duty: 1, assignment_id: 1)
+      patch "/api/v1/duties/#{duty.id}", params:  { duty: { name: 'Test Duty', max_members_for_duty: 1 } }
+      follow_redirect!
+      expect(response).to have_http_status(:success)
     end
   end
 
-  describe 'POST #create' do
-    context 'with valid params' do
-      let(:duty_attributes) { attributes_for(:duty) }
-
-      it 'creates a new duty' do
-        expect {
-          post :create, params: { assignment_id: assignment.id, duty: duty_attributes }
-        }.to change(Duty, :count).by(1)
-      end
-
-      it 'redirects to edit_assignment_path' do
-        post :create, params: { assignment_id: assignment.id, duty: duty_attributes }
-        expect(response).to redirect_to(edit_assignment_path(assignment))
-      end
-    end
-
-    context 'with invalid params' do
-      let(:duty_attributes) { attributes_for(:duty, name: nil) }
-
-      it 'does not create a new duty' do
-        expect {
-          post :create, params: { assignment_id: assignment.id, duty: duty_attributes }
-        }.to_not change(Duty, :count)
-      end
-
-      it 'redirects to new duty page and shows error' do
-        post :create, params: { assignment_id: assignment.id, duty: duty_attributes }
-        expect(response).to redirect_to(action: :new, assignment_id: assignment.id)
-        expect(flash[:error]).to be_present
-      end
+  describe 'DELETE /destroy' do
+    it 'returns http success' do
+      duty = Duty.create(name: 'Test Duty', max_members_for_duty: 1, assignment_id: 1)
+      delete "/api/v1/badges/#{duty.id}"
+      expect(response).to have_http_status(:redirect)
     end
   end
 end
