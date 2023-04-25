@@ -1,7 +1,8 @@
 class Api::V1::ParticipantsController < ApplicationController
 
-    # returns a list of participants of an assignment or a course
     # GET /participants/index/:model/:id
+    # params - model: "Course" or "Assignment", id: id of the corresponsing model object
+    # returns a list of participants of an assignment or a course
     def index
         begin
             model_object = Object.const_get(params[:model]).find(params[:id].to_i)
@@ -16,8 +17,9 @@ class Api::V1::ParticipantsController < ApplicationController
         end
     end
 
-    # creates a participant in an assignment or a course
     # POST /participants/:model/:id
+    # params - model: "Course" or "Assignment", id: id of the corresponsing model object
+    # creates a participant in an assignment or a course
     def create
         user = User.find_by(name: params[:user][:name])
         if user.nil?
@@ -48,8 +50,9 @@ class Api::V1::ParticipantsController < ApplicationController
         render json: { participant: participant }, status: :created
     end
 
-    # updates the participant's handle in an assignment
     # PATCH /participants/update_handle/:id
+    # params - id: id of the participant
+    # updates the participant's handle in an assignment
     def update_handle
         participant = AssignmentParticipant.find(params[:id].to_i)
         if participant.handle == params[:participant][:handle]
@@ -64,8 +67,9 @@ class Api::V1::ParticipantsController < ApplicationController
         end
     end
 
-    # updates the permissions in an assignment or a course based on the participant role
     # PATCH /participants/update_authorization/:id
+    # params - id: id of the participant
+    # updates the permissions in an assignment or a course based on the participant role
     def update_authorization
         participant = Participant.find(params[:id].to_i)
         if participant.update(  can_submit: params[:participant][:can_submit], 
@@ -77,26 +81,29 @@ class Api::V1::ParticipantsController < ApplicationController
         end
     end
 
+    # DELETE /participants/:id
+    # params - id: id of the participant
     # destroys a participant from an assignment or a course
-    # DELETE /participants/:id?force={}
     def destroy
         participant = Participant.find(params[:id].to_i)
         begin
-            participant.delete(params[:query][:force])
+            participant.delete(false)
             render json: { message: "#{participant.user.name} was successfully removed as a participant" }, status: :ok
         rescue => e
             render json: { error: e }, status: :unprocessable_entity
         end
     end
-      
-    # copies existing participants from a course down to its assignment
+    
     # GET /participants/inherit/:id
+    # params - id: id of the assignment
+    # copies existing participants from a course down to its assignment
     def inherit
         copy_participants_from_source_to_target(params[:id], :course_to_assignment)
     end
     
-    # copies existing participants from an assignment up to its course
     # GET /participants/bequeath/:id
+    # params - id: id of the assignment
+    # copies existing participants from an assignment up to its course
     def bequeath
         copy_participants_from_source_to_target(params[:id], :assignment_to_course)
     end
