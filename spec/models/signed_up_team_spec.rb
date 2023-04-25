@@ -43,7 +43,6 @@ RSpec.describe SignedUpTeam, type: :model do
     end
 
     it "Deletes the signed_up_team for the topic assigned and checks if the record exists in the database" do
-      # expect(SignedUpTeam.delete_signed_up_team(signed_up_team["id"])).to eq(true)
       SignedUpTeam.find(signed_up_team['id']).destroy
       expect(SignedUpTeam.exists?(signed_up_team['id'])).to be false
     end
