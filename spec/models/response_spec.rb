@@ -95,7 +95,7 @@ describe Response do
   # information both for totals and in a list per-round.
   describe '.volume_of_review_comments' do
     it 'returns volumes of review comments in each round' do
-      allow(Response).to receive(:get_all_review_comments)
+      allow(response).to receive(:get_all_review_comments)
                            .with(1, 1)
                            .and_return([
                                          'Answer textAnswer textLGTM',
@@ -103,8 +103,7 @@ describe Response do
                                          [nil, 'Answer text', 'Answer textLGTM', ''],
                                          [nil, 1, 1, 0]
                                        ])
-
-      expect(response.volume_of_review_comments(1, 1)).to eq([1, 2, 2, 0])
+      expect(response.volume_of_review_comments(response,1, 1)).to eq([1, 2, 2, 0])
     end
   end
 end
