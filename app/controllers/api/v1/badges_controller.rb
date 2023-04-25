@@ -46,8 +46,10 @@ class Api::V1::BadgesController < ApplicationController
   end
 
 
-  private
 
+
+
+  private
   def set_badge
     @badge = Badge.find(params[:id])
   end

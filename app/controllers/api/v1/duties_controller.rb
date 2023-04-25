@@ -1,8 +1,8 @@
 class Api::V1::DutiesController < ApplicationController
 
   before_action :set_assignment
-  before_action :set_duty, only: %i[show edit update destroy]
   before_action :authorize_user, except: [:index, :show]
+  before_action :set_duty, only: %i[show edit update destroy]
 
   def index
     @duties = @assignment.duties
@@ -41,8 +41,9 @@ class Api::V1::DutiesController < ApplicationController
     redirect_to edit_assignment_path(@assignment), notice: 'Role was successfully deleted.'
   end
 
-    private
 
+
+    private
   def set_assignment
     @assignment = Assignment.find(params[:assignment_id])
   end
