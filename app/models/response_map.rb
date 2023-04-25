@@ -6,9 +6,8 @@ class ResponseMap < ApplicationRecord
 
   alias map_id id
 
-  # returns all responses by a particular reviewee
-  def get_all_reviewee_responses
-    map_id = ResponseMap.find_by(assignment: map.assignment, reviewer: map.reviewer, reviewee: map.reviewee)
+  # returns all responses
+  def get_all_responses
     Response.where(map_id: map_id).all
   end
 

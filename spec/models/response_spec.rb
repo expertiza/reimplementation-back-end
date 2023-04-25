@@ -4,7 +4,6 @@ describe Response do
 
   let(:user) { User.new(id: 1, role_id: 1, name: 'no name', fullname: 'no one') }
   let(:team) {Team.new}
-  let(:participant) { build(:participant, id: 1, parent_id: 1, user: user) }
   let(:assignment) { Assignment.new(id: 1, name: 'Test Assignment') }
   let(:answer) { Answer.new(answer: 1, comments: 'Answer text', question_id: 1) }
   let(:question) { ScoredQuestion.new(id: 1, weight: 2) }
