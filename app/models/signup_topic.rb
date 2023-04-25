@@ -51,16 +51,15 @@ class SignupTopic < ApplicationRecord
     self.signed_up_teams.count(:team_id)
   end
 
-  # Method used to remove team from the topic and assigns topic to signed up team in waitlist.
-  def release_team(team_id)
+  # Method used to promote 1 team from waitlist if there a signed up team is deleted.
+  def release_team
     self.transaction do
-      Waitlist.promote_teams_from_waitlist(self.id)
+      return Waitlist.promote_teams_from_waitlist(self.id)
     end
   end
 
   # Method used to validate if the topic is assigned to signed up team
   def is_assigned_to_team(team_id)
-
     has_assigned_topic = signed_up_teams.find(team_id)
     !has_assigned_topic.nil?
   end
