@@ -46,10 +46,12 @@ class Response < ApplicationRecord
 
   def significant_difference?
     map_class = map.class
+    # gets all responses made by a reviewee
     existing_responses = map_class.assessments_for(map.reviewee)
 
     count = 0
     total = 0
+    # gets the sum total percentage scores of all responses that are not this response
     existing_responses.each do |response|
       unless id == response.id # the current_response is also in existing_responses array
         count += 1
@@ -57,9 +59,10 @@ class Response < ApplicationRecord
       end
     end
 
-    # if this response is the first on this artifact, there's no grade conflict
+    # if this response is the only response by the reviewee, there's no grade conflict
     return false if count.zero?
 
+    # calculates the average score of all other responses
     average_score = total / count
 
     # This score has already skipped the unfilled scorable question(s)
