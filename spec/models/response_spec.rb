@@ -13,9 +13,9 @@ describe Response do
   let(:response) { Response.new(map_id: 1, response_map: review_response_map, scores: [answer]) }
 
 
-
+  # Compare the current response score with other scores on the same artifact, and test if the difference is significant enough to notify
+  # instructor.
   describe '#significant_difference?' do
-
     context 'when count is 0' do
       it 'returns false' do
         allow(ReviewResponseMap).to receive(:assessments_for).with(team).and_return([response])
@@ -40,6 +40,7 @@ describe Response do
     end
   end
 
+  # Calculate the total score of a review
   describe '#calculate_total_score' do
     it 'computes the total score of a review' do
       question2 = double('ScoredQuestion', weight: 2)
@@ -51,6 +52,7 @@ describe Response do
     end
   end
 
+  # Calculate Average score with maximum score as zero and non-zero
   describe '#average_score' do
     context 'when maximum_score returns 0' do
       it 'returns N/A' do
@@ -68,6 +70,8 @@ describe Response do
     end
   end
 
+  # Returns the maximum possible score for this response - only count the scorable questions, only when the answer is not nil (we accept nil as
+  # answer for scorable questions, and they will not be counted towards the total score)
   describe '#maximum_score' do
     it 'returns the maximum possible score for current response' do
       question2 = double('ScoredQuestion', weight: 2)
@@ -86,7 +90,9 @@ describe Response do
       expect(response.maximum_score).to eq(0)
     end
   end
-
+  
+  # Get a collection of all comments across all rounds of a review as well as a count of the total number of comments. Returns the above
+  # information both for totals and in a list per-round.
   describe '.volume_of_review_comments' do
     it 'returns volumes of review comments in each round' do
       allow(Response).to receive(:get_all_review_comments)
