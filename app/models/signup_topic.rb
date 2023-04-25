@@ -3,9 +3,8 @@ class SignupTopic < ApplicationRecord
   has_many :signed_up_teams, counter_cache: true
 
   # Method used to destroy the topic from the table and also
-  # cascading deletes performed in both SignUpTeams and Waitlist and team with error handling
+  # perform cascading deletes in SignUpTeams and Waitlist with error handling.
   def destroy_topic
-
     self.transaction do
       self.signed_up_teams.each do |signupteam|
         signupteam.destroy!
@@ -82,7 +81,7 @@ class SignupTopic < ApplicationRecord
     SignupTopicSerializer.new(self).serializable_hash.to_json
   end
 
-
+  # Method to check if given topic is available for selection by signup teams.
   def is_available
     if count_available_slots.positive?
       return true
