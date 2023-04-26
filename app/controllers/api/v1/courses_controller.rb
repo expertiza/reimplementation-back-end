@@ -4,6 +4,7 @@ class Api::V1::CoursesController < ApplicationController
   before_action :set_course, only: %i[ show update destroy ]
 
   # GET /courses
+  # List all the courses
   def index
     @courses = Course.all
 
@@ -11,11 +12,13 @@ class Api::V1::CoursesController < ApplicationController
   end
 
   # GET /courses/1
+  # Get a course
   def show
     render json: @course
   end
 
   # POST /courses
+  # Create a course
   def create
     @course = Course.new(course_params)
 
@@ -27,6 +30,7 @@ class Api::V1::CoursesController < ApplicationController
   end
 
   # PATCH/PUT /courses/1
+  # Update a course
   def update
     if @course.update(course_params)
       render json: @course
@@ -36,6 +40,7 @@ class Api::V1::CoursesController < ApplicationController
   end
 
   # DELETE /courses/1
+  # Delete a course
   def destroy
     @course.destroy
     render json: { message: "Course with id #{params[:id]}, deleted" }, status: :ok
