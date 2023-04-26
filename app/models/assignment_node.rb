@@ -17,7 +17,7 @@ class AssignmentNode < Node
     query_user = User.find_by(id: user_id)
 
     if query_user && query_user.teaching_assistant?
-      clause = "assignments.course_id in (#{Ta.get_mapped_courses(user_id)})"
+      clause = "assignments.course_id in (?)"
     else
       clause = "assignments.instructor_id = #{user_id}"
     end
