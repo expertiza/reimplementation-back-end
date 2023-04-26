@@ -5,6 +5,37 @@ FactoryBot.define do
     name {"test"}
     type { "QuestionnaireTypeNode"}
   end
+  factory :role_of_teaching_assistant, class: Role do
+    name {'Teaching Assistant'}
+    parent_id {nil}
+    # description {''}
+  end
+  factory :teaching_assistant, class: Ta do
+    name {'teaching_assistant5888'}
+    role { Role.where(name: 'Teaching Assistant').first || association(:role_of_teaching_assistant) }
+    password {'password'}
+    password_confirmation {'password'}
+    fullname {'5888, teaching assistant'}
+    email {'expertiza@mailinator.com'}
+    parent_id {1}
+    #private_by_default  {false}
+    mru_directory_path  {nil}
+    email_on_review {true}
+    email_on_submission {true}
+    email_on_review_of_review {true}
+    is_new_user {false}
+    master_permission_granted {0}
+    handle {'handle'}
+    #digital_certificate {nil}
+    timezonepref {'Eastern Time (US & Canada)'}
+    #public_key {nil}
+    copy_of_emails  {false}
+  end
+  factory :questionnaire_node, class: QuestionnaireNode do
+    parent_id {0}
+    node_object_id {0}
+    type {'QuestionnaireNode'}
+  end
   factory :questionnaire, class: ReviewQuestionnaire do
     name {'Test questionnaire'}
     # Beware: it is fragile to assume that role_id of instructor is 1 (or any other unchanging value)
@@ -20,7 +51,7 @@ FactoryBot.define do
     node_object_id {1}
     name {"test"}
   end
-  factory :course_node, class: CourseNode do 
+  factory :course_node, class: CourseNode do
     course { Course.first  }
     node_object_id {1}
     type {'CourseNode'}

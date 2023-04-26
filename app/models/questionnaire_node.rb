@@ -54,7 +54,7 @@ class QuestionnaireNode < Node
   end
 
   def private?
-    cached_assignment_lookup(:private)
+    cached_questionnaire_lookup(:private)
   end
 
   def creation_date
