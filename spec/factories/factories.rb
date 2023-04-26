@@ -6,6 +6,18 @@ FactoryBot.define do
         type {'CourseNode'}
     end
 
+    factory :teams_user, class: TeamsUser do
+      id{1}
+      user_id {1}
+    end
+    
+    factory :team_user_node, class: TeamUserNode do
+      id {1}
+      node_object_id {1}
+      name {"test"}
+      
+    end
+
     factory :course, class: Course do
       # sequence(:name) { |n| "CSC517, test#{n}" }
       instructor { Instructor.first || association(:instructor) }

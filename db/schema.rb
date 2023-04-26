@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_04_26_013605) do
+ActiveRecord::Schema[7.0].define(version: 2023_04_26_021555) do
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -101,6 +101,18 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_26_013605) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
+  end
+
+  create_table "teams", id: :integer, charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "name"
+    t.integer "assignment_id", default: 0, null: false
+    t.index ["assignment_id"], name: "fk_teams_assignments"
+  end
+
+  create_table "teams_users", id: :integer, charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "team_id"
+    t.integer "user_id"
+    t.index ["team_id"], name: "fk_users_teams"
   end
 
   create_table "tree_folders", id: :integer, charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|

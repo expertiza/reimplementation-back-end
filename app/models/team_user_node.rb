@@ -1,5 +1,5 @@
 class TeamUserNode < Node
-  belongs_to :node_object, class_name: 'TeamsUser'
+  belongs_to :node_object, class_name: 'TeamsUser', foreign_key: 'node_object_id'
 
   def name(ip_address = nil)
     TeamsUser.find(node_object_id).name(ip_address)
