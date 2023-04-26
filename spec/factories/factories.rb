@@ -5,10 +5,20 @@ FactoryBot.define do
     name {"test"}
     type { "QuestionnaireTypeNode"}
   end
+  
+  factory :folder_node, class: FolderNode do
+    node_object_id {1}
+    type {"FolderNode"}
+  end
   factory :role_of_teaching_assistant, class: Role do
     name {'Teaching Assistant'}
     parent_id {nil}
     # description {''}
+  end
+  factory :assignment_node, class: AssignmentNode do
+    assignment { Assignment.first || association(:assignment) }
+    node_object_id {1}
+    type {'AssignmentNode'}
   end
   factory :teaching_assistant, class: Ta do
     name {'teaching_assistant5888'}
