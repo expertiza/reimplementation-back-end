@@ -1,7 +1,12 @@
 
 FactoryBot.define do
+  factory :team_node, class: TeamNode do
+    node_object_id {1}
+    name {"test"}
+
+  end
     factory :course_node, class: CourseNode do
-        course { Course.first  }
+      course { Course.first  }
         node_object_id {1}
         type {'CourseNode'}
     end
@@ -10,8 +15,13 @@ FactoryBot.define do
       id{1}
       user_id {1}
     end
-    
-    factory :team_user_node, class: TeamUserNode do
+
+  factory :team, class: Team do
+      id{1}
+  end
+
+
+  factory :team_user_node, class: TeamUserNode do
       id {1}
       node_object_id {1}
       name {"test"}
@@ -32,7 +42,7 @@ FactoryBot.define do
     factory :assignment, class: Assignment do
         # Help multiple factory-created assignments get unique names
         # Let the first created assignment have the name 'final2' to avoid breaking some fragile existing tests
-        name { (Assignment.last ? ('assignment' + (Assignment.last.id + 1).to_s) : 'final2').to_s }
+      name { (Assignment.last ? ('assignment' + (Assignment.last.id + 1).to_s) : 'final2').to_s }
         directory_path { 'final_test' }
         submitter_count { 0 }
         course { Course.first || association(:course) }
@@ -77,7 +87,7 @@ FactoryBot.define do
         auto_assign_mentor { false }
     end
     factory :instructor, class: Instructor do
-        name {'instructor6'}
+      name {'instructor6'}
         #role { Role.where(name: 'Instructor').first || association(:role_of_instructor) }
         password {'password'}
         password_confirmation {'password'}
