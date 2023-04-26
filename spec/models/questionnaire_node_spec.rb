@@ -25,3 +25,28 @@ describe QuestionnaireNode do
   end
 
 end
+
+
+
+
+# let(:questionnaire_type_node) { FactoryBot.build(:questionnaire_type_node, id: 1) }
+#
+# before(:each) do
+#   questionnaire_type_node.node_object_id = 1
+#
+# end
+# describe '#cached_questionnaire_lookup' do
+#
+#   it "Test cache lookup" do
+#     expect(questionnaire_type_node.cached_course_lookup(:)).to eq(1)
+#
+#   end
+# end
+#
+# end
+# describe '#get_name' do
+#   it 'The Ruby code  defines a method named `get_name`. This method takes no arguments and retrieves the name of a folder object in the TreeFolder model, using its `node_object_id` attribute. The retrieved name is returned as the output of the method.'
+# end
+# describe '#get_children(sortvar = nil, sortorder = nil, user_id = nil, show = nil, _parent_id = nil, search = nil)' do
+#   it 'The code defines a method called "get_children" that takes in several optional parameters (sortvar, sortorder, user_id, show, _parent_id, search) and calls the "get" method on the QuestionnaireNode class with some of those parameters (sortvar, sortorder, user_id, show, node_object_id, search) to retrieve a list of child nodes. However, there seems to be an error in the code as "_parent_id" is not being used anywhere in the method.'
+# end

@@ -22,6 +22,6 @@ class QuestionnaireTypeNode < FolderNode
   end
 
   def children(sortvar = nil, sortorder = nil, user_id = nil, show = nil, _parent_id = nil, search = nil)
-    QuestionnaireNode.get(sortvar, sortorder, user_id, show, node_object_id, search)
+    QuestionnaireNode.get(sortvar, sortorder, user_id, show, node_object_id)
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_04_26_021555) do
+ActiveRecord::Schema[7.0].define(version: 2023_04_26_035709) do
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -92,6 +92,19 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_26_021555) do
     t.integer "lft"
     t.integer "rgt"
     t.integer "depth"
+  end
+
+  create_table "questionnaires", id: :integer, charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "name", limit: 64
+    t.integer "instructor_id", default: 0, null: false
+    t.boolean "private", default: false, null: false
+    t.integer "min_question_score", default: 0, null: false
+    t.integer "max_question_score"
+    t.datetime "created_at", precision: nil
+    t.datetime "updated_at", precision: nil, null: false
+    t.integer "default_num_choices"
+    t.integer "type_id", default: 1, null: false
+    t.index ["type_id"], name: "fk_questionnaire_type"
   end
 
   create_table "roles", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
