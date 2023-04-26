@@ -46,9 +46,9 @@ class Api::V1::CoursesController < ApplicationController
     @course = Course.find(params[:id])
     @user = User.find_by(id: params[:ta_id])
     if @user.nil?
-      return render json: { status: "error", message: "The user inputted " + params[:ta_id].to_s + " does not exist" }, status: :bad_request
+      return render json: { status: "error", message: "The user " + params[:ta_id].to_s + " does not exist" }, status: :bad_request
     elsif !TaMapping.where(ta_id: @user.id, course_id: @course.id).empty?
-      return render json: { status: "error", message: "The user inputted " + params[:ta_id].to_s + " is already a TA for this course." }, status: :bad_request
+      return render json: { status: "error", message: "The user " + params[:ta_id].to_s + " is already a TA for this course." }, status: :bad_request
     else
       @ta_mapping = TaMapping.create(ta_id: @user.id, course_id: @course.id)
       @role_id = Role.find_by(name: 'Teaching Assistant').id
@@ -79,8 +79,8 @@ class Api::V1::CoursesController < ApplicationController
     end
     @ta = User.find(@ta_mapping.ta_id)
     # if the user is not a TA for any other course, then the role should be changed to student
-    other_ta_mappings_num = TaMapping.where(ta_id: params[:ta_id]).size - 1
-    if other_ta_mappings_num.zero?
+    ta_count = TaMapping.where(ta_id: params[:ta_id]).size - 1
+    if ta_count.zero?
       @role_id = Role.find_by(name: 'Student').id
       @ta.update_attribute(:role_id, @role_id)
     end
