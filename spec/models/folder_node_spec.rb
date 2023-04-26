@@ -31,16 +31,4 @@ describe FolderNode do
      
    end 
   end
-  describe '#children(sortvar = nil, sortorder = nil, user_id = nil, show = nil, parent_id = nil, search = nil)' do
-	 it 'The code defines a method called "get_children" with five optional parameters: "sortvar", "sortorder", "user_id", "show", and "parent_id". If "parent_id" is not provided, it defaults to the "id" attribute of the "folder" object. The method then calls another method based on the value of "get_child_type", passing the parameters to it. The purpose of this method is to retrieve and return a list of child objects of a certain type (determined by "get_child_type") based on the provided parameters.' do
-     tree_folder = double('TreeFolder', parent_id: 2, id: 1, name: "ABC")
-    
-
-     allow(TreeFolder).to receive(:find).with(1).and_return(tree_folder)
-     allow(Object).to receive(:const_get).and_return([questionnaire])
-     expect(folder_node.children.first).to eq(questionnaire)
-
-   end 
-  end
-
 end

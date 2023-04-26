@@ -6,7 +6,6 @@ describe QuestionnaireNode do
   let(:questionnaire3) { FactoryBot.build(:questionnaire) }
   let(:questionnaire_node) { FactoryBot.build(:questionnaire_node) }
   let(:teaching_assistant) { FactoryBot.build(:teaching_assistant) }
-  # let(:student) { FactoryBot.build(:user) }
    let(:student) { User.new name: 'abc', fullname: 'abc bbc', email: 'abcbbc@gmail.com', password: '123456789', password_confirmation: '123456789' }
   let(:assignment) { FactoryBot.build(:assignment, id: 1, name: 'Assignment') }
   
@@ -52,7 +51,3 @@ describe QuestionnaireNode do
   end
   
 end
-
-
-
-
