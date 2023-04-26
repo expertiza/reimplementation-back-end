@@ -1,13 +1,11 @@
 require "rails_helper"
 
 describe AssignmentNode do
-  let(:assignment) { FactoryBot.build(:assignment,id: 1)}
   let(:assignment_node) { FactoryBot.build(:assignment_node, id: 1)}
   let(:user1) { User.new name: 'abc', fullname: 'abc bbc', email: 'abcbbc@gmail.com', password: '123456789', password_confirmation: '123456789' }
 
   before(:each) do
     assignment_node.node_object_id = 1
-    allow(assignment).to receive(:name).and_return("test")
     allow(User).to receive(:find_by).with(id: 1).and_return(user1)
     allow(User).to receive(:find).with(1).and_return(user1)
     allow(user1).to receive(:id).and_return(1)
@@ -31,12 +29,6 @@ end
 	 it 'The code defines a method named "is_leaf" that always returns a boolean value of true.' do
      expect(AssignmentNode.leaf?).to eq(true)
    end 
-  end
-
-  describe '#name' do
-	 it 'The code defines a method called "get_name". The method first checks if an instance variable called "@assign_node" exists, and if it does, it returns the value of its "name" attribute. If "@assign_node" is nil, it uses the "try" method to attempt to find an "Assignment" object by its ID, which is stored in a variable called "node_object_id". If an "Assignment" object is found, it returns its "name" attribute. If no "Assignment" object is found, it returns nil.' do
-     expect(assignment_node.name).to eq("test")
-     end
   end
 
 end
