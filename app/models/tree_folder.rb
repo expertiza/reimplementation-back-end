@@ -1,0 +1,2 @@
+class TreeFolder < ApplicationRecord
+end

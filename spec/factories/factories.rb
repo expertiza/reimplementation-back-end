@@ -1,12 +1,20 @@
 
 FactoryBot.define do
-    factory :course_node, class: Course do
-        id { 1 }
+    factory :course_node, class: CourseNode do
+        course { Course.first  }
+        node_object_id {1}
+        type {'CourseNode'}
     end
 
     factory :course, class: Course do
-        id { 1 }
-        name { 'ECE517' }
+      # sequence(:name) { |n| "CSC517, test#{n}" }
+      instructor { Instructor.first || association(:instructor) }
+      # directory_path {'csc517/test'}
+      info {'Object-Oriented Languages and Systems'}
+      survey_distribution_id { 1 }
+      institutions_id { 1 }
+      private {true}
+      #institutions_id {nil}
     end
 
     factory :assignment, class: Assignment do
@@ -55,7 +63,28 @@ FactoryBot.define do
         has_badge { false }
         allow_selecting_additional_reviews_after_1st_round { false }
         auto_assign_mentor { false }
-      end
+    end
+    factory :instructor, class: Instructor do
+        name {'instructor6'}
+        #role { Role.where(name: 'Instructor').first || association(:role_of_instructor) }
+        password {'password'}
+        password_confirmation {'password'}
+        fullname {'6, instructor'}
+        email {'expertiza@mailinator.com'}
+        parent_id {1}
+        # private_by_default  {false}
+        mru_directory_path  {nil}
+        email_on_review {true}
+        email_on_submission {true}
+        email_on_review_of_review {true}
+        is_new_user {false}
+        master_permission_granted {0}
+        handle {'handle'}
+        #digital_certificate {nil}
+        timezonepref {'Eastern Time (US & Canada)'}
+        #public_key {nil}
+        copy_of_emails {false}
+    end
 
 
 end

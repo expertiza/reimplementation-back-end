@@ -1,3 +1,4 @@
+require "rails_helper"
 describe AssignmentNode do
   describe '#self.get' do
 	 it 'The code defines a class method called "self.get" which takes in several optional parameters. It first checks if a "show" parameter is passed and determines the appropriate conditions based on the users role. If "show" is not passed, it checks if the user is a Teaching Assistant and sets the conditions accordingly. If a parent_id parameter is passed, it adds a condition to filter results by the specified parent_id. The method then sets default values for sortvar and sortorder if they are not passed. Finally, it constructs a find_conditions array based on the determined conditions and values, and returns a result set of objects with associated assignments, filtered and sorted according to the specified parameters.'

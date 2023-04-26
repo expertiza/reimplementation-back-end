@@ -25,7 +25,7 @@ class CourseNode < Node
     query_user = User.find_by(id: user_id)
 
     if query_user && query_user.teaching_assistant?
-      clause = "courses.id in (#{Ta.get_mapped_courses(user_id)})"
+      clause = "courses.id in (?)"
     else
       clause = "courses.instructor_id = #{user_id}"
     end
@@ -64,8 +64,8 @@ class CourseNode < Node
     cached_course_lookup(:name)
   end
 
-  def directory
-    cached_course_lookup(:directory)
+  def directory_path
+    cached_course_lookup(:directory_path)
   end
 
   def creation_date

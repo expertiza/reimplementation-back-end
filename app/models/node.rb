@@ -1,6 +1,6 @@
 
 class Node < ApplicationRecord
-  has_paper_trail
+  #has_paper_trail
 
 
   belongs_to :parent, class_name: 'Node', foreign_key: 'parent_id', inverse_of: false
