@@ -15,7 +15,7 @@ RSpec.describe Waitlist, type: :model do
     it "returns count of teams waitlisted for given topic" do
       expect(waitlisted_team).to be_valid
 
-      actual_count_for_topic = Waitlist.count_waitlisted_teams(topic["id"])
+      actual_count_for_topic = SignupTopic.count_waitlisted_teams(topic["id"])
       expected_count_for_topic = 1
       expect(actual_count_for_topic).to eq(expected_count_for_topic)
     end
@@ -24,7 +24,7 @@ RSpec.describe Waitlist, type: :model do
     it "gets the waitlisted teams" do
       expect(waitlisted_team).to be_valid
 
-      teams = Waitlist.get_waitlisted_teams(topic["id"])
+      teams = SignupTopic.get_waitlisted_teams(topic["id"])
       expect(teams).to include(waitlisted_team["id"])
     end
 
@@ -32,11 +32,11 @@ RSpec.describe Waitlist, type: :model do
     it "Promotes waitlisted teams" do
       expect(waitlisted_team).to be_valid
 
-      actual_promoted_teams = Waitlist.promote_teams_from_waitlist(topic["id"])
+      actual_promoted_teams = SignupTopic.promote_teams_from_waitlist(topic["id"])
 
       expect(actual_promoted_teams).to include(waitlisted_team["id"])
 
-      waitlist_count = Waitlist.count_waitlisted_teams(topic["id"])
+      waitlist_count = SignupTopic.count_waitlisted_teams(topic["id"])
       expect(waitlist_count).to eq(0)
     end
   end
@@ -48,7 +48,7 @@ RSpec.describe Waitlist, type: :model do
       expect(waitlisted_team).to be_valid
 
       non_existent_topic = 2
-      actual_count_for_topic = Waitlist.count_waitlisted_teams(non_existent_topic)
+      actual_count_for_topic = SignupTopic.count_waitlisted_teams(non_existent_topic)
       expected_count_for_topic = 0
       expect(actual_count_for_topic).to eq(expected_count_for_topic)
     end
@@ -58,7 +58,7 @@ RSpec.describe Waitlist, type: :model do
       expect(waitlisted_team).to be_valid
 
       non_existent_topic = 2
-      teams = Waitlist.get_waitlisted_teams(non_existent_topic)
+      teams = SignupTopic.get_waitlisted_teams(non_existent_topic)
       expect(teams).to_not include(waitlisted_team["id"])
       expect(teams).to_not include(non_waitlisted_team["id"])
     end
@@ -67,11 +67,11 @@ RSpec.describe Waitlist, type: :model do
     it "checks if promotion of different topic does not modify other topic waitlist" do
       expect(waitlisted_team).to be_valid
 
-      actual_promoted_teams = Waitlist.promote_teams_from_waitlist(2)
+      actual_promoted_teams = SignupTopic.promote_teams_from_waitlist(2)
 
       expect(actual_promoted_teams).to_not include(waitlisted_team["id"])
 
-      waitlist_count = Waitlist.count_waitlisted_teams(topic["id"])
+      waitlist_count = SignupTopic.count_waitlisted_teams(topic["id"])
       expect(waitlist_count).to eq(1)
     end
   end

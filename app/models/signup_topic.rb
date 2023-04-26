@@ -1,4 +1,6 @@
 class SignupTopic < ApplicationRecord
+  include Waitlist
+
   belongs_to :assignment
   has_many :signed_up_teams, counter_cache: true
 
@@ -28,7 +30,7 @@ class SignupTopic < ApplicationRecord
       end
       if !maxChoosers.nil? && maxChoosers > self.max_choosers
         count_teams_to_promote = maxChoosers - self.max_choosers
-        Waitlist.promote_teams_from_waitlist(self.id, count_teams_to_promote)
+        SignupTopic.promote_teams_from_waitlist(self.id, count_teams_to_promote)
         self.max_choosers = maxChoosers
         need_to_update = true
       end
@@ -54,7 +56,7 @@ class SignupTopic < ApplicationRecord
   # Method used to promote 1 team from waitlist if there a signed up team is deleted.
   def release_team
     self.transaction do
-      return Waitlist.promote_teams_from_waitlist(self.id)
+      return SignupTopic.promote_teams_from_waitlist(self.id)
     end
   end
 
