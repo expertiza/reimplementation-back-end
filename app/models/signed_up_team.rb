@@ -11,7 +11,7 @@ class SignedUpTeam < ApplicationRecord
   def self.create_signed_up_team(topic_id, team_id)
     signup_topic = SignupTopic.find(topic_id)
 
-    if signup_topic.is_available() == false
+    if signup_topic.is_available? == false
       signed_up_team = SignedUpTeam.create!({:signup_topic_id => topic_id, :team_id => team_id, :is_waitlisted => true })
     else
       signed_up_team = SignedUpTeam.create!({:signup_topic_id => topic_id, :team_id => team_id})
@@ -21,7 +21,7 @@ class SignedUpTeam < ApplicationRecord
 
   # This method overrides the default destory method to trigger signup topic and waitlist related updates.
   def destroy
-    self.signup_topic.release_team
+    self.signup_topic.promote_waitlisted_team
     super
   end
 end

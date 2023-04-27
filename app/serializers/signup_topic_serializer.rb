@@ -5,7 +5,7 @@ class SignupTopicSerializer
     SignupTopic.count_waitlisted_teams(object.id)
   end
   attributes :available_slots do |object|
-    object.count_available_slots
+    object.num_available_slots
   end
 
   attributes :signed_up_teams
