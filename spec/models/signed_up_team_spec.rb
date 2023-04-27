@@ -18,7 +18,7 @@ RSpec.describe SignedUpTeam, type: :model do
 
   describe "Test Functionality" do
     it "Returns the team participants for a signed_up_topic" do
-      expect(signed_up_team.get_team_participants()).to eq(true)
+      expect(signed_up_team.team_participants()).to eq(true)
     end
 
     it "Signs up a team for the topic if the topic is available and checks if the record exists in the database" do

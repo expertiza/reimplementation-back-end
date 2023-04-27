@@ -3,8 +3,8 @@ class SignedUpTeam < ApplicationRecord
   belongs_to :team 
 
   # This method is to get participants in the team signed up for a given topic. It calls on the parent Team Class to fetch the participants details.
-  def get_team_participants()
-    return team.get_team_participants()
+  def team_participants()
+    return team.team_participants()
   end 
 
   # This is a class method responsible for creating a SignedUpTeam instance with given topic_id and team_id by checking the condition if topic is available to choose.
