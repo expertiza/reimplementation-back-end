@@ -25,7 +25,7 @@ RSpec.describe SignupTopic, type: :model do
     end
 
     it "Returns number of available slots for teams to sign up for the topic" do
-      expect(topic.count_available_slots).to eq(topic.max_choosers - topic.signed_up_teams.count)
+      expect(topic.num_available_slots).to eq(topic.max_choosers - topic.signed_up_teams.count)
     end
 
     describe "Returns number of filled slots for the topic" do
@@ -40,7 +40,7 @@ RSpec.describe SignupTopic, type: :model do
     end
 
     it "Method used to release team from the topic" do
-      expect(topic.release_team).to eq([])
+      expect(topic.promote_waitlisted_team).to eq([])
     end
 
     it "Method used to validate if the topic is assigned to signed up team" do
@@ -48,12 +48,12 @@ RSpec.describe SignupTopic, type: :model do
     end
 
     it "Returns whether the topic is available" do
-      expect(topic.is_available).to eq(true)
+      expect(topic.is_available?).to eq(true)
     end
 
     it "Returns all the signed up teams for the topic" do
       expect(SignedUpTeam.create_signed_up_team(topic["id"], team["id"])).to eq(true)
-      expect(topic.get_assigned_teams.collect { |signed_team| signed_team.team_id }).to eq([team.id])
+      expect(topic.all_assigned_teams.collect { |signed_team| signed_team.team_id }).to eq([team.id])
     end
 
     it "Returns JSON object that holds the signup topic data" do
