@@ -93,6 +93,7 @@ class Participant < ApplicationRecord
             participants.sort_by { |p| p.user.name.downcase }
         else
             raise ArgumentError, "Invalid sort parameter. Please use 'id' or 'name'."
+        end
     end
   
     # Provide export functionality for Assignment Participants and Course Participants
