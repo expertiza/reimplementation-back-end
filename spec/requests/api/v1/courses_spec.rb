@@ -2,6 +2,7 @@ require 'swagger_helper'
 
 RSpec.describe 'api/v1/courses', type: :request do
 
+  #GET /courses/{id}/add_ta/{ta_id}
   path '/api/v1/courses/{id}/add_ta/{ta_id}' do
     parameter name: :id, in: :path, type: :integer, required: true
     parameter name: :ta_id, in: :path, type: :integer, required: true
@@ -55,6 +56,7 @@ RSpec.describe 'api/v1/courses', type: :request do
     end
     end
 
+  #GET /courses/{id}/tas
   path '/api/v1/courses/{id}/tas' do
     parameter name: 'id', in: :path, type: :string, description: 'id'
     let(:institution) { Institution.create(name: "NC State") }
@@ -83,6 +85,7 @@ RSpec.describe 'api/v1/courses', type: :request do
     end
   end
 
+  #GET /courses/{id}/remove_ta/{ta_id}
   path '/api/v1/courses/{id}/remove_ta/{ta_id}' do
     parameter name: 'id', in: :path, type: :string, description: 'id'
     parameter name: 'ta_id', in: :path, type: :string, description: 'ta_id'
@@ -128,6 +131,7 @@ RSpec.describe 'api/v1/courses', type: :request do
     end
   end
 
+  #GET /courses/{id}/copy
   path '/api/v1/courses/{id}/copy' do
     parameter name: 'id', in: :path, type: :string, description: 'id'
     let(:institution) { Institution.create(name: "NC State") }
@@ -156,6 +160,7 @@ RSpec.describe 'api/v1/courses', type: :request do
     end
   end
 
+  #GET /courses/
   path '/api/v1/courses' do
     get('list courses') do
       tags 'Courses'
@@ -171,6 +176,7 @@ RSpec.describe 'api/v1/courses', type: :request do
       end
     end
 
+    #POST /courses/
     post('create course') do
       tags 'Courses'
       consumes 'application/json'
@@ -208,6 +214,7 @@ RSpec.describe 'api/v1/courses', type: :request do
     end
   end
 
+  #GET /courses/{id}
   path '/api/v1/courses/{id}' do
     parameter name: 'id', in: :path, type: :string, description: 'id'
     let(:institution) { Institution.create(name: "NC State") }
@@ -235,6 +242,7 @@ RSpec.describe 'api/v1/courses', type: :request do
       end
     end
 
+    #PATCH /courses/{id}
     patch('update course') do
       tags 'Courses'
       consumes 'application/json'
@@ -272,6 +280,7 @@ RSpec.describe 'api/v1/courses', type: :request do
       end
     end
 
+    #PUT /courses/{id}
     put('update course') do
       tags 'Courses'
       consumes 'application/json'
@@ -309,6 +318,7 @@ RSpec.describe 'api/v1/courses', type: :request do
       end
     end
 
+    #DELETE /courses/{id}
     delete('delete course') do
       tags 'Courses'
       let(:institution) { Institution.create(name: "NC State") }
