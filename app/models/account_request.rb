@@ -3,14 +3,13 @@ class AccountRequest < ApplicationRecord
     belongs_to :institution
   
     before_save { self.email = email.downcase }
-    before_save { name }
+    before_save { username }
     
-    validates :name, presence: true, length: { maximum: 50, message: 'is too long' },
-                     format: { with: /\A[a-z]+\z/, message: 'must be in lowercase without numbers or special chars' },
-                     uniqueness: { case_sensitive: false, message: 'Account with this name has already been requested' }
+    validates :username, presence: true, length: { maximum: 50, message: 'is too long' },
+                     format: { with: /\A[a-z]+\z/, message: 'must be in lowercase without numbers or special chars' }
+                     
     validates :email, presence: true, length: { maximum: 255, message: 'is too long' },
-                      format: { with: URI::MailTo::EMAIL_REGEXP, message: 'format is wrong' },
-                      uniqueness: { case_sensitive: false, message: 'Account with this emaill has already been requested' }
+                      format: { with: URI::MailTo::EMAIL_REGEXP, message: 'format is wrong' }
   
     validates :FullName, presence: true, length: { maximum: 100, message: 'is too long' }
 
@@ -18,13 +17,10 @@ class AccountRequest < ApplicationRecord
 
     private
 
-    # Check if user with same name or email already exists in Users table
+    # Check if user with same username or email already exists in Users table
     def validate_user_exists
-        if User.find_by(name: self[:name])
-            self.errors.add(:name, 'User with this name already exists')
-        elsif User.find_by(email: self[:email])
-            self.errors.add(:email, 'User with this email already exists')
+        if User.find_by(name: self[:username])
+            self.errors.add(:username, 'User with this username already exists')
         end
     end
-  end
-  
+end

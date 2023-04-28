@@ -38,7 +38,7 @@ paths:
             schema:
               type: object
               properties:
-                name:
+                username:
                   type: string
                 FullName:
                   type: string
@@ -51,7 +51,7 @@ paths:
                 institution_id:
                   type: integer
               required:
-              - name
+              - username
               - FullName
               - email
               - introduction
