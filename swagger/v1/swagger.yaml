@@ -83,14 +83,36 @@ paths:
   "/api/v1/duties":
     get:
       summary: list duties
+      tags:
+      - Duties
       responses:
         '200':
           description: successful
     post:
       summary: create duty
+      tags:
+      - Duties
+      description: Create a new duty
+      parameters: []
       responses:
         '200':
           description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                max_members_for_duty:
+                  type: integer
+                assignment_id:
+                  type: integer
+              required:
+              - name
+              - max_members_for_duty
+              - assignment_id
   "/api/v1/duties/{id}":
     parameters:
     - name: id
@@ -101,21 +123,41 @@ paths:
         type: string
     get:
       summary: show duty
+      tags:
+      - Duties
       responses:
         '200':
           description: successful
     patch:
       summary: update duty
+      tags:
+      - Duties
+      description: Update a duty
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
         '200':
           description: successful
-    put:
-      summary: update duty
-      responses:
-        '200':
-          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                max_members_for_duty:
+                  type: integer
+                assignment_id:
+                  type: integer
     delete:
       summary: delete duty
+      tags:
+      - Duties
       responses:
         '200':
           description: successful
