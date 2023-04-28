@@ -1,13 +1,5 @@
 class Badge < ApplicationRecord
 
-  def self.get_id_from_name(badge_name)
-    Badge.find_by(name: badge_name)&.id
-  end
-
-  def self.get_image_name_from_name(badge_name)
-    Badge.find_by(name: badge_name)&.image_name
-  end
-
   def self.upload_image(image_file)
     return '' unless image_file
 
