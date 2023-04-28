@@ -1,6 +1,4 @@
 class Participant < ApplicationRecord
-    include Scoring
-    include ParticipantsHelper
 
     # paper trail is used to keep track of the changes that are made to the code (does not affect the codebase in anyway)
     has_paper_trail
