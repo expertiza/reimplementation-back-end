@@ -1,76 +1,51 @@
 class Api::V1::BadgesController < ApplicationController
-
   before_action :set_badge, only: [:show, :edit, :update, :destroy]
   before_action :set_return_to, only: [:new]
 
-  def action_allowed?
-    unless current_user_has_ta_privileges?
-      redirect_to login_path, alert: "You don't have permission to access this page"
-    end
-  end
-
   def index
     @badges = Badge.all
+    render json: { badges: @badges }, status: :ok
   end
 
   def show
-    @badge = Badge.find(params[:id])
-    render json: @badge
-  end
-
-  def new
-    @badge = Badge.new
+    render json: { badge: @badge }, status: :ok
   end
 
   def create
     @badge = Badge.new(badge_params)
 
     if @badge.save
-      redirect_to redirect_to_url, notice: 'Badge was successfully created'
+      render json: { badge: @badge }, status: :created
     else
-      render :new
+      render json: { errors: @badge.errors.full_messages }, status: :unprocessable_entity
     end
   end
 
   def update
     if @badge.update(badge_params)
-      redirect_to api_v1_badge_url(@badge), notice: 'Badge was successfully updated.'
+      render json: { badge: @badge }, status: :ok
     else
-      render :edit
+      render json: { errors: @badge.errors.full_messages }, status: :unprocessable_entity
     end
   end
 
   def destroy
     @badge.destroy
-    redirect_to badges_url, notice: 'Badge was successfully destroyed.'
+    render json: { message: "Badge was successfully destroyed." }, status: :ok
   end
 
-
-
-
-
   private
+
   def set_badge
     @badge = Badge.find(params[:id])
   end
 
-  def badges_url
-    "/api/v1/badges"
-  end
 
   def set_return_to
     session[:return_to] ||= request.referer
   end
 
-  def redirect_to_url
-    session.delete(:return_to) || badges_url
-  end
-
   def badge_params
     params.require(:badge).permit(:name, :description, :image_name, :image_file)
-  end
-
-  def redirect_to_url
-    session.delete(:return_to) || api_v1_badges_url
   end
 end
