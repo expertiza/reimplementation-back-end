@@ -7,14 +7,33 @@ paths:
   "/api/v1/badges":
     get:
       summary: list badges
+      tags:
+      - Badges
       responses:
         '200':
           description: successful
     post:
       summary: create badge
+      tags:
+      - Badges
+      description: Create a new badge
+      parameters: []
       responses:
         '200':
           description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+              required:
+              - name
+              - description
   "/api/v1/badges/{id}":
     parameters:
     - name: id
@@ -25,21 +44,39 @@ paths:
         type: string
     get:
       summary: show badge
+      tags:
+      - Badges
       responses:
         '200':
           description: successful
     patch:
       summary: update badge
+      tags:
+      - Badges
+      description: Update a badge
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
         '200':
           description: successful
-    put:
-      summary: update badge
-      responses:
-        '200':
-          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
     delete:
       summary: delete badge
+      tags:
+      - Badges
       responses:
         '200':
           description: successful
