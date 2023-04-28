@@ -38,8 +38,22 @@ RSpec.describe 'api/v1/courses', type: :request do
         end
         run_test!
       end
+      response(400, 'bad request') do
+        let(:invalid_course_id) { 'invalid_course_id' }
+        let(:invalid_ta_id) { 'invalid_ta_id' }
+        let(:id) { invalid_course_id }
+        let(:ta_id) { invalid_ta_id }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              error: 'TA could not be added to the course'
+            }
+          }
+        end
     end
-  end
+    end
+    end
 
   path '/api/v1/courses/{id}/tas' do
     parameter name: 'id', in: :path, type: :string, description: 'id'
