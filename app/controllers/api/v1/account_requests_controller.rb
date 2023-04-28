@@ -1,13 +1,13 @@
 class Api::V1::AccountRequestsController < ApplicationController
 
   # GET /account_requests/pending
-  def pending_request
+  def pending_requests
     @account_requests = AccountRequest.where(status: 'Under Review').order('created_at DESC')
     render json: @account_requests, status: :ok
   end
 
   # GET /account_requests/processed
-  def processed_request
+  def processed_requests
     @account_requests = AccountRequest.where.not(status: 'Under Review').order('updated_at DESC')
     render json: @account_requests, status: :ok
   end
@@ -16,7 +16,11 @@ class Api::V1::AccountRequestsController < ApplicationController
   def create
     @account_request = AccountRequest.new(account_request_params)
     if @account_request.save
-      render json: @account_request, status: :created
+      response = { account_request: @account_request }
+      if User.find_by(email: @account_request.email)
+        response[:warnings] = 'WARNING: User with this email already exists!'
+      end
+      render json: response, status: :created
     else
       render json: @account_request.errors, status: :unprocessable_entity
     end
@@ -37,6 +41,7 @@ class Api::V1::AccountRequestsController < ApplicationController
   end
 
   # PATCH/PUT /account_requests/:id
+  # This API is used to Approve or Reject an account request. If Approved, a new user is created.
   def update
     @account_request = AccountRequest.find(params[:id])
     @account_request.update(account_request_params)
@@ -64,17 +69,19 @@ class Api::V1::AccountRequestsController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def account_request_params
+    # For new account request creation, status sent is null. So, status is set to 'Under Review' by default
     if params[:account_request][:status].nil?
       params[:account_request][:status] = 'Under Review'
+    # For Approval or Rejection of an existing request, raise error if user sends a status other than Approved or Rejected
     elsif !['Approved', 'Rejected'].include?(params[:account_request][:status])
       raise StandardError, 'Status can only be Approved or Rejected'
     end
-    params.require(:account_request).permit(:name, :FullName, :email, :status, :introduction, :role_id, :institution_id)
+    params.require(:account_request).permit(:username, :FullName, :email, :status, :introduction, :role_id, :institution_id)
   end
 
   # Create a new user if account request is approved
   def create_approved_user
-    @new_user = User.new(name: @account_request.name, role_id: @account_request.role_id, institution_id: @account_request.institution_id, fullname: @account_request.FullName, email: @account_request.email, password: 'password')
+    @new_user = User.new(name: @account_request.username, role_id: @account_request.role_id, institution_id: @account_request.institution_id, fullname: @account_request.FullName, email: @account_request.email, password: 'password')
     if @new_user.save
       render json: { success: 'Account Request Approved and User successfully created.', user: @new_user}, status: :ok
     else
