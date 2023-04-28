@@ -8,6 +8,11 @@ class Api::V1::DutiesController < ApplicationController
     render json: @duties
   end
 
+  def new
+    @duty = Duty.new
+    @id = params[:id]
+  end
+
   def show
     render json: @duty
   end

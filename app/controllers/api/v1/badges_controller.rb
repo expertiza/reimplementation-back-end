@@ -7,6 +7,11 @@ class Api::V1::BadgesController < ApplicationController
     render json: { badges: @badges }, status: :ok
   end
 
+  def new
+    @badge = Badge.new
+    render json: { badge: @badge }, status: :ok
+  end
+
   def show
     render json: { badge: @badge }, status: :ok
   end
