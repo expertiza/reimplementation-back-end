@@ -24,7 +24,7 @@ services:
       MYSQL_PASSWORD: expertiza
       MYSQL_ROOT_PASSWORD: expertiza
     ports:
-      - "3307:3307"
+      - "3306:3306"
     volumes:
       - expertiza-mysql:/var/lib/mysql2/data
 
