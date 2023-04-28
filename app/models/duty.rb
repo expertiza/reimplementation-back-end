@@ -5,9 +5,9 @@ class Duty < ApplicationRecord
                    format: { with: /\A[^`!@#\$%\^&*+_=]+\z/,
                              message: 'Please enter a valid role name' },
                    length: {
-              minimum: 3,
-              message: 'Role name is too short (minimum is 3 characters)'
-            },
+                     minimum: 3,
+                     message: 'Role name is too short (minimum is 3 characters)'
+                   },
                    uniqueness: { case_sensitive: false, scope: :assignment_id,
                                  message: 'The role "%{value}" is already present for this assignment' }
   validates :max_members_for_duty, numericality: { only_integer: true, greater_than_or_equal_to: 1,
