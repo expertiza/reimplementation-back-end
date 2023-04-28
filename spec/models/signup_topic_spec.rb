@@ -34,7 +34,7 @@ RSpec.describe SignupTopic, type: :model do
       end
 
       it "Returns 1 if there is one signed up team for the topic" do
-        expect(SignedUpTeam.create_signed_up_team(topic["id"], team["id"])).to eq(true)
+        expect(SignedUpTeam.create(topic["id"], team["id"])).to be_valid
         expect(topic.count_filled_slots).to eq(1)
       end
     end
@@ -52,12 +52,12 @@ RSpec.describe SignupTopic, type: :model do
     end
 
     it "Returns all the signed up teams for the topic" do
-      expect(SignedUpTeam.create_signed_up_team(topic["id"], team["id"])).to eq(true)
+      expect(SignedUpTeam.create(topic["id"], team["id"])).to be_valid
       expect(topic.all_assigned_teams.collect { |signed_team| signed_team.team_id }).to eq([team.id])
     end
 
     it "Returns JSON object that holds the signup topic data" do
-      expect(SignedUpTeam.create_signed_up_team(topic["id"], team["id"])).to eq(true)
+      expect(SignedUpTeam.create(topic["id"], team["id"])).to be_valid
       expected_json = SignupTopicSerializer.new(topic).serializable_hash.to_json
       expect(topic.as_json).to eq(expected_json)
     end
