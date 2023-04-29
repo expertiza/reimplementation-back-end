@@ -66,7 +66,7 @@ class FeedbackResponseMap < ResponseMap
   # email_command should be initialized to a nested hash which invoking this function {body: {}}
   # @param assignment is the assignment instance for which the email is related to
   def send_email(email_command, assignment)
-    mail = AuthorFeedbackEmailSendingMethod.new(email_command, assignment, reviewed_object_id)
+    mail = AuthorFeedbackEmailSender.new(email_command, assignment, reviewed_object_id)
     mail.accept(AuthorFeedbackEmailVisitor.new)
   end
 end
