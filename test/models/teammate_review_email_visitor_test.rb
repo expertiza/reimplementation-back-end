@@ -13,7 +13,7 @@ class TeammateReviewEmailVisitorTest < ActiveSupport::TestCase
     user = User.new
     user.fullname = "testcase user"
     user.email = "testcaseuser@ncsu.edu"
-    mail = TeammateReviewEmailSendingMethod.new(defn, assignment, 1)
+    mail = TeammateReviewEmailSender.new(defn, assignment, 1)
     AssignmentParticipant.stub :find, participant do
       User.stub :find, user do
         ApplicationMailer.stub :sync_message, MockMail.new do
