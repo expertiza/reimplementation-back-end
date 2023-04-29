@@ -217,6 +217,57 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
       end  
     end
 
+    patch('update questionnaire') do
+      tags 'Questionnaires'
+      consumes 'application/json'
+      produces 'application/json'
+
+      parameter name: :body_params, in: :body, schema: {
+        type: :object,
+        properties: {
+          min_question_score: { type: :integer }
+        }
+      }
+      
+      # patch request on /api/v1/questionnaires/{id} returns 200 response succesful when questionnaire id is present in the database and correct valid params are passed
+      response(200, 'successful') do
+        let(:body_params) do
+          {
+            min_question_score: 1
+          }
+        end
+        run_test! do
+          expect(response.body).to include('"min_question_score":1')
+        end
+      end
+
+      # patch request on /api/v1/questionnaires/{id} returns 404 not found when id is not present in the database which questionnaire needs to be updated
+      response(404, 'not found') do
+        let(:id) { 0 }
+        let(:body_params) do
+          {
+            min_question_score: 0
+          }
+        end
+        run_test! do
+          expect(response.body).to include("Couldn't find Questionnaire")
+        end
+      end
+
+      # patch request on /api/v1/questionnaires/{id} returns 422 response unprocessable entity when correct parameters for the questionnaire to be updated are not passed
+      response(422, 'unprocessable entity') do
+        let(:body_params) do
+          {
+            min_question_score: -1
+          }
+        end
+        schema type: :string
+        run_test! do
+          expect(response.body).to_not include('"min_question_score":-1')
+        end
+      end  
+    end
+
     delete('delete questionnaire') do
       tags 'Questionnaires'
       produces 'application/json'

@@ -71,8 +71,22 @@ class Api::V1::QuestionsController < ApplicationController
     end
   end
 
+  # show_all method returns all questions associated to a questionnaire with id - {:id}
+  # GET on /questions/show_all/questionnaire/:id
+  def show_all
+    begin
+      @questionnaire = Questionnaire.find(params[:id])
+      @questions = @questionnaire.questions
+      render json: @questions, status: :ok
+    rescue ActiveRecord::RecordNotFound
+      render json: $ERROR_INFO.to_s, status: :not_found
+    rescue ActiveRecord::RecordInvalid
+      render json: $ERROR_INFO.to_s, status: :unprocessable_entity
+    end
+  end
+
   # Delete_all method deletes all the questions and returns the status code
-  # DELETE on /questions/delete_all/<questionnaire_id>
+  # DELETE on /questions/delete_all/questionnaire/<questionnaire_id>
   # Endpoint to delete all questions associated to a particular questionnaire.
   def delete_all
     begin

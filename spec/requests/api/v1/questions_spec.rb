@@ -269,6 +269,60 @@ RSpec.describe 'api/v1/questions', type: :request do
 
     end
 
+    patch('update question') do
+      tags 'Questions'
+      consumes 'application/json'
+      produces 'application/json'
+
+      parameter name: :body_params, in: :body, schema: {
+        type: :object,
+        properties: {
+          break_before: { type: :boolean },
+          seq: { type: :integer }
+        }
+      }
+      
+      # patch request on /api/v1/questions/{id} returns 200 succesful response and updates parameters of question with given question id
+      response(200, 'successful') do
+        let(:body_params) do
+          {
+            break_before: true
+          }
+        end
+        run_test! do
+          expect(response.body).to include('"break_before":true')
+        end
+      end
+
+      # patch request on /api/v1/questions/{id} returns 404 not found response when question with given id is not present in the database
+      response(404, 'not found') do
+        let(:id) { 0 }
+        let(:body_params) do
+          {
+            break_before: true
+          }
+        end
+        run_test! do
+          expect(response.body).to include("Couldn't find Question")
+        end
+      end
+
+      # patch request on /api/v1/questions/{id} returns 422 unprocessable entity when incorrect parameters are passed for question with given question id 
+      response(422, 'unprocessable entity') do
+        let(:body_params) do
+          {
+            seq: "Dfsd"
+          }
+        end
+        schema type: :string
+        run_test! do
+          expect(response.body).to_not include('"seq":"Dfsd"')
+        end
+      end  
+
+
+    end
+
 
     delete('delete question') do
 
@@ -293,7 +347,7 @@ RSpec.describe 'api/v1/questions', type: :request do
 
   end
 
-  path '/api/v1/questions/delete_all/{id}' do
+  path '/api/v1/questions/delete_all/questionnaire/{id}' do
     parameter name: 'id', in: :path, type: :integer
 
     # Creation of dummy objects for the test with the help of let statements
@@ -352,14 +406,117 @@ RSpec.describe 'api/v1/questions', type: :request do
       tags 'Questions'
       produces 'application/json'
 
-      # delete method on /api/v1/questions/delete_all/{id} returns 200 succesful response when all questions with given questionnaire id are deleted
+      # delete method on /api/v1/questions/delete_all/questionnaire/{id} returns 200 succesful response when all questions with given questionnaire id are deleted
       response(200, 'successful') do
         run_test! do
           expect(Question.where(questionnaire_id: id).count).to eq(0)
         end
       end
 
-      # delete request on /api/v1/questions/delete_all/{id} returns 404 not found response when questionnaire id is not found in the database
+      # delete request on /api/v1/questions/delete_all/questionnaire/{id} returns 404 not found response when questionnaire id is not found in the database
+      response(404, 'not found') do
+        let(:id) { 0 }
+        run_test! do
+          expect(response.body).to include("Couldn't find Questionnaire")
+        end
+      end
+    end
+  end
+
+  path '/api/v1/questions/show_all/questionnaire/{id}' do
+    parameter name: 'id', in: :path, type: :integer
+
+    # Creation of dummy objects for the test with the help of let statements
+    let(:role) { Role.create(name: 'Instructor', parent_id: nil, default_page_id: nil) }
+    
+    let(:instructor) do 
+      role
+      Instructor.create(name: 'testinstructor', email: 'test@test.com', fullname: 'Test Instructor', password: '123456', role: role) 
+    end
+
+    let(:questionnaire) do
+      instructor
+      Questionnaire.create(
+        name: 'Questionnaire 1',
+        questionnaire_type: 'AuthorFeedbackReview',
+        private: true,
+        min_question_score: 0,
+        max_question_score: 10,
+        instructor_id: instructor.id
+      )
+    end
+
+    let(:question1) do
+      questionnaire
+      Question.create(
+        seq: 1, 
+        txt: "test question 1", 
+        question_type: "multiple_choice", 
+        break_before: true, 
+        weight: 5,
+        questionnaire: questionnaire
+      )
+    end
+
+    let(:questionnaire2) do
+      instructor
+      Questionnaire.create(
+        name: 'Questionnaire 2',
+        questionnaire_type: 'AuthorFeedbackReview',
+        private: true,
+        min_question_score: 0,
+        max_question_score: 10,
+        instructor_id: instructor.id
+      )
+    end
+
+    let(:question2) do
+      questionnaire2
+      Question.create(
+        seq: 2, 
+        txt: "test question 2", 
+        question_type: "multiple_choice", 
+        break_before: true, 
+        weight: 5,
+        questionnaire: questionnaire2
+      )
+    end
+
+    let(:question3) do
+      questionnaire2
+      Question.create(
+        seq: 3, 
+        txt: "test question 3", 
+        question_type: "multiple_choice", 
+        break_before: false, 
+        weight: 10,
+        questionnaire: questionnaire2
+      )
+    end
+
+    
+    let(:id) do
+      questionnaire
+      questionnaire2
+      question1
+      question2
+      question3
+      questionnaire.id 
+    end
+
+    get('show all questions') do
+      tags 'Questions'
+      produces 'application/json'
+
+      # get method on /api/v1/questions/show_all/questionnaire/{id} returns 200 succesful response when all questions with given questionnaire id are shown
+      response(200, 'successful') do
+        run_test! do
+          expect(Question.where(questionnaire_id: id).count).to eq(1)
+          expect(response.body).to_not include('"questionnaire_id: "' + questionnaire2.id.to_s)
+        end
+      end
+
+      # get request on /api/v1/questions/delete_all/questionnaire/{id} returns 404 not found response when questionnaire id is not found in the database
       response(404, 'not found') do
         let(:id) { 0 }
         run_test! do
