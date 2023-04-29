@@ -48,7 +48,7 @@ class TeammateReviewResponseMap < ResponseMap
   # command should be initialized to a nested hash which invoking this function {body: {}}
   # @param assignment is the assignment instance for which the email is related to
   def send_email(command, assignment)
-    mail = TeammateReviewEmailSendingMethod.new(command, assignment, reviewee_id)
+    mail = TeammateReviewEmailSender.new(command, assignment, reviewee_id)
 
     mail.accept(TeammateReviewEmailVisitor.new)
   end

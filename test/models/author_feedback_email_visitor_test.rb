@@ -18,7 +18,7 @@ class AuthorFeedbackEmailVisitorTest < ActiveSupport::TestCase
     user.email = "testuser@ncsu.edu"
 
     defn = {body: {}}
-    mail = AuthorFeedbackEmailSendingMethod.new(defn, assignment, 1)
+    mail = AuthorFeedbackEmailSender.new(defn, assignment, 1)
     Response.stub :find, response do
       ResponseMap.stub :find, response_map do
         AssignmentParticipant.stub :find, participant do
