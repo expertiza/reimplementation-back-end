@@ -41,7 +41,7 @@ class Api::V1::DutiesController < ApplicationController
 
   def destroy
     @duty.destroy
-    head :no_content
+    render json: { message: "Duty was successfully destroyed." }, status: :ok
   end
 
   private
