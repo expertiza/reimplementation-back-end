@@ -90,6 +90,7 @@ describe Response do
       expect(response.maximum_score).to eq(0)
     end
 
+    # Expects to return the participant's assignment for a ResponseMap object
     it 'returns the appropriate assignment for ResponseMap' do
       allow(Participant).to receive(:find).and_return(participant)
       allow(participant).to receive(:assignment).and_return(assignment)
@@ -97,6 +98,7 @@ describe Response do
       expect(response_map.response_assignment).to eq(assignment)
     end
 
+    # Expects to return ResponseMap's assignment
     it 'returns the appropriate assignment for ReviewResponseMap' do
       question2 = double('ScoredQuestion', weight: 2)
       arr_question2 = [question2]
