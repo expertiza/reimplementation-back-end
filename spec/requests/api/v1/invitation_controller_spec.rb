@@ -229,7 +229,7 @@ RSpec.describe 'Invitations API', type: :request do
     end
   end
 
-  path '/api/v1/invitations/{user_id}/{assignment_id}' do
+  path '/api/v1/invitations/user/{user_id}/assignment/{assignment_id}' do
     parameter name: 'user_id', in: :path, type: :integer, description: 'id of user'
     parameter name: 'assignment_id', in: :path, type: :integer, description: 'id of assignment'
     get('Show all invitation for the given user and assignment') do

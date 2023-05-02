@@ -75,7 +75,7 @@ class Api::V1::InvitationsController < ApplicationController
 
   # This method will check if the invited user exists.Additionally, this
   # method will also check if the sender himself is participating in the given assignment
-  # before they can send an invitation.
+  # before they can  send an invitation.
   def check_invited_user_before_invitation; end
 
   # This method will check if the invited user is a participant in the assignment.
