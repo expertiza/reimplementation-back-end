@@ -4,12 +4,12 @@ class Api::V1::InvitationsController < ApplicationController
   # GET /api/v1/invitations
   def index
     @invitations = Invitation.all
-    render json: @invitations
+    render json: @invitations, status: :ok
   end
 
   # POST /api/v1/invitations/
   def create
-    params[:invitation][:reply_status] ||= Invitation::WAITING_STATUS
+    params[:invitation][:reply_status] ||= InvitationValidator::WAITING_STATUS
     @invitation = Invitation.invitation_factory(invite_params)
     if @invitation.save
       @invitation.send_invite_email
@@ -23,20 +23,17 @@ class Api::V1::InvitationsController < ApplicationController
   def show
     @invitation = Invitation.find(params[:id])
     render json: @invitation, status: :ok
-  rescue ActiveRecord::RecordNotFound => e
-    render json: { error: e.message }, status: :not_found
   end
 
   # PATCH /api/v1/invitations/:id
   def update
-    @invite_id = params[:id]
-    @invitation = Invitation.find(@invite_id)
+    @invitation = Invitation.find(params[:id])
     case params[:reply_status]
-    when Invitation::ACCEPT_STATUS
-      @invitation.accept_invitation( nil)
+    when InvitationValidator::ACCEPT_STATUS
+      @invitation.accept_invitation(nil)
       render json: @invitation, status: :ok
-    when Invitation::REJECT_STATUS
-      @invitation.decline_invitation( nil)
+    when InvitationValidator::REJECT_STATUS
+      @invitation.decline_invitation(nil)
       render json: @invitation, status: :ok
     else
       render json: @invitation.errors, status: :unprocessable_entity
