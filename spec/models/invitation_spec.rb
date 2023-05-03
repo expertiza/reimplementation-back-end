@@ -22,13 +22,13 @@ RSpec.describe Invitation, type: :model do
   it 'accepts invitation and change reply_status to Accept(A)' do
     invitation = Invitation.create(to_id: user1.id, from_id: user2.id, assignment_id: assignment.id)
     invitation.accept_invitation(nil)
-    expect(invitation.reply_status).to eq(Invitation::ACCEPT_STATUS)
+    expect(invitation.reply_status).to eq(InvitationValidator::ACCEPT_STATUS)
   end
 
   it 'rejects invitation and change reply_status to Reject(R)' do
     invitation = Invitation.create(to_id: user1.id, from_id: user2.id, assignment_id: assignment.id)
     invitation.decline_invitation(nil)
-    expect(invitation.reply_status).to eq(Invitation::REJECT_STATUS)
+    expect(invitation.reply_status).to eq(InvitationValidator::REJECT_STATUS)
   end
 
   it 'retracts invitation' do
@@ -61,31 +61,31 @@ RSpec.describe Invitation, type: :model do
 
   it 'is valid with valid attributes' do
     invitation = Invitation.new(to_id: user1.id, from_id: user2.id, assignment_id: assignment.id,
-                                reply_status: Invitation::WAITING_STATUS)
+                                reply_status: InvitationValidator::WAITING_STATUS)
     expect(invitation).to be_valid
   end
 
   it 'is invalid with same from and to attribute' do
     invitation = Invitation.new(to_id: user1.id, from_id: user1.id, assignment_id: assignment.id,
-                                reply_status: Invitation::WAITING_STATUS)
+                                reply_status: InvitationValidator::WAITING_STATUS)
     expect(invitation).to_not be_valid
   end
 
   it 'is invalid with invalid to user attribute' do
     invitation = Invitation.new(to_id: 'INVALID', from_id: user2.id, assignment_id: assignment.id,
-                                reply_status: Invitation::WAITING_STATUS)
+                                reply_status: InvitationValidator::WAITING_STATUS)
     expect(invitation).to_not be_valid
   end
 
   it 'is invalid with invalid from user attribute' do
     invitation = Invitation.new(to_id: user1.id, from_id: 'INVALID', assignment_id: assignment.id,
-                                reply_status: Invitation::WAITING_STATUS)
+                                reply_status: InvitationValidator::WAITING_STATUS)
     expect(invitation).to_not be_valid
   end
 
   it 'is invalid with invalid assignment attribute' do
     invitation = Invitation.new(to_id: user1.id, from_id: user2.id, assignment_id: 'INVALID',
-                                reply_status: Invitation::WAITING_STATUS)
+                                reply_status: InvitationValidator::WAITING_STATUS)
     expect(invitation).to_not be_valid
   end
 

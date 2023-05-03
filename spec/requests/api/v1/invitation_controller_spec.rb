@@ -156,7 +156,7 @@ RSpec.describe 'Invitations API', type: :request do
 
       response(200, 'Update successful') do
         let(:id) { invitation.id }
-        let(:invitation_status) { { reply_status: Invitation::ACCEPT_STATUS } }
+        let(:invitation_status) { { reply_status: InvitationValidator::ACCEPT_STATUS } }
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -169,7 +169,7 @@ RSpec.describe 'Invitations API', type: :request do
 
       response(200, 'Update successful') do
         let(:id) { invitation.id }
-        let(:invitation_status) { { reply_status: Invitation::REJECT_STATUS } }
+        let(:invitation_status) { { reply_status: InvitationValidator::REJECT_STATUS } }
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
