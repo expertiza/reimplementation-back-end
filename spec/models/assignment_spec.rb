@@ -20,7 +20,7 @@ RSpec.describe Assignment, type: :model do
       allow(review_response_map).to receive(:response).and_return([response1, response2])
       allow(response1).to receive(:scores).and_return([answer])
       allow(response2).to receive(:scores).and_return([answer2])
-      expect(assignment.get_all_review_comments(1)).to eq(['Answer textAnswer textLGTM', 2, [nil, 'Answer text', 'Answer textLGTM', ''], [nil, 1, 1, 0]])
+      expect(assignment.get_all_review_comments(1)).to eq([[nil, 'Answer text', 'Answer textLGTM', ''], [nil, 1, 1, 0]])
     end
   end
 
@@ -29,7 +29,7 @@ RSpec.describe Assignment, type: :model do
   describe '.volume_of_review_comments' do
     it 'returns volumes of review comments in each round' do
       allow(assignment).to receive(:get_all_review_comments).with(1)
-                                                                  .and_return(['Answer textAnswer textLGTM', 2, [nil, 'Answer text', 'Answer textLGTM', ''], [nil, 1, 1, 0]])
+                                                                  .and_return([[nil, 'Answer text', 'Answer textLGTM', ''], [nil, 1, 1, 0]])
       expect(assignment.volume_of_review_comments(1)).to eq([1, 2, 2, 0])
     end
   end
