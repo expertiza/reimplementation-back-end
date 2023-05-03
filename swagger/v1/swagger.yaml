@@ -6,7 +6,7 @@ info:
 paths:
   "/api/v1/account_requests/pending":
     get:
-      summary: List Pending Account Requests
+      summary: List all Pending Account Requests
       tags:
       - Account Requests
       responses:
@@ -14,7 +14,7 @@ paths:
           description: List Pending Account Requests
   "/api/v1/account_requests/processed":
     get:
-      summary: List Processed Account Requests
+      summary: List all Processed Account Requests
       tags:
       - Account Requests
       responses:
@@ -28,10 +28,11 @@ paths:
       parameters: []
       responses:
         '201':
-          description: Created an Account Request with valid parameters
-        '422':
           description: Create an Account Request whose email already exists in Users
             table
+        '422':
+          description: Attempt to Create an Account Request whose username already
+            exists in Users table
       requestBody:
         content:
           application/json:
@@ -40,7 +41,7 @@ paths:
               properties:
                 username:
                   type: string
-                FullName:
+                full_name:
                   type: string
                 email:
                   type: string
@@ -52,7 +53,7 @@ paths:
                   type: integer
               required:
               - username
-              - FullName
+              - full_name
               - email
               - introduction
               - role_id
@@ -66,7 +67,7 @@ paths:
       schema:
         type: integer
     get:
-      summary: Show Account Request
+      summary: Show a specific Account Request by id
       tags:
       - Account Requests
       responses:
@@ -81,7 +82,7 @@ paths:
         '200':
           description: Reject account request
         '422':
-          description: Invalid status in Patch
+          description: Attempt to send Invalid status in Patch
       requestBody:
         content:
           application/json:
@@ -102,7 +103,7 @@ paths:
         '200':
           description: Reject account request
         '422':
-          description: Invalid status in Patch
+          description: Attempt to send Invalid status in PUT
       requestBody:
         content:
           application/json:

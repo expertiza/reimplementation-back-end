@@ -53,20 +53,20 @@ RSpec.describe 'Account Requests API', type: :request do
         type: :object,
         properties: {
           username: { type: :string },
-          FullName: { type: :string },
+          full_name: { type: :string },
           email: { type: :string },
           introduction: { type: :string },
           role_id: { type: :integer },
           institution_id: { type: :integer }
         },
-        required: [ 'username', 'FullName', 'email', 'introduction', 'role_id', 'institution_id' ]
+        required: [ 'username', 'full_name', 'email', 'introduction', 'role_id', 'institution_id' ]
       }
 
       # Attempt to Create an Account Request with valid parameters
       response(201, 'Attempt to Create an Account Request with valid parameters') do
         let(:role) { Role.create(name: 'Student') }
         let(:institution) { Institution.create(name: 'North Carolina State University') }
-        let(:account_request) { { username: 'useracc', FullName: 'User Account 1', email: 'useracc1@gmail.com', introduction: 'User 1 Intro', role_id: role.id, institution_id: institution.id } }
+        let(:account_request) { { username: 'useracc', full_name: 'User Account 1', email: 'useracc1@gmail.com', introduction: 'User 1 Intro', role_id: role.id, institution_id: institution.id } }
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -96,7 +96,7 @@ RSpec.describe 'Account Requests API', type: :request do
 
       # Attempt to Create an Account Request with invalid parameters
       response(422, 'Attempt to Create an Account Request with invalid parameters') do
-        let(:account_request) { { username: 'useracc', FullName: 'User Account 1', email: 'useracc1', introduction: 'User 1 Intro', role_id: 0, institution_id: 1 } }
+        let(:account_request) { { username: 'useracc', full_name: 'User Account 1', email: 'useracc1', introduction: 'User 1 Intro', role_id: 0, institution_id: 1 } }
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -113,7 +113,7 @@ RSpec.describe 'Account Requests API', type: :request do
         let(:role) { Role.create(name: 'Student') }
         let(:institution) { Institution.create(name: 'North Carolina State University') }
         let(:user) { User.create(name: 'useracc', fullname: 'User One', email: 'userone@gmail.com', role_id: role.id, password: 'password') }
-        let(:account_request) { { username: user.name, FullName: 'User Account 1', email: 'useracc1@gmail.com', introduction: 'User 1 Intro', role_id: role.id, institution_id: institution.id } }
+        let(:account_request) { { username: user.name, full_name: 'User Account 1', email: 'useracc1@gmail.com', introduction: 'User 1 Intro', role_id: role.id, institution_id: institution.id } }
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -130,7 +130,7 @@ RSpec.describe 'Account Requests API', type: :request do
         let(:role) { Role.create(name: 'Student') }
         let(:institution) { Institution.create(name: 'North Carolina State University') }
         let(:user) { User.create(name: 'userone', fullname: 'User One', email: 'userone@gmail.com', role_id: role.id, password: 'password') }
-        let(:account_request) { { username: 'useracc', FullName: 'User Account 1', email: user.email, introduction: 'User 1 Intro', role_id: role.id, institution_id: institution.id } }
+        let(:account_request) { { username: 'useracc', full_name: 'User Account 1', email: user.email, introduction: 'User 1 Intro', role_id: role.id, institution_id: institution.id } }
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -148,7 +148,7 @@ RSpec.describe 'Account Requests API', type: :request do
 
     let(:role) { Role.create(name: 'Student') }
     let(:institution) { Institution.create(name: 'North Carolina State University') }
-    let(:account_request) { AccountRequest.create(username: 'useracc', FullName: 'User Account 1', email: 'useracc1@gmail.com', introduction: 'User 1 Intro', role_id: role.id, institution_id: institution.id) }
+    let(:account_request) { AccountRequest.create(username: 'useracc', full_name: 'User Account 1', email: 'useracc1@gmail.com', introduction: 'User 1 Intro', role_id: role.id, institution_id: institution.id) }
     let(:id) { account_request.id }
 
     get('Show a specific Account Request by id') do
