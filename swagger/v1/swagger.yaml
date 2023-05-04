@@ -88,6 +88,30 @@ paths:
               properties:
                 min_question_score:
                   type: integer
+    patch:
+      summary: update questionnaire
+      tags:
+      - Questionnaires
+      parameters: []
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+        '422':
+          description: unprocessable entity
+          content:
+            application/json:
+              schema:
+                type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                min_question_score:
+                  type: integer
     delete:
       summary: delete questionnaire
       tags:
@@ -213,6 +237,32 @@ paths:
                   type: boolean
                 seq:
                   type: integer
+    patch:
+      summary: update question
+      tags:
+      - Questions
+      parameters: []
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+        '422':
+          description: unprocessable entity
+          content:
+            application/json:
+              schema:
+                type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                break_before:
+                  type: boolean
+                seq:
+                  type: integer
     delete:
       summary: delete question
       tags:
@@ -222,7 +272,7 @@ paths:
           description: successful
         '404':
           description: not found
-  "/api/v1/questions/delete_all/{id}":
+  "/api/v1/questions/delete_all/questionnaire/{id}":
     parameters:
     - name: id
       in: path
@@ -231,6 +281,22 @@ paths:
         type: integer
     delete:
       summary: delete all questions
+      tags:
+      - Questions
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+  "/api/v1/questions/show_all/questionnaire/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: show all questions
       tags:
       - Questions
       responses:

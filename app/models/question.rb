@@ -6,14 +6,15 @@ class Question < ApplicationRecord
   validates :question_type, presence: true # user must define type for a question
   validates :break_before, presence: true
 
+  
+
   def as_json(options = {})
       super(options.merge({
-                            only: %i[questionnaire_id txt weight seq question_type size alternatives break_before min_label max_label created_at updated_at],
+                            only: %i[txt weight seq question_type size alternatives break_before min_label max_label created_at updated_at],
                             include: {
-                              questionnaire: { only: %i[name private min_question_score max_question_score instructor_id created_at updated_at questionnaire_type] }
+                              questionnaire: { only: %i[name id] }
                             }
                           })).tap do |hash|
-        hash['questionnaire'] ||= { id: nil, name: nil }
       end
   end
 end

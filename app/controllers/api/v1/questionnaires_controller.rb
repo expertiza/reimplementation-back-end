@@ -40,33 +40,26 @@ class Api::V1::QuestionnairesController < ApplicationController
       @questionnaire.delete
     rescue ActiveRecord::RecordNotFound
       render json: $ERROR_INFO.to_s, status: :not_found and return
-    rescue ActiveRecord::RecordInvalid
-      render json: $ERROR_INFO.to_s, status: :unprocessable_entity
     end
   end
 
   # Update method updates the questionnaire object with id - {:id} and returns the updated questionnaire JSON object
   # PUT on /questionnaires/:id
+
   def update
-    # Save questionnaire information
-    begin
-      @questionnaire = Questionnaire.find(params[:id])
-      @questionnaire.update(questionnaire_params)
-      @questionnaire.save!
-      render json: @questionnaire, status: :ok and return
-    rescue ActiveRecord::RecordNotFound
-      render json: $ERROR_INFO.to_s, status: :not_found and return
-    rescue ActiveRecord::RecordInvalid
-      render json: $ERROR_INFO.to_s, status: :unprocessable_entity
+    @questionnaire = Questionnaire.find(params[:id])
+    if @questionnaire.update(questionnaire_params)
+      render json: @questionnaire, status: :ok
+    else
+      render json: @questionnaire.errors.full_messages, status: :unprocessable_entity
     end
   end
-
   # Copy method creates a copy of questionnaire with id - {:id} and return its JSON object
   # POST on /questionnaires/copy/:id
   def copy
     begin
       @questionnaire = Questionnaire.copy_questionnaire_details(params)
-      render json: "Copy of the questionnaire has been created successfully.", status: :ok and return
+      render json: @questionnaire, status: :ok and return
     rescue ActiveRecord::RecordNotFound
       render json: $ERROR_INFO.to_s, status: :not_found and return
     rescue ActiveRecord::RecordInvalid
@@ -76,15 +69,16 @@ class Api::V1::QuestionnairesController < ApplicationController
 
   # Toggle access method toggles the private variable of the questionnaire with id - {:id} and return its JSON object
   # GET on /questionnaires/toggle_access/:id
+
   def toggle_access
     begin
       @questionnaire = Questionnaire.find(params[:id])
-      @questionnaire.private = !@questionnaire.private
-      @questionnaire.save!
-      @access = @questionnaire.private == true ? 'private' : 'public'
-      render json: "The questionnaire \"#{@questionnaire.name}\" has been successfully made #{@access}. ", status: :ok and return
+      @questionnaire.toggle!(:private)
+      @access = @questionnaire.private ? 'private' : 'public'
+      render json: "The questionnaire \"#{@questionnaire.name}\" has been successfully made #{@access}. ",
+        status: :ok
     rescue ActiveRecord::RecordNotFound
-      render json: $ERROR_INFO.to_s, status: :not_found and return
+      render json: $ERROR_INFO.to_s, status: :not_found
     rescue ActiveRecord::RecordInvalid
       render json: $ERROR_INFO.to_s, status: :unprocessable_entity
     end

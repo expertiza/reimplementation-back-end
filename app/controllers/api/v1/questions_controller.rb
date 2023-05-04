@@ -57,6 +57,7 @@ class Api::V1::QuestionsController < ApplicationController
       render json: $ERROR_INFO.to_s, status: :unprocessable_entity
     end
   end
+  
 
   # Destroy method deletes the question with id - {:id}
   # DELETE on /questions/:id
@@ -66,8 +67,6 @@ class Api::V1::QuestionsController < ApplicationController
       @question.destroy
     rescue ActiveRecord::RecordNotFound
       render json: $ERROR_INFO.to_s, status: :not_found and return
-    rescue ActiveRecord::RecordInvalid
-      render json: $ERROR_INFO.to_s, status: :unprocessable_entity
     end
   end
 
@@ -80,28 +79,24 @@ class Api::V1::QuestionsController < ApplicationController
       render json: @questions, status: :ok
     rescue ActiveRecord::RecordNotFound
       render json: $ERROR_INFO.to_s, status: :not_found
-    rescue ActiveRecord::RecordInvalid
-      render json: $ERROR_INFO.to_s, status: :unprocessable_entity
     end
   end
 
   # Delete_all method deletes all the questions and returns the status code
   # DELETE on /questions/delete_all/questionnaire/<questionnaire_id>
   # Endpoint to delete all questions associated to a particular questionnaire.
+  
   def delete_all
     begin
-      @questionnaire = Questionnaire.find(params[:id])
-      if @questionnaire.questions.size > 0 
-        @questionnaire.questions.destroy_all
-        msg = "All questions for Questionnaire ID:" + params[:id].to_s + " has been successfully deleted!"
-        render json: msg, status: :ok
-      else
-        render json: "No questions associated to Questionnaire ID:" + params[:id].to_s, status: :unprocessable_entity and return
+      questionnaire = Questionnaire.find(params[:id])
+      if questionnaire.questions.empty?
+        render json: "No questions associated with questionnaire ID #{params[:id]}.", status: :unprocessable_entity and return
       end
+  
+      questionnaire.questions.destroy_all
+      render json: "All questions for questionnaire ID #{params[:id]} have been deleted.", status: :ok
     rescue ActiveRecord::RecordNotFound
-      render json: $ERROR_INFO.to_s, status: :not_found and return
-    rescue ActiveRecord::RecordInvalid
-      render json: $ERROR_INFO.to_s, status: :unprocessable_entity
+      render json: "Questionnaire ID #{params[:id]} not found.", status: :not_found and return
     end
   end
 
@@ -110,13 +105,13 @@ class Api::V1::QuestionsController < ApplicationController
   def update
     begin
       @question = Question.find(params[:id])
-      @question.update(question_params)
-      @question.save!
-      render json: @question, status: :ok and return
+      if @question.update(question_params)
+        render json: @question, status: :ok and return
+      else
+        render json: "Failed to update the question.", status: :unprocessable_entity and return
+      end
     rescue ActiveRecord::RecordNotFound
       render json: $ERROR_INFO.to_s, status: :not_found and return
-    rescue ActiveRecord::RecordInvalid
-      render json: $ERROR_INFO.to_s, status: :unprocessable_entity
     end
   end
 
