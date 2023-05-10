@@ -64,10 +64,12 @@ RSpec.describe 'Roles API', type: :request do
   path '/api/v1/roles/{id}' do
     parameter name: 'id', in: :path, type: :integer, description: 'id of the role'
 
+    let(:role) { Role.create(name: 'Test Role') }
+    let(:id) { role.id }
+
     get('show role') do
       tags 'Roles'
       response(200, 'successful') do
-        let(:id) { '123' }
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -94,7 +96,6 @@ RSpec.describe 'Roles API', type: :request do
       }
       
       response(200, 'successful') do
-        let(:id) { '123' }
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -108,6 +109,7 @@ RSpec.describe 'Roles API', type: :request do
 
       response(422, 'invalid request') do
         let(:role) { { name: '' } }
+        let(:id) { Role.create(name: 'Test Role').id }
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -134,7 +136,6 @@ RSpec.describe 'Roles API', type: :request do
       }
 
       response(200, 'successful') do
-        let(:id) { '123' }
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -148,6 +149,7 @@ RSpec.describe 'Roles API', type: :request do
 
       response(422, 'invalid request') do
         let(:role) { { name: '' } }
+        let(:id) { Role.create(name: 'Test Role').id }
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -162,13 +164,12 @@ RSpec.describe 'Roles API', type: :request do
 
     delete('delete role') do
       tags 'Roles'
-      response(200, 'successful') do
-        let(:id) { '123' }
+      response(204, 'successful') do
 
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
+              example: ''
             }
           }
         end
