@@ -24,6 +24,13 @@ Tutorial: [Docker Compose as a remote interpreter](https://www.jetbrains.com/hel
 " target="_blank"><img src="http://img.youtube.com/vi/BHniRaZ0_JE/maxresdefault.jpg" 
 alt="IMAGE ALT TEXT HERE" width="560" height="315" border="10" /></a>
 
+### Project Tutorial
+<a href="https://www.youtube.com/watch?v=22wExrVX15o&ab_channel=AmeyaVaichalkar" target="_blank"><img src="https://img.youtube.com/vi/22wExrVX15o/0.jpg" 
+alt="IMAGE ALT TEXT HERE" width="560" height="315" border="10" /></a>
+
 ### Database Credentials
 - username: root
 - password: expertiza 
+
+### Documentation
+<a href="https://expertiza.csc.ncsu.edu/index.php/CSC/ECE_517/Spring_2023/E2332_Reimplement_Courses_(Refactor_course.rb)">Wiki Docs</a>
