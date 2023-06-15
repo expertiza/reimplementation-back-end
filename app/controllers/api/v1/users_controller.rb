@@ -58,7 +58,11 @@ class Api::V1::UsersController < ApplicationController
   # Get all users that are managed by a user
   def managed_users
     @parent = User.find(params[:id])
-    @users = @parent.manageable_users
+    if @parent.student?
+      render json: { error: 'Students do not manage any users' }, status: :unprocessable_entity
+      return
+    end
+    @users = @parent.managed_users
     render json: @users, status: :ok
   rescue ActiveRecord::RecordNotFound => e
     render json: { error: e.message }, status: :not_found
