@@ -31,9 +31,7 @@ class Role < ApplicationRecord
 
   # returns an array of ids of all roles that are below the current role
   def subordinate_roles
-    return [] unless parent_id.present?
-
-    role = Role.find_by(id: parent_id)
+    role = Role.find_by(parent_id: id)
     return [] unless role
 
     [role.id] + role.subordinate_roles
