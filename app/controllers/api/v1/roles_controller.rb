@@ -9,7 +9,7 @@ class Api::V1::RolesController < ApplicationController
   # GET /roles/:id
   def show
     @role = Role.find(params[:id])
-    render json: @role.slice(:name, :parent_id)
+    render json: @role.slice(:id, :name, :parent_id)
   rescue ActiveRecord::RecordNotFound => e
     render json: { error: e.message }, status: :not_found
   end
@@ -18,7 +18,7 @@ class Api::V1::RolesController < ApplicationController
   def create
     @role = Role.new(role_params)
     if @role.save
-      render json: @role.slice(:name, :parent_id), status: :created
+      render json: @role.slice(:id, :name, :parent_id), status: :created
     else
       render json: @role.errors, status: :unprocessable_entity
     end
@@ -44,7 +44,7 @@ class Api::V1::RolesController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def role_params
-    params.require(:role).permit(:name, :parent_id, :default_page_id)
+    params.require(:role).permit(:id, :name, :parent_id, :default_page_id)
   end
 
   def role_not_found

@@ -45,7 +45,7 @@ class Api::V1::InstitutionsController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def institution_params
-    params.require(:institution).permit(:name)
+    params.require(:institution).permit(:id, :name)
   end
 
   def institution_not_found
