@@ -4,6 +4,317 @@ info:
   title: EXPERTIZA API V1
   version: v1
 paths:
+  "/api/v1/account_requests/pending":
+    get:
+      summary: List all Pending Account Requests
+      tags:
+      - Account Requests
+      responses:
+        '200':
+          description: List Pending Account Requests
+  "/api/v1/account_requests/processed":
+    get:
+      summary: List all Processed Account Requests
+      tags:
+      - Account Requests
+      responses:
+        '200':
+          description: List Processed Account Requests
+  "/api/v1/account_requests":
+    post:
+      summary: Create Account Request
+      tags:
+      - Account Requests
+      parameters: []
+      responses:
+        '201':
+          description: Create an Account Request whose email already exists in Users
+            table
+        '422':
+          description: Attempt to Create an Account Request whose username already
+            exists in Users table
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                full_name:
+                  type: string
+                email:
+                  type: string
+                introduction:
+                  type: string
+                role_id:
+                  type: integer
+                institution_id:
+                  type: integer
+              required:
+              - username
+              - full_name
+              - email
+              - introduction
+              - role_id
+              - institution_id
+  "/api/v1/account_requests/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id of the Account Request
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Show a specific Account Request by id
+      tags:
+      - Account Requests
+      responses:
+        '200':
+          description: Retrieve a specific account request with valid id
+    patch:
+      summary: Update Account Request
+      tags:
+      - Account Requests
+      parameters: []
+      responses:
+        '200':
+          description: Reject account request
+        '422':
+          description: Attempt to send Invalid status in Patch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: Approved
+              required:
+              - status
+    put:
+      summary: Update Account Request
+      tags:
+      - Account Requests
+      parameters: []
+      responses:
+        '200':
+          description: Reject account request
+        '422':
+          description: Attempt to send Invalid status in PUT
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: Approved
+              required:
+              - status
+    delete:
+      summary: Delete Account Request
+      tags:
+      - Account Requests
+      responses:
+        '204':
+          description: successful
+  "/api/v1/institutions":
+    get:
+      summary: list institutions
+      tags:
+      - Institutions
+      responses:
+        '200':
+          description: successful
+    post:
+      summary: create institution
+      tags:
+      - Institutions
+      parameters: []
+      responses:
+        '201':
+          description: Created a institution
+        '422':
+          description: invalid request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+              - name
+  "/api/v1/institutions/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id of the institution
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: show institution
+      tags:
+      - Institutions
+      responses:
+        '200':
+          description: successful
+    patch:
+      summary: update institution
+      tags:
+      - Institutions
+      parameters: []
+      responses:
+        '200':
+          description: successful
+        '422':
+          description: invalid request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+              - name
+    put:
+      summary: update institution
+      tags:
+      - Institutions
+      parameters: []
+      responses:
+        '200':
+          description: successful
+        '422':
+          description: invalid request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+              - name
+    delete:
+      summary: delete institution
+      tags:
+      - Institutions
+      responses:
+        '200':
+          description: successful
+  "/api/v1/roles":
+    get:
+      summary: list roles
+      tags:
+      - Roles
+      responses:
+        '200':
+          description: successful
+    post:
+      summary: create role
+      tags:
+      - Roles
+      parameters: []
+      responses:
+        '201':
+          description: Created a role
+        '422':
+          description: invalid request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                parent_id:
+                  type: integer
+                default_page_id:
+                  type: integer
+              required:
+              - name
+  "/api/v1/roles/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id of the role
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: show role
+      tags:
+      - Roles
+      responses:
+        '200':
+          description: successful
+    patch:
+      summary: update role
+      tags:
+      - Roles
+      parameters: []
+      responses:
+        '200':
+          description: successful
+        '422':
+          description: invalid request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                parent_id:
+                  type: integer
+                default_page_id:
+                  type: integer
+              required:
+              - name
+    put:
+      summary: update role
+      tags:
+      - Roles
+      parameters: []
+      responses:
+        '200':
+          description: successful
+        '422':
+          description: invalid request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                parent_id:
+                  type: integer
+                default_page_id:
+                  type: integer
+              required:
+              - name
+    delete:
+      summary: delete role
+      tags:
+      - Roles
+      responses:
+        '204':
+          description: successful
+          
   "/api/v1/invitations":
     get:
       summary: list invitations
@@ -110,108 +421,6 @@ paths:
           description: Show all invitations for the user for an assignment
         '404':
           description: Not found
-  "/api/v1/roles":
-    get:
-      summary: list roles
-      tags:
-      - Roles
-      responses:
-        '200':
-          description: successful
-    post:
-      summary: create role
-      tags:
-      - Roles
-      parameters: []
-      responses:
-        '201':
-          description: Created a role
-        '422':
-          description: invalid request
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                parent_id:
-                  type: integer
-                default_page_id:
-                  type: integer
-              required:
-              - name
-  "/api/v1/roles/{id}":
-    parameters:
-    - name: id
-      in: path
-      description: id of the role
-      required: true
-      schema:
-        type: integer
-    get:
-      summary: show role
-      tags:
-      - Roles
-      responses:
-        '200':
-          description: successful
-    patch:
-      summary: update role
-      tags:
-      - Roles
-      parameters: []
-      responses:
-        '200':
-          description: successful
-        '422':
-          description: invalid request
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                parent_id:
-                  type: integer
-                default_page_id:
-                  type: integer
-              required:
-              - name
-    put:
-      summary: update role
-      tags:
-      - Roles
-      parameters: []
-      responses:
-        '200':
-          description: successful
-        '422':
-          description: invalid request
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                parent_id:
-                  type: integer
-                default_page_id:
-                  type: integer
-              required:
-              - name
-    delete:
-      summary: delete role
-      tags:
-      - Roles
-      responses:
-        '200':
-          description: successful
 servers:
 - url: http://{defaultHost}
   variables:
