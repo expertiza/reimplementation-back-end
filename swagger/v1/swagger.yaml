@@ -4,124 +4,6 @@ info:
   title: EXPERTIZA API V1
   version: v1
 paths:
-  "/api/v1/account_requests/pending":
-    get:
-      summary: List all Pending Account Requests
-      tags:
-      - Account Requests
-      responses:
-        '200':
-          description: List Pending Account Requests
-  "/api/v1/account_requests/processed":
-    get:
-      summary: List all Processed Account Requests
-      tags:
-      - Account Requests
-      responses:
-        '200':
-          description: List Processed Account Requests
-  "/api/v1/account_requests":
-    post:
-      summary: Create Account Request
-      tags:
-      - Account Requests
-      parameters: []
-      responses:
-        '201':
-          description: Create an Account Request whose email already exists in Users
-            table
-        '422':
-          description: Attempt to Create an Account Request whose username already
-            exists in Users table
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                full_name:
-                  type: string
-                email:
-                  type: string
-                introduction:
-                  type: string
-                role_id:
-                  type: integer
-                institution_id:
-                  type: integer
-              required:
-              - username
-              - full_name
-              - email
-              - introduction
-              - role_id
-              - institution_id
-  "/api/v1/account_requests/{id}":
-    parameters:
-    - name: id
-      in: path
-      description: id of the Account Request
-      required: true
-      schema:
-        type: integer
-    get:
-      summary: Show a specific Account Request by id
-      tags:
-      - Account Requests
-      responses:
-        '200':
-          description: Retrieve a specific account request with valid id
-    patch:
-      summary: Update Account Request
-      tags:
-      - Account Requests
-      parameters: []
-      responses:
-        '200':
-          description: Reject account request
-        '422':
-          description: Attempt to send Invalid status in Patch
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                status:
-                  type: string
-                  example: Approved
-              required:
-              - status
-    put:
-      summary: Update Account Request
-      tags:
-      - Account Requests
-      parameters: []
-      responses:
-        '200':
-          description: Reject account request
-        '422':
-          description: Attempt to send Invalid status in PUT
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                status:
-                  type: string
-                  example: Approved
-              required:
-              - status
-    delete:
-      summary: Delete Account Request
-      tags:
-      - Account Requests
-      responses:
-        '204':
-          description: successful
   "/api/v1/institutions":
     get:
       summary: list institutions
@@ -314,20 +196,138 @@ paths:
       responses:
         '204':
           description: successful
+  "/api/v1/account_requests/pending":
+    get:
+      summary: List all Pending Account Requests
+      tags:
+        - Account Requests
+      responses:
+        '200':
+          description: List Pending Account Requests
+  "/api/v1/account_requests/processed":
+    get:
+      summary: List all Processed Account Requests
+      tags:
+        - Account Requests
+      responses:
+        '200':
+          description: List Processed Account Requests
+  "/api/v1/account_requests":
+    post:
+      summary: Create Account Request
+      tags:
+        - Account Requests
+      parameters: [ ]
+      responses:
+        '201':
+          description: Create an Account Request whose email already exists in Users
+            table
+        '422':
+          description: Attempt to Create an Account Request whose username already
+            exists in Users table
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                full_name:
+                  type: string
+                email:
+                  type: string
+                introduction:
+                  type: string
+                role_id:
+                  type: integer
+                institution_id:
+                  type: integer
+              required:
+                - username
+                - full_name
+                - email
+                - introduction
+                - role_id
+                - institution_id
+  "/api/v1/account_requests/{id}":
+    parameters:
+      - name: id
+        in: path
+        description: id of the Account Request
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Show a specific Account Request by id
+      tags:
+        - Account Requests
+      responses:
+        '200':
+          description: Retrieve a specific account request with valid id
+    patch:
+      summary: Update Account Request
+      tags:
+        - Account Requests
+      parameters: [ ]
+      responses:
+        '200':
+          description: Reject account request
+        '422':
+          description: Attempt to send Invalid status in Patch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: Approved
+              required:
+                - status
+    put:
+      summary: Update Account Request
+      tags:
+        - Account Requests
+      parameters: [ ]
+      responses:
+        '200':
+          description: Reject account request
+        '422':
+          description: Attempt to send Invalid status in PUT
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: Approved
+              required:
+                - status
+    delete:
+      summary: Delete Account Request
+      tags:
+        - Account Requests
+      responses:
+        '204':
+          description: successful
           
   "/api/v1/invitations":
     get:
       summary: list invitations
       tags:
-      - Invitations
+        - Invitations
       responses:
         '200':
           description: Success
     post:
       summary: create invitation
       tags:
-      - Invitations
-      parameters: []
+        - Invitations
+      parameters: [ ]
       responses:
         '201':
           description: Create successful
@@ -348,21 +348,21 @@ paths:
                 reply_status:
                   type: string
               required:
-              - assignment_id
-              - from_id
-              - to_id
+                - assignment_id
+                - from_id
+                - to_id
   "/api/v1/invitations/{id}":
     parameters:
-    - name: id
-      in: path
-      description: id of the invitation
-      required: true
-      schema:
-        type: integer
+      - name: id
+        in: path
+        description: id of the invitation
+        required: true
+        schema:
+          type: integer
     get:
       summary: show invitation
       tags:
-      - Invitations
+        - Invitations
       responses:
         '200':
           description: Show invitation
@@ -371,8 +371,8 @@ paths:
     patch:
       summary: update invitation
       tags:
-      - Invitations
-      parameters: []
+        - Invitations
+      parameters: [ ]
       responses:
         '200':
           description: Update successful
@@ -388,11 +388,11 @@ paths:
               properties:
                 reply_status:
                   type: string
-              required: []
+              required: [ ]
     delete:
       summary: Delete invitation
       tags:
-      - Invitations
+        - Invitations
       responses:
         '204':
           description: Delete successful
@@ -400,27 +400,336 @@ paths:
           description: Not found
   "/api/v1/invitations/{user_id}/{assignment_id}":
     parameters:
-    - name: user_id
-      in: path
-      description: id of user
-      required: true
-      schema:
-        type: integer
-    - name: assignment_id
-      in: path
-      description: id of assignment
-      required: true
-      schema:
-        type: integer
+      - name: user_id
+        in: path
+        description: id of user
+        required: true
+        schema:
+          type: integer
+      - name: assignment_id
+        in: path
+        description: id of assignment
+        required: true
+        schema:
+          type: integer
     get:
       summary: Show all invitation for the given user and assignment
       tags:
-      - Invitations
+        - Invitations
       responses:
         '200':
           description: Show all invitations for the user for an assignment
         '404':
           description: Not found
+
+  "/api/v1/questionnaires":
+    get:
+      summary: list questionnaires
+      tags:
+        - Questionnaires
+      responses:
+        '200':
+          description: successful
+    post:
+      summary: create questionnaire
+      tags:
+        - Questionnaires
+      parameters: []
+      responses:
+        '201':
+          description: created
+        '422':
+          description: unprocessable entity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                questionnaire_type:
+                  type: string
+                private:
+                  type: boolean
+                min_question_score:
+                  type: integer
+                max_question_score:
+                  type: integer
+                instructor_id:
+                  type: integer
+              required:
+                - id
+                - name
+                - questionnaire_type
+                - private
+                - min_question_score
+                - max_question_score
+                - instructor_id
+  "/api/v1/questionnaires/{id}":
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: show questionnaire
+      tags:
+        - Questionnaires
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not_found
+    put:
+      summary: update questionnaire
+      tags:
+        - Questionnaires
+      parameters: []
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+        '422':
+          description: unprocessable entity
+          content:
+            application/json:
+              schema:
+                type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                min_question_score:
+                  type: integer
+    patch:
+      summary: update questionnaire
+      tags:
+        - Questionnaires
+      parameters: []
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+        '422':
+          description: unprocessable entity
+          content:
+            application/json:
+              schema:
+                type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                min_question_score:
+                  type: integer
+    delete:
+      summary: delete questionnaire
+      tags:
+        - Questionnaires
+      responses:
+        '204':
+          description: successful
+        '404':
+          description: not found
+  "/api/v1/questionnaires/toggle_access/{id}":
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: toggle access
+      tags:
+        - Questionnaires
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+  "/api/v1/questionnaires/copy/{id}":
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      summary: copy questionnaire
+      tags:
+        - Questionnaires
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+  "/api/v1/questions":
+    get:
+      summary: list questions
+      tags:
+        - Questions
+      responses:
+        '200':
+          description: successful
+    post:
+      summary: create question
+      tags:
+        - Questions
+      parameters: []
+      responses:
+        '201':
+          description: created
+        '404':
+          description: questionnaire id not found
+        '422':
+          description: unprocessable entity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                weight:
+                  type: integer
+                questionnaire_id:
+                  type: integer
+                break_before:
+                  type: boolean
+                txt:
+                  type: string
+                question_type:
+                  type: string
+              required:
+                - weight
+                - questionnaire_id
+                - break_before
+                - txt
+                - question_type
+  "/api/v1/questions/{id}":
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: show question
+      tags:
+        - Questions
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not_found
+    put:
+      summary: update question
+      tags:
+        - Questions
+      parameters: []
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+        '422':
+          description: unprocessable entity
+          content:
+            application/json:
+              schema:
+                type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                break_before:
+                  type: boolean
+                seq:
+                  type: integer
+    patch:
+      summary: update question
+      tags:
+        - Questions
+      parameters: []
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+        '422':
+          description: unprocessable entity
+          content:
+            application/json:
+              schema:
+                type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                break_before:
+                  type: boolean
+                seq:
+                  type: integer
+    delete:
+      summary: delete question
+      tags:
+        - Questions
+      responses:
+        '204':
+          description: successful
+        '404':
+          description: not found
+  "/api/v1/questions/delete_all/questionnaire/{id}":
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    delete:
+      summary: delete all questions
+      tags:
+        - Questions
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+  "/api/v1/questions/show_all/questionnaire/{id}":
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: show all questions
+      tags:
+        - Questions
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+  "/api/v1/questions/types":
+    get:
+      summary: question types
+      tags:
+        - Questions
+      responses:
+        '200':
+          description: successful
 servers:
 - url: http://{defaultHost}
   variables:

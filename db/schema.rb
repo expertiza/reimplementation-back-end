@@ -10,7 +10,6 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-
 ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
@@ -25,7 +24,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.index ["institution_id"], name: "index_account_requests_on_institution_id"
     t.index ["role_id"], name: "index_account_requests_on_role_id"
   end
-
+  
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -86,6 +85,35 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "questionnaires", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "name"
+    t.integer "instructor_id"
+    t.boolean "private"
+    t.integer "min_question_score"
+    t.integer "max_question_score"
+    t.string "questionnaire_type"
+    t.string "display_type"
+    t.text "instruction_loc"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "questions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.text "txt"
+    t.integer "weight"
+    t.decimal "seq", precision: 10
+    t.string "question_type"
+    t.string "size"
+    t.string "alternatives"
+    t.boolean "break_before"
+    t.string "max_label"
+    t.string "min_label"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "questionnaire_id", null: false
+    t.index ["questionnaire_id"], name: "index_questions_on_questionnaire_id"
+  end
+  
   create_table "invitations", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.integer "assignment_id"
     t.integer "from_id"
@@ -134,6 +162,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.index ["role_id"], name: "index_users_on_role_id"
   end
 
+  add_foreign_key "questions", "questionnaires"
   add_foreign_key "account_requests", "institutions"
   add_foreign_key "account_requests", "roles"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
