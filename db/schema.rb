@@ -10,7 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_04_01_213411) do
+ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
+  create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "username"
+    t.string "full_name"
+    t.string "email"
+    t.string "status"
+    t.text "introduction"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "role_id", null: false
+    t.bigint "institution_id", null: false
+    t.index ["institution_id"], name: "index_account_requests_on_institution_id"
+    t.index ["role_id"], name: "index_account_requests_on_role_id"
+  end
+  
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -99,6 +113,18 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_01_213411) do
     t.bigint "questionnaire_id", null: false
     t.index ["questionnaire_id"], name: "index_questions_on_questionnaire_id"
   end
+  
+  create_table "invitations", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "assignment_id"
+    t.integer "from_id"
+    t.integer "to_id"
+    t.string "reply_status", limit: 1
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "fk_invitation_assignments"
+    t.index ["from_id"], name: "fk_invitationfrom_users"
+    t.index ["to_id"], name: "fk_invitationto_users"
+  end
 
   create_table "roles", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
@@ -112,10 +138,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_01_213411) do
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "password_digest"
-    t.integer "role_id"
-    t.string "fullname"
+    t.string "full_name"
     t.string "email"
-    t.integer "parent_id"
     t.string "mru_directory_path"
     t.boolean "email_on_review", default: false
     t.boolean "email_on_submission", default: false
@@ -124,15 +148,25 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_01_213411) do
     t.boolean "master_permission_granted", default: false
     t.string "handle"
     t.string "persistence_token"
-    t.string "timezonepref"
+    t.string "timeZonePref"
     t.boolean "copy_of_emails", default: false
-    t.integer "institution_id"
     t.boolean "etc_icons_on_homepage", default: false
     t.integer "locale"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "role_id", null: false
+    t.bigint "institution_id"
+    t.bigint "parent_id"
+    t.index ["institution_id"], name: "index_users_on_institution_id"
+    t.index ["parent_id"], name: "index_users_on_parent_id"
+    t.index ["role_id"], name: "index_users_on_role_id"
   end
 
   add_foreign_key "questions", "questionnaires"
+  add_foreign_key "account_requests", "institutions"
+  add_foreign_key "account_requests", "roles"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
+  add_foreign_key "users", "institutions"
+  add_foreign_key "users", "roles"
+  add_foreign_key "users", "users", column: "parent_id"
 end
