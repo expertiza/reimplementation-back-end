@@ -21,42 +21,40 @@ class Api::V1::QuestionsController < ApplicationController
   # Create method returns the JSON object of created question
   # POST on /questions
   def create
-    begin
-      questionnaire_id = params[:questionnaire_id] unless params[:questionnaire_id].nil?
-      num_of_existed_questions = Questionnaire.find(questionnaire_id).questions.size
-      question = Question.create(
-        txt: params[:txt],
-        questionnaire_id: questionnaire_id,
-        seq: num_of_existed_questions + 1,
-        question_type: params[:question_type],
-        break_before: true)
-      case question.question_type
-        when 'Scale'
-          question.weight = params[:weight]
-          question.max_label = 'Strongly agree'
-          question.min_label = 'Strongly disagree'
-        when 'Cake', 'Criterion'
-          question.weight = params[:weight]
-          question.max_label = 'Strongly agree'
-          question.min_label = 'Strongly disagree'
-          question.size = '50, 3'
-        when 'Dropdown'
-          question.alternatives = '0|1|2|3|4|5'
-          question.size = nil
-        when 'TextArea'
-          question.size = '60, 5'
-        when 'TextField'
-          question.size = '30'
-      end
-    
-      question.save!
-      render json: question, status: :created
-    rescue ActiveRecord::RecordNotFound
-      render json: $ERROR_INFO.to_s, status: :not_found and return  
-    rescue ActiveRecord::RecordInvalid
-      render json: $ERROR_INFO.to_s, status: :unprocessable_entity
-    end
+  questionnaire_id = params[:questionnaire_id]
+  questionnaire = Questionnaire.find(questionnaire_id)
+  question = questionnaire.questions.build(
+    txt: params[:txt],
+    question_type: params[:question_type],
+    break_before: true
+  )
+
+  case question.question_type
+  when 'Scale'
+    question.weight = params[:weight]
+    question.max_label = 'Strongly agree'
+    question.min_label = 'Strongly disagree'
+  when 'Cake', 'Criterion'
+    question.weight = params[:weight]
+    question.max_label = 'Strongly agree'
+    question.min_label = 'Strongly disagree'
+    question.size = '50, 3'
+  when 'Dropdown'
+    question.alternatives = '0|1|2|3|4|5'
+  when 'TextArea'
+    question.size = '60, 5'
+  when 'TextField'
+    question.size = '30'
   end
+
+  if question.save
+    render json: question, status: :created
+  else
+    render json: question.errors.full_messages.to_sentence, status: :unprocessable_entity
+  end
+rescue ActiveRecord::RecordNotFound
+  render json: $ERROR_INFO.to_s, status: :not_found and return  
+end
   
 
   # Destroy method deletes the question with id - {:id}
