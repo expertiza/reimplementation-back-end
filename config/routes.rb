@@ -14,8 +14,9 @@ Rails.application.routes.draw do
         get ':id/managed', on: :collection, action: :managed_users
       end
       resources :assignments
-      #added routes for signup topics
-      # resources :sign_up_topics
+      get '/account_requests/pending', controller: :account_requests, action: :pending_requests
+      get '/account_requests/processed', controller: :account_requests, action: :processed_requests
+      resources :account_requests
       resources :signed_up_teams do
         collection do
           post '/sign_up', to: 'signed_up_teams#sign_up'
@@ -26,9 +27,6 @@ Rails.application.routes.draw do
         collection do
           get :filter
           delete '/', to: 'sign_up_topics#destroy'
-          # delete :filter, to: 'sign_up_topics#delete_filter'
-          # delete :delete_all_topics_for_assignment
-          # delete :delete_all_selected_topics
         end
       end
     end

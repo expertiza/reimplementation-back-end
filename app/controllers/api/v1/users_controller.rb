@@ -1,5 +1,6 @@
 class Api::V1::UsersController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :user_not_found
+  rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
   def index
     @users = User.all
@@ -67,12 +68,16 @@ class Api::V1::UsersController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def user_params
-    params.require(:user).permit(:id, :name, :role_id, :fullname, :email, :parent_id, :institution_id,
+    params.require(:user).permit(:id, :name, :role_id, :full_name, :email, :parent_id, :institution_id,
                                  :email_on_review, :email_on_submission, :email_on_review_of_review,
                                  :handle, :copy_of_emails, :password, :password_confirmation)
   end
 
   def user_not_found
     render json: { error: "User with id #{params[:id]} not found" }, status: :not_found
+  end
+
+  def parameter_missing
+    render json: { error: 'Parameter missing' }, status: :unprocessable_entity
   end
 end

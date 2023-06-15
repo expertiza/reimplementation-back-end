@@ -3,10 +3,8 @@ class CreateUsers < ActiveRecord::Migration[7.0]
     create_table :users, on_delete: :cascade do |t|
       t.string :name
       t.string :password_digest
-      t.integer :role_id
-      t.string :fullname
+      t.string :full_name
       t.string :email
-      t.integer :parent_id
       t.string :mru_directory_path
       t.boolean :email_on_review, default: false
       t.boolean :email_on_submission, default: false
@@ -15,9 +13,8 @@ class CreateUsers < ActiveRecord::Migration[7.0]
       t.boolean :master_permission_granted, default: false
       t.string :handle
       t.string :persistence_token
-      t.string :timezonepref
+      t.string :timeZonePref
       t.boolean :copy_of_emails, default: false
-      t.integer :institution_id
       t.boolean :etc_icons_on_homepage, default: false
       t.integer :locale
 

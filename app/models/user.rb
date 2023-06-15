@@ -7,7 +7,7 @@ class User < ApplicationRecord
                    format: { with: /\A[a-z]+\z/, message: 'must be in lowercase' }
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :password, length: { minimum: 6 }, presence: true, allow_nil: true
-  validates :fullname, presence: true, length: { maximum: 50 }
+  validates :full_name, presence: true, length: { maximum: 50 }
 
   belongs_to :role
   belongs_to :institution, optional: true
@@ -86,7 +86,7 @@ class User < ApplicationRecord
   # that only the id, name, and email attributes should be included when a User object is serialized.
   def as_json(options = {})
     super(options.merge({
-                          only: %i[id name email fullname email_on_review email_on_submission
+                          only: %i[id name email full_name email_on_review email_on_submission
                                    email_on_review_of_review],
                           include: {
                             role: { only: %i[id name] },
