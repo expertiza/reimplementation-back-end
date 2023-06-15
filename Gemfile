@@ -36,6 +36,8 @@ group :development, :test do
   gem 'simplecov', require: false, group: :test
   gem 'rspec-rails'
   gem 'rswag-specs'
+  gem 'factory_bot_rails'
+  gem 'faker'
 end
 
 group :development do

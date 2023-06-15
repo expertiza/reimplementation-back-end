@@ -27,6 +27,13 @@ Rails.application.routes.draw do
         collection do
           get :filter
           delete '/', to: 'sign_up_topics#destroy'
+      resources :invitations do
+        get 'user/:user_id/assignment/:assignment_id/', on: :collection, action: :invitations_for_user_assignment
+      end
+      resources :account_requests do
+        collection do
+          get :pending, action: :pending_requests
+          get :processed, action: :processed_requests
         end
       end
     end
