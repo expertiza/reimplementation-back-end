@@ -10,18 +10,20 @@ Rails.application.routes.draw do
       resources :institutions
       resources :roles
       resources :users do
-        get 'institution/:id', on: :collection, action: :institution_users
-        get ':id/managed', on: :collection, action: :managed_users
+        collection do
+          get 'institution/:id', action: :institution_users
+          get ':id/managed', action: :managed_users
+        end
       end
       resources :assignments
-      
+
       resources :questionnaires do
         collection do
           post 'copy/:id', to: 'questionnaires#copy', as: 'copy'
           get 'toggle_access/:id', to: 'questionnaires#toggle_access', as: 'toggle_access'
         end
       end
-      
+
       resources :questions do
         collection do
           get :types
@@ -29,7 +31,7 @@ Rails.application.routes.draw do
           delete 'delete_all/questionnaire/:id', to:'questions#delete_all#questionnaire', as: 'delete_all'
         end
       end
-      
+
       resources :signed_up_teams do
         collection do
           post '/sign_up', to: 'signed_up_teams#sign_up'
@@ -42,11 +44,11 @@ Rails.application.routes.draw do
           delete '/', to: 'sign_up_topics#destroy'
         end
       end
-      
+
       resources :invitations do
         get 'user/:user_id/assignment/:assignment_id/', on: :collection, action: :invitations_for_user_assignment
       end
-      
+
       resources :account_requests do
         collection do
           get :pending, action: :pending_requests
