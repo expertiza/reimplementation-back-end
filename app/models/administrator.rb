@@ -1,5 +1,6 @@
 class Administrator < User
   def managed_users
-    User.where(institution_id:).to_a
+    # Get all users that belong to an institution of the loggedIn user except the user itself
+    User.where(institution_id:).where.not(id:)
   end
 end

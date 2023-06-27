@@ -1,17 +1,15 @@
 require 'swagger_helper'
 
 RSpec.describe 'Account Requests API', type: :request do
-
- path '/api/v1/account_requests/pending' do
+  path '/api/v1/account_requests/pending' do
     # List all Pending Account Requests
     get('List all Pending Account Requests') do
       tags 'Account Requests'
       produces 'application/json'
 
       response(200, 'List Pending Account Requests') do
-
         after do |example|
-         example.metadata[:response][:content] = {
+          example.metadata[:response][:content] = {
             'application/json' => {
               example: JSON.parse(response.body, symbolize_names: true)
             }
@@ -20,9 +18,7 @@ RSpec.describe 'Account Requests API', type: :request do
         run_test!
       end
     end
-  end 
-  
-  
+  end
 
   path '/api/v1/account_requests/processed' do
     # List all Processed Account Requests
@@ -31,7 +27,6 @@ RSpec.describe 'Account Requests API', type: :request do
       produces 'application/json'
 
       response(200, 'List Processed Account Requests') do
-
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -45,7 +40,6 @@ RSpec.describe 'Account Requests API', type: :request do
   end
 
   path '/api/v1/account_requests' do
-
     post('Create Account Request') do
       tags 'Account Requests'
       consumes 'application/json'
@@ -59,14 +53,17 @@ RSpec.describe 'Account Requests API', type: :request do
           role_id: { type: :integer },
           institution_id: { type: :integer }
         },
-        required: [ 'username', 'full_name', 'email', 'introduction', 'role_id', 'institution_id' ]
+        required: %w[username full_name email introduction role_id institution_id]
       }
 
       # Attempt to Create an Account Request with valid parameters
       response(201, 'Attempt to Create an Account Request with valid parameters') do
         let(:role) { Role.create(name: 'Student') }
         let(:institution) { Institution.create(name: 'North Carolina State University') }
-        let(:account_request) { { username: 'useracc', full_name: 'User Account 1', email: 'useracc1@gmail.com', introduction: 'User 1 Intro', role_id: role.id, institution_id: institution.id } }
+        let(:account_request) do
+          { username: 'useracc', full_name: 'User Account 1', email: 'useracc1@gmail.com', introduction: 'User 1 Intro',
+            role_id: role.id, institution_id: institution.id }
+        end
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -96,7 +93,10 @@ RSpec.describe 'Account Requests API', type: :request do
 
       # Attempt to Create an Account Request with invalid parameters
       response(422, 'Attempt to Create an Account Request with invalid parameters') do
-        let(:account_request) { { username: 'useracc', full_name: 'User Account 1', email: 'useracc1', introduction: 'User 1 Intro', role_id: 0, institution_id: 1 } }
+        let(:account_request) do
+          { username: 'useracc', full_name: 'User Account 1', email: 'useracc1', introduction: 'User 1 Intro', role_id: 0,
+            institution_id: 1 }
+        end
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -112,8 +112,14 @@ RSpec.describe 'Account Requests API', type: :request do
       response(422, 'Attempt to Create an Account Request whose username already exists in Users table') do
         let(:role) { Role.create(name: 'Student') }
         let(:institution) { Institution.create(name: 'North Carolina State University') }
-        let(:user) { User.create(name: 'useracc', fullname: 'User One', email: 'userone@gmail.com', role_id: role.id, password: 'password') }
-        let(:account_request) { { username: user.name, full_name: 'User Account 1', email: 'useracc1@gmail.com', introduction: 'User 1 Intro', role_id: role.id, institution_id: institution.id } }
+        let(:user) do
+          User.create(name: 'useracc', fullname: 'User One', email: 'userone@gmail.com', role_id: role.id,
+                      password: 'password')
+        end
+        let(:account_request) do
+          { username: user.name, full_name: 'User Account 1', email: 'useracc1@gmail.com', introduction: 'User 1 Intro',
+            role_id: role.id, institution_id: institution.id }
+        end
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -129,135 +135,13 @@ RSpec.describe 'Account Requests API', type: :request do
       response(201, 'Create an Account Request whose email already exists in Users table') do
         let(:role) { Role.create(name: 'Student') }
         let(:institution) { Institution.create(name: 'North Carolina State University') }
-        let(:user) { User.create(name: 'userone', fullname: 'User One', email: 'userone@gmail.com', role_id: role.id, password: 'password') }
-        let(:account_request) { { username: 'useracc', full_name: 'User Account 1', email: user.email, introduction: 'User 1 Intro', role_id: role.id, institution_id: institution.id } }
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
+        let(:user) do
+          User.create(name: 'userone', fullname: 'User One', email: 'userone@gmail.com', role_id: role.id,
+                      password: 'password')
         end
-        run_test!
-      end
-  end
-
-  path '/api/v1/account_requests/{id}' do
-    parameter name: 'id', in: :path, type: :integer, description: 'id of the Account Request'
-
-    let(:role) { Role.create(name: 'Student') }
-    let(:institution) { Institution.create(name: 'North Carolina State University') }
-    let(:account_request) { AccountRequest.create(username: 'useracc', full_name: 'User Account 1', email: 'useracc1@gmail.com', introduction: 'User 1 Intro', role_id: role.id, institution_id: institution.id) }
-    let(:id) { account_request.id }
-
-    get('Show a specific Account Request by id') do
-      tags 'Account Requests'
-
-      # Retrieve a specific account request with valid id
-      response(200, 'Retrieve a specific account request with valid id') do
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
-        run_test!
-      end
-    end
-
-    patch('Update Account Request') do
-      tags 'Account Requests'
-      consumes 'application/json'
-      parameter name: :account_request, in: :body, schema: {
-        type: :object,
-        properties: {
-          status: { type: :string, example: 'Approved' }
-        },
-        required: ['status' ]
-      }
-      
-      # Approve account request
-      response(200, 'Approve account request') do
-
-        before do
-          account_request.status = 'Approved'
-        end
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
-        run_test!
-      end
-
-      # Attempt to Approve account request but user with same name already exists
-      response(422, 'Attempt to Approve account request but user with same name already exists') do
-        
-        let(:user) { User.create(name: 'user', fullname: 'User One', email: 'userone@gmail.com', role_id: role.id, password: 'password') }
-
-        before do
-          account_request.status = 'Approved'
-          account_request.username = user.name
-        end
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
-        run_test!
-      end
-
-      # Attempt to Approve account request but user with same email already exists
-      response(422, 'Attempt to Approve account request but user with same email already exists') do
-
-        let(:user) { User.create(name: 'user', fullname: 'User One', email: 'userone@gmail.com', role_id: role.id, password: 'password') }
-
-        before do
-          account_request.status = 'Approved'
-          account_request.username = user.email
-        end
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
-        run_test!
-      end
-
-      # Reject account request
-      response(200, 'Reject account request') do
-
-        before do
-          account_request.status = 'Rejected'
-        end
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
-        run_test!
-      end
-
-      # Attempt to send Invalid status in Patch
-      response(422, 'Attempt to send Invalid status in Patch') do
-
-        before do
-          account_request.status = 'Random String'
+        let(:account_request) do
+          { username: 'useracc', full_name: 'User Account 1', email: user.email, introduction: 'User 1 Intro', role_id: role.id,
+            institution_id: institution.id }
         end
 
         after do |example|
@@ -271,124 +155,255 @@ RSpec.describe 'Account Requests API', type: :request do
       end
     end
 
-    put('Update Account Request') do
-      tags 'Account Requests'
-      consumes 'application/json'
-      parameter name: :account_request, in: :body, schema: {
-        type: :object,
-        properties: {
-          status: { type: :string, example: 'Approved' }
-        },
-        required: ['status' ]
-      }
-      
-      # Approve account request
-      response(200, 'Approve account request') do
+    path '/api/v1/account_requests/{id}' do
+      parameter name: 'id', in: :path, type: :integer, description: 'id of the Account Request'
 
-        before do
-          account_request.status = 'Approved'
-        end
+      let(:role) { Role.create(name: 'Student') }
+      let(:institution) { Institution.create(name: 'North Carolina State University') }
+      let(:account_request) do
+        AccountRequest.create(username: 'useracc', full_name: 'User Account 1', email: 'useracc1@gmail.com',
+                              introduction: 'User 1 Intro', role_id: role.id, institution_id: institution.id)
+      end
+      let(:id) { account_request.id }
 
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
+      get('Show a specific Account Request by id') do
+        tags 'Account Requests'
+
+        # Retrieve a specific account request with valid id
+        response(200, 'Retrieve a specific account request with valid id') do
+          after do |example|
+            example.metadata[:response][:content] = {
+              'application/json' => {
+                example: JSON.parse(response.body, symbolize_names: true)
+              }
             }
-          }
+          end
+          run_test!
         end
-        run_test!
       end
 
-      # Attempt to Approve account request but user with same username already exists
-      response(422, 'Attempt to Approve account request but user with same username already exists') do
-        
-        let(:user) { User.create(name: 'user', fullname: 'User One', email: 'userone@gmail.com', role_id: role.id, password: 'password') }
+      patch('Update Account Request') do
+        tags 'Account Requests'
+        consumes 'application/json'
+        parameter name: :account_request, in: :body, schema: {
+          type: :object,
+          properties: {
+            status: { type: :string, example: 'Approved' }
+          },
+          required: ['status']
+        }
 
-        before do
-          account_request.status = 'Approved'
-          account_request.username = user.name
-        end
+        # Approve account request
+        response(200, 'Approve account request') do
+          before do
+            account_request.status = 'Approved'
+          end
 
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
+          after do |example|
+            example.metadata[:response][:content] = {
+              'application/json' => {
+                example: JSON.parse(response.body, symbolize_names: true)
+              }
             }
-          }
+          end
+          run_test!
         end
-        run_test!
+
+        # Attempt to Approve account request but user with same name already exists
+        response(422, 'Attempt to Approve account request but user with same name already exists') do
+          let(:user) do
+            User.create(name: 'user', fullname: 'User One', email: 'userone@gmail.com', role_id: role.id,
+                        password: 'password')
+          end
+
+          before do
+            account_request.status = 'Approved'
+            account_request.username = user.name
+          end
+
+          after do |example|
+            example.metadata[:response][:content] = {
+              'application/json' => {
+                example: JSON.parse(response.body, symbolize_names: true)
+              }
+            }
+          end
+          run_test!
+        end
+
+        # Attempt to Approve account request but user with same email already exists
+        response(422, 'Attempt to Approve account request but user with same email already exists') do
+          let(:user) do
+            User.create(name: 'user', fullname: 'User One', email: 'userone@gmail.com', role_id: role.id,
+                        password: 'password')
+          end
+
+          before do
+            account_request.status = 'Approved'
+            account_request.username = user.email
+          end
+
+          after do |example|
+            example.metadata[:response][:content] = {
+              'application/json' => {
+                example: JSON.parse(response.body, symbolize_names: true)
+              }
+            }
+          end
+          run_test!
+        end
+
+        # Reject account request
+        response(200, 'Reject account request') do
+          before do
+            account_request.status = 'Rejected'
+          end
+
+          after do |example|
+            example.metadata[:response][:content] = {
+              'application/json' => {
+                example: JSON.parse(response.body, symbolize_names: true)
+              }
+            }
+          end
+          run_test!
+        end
+
+        # Attempt to send Invalid status in Patch
+        response(422, 'Attempt to send Invalid status in Patch') do
+          before do
+            account_request.status = 'Random String'
+          end
+
+          after do |example|
+            example.metadata[:response][:content] = {
+              'application/json' => {
+                example: JSON.parse(response.body, symbolize_names: true)
+              }
+            }
+          end
+          run_test!
+        end
       end
 
-      # Approve account request but user with same email already exists
-      response(200, 'Approve account request but user with same email already exists') do
+      put('Update Account Request') do
+        tags 'Account Requests'
+        consumes 'application/json'
+        parameter name: :account_request, in: :body, schema: {
+          type: :object,
+          properties: {
+            status: { type: :string, example: 'Approved' }
+          },
+          required: ['status']
+        }
 
-        let(:user) { User.create(name: 'user', fullname: 'User One', email: 'userone@gmail.com', role_id: role.id, password: 'password') }
+        # Approve account request
+        response(200, 'Approve account request') do
+          before do
+            account_request.status = 'Approved'
+          end
 
-        before do
-          account_request.status = 'Approved'
-          account_request.email = user.email
-        end
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
+          after do |example|
+            example.metadata[:response][:content] = {
+              'application/json' => {
+                example: JSON.parse(response.body, symbolize_names: true)
+              }
             }
-          }
+          end
+          run_test!
         end
-        run_test!
+
+        # Attempt to Approve account request but user with same username already exists
+        response(422, 'Attempt to Approve account request but user with same username already exists') do
+          let(:user) do
+            User.create(name: 'user', fullname: 'User One', email: 'userone@gmail.com', role_id: role.id,
+                        password: 'password')
+          end
+
+          before do
+            account_request.status = 'Approved'
+            account_request.username = user.name
+          end
+
+          after do |example|
+            example.metadata[:response][:content] = {
+              'application/json' => {
+                example: JSON.parse(response.body, symbolize_names: true)
+              }
+            }
+          end
+          run_test!
+        end
+
+        # Approve account request but user with same email already exists
+        response(200, 'Approve account request but user with same email already exists') do
+          let(:user) do
+            User.create(name: 'user', fullname: 'User One', email: 'userone@gmail.com', role_id: role.id,
+                        password: 'password')
+          end
+
+          before do
+            account_request.status = 'Approved'
+            account_request.email = user.email
+          end
+
+          after do |example|
+            example.metadata[:response][:content] = {
+              'application/json' => {
+                example: JSON.parse(response.body, symbolize_names: true)
+              }
+            }
+          end
+          run_test!
+        end
+
+        # Reject an account request
+        response(200, 'Reject account request') do
+          before do
+            account_request.status = 'Rejected'
+          end
+
+          after do |example|
+            example.metadata[:response][:content] = {
+              'application/json' => {
+                example: JSON.parse(response.body, symbolize_names: true)
+              }
+            }
+          end
+          run_test!
+        end
+
+        # Attempt to send Invalid status in PUT
+        response(422, 'Attempt to send Invalid status in PUT') do
+          before do
+            account_request.status = 'Random String'
+          end
+
+          after do |example|
+            example.metadata[:response][:content] = {
+              'application/json' => {
+                example: JSON.parse(response.body, symbolize_names: true)
+              }
+            }
+          end
+          run_test!
+        end
       end
 
-      # Reject an account request
-      response(200, 'Reject account request') do
-
-        before do
-          account_request.status = 'Rejected'
-        end
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
+      # Delete an Account Request
+      delete('Delete Account Request') do
+        tags 'Account Requests'
+        response(204, 'successful') do
+          after do |example|
+            example.metadata[:response][:content] = {
+              'application/json' => {
+                example: ''
+              }
             }
-          }
+          end
+          run_test!
         end
-        run_test!
-      end
-
-      # Attempt to send Invalid status in PUT
-      response(422, 'Attempt to send Invalid status in PUT') do
-
-        before do
-          account_request.status = 'Random String'
-        end
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
-        run_test!
       end
     end
-
-    # Delete an Account Request
-    delete('Delete Account Request') do
-      tags 'Account Requests'
-      response(204, 'successful') do
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: ''
-            }
-          }
-        end
-        run_test!
-      end
-    end
-  end
   end
 end

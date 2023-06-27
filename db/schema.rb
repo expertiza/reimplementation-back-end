@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
+ActiveRecord::Schema[7.0].define(version: 2023_06_26_231828) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -24,7 +24,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.index ["institution_id"], name: "index_account_requests_on_institution_id"
     t.index ["role_id"], name: "index_account_requests_on_role_id"
   end
-  
+
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -85,6 +85,18 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "invitations", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "assignment_id"
+    t.integer "from_id"
+    t.integer "to_id"
+    t.string "reply_status", limit: 1
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "fk_invitation_assignments"
+    t.index ["from_id"], name: "fk_invitationfrom_users"
+    t.index ["to_id"], name: "fk_invitationto_users"
+  end
+
   create_table "questionnaires", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.integer "instructor_id"
@@ -113,18 +125,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.bigint "questionnaire_id", null: false
     t.index ["questionnaire_id"], name: "index_questions_on_questionnaire_id"
   end
-  
-  create_table "invitations", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.integer "assignment_id"
-    t.integer "from_id"
-    t.integer "to_id"
-    t.string "reply_status", limit: 1
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["assignment_id"], name: "fk_invitation_assignments"
-    t.index ["from_id"], name: "fk_invitationfrom_users"
-    t.index ["to_id"], name: "fk_invitationto_users"
-  end
 
   create_table "roles", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
@@ -133,6 +133,13 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
+  end
+
+  create_table "ta_mappings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_ta_mappings_on_user_id"
   end
 
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -154,18 +161,19 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.integer "locale"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "role_id", null: false
     t.bigint "institution_id"
+    t.bigint "role_id", null: false
     t.bigint "parent_id"
     t.index ["institution_id"], name: "index_users_on_institution_id"
     t.index ["parent_id"], name: "index_users_on_parent_id"
     t.index ["role_id"], name: "index_users_on_role_id"
   end
 
-  add_foreign_key "questions", "questionnaires"
   add_foreign_key "account_requests", "institutions"
   add_foreign_key "account_requests", "roles"
+  add_foreign_key "questions", "questionnaires"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
+  add_foreign_key "ta_mappings", "users"
   add_foreign_key "users", "institutions"
   add_foreign_key "users", "roles"
   add_foreign_key "users", "users", column: "parent_id"
