@@ -1,18 +1,25 @@
 Rails.application.routes.draw do
-  mount Rswag::Ui::Engine => '/api-docs'
-  mount Rswag::Api::Engine => '/api-docs'
+  mount Rswag::Api::Engine => 'api-docs'
+  mount Rswag::Ui::Engine => 'api-docs'
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Defines the root path route ("/")
   # root "articles#index"
+  post '/login', to: 'authentication#login'
   namespace :api do
     namespace :v1 do
       resources :institutions
-      resources :roles
+      resources :roles do
+        collection do
+          # Get all roles that are subordinate to a role of a logged in user
+          get 'subordinate_roles', action: :subordinate_roles
+        end
+      end
       resources :users do
         collection do
           get 'institution/:id', action: :institution_users
           get ':id/managed', action: :managed_users
+          get 'role/:name', action: :role_users
         end
       end
       resources :assignments
