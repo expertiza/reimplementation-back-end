@@ -34,12 +34,12 @@ class Role < ApplicationRecord
     role = Role.find_by(parent_id: id)
     return [] unless role
 
-    [role.id] + role.subordinate_roles
+    [role] + role.subordinate_roles
   end
 
   # returns an array of ids of all roles that are below the current role and includes the current role
   def subordinate_roles_and_self
-    [id] + subordinate_roles
+    [self] + subordinate_roles
   end
 
   # checks if the current role has all the privileges of the target role
@@ -58,5 +58,9 @@ class Role < ApplicationRecord
   # return list of all roles other than the current role
   def other_roles
     Role.where.not(id:)
+  end
+
+  def as_json(options = nil)
+    super(options.merge({ only: %i[id name parent_id] }))
   end
 end

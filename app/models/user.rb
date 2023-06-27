@@ -28,15 +28,15 @@ class User < ApplicationRecord
   delegate :super_administrator?, to: :role
 
   def self.instantiate(record)
-    case record['role_id']
+    case record.role
     when Role::TEACHING_ASSISTANT
-      Ta.new(record)
+      record.becomes(Ta)
     when Role::INSTRUCTOR
-      Instructor.new(record)
+      record.becomes(Instructor)
     when Role::ADMINISTRATOR
-      Administrator.new(record)
+      record.becomes(Administrator)
     when Role::SUPER_ADMINISTRATOR
-      SuperAdministrator.new(record)
+      record.becomes(SuperAdministrator)
     else
       super
     end
@@ -89,7 +89,8 @@ class User < ApplicationRecord
     super(options.merge({
                           only: %i[id name email full_name email_on_review email_on_submission
                                    email_on_review_of_review],
-                          include: {
+                          include:
+                          {
                             role: { only: %i[id name] },
                             parent: { only: %i[id name] },
                             institution: { only: %i[id name] }
