@@ -13,7 +13,7 @@ class Api::V1::CoursesController < ApplicationController
   # GET /courses/1
   # Get a course
   def show
-    render json: @course
+    render json: @course, status: :ok
   end
 
   # POST /courses
