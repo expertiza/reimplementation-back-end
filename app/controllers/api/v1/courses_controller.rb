@@ -1,5 +1,5 @@
 class Api::V1::CoursesController < ApplicationController
-  before_action :set_course, only: %i[ show update destroy add_ta view_tas ]
+  before_action :set_course, only: %i[ show update destroy add_ta view_tas remove_ta ]
   rescue_from ActiveRecord::RecordNotFound, with: :course_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
@@ -64,19 +64,12 @@ class Api::V1::CoursesController < ApplicationController
 
   # Removes Teaching Assistant from the course
   def remove_ta
-    @ta_mapping = TaMapping.find_by(course_id: params[:id], ta_id: params[:ta_id])
-    if @ta_mapping.nil?
-      return render json: { status: "error", message: "No TA mapping found for the specified course and TA" }, status: :not_found
+    result = @course.remove_ta(params[:ta_id])
+    if result[:success]
+      render json: { message: "The TA #{result[:ta_name]} has been removed." }, status: :ok
+    else
+      render json: { status: "error", message: result[:message] }, status: :not_found
     end
-    @ta = User.find(@ta_mapping.ta_id)
-    # if the user is not a TA for any other course, then the role should be changed to student
-    ta_count = TaMapping.where(ta_id: params[:ta_id]).size - 1
-    if ta_count.zero?
-      @role_id = Role.find_by(name: 'Student').id
-      @ta.update_attribute(:role_id, @role_id)
-    end
-    @ta_mapping.destroy
-    render json: { message: "The TA " + @ta.name + " has been removed." }, status: :ok
   end
 
   # Creates a copy of the course

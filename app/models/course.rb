@@ -6,7 +6,7 @@ class Course < ApplicationRecord
   has_many :ta_mappings, dependent: :destroy
   has_many :tas, through: :ta_mappings
 
-  # returns the submission directory for the course
+  # Returns the submission directory for the course
   def path
     raise 'Path can not be created as the course must be associated with an instructor.' if instructor_id.nil?
     Rails.root + '/' + Institution.find(institution_id).name.gsub(" ", "") + '/' + User.find(instructor_id).name.gsub(" ", "") + '/' + directory_path + '/'
@@ -27,5 +27,18 @@ class Course < ApplicationRecord
         return { success: false, message: ta_mapping.errors }
       end
     end
+  end
+
+  # Removes Teaching Assistant from the course
+  def remove_ta(ta_id)
+    ta_mapping = ta_mappings.find_by(ta_id: ta_id, course_id: :id)
+    return { success: false, message: "No TA mapping found for the specified course and TA" } if ta_mapping.nil?
+    ta = User.find(ta_mapping.ta_id)
+    ta_count = TaMapping.where(ta_id: ta_id).size - 1
+    if ta_count.zero?
+      ta.update(role: Role::STUDENT)
+    end
+    ta_mapping.destroy
+    { success: true, ta_name: ta.name }
   end
 end

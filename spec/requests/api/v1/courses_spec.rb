@@ -116,13 +116,12 @@ RSpec.describe 'api/v1/courses', type: :request do
       produces 'application/json'
       response(200, 'successful') do
         before do
-          allow(TaMapping).to receive(:find_by).and_return(ta_mapping)
-          allow(User).to receive(:find).and_return(ta)
+          allow_any_instance_of(Course).to receive(:remove_ta).and_return({ success: true, ta_name: ta.name })
         end
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
+              example: { message: "The TA taa has been removed." }
             }
           }
         end
