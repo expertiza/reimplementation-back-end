@@ -1,5 +1,5 @@
 class Api::V1::CoursesController < ApplicationController
-  before_action :set_course, only: %i[ show update destroy add_ta ]
+  before_action :set_course, only: %i[ show update destroy add_ta view_tas ]
   rescue_from ActiveRecord::RecordNotFound, with: :course_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
@@ -57,7 +57,6 @@ class Api::V1::CoursesController < ApplicationController
 
   # Displays all Teaching Assistants for the course
   def view_tas
-    @course = Course.find(params[:id])
     @ta_mappings = @course.ta_mappings
     @users = User.where(id: @ta_mappings.pluck(:ta_id))
     render json: @users, status: :ok
