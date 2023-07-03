@@ -41,7 +41,7 @@ class Api::V1::CoursesController < ApplicationController
   # Delete a course
   def destroy
     @course.destroy
-    render json: { message: "Course with id #{params[:id]}, deleted" }, status: :ok
+    render json: { message: "Course with id #{params[:id]}, deleted" }, status: :no_content
   end
 
   # Adds a Teaching Assistant to the course
