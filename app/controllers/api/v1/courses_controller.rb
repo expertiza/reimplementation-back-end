@@ -31,7 +31,7 @@ class Api::V1::CoursesController < ApplicationController
   # Update a course
   def update
     if @course.update(course_params)
-      render json: @course
+      render json: @course, status: :ok
     else
       render json: @course.errors, status: :unprocessable_entity
     end
