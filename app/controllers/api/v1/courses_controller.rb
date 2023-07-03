@@ -1,5 +1,7 @@
 class Api::V1::CoursesController < ApplicationController
   before_action :set_course, only: %i[ show update destroy ]
+  rescue_from ActiveRecord::RecordNotFound, with: :course_not_found
+  rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
   # GET /courses
   # List all the courses
@@ -113,5 +115,13 @@ class Api::V1::CoursesController < ApplicationController
   # Only allow a list of trusted parameters through.
   def course_params
     params.require(:course).permit(:name, :directory_path, :info, :private, :instructor_id, :institution_id)
+  end
+
+  def course_not_found
+    render json: { error: "Course with id #{params[:id]} not found" }, status: :not_found
+  end
+
+  def parameter_missing
+    render json: { error: "Parameter missing" }, status: :unprocessable_entity
   end
 end
