@@ -1,5 +1,5 @@
 class Api::V1::CoursesController < ApplicationController
-  before_action :set_course, only: %i[ show update destroy add_ta view_tas remove_ta ]
+  before_action :set_course, only: %i[ show update destroy add_ta view_tas remove_ta copy ]
   rescue_from ActiveRecord::RecordNotFound, with: :course_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
@@ -74,14 +74,12 @@ class Api::V1::CoursesController < ApplicationController
 
   # Creates a copy of the course
   def copy
-    existing_course = Course.find(params[:id])
-    @new_course = Course.new()
-    @new_course = existing_course.dup
-    @new_course.directory_path = @new_course.directory_path + '_copy'
-    if @new_course.save
-      render json: { message: "The course " + existing_course.name + " has been successfully copied" }
+    # existing_course = Course.find(params[:id])
+    success = @course.copy_course
+    if success
+      render json: { message: "The course #{@course.name} has been successfully copied" }, status: :ok
     else
-      render json: { message: "The course was not able to be copied" }
+      render json: { message: "The course was not able to be copied" }, status: :unprocessable_entity
     end
   end
 

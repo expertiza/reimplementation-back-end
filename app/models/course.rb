@@ -41,4 +41,12 @@ class Course < ApplicationRecord
     ta_mapping.destroy
     { success: true, ta_name: ta.name }
   end
+
+  # Creates a copy of the course
+  def copy_course
+    new_course = dup
+    new_course.directory_path += '_copy'
+    new_course.name += '_copy'
+    new_course.save
+  end
 end
