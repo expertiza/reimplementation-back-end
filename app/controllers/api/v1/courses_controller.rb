@@ -1,5 +1,5 @@
 class Api::V1::CoursesController < ApplicationController
-  before_action :set_course, only: %i[ show update destroy ]
+  before_action :set_course, only: %i[ show update destroy add_ta ]
   rescue_from ActiveRecord::RecordNotFound, with: :course_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
@@ -46,23 +46,12 @@ class Api::V1::CoursesController < ApplicationController
 
   # Adds a Teaching Assistant to the course
   def add_ta
-    @course = Course.find(params[:id])
-    @user = User.find_by(id: params[:ta_id])
-    if @user.nil?
-      return render json: { status: "error", message: "The user " + params[:ta_id].to_s + " does not exist" }, status: :bad_request
-    elsif !TaMapping.where(ta_id: @user.id, course_id: @course.id).empty?
-      return render json: { status: "error", message: "The user " + params[:ta_id].to_s + " is already a TA for this course." }, status: :bad_request
+    user = User.find_by(id: params[:ta_id])
+    result = @course.add_ta(user)
+    if result[:success]
+      render json: result[:data], status: :created
     else
-      @ta_mapping = TaMapping.create(ta_id: @user.id, course_id: @course.id)
-      @role_id = Role.find_by(name: 'Teaching Assistant').id
-      @user.update_attribute(:role_id, @role_id)
-      @user.save
-    end
-
-    if @ta_mapping.save
-      render json: @ta_mapping.slice(:course_id, :ta_id), status: :created
-    else
-      render json: @ta_mapping.errors, status: :unprocessable_entity
+      render json: { status: "error", message: result[:message] }, status: :bad_request
     end
   end
 
