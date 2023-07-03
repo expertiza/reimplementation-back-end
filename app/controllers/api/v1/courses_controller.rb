@@ -4,9 +4,8 @@ class Api::V1::CoursesController < ApplicationController
   # GET /courses
   # List all the courses
   def index
-    @courses = Course.all
-
-    render json: @courses
+    courses = Course.all
+    render json: courses, status: :ok
   end
 
   # GET /courses/1
