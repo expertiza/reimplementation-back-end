@@ -2,7 +2,7 @@ require 'swagger_helper'
 
 RSpec.describe 'api/v1/courses', type: :request do
 
-  #GET /courses/{id}/add_ta/{ta_id}
+  # GET /courses/{id}/add_ta/{ta_id}
   path '/api/v1/courses/{id}/add_ta/{ta_id}' do
     parameter name: :id, in: :path, type: :integer, required: true
     parameter name: :ta_id, in: :path, type: :integer, required: true
@@ -52,11 +52,11 @@ RSpec.describe 'api/v1/courses', type: :request do
             }
           }
         end
+      end
     end
-    end
-    end
+  end
 
-  #GET /courses/{id}/tas
+  # GET /courses/{id}/tas
   path '/api/v1/courses/{id}/tas' do
     parameter name: 'id', in: :path, type: :string, description: 'id'
     let(:institution) { Institution.create(name: "NC State") }
@@ -85,7 +85,7 @@ RSpec.describe 'api/v1/courses', type: :request do
     end
   end
 
-  #GET /courses/{id}/remove_ta/{ta_id}
+  # GET /courses/{id}/remove_ta/{ta_id}
   path '/api/v1/courses/{id}/remove_ta/{ta_id}' do
     parameter name: 'id', in: :path, type: :string, description: 'id'
     parameter name: 'ta_id', in: :path, type: :string, description: 'ta_id'
@@ -131,7 +131,7 @@ RSpec.describe 'api/v1/courses', type: :request do
     end
   end
 
-  #GET /courses/{id}/copy
+  # GET /courses/{id}/copy
   path '/api/v1/courses/{id}/copy' do
     parameter name: 'id', in: :path, type: :string, description: 'id'
     let(:institution) { Institution.create(name: "NC State") }
@@ -160,7 +160,7 @@ RSpec.describe 'api/v1/courses', type: :request do
     end
   end
 
-  #GET /courses/
+  # GET /courses/
   path '/api/v1/courses' do
     get('list courses') do
       tags 'Courses'
@@ -176,7 +176,7 @@ RSpec.describe 'api/v1/courses', type: :request do
       end
     end
 
-    #POST /courses/
+    # POST /courses/
     post('create course') do
       tags 'Courses'
       consumes 'application/json'
@@ -214,7 +214,7 @@ RSpec.describe 'api/v1/courses', type: :request do
     end
   end
 
-  #GET /courses/{id}
+  # GET /courses/{id}
   path '/api/v1/courses/{id}' do
     parameter name: 'id', in: :path, type: :string, description: 'id'
     let(:institution) { Institution.create(name: "NC State") }
@@ -242,7 +242,7 @@ RSpec.describe 'api/v1/courses', type: :request do
       end
     end
 
-    #PATCH /courses/{id}
+    # PATCH /courses/{id}
     patch('update course') do
       tags 'Courses'
       consumes 'application/json'
@@ -280,7 +280,7 @@ RSpec.describe 'api/v1/courses', type: :request do
       end
     end
 
-    #PUT /courses/{id}
+    # PUT /courses/{id}
     put('update course') do
       tags 'Courses'
       consumes 'application/json'
@@ -318,7 +318,7 @@ RSpec.describe 'api/v1/courses', type: :request do
       end
     end
 
-    #DELETE /courses/{id}
+    # DELETE /courses/{id}
     delete('delete course') do
       tags 'Courses'
       let(:institution) { Institution.create(name: "NC State") }
@@ -332,11 +332,11 @@ RSpec.describe 'api/v1/courses', type: :request do
       ) }
       let(:course) { Course.create(institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: 'OODD', info: 'blank') }
       let(:id) { course.id }
-      response(200, 'successful') do
+      response(204, 'successful') do
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
+              example: response.body
             }
           }
         end
