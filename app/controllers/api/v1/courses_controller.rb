@@ -19,12 +19,11 @@ class Api::V1::CoursesController < ApplicationController
   # POST /courses
   # Create a course
   def create
-    @course = Course.new(course_params)
-
-    if @course.save
-      render json: @course, status: :created
+    course = Course.new(course_params)
+    if course.save
+      render json: course, status: :created
     else
-      render json: @course.errors, status: :unprocessable_entity
+      render json: course.errors, status: :unprocessable_entity
     end
   end
 
