@@ -1,5 +1,3 @@
-include ActionController::Flash
-
 class Api::V1::CoursesController < ApplicationController
   before_action :set_course, only: %i[ show update destroy ]
 
