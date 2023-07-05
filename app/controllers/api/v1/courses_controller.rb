@@ -57,9 +57,8 @@ class Api::V1::CoursesController < ApplicationController
 
   # Displays all Teaching Assistants for the course
   def view_tas
-    @ta_mappings = @course.ta_mappings
-    @users = User.where(id: @ta_mappings.pluck(:ta_id))
-    render json: @users, status: :ok
+    teaching_assistants = @course.tas
+    render json: teaching_assistants, status: :ok
   end
 
   # Removes Teaching Assistant from the course
