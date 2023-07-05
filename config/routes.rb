@@ -15,11 +15,11 @@ Rails.application.routes.draw do
       end
       resources :assignments
       resources :courses do
-        member do
-          get '/add_ta/:ta_id' => 'courses#add_ta'
-          get '/tas' => 'courses#view_tas'
-          get '/remove_ta/:ta_id' => 'courses#remove_ta'
-          get '/copy' =>'courses#copy'
+        collection do
+          get ':id/add_ta/:ta_id', action: :add_ta
+          get ':id/tas', action: :view_tas
+          get ':id/remove_ta/:ta_id', action: :remove_ta
+          get ':id/copy', action: :copy
         end
       end
     end
