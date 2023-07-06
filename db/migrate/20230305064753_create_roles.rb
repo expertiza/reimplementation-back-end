@@ -13,14 +13,13 @@ class CreateRoles < ActiveRecord::Migration[7.0]
 
     # Insert initial data into the roles table
     execute <<~SQL
-      INSERT INTO roles (name, parent_id, default_page_id, created_at, updated_at)
+      INSERT INTO roles (name, parent_id, created_at, updated_at)
       VALUES
-        ('Unregistered user', NULL, NULL, NOW(), NOW()),
-        ('Student', NULL, 0, NOW(), NOW()),
-        ('Teaching Assistant', 2, NULL, NOW(), NOW()),
-        ('Instructor', 3, NULL, NOW(), NOW()),
-        ('Administrator', 4, 8, NOW(), NOW()),
-        ('Super Administrator', 5,  NULL, NOW(), NOW());
+        ('Super Administrator', NULL, NOW(), NOW()),
+        ('Administrator', 1, NOW(), NOW()),
+        ('Instructor', 2, NOW(), NOW()),
+        ('Teaching Assistant', 3,  NOW(), NOW()),
+        ('Student', 4, NOW(), NOW());
     SQL
   end
 end

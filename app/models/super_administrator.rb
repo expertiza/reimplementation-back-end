@@ -1,5 +1,5 @@
 class SuperAdministrator < User
-  def manageable_users
+  def managed_users
     User.all.to_a
   end
 end
