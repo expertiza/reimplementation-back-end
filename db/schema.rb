@@ -79,6 +79,19 @@ ActiveRecord::Schema[7.0].define(version: 2023_06_26_231828) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "courses", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "name"
+    t.string "directory_path"
+    t.text "info"
+    t.boolean "private", default: false
+    t.integer "instructor_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "institution_id", null: false
+    t.index ["institution_id"], name: "index_courses_on_institution_id"
+    t.index ["instructor_id"], name: "fk_course_users"
+  end
+
   create_table "institutions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -136,9 +149,11 @@ ActiveRecord::Schema[7.0].define(version: 2023_06_26_231828) do
   end
 
   create_table "ta_mappings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "course_id", null: false
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["course_id"], name: "index_ta_mappings_on_course_id"
     t.index ["user_id"], name: "index_ta_mappings_on_user_id"
   end
 
@@ -169,6 +184,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_06_26_231828) do
     t.index ["role_id"], name: "index_users_on_role_id"
   end
 
+  add_foreign_key "courses", "institutions"
+  add_foreign_key "ta_mappings", "courses"
   add_foreign_key "account_requests", "institutions"
   add_foreign_key "account_requests", "roles"
   add_foreign_key "questions", "questionnaires"

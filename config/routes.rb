@@ -24,6 +24,13 @@ Rails.application.routes.draw do
       end
       resources :assignments
 
+      resources :courses do
+        collection do
+          get ':id/add_ta/:ta_id', action: :add_ta
+          get ':id/tas', action: :view_tas
+          get ':id/remove_ta/:ta_id', action: :remove_ta
+          get ':id/copy', action: :copy
+
       resources :questionnaires do
         collection do
           post 'copy/:id', to: 'questionnaires#copy', as: 'copy'
