@@ -12,7 +12,7 @@ RSpec.describe Assignment, type: :model do
     it 'returns concatenated review comments and # of reviews in each round' do
       allow(Assignment).to receive(:find).with(1).and_return(assignment)
       allow(assignment).to receive(:num_review_rounds).and_return(2)
-      allow(Question).to receive(:get_all_questions_with_comments_available).with(1).and_return([1, 2])
+      allow(Question).to receive(:get_questions_with_comments_for_assignment).with(1).and_return([1, 2])
       allow(ReviewResponseMap).to receive_message_chain(:where, :find_each).with(reviewed_object_id: 1, reviewer_id: 1)
                                                                            .with(no_args).and_yield(review_response_map)
       response1 = double('Response', round: 1, additional_comment: '')
