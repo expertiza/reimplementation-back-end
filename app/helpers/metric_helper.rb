@@ -32,7 +32,7 @@ module MetricHelper
   def get_all_review_comments(reviewer_id)
     @comments_in_round = []
     @counter_in_round = []
-    question_ids = Question.get_all_questions_with_comments_available(id)
+    question_ids = Question.get_questions_with_comments_for_assignment(id)
 
     ReviewResponseMap.where(reviewed_object_id: id, reviewer_id: reviewer_id).find_each do |response_map|
       (1..num_review_rounds + 1).each do |round|
