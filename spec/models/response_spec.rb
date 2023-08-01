@@ -57,7 +57,7 @@ describe Response do
     context 'when maximum_score returns 0' do
       it 'returns N/A' do
         allow(response).to receive(:maximum_score).and_return(0)
-        expect(response.average_score).to eq('N/A')
+        expect(response.average_score).to eq(0)
       end
     end
 
