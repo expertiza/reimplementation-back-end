@@ -24,7 +24,7 @@ module ScorableHelper
   # Returns the average score across all of the instances scores as an integer (0-100)
   def average_score
     if maximum_score.zero?
-      'N/A'
+      0
     else
       ((calculate_total_score.to_f / maximum_score.to_f) * 100).round
     end
