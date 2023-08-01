@@ -11,5 +11,9 @@ class Question < ApplicationRecord
       end
       question_ids
     end
+
+    def scorable?
+      false
+    end
+    
 end
-  
