@@ -14,7 +14,8 @@ module ScorableHelper
     questions = Question.find_with_order(question_ids)
 
     scores.each_with_index do |score, idx|
-      sum += score.answer * questions[idx].weight unless score.answer.nil? || !questions[idx].is_a?(ScoredQuestion)
+      question = questions[idx]
+      sum += score.answer * questions[idx].weight if !score.answer.nil? && question.scorable?
     end
 
     sum
