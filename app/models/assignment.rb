@@ -7,7 +7,6 @@ class Assignment < ApplicationRecord
   end
 
   def num_review_rounds
-    2
+    rounds_of_reviews
   end
 end
-  
