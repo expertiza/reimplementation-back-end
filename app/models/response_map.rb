@@ -6,11 +6,6 @@ class ResponseMap < ApplicationRecord
 
   alias map_id id
 
-  # returns all responses
-  def get_all_responses
-    Response.where(map_id: map_id).all
-  end
-
   # returns the assignment related to the response map
   def response_assignment
     return Participant.find(self.reviewer_id).assignment
