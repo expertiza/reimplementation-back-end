@@ -10,7 +10,7 @@ class Response < ApplicationRecord
   alias map response_map
   delegate :questionnaire, :reviewee, :reviewer, to: :map
 
-  def significant_difference?
+  def reportable_difference?
     map_class = map.class
     # gets all responses made by a reviewee
     existing_responses = map_class.assessments_for(map.reviewee)
