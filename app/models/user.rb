@@ -7,12 +7,13 @@ class User < ApplicationRecord
                    format: { with: /\A[a-z]+\z/, message: 'must be in lowercase' }
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :password, length: { minimum: 6 }, presence: true, allow_nil: true
-  validates :fullname, presence: true, length: { maximum: 50 }
+  validates :full_name, presence: true, length: { maximum: 50 }
 
   belongs_to :role
   belongs_to :institution, optional: true
   belongs_to :parent, class_name: 'User', optional: true
   has_many :users, foreign_key: 'parent_id', dependent: :nullify
+  has_many :invitations
 
   scope :students, -> { where role_id: Role::STUDENT }
   scope :tas, -> { where role_id: Role::TEACHING_ASSISTANT }
@@ -27,15 +28,15 @@ class User < ApplicationRecord
   delegate :super_administrator?, to: :role
 
   def self.instantiate(record)
-    case record['role_id']
+    case record.role
     when Role::TEACHING_ASSISTANT
-      Ta.new(record)
+      record.becomes(Ta)
     when Role::INSTRUCTOR
-      Instructor.new(record)
+      record.becomes(Instructor)
     when Role::ADMINISTRATOR
-      Administrator.new(record)
+      record.becomes(Administrator)
     when Role::SUPER_ADMINISTRATOR
-      SuperAdministrator.new(record)
+      record.becomes(SuperAdministrator)
     else
       super
     end
@@ -86,9 +87,10 @@ class User < ApplicationRecord
   # that only the id, name, and email attributes should be included when a User object is serialized.
   def as_json(options = {})
     super(options.merge({
-                          only: %i[id name email fullname email_on_review email_on_submission
+                          only: %i[id name email full_name email_on_review email_on_submission
                                    email_on_review_of_review],
-                          include: {
+                          include:
+                          {
                             role: { only: %i[id name] },
                             parent: { only: %i[id name] },
                             institution: { only: %i[id name] }

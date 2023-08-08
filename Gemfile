@@ -18,6 +18,7 @@ gem 'rswag-ui'
 # Use Kredis to get higher-level data types in Redis [https://github.com/rails/kredis]
 # gem "kredis"
 
+gem 'jwt', '~> 2.7', '>= 2.7.1'
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 gem 'bcrypt', '~> 3.1.7'
 
@@ -37,10 +38,12 @@ gem 'find_with_order'
 
 group :development, :test do
   gem 'debug', platforms: %i[mri mingw x64_mingw]
-  gem 'rubocop'
-  gem 'simplecov', require: false, group: :test
+  gem 'factory_bot_rails'
+  gem 'faker'
   gem 'rspec-rails'
   gem 'rswag-specs'
+  gem 'rubocop'
+  gem 'simplecov', require: false, group: :test
 end
 
 group :development do

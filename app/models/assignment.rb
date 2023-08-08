@@ -1,5 +1,6 @@
 class Assignment < ApplicationRecord
   include MetricHelper
+  has_many :invitations
   has_many :questionnaires
 
   def review_questionnaire_id
