@@ -103,7 +103,7 @@ describe Response do
       question2 = double('ScoredQuestion', weight: 2)
       arr_question2 = [question2]
       allow(Question).to receive(:find_with_order).with([1]).and_return(arr_question2)
-      allow(question2).to receive(:is_a?).with(ScoredQuestion).and_return(true)
+      allow(question2).to receive(:scorable?).and_return(true)
       allow(questionnaire).to receive(:max_question_score).and_return(5)
       allow(review_response_map).to receive(:assignment).and_return(assignment)
 
