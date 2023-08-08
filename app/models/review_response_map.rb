@@ -5,6 +5,6 @@ class ReviewResponseMap < ResponseMap
 
   # returns the assignment related to the response map
   def response_assignment
-    return self.assignment
+    return assignment
   end
 end
