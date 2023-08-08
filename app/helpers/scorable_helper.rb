@@ -41,7 +41,7 @@ module ScorableHelper
     questions = Question.find_with_order(question_ids)
 
     scores.each_with_index do |score, idx|
-      total_weight += questions[idx].weight unless score.answer.nil? || !questions[idx].is_a?(ScoredQuestion)
+      total_weight += questions[idx].weight unless score.answer.nil? || !questions[idx].scorable?
     end
 
     questionnaire = if scores.empty?
