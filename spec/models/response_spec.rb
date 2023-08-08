@@ -15,11 +15,11 @@ describe Response do
 
   # Compare the current response score with other scores on the same artifact, and test if the difference is significant enough to notify
   # instructor.
-  describe '#significant_difference?' do
+  describe '#reportable_difference?' do
     context 'when count is 0' do
       it 'returns false' do
         allow(ReviewResponseMap).to receive(:assessments_for).with(team).and_return([response])
-        expect(response.significant_difference?).to be false
+        expect(response.reportable_difference?).to be false
       end
     end
 
@@ -34,7 +34,7 @@ describe Response do
           allow(response).to receive(:questionnaire_by_answer).with(answer).and_return(questionnaire)
           allow(AssignmentQuestionnaire).to receive(:find_by).with(assignment_id: 1, questionnaire_id: 1)
                                                              .and_return(double('AssignmentQuestionnaire', notification_limit: 5.0))
-          expect(response.significant_difference?).to be true
+          expect(response.reportable_difference?).to be true
         end
       end
     end
