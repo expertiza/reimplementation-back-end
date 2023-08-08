@@ -52,7 +52,7 @@ class Response < ApplicationRecord
     scores.each do |s|
       question = Question.find(s.question_id)
       # For quiz responses, the weights will be 1 or 0, depending on if correct
-      sum += s.answer * question.weight unless s.answer.nil? || !question.is_a?(ScoredQuestion)
+      sum += s.answer * question.weight unless s.answer.nil? || !question.scorable?
     end
     sum
   end
