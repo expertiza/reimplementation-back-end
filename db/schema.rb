@@ -11,6 +11,27 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[7.0].define(version: 2023_06_26_231828) do
+  create_table "answers", force: :cascade do |t|
+    t.integer "question_id", default: 0, null: false
+    t.integer "response_id"
+    t.integer "answer"
+    t.text "comments"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["question_id"], name: "fk_score_questions"
+    t.index ["response_id"], name: "fk_score_response"
+  end
+
+  create_table "assignment_questionnaires", force: :cascade do |t|
+    t.integer "assignment_id"
+    t.integer "questionnaire_id"
+    t.integer "notification_limit", default: 15, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "fk_aq_assignments_id"
+    t.index ["questionnaire_id"], name: "fk_aq_questionnaire_id"
+  end
+
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -98,6 +119,14 @@ ActiveRecord::Schema[7.0].define(version: 2023_06_26_231828) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "participants", force: :cascade do |t|
+    t.integer "user_id"
+    t.integer "parent_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "fk_participant_users"
+  end
+
   create_table "invitations", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.integer "assignment_id"
     t.integer "from_id"
@@ -123,6 +152,32 @@ ActiveRecord::Schema[7.0].define(version: 2023_06_26_231828) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "questions", force: :cascade do |t|
+    t.integer "weight"
+    t.integer "questionnaire_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["questionnaire_id"], name: "fk_question_questionnaires"
+  end
+
+  create_table "response_maps", force: :cascade do |t|
+    t.integer "reviewed_object_id", default: 0, null: false
+    t.integer "reviewer_id", default: 0, null: false
+    t.integer "reviewee_id", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["reviewer_id"], name: "fk_response_map_reviewer"
+  end
+
+  create_table "responses", force: :cascade do |t|
+    t.integer "map_id", default: 0, null: false
+    t.text "additional_comment"
+    t.boolean "is_submitted", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["map_id"], name: "fk_response_response_map"
+  end
+
   create_table "questions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.text "txt"
     t.integer "weight"
@@ -141,11 +196,15 @@ ActiveRecord::Schema[7.0].define(version: 2023_06_26_231828) do
 
   create_table "roles", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
-    t.bigint "parent_id"
+    t.integer "parent_id"
     t.integer "default_page_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["parent_id"], name: "fk_rails_4404228d2f"
+  end
+
+  create_table "teams", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "ta_mappings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|

@@ -1,12 +1,12 @@
 class Questionnaire < ApplicationRecord
-  has_many :questions, dependent: :restrict_with_error
+  belongs_to :assignment, foreign_key: 'assignment_id', inverse_of: false
   belongs_to :instructor
-
+  has_many :questions, dependent: :destroy # the collection of questions associated with this Questionnaire
   before_destroy :check_for_question_associations
 
   validate :validate_questionnaire
   validates :name, presence: true
-  validates :max_question_score, :min_question_score, numericality: true
+  validates :max_question_score, :min_question_score, numericality: true 
 
   # clones the contents of a questionnaire, including the questions and associated advice
   def self.copy_questionnaire_details(params)
