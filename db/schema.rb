@@ -10,28 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_06_26_231828) do
-  create_table "answers", force: :cascade do |t|
-    t.integer "question_id", default: 0, null: false
-    t.integer "response_id"
-    t.integer "answer"
-    t.text "comments"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["question_id"], name: "fk_score_questions"
-    t.index ["response_id"], name: "fk_score_response"
-  end
-
-  create_table "assignment_questionnaires", force: :cascade do |t|
-    t.integer "assignment_id"
-    t.integer "questionnaire_id"
-    t.integer "notification_limit", default: 15, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["assignment_id"], name: "fk_aq_assignments_id"
-    t.index ["questionnaire_id"], name: "fk_aq_questionnaire_id"
-  end
-
+ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -44,6 +23,27 @@ ActiveRecord::Schema[7.0].define(version: 2023_06_26_231828) do
     t.bigint "institution_id", null: false
     t.index ["institution_id"], name: "index_account_requests_on_institution_id"
     t.index ["role_id"], name: "index_account_requests_on_role_id"
+  end
+
+  create_table "answers", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "question_id", default: 0, null: false
+    t.integer "response_id"
+    t.integer "answer"
+    t.text "comments"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["question_id"], name: "fk_score_questions"
+    t.index ["response_id"], name: "fk_score_response"
+  end
+
+  create_table "assignment_questionnaires", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "assignment_id"
+    t.integer "questionnaire_id"
+    t.integer "notification_limit", default: 15, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "fk_aq_assignments_id"
+    t.index ["questionnaire_id"], name: "fk_aq_questionnaire_id"
   end
 
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -105,26 +105,19 @@ ActiveRecord::Schema[7.0].define(version: 2023_06_26_231828) do
     t.string "directory_path"
     t.text "info"
     t.boolean "private", default: false
-    t.integer "instructor_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "instructor_id", null: false
     t.bigint "institution_id", null: false
     t.index ["institution_id"], name: "index_courses_on_institution_id"
     t.index ["instructor_id"], name: "fk_course_users"
+    t.index ["instructor_id"], name: "index_courses_on_instructor_id"
   end
 
   create_table "institutions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-  end
-
-  create_table "participants", force: :cascade do |t|
-    t.integer "user_id"
-    t.integer "parent_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["user_id"], name: "fk_participant_users"
   end
 
   create_table "invitations", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -137,6 +130,16 @@ ActiveRecord::Schema[7.0].define(version: 2023_06_26_231828) do
     t.index ["assignment_id"], name: "fk_invitation_assignments"
     t.index ["from_id"], name: "fk_invitationfrom_users"
     t.index ["to_id"], name: "fk_invitationto_users"
+  end
+
+  create_table "participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "user_id"
+    t.bigint "assignment_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "index_participants_on_assignment_id"
+    t.index ["user_id"], name: "fk_participant_users"
+    t.index ["user_id"], name: "index_participants_on_user_id"
   end
 
   create_table "questionnaires", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -152,32 +155,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_06_26_231828) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "questions", force: :cascade do |t|
-    t.integer "weight"
-    t.integer "questionnaire_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["questionnaire_id"], name: "fk_question_questionnaires"
-  end
-
-  create_table "response_maps", force: :cascade do |t|
-    t.integer "reviewed_object_id", default: 0, null: false
-    t.integer "reviewer_id", default: 0, null: false
-    t.integer "reviewee_id", default: 0, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["reviewer_id"], name: "fk_response_map_reviewer"
-  end
-
-  create_table "responses", force: :cascade do |t|
-    t.integer "map_id", default: 0, null: false
-    t.text "additional_comment"
-    t.boolean "is_submitted", default: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["map_id"], name: "fk_response_response_map"
-  end
-
   create_table "questions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.text "txt"
     t.integer "weight"
@@ -188,23 +165,37 @@ ActiveRecord::Schema[7.0].define(version: 2023_06_26_231828) do
     t.boolean "break_before"
     t.string "max_label"
     t.string "min_label"
+    t.integer "questionnaire_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "questionnaire_id", null: false
-    t.index ["questionnaire_id"], name: "index_questions_on_questionnaire_id"
+    t.index ["questionnaire_id"], name: "fk_question_questionnaires"
+  end
+
+  create_table "response_maps", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "reviewed_object_id", default: 0, null: false
+    t.integer "reviewer_id", default: 0, null: false
+    t.integer "reviewee_id", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["reviewer_id"], name: "fk_response_map_reviewer"
+  end
+
+  create_table "responses", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "map_id", default: 0, null: false
+    t.text "additional_comment"
+    t.boolean "is_submitted", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["map_id"], name: "fk_response_response_map"
   end
 
   create_table "roles", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
-    t.integer "parent_id"
+    t.bigint "parent_id"
     t.integer "default_page_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-  end
-
-  create_table "teams", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.index ["parent_id"], name: "fk_rails_4404228d2f"
   end
 
   create_table "ta_mappings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -213,7 +204,13 @@ ActiveRecord::Schema[7.0].define(version: 2023_06_26_231828) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["course_id"], name: "index_ta_mappings_on_course_id"
+    t.index ["user_id"], name: "fk_ta_mapping_users"
     t.index ["user_id"], name: "index_ta_mappings_on_user_id"
+  end
+
+  create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -243,12 +240,14 @@ ActiveRecord::Schema[7.0].define(version: 2023_06_26_231828) do
     t.index ["role_id"], name: "index_users_on_role_id"
   end
 
-  add_foreign_key "courses", "institutions"
-  add_foreign_key "ta_mappings", "courses"
   add_foreign_key "account_requests", "institutions"
   add_foreign_key "account_requests", "roles"
-  add_foreign_key "questions", "questionnaires"
+  add_foreign_key "courses", "institutions"
+  add_foreign_key "courses", "users", column: "instructor_id"
+  add_foreign_key "participants", "assignments"
+  add_foreign_key "participants", "users"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
+  add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
   add_foreign_key "users", "institutions"
   add_foreign_key "users", "roles"
