@@ -30,6 +30,8 @@ Rails.application.routes.draw do
           get ':id/tas', action: :view_tas
           get ':id/remove_ta/:ta_id', action: :remove_ta
           get ':id/copy', action: :copy
+        end
+      end
 
       resources :questionnaires do
         collection do
