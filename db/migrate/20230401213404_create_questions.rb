@@ -13,7 +13,5 @@ class CreateQuestions < ActiveRecord::Migration[7.0]
 
       t.timestamps
     end
-    add_reference :questions, :questionnaire, null: false, foreign_key: true
-    add_index :questions, :questionnaire_id, name: :fk_question_questionnaires
   end
 end
