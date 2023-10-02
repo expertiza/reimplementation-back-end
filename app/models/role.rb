@@ -3,11 +3,13 @@ class Role < ApplicationRecord
   belongs_to :parent, class_name: 'Role', optional: true
   has_many :users, dependent: :nullify
 
-  STUDENT = find_by_name('Student')
-  INSTRUCTOR = find_by_name('Instructor')
-  ADMINISTRATOR = find_by_name('Administrator')
-  TEACHING_ASSISTANT = find_by_name('Teaching Assistant')
-  SUPER_ADMINISTRATOR = find_by_name('Super Administrator')
+  if Role.table_exists?
+    STUDENT = find_by_name('Student')
+    INSTRUCTOR = find_by_name('Instructor')
+    ADMINISTRATOR = find_by_name('Administrator')
+    TEACHING_ASSISTANT = find_by_name('Teaching Assistant')
+    SUPER_ADMINISTRATOR = find_by_name('Super Administrator')
+  end
 
   def super_administrator?
     name['Super Administrator']

@@ -27,9 +27,11 @@ FactoryBot.define do
     name {'North Carolina State University'}
   end
 
-  factory :role_of_instructor, class: Role do
-    name {'Instructor'}
-    parent_id {nil}
+  if ActiveRecord::Base.connection.table_exists?(:roles)
+    factory :role_of_instructor, class: Role do
+      name { 'Instructor' }
+      parent_id { nil }
+    end
   end
 
   factory :instructor, class: Instructor do
