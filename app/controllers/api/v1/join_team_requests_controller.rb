@@ -15,13 +15,15 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
 
   # POST /join_team_requests
   def create
-    @join_team_request = JoinTeamRequest.new(join_team_request_params)
 
-    if @join_team_request.save
-      render json: @join_team_request, status: :created, location: @join_team_request
-    else
-      render json: @join_team_request.errors, status: :unprocessable_entity
-    end
+    @join_team_request = JoinTeamRequest.new(join_team_request_params)
+    render json: @join_team_request, status: :created
+
+    # if @join_team_request.save
+    #   render json: @join_team_request, status: :created, location: @join_team_request
+    # else
+    #   render json: @join_team_request.errors, status: :unprocessable_entity
+    # end
   end
 
   # PATCH/PUT /join_team_requests/1
@@ -45,8 +47,14 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
     @join_team_request = JoinTeamRequest.find(params[:id])
   end
 
+
+  private 
+
+
   # Only allow a list of trusted parameters through.
   def join_team_request_params
-    params.fetch(:join_team_request, {})
+    # params.fetch(:join_team_request, {})
+    params.require(:join_team_request).permit(:id, :team)
+
   end
 end
