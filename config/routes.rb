@@ -58,9 +58,12 @@ Rails.application.routes.draw do
 
       resources :join_team_requests do
         collection do
-          get '/join_team_requests', to: 'join_team_requests#index'
+          post 'decline/:id', to:'join_team_requests#decline'
+          post 'accept/:id', to:'join_team_requests#accept'
         end
       end
+
+
 
       resources :sign_up_topics do
         collection do
