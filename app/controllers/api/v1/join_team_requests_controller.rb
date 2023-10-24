@@ -40,20 +40,20 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
     @join_team_request.team_id = params[:team_id]
 
     # How to test the following lines given no teams table
-    # participant = Participant.where(user_id: session[:user][:id], parent_id: params[:assignment_id]).first
-    # team = Team.find(params[:team_id])
-    #
-    # if team.participants.include?(participant)
-    #   render json: { error: 'You already belong to the team' }, status: :unprocessable_entity
-    # else
-    #   @join_team_request.participant_id = participant.id
-      @join_team_request.participant_id = 1
+    participant = Participant.where(user_id: session[:user][:id], parent_id: params[:assignment_id]).first
+    team = Team.find(params[:team_id])
+
+    if team.participants.include?(participant)
+      render json: { error: 'You already belong to the team' }, status: :unprocessable_entity
+    else
+      @join_team_request.participant_id = participant.id
+      # @join_team_request.participant_id = 1
       if @join_team_request.save
         render json: @join_team_request, status: :created
       else
         render json: { errors: @join_team_request.errors.full_messages }, status: :unprocessable_entity
       end
-    # end
+    end
   end
 
   # PATCH/PUT api/v1/join_team_requests/1
