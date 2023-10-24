@@ -1,30 +1,57 @@
 require 'rails_helper'
 RSpec.describe Api::V1::JoinTeamRequestsController, type: :controller do
-
-describe "#action_allowed?" do
-  context "when the current role is 'Student'" do
-    it "returns true" do
-      # test body
-    end
+  before do
+    sign_in user
   end
+# describe "#action_allowed?" do
+#   context "when the current role is 'Student'" do
+#     it "returns true" do
+#       # test body
+#     end
+#   end
 
-  context "when the current role is not 'Student'" do
-    it "returns false" do
-      # test body
-    end
-  end
-end
+#   context "when the current role is not 'Student'" do
+#     it "returns false" do
+#       # test body
+#     end
+#   end
+# end
 describe "index" do
-  it "returns all join team requests" do
+  it "returns all join team requests when there are no requests in the database" do
     # Test scenario 1
     # Given: There are no join team requests in the database
     # When: The index method is called
     # Then: An empty array of join team requests is returned
 
+    # Ensure the database is empty
+    JoinTeamRequest.destroy_all
+
+    get :index
+
+    # Expect an HTTP success response (e.g., 200 OK)
+    expect(response).to have_http_status(:success)
+
+    # Expect an empty array of join team requests
+    expect(JSON.parse(response.body)).to be_empty
+  end
+
+  it "returns all join team requests when there are requests in the database" do
     # Test scenario 2
     # Given: There are multiple join team requests in the database
     # When: The index method is called
     # Then: An array containing all join team requests is returned
+
+    # Create some sample join team requests in the database
+    join_team_requests = create_list(:join_team_request, 3)
+
+    get :index
+
+    # Expect an HTTP success response (e.g., 200 OK)
+    expect(response).to have_http_status(:success)
+
+    # Expect an array containing all join team requests
+    expect(JSON.parse(response.body).count).to eq(join_team_requests.count)
+
   end
 
   it "responds after retrieving join team requests" do
