@@ -6,10 +6,11 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   ACCEPTED = 'A'
 
 
+  # TODO Once the check_team_status is implemented uncomment this line
   # before_action :check_team_status, only: [:create]
   before_action :find_request, only: %i[show update destroy decline]
 
-  # From Original Controller - do we include it? If so how?
+  # TODO Uncomment this code when authorization is implemented
   # include AuthorizationHelper
   # def action_allowed?
   #     current_user_has_student_privileges?
@@ -17,7 +18,7 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
 
   # GET api/v1/join_team_requests
   def index
-    # Logic from original controller
+    # TODO Check if the user has admin privileges before allowing them access to the route
     # unless current_user_has_admin_privileges?
     #   render json: { errors: 'Unauthorized' }, status: :unauthorized
     # end
@@ -39,13 +40,17 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
     @join_team_request.status = PENDING
     @join_team_request.team_id = params[:team_id]
 
-    # How to test the following lines given no teams table
-    participant = Participant.where(user_id: session[:user][:id], parent_id: params[:assignment_id]).first
+    # TODO
+    # TODO participant = Participant.where(user_id: session[:user][:id], parent_id: params[:assignment_id]).first
+    # TODO Use this  above line when session is implemented and assignments are implemented
+    participant = Participant.where(user_id: 2).first
     team = Team.find(params[:team_id])
 
-    if team.participants.include?(participant)
-      render json: { error: 'You already belong to the team' }, status: :unprocessable_entity
-    else
+    # TODO
+    # TODO Once the Team controller and model is complete, this line of code will be necessary to check whether participant is part of team or not.
+    # if team.participants.include?(participant)
+    #   render json: { error: 'You already belong to the team' }, status: :unprocessable_entity
+    # else
       @join_team_request.participant_id = participant.id
       # @join_team_request.participant_id = 1
       if @join_team_request.save
@@ -53,7 +58,7 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
       else
         render json: { errors: @join_team_request.errors.full_messages }, status: :unprocessable_entity
       end
-    end
+    # end
   end
 
   # PATCH/PUT api/v1/join_team_requests/1
@@ -92,8 +97,13 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
 
   private
 
+  # TODO
+  # TODO Uncomment and modify this code as necessary when Team and Team controller is complete
+  # TODO It Checks if the request is from a team member and if so, disallow requesting invitations
+  # TODO It also ensures a team isn't full before joining and requesting user isn't already a part of the team
+  #
   # def check_team_status
-  #   # Check if the advertisement is from a team member and if so, disallow requesting invitations
+  #
   #   team_member = TeamsUser.where(['team_id = ? and user_id = ?', params[:team_id], session[:user][:id]])
   #   team = Team.find(params[:team_id])
   #

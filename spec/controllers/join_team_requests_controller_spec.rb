@@ -1,4 +1,6 @@
-describe JoinTeamRequestsController do
+require 'rails_helper'
+RSpec.describe Api::V1::JoinTeamRequestsController, type: :controller do
+
 describe "#action_allowed?" do
   context "when the current role is 'Student'" do
     it "returns true" do
