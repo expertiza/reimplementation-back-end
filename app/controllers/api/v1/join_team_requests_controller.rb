@@ -6,7 +6,7 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   ACCEPTED = 'A'
 
 
-  # TODO Once the check_team_status is implemented uncomment this line
+  # TODO Once the check_team_status is implemented below, uncomment this line
   # before_action :check_team_status, only: [:create]
   before_action :find_request, only: %i[show update destroy decline]
 
