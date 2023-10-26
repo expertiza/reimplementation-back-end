@@ -23,6 +23,16 @@ Rails.application.routes.draw do
         end
       end
       resources :assignments
+      resources :participants, only: [:destroy] do
+        collection do
+          get 'index/:model/:id', to: 'participants#index'
+          post ':model/:id', to: 'participants#create'
+          patch 'update_handle/:id', to: 'participants#update_handle'
+          patch 'update_authorization/:id', to: 'participants#update_authorization'
+          get 'inherit/:id', to: 'participants#inherit'
+          get 'bequeath/:id', to: 'participants#bequeath'
+        end
+      end
 
       resources :courses do
         collection do
@@ -64,6 +74,8 @@ Rails.application.routes.draw do
       resources :invitations do
         get 'user/:user_id/assignment/:assignment_id/', on: :collection, action: :invitations_for_user_assignment
       end
+      
+      
 
       resources :account_requests do
         collection do
