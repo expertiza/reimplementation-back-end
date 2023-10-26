@@ -1,20 +1,17 @@
 class Api::V1::ParticipantsController < ApplicationController
-
   # GET /participants/index/:model/:id
   # params - model: "Course" or "Assignment", id: id of the corresponsing model object
   # returns a list of participants of an assignment or a course
   def index
-    begin
-      model_object = Object.const_get(params[:model]).find(params[:id].to_i)
-      participants = model_object.participants
+    model_object = Object.const_get(params[:model]).find(params[:id].to_i)
+    participants = model_object.participants
 
-      render json: {
-        "model_object": model_object,
-        "participants": participants,
-      }, status: :ok
-    rescue
-      render json: { error: "Invalid required parameters" }, status: :unprocessable_entity
-    end
+    render json: {
+      "model_object": model_object,
+      "participants": participants
+    }, status: :ok
+  rescue StandardError
+    render json: { error: 'Invalid required parameters' }, status: :unprocessable_entity
   end
 
   # POST /participants/:model/:id
@@ -31,11 +28,12 @@ class Api::V1::ParticipantsController < ApplicationController
 
     queried_participant = model_object.participants.find_by(user_id: user.id)
     if queried_participant.present?
-      render json: { error: "Participant #{params[:user][:name]} already exists for this #{params[:model]}" }, status: :ok
+      render json: { error: "Participant #{params[:user][:name]} already exists for this #{params[:model]}" },
+             status: :ok
       return
     end
 
-    permissions =   {
+    permissions = {
       can_submit: params[:participant][:can_submit],
       can_review: params[:participant][:can_review],
       can_take_quiz: params[:participant][:can_take_quiz]
@@ -47,7 +45,7 @@ class Api::V1::ParticipantsController < ApplicationController
       participant = model_object.add_participant(params[:user][:name])
     end
 
-    render json: { participant: participant }, status: :created
+    render json: { participant: }, status: :created
   end
 
   # PATCH /participants/update_handle/:id
@@ -56,12 +54,12 @@ class Api::V1::ParticipantsController < ApplicationController
   def update_handle
     participant = AssignmentParticipant.find(params[:id].to_i)
     if participant.handle == params[:participant][:handle]
-      render json: { note: "Handle already in use" }, status: :ok
+      render json: { note: 'Handle already in use' }, status: :ok
       return
     end
 
     if participant.update(participant_params)
-      render json: { participant: participant }, status: :ok
+      render json: { participant: }, status: :ok
     else
       render json: { error: participant.errors }, status: :unprocessable_entity
     end
@@ -72,10 +70,10 @@ class Api::V1::ParticipantsController < ApplicationController
   # updates the permissions in an assignment or a course based on the participant role
   def update_authorization
     participant = Participant.find(params[:id].to_i)
-    if participant.update(  can_submit: params[:participant][:can_submit],
-                            can_review: params[:participant][:can_review],
-                            can_take_quiz: params[:participant][:can_take_quiz]  )
-      render json: { participant: participant }, status: :ok
+    if participant.update(can_submit: params[:participant][:can_submit],
+                          can_review: params[:participant][:can_review],
+                          can_take_quiz: params[:participant][:can_take_quiz])
+      render json: { participant: }, status: :ok
     else
       render json: { error: participant.errors }, status: :unprocessable_entity
     end
@@ -87,9 +85,9 @@ class Api::V1::ParticipantsController < ApplicationController
   def destroy
     participant = Participant.find(params[:id].to_i)
     begin
-      participant.delete()
+      participant.delete(false)
       render json: { message: "#{participant.user.name} was successfully removed as a participant" }, status: :ok
-    rescue => e
+    rescue StandardError => e
       render json: { error: e }, status: :unprocessable_entity
     end
   end
@@ -111,11 +109,11 @@ class Api::V1::ParticipantsController < ApplicationController
   private
 
   # copies existing participants from source to target
-  def copy_participants_from_source_to_target(assignment_id, direction)
+  def copy_participants_from_source_to_target(_assignment_id, direction)
     assignment = Assignment.find(params[:id].to_i)
     course = assignment.course
     if course.nil?
-      render json: { error: "No course was found for this assignment" }, status: :unprocessable_entity
+      render json: { error: 'No course was found for this assignment' }, status: :unprocessable_entity
       return
     end
 
