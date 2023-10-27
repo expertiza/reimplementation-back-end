@@ -1,6 +1,6 @@
 class Api::V1::ParticipantsController < ApplicationController
   # GET /participants/index/:model/:id
-  # params - model: "Course" or "Assignment", id: id of the corresponsing model object
+  # params - model: "Course" or "Assignment", id: id of the corresponding model object
   # returns a list of participants of an assignment or a course
   def index
     model_object = Object.const_get(params[:model]).find(params[:id].to_i)
@@ -15,7 +15,7 @@ class Api::V1::ParticipantsController < ApplicationController
   end
 
   # POST /participants/:model/:id
-  # params - model: "Course" or "Assignment", id: id of the corresponsing model object
+  # params - model: "Course" or "Assignment", id: id of the corresponding model object
   # creates a participant in an assignment or a course
   def create
     user = User.find_by(name: params[:user][:name])
@@ -85,7 +85,7 @@ class Api::V1::ParticipantsController < ApplicationController
   def destroy
     participant = Participant.find(params[:id].to_i)
     begin
-      participant.delete(false)
+      participant.delete(false)  # Specify 'false' to avoid accidental deletion
       render json: { message: "#{participant.user.name} was successfully removed as a participant" }, status: :ok
     rescue StandardError => e
       render json: { error: e }, status: :unprocessable_entity
