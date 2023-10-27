@@ -9,6 +9,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :institutions
+      resources :quiz_questionnaires
       resources :roles do
         collection do
           # Get all roles that are subordinate to a role of a logged in user

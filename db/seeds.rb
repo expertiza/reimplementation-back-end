@@ -5,3 +5,7 @@
 #
 #   movies = Movie.create([{ name: "Star Wars" }, { name: "Lord of the Rings" }])
 #   Character.create(name: "Luke", movie: movies.first)
+role = Role.find(2)
+Role.create(name: "xxx", parent_id: 1).save
+user = User.create(name: "admin", full_name: "admin", role_id: 2, institution_id: 1)
+user.save
