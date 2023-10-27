@@ -96,20 +96,20 @@ class Api::V1::ParticipantsController < ApplicationController
   # params - id: id of the assignment
   # copies existing participants from a course down to its assignment
   def inherit
-    copy_participants_from_source_to_target(params[:id], :course_to_assignment)
+    copy_participants(params[:id], :course_to_assignment)
   end
 
   # GET /participants/bequeath/:id
   # params - id: id of the assignment
   # copies existing participants from an assignment up to its course
   def bequeath
-    copy_participants_from_source_to_target(params[:id], :assignment_to_course)
+    copy_participants(params[:id], :assignment_to_course)
   end
 
   private
 
-  # copies existing participants from source to target
-  def copy_participants_from_source_to_target(_assignment_id, direction)
+  # Copies existing participants from source to target
+  def copy_participants(_model_id, direction)
     assignment = Assignment.find(params[:id].to_i)
     course = assignment.course
     if course.nil?
