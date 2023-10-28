@@ -22,7 +22,12 @@ Rails.application.routes.draw do
           get 'role/:name', action: :role_users
         end
       end
-      resources :assignments
+      resources :assignments do
+        collection do
+          post '/:assignment_id/add_participant',action: :add_participant
+          post '/:assignment_id/remove_participant/:user_id',action: :remove_participant
+        end
+      end
 
       resources :courses do
         collection do

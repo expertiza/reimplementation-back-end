@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_10_27_005159) do
+ActiveRecord::Schema[7.0].define(version: 2023_10_28_014322) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -137,7 +137,11 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_27_005159) do
     t.bigint "assignment_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "can_submit", default: true
+    t.boolean "can_review", default: true
     t.string "handle"
+    t.boolean "permission_granted"
+    t.boolean "can_take_quiz"
     t.index ["assignment_id"], name: "index_participants_on_assignment_id"
     t.index ["user_id"], name: "fk_participant_users"
     t.index ["user_id"], name: "index_participants_on_user_id"
@@ -237,9 +241,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_27_005159) do
     t.bigint "institution_id"
     t.bigint "role_id", null: false
     t.bigint "parent_id"
-    t.boolean "can_submit"
-    t.boolean "can_review"
-    t.boolean "can_take_quiz"
     t.index ["institution_id"], name: "index_users_on_institution_id"
     t.index ["parent_id"], name: "index_users_on_parent_id"
     t.index ["role_id"], name: "index_users_on_role_id"

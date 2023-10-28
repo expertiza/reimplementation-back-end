@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class AssignmentParticipant < Participant
-  belongs_to  :assignment, class_name: 'Assignment', foreign_key: 'parent_id'
+  belongs_to  :assignment, class_name: 'Assignment', foreign_key: 'assignment_id'
   belongs_to :user
   validates :handle, presence: true
 
@@ -14,7 +14,7 @@ class AssignmentParticipant < Participant
                   else
                     user.handle
                   end
-    save!
+    self.save
   end
 
 end
