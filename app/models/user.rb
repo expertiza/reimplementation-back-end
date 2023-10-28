@@ -14,6 +14,7 @@ class User < ApplicationRecord
   belongs_to :parent, class_name: 'User', optional: true
   has_many :users, foreign_key: 'parent_id', dependent: :nullify
   has_many :invitations
+  has_many :assignments, through: :participants
 
   scope :students, -> { where role_id: Role::STUDENT }
   scope :tas, -> { where role_id: Role::TEACHING_ASSISTANT }
@@ -109,4 +110,5 @@ class User < ApplicationRecord
     self.email_on_review_of_review ||= false
     self.etc_icons_on_homepage ||= true
   end
+
 end

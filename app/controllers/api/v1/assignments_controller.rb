@@ -11,6 +11,18 @@ class Api::V1::AssignmentsController < ApplicationController
     render json: assignment
   end
 
+  def add_participant
+    assignment = Assignment.find(params[:assignment_id])
+    assignment.add_participant(true,true,true)
+  end
+
+  def remove_participant
+    #user = User.find_by(id: @current_user.id)
+    user = User.find_by(id: 4)
+    assignment = Assignment.find(params[:assignment_id])
+    assignment.remove_participant(assignment.id, user.id)
+  end
+
   # POST /api/v1/assignments
   def create
     assignment = Assignment.new(assignment_params)
