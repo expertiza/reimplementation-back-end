@@ -7,15 +7,18 @@
 #   Character.create(name: "Luke", movie: movies.first)
 
 
-# institutions = Institution.where(name: "NCSU")
-# institution_id = institutions.first.id
-#
-# if institutions.count > 0
-#   Institution.create(name: "NCSU").save!
-# end
+institutions = Institution.where(name: "NCSU")
+institution_id = institutions.first.id
 
+if institutions.count == 0
+  Institution.create(name: "NCSU").save!
+end
 
-# User.create(name: "admin", full_name: "admin", email: "admin@gmail.com", password_digest: "admin", role_id: 2, institution_id: 2).save!
+users = User.where(name: "admin")
+
+if users.count == 0
+  ser.create(name: "admin", full_name: "admin", email: "admin@gmail.com", password_digest: "admin", role_id: 2, institution_id: 2).save!
+end
 
 
 # if ENV['UNDO_SEED']
