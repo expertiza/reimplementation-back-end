@@ -5,7 +5,21 @@
 #
 #   movies = Movie.create([{ name: "Star Wars" }, { name: "Lord of the Rings" }])
 #   Character.create(name: "Luke", movie: movies.first)
-role = Role.find(2)
-Role.create(name: "xxx", parent_id: 1).save
-user = User.create(name: "admin", full_name: "admin", role_id: 2, institution_id: 1)
-user.save
+
+
+# institutions = Institution.where(name: "NCSU")
+# institution_id = institutions.first.id
+#
+# if institutions.count > 0
+#   Institution.create(name: "NCSU").save!
+# end
+
+
+# User.create(name: "admin", full_name: "admin", email: "admin@gmail.com", password_digest: "admin", role_id: 2, institution_id: 2).save!
+
+
+# if ENV['UNDO_SEED']
+#   Institution.where(name: ['NCSU']).destroy_all
+#   User.where(name: ['admin']).destroy_all
+# end
+#UNDO_SEED=true rails db:seed
