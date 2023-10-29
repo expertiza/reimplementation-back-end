@@ -26,6 +26,8 @@ Rails.application.routes.draw do
         collection do
           post '/:assignment_id/add_participant',action: :add_participant
           post '/:assignment_id/remove_participant/:user_id',action: :remove_participant
+          post '/:assignment_id/remove_assignment_from_course',action: :remove_assignment_from_course
+          post '/:assignment_id/assign_courses_to_assignment/:course_id',action: :assign_courses_to_assignment
         end
       end
 

@@ -101,4 +101,24 @@ class Assignment < ApplicationRecord
     end
   end
 
+  def remove_assignment_from_course(assignment_id)
+    assignment = Assignment.where(id: assignment_id).first
+    if assignment
+      assignment.course_id = nil
+    else
+      raise "Cannot find Assignment."
+    end
+    save
+  end
+
+  def assign_courses_to_assignment(assignment_id, course_id)
+    assignment = Assignment.where(id: assignment_id).first
+    course = Course.where(id: course_id).first
+    if assignment && course
+      assignment.update(course_id: course_id)
+    else
+      raise "Cannot find Assignment or Course."
+    end
+  end
+
 end

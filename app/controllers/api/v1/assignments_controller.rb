@@ -23,6 +23,17 @@ class Api::V1::AssignmentsController < ApplicationController
     assignment.remove_participant(assignment.id, user.id)
   end
 
+  def remove_assignment_from_course
+    assignment = Assignment.find(params[:assignment_id])
+    assignment.remove_assignment_from_course(assignment.id)
+  end
+
+  def assign_courses_to_assignment
+    assignment = Assignment.find(params[:assignment_id])
+    course = Course.find(params[:course_id])
+    assignment.assign_courses_to_assignment(assignment.id, course.id)
+  end
+
   # POST /api/v1/assignments
   def create
     assignment = Assignment.new(assignment_params)
