@@ -63,7 +63,10 @@ class Api::V1::TeamsAssignmentController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def team_assignment_params
-    params.require(:team_assignment).permit(:name)
+    params.require(:team_assignment).permit(
+        :name, :parent_id, :type, :comments_for_advertisement, :advertise_for_partner, :submitted_hyperlinks,
+        :directory_num, :comment_for_submission, :pair_programming_request
+    )
   end
 
   def team_assignment_not_found
