@@ -1,11 +1,17 @@
-# Expertiza Backend Re-Implementation
+# E2370 Join Team Requests Controller (Expertiza Backend Re-Implementation)
+![GitHub top language](https://img.shields.io/github/languages/top/manoj-ayyappan/csc517_program3_E2370)
+![GitHub contributors](https://img.shields.io/github/contributors/manoj-ayyappan/csc517_program3_E2370)
+![GitHub repo size](https://img.shields.io/github/repo-size/manoj-ayyappan/csc517_Program3_E2370)
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
 
-Things you may want to cover:
+These are the requirements for the project - 
 
 * Ruby version - 3.2.1
+* Rails version - 7.0.4.2
+
+These links mey help you to install Ruby and Ruby on Rails on your Mac
+1. Ruby on Rails guide 1 [Clicke here](https://mac.install.guide/rubyonrails/5.html)
+2. Ruby on Rails guide 2 [Clicke here](https://mac.install.guide/rubyonrails/7.html)
 
 ## Development Environment
 
@@ -26,4 +32,12 @@ alt="IMAGE ALT TEXT HERE" width="560" height="315" border="10" /></a>
 
 ### Database Credentials
 - username: root
-- password: expertiza 
+- password: expertiza
+
+### Work done
+
+
+### Team
+1. Manoj Ayyappan
+2. Pradeep Patil
+3. Maya Patel
