@@ -2,6 +2,7 @@
 ![GitHub top language](https://img.shields.io/github/languages/top/manoj-ayyappan/csc517_program3_E2370)
 ![GitHub contributors](https://img.shields.io/github/contributors/manoj-ayyappan/csc517_program3_E2370)
 ![GitHub repo size](https://img.shields.io/github/repo-size/manoj-ayyappan/csc517_Program3_E2370)
+<img src=https://img.shields.io/badge/License-MIT-red></img>
 
 
 These are the requirements for the project - 
