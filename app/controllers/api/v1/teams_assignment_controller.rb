@@ -67,6 +67,7 @@ class Api::V1::TeamsAssignmentController < ApplicationController
   end
 
   def team_assignment_not_found
+    render json: { error: "Team assignment with id #{params[:id]} not found" }, status: :not_found
   end
 
   def parameter_missing
