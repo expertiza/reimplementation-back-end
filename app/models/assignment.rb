@@ -114,7 +114,9 @@ class Assignment < ApplicationRecord
   def assign_courses_to_assignment(assignment_id, course_id)
     assignment = Assignment.where(id: assignment_id).first
     course = Course.where(id: course_id).first
-    if assignment && course
+    if assignment.course_id == course.id
+      raise "The assignment already belongs to this course id."
+    elsif  assignment && course
       assignment.update(course_id: course_id)
     else
       raise "Cannot find Assignment or Course."
