@@ -65,7 +65,11 @@ Rails.application.routes.draw do
         get 'user/:user_id/assignment/:assignment_id/', on: :collection, action: :invitations_for_user_assignment
       end
 
-      resources :quiz_questionnaires
+      resources :quiz_questionnaires do
+        collection do
+          post 'copy/:id', to: 'quiz_questionnaires#copy', as: 'copy'
+        end
+      end
 
       resources :account_requests do
         collection do

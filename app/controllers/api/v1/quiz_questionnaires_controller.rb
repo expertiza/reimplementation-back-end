@@ -1,5 +1,10 @@
 class Api::V1::QuizQuestionnairesController < ApplicationController
 
+  def index
+    @quiz_questionnaires = Questionnaire.where(questionnaire_type: 'Quiz Questionnaire').order(:id)
+    render json: @quiz_questionnaires, status: :ok and return
+  end
+
   def show
     begin
       @questionnaire = Questionnaire.find(params[:id])
@@ -11,25 +16,26 @@ class Api::V1::QuizQuestionnairesController < ApplicationController
 
   def create
     begin
-      # render json: params, status: :accepted and return
 
       @assignment_id = params[:assignmnet_id] # creating an instance variable to hold the assignment id
       @participant_id = params[:participant_id] # creating an instance variable to hold the participant id
-      @team_id = params[:team_id]
+      @team_id = params[:team_id] # creating an instance variable to hold the team id
+      @user_id = params[:user_id]
+
+      if check_privilege(@user_id) == false
+        err = 'You do not have the required permission'
+        render json: err, status: :unprocessable_entity and return
+      end
 
       assignment = Assignment.find(@assignment_id)
-
-      # render json: assignment, status: :created and return
 
       if assignment.require_quiz?
         valid_request = team_valid?(@team_id, @participant_id) # check for validity of the request
       else
-        @err = 'This assignment is not configured to use quizzes.'
-        render json: @err, status: :bad_request
+        err = 'This assignment is not configured to use quizzes.'
+        render json: err, status: :unprocessable_entity and return
         valid_request = false
       end
-
-      # render json: valid_request, status: :accepted and return
 
       if valid_request && check_questionnaire_type(params[:questionnaire_type])
 
@@ -51,20 +57,21 @@ class Api::V1::QuizQuestionnairesController < ApplicationController
         end
 
       else
-        @err = 'Validation Errors.'
-        render json: @err, status: :bad_request
+        err = 'Validation Errors.'
+        render json: err, status: :unprocessable_entity and return
       end
 
     end
-
   end
 
-  def team_valid?(team_id, participant_id)
-    participantTeamID = Participant.find(participant_id).team_id
-    team_id.eql?(participantTeamID)
+  def update
+    @questionnaire = Questionnaire.find(params[:id])
+    if @questionnaire.update(questionnaire_params)
+      render json: @questionnaire, status: :ok and return
+    else
+      render json: @questionnaire.errors.full_messages, status: :unprocessable_entity and return
+    end
   end
-
-  #
 
   def destroy
     begin
@@ -75,113 +82,31 @@ class Api::V1::QuizQuestionnairesController < ApplicationController
     end
   end
 
-  def update
-    @questionnaire = Questionnaire.find(params[:id])
-    if @questionnaire.update(questionnaire_params)
-      render json: @questionnaire, status: :ok
-    else
-      render json: @questionnaire.errors.full_messages, status: :unprocessable_entity
+  def copy
+    begin
+      @questionnaire = Questionnaire.copy_questionnaire_details(params)
+      render json: @questionnaire, status: :ok and return
+    rescue ActiveRecord::RecordNotFound
+      render json: $ERROR_INFO.to_s, status: :not_found and return
+    rescue ActiveRecord::RecordInvalid
+      render json: $ERROR_INFO.to_s, status: :unprocessable_entity
     end
   end
 
 
-
-
-  # def update
-    #   begin
-    #     @questionnaire = Questionnaire.find(params[:id])
-    #
-    #     if @questionnaire.nil?
-    #       @err = 'Empty Questionnaire, make sure the correct ID is sent.'
-    #       render json: @err, status: :bad_request and return
-    #     end
-    #
-    #     if @questionnaire.taken_by_anyone?
-    #       @err = 'Your quiz has been taken by one or more students; you cannot edit it anymore.'
-    #       render json: @err, status: :bad_request and return
-    #     end
-    #     # quiz can be edited only if its not taken by anyone
-    #     @assignment_id = params[:assignmnetID] # creating an instance variable to hold the assignment id
-    #     @participant_id = params[:participantID] # creating an instance variable to hold the participant id
-    #     @team_id = params[:teamID]
-    #
-    #     user = User.find(Participant.find(@participant_id))
-    #     role = Role.find(user.role_id)
-    #
-    #     if role.eql?("Student") || role.eql?("Administrator")
-    #       if @questionnaire.update(questionnaire_params)
-    #
-    #         params[:question].each_pair do |qid, _|
-    #           @question = Question.find(qid)
-    #           @question.txt = params[:question][qid.to_sym][:txt]
-    #           @question.weight = params[:question_weights][qid.to_sym][:txt]
-    #           @question.save
-    #           @quiz_question_choices = QuizQuestionChoice.where(question_id: qid)
-    #           question_index = 1
-    #           @quiz_question_choices.each do |question_choice|
-    #             # Updates state of each question choice for selected question
-    #             # Call private methods to handle question types
-    #             update_checkbox(question_choice, question_index) if @question.type == 'MultipleChoiceCheckbox'
-    #             update_radio(question_choice, question_index) if @question.type == 'MultipleChoiceRadio'
-    #             update_truefalse(question_choice) if @question.type == 'TrueFalse'
-    #             question_index += 1
-    #           end
-    #         end
-    #         render json: @questionnaire, status: :ok
-    #       else
-    #         render json: @questionnaire.errors.full_messages, status: :unprocessable_entity
-    #       end
-    #
-    #     else
-    #       @err = 'You do not have the permission to edit this questionnaire.'
-    #       render json: @err, status: :bad_request
-    #     end
-    #
-    #   end
-    # end
-
-  # def update_checkbox(question_choice, question_index)
-  #   if params[:quiz_question_choices][@question.id.to_s][@question.type][question_index.to_s]
-  #     question_choice.update_attributes(
-  #       iscorrect: params[:quiz_question_choices][@question.id.to_s][@question.type][question_index.to_s][:iscorrect],
-  #       txt: params[:quiz_question_choices][@question.id.to_s][@question.type][question_index.to_s][:txt]
-  #     )
-  #   else
-  #     question_choice.update_attributes(
-  #       iscorrect: '0',
-  #       txt: params[:quiz_question_choices][question_choice.id.to_s][:txt]
-  #     )
-  #   end
-  # end
-  #
-  # # update radio item
-  # def update_radio(question_choice, question_index)
-  #   if params[:quiz_question_choices][@question.id.to_s][@question.type][:correctindex] == question_index.to_s
-  #     question_choice.update_attributes(
-  #       iscorrect: '1',
-  #       txt: params[:quiz_question_choices][@question.id.to_s][@question.type][question_index.to_s][:txt]
-  #     )
-  #   else
-  #     question_choice.update_attributes(
-  #       iscorrect: '0',
-  #       txt: params[:quiz_question_choices][@question.id.to_s][@question.type][question_index.to_s][:txt]
-  #     )
-  #   end
-  # end
-  #
-  # # update true/false item
-  # def update_truefalse(question_choice)
-  #   if params[:quiz_question_choices][@question.id.to_s][@question.type][1.to_s][:iscorrect] == 'True' # the statement is correct
-  #     question_choice.txt == 'True' ? question_choice.update_attributes(iscorrect: '1') : question_choice.update_attributes(iscorrect: '0')
-  #     # the statement is correct so "True" is the right answer
-  #   else
-  #     # the statement is not correct
-  #     question_choice.txt == 'True' ? question_choice.update_attributes(iscorrect: '0') : question_choice.update_attributes(iscorrect: '1')
-  #     # the statement is not correct so "False" is the right answer
-  #   end
-  # end
-
   private
+
+  def check_privilege(user_id)
+    role_id = User.find(user_id).role_id
+    role = Role.find(role_id).name
+
+    role.eql?('Student') or role.eql?('Administrator') or role.eql?('Super Administrator')
+  end
+
+  def team_valid?(team_id, participant_id)
+    participantTeamID = Participant.find(participant_id).team_id
+    team_id.eql?(participantTeamID)
+  end
 
   def questionnaire_params
     params.require(:quiz_questionnaire).permit(:name, :questionnaire_type, :private, :min_question_score, :max_question_score, :instructor_id, :assignment_id)
