@@ -1,7 +1,7 @@
 class Question < ApplicationRecord
   before_create :set_seq
   belongs_to :questionnaire # each question belongs to a specific questionnaire
-  has_many :answers, dependent: :destroy
+  has_many :answer, dependent: :destroy
   
   validates :seq, presence: true, numericality: true # sequence must be numeric
   validates :txt, length: { minimum: 0, allow_nil: false, message: "can't be nil" } # user must define text content for a question
