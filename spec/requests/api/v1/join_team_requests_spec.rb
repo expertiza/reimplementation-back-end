@@ -60,10 +60,11 @@ RSpec.describe 'Join Team Requests Controller', type: :request do
         run_test!
       end
     end
-
+# Also test the failure cases, 422, 221
     post('create join_team_request') do
       tags 'Join Team Requests'
-      response(200, 'successful') do
+      #do we need this one??
+      response(200, 'success') do
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -74,10 +75,39 @@ RSpec.describe 'Join Team Requests Controller', type: :request do
         end
         run_test!
       end
+
+      response(201, 'created') do
+        let(:join_team_request) do
+          JoinTeamRequest.create(valid_join_team_request_params)
+        end
+        run_test! do
+          expect(response.body).to include('"comments":"comment"')
+        end
+      end
+
+      response(422, 'unprocessable entity') do
+        let(:join_team_request) do
+          #team
+          JoinTeamRequest.create(invalid_join_team_request_params)
+        end
+        run_test!
+      end
     end
   end
 
   path '/api/v1/join_team_requests/{id}' do
+
+    let(:valid_join_team_request_params) do
+      {
+        comments:'comment'
+      }
+    end
+
+    let(:invalid_join_team_request_params) do
+      {
+        comments: nil
+      }
+    end
     # You'll want to customize the parameter types...
     parameter name: 'id', in: :path, type: :string, description: 'id'
 
@@ -93,6 +123,13 @@ RSpec.describe 'Join Team Requests Controller', type: :request do
             }
           }
         end
+      # get request on /api/v1/questions/{id} returns 404 not found response when question id is not present in the database
+      response(404, 'not_found') do
+        let(:id) { 'invalid' }
+          run_test! do
+            expect(response.body).to include("Couldn't find JoinTeamRequest")
+          end
+      end
         run_test!
       end
     end
@@ -115,6 +152,13 @@ RSpec.describe 'Join Team Requests Controller', type: :request do
 
     put('update join_team_request') do
       tags 'Join Team Requests'
+
+      parameter name: :body_params, in: :body, schema: {
+        type: :object,
+        properties: {
+          comments: { type: :string }
+        }
+      }
       response(200, 'successful') do
         let(:id) { '123' }
 
@@ -127,10 +171,22 @@ RSpec.describe 'Join Team Requests Controller', type: :request do
         end
         run_test!
       end
+
+      response(422, 'unprocessable entity') do
+        let(:body_params) do
+          {
+            comments: -1
+          }
+        end
+        schema type: :string
+        run_test! do
+          expect(response.body).to_not include('"comments":-1')
+        end
     end
 
     delete('delete join_team_request') do
       tags 'Join Team Requests'
+      #do we need this?
       response(200, 'successful') do
         let(:id) { '123' }
 
@@ -143,6 +199,20 @@ RSpec.describe 'Join Team Requests Controller', type: :request do
         end
         run_test!
       end
+
+      response(204, 'successful') do
+        run_test! do
+          expect(JoinTeamRequest.exists?(id)).to eq(false)
+        end
+      end
+
+      response(404, 'not found') do
+        let(:id) { 0 }
+        run_test! do
+          expect(response.body).to include("Couldn't find JoinTeamRequest")
+        end
+      end
     end
   end
+end
 end
