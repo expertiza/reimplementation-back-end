@@ -31,6 +31,11 @@ class Api::V1::TeamsAssignmentController < ApplicationController
   # PATCH/PUT /team_assignments/1
   # Update a team_assignment
   def update
+    if @team_assignment.update(team_assignment_params)
+      render json: @team_assignment, status: :ok
+    else
+      render json: @team_assignment.errors, status: :unprocessable_entity
+    end
   end
 
   # DELETE /team_assignments/1
