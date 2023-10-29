@@ -14,6 +14,7 @@ class Api::V1::TeamsAssignmentController < ApplicationController
   # GET /team_assignments/1
   # Get a team_assignment
   def show
+    render json: @team_assignment, status: :ok
   end
 
   # POST /team_assignments
