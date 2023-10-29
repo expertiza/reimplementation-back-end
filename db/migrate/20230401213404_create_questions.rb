@@ -10,6 +10,7 @@ class CreateQuestions < ActiveRecord::Migration[7.0]
       t.boolean :break_before
       t.string :max_label
       t.string :min_label
+      t.string :type, null: false
 
       t.timestamps
     end

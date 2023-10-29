@@ -1,0 +1,4 @@
+<%= form_for @question, url: url_for(controller: 'unscored_questions', action: 'update'), html: { method: :put } do |f| %>
+  <%= render 'questions/form_fields', f: f %>
+  <%= f.submit 'Update Unscored Question' %>
+<% end %>
