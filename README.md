@@ -1,4 +1,9 @@
 # E2370 Join Team Requests Controller (Expertiza Backend Re-Implementation)
+<div align="centre">
+<img src="https://avatars.githubusercontent.com/u/427458?s=280&v=4"></img>
+</div>
+
+
 ![GitHub top language](https://img.shields.io/github/languages/top/manoj-ayyappan/csc517_program3_E2370)
 ![GitHub contributors](https://img.shields.io/github/contributors/manoj-ayyappan/csc517_program3_E2370)
 ![GitHub repo size](https://img.shields.io/github/repo-size/manoj-ayyappan/csc517_Program3_E2370)
@@ -40,8 +45,7 @@ alt="IMAGE ALT TEXT HERE" width="560" height="315" border="10" /></a>
 - password: expertiza
 
 ### Future Work
-We have already tested the program using Postman but Swagger for some reason does not recognise our testing requests and fails to work. 
-- Testing using Swagger
+Implementation of teams_controller.rb
 
 ### Team
 1. Manoj Ayyappan
