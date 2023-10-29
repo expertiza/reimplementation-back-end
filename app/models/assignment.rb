@@ -1,8 +1,8 @@
 class Assignment < ApplicationRecord
   include MetricHelper
-  has_many :participants, class_name: 'AssignmentParticipant', foreign_key: 'parent_id', dependent: :destroy
+  has_many :participants, class_name: 'AssignmentParticipant', foreign_key: 'assignment_id', dependent: :destroy
   has_many :users, through: :participants, inverse_of: :assignment
-  has_many :teams, class_name: 'AssignmentTeam', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :assignment
+  #has_many :teams, class_name: 'AssignmentTeam', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :assignment
   has_many :invitations, class_name: 'Invitation', foreign_key: 'assignment_id', dependent: :destroy # , inverse_of: :assignment
   has_many :assignment_questionnaires, dependent: :destroy
   has_many :questionnaires, through: :assignment_questionnaires
@@ -104,23 +104,24 @@ class Assignment < ApplicationRecord
   def remove_assignment_from_course(assignment_id)
     assignment = Assignment.where(id: assignment_id).first
     if assignment
-      assignment.course_id = nil
+      assignment.destroy
     else
       raise "Cannot find Assignment."
     end
-    save
   end
 
   def assign_courses_to_assignment(assignment_id, course_id)
     assignment = Assignment.where(id: assignment_id).first
     course = Course.where(id: course_id).first
-    if assignment.course_id == course.id
-      raise "The assignment already belongs to this course id."
-    elsif  assignment && course
-      assignment.update(course_id: course_id)
+    if  assignment && course
+      if assignment.course_id == course.id
+        raise "The assignment already belongs to this course id."
+      end
+      assignment.course_id = course_id
     else
       raise "Cannot find Assignment or Course."
     end
+    save_changes(assignment)
   end
 
 end
