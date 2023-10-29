@@ -20,6 +20,12 @@ class Api::V1::TeamsAssignmentController < ApplicationController
   # POST /team_assignments
   # Create a team_assignment
   def create
+    team_assignment = TeamAssignment.new(team_assignment_params)
+    if team_assignment.save
+      render json: team_assignment, status: :created
+    else
+      render json: team_assignment.errors, status: :unprocessable_entity
+    end
   end
 
   # PATCH/PUT /team_assignments/1
