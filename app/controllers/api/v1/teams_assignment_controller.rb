@@ -7,6 +7,8 @@ class Api::V1::TeamsAssignmentController < ApplicationController
   # GET /team_assignments
   # List all the team_assignments
   def index
+    team_assignment = TeamAssignment.all
+    render json: team_assignment, status: :ok
   end
 
   # GET /team_assignments/1
