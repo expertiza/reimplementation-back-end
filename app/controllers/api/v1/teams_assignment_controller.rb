@@ -41,10 +41,17 @@ class Api::V1::TeamsAssignmentController < ApplicationController
   # DELETE /team_assignments/1
   # Delete a team_assignment
   def destroy
+    @team_assignment.destroy
+    render json: { message: "Team assignment with id #{params[:id]}, deleted" }, status: :no_content
   end
 
   # Creates a copy of the team_assignment
   def copy
+    if @team_assignment.copy_team_assignment
+      render json: { message: "The team assignment #{@team_assignment.name} has been successfully copied" }, status: :ok
+    else
+      render json: { message: "The team assignment was not able to be copied" }, status: :unprocessable_entity
+    end
   end
 
   private
