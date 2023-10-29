@@ -20,7 +20,7 @@ class Api::V1::QuizQuestionnairesController < ApplicationController
       @assignment_id = params[:assignmnet_id] # creating an instance variable to hold the assignment id
       @participant_id = params[:participant_id] # creating an instance variable to hold the participant id
       @team_id = params[:team_id] # creating an instance variable to hold the team id
-      @user_id = params[:user_id]
+      @user_id = params[:user_id] # creating an instance variable to hold the user id
 
       if check_privilege(@user_id) == false
         err = 'You do not have the required permission'
@@ -65,6 +65,13 @@ class Api::V1::QuizQuestionnairesController < ApplicationController
   end
 
   def update
+
+    @user_id = params[:user_id]
+    if check_privilege(@user_id) == false
+      err = 'You do not have the required permission'
+      render json: err, status: :unprocessable_entity and return
+    end
+
     @questionnaire = Questionnaire.find(params[:id])
     if @questionnaire.update(questionnaire_params)
       render json: @questionnaire, status: :ok and return
@@ -75,6 +82,14 @@ class Api::V1::QuizQuestionnairesController < ApplicationController
 
   def destroy
     begin
+
+      @user_id = params[:user_id] # creating an instance variable to hold the user id
+
+      if check_privilege(@user_id) == false
+        err = 'You do not have the required permission'
+        render json: err, status: :unprocessable_entity and return
+      end
+
       @questionnaire = Questionnaire.find(params[:id])
       @questionnaire.delete
     rescue ActiveRecord::RecordNotFound
