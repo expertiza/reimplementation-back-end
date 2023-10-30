@@ -24,8 +24,11 @@ Rails.application.routes.draw do
       end
       resources :assignments do
         collection do
-          post '/:assignment_id/add_participant',action: :add_participant
-          post '/:assignment_id/remove_participant/:user_id',action: :remove_participant
+          post '/:assignment_id/add_participant/:user_id',action: :add_participant
+          delete '/:assignment_id/remove_participant/:user_id',action: :remove_participant
+          patch '/:assignment_id/remove_assignment_from_course',action: :remove_assignment_from_course
+          patch '/:assignment_id/assign_courses_to_assignment/:course_id',action: :assign_courses_to_assignment
+          post '/:assignment_id/copy_assignment', action: :copy_assignment
         end
       end
 
