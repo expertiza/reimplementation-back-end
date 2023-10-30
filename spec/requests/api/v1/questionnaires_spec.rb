@@ -97,7 +97,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
       response(201, 'created') do
         let(:questionnaire) do
           team
-          JoinTeamRequest.create(valid_questionnaire_params)
+          Questionnaire.create(valid_questionnaire_params)
         end
         run_test! do
           expect(response.body).to include('"name":"Test Questionnaire"')
