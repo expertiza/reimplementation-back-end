@@ -1,6 +1,6 @@
 class Api::V1::TeamsAssignmentController < ApplicationController
     
-  before_action :set_team_assignment, only: %i[ show update destroy add_ta view_tas remove_ta copy ]
+  before_action :set_team_assignment, only: %i[ show update destroy copy ]
   rescue_from ActiveRecord::RecordNotFound, with: :team_assignment_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
