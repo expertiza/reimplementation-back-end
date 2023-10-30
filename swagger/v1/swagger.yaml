@@ -3,7 +3,224 @@ openapi: 3.0.1
 info:
   title: EXPERTIZA API V1
   version: v1
+security:
+  - JWT: []
+components:
+  securitySchemes:
+    JWT:
+        type: apiKey
+        name: Authorization
+        in: header
 paths:
+  "/api/v1/badges":
+    get:
+      summary: Get all badges
+      tags:
+        - Badges
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              example:
+                - id: 1
+                  name: Example Badge
+                  description: Example badge description
+                  image_name: badge_image.png
+    post:
+      summary: Create a new badge
+      tags:
+        - Badges
+      parameters:
+        - name: badge
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              image_name:
+                type: string
+              image_file:
+                type: string
+            required:
+              - name
+              - description
+              - image_name
+              - image_file
+      responses:
+        '201':
+          description: Badge created successfully
+          content:
+            application/json:
+              example:
+                id: 1
+                name: Example Badge
+                description: Example badge description
+                image_name: badge_image.png
+
+  "/api/v1/badges/{badgeId}":
+    parameters:
+      - name: badgeId
+        in: path
+        description: ID of the badge
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get a badge by ID
+      tags:
+        - Badges
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              example:
+                id: 1
+                name: Example Badge
+                description: Example badge description
+                image_name: badge_image.png
+    put:
+      summary: Update a badge by ID
+      tags:
+        - Badges
+      parameters:
+        - name: badge
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              image_name:
+                type: string
+              image_file:
+                type: string
+            required:
+              - name
+              - description
+              - image_name
+              - image_file
+      responses:
+        '200':
+          description: Badge updated successfully
+    delete:
+      summary: Delete a badge by ID
+      tags:
+        - Badges
+      responses:
+        '200':
+          description: Badge deleted successfully
+
+  "/api/v1/duties":
+    get:
+      summary: Get all duties
+      tags:
+        - Duties
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              example:
+                - id: 1
+                  name: Example Duty
+                  assignment_id: 1
+                  max_members_for_duties: 5
+                # Add more duty objects as needed
+    post:
+      summary: Create a new duty
+      tags:
+        - Duties
+      parameters:
+        - name: duty
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              assignment_id:
+                type: integer
+              max_members_for_duties:
+                type: integer
+            required:
+              - name
+              - assignment_id
+              - max_members_for_duties
+      responses:
+        '201':
+          description: Duty created successfully
+          content:
+            application/json:
+              example:
+                id: 1
+                name: Example Duty
+                assignment_id: 1
+                max_members_for_duties: 5
+
+  "/api/v1/duties/{dutyId}":
+    parameters:
+      - name: dutyId
+        in: path
+        description: ID of the duty
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get a duty by ID
+      tags:
+        - Duties
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              example:
+                id: 1
+                name: Example Duty
+                assignment_id: 1
+                max_members_for_duties: 5
+    put:
+      summary: Update a duty by ID
+      tags:
+        - Duties
+      parameters:
+        - name: duty
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              assignment_id:
+                type: integer
+              max_members_for_duties:
+                type: integer
+            required:
+              - name
+              - assignment_id
+              - max_members_for_duties
+      responses:
+        '200':
+          description: Duty updated successfully
+    delete:
+      summary: Delete a duty by ID
+      tags:
+        - Duties
+      responses:
+        '200':
+          description: Duty deleted successfully
+
   "/api/v1/account_requests/pending":
     get:
       summary: List all Pending Account Requests
@@ -1169,9 +1386,10 @@ paths:
       - Courses
       responses:
         '200':
-          description: successful 
+          description: successful
+
 servers:
 - url: http://{defaultHost}
   variables:
     defaultHost:
-      default: 127.0.0.1:3000
+      default: localhost:3002
