@@ -52,14 +52,19 @@ class MultipleChoiceCheckbox < QuizQuestion
   # Override the is_valid method for MultipleChoiceCheckbox
   def is_valid(choice_info)
     valid = 'Valid'
-    valid = 'Please make sure all questions have text.' if txt.blank?
+    #valid = 'Please make sure all questions have text.' if txt.blank?
     correct_count = 0
+
     choice_info.each_value do |value|
       if value[:txt].blank?
         valid = 'Please make sure every option has text for all options.'
         break
       end
-      correct_count += 1 if value[:correct] == '1'
+
+      # Check if the 'correct' attribute is truthy (not nil or false)
+      if value[:correct]
+        correct_count += 1
+      end
     end
 
     if correct_count.zero?
@@ -70,4 +75,5 @@ class MultipleChoiceCheckbox < QuizQuestion
 
     valid
   end
+
 end
