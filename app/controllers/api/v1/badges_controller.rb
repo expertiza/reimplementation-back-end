@@ -1,16 +1,15 @@
-class BadgesController < ApplicationController
+class Api::V1::BadgesController < ApplicationController
   before_action :set_badge, only: %i[ show update destroy ]
 
   # GET /badges
   def index
     @badges = Badge.all
-
-    render json: @badges
+    render json: @badges, status: :ok
   end
 
   # GET /badges/1
   def show
-    render json: @badge
+    render json: @badge, status: :ok
   end
 
   # POST /badges
@@ -27,7 +26,7 @@ class BadgesController < ApplicationController
   # PATCH/PUT /badges/1
   def update
     if @badge.update(badge_params)
-      render json: @badge
+      render json: @badge, status: :ok
     else
       render json: @badge.errors, status: :unprocessable_entity
     end
@@ -36,6 +35,7 @@ class BadgesController < ApplicationController
   # DELETE /badges/1
   def destroy
     @badge.destroy
+    render json: { message: 'Badge was successfully destroyed.'}, status: :ok
   end
 
   private
@@ -46,6 +46,6 @@ class BadgesController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def badge_params
-      params.require(:badge).permit(:name, :description, :image_name)
+      params.require(:badge).permit(:name, :description, :image_name, :image_file)
     end
 end

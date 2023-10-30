@@ -1,16 +1,15 @@
-class DutiesController < ApplicationController
+class Api::V1::DutiesController < ApplicationController
   before_action :set_duty, only: %i[ show update destroy ]
 
   # GET /duties
   def index
     @duties = Duty.all
-
-    render json: @duties
+    render json: @duties, status: :ok
   end
 
   # GET /duties/1
   def show
-    render json: @duty
+    render json: @duty, status: :ok
   end
 
   # POST /duties
@@ -36,6 +35,7 @@ class DutiesController < ApplicationController
   # DELETE /duties/1
   def destroy
     @duty.destroy
+    render json: { message: "Duty was successfully destroyed." }, status: :ok
   end
 
   private
@@ -46,6 +46,6 @@ class DutiesController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def duty_params
-      params.require(:duty).permit(:name, :max_members_for_duties)
+      params.require(:duty).permit(:name, :assignment_id, :max_members_for_duties)
     end
 end
