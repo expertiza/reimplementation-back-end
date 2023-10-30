@@ -52,17 +52,20 @@ class MultipleChoiceRadio < QuizQuestion
   # Override the is_valid method for MultipleChoiceRadio
   def is_valid(choice_info)
     valid = 'Valid'
-    valid = 'Please make sure all questions have text.' if txt.blank?
+    #valid = 'Please make sure all questions have text.' if txt.blank?
     correct_count = 0
     choice_info.each_value do |value|
       if value[:txt].blank?
         valid = 'Please make sure every question has text for all options.'
         break
       end
-      correct_count += 1 if value[:correct] == '1'
+      correct_count += 1 if value[:correct] == true
     end
 
     valid = 'Please select a correct answer for all questions.' if correct_count.zero?
+    if correct_count > 1
+      valid = "Please select only one correct answer."
+    end
     valid
   end
 end
