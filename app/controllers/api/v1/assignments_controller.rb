@@ -1,4 +1,5 @@
 class Api::V1::AssignmentsController < ApplicationController
+  include AssignmentHelper
   # GET /api/v1/assignments
   def index
     assignments = Assignment.all
@@ -11,27 +12,96 @@ class Api::V1::AssignmentsController < ApplicationController
     render json: assignment
   end
 
+  #add participant to assignment
+  # input: assignment id
+  # output: status code and json of assignment
   def add_participant
-    assignment = Assignment.find(params[:assignment_id])
-    assignment.add_participant(true,true,true)
+    assignment = Assignment.find_by(id: params[:assignment_id])
+    if assignment.nil?
+      render json: { error: "Assignment not found" }, status: :not_found
+    else
+      new_participant = assignment.add_participant(params[:user_id])
+      if new_participant.save
+        render json: new_participant, status: :ok
+      else
+        render json: new_participant.errors, status: :unprocessable_entity
+      end
+    end
   end
 
+  #remove participant from assignment
+  # input: user id and assignment id
+  # output: status code and json of assignment
   def remove_participant
-    #user = User.find_by(id: @current_user.id)
-    user = User.find_by(id: 4)
-    assignment = Assignment.find(params[:assignment_id])
-    assignment.remove_participant(assignment.id, user.id)
+    user = User.find_by(id: params[:user_id])
+    assignment = Assignment.find_by(id: params[:assignment_id])
+    if user && assignment
+      assignment.remove_participant(user.id)
+      if assignment.save
+        head :ok
+      else
+        render json: assignment.errors, status: :unprocessable_entity
+      end
+    else
+      not_found_message = user ? "Assignment not found" : "User not found"
+      render json: { error: not_found_message }, status: :not_found
+    end
   end
 
+
+  # make course_id of assignment null
+  # the method is not working as of now because rails is not allowing the course id to be null
+  # input: assignment id
+  # output: status code and json of assignment
   def remove_assignment_from_course
     assignment = Assignment.find(params[:assignment_id])
-    assignment.remove_assignment_from_course(assignment.id)
+    if assignment.nil?
+      render json: { error: "Assignment not found" }, status: :not_found
+    else
+      assignment = assignment.remove_assignment_from_course
+      if assignment.save
+        render json: assignment , status: :ok
+      else
+        render json: assignment.errors, status: :unprocessable_entity
+      end
+    end
+    
   end
 
+  #update course id of an assignment/ assign the assign to some toher course
+  # input: assignment id and course id
+  # output: status code and json of assignment
   def assign_courses_to_assignment
     assignment = Assignment.find(params[:assignment_id])
     course = Course.find(params[:course_id])
-    assignment.assign_courses_to_assignment(assignment.id, course.id)
+    if assignment && course
+      assignment = assignment.assign_courses_to_assignment(course.id)
+      if assignment.save
+        render json: assignment, status: :ok
+      else
+        render json: assignment.errors, status: :unprocessable_entity
+      end
+    else
+      not_found_message = course ? "Assignment not found" : "Course not found"
+      render json: { error: not_found_message }, status: :not_found
+    end
+  end
+
+  #copy existing assignment
+  # input: assignment id
+  # output: status code and json fo assignment
+  def copy_assignment
+    assignment = Assignment.find(params[:assignment_id])
+    if assignment.nil?
+      render json: { error: "Assignment not found" }, status: :not_found
+    else
+      new_assignment = assignment.copy_assignment
+      if new_assignment.save
+        render json: new_assignment, status: :ok
+      else
+        render json :new_assignment.errors, status: :unprocessable_entity
+      end
+    end
   end
 
   # POST /api/v1/assignments

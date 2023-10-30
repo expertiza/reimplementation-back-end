@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_10_28_014322) do
+ActiveRecord::Schema[7.0].define(version: 2023_10_30_031806) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -50,7 +50,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_28_014322) do
     t.string "name"
     t.string "directory_path"
     t.integer "submitter_count"
-    t.integer "course_id"
     t.integer "instructor_id"
     t.boolean "private"
     t.integer "num_reviews"
@@ -98,6 +97,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_28_014322) do
     t.integer "sample_assignment_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "course_id"
+    t.index ["course_id"], name: "index_assignments_on_course_id"
   end
 
   create_table "courses", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -248,6 +249,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_28_014322) do
 
   add_foreign_key "account_requests", "institutions"
   add_foreign_key "account_requests", "roles"
+  add_foreign_key "assignments", "courses"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
   add_foreign_key "participants", "assignments"
