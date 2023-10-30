@@ -96,7 +96,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
       # post request on /api/v1/questionnaires creates questionnaire with response 201 when correct params are passed
       response(201, 'created') do
         let(:questionnaire) do
-          team
+          instructor
           Questionnaire.create(valid_questionnaire_params)
         end
         run_test! do
