@@ -112,13 +112,10 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
 
   def find_request
     @join_team_request = JoinTeamRequest.find(params[:id])
-    # render json: @join_team_request
   end
 
 
   def join_team_request_params
-    # params.require(:join_team_request).permit(:comments, :status)
-    params.require(:join_team_request).permit(:comments)
-
+    params.require(:join_team_request).permit(:comments, :status)
   end
 end
