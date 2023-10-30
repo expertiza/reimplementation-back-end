@@ -50,4 +50,18 @@ FactoryBot.define do
     private {true}
     institution { Institution.first || association(:institution) }
   end
+
+  factory :teams_assignment do
+    name { "Sample Team Assignment" }
+    parent_id { 1 } # You can adjust this value as needed
+    type { "Assignment" }
+    comments_for_advertisement { "Sample comments for advertisement" }
+    advertise_for_partner { true }
+    submitted_hyperlinks { "Sample hyperlinks" }
+    directory_num { 1 }
+    grade_for_submission { 100 }
+    comment_for_submission { "Sample comment for submission" }
+    pair_programming_request { 1 }
+  end
+  
 end
