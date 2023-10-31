@@ -33,6 +33,12 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :team_assignments do
+        collection do
+          get ':id/copy', action: :copy
+        end
+      end
+
       resources :questionnaires do
         collection do
           post 'copy/:id', to: 'questionnaires#copy', as: 'copy'
@@ -54,6 +60,7 @@ Rails.application.routes.draw do
           post '/sign_up_student', to: 'signed_up_teams#sign_up_student'
         end
       end
+      
       resources :sign_up_topics do
         collection do
           get :filter
