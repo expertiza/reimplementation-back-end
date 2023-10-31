@@ -1,64 +1,65 @@
 class TeamsAssignment < ApplicationRecord
+  require 'csv'  # Require the 'csv' library
+  
+  has_many :users, through: :teams_users
+  has_many :join_team_requests, dependent: :destroy
+  has_one :team_node, foreign_key: :node_object_id, dependent: :destroy
+  has_many :signed_up_teams, dependent: :destroy
+  has_many :bids, dependent: :destroy
+  has_paper_trail
 
-  # Example: Return teams associated with this course
-  def get_teams
-    CourseTeam.where(parent_id: id)
-  end
-
-  # Example: Return participants associated with these teams
-  def get_participants
-    CourseParticipant.where(parent_id: id)
-  end
-
-
-  # Example: Return a specific participant by user_id
-  def get_participant(user_id)
-    CourseParticipant.find_by(parent_id: id, user_id: user_id)
-  end
-
-  # Example: Add a participant to a team
-  def add_participant(user_name)
-    user = User.find_by(name: user_name)
-    if user.nil?
-      raise 'No user account exists with the name ' + user_name + ". Please create the user first."
-    end
-
-    participant = CourseParticipant.find_by(parent_id: id, user_id: user.id)
-    if participant
-      raise "The user #{user.name} is already a participant."
-    else
-      CourseParticipant.create(parent_id: id, user_id: user.id, permission_granted: user.master_permission_granted)
+  # Import teams from a CSV file
+  def self.import_teams_from_csv(file)
+    CSV.foreach(file.path, headers: true) do |row|
+      team = self.find_or_create_by(name: row['name'])
+      team.users << User.find_by(name: row['user_name'])
     end
   end
 
-  # Example: Copy participants from an assignment to these teams
-  def copy_participants(assignment_id)
-    participants = AssignmentParticipant.where(parent_id: assignment_id)
-    errors = []
-    participants.each do |participant|
-      user = User.find(participant.user_id)
+  def self.export_teams_to_csv(file)
+    CSV.open(file.path, 'w') do |csv|
+    csv << ['name', 'user_name'] # Add relevant column names
 
-      begin
-        add_participant(user.name)
-      rescue StandardError => e
-        errors << e.message
+      all.each do |team|
+        team.users.each do |user|
+          csv << [team.name, user.name]
+        end
       end
     end
-
-    unless errors.empty?
-      raise errors.join('<br/>')
-    end
   end
 
-  # Example: Check if a user is on a team
-  def user_on_team?(user)
-    teams = get_teams
-    users = []
-    teams.each do |team|
-      users.concat(team.users)
-    end
-    users.include?(user)
+  # Method to create a new team
+  def create_team(name)
+    team = Team.create(name: name, parent_id: self.id)
+    TeamNode.create(parent_id: self.id, node_object_id: team.id)
+    team
   end
 
+  # Method to add a user to a team
+  def add_user_to_team(team, user)
+    # Check if the user is already a member of the team
+    return if team.users.include?(user)
+
+    TeamsUser.create(team_id: team.id, user_id: user.id)
+    # Optionally, you can add this user to any related associations, like CourseParticipants or AssignmentParticipants
+  end
+
+  # Method to remove a user from a team
+  def remove_user_from_team(team, user)
+    team_user = TeamsUser.find_by(team_id: team.id, user_id: user.id)
+    team_user&.destroy
+  end
+
+  # Generate the team name
+  def self.generate_team_name(team_name_prefix = '')
+    counter = 1
+    loop do
+      team_name = "#{team_name_prefix} Team_#{counter}"
+      return team_name unless TeamsAssignment.find_by(name: team_name)
+
+      counter += 1
+    end
+  end
+  
 end
 
