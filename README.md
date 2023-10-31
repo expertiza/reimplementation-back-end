@@ -32,3 +32,10 @@ alt="IMAGE ALT TEXT HERE" width="560" height="315" border="10" /></a>
 ### Run Services on Rubymine
 -Initially open the Project in Rubymine
 -Run Containers based on your docker-compose.yml file
+
+### Install Gems from the Gemfile
+-bundle install
+
+### Run Migrations
+-rake db:create
+-rails db:migrate
