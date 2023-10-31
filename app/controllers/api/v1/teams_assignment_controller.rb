@@ -1,5 +1,6 @@
 class Api::V1::TeamsAssignmentController < ApplicationController
     
+  before_action :set_paper_trail_whodunnit
   before_action :set_team_assignment, only: %i[ show update destroy copy ]
   rescue_from ActiveRecord::RecordNotFound, with: :team_assignment_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
@@ -64,8 +65,11 @@ class Api::V1::TeamsAssignmentController < ApplicationController
   # Only allow a list of trusted parameters through.
   def team_assignment_params
     params.require(:team_assignment).permit(
-        :name, :parent_id, :type, :comments_for_advertisement, :advertise_for_partner, :submitted_hyperlinks,
-        :directory_num, :comment_for_submission, :pair_programming_request
+      :users,
+      :join_team_requests,
+      :team_node,
+      :signed_up_teams,
+      :bids
     )
   end
 
