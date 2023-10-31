@@ -31,26 +31,26 @@ paths:
       summary: Create a new badge
       tags:
         - Badges
-      parameters:
-        - name: badge
-          in: body
-          required: true
-          schema:
-            type: object
-            properties:
-              name:
-                type: string
-              description:
-                type: string
-              image_name:
-                type: string
-              image_file:
-                type: string
-            required:
-              - name
-              - description
-              - image_name
-              - image_file
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                image_name:
+                  type: string
+                image_file:
+                  type: string
+              required:
+                - name
+                - description
+                - image_name
+                - image_file
       responses:
         '201':
           description: Badge created successfully
@@ -89,25 +89,32 @@ paths:
       tags:
         - Badges
       parameters:
-        - name: badge
-          in: body
+        - name: badgeId
+          in: path
+          description: ID of the badge
           required: true
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-              description:
-                type: string
-              image_name:
-                type: string
-              image_file:
-                type: string
-            required:
-              - name
-              - description
-              - image_name
-              - image_file
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                image_name:
+                  type: string
+                image_file:
+                  type: string
+              required:
+                - name
+                - description
+                - image_name
+                - image_file
       responses:
         '200':
           description: Badge updated successfully
@@ -115,6 +122,13 @@ paths:
       summary: Delete a badge by ID
       tags:
         - Badges
+      parameters:
+        - name: badgeId
+          in: path
+          description: ID of the badge
+          required: true
+          schema:
+            type: integer
       responses:
         '200':
           description: Badge deleted successfully
@@ -139,23 +153,23 @@ paths:
       summary: Create a new duty
       tags:
         - Duties
-      parameters:
-        - name: duty
-          in: body
-          required: true
-          schema:
-            type: object
-            properties:
-              name:
-                type: string
-              assignment_id:
-                type: integer
-              max_members_for_duties:
-                type: integer
-            required:
-              - name
-              - assignment_id
-              - max_members_for_duties
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                assignment_id:
+                  type: integer
+                max_members_for_duties:
+                  type: integer
+              required:
+                - name
+                - assignment_id
+                - max_members_for_duties
       responses:
         '201':
           description: Duty created successfully
@@ -194,22 +208,29 @@ paths:
       tags:
         - Duties
       parameters:
-        - name: duty
-          in: body
+        - name: dutyId
+          in: path
+          description: ID of the duty
           required: true
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-              assignment_id:
-                type: integer
-              max_members_for_duties:
-                type: integer
-            required:
-              - name
-              - assignment_id
-              - max_members_for_duties
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                assignment_id:
+                  type: integer
+                max_members_for_duties:
+                  type: integer
+              required:
+                - name
+                - assignment_id
+                - max_members_for_duties
       responses:
         '200':
           description: Duty updated successfully
@@ -217,10 +238,16 @@ paths:
       summary: Delete a duty by ID
       tags:
         - Duties
+      parameters:
+        - name: dutyId
+          in: path
+          description: ID of the duty
+          required: true
+          schema:
+            type: integer
       responses:
         '200':
           description: Duty deleted successfully
-
   "/api/v1/account_requests/pending":
     get:
       summary: List all Pending Account Requests
