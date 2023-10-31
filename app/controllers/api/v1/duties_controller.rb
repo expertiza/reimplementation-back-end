@@ -17,7 +17,7 @@ class Api::V1::DutiesController < ApplicationController
     @duty = Duty.new(duty_params)
 
     if @duty.save
-      render json: @duty, status: :created, location: @duty
+      render json: @duty, status: :created
     else
       render json: @duty.errors, status: :unprocessable_entity
     end

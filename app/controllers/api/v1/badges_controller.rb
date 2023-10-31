@@ -17,7 +17,7 @@ class Api::V1::BadgesController < ApplicationController
     @badge = Badge.new(badge_params)
 
     if @badge.save
-      render json: @badge, status: :created, location: @badge
+      render json: @badge, status: :created
     else
       render json: @badge.errors, status: :unprocessable_entity
     end
