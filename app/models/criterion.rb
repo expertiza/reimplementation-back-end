@@ -2,12 +2,13 @@
 
 class Criterion < ScoredQuestion
 
-  def edit
+  attr_accessor :formatted_question_type
+  def edit(count)
     edit_html = "<div class=\"question\">"
     edit_html += delete_link(count) + sequence_input(count)
-    edit_html += text_area_field + disabled_type_field
-    edit_html += weight_input + size_input
-    edit_html += labels_input + "</div>"
+    edit_html += text_area_field(count) + disabled_type_field
+    edit_html += weight_input(count) + size_input(count)
+    edit_html += labels_input(count) + "</div>"
     edit_html.html_safe
   end
 
@@ -19,7 +20,7 @@ class Criterion < ScoredQuestion
     end
   end
 
-  def complete
+  def complete(dropdown_or_scale)
     html = "<label>#{txt}</label>"
     html += if dropdown_or_scale == 'dropdown'
               dropdown_options
@@ -29,7 +30,7 @@ class Criterion < ScoredQuestion
     html.html_safe
   end
 
-  def advices_criterio_questions
+  def advices_criterion_question(count)
     html = "<ul class=\"advices\">"
     question_advices.each do |advice|
       html << "<li>Advice #{count}: #{advice.txt}</li>"
@@ -39,7 +40,7 @@ class Criterion < ScoredQuestion
     html.html_safe
   end
 
-  def dropdown_criterion_question
+  def dropdown_criterion_question(answer)
     html = "<select>"
     html += "<option value=\"\">Select an option</option>"
     alternatives.split('|').each do |alt|
@@ -56,7 +57,7 @@ class Criterion < ScoredQuestion
     html.html_safe
   end
 
-  def view_completed_question
+  def view_completed_question(count, answer, questionnaire_max)
     completed_question_html = "<div class=\"question\">"
     completed_question_html += "<div class=\"question-text\">#{txt}</div>"
     completed_question_html += "<div class=\"question-type\">#{formatted_question_type}</div>"
@@ -65,9 +66,6 @@ class Criterion < ScoredQuestion
     completed_question_html += "</div>"
     completed_question_html.html_safe
   end
-
-
-
 
   # Helper methods
   private
@@ -80,7 +78,7 @@ class Criterion < ScoredQuestion
     "<input type=\"hidden\" name=\"question[#{count}][sequence]\" value=\"#{seq}\">"
   end
 
-  def text_area_field
+  def text_area_field(count)
     "<textarea name=\"question[#{count}][txt]\">#{txt}</textarea>"
   end
 
@@ -88,15 +86,15 @@ class Criterion < ScoredQuestion
     "<input type=\"hidden\" name=\"question[#{count}][type]\" value=\"Criterion\" disabled=\"disabled\">"
   end
 
-  def weight_input
+  def weight_input(count)
     "<input type=\"text\" name=\"question[#{count}][weight]\" value=\"#{weight}\">"
   end
 
-  def size_input
+  def size_input(count)
     "<input type=\"text\" name=\"question[#{count}][size]\" value=\"#{size}\">"
   end
 
-  def labels_input
+  def labels_input(count)
     "<input type=\"text\" name=\"question[#{count}][min_label]\" value=\"#{min_label}\">
      <input type=\"text\" name=\"question[#{count}][max_label]\" value=\"#{max_label}\">"
   end

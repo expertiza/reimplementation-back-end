@@ -2,45 +2,44 @@
 
 class Dropdown < UnscoredQuestion
 
-  def edit_count
-    html = ''
-    # Generate HTML for the edit form with the given count
-    html += '<form>'
-    html += "<label for='question'>Question:</label>"
-    html += "<input type='text' name='question' value='Dropdown Question'>"
-    html += '</form>'
-    return html
+  def edit(count)
+    html = '<div>'
+    html += "<label for='question_#{id}'>Question #{count}:</label>"
+    html += "<input type='text' id='question_#{id}' name='question[#{id}]' value='#{txt}' />"
+    html += '</div>'
+    html
   end
 
   def view_question_text
     if txt.nil? || type.nil? || weight.nil?
-      raise ArgumentError, 'Invalid input values'
+      'Invalid input values'
     end
 
     html = "<TR><TD align='left'> #{txt} </TD><TD align='left'>#{type}</TD><td align='center'>#{weight}</TD><TD align='center'>&mdash;</TD></TR>"
-    return html
+    html
   end
 
-  def complete(count, ans = nil)
-    html = '<select>'
+  def complete(count, answer = nil)    #initial ans = nil
+    html = ''
+    html += '<select>'
     if count
       (1..count).each do |option|
-        selected = (option == answer) ? 'selected' : ''
-        html << "<option value='#{option}' #{selected}>#{option}</option>"
+        selected = (option == answer.to_i) ? 'selected' : ''
+        html += "<option value='#{option}' #{selected}>#{option}</option>"
       end
     end
     html += '</select>'
-    return html
+    html
   end
 
   def complete_for_alternatives(alternatives, answer)
     html = '<select>'
     alternatives.each do |option|
       selected = (option == answer) ? 'selected' : ''
-      html << "<option value='#{option}' #{selected}>#{option}</option>"
+      html += "<option value='#{option}' #{selected}>#{option}</option>"
     end
     html += '</select>'
-    return html
+    html
   end
 
   def view_completed_question
