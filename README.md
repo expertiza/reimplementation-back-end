@@ -6,6 +6,7 @@ application up and running.
 Things you may want to cover:
 
 * Ruby version - 3.2.1
+* Rails version - 7.0.4.2
 
 ## Development Environment
 
@@ -27,4 +28,7 @@ alt="IMAGE ALT TEXT HERE" width="560" height="315" border="10" /></a>
 ### Database Credentials
 - username: root
 - password: expertiza
-- 
+
+### Run Services on Rubymine
+-Initially open the Project in Rubymine
+-Run Containers based on your docker-compose.yml file
