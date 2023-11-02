@@ -59,7 +59,6 @@ Rails.application.routes.draw do
       resources :join_team_requests do
         collection do
           post 'decline/:id', to:'join_team_requests#decline'
-          post 'accept/:id', to:'join_team_requests#accept'
         end
       end
 
