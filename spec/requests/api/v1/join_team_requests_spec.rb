@@ -9,28 +9,7 @@ RSpec.describe 'Join Team Requests Controller', type: :request do
     post('decline join_team_request') do
       tags 'Join Team Requests'
       response(200, 'successful') do
-        let(:id) { '123' }
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
-        run_test!
-      end
-    end
-  end
-
-  path '/api/v1/join_team_requests/accept/{id}' do
-    # You'll want to customize the parameter types...
-    parameter name: 'id', in: :path, type: :string, description: 'id'
-
-    post('accept join_team_request') do
-      tags 'Join Team Requests'
-      response(200, 'successful') do
-        let(:id) { '123' }
+        
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -62,6 +41,9 @@ RSpec.describe 'Join Team Requests Controller', type: :request do
     end
 # Also test the failure cases, 422, 221
     post('create join_team_request') do
+      parameter name: 'comments', in: :query, type: :string, description: 'comments'
+      parameter name: 'team_id', in: :query, type: :integer, description: 'team_id'
+      parameter name: 'assignment_id', in: :query, type: :integer, description: 'assignment_id'
       tags 'Join Team Requests'
       #do we need this one??
       response(200, 'success') do
@@ -96,25 +78,12 @@ RSpec.describe 'Join Team Requests Controller', type: :request do
   end
 
   path '/api/v1/join_team_requests/{id}' do
-
-    let(:valid_join_team_request_params) do
-      {
-        comments:'comment'
-      }
-    end
-
-    let(:invalid_join_team_request_params) do
-      {
-        comments: nil
-      }
-    end
-    # You'll want to customize the parameter types...
     parameter name: 'id', in: :path, type: :string, description: 'id'
 
     get('show join_team_request') do
       tags 'Join Team Requests'
       response(200, 'successful') do
-        let(:id) { '123' }
+        
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -135,9 +104,11 @@ RSpec.describe 'Join Team Requests Controller', type: :request do
     end
 
     patch('update join_team_request') do
+      parameter name: 'join_team_request[comments]', in: :query, type: :string, description: 'comments'
+      parameter name: 'join_team_request[status]', in: :query, type: :string, description: 'status'
       tags 'Join Team Requests'
       response(200, 'successful') do
-        let(:id) { '123' }
+
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -151,6 +122,8 @@ RSpec.describe 'Join Team Requests Controller', type: :request do
     end
 
     put('update join_team_request') do
+      parameter name: 'join_team_request[comments]', in: :query, type: :string, description: 'comments'
+      parameter name: 'join_team_request[status]', in: :query, type: :string, description: 'status'
       tags 'Join Team Requests'
 
       parameter name: :body_params, in: :body, schema: {
@@ -160,7 +133,7 @@ RSpec.describe 'Join Team Requests Controller', type: :request do
         }
       }
       response(200, 'successful') do
-        let(:id) { '123' }
+        
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -186,19 +159,6 @@ RSpec.describe 'Join Team Requests Controller', type: :request do
 
     delete('delete join_team_request') do
       tags 'Join Team Requests'
-      #do we need this?
-      response(200, 'successful') do
-        let(:id) { '123' }
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
-        run_test!
-      end
 
       response(204, 'successful') do
         run_test! do
@@ -207,7 +167,6 @@ RSpec.describe 'Join Team Requests Controller', type: :request do
       end
 
       response(404, 'not found') do
-        let(:id) { 0 }
         run_test! do
           expect(response.body).to include("Couldn't find JoinTeamRequest")
         end
