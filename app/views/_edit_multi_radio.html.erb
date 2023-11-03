@@ -1,0 +1,20 @@
+
+quiz_question_choices = QuizQuestionChoice.where(question_id: id)
+
+<tr><td>
+  <textarea cols="100" name="question[' + id.to_s + '][txt]" id="question_' + id.to_s + '_txt">' + txt + '</textarea>
+</td></tr>
+
+<tr><td> Question Weight:
+  <input type="number" name="question_weights[' + id.to_s + '][txt]" id="question_wt_' + id.to_s + '_txt" value="' + weight.to_s + '" min="0" />
+</td></tr>
+
+# Four answer choices
+<% [0, 1, 2, 3].each do |i| %>
+  <tr><td>
+    <% if quiz_question_choices[i].correct%>
+      <input type="radio" name="quiz_question_choices[' + id.to_s + '][MultipleChoiceRadio][correctindex]" id="quiz_question_choices_' + id.to_s + '_MultipleChoiceRadio_correctindex_' + (i + 1).to_s + '" value="' + (i + 1).to_s + '" checked="checked" />
+    <% end %>
+    <input type="text" name="quiz_question_choices[' + id.to_s + '][MultipleChoiceRadio][' + (i + 1).to_s + '][txt]" id="quiz_question_choices_' + id.to_s + '_MultipleChoiceRadio_' + (i + 1).to_s + '_txt" value="' + quiz_question_choices[i].txt + '" size="40" />
+  </td></tr>
+<% end %>
