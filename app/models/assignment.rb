@@ -10,7 +10,7 @@ class Assignment < ApplicationRecord
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   
   belongs_to :course, optional: true
-  belongs_to :instructor, class_name: 'User', inverse_of: :assignments
+  belongs_to :instructor, class_name: 'User', inverse_of: :assignments , foreign_key: 'instructor_id'
 
 
   def review_questionnaire_id
@@ -24,8 +24,7 @@ class Assignment < ApplicationRecord
   def add_participant(user_id)
     user = User.find_by(id: user_id)
     if user.nil?
-      raise "The user account with the name #{user.name} does not exist. Please <a href='" +
-              url_for(controller: 'users', action: 'new') + "'>create</a> the user first."
+      raise "The user account does not exist"
     end
     participant = Participant.find_by(assignment_id:id, user_id:user.id)
     if participant
@@ -42,7 +41,9 @@ class Assignment < ApplicationRecord
   #removes participant from assignment
   def remove_participant(user_id)
     assignment_participant = AssignmentParticipant.where(assignment_id: self.id, user_id: user_id).first
-    assignment_participant.destroy
+    if assignment_participant
+      assignment_participant.destroy
+    end 
   end
 
   def remove_assignment_from_course
@@ -52,14 +53,27 @@ class Assignment < ApplicationRecord
 
   def assign_courses_to_assignment(course_id)
     assignment = Assignment.where(id: id).first
+    if assignment.course_id == course_id
+      raise "The assignment already belongs to this course id."
+    end
     assignment.course_id = course_id
     assignment
   end
 
 
   def copy_assignment()
-    new_assignment = Assignment.create(name: "Copy of "+self.name, instructor_id: self.instructor_id, course_id: self.course_id)
-    new_assignment
+    copied_assignment = Assignment.new(
+      name: "Copy of #{self.name}",
+      course_id: self.course_id,
+      )
+
+    # Assign the correct instructor to the copied assignment
+    copied_assignment.instructor = self.instructor
+
+    # Save the copied assignment to the database
+    copied_assignment.save
+
+    copied_assignment
 
   end
 

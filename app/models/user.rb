@@ -3,8 +3,8 @@ class User < ApplicationRecord
   after_initialize :set_defaults
 
   # name must be lowercase and unique
-  validates :name, presence: true, uniqueness: true, allow_blank: false,
-                   format: { with: /\A[a-z]+\z/, message: 'must be in lowercase' }
+  validates :name, presence: true, uniqueness: true, allow_blank: false
+                   # format: { with: /\A[a-z]+\z/, message: 'must be in lowercase' }
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :password, length: { minimum: 6 }, presence: true, allow_nil: true
   validates :full_name, presence: true, length: { maximum: 50 }

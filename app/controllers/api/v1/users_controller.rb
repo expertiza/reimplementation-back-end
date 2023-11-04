@@ -18,7 +18,6 @@ class Api::V1::UsersController < ApplicationController
     # Add default password for a user if the password is not provided
     params[:user][:password] ||= 'password'
     user = User.new(user_params)
-    if(user.role.super_administrator? || user.role.administrator? || user.role.instructor? || use)
     if user.save
       render json: user, status: :created
     else
