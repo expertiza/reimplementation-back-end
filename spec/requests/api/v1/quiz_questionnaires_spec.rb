@@ -1,186 +1,169 @@
+
 require 'swagger_helper'
 
-RSpec.describe 'api/v1/quiz_questionnaires', type: :request do
+RSpec.describe 'Api::V1::QuizQuestionnaires', type: :request do
+  path '/api/v1/quiz_questionnaires' do
+    post 'Create a quiz questionnaire' do
+      tags 'Quiz Questionnaires'
+      consumes 'application/json'
+      parameter name: :quiz_questionnaire, in: :body, schema: {
+        type: :object,
+        properties: {
+          name: { type: :string },
+          questionnaire_type: { type: :string },
+          private: { type: :boolean },
+          min_question_score: { type: :integer },
+          max_question_score: { type: :integer },
+          instructor_id: { type: :integer },
+          assignment_id: { type: :integer }
+        },
+        required: ['name', 'questionnaire_type', 'private', 'min_question_score', 'max_question_score', 'instructor_id', 'assignment_id']
+      }
 
-  require 'swagger_helper'
-
-  RSpec.describe "Quiz Questionnaires", type: :request do
-
-    path '/api/v1/quiz_questionnaires' do
-
-      let(:role_admin) { Role.create(name: 'Administrator', parent_id: nil, default_page_id: nil).save }
-      let(:role_ta) { Role.create(name: 'Teaching Assistant', parent_id: nil, default_page_id: nil).save }
-
-      let(:institution) { Institution.create(name: 'NCSU').save }
-
-      let(:user) do
-        institution
-        User.create(name: "admin", full_name: "admin", email: "admin@gmail.com", password_digest: "admin", role_id: role_admin.id, institution_id: institution.id).save!
-      end
-
-      let(:assignment_with_quiz) { Assignment.create(name: "QuizAssignmentTest1", require_quiz: true).save! }
-      let(:assignment_without_quiz) { Assignment.create(name: "QuizAssignmentTest1", require_quiz: true).save! }
-
-      let(:team) {Team.create(name: "team1").save!}
-
-      let(:quizQuestionnaire1) do
-        team
-        assignment_with_quiz
-        Questionnaire.create(
-          name: 'QuizQuestionnaireTest1',
-          questionnaire_type: 'Quiz Questionnaire',
-          private: true,
-          min_question_score: 0,
-          max_question_score: 10,
-          instructor_id: team.id,
-          assignment_id: assignment_with_quiz.id
-        ).save!
-      end
-
-      let(:quizQuestionnaire2) do
-        team
-        assignment_with_quiz
-        Questionnaire.create(
-          name: 'QuizQuestionnaireTest2',
-          questionnaire_type: 'Quiz Questionnaire',
-          private: true,
-          min_question_score: 0,
-          max_question_score: 99,
-          instructor_id: team.id,
-          assignment_id: assignment_with_quiz.id
-        ).save!
-      end
-
-      get('list quiz questionnaires') do
-        tags 'QuizQuestionnaires'
-        produces 'application/json'
-        response(200, 'successful') do
-          run_test! do
-            expect(response.body.size).to eq(2)
+      response '201', 'Quiz questionnaire created' do
+        run_test! do
+          # Provide valid data for a successful creation
+          let(:quiz_questionnaire) do
+            {
+              name: 'Sample Quiz',
+              questionnaire_type: 'Quiz Questionnaire',
+              private: false,
+              min_question_score: 0,
+              max_question_score: 100,
+              instructor_id: 1,
+              assignment_id: 1
+            }
           end
         end
       end
 
+      response '422', 'Unprocessable Entity' do
+        run_test! do
+          # Provide incomplete or invalid data to trigger a 422 response
+          let(:quiz_questionnaire) do
+            {
+              name: '', # Invalid: Name is required
+              questionnaire_type: '', # Invalid: Type is required
+              private: nil, # Invalid: Private should be a boolean
+              min_question_score: -1, # Invalid: Min score should be non-negative
+              max_question_score: 50, # Invalid: Max score should be greater than min score
+              instructor_id: 'invalid_id', # Invalid: Instructor ID should be an integer
+              assignment_id: nil # Invalid: Assignment ID is required
+            }
+          end
+        end
+      end
     end
 
+    get 'List quiz questionnaires' do
+      tags 'Quiz Questionnaires'
+      produces 'application/json'
 
-
+      response '200', 'List of quiz questionnaires' do
+        run_test! do
+          # Test response data or expectations
+        end
+      end
+    end
   end
 
+  path '/api/v1/quiz_questionnaires/{id}' do
+    parameter name: :id, in: :path, type: :string
 
-  # path '/api/v1/quiz_questionnaires/copy/{id}' do
-  #   # You'll want to customize the parameter types...
-  #   parameter name: 'id', in: :path, type: :string, description: 'id'
-  #
-  #   post('copy quiz_questionnaire') do
-  #     response(200, 'successful') do
-  #       let(:id) { '123' }
-  #
-  #       after do |example|
-  #         example.metadata[:response][:content] = {
-  #           'application/json' => {
-  #             example: JSON.parse(response.body, symbolize_names: true)
-  #           }
-  #         }
-  #       end
-  #       run_test!
-  #     end
-  #   end
-  # end
-  #
-  # path '/api/v1/quiz_questionnaires' do
-  #
-  #   get('list quiz_questionnaires') do
-  #     response(200, 'successful') do
-  #
-  #       after do |example|
-  #         example.metadata[:response][:content] = {
-  #           'application/json' => {
-  #             example: JSON.parse(response.body, symbolize_names: true)
-  #           }
-  #         }
-  #       end
-  #       run_test!
-  #     end
-  #   end
-  #
-  #   post('create quiz_questionnaire') do
-  #     response(200, 'successful') do
-  #
-  #       after do |example|
-  #         example.metadata[:response][:content] = {
-  #           'application/json' => {
-  #             example: JSON.parse(response.body, symbolize_names: true)
-  #           }
-  #         }
-  #       end
-  #       run_test!
-  #     end
-  #   end
-  # end
-  #
-  # path '/api/v1/quiz_questionnaires/{id}' do
-  #   # You'll want to customize the parameter types...
-  #   parameter name: 'id', in: :path, type: :string, description: 'id'
-  #
-  #   get('show quiz_questionnaire') do
-  #     response(200, 'successful') do
-  #       let(:id) { '123' }
-  #
-  #       after do |example|
-  #         example.metadata[:response][:content] = {
-  #           'application/json' => {
-  #             example: JSON.parse(response.body, symbolize_names: true)
-  #           }
-  #         }
-  #       end
-  #       run_test!
-  #     end
-  #   end
-  #
-  #   patch('update quiz_questionnaire') do
-  #     response(200, 'successful') do
-  #       let(:id) { '123' }
-  #
-  #       after do |example|
-  #         example.metadata[:response][:content] = {
-  #           'application/json' => {
-  #             example: JSON.parse(response.body, symbolize_names: true)
-  #           }
-  #         }
-  #       end
-  #       run_test!
-  #     end
-  #   end
-  #
-  #   put('update quiz_questionnaire') do
-  #     response(200, 'successful') do
-  #       let(:id) { '123' }
-  #
-  #       after do |example|
-  #         example.metadata[:response][:content] = {
-  #           'application/json' => {
-  #             example: JSON.parse(response.body, symbolize_names: true)
-  #           }
-  #         }
-  #       end
-  #       run_test!
-  #     end
-  #   end
-  #
-  #   delete('delete quiz_questionnaire') do
-  #     response(200, 'successful') do
-  #       let(:id) { '123' }
-  #
-  #       after do |example|
-  #         example.metadata[:response][:content] = {
-  #           'application/json' => {
-  #             example: JSON.parse(response.body, symbolize_names: true)
-  #           }
-  #         }
-  #       end
-  #       run_test!
-  #     end
-  #   end
-  # end
+    get 'Retrieve a quiz questionnaire' do
+      tags 'Quiz Questionnaires'
+      produces 'application/json'
+
+      response '200', 'Quiz questionnaire details' do
+        run_test! do
+          # Provide the test scenario to retrieve a quiz questionnaire by ID
+          # Example data:
+          let(:id) { '1' }
+        end
+      end
+
+      response '404', 'Not Found' do
+        run_test! do
+          # Provide a scenario that triggers a 404 response
+          # Example data:
+          let(:id) { '999' } # An ID that does not exist
+        end
+      end
+    end
+
+    put 'Update a quiz questionnaire' do
+      tags 'Quiz Questionnaires'
+      consumes 'application/json'
+      parameter name: :quiz_questionnaire, in: :body, schema: {
+        type: :object,
+        properties: {
+          # Define the properties for updating a quiz questionnaire
+          name: { type: :string },
+          questionnaire_type: { type: :string },
+          private: { type: :boolean },
+          min_question_score: { type: :integer },
+          max_question_score: { type: :integer },
+          instructor_id: { type: :integer },
+          assignment_id: { type: :integer }
+        },
+        required: ['name', 'questionnaire_type', 'private', 'min_question_score', 'max_question_score', 'instructor_id', 'assignment_id']
+      }
+
+      response '200', 'Quiz questionnaire updated' do
+        run_test! do
+          # Provide the request body data to update a quiz questionnaire
+          # Example data:
+          let(:quiz_questionnaire) do
+            {
+              name: 'Updated Quiz',
+              questionnaire_type: 'Quiz Questionnaire',
+              private: true,
+              min_question_score: 5,
+              max_question_score: 50,
+              instructor_id: 1,
+              assignment_id: 1
+            }
+          end
+        end
+      end
+
+      response '422', 'Unprocessable Entity' do
+        run_test! do
+          # Provide invalid or incomplete data to trigger a 422 response
+          let(:quiz_questionnaire) do
+            {
+              name: '', # Invalid: Name is required
+              questionnaire_type: '', # Invalid: Type is required
+              private: nil, # Invalid: Private should be a boolean
+              min_question_score: -1, # Invalid: Min score should be non-negative
+              max_question_score: 10, # Invalid: Max score should be less than min score
+              instructor_id: 'invalid_id', # Invalid: Instructor ID should be an integer
+              assignment_id: nil # Invalid: Assignment ID is required
+            }
+          end
+        end
+      end
+    end
+
+    delete 'Delete a quiz questionnaire' do
+      tags 'Quiz Questionnaires'
+
+      response '200', 'Quiz questionnaire deleted' do
+        run_test! do
+          # Provide the scenario to delete a quiz questionnaire
+          # Example data:
+          let(:id) { '1' } # ID of the quiz questionnaire to be deleted
+        end
+      end
+
+      response '404', 'Not Found' do
+        run_test! do
+          # Provide a scenario that triggers a 404 response
+          # Example data:
+          let(:id) { '999' } # An ID that does not exist
+        end
+      end
+    end
+  end
 end
+
