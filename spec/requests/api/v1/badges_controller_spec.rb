@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-describe Api::V1::BadgesController, type: :controller do
+RSpec.describe Api::V1::BadgesController, type: :controller do
   describe "index" do
     it "returns all badges" do
       # Test scenario: When there are no badges in the database initially.
