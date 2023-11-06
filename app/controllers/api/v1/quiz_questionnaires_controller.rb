@@ -1,22 +1,26 @@
 class Api::V1::QuizQuestionnairesController < ApplicationController
 
+  # Action to retrieve a list of quiz questionnaires
   def index
     @quiz_questionnaires = Questionnaire.where(questionnaire_type: 'Quiz Questionnaire').order(:id)
     render json: @quiz_questionnaires, status: :ok and return
   end
 
+  # Action to retrieve details of a single quiz questionnaire
   def show
     begin
       @questionnaire = Questionnaire.find(params[:id])
       render json: @questionnaire, status: :ok and return
     rescue ActiveRecord::RecordNotFound
+      # Handle the case when the questionnaire is not found
       render json: $ERROR_INFO.to_s, status: :not_found and return
     end
   end
 
+  # Action to create a new quiz questionnaire
   def create
     begin
-
+      # Extract parameters and validate user's privileges
       @assignment_id = params[:assignmnet_id] # creating an instance variable to hold the assignment id
       @participant_id = params[:participant_id] # creating an instance variable to hold the participant id
       @team_id = params[:team_id] # creating an instance variable to hold the team id
@@ -38,7 +42,7 @@ class Api::V1::QuizQuestionnairesController < ApplicationController
       end
 
       if valid_request && check_questionnaire_type(params[:questionnaire_type])
-
+        # Create a new QuizQuestionnaire instance and set its attributes
         @questionnaire = QuizQuestionnaire.new(questionnaire_params)
         @questionnaire.instructor_id = @team_id
         @questionnaire.display_type = params[:questionnaire_type].split('Questionnaire')[0]
@@ -64,6 +68,7 @@ class Api::V1::QuizQuestionnairesController < ApplicationController
     end
   end
 
+  # Action to update an existing quiz questionnaire
   def update
 
     @user_id = params[:user_id]
@@ -80,6 +85,7 @@ class Api::V1::QuizQuestionnairesController < ApplicationController
     end
   end
 
+  # Action to delete a quiz questionnaire
   def destroy
     begin
 
@@ -97,6 +103,7 @@ class Api::V1::QuizQuestionnairesController < ApplicationController
     end
   end
 
+  # Action to create a copy of a quiz questionnaire
   def copy
     begin
       @questionnaire = Questionnaire.copy_questionnaire_details(params)
@@ -111,6 +118,7 @@ class Api::V1::QuizQuestionnairesController < ApplicationController
 
   private
 
+  # Check user's privilege based on their role
   def check_privilege(user_id)
     role_id = User.find(user_id).role_id
     role = Role.find(role_id).name
@@ -118,15 +126,18 @@ class Api::V1::QuizQuestionnairesController < ApplicationController
     role.eql?('Student') or role.eql?('Administrator') or role.eql?('Super Administrator')
   end
 
+  # Check if the team is valid for the given participant
   def team_valid?(team_id, participant_id)
     participantTeamID = Participant.find(participant_id).team_id
     team_id.eql?(participantTeamID)
   end
 
+  # Define the permitted parameters for creating/updating a questionnaire
   def questionnaire_params
     params.require(:quiz_questionnaire).permit(:name, :questionnaire_type, :private, :min_question_score, :max_question_score, :instructor_id, :assignment_id)
   end
 
+  # Check if the questionnaire type is "Quiz Questionnaire"
   def check_questionnaire_type(type)
     type.eql?("Quiz Questionnaire")
   end
