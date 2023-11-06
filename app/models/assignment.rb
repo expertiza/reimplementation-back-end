@@ -47,6 +47,9 @@ class Assignment < ApplicationRecord
   end
 
   def remove_assignment_from_course
+    if self.course_id == nil
+      raise "The assignment does not belong to any course."
+    end
     self.course_id = nil
     self
   end
