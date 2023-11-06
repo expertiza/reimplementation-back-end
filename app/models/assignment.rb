@@ -10,4 +10,8 @@ class Assignment < ApplicationRecord
   def num_review_rounds
     rounds_of_reviews
   end
+  #added a dummy method for assignment_participant file
+  def team_reviewing_enabled
+
+  end
 end

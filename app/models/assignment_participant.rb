@@ -10,14 +10,22 @@ class AssignmentParticipant < Participant
 
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewee_id'
   has_many :response_maps, foreign_key: 'reviewee_id'
-  has_many :quiz_mappings, class_name: 'QuizResponseMap', foreign_key: 'reviewee_id'
-  has_many :quiz_response_maps, foreign_key: 'reviewee_id'
-  has_many :quiz_responses, through: :quiz_response_maps, foreign_key: 'map_id'
+  #has_many :quiz_mappings, class_name: 'QuizResponseMap', foreign_key: 'reviewee_id'
+  #has_many :quiz_response_maps, foreign_key: 'reviewee_id'
+  #has_many :quiz_responses, through: :quiz_response_maps, foreign_key: 'map_id'
 
   validates :handle, presence: true
 
   # Removed obsolete attr_accessors and simplified methods for readability.
+  #this method
+  def average_question_score(question)
+    response_maps = ResponseMap.where(question: question, reviewee_id: team.id)
+    return nil if response_maps.empty?
 
+    total_score = response_maps.sum(&:score)
+    average_score = total_score.to_f / response_maps.size
+    average_score.round(2) # Rounded to two decimal places
+  end
   def dir_path
     assignment&.directory_path # Use safe navigation operator for assignment to avoid nil errors.
   end
