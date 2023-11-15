@@ -213,6 +213,18 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "teams_users", id: :integer, force: :cascade, options: "ENGINE=InnoDB DEFAULT CHARSET=latin1" do |t|
+    t.integer "team_id"
+    t.integer "user_id"
+    t.integer "duty_id"
+    t.string "pair_programming_status", limit: 1
+    t.integer "participant_id"
+    t.index ["duty_id"], name: "index_teams_participants_on_duty_id"
+    t.index ["participant_id"], name: "fk_rails_f4d20198de"
+    t.index ["team_id"], name: "fk_users_teams"
+    t.index ["user_id"], name: "fk_teams_users"
+  end
+
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "password_digest"
