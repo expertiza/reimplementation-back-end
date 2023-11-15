@@ -1,3 +1,5 @@
+require "rails_helper"
+
 describe 'CourseParticipant' do
   describe '#copy' do
     before(:each) do

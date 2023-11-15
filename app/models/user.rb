@@ -85,6 +85,13 @@ class User < ApplicationRecord
     user
   end
 
+  def self.anonymized_view?(ip_address = nil)
+    anonymized_view_starter_ips = $redis.get('anonymized_view_starter_ips') || ''
+    return true if ip_address && anonymized_view_starter_ips.include?(ip_address)
+
+    false
+  end
+
   # This will override the default as_json method in the ApplicationRecord class and specify
   # that only the id, name, and email attributes should be included when a User object is serialized.
   def as_json(options = {})

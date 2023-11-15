@@ -1,53 +1,68 @@
-describe which do
-describe "#average_question_score" do
-  context "when there are response maps for the question" do
-    it "calculates the average score for the given question" do
-      # Test scenario 1
-      # Given: A question with response maps
-      # When: The method is called with the question
-      # Then: The average score for the question is returned
-
-      # Test scenario 2
-      # Given: A question with response maps
-      # When: The method is called with the question
-      # Then: The average score for the question is calculated correctly
-
-      # Test scenario 3
-      # Given: A question with response maps
-      # When: The method is called with the question
-      # Then: The average score for the question is rounded to two decimal places
+  describe AssignmentParticipant do
+    let(:response) { build(:response) }
+    let(:team) { build(:assignment_team, id: 1) }
+    let(:team2) { build(:assignment_team, id: 2) }
+    let(:response_map) { build(:review_response_map, reviewer_id: 2, response: [response]) }
+    let(:participant) { build(:participant, id: 1, assignment: assignment) }
+    let(:participant2) { build(:participant, id: 2, grade: 100) }
+    let(:assignment) { build(:assignment, id: 1) }
+    let(:review_questionnaire) { build(:questionnaire, id: 1) }
+    let(:question) { double('Question') }
+    before(:each) do
+      allow(assignment).to receive(:questionnaires).and_return([review_questionnaire])
+      allow(participant).to receive(:team).and_return(team)
     end
-  end
+  describe "#average_question_score" do
 
-  context "when there are no response maps for the question" do
-    it "returns 0" do
-      # Test scenario 1
-      # Given: A question without response maps
-      # When: The method is called with the question
-      # Then: 0 is returned
+    context "when there are response maps for the question" do
 
-      # Test scenario 2
-      # Given: A question without response maps
-      # When: The method is called with the question
-      # Then: The method returns 0 regardless of the question
+      end
 
-      # Test scenario 3
-      # Given: A question without response maps
-      # When: The method is called with the question
-      # Then: The method always returns 0 for any question
+      it "calculates the average score for the question correctly" do
+
+      end
+
+      it "rounds the average score to two decimal places" do
+
+      end
     end
-  end
-end
+
+    context "when there are no response maps for the question" do
+      it "returns nil for a question without response maps" do
+
+      end
+
+      it "returns nil regardless of the question" do
+
+      end
+
+      it "always returns nil for any question without response maps" do
+
+      end
+    end
+
 describe "#dir_path" do
   context "when assignment has a directory path" do
     it "returns the directory path of the assignment" do
-      # Test body
+      # Create a test double for the assignment with a directory path.
+      assignment = double("assignment", directory_path: "/path/to/assignment")
+      # Set the expectation that the directory_path method should return the path.
+      expect(assignment).to receive(:directory_path).and_return("/path/to/assignment")
+      # Call the dir_path method and expect it to return the path.
+      result = dir_path(assignment)
+      expect(result).to eq("/path/to/assignment")
     end
   end
 
   context "when assignment does not have a directory path" do
     it "returns nil" do
-      # Test body
+      # Create a test double for the assignment with no directory path.
+      assignment = double("assignment", directory_path: nil)
+      # Set the expectation that the directory_path method should return nil.
+      expect(assignment).to receive(:directory_path).and_return(nil)
+      # Call the dir_path method and expect it to return nil.
+      result = dir_path(assignment)
+      expect(result).to be_nil
     end
   end
 end
