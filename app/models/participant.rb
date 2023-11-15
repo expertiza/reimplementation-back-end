@@ -1,7 +1,7 @@
 class Participant < ApplicationRecord
 
   # paper trail is used to keep track of the changes that are made to the code (does not affect the codebase in anyway)
-  has_paper_trail
+  # has_paper_trail
   belongs_to :user
   belongs_to :topic, class_name: 'SignUpTopic', inverse_of: false
   belongs_to :assignment, foreign_key: 'parent_id', inverse_of: false
@@ -14,7 +14,7 @@ class Participant < ApplicationRecord
   has_one :review_grade, dependent: :destroy
   #validation to ensure grade is of type numerical or nil
   validates :grade, numericality: { allow_nil: true }
-  has_paper_trail
+  # has_paper_trail
   delegate :course, to: :assignment
   delegate :current_stage, to: :assignment
   delegate :stage_deadline, to: :assignment

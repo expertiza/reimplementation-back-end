@@ -1,5 +1,6 @@
 class CourseParticipant < Participant
   belongs_to :course, class_name: 'Course', foreign_key: 'parent_id'
+  attribute :parent_id, :integer  # Add this line to define the attribute
 
   # Refactored: Simplified method using 'find_or_create_by'.
   # Copy this participant to an assignment
