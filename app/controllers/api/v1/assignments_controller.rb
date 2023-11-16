@@ -2,6 +2,8 @@ class Api::V1::AssignmentsController < ApplicationController
   # GET /api/v1/assignments
   def index
     assignments = Assignment.all
+    puts "========================================"
+    puts assignments
     render json: assignments
   end
 
@@ -36,6 +38,11 @@ class Api::V1::AssignmentsController < ApplicationController
     assignment = Assignment.find(params[:id])
     assignment.destroy
     head :no_content
+  end
+
+  def etc
+    assignment = Assignment.all
+    render json: assignment, status: :ok
   end
 
   private
