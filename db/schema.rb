@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_11_15_054915) do
+ActiveRecord::Schema[7.0].define(version: 2023_11_18_185433) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -148,6 +148,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_15_054915) do
     t.float "grade"
     t.text "comments_to_student"
     t.text "private_instructor_comments"
+    t.string "handle"
     t.index ["parent_id"], name: "index_participants_on_parent_id"
     t.index ["user_id"], name: "fk_participant_users"
     t.index ["user_id"], name: "index_participants_on_user_id"

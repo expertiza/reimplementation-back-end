@@ -13,7 +13,7 @@ class AssignmentParticipant < Participant
   #has_many :quiz_mappings, class_name: 'QuizResponseMap', foreign_key: 'reviewee_id'
   #has_many :quiz_response_maps, foreign_key: 'reviewee_id'
   #has_many :quiz_responses, through: :quiz_response_maps, foreign_key: 'map_id'
-
+  attribute :handle, :string
   validates :handle, presence: true
 
   # Removed obsolete attr_accessors and simplified methods for readability.
@@ -138,12 +138,11 @@ class AssignmentParticipant < Participant
 
   # define a handle for a new participant
   def set_handle
-    self.handle = if user.handle.blank? || AssignmentParticipant.exists?(parent_id: assignment.id, handle: user.handle)
-                    user.name
+    self.handle = if user.nil? || user.handle.blank? || AssignmentParticipant.exists?(parent_id: assignment.id, handle: user.handle)
+                    user&.name
                   else
                     user.handle
                   end
-    save!
   end
 
   def path

@@ -38,21 +38,30 @@ FactoryBot.define do
 
   if ActiveRecord::Base.connection.table_exists?(:roles)
     factory :role_of_instructor, class: Role do
-      name { 'Instructor' }
+      name { 'instructor' }
       parent_id { nil }
     end
   end
 
+  factory :role_of_student, class: Role do
+    name { 'student' }
+    parent_id { nil }
+
+  end
+
   factory :instructor, class: Instructor do
-    name {'instructor6'}
-    role {Role.where(name: 'Instructor').first || association(:role_of_instructor)}
-    parent_id {1}
+    name {'instructor'}
+    role { Role.where(name: 'instructor').first || association(:role_of_instructor) }
+    password { 'password' }
+    full_name { 'instructornew' }
+    parent_id { User.first || association(:user) }
     email {'instructor6@gmail.com'}
+
   end
 
   factory :course, class: Course do
-    sequence(:name) { |n| "CSC517, test#{n}" }
     instructor { Instructor.first || association(:instructor) }
+    sequence(:name) { |n| "user_#{n}" }
     directory_path {'csc517/test'}
     info {'Object-Oriented Languages and Systems'}
     private {true}
@@ -64,18 +73,21 @@ FactoryBot.define do
     assignment { Assignment.first || association(:assignment) }
     association :user, factory: :student
     type { 'AssignmentParticipant' }
+    handle { 'handle' }
   end
 
   factory :course_participant, class: CourseParticipant do
     course { Course.first || association(:course) }
     association :user, factory: :student
     type { 'CourseParticipant' }
+    handle { 'handle' }
   end
 
   factory :student, class: User do
     # Zhewei: In order to keep students the same names (2065, 2066, 2064) before each example.
-    sequence(:name) { |n| n = n % 3; "student206#{n + 4}" }
-    role { Role.where(name: 'Student').first || association(:role_of_student) }
+    name {'studentname'}
+    role { Role.where(name: 'student').first || association(:role_of_student) }
+    full_name { 'studentnew' }
     password { 'password' }
     email { 'expertiza@mailinator.com' }
     parent_id { 1 }

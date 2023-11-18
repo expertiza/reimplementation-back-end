@@ -4,27 +4,38 @@ class CourseParticipant < Participant
 
   # Refactored: Simplified method using 'find_or_create_by'.
   # Copy this participant to an assignment
+  # Copy this participant to an assignment
   def copy(assignment_id)
-    part = AssignmentParticipant.find_or_create_by(user_id: user_id, parent_id: assignment_id)
-    part.set_handle # Set the handle for the newly created assignment participant.
-    part
+    raise ArgumentError, 'Assignment ID cannot be nil' if assignment_id.nil?
+
+    assignment = Assignment.find_by(id: assignment_id)
+    raise ActiveRecord::RecordNotFound, "Assignment with id #{assignment_id} not found" if assignment.nil?
+
+    assignment_participant = AssignmentParticipant.find_or_create_by(user_id: user_id, parent_id: assignment_id)
+    assignment_participant.set_handle if assignment_participant.respond_to?(:handle)
+    assignment_participant
   end
+
+
 
   # Refactored: Simplified method using 'find_or_create_by'.
   # Provide import functionality for Course Participants
   def self.import(row_hash, _row_header = nil, session, id)
-    # Check if a user id has been provided in the row_hash.
     raise ArgumentError, 'No user id has been specified.' if row_hash.empty?
 
-    # Find or create a user with the given name from the row_hash.
-    user = User.find_or create_by(name: row_hash[:name])
+    user = User.find_by(name: row_hash[:name])
+    if user.nil?
+      raise ArgumentError, "The record containing #{row_hash[:name]} does not have enough items." if row_hash.length < 4
 
-    # Find the course by its id.
-    course = Course.find_by(id: id)
-    raise ImportError, 'The course with the id "' + id.to_s + '" was not found.' if course.nil?
+      attributes = ImportFileHelper.define_attributes(row_hash)
+      user = ImportFileHelper.create_new_user(attributes, session)
+    end
+    course = Course.find(id)
+    raise ArgumentError, 'The course with the id "' + id.to_s + '" was not found.' if course.nil?
 
-    # Find or create a course participant for the user and course.
-    CourseParticipant.find_or_create_by(user_id: user.id, parent_id: id)
+    unless CourseParticipant.exists?(user_id: user.id, parent_id: id)
+      CourseParticipant.create(user_id: user.id, parent_id: id)
+    end
   end
 
   def path

@@ -2,6 +2,7 @@ class Assignment < ApplicationRecord
   include MetricHelper
   has_many :invitations
   has_many :questionnaires
+  has_many :participants, class_name: 'AssignmentParticipant', foreign_key: 'parent_id', dependent: :destroy
 
   def review_questionnaire_id
     Questionnaire.find_by_assignment_id id
