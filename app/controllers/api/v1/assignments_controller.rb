@@ -42,6 +42,8 @@ class Api::V1::AssignmentsController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def assignment_params
-    params.require(:assignment).permit(:title, :description)
+    params.require(:assignment).permit(:name, :directory_path, :course_id, :instructor_id,
+                                       :require_quiz, :num_quiz_questions,
+                                       :description)
   end
 end

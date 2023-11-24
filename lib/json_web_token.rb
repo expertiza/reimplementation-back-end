@@ -6,13 +6,13 @@ class JsonWebToken
 
   if File.exist?(RSA_KEYS_FILE)
     rsa_keys = YAML.load_file(RSA_KEYS_FILE)
-    RSA_PRIVATE_KEY = OpenSSL::PKey::RSA.new(rsa_keys['private_key'])
-    RSA_PUBLIC_KEY = OpenSSL::PKey::RSA.new(rsa_keys['public_key'])
+    RSA_PRIVATE_KEY = OpenSSL::PKey::RSA.new(rsa_keys['private_key_str'])
+    RSA_PUBLIC_KEY = OpenSSL::PKey::RSA.new(rsa_keys['public_key_str'])
   else
     rsa_key = OpenSSL::PKey::RSA.generate(2048)
     RSA_PRIVATE_KEY = rsa_key
     RSA_PUBLIC_KEY = rsa_key.public_key
-    File.write(RSA_KEYS_FILE, { 'private_key' => RSA_PRIVATE_KEY, 'public_key' => RSA_PUBLIC_KEY }.to_yaml)
+    File.write(RSA_KEYS_FILE, { 'private_key_str' => RSA_PRIVATE_KEY.to_pem, 'public_key_str' => RSA_PUBLIC_KEY.to_pem }.to_yaml)
   end
 
   def self.encode(payload, exp = 24.hours.from_now)

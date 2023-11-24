@@ -87,7 +87,13 @@ class Api::V1::QuestionnairesController < ApplicationController
   private
 
   def questionnaire_params
-    params.require(:questionnaire).permit(:name, :questionnaire_type, :private, :min_question_score, :max_question_score, :instructor_id)
+    params.require(:questionnaire).permit(:name,
+                                          :questionnaire_type,
+                                          :private,
+                                          :min_question_score,
+                                          :max_question_score,
+                                          :instructor_id,
+                                          :assignment_id)
   end
 
   def sanitize_display_type(type)

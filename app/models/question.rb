@@ -1,19 +1,18 @@
 class Question < ApplicationRecord
-  before_create :set_seq
+  before_validation :set_seq, on: :create
   belongs_to :questionnaire # each question belongs to a specific questionnaire
   has_many :answers, dependent: :destroy
-  
-  validates :seq, presence: true, numericality: true # sequence must be numeric
+  accepts_nested_attributes_for :answers # Allows nested attributes for answers
+
+
   validates :txt, length: { minimum: 0, allow_nil: false, message: "can't be nil" } # user must define text content for a question
   validates :question_type, presence: true # user must define type for a question
-  validates :break_before, presence: true
+  validates :break_before, inclusion: { in: [true, false] }
+  validates :correct_answer, presence: true
+
 
   def scorable?
     false
-  end
-    
-  def set_seq
-    self.seq = questionnaire.questions.size + 1
   end
 
   def as_json(options = {})
@@ -25,4 +24,15 @@ class Question < ApplicationRecord
                           })).tap do |hash|
       end
   end
+
+
+  private
+
+  def set_seq
+    if questionnaire.present?
+      max_seq = questionnaire.questions.maximum(:seq)
+      self.seq = max_seq.to_i + 1
+     end
+  end
+
 end
