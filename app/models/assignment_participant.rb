@@ -7,7 +7,7 @@ class AssignmentParticipant < Participant
 
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'parent_id'
   belongs_to :user
-
+  belongs_to :assignment_team #check with devashish
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewee_id'
   #has_many :response_maps, foreign_key: 'reviewee_id'
   #has_many :quiz_mappings, class_name: 'QuizResponseMap', foreign_key: 'reviewee_id'
@@ -24,6 +24,11 @@ class AssignmentParticipant < Participant
 
   # all the participants in this assignment who have reviewed the team where this participant belongs
   def reviewers
+    # team = self.assignment_team
+    #
+    # if team.nil?
+    #   return [] # Return an empty array if team is nil
+    # end
     reviewers = []
     rmaps = ReviewResponseMap.where('reviewee_id = ?', team.id)
     rmaps.each do |rm|
@@ -101,40 +106,8 @@ class AssignmentParticipant < Participant
   end
   # provide import functionality for Assignment Participants
   # if user does not exist, it will be created and added to this assignment
-  def self.import(row_hash, _row_header = nil, session, id)
-    raise ArgumentError, 'No user id has been specified.' if row_hash.empty?
 
-    user = User.find_by(name: row_hash[:name])
-    # if user with provided name in csv file is not present then new user will be created.
-    if user.nil?
-      raise ArgumentError, "The record containing #{row_hash[:name]} does not have enough items." if row_hash.length < 4
-      # define_attributes method will return an element that stores values from the row_hash.
-      # create_new_user method will create new user with values present in attribute
-      attributes = ImportFileHelper.define_attributes(row_hash)
-      user = ImportFileHelper.create_new_user(attributes, session)
-    end
-    # if user is already added to the assignment then return.
-    raise ImportError, "The assignment with id \"#{id}\" was not found." if Assignment.find_by(id: id).nil?
 
-    return if AssignmentParticipant.exists?(user_id: user.id, parent_id: id)
-    # if user is not already a participant then, user will be added to the assignment.
-    new_part = AssignmentParticipant.create(user_id: user.id, parent_id: id)
-    new_part.set_handle
-  end
-  # grant publishing rights to one or more assignments. Using the supplied private key,
-  # digital signatures are generated.
-  # reference: http://stuff-things.net/2008/02/05/encrypting-lots-of-sensitive-data-with-ruby-on-rails/
-  def assign_copyright(private_key)
-    # now, check to make sure the digital signature is valid, if not raise error
-    self.permission_granted = verify_digital_signature(private_key)
-    save
-    raise 'Invalid key' unless permission_granted
-  end
-
-  # verify the digital signature is valid
-  def verify_digital_signature(private_key)
-    user.public_key == OpenSSL::PKey::RSA.new(private_key).public_key.to_pem
-  end
 
   # define a handle for a new participant
   def set_handle

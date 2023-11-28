@@ -15,4 +15,7 @@ class Assignment < ApplicationRecord
   def team_reviewing_enabled
 
   end
+  def path
+
+  end
 end

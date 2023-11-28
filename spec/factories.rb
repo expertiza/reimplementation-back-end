@@ -22,6 +22,36 @@ FactoryBot.define do
 
   factory :assignment do
     sequence(:name) { |n| "assignment#{n}" }
+    directory_path {"final_test"}
+  end
+
+  factory :team, class: Team do
+    id {1}
+    name {'testteam'}
+    parent_id {1}
+  end
+
+  factory :assignment_team, class: AssignmentTeam do
+
+  end
+
+  factory :review_response_map, class: ReviewResponseMap do
+    assignment { Assignment.first || association(:assignment) }
+    reviewer { AssignmentParticipant.first || association(:participant) }
+    #reviewee { AssignmentTeam.first || association(:assignment_team) }
+    #type {'ReviewResponseMap'}
+    #calibrate_to 0
+  end
+
+
+
+  factory :response, class: Response do
+    #response_map { ReviewResponseMap.first || association(:review_response_map) }
+    #additional_comment nil
+    #version_num nil
+    #round {1}
+    is_submitted {false}
+    #visibility {'private'}
   end
 
 
@@ -82,7 +112,12 @@ FactoryBot.define do
     type { 'CourseParticipant' }
     handle { 'handle' }
   end
-
+  factory :assignment_participant, class: AssignmentParticipant do
+    assignment { Assignment.first || association(:assignment) }
+    association :user, factory: :student
+    type { 'AssignmentParticipant' }
+    handle { 'handle' }
+  end
   factory :student, class: User do
     # Zhewei: In order to keep students the same names (2065, 2066, 2064) before each example.
     name {'studentname'}
