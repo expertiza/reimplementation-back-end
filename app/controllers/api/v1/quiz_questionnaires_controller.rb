@@ -20,8 +20,8 @@ class Api::V1::QuizQuestionnairesController < ApplicationController
   # Action to create a new quiz questionnaire
   def create
     begin
-      # Extract parameters and validate user's privileges
-      @assignment_id = params[:assignmnet_id] # creating an instance variable to hold the assignment id
+
+      @assignment_id = params[:assignment_id] # creating an instance variable to hold the assignment id
       @participant_id = params[:participant_id] # creating an instance variable to hold the participant id
       @team_id = params[:team_id] # creating an instance variable to hold the team id
       @user_id = params[:user_id] # creating an instance variable to hold the user id
