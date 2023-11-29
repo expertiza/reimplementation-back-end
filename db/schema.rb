@@ -98,7 +98,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_29_024913) do
     t.datetime "updated_at", null: false
     t.bigint "course_id"
     t.bigint "instructor_id", null: false
-    t.boolean "has_teams"
     t.index ["course_id"], name: "index_assignments_on_course_id"
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
@@ -220,8 +219,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_29_024913) do
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "assignment_id", null: false
-    t.index ["assignment_id"], name: "index_teams_on_assignment_id"
   end
 
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -263,7 +260,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_29_024913) do
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
-  add_foreign_key "teams", "assignments"
   add_foreign_key "users", "institutions"
   add_foreign_key "users", "roles"
   add_foreign_key "users", "users", column: "parent_id"

@@ -118,7 +118,7 @@ RSpec.describe Assignment, type: :model do
     let(:course) {create(:course)}
     it 'sets course_id to nil' do
 
-
+      assignment.course_id = course.id
       # Call the method to remove the course
       modified_assignment = assignment.remove_assignment_from_course
 
@@ -126,15 +126,10 @@ RSpec.describe Assignment, type: :model do
       expect(modified_assignment.course_id).to be_nil
     end
 
-    it 'returns the modified assignment' do
-      # Create an assignment with a course using FactoryBot
+    it 'raises an error if the assignment does not belongs to any course' do
 
-
-      # Call the method to remove the course
-      modified_assignment = assignment.remove_assignment_from_course
-
-      # Verify that the method returns the modified assignment
-      expect(modified_assignment).to eq(assignment)
+      expect { assignment.remove_assignment_from_course }
+        .to raise_error("The assignment does not belong to any course.")
     end
   end
 
