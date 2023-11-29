@@ -3,11 +3,49 @@ require 'rails_helper'
 RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
   let(:student) { create(:student) }       # Creates a student user
   let(:instructor) { create(:instructor) } # Creates an instructor user
-  let(:auth_token) { 'mocked_auth_token' } # mock a token
-  let(:questionnaire) do # mock questionnaires
-    course = create(:course, instructor: instructor)
-    assignment = create(:assignment, course: course, instructor: instructor)
-    create(:questionnaire, assignment: assignment, instructor: instructor)
+  let(:auth_token) { 'mocked_auth_token' } # Mock a token
+
+  let(:course) { create(:course, instructor: instructor) }
+  let(:assignment) { create(:assignment, course: course) }
+
+  let(:questionnaire_params) do
+    {
+      "questionnaire": {
+        "name": "General Knowledge Quiz",
+        "instructor_id": instructor.id,
+        "assignment_id": assignment.id,
+        "min_question_score": 0,
+        "max_question_score": 5,
+        "questions_attributes": [
+          {
+            "txt": "What is the capital of France?",
+            "question_type": "multiple_choice",
+            "break_before": true,
+            "correct_answer": "Paris",
+            "score_value": 1,
+            "answers_attributes": [
+              { "answer_text": "Paris", "correct": true },
+              { "answer_text": "Madrid", "correct": false },
+              { "answer_text": "Berlin", "correct": false },
+              { "answer_text": "Rome", "correct": false }
+            ]
+          },
+          {
+            "txt": "What is the largest planet in our solar system?",
+            "question_type": "multiple_choice",
+            "break_before": true,
+            "correct_answer": "Jupiter",
+            "score_value": 1,
+            "answers_attributes": [
+              { "answer_text": "Earth", "correct": false },
+              { "answer_text": "Jupiter", "correct": true },
+              { "answer_text": "Mars", "correct": false },
+              { "answer_text": "Saturn", "correct": false }
+            ]
+          }
+        ]
+      }
+    }
   end
 
   before do
@@ -24,11 +62,6 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
 
   describe 'GET #index' do
     before do
-      create(:institution)
-      course = create(:course, instructor: instructor)
-      assignment = create(:assignment, course: course, instructor: instructor)
-      # The 3 below refers to how many quizzes you want to create. In this case we create 3 and make sure
-      # the index returns a count of 3.
       create_list(:questionnaire, 3, assignment: assignment)
 
       get :index
@@ -45,6 +78,8 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
   end
 
   describe 'GET #show' do
+    let(:questionnaire) { create(:questionnaire, assignment: assignment, instructor: instructor) }
+
     before do
       get :show, params: { id: questionnaire.id }
     end
@@ -59,4 +94,22 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
     end
   end
 
+  describe 'POST #create_questionnaire' do
+    before do
+      post :create_questionnaire, params: questionnaire_params
+    end
+
+    it 'creates a new questionnaire' do
+      unless response.status == 200
+        puts response.body
+      end
+      expect(response).to have_http_status(:success)
+    end
+
+    it 'creates questions and answers for the questionnaire' do
+      questionnaire = Questionnaire.last
+      expect(questionnaire.questions.count).not_to be_zero
+      expect(questionnaire.questions.first.answers.count).not_to be_zero
+    end
+  end
 end
