@@ -1,6 +1,7 @@
 class CourseParticipant < Participant
   belongs_to :course, class_name: 'Course', foreign_key: 'parent_id'
   attribute :parent_id, :integer  # Add this line to define the attribute
+  attribute :directory_num, :integer
 
   # Refactored: Simplified method using 'find_or_create_by'.
   # Copy this participant to an assignment
@@ -39,10 +40,7 @@ class CourseParticipant < Participant
   end
 
   def path
-    # Refactored: Use safe navigation to avoid nil errors.
-    # Find the course by its parent_id.
-    course = Course.find_by(id: parent_id)
-    # Construct the path by appending the directory_num to the course's path.
-    course&.path.to_s + directory_num.to_s + '/'
+    Course.find(parent_id).path + directory_num.to_s + '/'
   end
+
 end

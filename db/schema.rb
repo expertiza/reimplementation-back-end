@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_11_18_185433) do
+ActiveRecord::Schema[7.0].define(version: 2023_11_29_232010) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -229,6 +229,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_18_185433) do
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "submitted_hyperlinks"
+    t.integer "directory_num"
   end
 
   create_table "update_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -255,11 +257,10 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_18_185433) do
     t.integer "locale"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "institution_id"
     t.bigint "role_id", null: false
-    t.bigint "parent_id"
+    t.integer "parent_id"
+    t.bigint "institution_id"
     t.index ["institution_id"], name: "index_users_on_institution_id"
-    t.index ["parent_id"], name: "index_users_on_parent_id"
     t.index ["role_id"], name: "index_users_on_role_id"
   end
 
@@ -275,5 +276,4 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_18_185433) do
   add_foreign_key "ta_mappings", "users"
   add_foreign_key "users", "institutions"
   add_foreign_key "users", "roles"
-  add_foreign_key "users", "users", column: "parent_id"
 end

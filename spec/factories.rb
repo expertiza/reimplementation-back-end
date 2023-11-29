@@ -84,14 +84,13 @@ FactoryBot.define do
     role { Role.where(name: 'instructor').first || association(:role_of_instructor) }
     password { 'password' }
     full_name { 'instructornew' }
-    parent_id { User.first || association(:user) }
+    parent_id { 1 }
     email {'instructor6@gmail.com'}
-
   end
 
   factory :course, class: Course do
-    instructor { Instructor.first || association(:instructor) }
     sequence(:name) { |n| "user_#{n}" }
+    instructor { Instructor.first || association(:instructor) }
     directory_path {'csc517/test'}
     info {'Object-Oriented Languages and Systems'}
     private {true}
@@ -112,12 +111,14 @@ FactoryBot.define do
     type { 'CourseParticipant' }
     handle { 'handle' }
   end
+
   factory :assignment_participant, class: AssignmentParticipant do
     assignment { Assignment.first || association(:assignment) }
     association :user, factory: :student
     type { 'AssignmentParticipant' }
     handle { 'handle' }
   end
+
   factory :student, class: User do
     # Zhewei: In order to keep students the same names (2065, 2066, 2064) before each example.
     name {'studentname'}

@@ -1,6 +1,6 @@
 require "rails_helper"
 
-describe 'CourseParticipant' do
+describe CourseParticipant do
   describe '#copy' do
     before(:each) do
       @assignment = create(:assignment)
@@ -73,17 +73,6 @@ describe 'CourseParticipant' do
 
   end
 
-  # describe '#export' do
-  #   it 'checks if csv file is created' do
-  #     options = { 'personal_details' => 'true' }
-  #     course_participant = create(:course_participant)
-  #     course_participant[:parent_id] = 2
-  #     CSV.open('t.csv', 'ab') do |csv|
-  #       CourseParticipant.export(csv, 2, options)
-  #     end
-  #   end
-  # end
-
   describe '#export_fields' do
     it 'option is empty fields is empty' do
       fields = []
@@ -100,28 +89,30 @@ describe 'CourseParticipant' do
   end
 
 
-# describe "#path" do
+  describe "#path" do
   # context "when the parent course exists" do
+  #   # let(:parent_course) { create(:course, directory_path: '/courses/') } # Assuming you have a Course factory
+  #
   #   it "returns the path of the parent course concatenated with the directory number" do
   #     # Create a course with an id of 1 and a path of '/courses/1/'
   #     course = create(:course, id: 1, directory_path: '/courses/1/')
   #
   #     # Create a course participant with directory_num of 123 and parent_id of 1
   #     course_participant = create(:course_participant, directory_num: 123, parent_id: 1)
+  #     # course_participant = create(:course_participant, parent_id: parent_course.id, directory_num: 123)
   #
   #     # Call the path method and expect the result to be '/courses/1/123/'
   #     expect(course_participant.path).to eq('/courses/1/123/')
   #   end
   # end
-  #
-  # context "when the parent course does not exist" do
-  #   it "raises an error" do
-  #     # Use build_stubbed instead of build to create a non-persisted instance
-  #     course_participant = build_stubbed(:course_participant, parent_id: 2)
-  #
-  #     # Expect calling path to raise an ActiveRecord::RecordNotFound error
-  #     expect { course_participant.path }.to raise_error(ActiveRecord::RecordNotFound)
-  #   end
-  # end
-  # end
+
+  context "when the parent course does not exist" do
+    it "raises an error" do
+      course_participant = build_stubbed(:course_participant, parent_id: 2)
+
+      # Expect calling path to raise an ActiveRecord::RecordNotFound error
+      expect { course_participant.path }.to raise_error(ActiveRecord::RecordNotFound)
+    end
+  end
+end
 end
