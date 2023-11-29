@@ -300,8 +300,6 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
       # Retrieve score
       get :calculate_score, params: { id: response_map.id }
 
-      # Debug the response
-      puts "Response from calculate_score: #{response.body}"
     end
 
     it 'returns the score of the ResponseMap' do
