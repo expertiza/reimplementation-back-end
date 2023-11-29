@@ -55,11 +55,15 @@ FactoryBot.define do
 
 
   factory :student, class: User do
-    name { Faker::Name.name }
-    role { Role.find_by(name: 'Student') || create(:role, name: 'Student') }
-    role_id { 5 }
+    sequence(:name) { |n| "student#{Faker::Alphanumeric.alpha(number: 4).downcase}" }
+    full_name { Faker::Name.name }
     password { 'password123' }
     email {'studenttest@gmail.com'}
+
+    after(:build) do |user|
+      student_role = Role.find_or_create_by!(name: 'Student', id: 5)
+      user.role = student_role
+    end
   end
 
   factory :course, class: Course do
@@ -70,4 +74,15 @@ FactoryBot.define do
     private {true}
     institution { Institution.first || association(:institution) }
   end
+
+  factory :response_map do
+    reviewee_id { create(:student).id }
+    reviewed_object_id { create(:questionnaire).id }
+  end
+
+  factory :participant do
+    user { create(:student) }
+    assignment { create(:assignment) }
+  end
+
 end

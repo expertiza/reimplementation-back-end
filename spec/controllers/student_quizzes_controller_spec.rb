@@ -59,6 +59,21 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
   end
   # Creates a questionnaire to delete to tests api endpoint
   let(:questionnaire_to_delete) { create(:questionnaire, assignment: assignment, instructor: instructor) }
+  # Create the participant that links student to assignments
+  let(:participant) { create(:participant, assignment: assignment, user: student) }
+  # Creates the json for assigning a student to an assignment which is needed for the questionnaire
+  let(:assign_quiz_params) do
+    {
+      participant_id: participant.id,
+      questionnaire_id: questionnaire.id
+    }
+  end
+  # Score to test the student quiz
+  let(:known_score) { 2 }
+  # create the response map needed for the student test and score api
+  let(:response_map) { create(:response_map, reviewee_id: student.id, reviewed_object_id: questionnaire.id) }
+
+
 
   before do
     allow_any_instance_of(Api::V1::StudentQuizzesController)
@@ -145,9 +160,9 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
     it 'destroys the requested questionnaire' do
       questionnaire_to_delete  # This line is to create the questionnaire before the test
 
-      expect {
+      expect do
         delete :destroy, params: { id: questionnaire_to_delete.id }
-      }.to change(Questionnaire, :count).by(-1)
+      end.to change(Questionnaire, :count).by(-1)
     end
 
     it 'returns a no content response' do
@@ -156,5 +171,143 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
     end
   end
 
+  describe 'POST #assign_quiz_to_student' do
+    context 'when the quiz is not already assigned' do
+      before do
+        post :assign_quiz_to_student, params: assign_quiz_params
+      end
+
+      it 'assigns the quiz to the student' do
+        expect(ResponseMap.where(reviewee_id: student.id, reviewed_object_id: questionnaire.id).exists?).to be true
+      end
+
+      it 'returns a success response' do
+        expect(response).to have_http_status(:success)
+      end
+    end
+
+    context 'when the quiz is already assigned' do
+      before do
+        create(:response_map, reviewee_id: student.id, reviewed_object_id: questionnaire.id)
+        post :assign_quiz_to_student, params: assign_quiz_params
+      end
+
+      it 'does not create a new assignment' do
+        expect(ResponseMap.where(reviewee_id: student.id, reviewed_object_id: questionnaire.id).count).to eq(1)
+      end
+
+      it 'returns an unprocessable entity response' do
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+  end
+
+  describe 'POST #submit_answers' do
+    let!(:question1) do
+      create(:question, questionnaire: questionnaire,
+                              txt: "What is the capital of France?", correct_answer: "Paris")
+    end
+    let!(:question2) do
+      create(:question, questionnaire: questionnaire,
+                              txt: "What is the largest planet in our solar system?", correct_answer: "Jupiter")
+    end
+
+    let(:submit_answers_params) do
+      {
+        questionnaire_id: questionnaire.id,
+        answers: [
+          { question_id: question1.id, answer_value: "Paris" },
+          { question_id: question2.id, answer_value: "Jupiter" }
+        ]
+      }
+    end
+
+    let!(:response_map) do
+      create(:response_map, reviewee_id: student.id, reviewed_object_id: questionnaire.id)
+    end
+
+    before do
+      allow_any_instance_of(Api::V1::StudentQuizzesController)
+        .to receive(:current_user)
+              .and_return(student)
+      # Ensure questions are linked to answers correctly
+      # Manually create answers for question1 and question2
+      create(:answer, question: question1, answer_text: "Paris", correct: true)
+      create(:answer, question: question1, answer_text: "Madrid", correct: false)
+      create(:answer, question: question2, answer_text: "Jupiter", correct: true)
+      create(:answer, question: question2, answer_text: "Mars", correct: false)
+
+      post :submit_answers, params: submit_answers_params
+    end
+
+    it 'calculates the total score correctly' do
+      json_response = JSON.parse(response.body)
+      expect(json_response['total_score']).to eq(2)
+    end
+
+    it 'creates/updates response records' do
+      expect(Response.where(response_map_id: response_map.id).count).to eq(submit_answers_params[:answers].length)
+    end
+  end
+
+
+
+  describe 'GET #calculate_score' do
+    # manually create the questionnaire questions and answers for the test
+    let!(:question1) do
+      create(:question, questionnaire: questionnaire,
+             txt: "What is the capital of France?", correct_answer: "Paris")
+    end
+    let!(:question2) do
+      create(:question, questionnaire: questionnaire,
+             txt: "What is the largest planet in our solar system?", correct_answer: "Jupiter")
+    end
+    # Submit the answers in the json format for the test
+    let(:submit_answers_params) do
+      {
+        questionnaire_id: questionnaire.id,
+        answers: [
+          { question_id: question1.id, answer_value: "Paris" },
+          { question_id: question2.id, answer_value: "Jupiter" }
+        ]
+      }
+    end
+    # Create the response map that links the student to the assignment
+    let!(:response_map) do
+      create(:response_map, reviewee_id: student.id, reviewed_object_id: questionnaire.id, score: 2)
+    end
+
+    before do
+      # take the quiz as the assigned student
+      allow_any_instance_of(Api::V1::StudentQuizzesController)
+        .to receive(:current_user)
+              .and_return(student)
+
+      # Manually create answers for question1 and question2
+      create(:answer, question: question1, answer_text: "Paris", correct: true)
+      create(:answer, question: question1, answer_text: "Madrid", correct: false)
+      create(:answer, question: question2, answer_text: "Jupiter", correct: true)
+      create(:answer, question: question2, answer_text: "Mars", correct: false)
+
+      # Submit answers
+      post :submit_answers, params: submit_answers_params
+
+      # Switch to instructor for calculating score
+      allow_any_instance_of(Api::V1::StudentQuizzesController)
+        .to receive(:current_user)
+              .and_return(instructor)
+
+      # Retrieve score
+      get :calculate_score, params: { id: response_map.id }
+
+      # Debug the response
+      puts "Response from calculate_score: #{response.body}"
+    end
+
+    it 'returns the score of the ResponseMap' do
+      json_response = JSON.parse(response.body)
+      expect(json_response['score']).to eq(2)
+    end
+  end
 
 end
