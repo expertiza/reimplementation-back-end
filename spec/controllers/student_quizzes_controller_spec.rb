@@ -1,13 +1,17 @@
 require 'rails_helper'
 
 RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
-  let(:student) { create(:student) }       # Creates a student user
-  let(:instructor) { create(:instructor) } # Creates an instructor user
-  let(:auth_token) { 'mocked_auth_token' } # Mock a token
-
+  # Creates a student user
+  let(:student) { create(:student) }
+  # Creates an instructor user
+  let(:instructor) { create(:instructor) }
+  # Mock a token
+  let(:auth_token) { 'mocked_auth_token' }
+  # Creates a course for the tests
   let(:course) { create(:course, instructor: instructor) }
+  # Creates an assignment
   let(:assignment) { create(:assignment, course: course) }
-
+  # Creates the questionnaire json for testing the api
   let(:questionnaire_params) do
     {
       "questionnaire": {
@@ -47,14 +51,14 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
       }
     }
   end
-  # mock a questionnaire
+  # Creates a questionnaire
   let(:questionnaire) { create(:questionnaire, assignment: assignment, instructor: instructor) }
-
   # mock a questionnaire update
   let(:updated_attributes) do
     { name: "Updated Quiz Name" }
   end
-
+  # Creates a questionnaire to delete to tests api endpoint
+  let(:questionnaire_to_delete) { create(:questionnaire, assignment: assignment, instructor: instructor) }
 
   before do
     allow_any_instance_of(Api::V1::StudentQuizzesController)
@@ -135,5 +139,22 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
       expect(response).to have_http_status(:success)
     end
   end
+
+
+  describe 'DELETE #destroy' do
+    it 'destroys the requested questionnaire' do
+      questionnaire_to_delete  # This line is to create the questionnaire before the test
+
+      expect {
+        delete :destroy, params: { id: questionnaire_to_delete.id }
+      }.to change(Questionnaire, :count).by(-1)
+    end
+
+    it 'returns a no content response' do
+      delete :destroy, params: { id: questionnaire_to_delete.id }
+      expect(response).to have_http_status(:no_content)
+    end
+  end
+
 
 end
