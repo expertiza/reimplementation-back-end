@@ -1,5 +1,5 @@
 class Api::V1::AssignmentsController < ApplicationController
-  include AssignmentHelper
+
   # GET /api/v1/assignments
   def index
     assignments = Assignment.all
@@ -68,7 +68,7 @@ class Api::V1::AssignmentsController < ApplicationController
     
   end
 
-  #update course id of an assignment/ assign the assign to some toher course
+  #update course id of an assignment/ assign the assign to some together course
   # input: assignment id and course id
   # output: status code and json of assignment
   def assign_courses_to_assignment
@@ -113,7 +113,22 @@ class Api::V1::AssignmentsController < ApplicationController
       render json: assignment.errors, status: :unprocessable_entity
     end
   end
-
+  def is_calibrated
+    assignment = Assignment.find(params[:assignment_id])
+    if assignment.nil?
+      render json: { error: "Assignment not found" }, status: :not_found
+    else
+      render json: assignment.is_calibrated? , status: :ok
+    end
+  end
+  def has_teams
+    assignment = Assignment.find(params[:assignment_id])
+    if assignment.nil?
+      render json: { error: "Assignment not found" }, status: :not_found
+    else
+      render json: assignment.teams?, status: :ok
+    end
+  end
   # PATCH/PUT /api/v1/assignments/:id
   def update
     assignment = Assignment.find(params[:id])
@@ -130,6 +145,7 @@ class Api::V1::AssignmentsController < ApplicationController
     assignment.destroy
     head :no_content
   end
+
 
   private
 

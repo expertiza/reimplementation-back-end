@@ -29,6 +29,8 @@ Rails.application.routes.draw do
           patch '/:assignment_id/remove_assignment_from_course',action: :remove_assignment_from_course
           patch '/:assignment_id/assign_courses_to_assignment/:course_id',action: :assign_courses_to_assignment
           post '/:assignment_id/copy_assignment', action: :copy_assignment
+          get '/:assignment_id/is_calibrated', action: :is_calibrated
+          get '/:assignment_id/has_teams', action: :has_teams
         end
       end
 
@@ -79,6 +81,7 @@ Rails.application.routes.draw do
           get :processed, action: :processed_requests
         end
       end
+
     end
   end
 end
