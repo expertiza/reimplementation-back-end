@@ -47,6 +47,14 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
       }
     }
   end
+  # mock a questionnaire
+  let(:questionnaire) { create(:questionnaire, assignment: assignment, instructor: instructor) }
+
+  # mock a questionnaire update
+  let(:updated_attributes) do
+    { name: "Updated Quiz Name" }
+  end
+
 
   before do
     allow_any_instance_of(Api::V1::StudentQuizzesController)
@@ -112,4 +120,20 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
       expect(questionnaire.questions.first.answers.count).not_to be_zero
     end
   end
+
+  describe 'PATCH/PUT #update' do
+    before do
+      put :update, params: { id: questionnaire.id, questionnaire: updated_attributes }
+    end
+
+    it 'updates the requested questionnaire' do
+      questionnaire.reload
+      expect(questionnaire.name).to eq("Updated Quiz Name")
+    end
+
+    it 'returns a success response' do
+      expect(response).to have_http_status(:success)
+    end
+  end
+
 end
