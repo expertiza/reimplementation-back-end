@@ -11,6 +11,7 @@ class User < ApplicationRecord
 
   belongs_to :role
   belongs_to :institution, optional: true
+  belongs_to :team, optional: true
   belongs_to :parent, class_name: 'User', optional: true
   has_many :users, foreign_key: 'parent_id', dependent: :nullify
   has_many :invitations

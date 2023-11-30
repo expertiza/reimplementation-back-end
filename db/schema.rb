@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
+ActiveRecord::Schema[7.0].define(version: 2023_11_18_184759) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -212,6 +212,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "name"
   end
 
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -236,9 +237,11 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.bigint "institution_id"
     t.bigint "role_id", null: false
     t.bigint "parent_id"
+    t.bigint "team_id"
     t.index ["institution_id"], name: "index_users_on_institution_id"
     t.index ["parent_id"], name: "index_users_on_parent_id"
     t.index ["role_id"], name: "index_users_on_role_id"
+    t.index ["team_id"], name: "fk_rails_b2bbf87303"
   end
 
   add_foreign_key "account_requests", "institutions"
@@ -253,5 +256,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
   add_foreign_key "ta_mappings", "users"
   add_foreign_key "users", "institutions"
   add_foreign_key "users", "roles"
+  add_foreign_key "users", "teams"
   add_foreign_key "users", "users", column: "parent_id"
 end
