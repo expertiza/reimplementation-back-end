@@ -43,7 +43,12 @@ class Api::V1::QuizQuestionnairesController < ApplicationController
 
       if valid_request && check_questionnaire_type(params[:questionnaire_type])
         # Create a new QuizQuestionnaire instance and set its attributes
-        @questionnaire = QuizQuestionnaire.new(questionnaire_params)
+        @questionnaire = QuizQuestionnaire.new
+        @questionnaire.name = params[:name]
+        @questionnaire.questionnaire_type = params[:questionnaire_type]
+        @questionnaire.private = params[:private]
+        @questionnaire.min_question_score = params[:min_question_score]
+        @questionnaire.max_question_score = params[:max_question_score]
         @questionnaire.instructor_id = @team_id
         @questionnaire.display_type = params[:questionnaire_type].split('Questionnaire')[0]
         @questionnaire.assignment_id = @assignment_id
@@ -133,9 +138,9 @@ class Api::V1::QuizQuestionnairesController < ApplicationController
   end
 
   # Define the permitted parameters for creating/updating a questionnaire
-  def questionnaire_params
-    params.require(:quiz_questionnaire).permit(:name, :questionnaire_type, :private, :min_question_score, :max_question_score, :instructor_id, :assignment_id)
-  end
+  # def questionnaire_params
+  #   params.require(:quiz_questionnaire).permit(:name, :questionnaire_type, :private, :min_question_score, :max_question_score, :instructor_id, :assignment_id)
+  # end
 
   # Check if the questionnaire type is "Quiz Questionnaire"
   def check_questionnaire_type(type)

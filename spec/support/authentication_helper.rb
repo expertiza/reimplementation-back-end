@@ -11,7 +11,7 @@ module AuthenticationHelper
     db_user = User.find(user.id)
     if user && (db_user.password_digest).eql?(user.password_digest)
       payload = { id: user.id, name: user.name, full_name: user.full_name, role: user.role.name,
-                  institution_id: user.institution.id }
+                  institution_id: user.institution_id }
       token = JsonWebToken.encode(payload, 24.hours.from_now)
       return token
     else
