@@ -118,5 +118,21 @@ class Assignment < ApplicationRecord
   def is_calibrated?
     is_calibrated
   end
+  
+  def pair_programming_enabled?
+    enable_pair_programming
+  end
+  
+  def has_badge?
+    has_badge
+  end
+
+  def topics?
+    @has_topics ||= sign_up_topics.any?
+  end
+
+  def team_assignment?
+    max_team_size > 0
+  end
 
 end
