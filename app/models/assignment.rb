@@ -2,7 +2,7 @@ class Assignment < ApplicationRecord
   include MetricHelper
   has_many :participants, class_name: 'AssignmentParticipant', foreign_key: 'assignment_id', dependent: :destroy
   has_many :users, through: :participants, inverse_of: :assignment
-  #has_many :teams, class_name: 'AssignmentTeam', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :assignment
+  has_many :teams, class_name: 'Team', foreign_key: 'assignment_id', dependent: :destroy, inverse_of: :assignment
   has_many :invitations, class_name: 'Invitation', foreign_key: 'assignment_id', dependent: :destroy # , inverse_of: :assignment
   has_many :assignment_questionnaires, dependent: :destroy
   has_many :questionnaires, through: :assignment_questionnaires
@@ -117,6 +117,22 @@ class Assignment < ApplicationRecord
   end
   def is_calibrated?
     is_calibrated
+  end
+  
+  def pair_programming_enabled?
+    enable_pair_programming
+  end
+  
+  def has_badge?
+    has_badge
+  end
+
+  def topics?
+    @has_topics ||= sign_up_topics.any?
+  end
+
+  def team_assignment?
+    max_team_size > 0
   end
 
 end

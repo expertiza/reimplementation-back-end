@@ -104,6 +104,43 @@ class Api::V1::AssignmentsController < ApplicationController
     end
   end
 
+
+  def has_badge
+    assignment = Assignment.find(params[:assignment_id])
+    if assignment.nil?
+      render json: { error: "Assignment not found" }, status: :not_found
+    else
+      render json: assignment.has_badge?, status: :ok
+    end
+  end
+
+  def pair_programming_enabled
+    assignment = Assignment.find(params[:assignment_id])
+    if assignment.nil?
+      render json: { error: "Assignment not found" }, status: :not_found
+    else
+      render json: assignment.pair_programming_enabled?, status: :ok
+    end
+  end
+
+  def has_topics
+    assignment = Assignment.find(params[:assignment_id])
+    if assignment.nil?
+      render json: { error: "Assignment not found" }, status: :not_found
+    else
+      render json: assignment.has_topics?, status: :ok
+    end
+  end
+
+  def team_assignment
+    assignment = Assignment.find(params[:assignment_id])
+    if assignment.nil?
+      render json: { error: "Assignment not found" }, status: :not_found
+    else
+      render json: assignment.team_assignment?, status: :ok
+    end
+  end
+
   # POST /api/v1/assignments
   def create
     assignment = Assignment.new(assignment_params)

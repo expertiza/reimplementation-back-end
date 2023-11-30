@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_11_29_024913) do
+ActiveRecord::Schema[7.0].define(version: 2023_11_05_193219) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -96,8 +96,11 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_29_024913) do
     t.integer "sample_assignment_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "course_id"
     t.bigint "instructor_id", null: false
+    t.bigint "course_id"
+    t.boolean "enable_pair_programming"
+    t.boolean "has_topics"
+    t.boolean "has_teams"
     t.index ["course_id"], name: "index_assignments_on_course_id"
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
@@ -141,9 +144,9 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_29_024913) do
     t.datetime "updated_at", null: false
     t.boolean "can_submit", default: true
     t.boolean "can_review", default: true
-    t.boolean "can_take_quiz", default: true
     t.string "handle"
     t.boolean "permission_granted"
+    t.boolean "can_take_quiz"
     t.index ["assignment_id"], name: "index_participants_on_assignment_id"
     t.index ["user_id"], name: "fk_participant_users"
     t.index ["user_id"], name: "index_participants_on_user_id"
@@ -206,6 +209,21 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_29_024913) do
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
   end
 
+  create_table "sign_up_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.text "topic_name"
+    t.bigint "assignment_id", null: false
+    t.integer "max_choosers"
+    t.text "category"
+    t.string "topic_identifier"
+    t.integer "micropayment"
+    t.integer "private_to"
+    t.text "description"
+    t.string "link"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "index_sign_up_topics_on_assignment_id"
+  end
+
   create_table "ta_mappings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "course_id", null: false
     t.bigint "user_id", null: false
@@ -219,6 +237,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_29_024913) do
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "assignment_id", null: false
+    t.index ["assignment_id"], name: "index_teams_on_assignment_id"
   end
 
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -258,8 +278,10 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_29_024913) do
   add_foreign_key "participants", "users"
   add_foreign_key "questions", "questionnaires"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
+  add_foreign_key "sign_up_topics", "assignments"
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
+  add_foreign_key "teams", "assignments"
   add_foreign_key "users", "institutions"
   add_foreign_key "users", "roles"
   add_foreign_key "users", "users", column: "parent_id"
