@@ -1,10 +1,11 @@
 class Api::V1::TeamsController < ApplicationController
+  before_action :set_team, only: %i[show update destroy add_ta view_tas remove_ta copy ]
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
   # GET /teams
   # List all the teams
   def index
-    teams = Team.all
+    teams = Team.order(:id)
     render json: teams, status: :ok
     # teams = Team.order(:id)
     # team_data = {}
@@ -50,10 +51,15 @@ class Api::V1::TeamsController < ApplicationController
 
   def set_team
     @team = Team.find(params[:id])
+    puts(@team.name)
   end
 
   def team_params
     params.require(:team).permit(:name)
+  end
+
+  def parameter_missing
+    render json: { error: 'Parameter missing' }, status: :unprocessable_entity
   end
 end
 
