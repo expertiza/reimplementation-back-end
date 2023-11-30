@@ -15,6 +15,8 @@ class User < ApplicationRecord
   has_many :users, foreign_key: 'parent_id', dependent: :nullify
   has_many :invitations
   has_many :assignments
+  has_many :teams_users, dependent: :destroy
+  has_many :teams, through: :teams_users
 
   scope :students, -> { where role_id: Role::STUDENT }
   scope :tas, -> { where role_id: Role::TEACHING_ASSISTANT }

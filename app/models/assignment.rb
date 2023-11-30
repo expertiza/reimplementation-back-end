@@ -103,7 +103,7 @@ class Assignment < ApplicationRecord
   def copy_assignment()
     copied_assignment = Assignment.new(
         name: "Copy of #{self.name}",
-        course_id: self.course_id,
+        course_id: self.course_id
       )
 
     # Assign the correct instructor to the copied assignment
@@ -118,11 +118,11 @@ class Assignment < ApplicationRecord
   def is_calibrated?
     is_calibrated
   end
-  
+
   def pair_programming_enabled?
     enable_pair_programming
   end
-  
+
   def has_badge?
     has_badge
   end
@@ -133,6 +133,10 @@ class Assignment < ApplicationRecord
 
   def team_assignment?
     max_team_size > 0
+  end
+
+  def staggered_and_no_topic?(topic_id)
+    staggered_deadline? && topic_id.nil?
   end
 
 end

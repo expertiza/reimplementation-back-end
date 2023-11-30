@@ -166,6 +166,18 @@ class Api::V1::AssignmentsController < ApplicationController
       render json: assignment.teams?, status: :ok
     end
   end
+  def staggered_and_no_topic
+    assignment = Assignment.find(params[:assignment_id])
+    topic_id = SignedUpTeam
+                 .joins(team: :teams_users)
+                 .where(teams_users: { user_id: 1, team_id: Team.where(assignment_id: params[:assignment_id]).pluck(:id) })
+                 .pluck(:sign_up_topic_id).first
+    if assignment.nil?
+      render json: { error: "Assignment not found" }, status: :not_found
+    else
+      render json: assignment.staggered_and_no_topic?(topic_id), status: :ok
+    end
+  end
   # PATCH/PUT /api/v1/assignments/:id
   def update
     assignment = Assignment.find(params[:id])
