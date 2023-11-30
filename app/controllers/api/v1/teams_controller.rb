@@ -4,12 +4,14 @@ class Api::V1::TeamsController < ApplicationController
   # GET /teams
   # List all the teams
   def index
-    teams = Team.order(:id)
-    team_data = {}
-    teams.each do |team|
-      team_data[team.name] = User.where(team_id: team.id)
-    end
-    render json: team_data, status: :ok
+    teams = Team.all
+    render json: teams, status: :ok
+    # teams = Team.order(:id)
+    # team_data = {}
+    #   teams.each do |team|
+    #     team_data[team.name] = User.where(team_id: team.id)
+    #   end
+    # render json: team_data, status: :ok
   end
 
   # GET /teams/1
