@@ -140,6 +140,16 @@ class Api::V1::AssignmentsController < ApplicationController
       render json: assignment.team_assignment?, status: :ok
     end
   end
+  
+  def valid_num_review
+    assignment = Assignment.find(params[:assignment_id])
+    review_type = params[:review_type]
+    if assignment.nil?
+      render json: { error: "Assignment not found" }, status: :not_found
+    else
+      render json: assignment.valid_num_review(review_type), status: :ok
+    end
+  end
 
   # POST /api/v1/assignments
   def create
