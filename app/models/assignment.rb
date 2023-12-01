@@ -167,5 +167,11 @@ class Assignment < ApplicationRecord
     end
   end
 
+  def varying_rubrics_by_round?
+    rubric_with_round = AssignmentQuestionnaire.where(assignment_id: id).where.not(used_in_round: nil).first
+
+    # Check if any rubric has a specified round
+    rubric_with_round.present?
+  end
 
 end
