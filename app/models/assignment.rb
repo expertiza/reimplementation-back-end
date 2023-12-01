@@ -118,11 +118,11 @@ class Assignment < ApplicationRecord
   def is_calibrated?
     is_calibrated
   end
-
+  
   def pair_programming_enabled?
     enable_pair_programming
   end
-
+  
   def has_badge?
     has_badge
   end
@@ -138,5 +138,34 @@ class Assignment < ApplicationRecord
   def staggered_and_no_topic?(topic_id)
     staggered_deadline? && topic_id.nil?
   end
+
+
+  def valid_reviews_allowed?(reviews_allowed)
+    reviews_allowed && reviews_allowed != -1
+  end
+
+  def num_reviews_greater?(reviews_required, reviews_allowed)
+    valid_reviews_allowed?(reviews_allowed) and reviews_required > reviews_allowed
+  end
+
+  def valid_num_review(review_type)
+    if review_type=='review'
+
+      if num_reviews_greater?(num_reviews_required,num_reviews_allowed)
+        {success: false, message: 'Number of metareviews required cannot be greater than number of reviews allowed'}
+      else
+        {success: true}
+      end
+
+
+    elsif review_type == 'metareview'
+        if num_reviews_greater?(num_metareviews_required,num_metareviews_allowed)
+          {success: false, message: 'Number of metareviews required cannot be greater than number of reviews allowed'}
+        else
+          {success: true}
+        end
+    end
+  end
+
 
 end
