@@ -20,6 +20,7 @@ Rails.application.routes.draw do
           get 'institution/:id', action: :institution_users
           get ':id/managed', action: :managed_users
           get 'role/:name', action: :role_users
+          get 'search/', action: :search_users
         end
       end
       resources :assignments

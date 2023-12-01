@@ -109,4 +109,19 @@ class User < ApplicationRecord
     self.email_on_review_of_review ||= false
     self.etc_icons_on_homepage ||= true
   end
+
+  def self.search_users(user, word, search_by)
+    # Check if the user's role is "Super Administrator"
+    if user.role.name == 'Super Administrator'
+      # If the user is a super admin, perform the LIKE query on the specified field
+      if search_by == 'role'
+        User.joins(:role).where("roles.name LIKE ?", "%#{word}%")
+      else
+        User.where("#{search_by} LIKE ?", "%#{word}%")
+      end
+    else
+      # If the user is not a super admin, return a message indicating unauthorized
+      'Not Authorized'
+    end
+  end
 end
