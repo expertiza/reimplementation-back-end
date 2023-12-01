@@ -3,6 +3,17 @@ openapi: 3.0.1
 info:
   title: EXPERTIZA API V1
   version: v1
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
 paths:
   "/api/v1/account_requests/pending":
     get:
@@ -119,6 +130,185 @@ paths:
       summary: Delete Account Request
       tags:
       - Account Requests
+      responses:
+        '204':
+          description: successful
+  "/api/v1/courses/{id}/add_ta/{ta_id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    - name: ta_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: add_ta course
+      tags:
+      - Courses
+      responses:
+        '201':
+          description: successful
+  "/api/v1/courses/{id}/tas":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: view_tas course
+      tags:
+      - Courses
+      responses:
+        '200':
+          description: successful
+  "/api/v1/courses/{id}/remove_ta/{ta_id}":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: string
+    - name: ta_id
+      in: path
+      description: ta_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: remove_ta course
+      tags:
+      - Courses
+      responses:
+        '200':
+          description: successful
+  "/api/v1/courses/{id}/copy":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: copy course
+      tags:
+      - Courses
+      responses:
+        '200':
+          description: successful
+  "/api/v1/courses":
+    get:
+      summary: list courses
+      tags:
+      - Courses
+      responses:
+        '200':
+          description: successful
+    post:
+      summary: create course
+      tags:
+      - Courses
+      parameters: []
+      responses:
+        '201':
+          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                directory_path:
+                  type: string
+                instructor_id:
+                  type: integer
+                institution_id:
+                  type: integer
+                info:
+                  type: string
+              required:
+              - name
+              - directory_path
+              - institution_id
+              - instructor_id
+  "/api/v1/courses/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: show course
+      tags:
+      - Courses
+      responses:
+        '200':
+          description: successful
+    patch:
+      summary: update course
+      tags:
+      - Courses
+      parameters: []
+      responses:
+        '200':
+          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                directory_path:
+                  type: string
+                instructor_id:
+                  type: integer
+                institution_id:
+                  type: integer
+                info:
+                  type: string
+              required: []
+    put:
+      summary: update course
+      tags:
+      - Courses
+      parameters: []
+      responses:
+        '200':
+          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                directory_path:
+                  type: string
+                instructor_id:
+                  type: integer
+                institution_id:
+                  type: integer
+                info:
+                  type: string
+              required: []
+    delete:
+      summary: delete course
+      tags:
+      - Courses
       responses:
         '204':
           description: successful
@@ -760,6 +950,8 @@ paths:
           type: integer
       - name: topic_ids
         in: query
+        items:
+          type: string
         description: Topic Identifiers to delete
         required: false
         schema:
@@ -991,185 +1183,6 @@ paths:
               required:
               - user_name
               - password
-    "/api/v1/courses/{id}/add_ta/{ta_id}":
-    parameters:
-    - name: id
-      in: path
-      required: true
-      schema:
-        type: integer
-    - name: ta_id
-      in: path
-      required: true
-      schema:
-        type: integer
-    get:
-      summary: add_ta course
-      tags:
-      - Courses
-      responses:
-        '201':
-          description: successful
-  "/api/v1/courses/{id}/tas":
-    parameters:
-    - name: id
-      in: path
-      description: id
-      required: true
-      schema:
-        type: string
-    get:
-      summary: view_tas course
-      tags:
-      - Courses
-      responses:
-        '200':
-          description: successful
-  "/api/v1/courses/{id}/remove_ta/{ta_id}":
-    parameters:
-    - name: id
-      in: path
-      description: id
-      required: true
-      schema:
-        type: string
-    - name: ta_id
-      in: path
-      description: ta_id
-      required: true
-      schema:
-        type: string
-    get:
-      summary: remove_ta course
-      tags:
-      - Courses
-      responses:
-        '200':
-          description: successful
-  "/api/v1/courses/{id}/copy":
-    parameters:
-    - name: id
-      in: path
-      description: id
-      required: true
-      schema:
-        type: string
-    get:
-      summary: copy course
-      tags:
-      - Courses
-      responses:
-        '200':
-          description: successful
-  "/api/v1/courses":
-    get:
-      summary: list courses
-      tags:
-      - Courses
-      responses:
-        '200':
-          description: successful
-    post:
-      summary: create course
-      tags:
-      - Courses
-      parameters: []
-      responses:
-        '201':
-          description: successful
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                directory_path:
-                  type: string
-                instructor_id:
-                  type: integer
-                institution_id:
-                  type: integer
-                info:
-                  type: string
-              required:
-              - name
-              - directory_path
-              - institution_id
-              - instructor_id
-  "/api/v1/courses/{id}":
-    parameters:
-    - name: id
-      in: path
-      description: id
-      required: true
-      schema:
-        type: string
-    get:
-      summary: show course
-      tags:
-      - Courses
-      responses:
-        '200':
-          description: successful
-    patch:
-      summary: update course
-      tags:
-      - Courses
-      parameters: []
-      responses:
-        '200':
-          description: successful
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                directory_path:
-                  type: string
-                instructor_id:
-                  type: integer
-                institution_id:
-                  type: integer
-                info:
-                  type: string
-              required: []
-    put:
-      summary: update course
-      tags:
-      - Courses
-      parameters: []
-      responses:
-        '200':
-          description: successful
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                directory_path:
-                  type: string
-                instructor_id:
-                  type: integer
-                institution_id:
-                  type: integer
-                info:
-                  type: string
-              required: []
-    delete:
-      summary: delete course
-      tags:
-      - Courses
-      responses:
-        '200':
-          description: successful 
 servers:
 - url: http://{defaultHost}
   variables:
