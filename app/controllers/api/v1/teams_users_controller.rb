@@ -1,7 +1,5 @@
 class TeamsUsersController < ApplicationController
   include AuthorizationHelper
-  include ParticipantsHelper
-  autocomplete :user, :name
 
   #The name of the function can be updated.
   def action_allowed?
@@ -14,6 +12,16 @@ class TeamsUsersController < ApplicationController
     team = Team.find(session[:team_id])
     @users = team.get_possible_team_members(params[:user][:name])
     render inline: "<%= auto_complete_result @users, 'name' %>", layout: false
+  end
+
+  def list
+    @team = Team.find(params[:id])
+    @assignment = Assignment.find(@team.parent_id)
+    @teams_users = TeamsUser.page(params[:page]).per_page(10).where(['team_id = ?', params[:id]])
+  end
+
+  def new
+    @team = Team.find(params[:id])
   end
 
   def create
@@ -36,7 +44,24 @@ class TeamsUsersController < ApplicationController
     redirect_to_team_list(team)
   end
 
-  private
+  def delete
+    @teams_user = TeamsUser.find(params[:id])
+    parent_id = Team.find(@teams_user.team_id).parent_id
+    @user = User.find(@teams_user.user_id)
+    @teams_user.destroy
+    undo_link("The team user \"#{@user.name}\" has been successfully removed. ")
+    redirect_to controller: 'teams', action: 'list', id: parent_id
+  end
+
+  def delete_selected
+    params[:item].each do |item_id|
+      team_user = TeamsUser.find(item_id).first
+      team_user.destroy
+    end
+    redirect_to action: 'list', id: params[:id]
+  end
+
+    private
 
   def user_not_defined_flash_error
     url_create = url_for(controller: 'users', action: 'new')
