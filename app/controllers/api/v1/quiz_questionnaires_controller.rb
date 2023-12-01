@@ -112,6 +112,7 @@ class Api::V1::QuizQuestionnairesController < ApplicationController
   end
 
   # Action to create a copy of a quiz questionnaire
+  # POST Method
   def copy
     begin
       @questionnaire = Questionnaire.copy_questionnaire_details(params)

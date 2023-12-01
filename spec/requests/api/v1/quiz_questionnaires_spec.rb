@@ -8,6 +8,10 @@ RSpec.describe "api/v1/questionnaires", type: :request do
     Role.create(id: 2, name: 'Administrator', parent_id: nil, default_page_id: nil)
 
     # Team.create(id: 1, name: "team1")
+    #
+    Institution.create(id: 2, name: 'Not_NCSU')
+    User.create(id: 2, name: "nopermission", full_name: "nopermission", email: "nopermission@gmail.com", password_digest: "nopermission", role_id: 1, institution_id: 2)
+
 
     Assignment.create(id: 1, name: "QuizAssignmentTest1", require_quiz: true)
     Assignment.create(id: 2, name: "QuizAssignmentTest2", require_quiz: false)
@@ -15,24 +19,19 @@ RSpec.describe "api/v1/questionnaires", type: :request do
     Participant.create(id: 1, user_id: user.id, assignment_id: 1, team_id: team.id)
   end
 
-  # let(:role_admin) { Role.create(name: 'Administrator', parent_id: nil, default_page_id: nil) }
-  # let(:role_ta) { Role.create(name: 'Teaching Assistant', parent_id: nil, default_page_id: nil) }
-
   let(:institution) { Institution.create(id: 1, name: 'NCSU') }
-  # let(:user) {User.create(id: 1, name: "admin", full_name: "admin", email: "admin@gmail.com", password_digest: "admin", role_id: 2, institution_id: institution.id)}
 
   let(:user) do
     institution
     User.create(id: 1, name: "admin", full_name: "admin", email: "admin@gmail.com", password_digest: "admin", role_id: 2, institution_id: institution.id)
   end
 
-  let(:team) { Team.create(id: 1, name: "team1") }
-
-  # let(:participant) do
-  #   user
-  #   team
-  #   Participant.create(id: 1, user_id: user.id, assignment_id: 1, team_id: team.id)
+  # let(:user_no_permission) do
+  #   institution
+  #   User.create(id: 2, name: "nopermission", full_name: "nopermission", email: "nopermission@gmail.com", password_digest: "nopermission", role_id: 1, institution_id: institution.id)
   # end
+
+  let(:team) { Team.create(id: 1, name: "team1") }
 
   let(:quizQuestionnaire1) do
     team
@@ -132,15 +131,6 @@ RSpec.describe "api/v1/questionnaires", type: :request do
           max_question_score: 0
         }
       end
-      # parameter name: 'assignment_id', in: :body, type: :integer
-      # parameter name: 'participant_id', in: :body, type: :integer
-      # parameter name: 'team_id', in: :body, type: :integer
-      # parameter name: 'user_id', in: :body, type: :integer
-      # parameter name: 'questionnaire_type', in: :body, type: :string
-      # parameter name: 'name', in: :body, type: :string
-      # parameter name: 'private', in: :body, type: :boolean
-      # parameter name: 'min_question_score', in: :body, type: :integer
-      # parameter name: 'max_question_score', in: :body, type: :integer
 
       parameter name: 'Authorization', in: :header, type: :string
       parameter name: 'Content-Type', in: :header, type: :string
@@ -148,27 +138,15 @@ RSpec.describe "api/v1/questionnaires", type: :request do
       let('Authorization') { "Bearer #{auth_token}" }
       let('Content-Type') { 'application/json' }
 
-      # let('user_id') { valid_questionnaire_params[:user_id] }
-      # let('assignment_id') { valid_questionnaire_params[:assignment_id] }
-      # let('participant_id') { valid_questionnaire_params[:participant_id] }
-      # let('team_id') { valid_questionnaire_params[:team_id] }
-      # let('name') { valid_questionnaire_params[:name] }
-      # let('questionnaire_type') { valid_questionnaire_params[:questionnaire_type] }
-      # let('private') { valid_questionnaire_params[:private] }
-      # let('min_question_score') { valid_questionnaire_params[:min_question_score] }
-      # let('max_question_score') { valid_questionnaire_params[:max_question_score] }
-
       # post request on /api/v1/questionnaires creates questionnaire with response 201 when correct params are passed
       response(201, 'created') do
 
         let('quiz_questionnaire') { valid_questionnaire_params }
 
-        run_test!
-
-        # run_test! do
-        #   # expect(response).to have_http_status(:created)
-        #   # expect(response_body['name']).to eq('TestCreateQuizQ101')
-        # end
+        run_test! do
+          expect(response).to have_http_status(:created)
+          expect(response.body).to include('TestCreateQuizQ101')
+        end
       end
 
       # post request on /api/v1/questionnaires returns 422 response - unprocessable entity when wrong params is passed toc reate questionnaire
@@ -178,6 +156,49 @@ RSpec.describe "api/v1/questionnaires", type: :request do
       end
 
     end
+  end
+
+  path '/api/v1/quiz_questionnaires/copy/{id}' do
+
+    post 'Copy a quiz Questionnaire' do
+      tags 'Quiz Questionnaires'
+
+      parameter name: :id, in: :path, type: :string
+
+      parameter name: 'Authorization', in: :header, type: :string
+      parameter name: 'Content-Type', in: :header, type: :string
+
+      before do
+
+          Questionnaire.create(
+            id: 69,
+            name: 'QuestionnaireToBeCopied',
+            questionnaire_type: 'Quiz Questionnaire',
+            private: true,
+            min_question_score: 1,
+            max_question_score: 70,
+            instructor_id: 1,
+            assignment_id: 1
+          )
+
+      end
+
+      response '200', 'Quiz questionnaire copied' do
+        let('Authorization') { "Bearer #{auth_token}" }
+        let('Content-Type') { 'application/json' }
+        let(:id) {'69'}
+        run_test!
+      end
+
+      response '404', 'Not Found' do
+        let('Authorization') { "Bearer #{auth_token}" }
+        let('Content-Type') { 'application/json' }
+        let(:id) { '999' }
+        run_test!
+      end
+
+    end
+
   end
 
   path '/api/v1/quiz_questionnaires/{id}' do
@@ -298,6 +319,25 @@ RSpec.describe "api/v1/questionnaires", type: :request do
         let('id'){1}
         run_test!
       end
+
+      response '422', 'Unprocessable Entity: Require Permission to Update' do
+        let('Authorization') { "Bearer #{auth_token}" }
+        let('Content-Type') { 'application/json' }
+
+        let(:questionnaire_params) do
+          {
+            user_id: 2,
+            name: 'Updated Quiz',
+            private: true,
+            min_question_score: 4,
+            max_question_score: 40
+          }
+        end
+
+        let('id'){1}
+
+        run_test!
+      end
     end
 
     delete 'Delete a quiz questionnaire' do
@@ -308,23 +348,54 @@ RSpec.describe "api/v1/questionnaires", type: :request do
       parameter name: 'Authorization', in: :header, type: :string
       parameter name: 'Content-Type', in: :header, type: :string
 
-      parameter name: :user_id, in: :body, type: :integer
+      parameter name: 'quiz_questionnaire', in: :body, schema: {
+        type: :object,
+        properties: {
+          user_id: { type: :integer }
+        }
+      }
 
-      response '200', 'Quiz questionnaire deleted' do
+      before do
+
+        Questionnaire.create(
+          id: 123,
+          name: 'QuestionnaireToBeCopied',
+          questionnaire_type: 'Quiz Questionnaire',
+          private: true,
+          min_question_score: 1,
+          max_question_score: 70,
+          instructor_id: 1,
+          assignment_id: 1
+        )
+
+      end
+
+      response '204', 'Quiz questionnaire deleted' do
         let('Authorization') { "Bearer #{auth_token}" }
         let('Content-Type') { 'application/json' }
-        let(:id) {'1'}
-        let(:user_id) {1}
+        let(:id) {'123'}
+        let('quiz_questionnaire') {{user_id: 1}}
+
         run_test!
       end
 
       response '404', 'Not Found' do
         let('Authorization') { "Bearer #{auth_token}" }
         let('Content-Type') { 'application/json' }
-        let('user_id') {1}
         let(:id) { '999' }
+        let('quiz_questionnaire') {{user_id: 1}}
         run_test!
       end
+
+      response '422', 'unprocessable_entity: Require Permission to Delete' do
+        let('Authorization') { "Bearer #{auth_token}" }
+        let('Content-Type') { 'application/json' }
+        let(:id) { '123' }
+        let('quiz_questionnaire') {{user_id: 2}}
+        run_test!
+      end
+
+
     end
 
   end
