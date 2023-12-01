@@ -205,6 +205,15 @@ class Api::V1::AssignmentsController < ApplicationController
     head :no_content
   end
 
+  def varying_rubrics_by_round?
+    assignment = Assignment.find(params[:assignment_id])
+    if assignment.nil?
+      render json: { error: "Assignment not found" }, status: :not_found
+    else
+      render json: assignment.varying_rubrics_by_round?, status: :ok
+    end
+  end
+
 
   private
 
