@@ -76,6 +76,22 @@ class Api::V1::UsersController < ApplicationController
     render json: { error: e.message }, status: :not_found
   end
 
+  def search_users
+    current_user = User.find(params[:user_id])
+    word = params[:word]
+    search_by = params[:search_by]
+
+    result = User.search_users(current_user, word, search_by)
+
+    if result.is_a?(ActiveRecord::Relation)
+      # If the result is a collection of users, render them as JSON
+      render json: result
+    else
+      # If the result is a message (e.g., 'Not Authorized'), render it as JSON with an error status
+      render json: { error: result }, status: :unauthorized
+    end
+  end
+
   private
 
   # Only allow a list of trusted parameters through.
