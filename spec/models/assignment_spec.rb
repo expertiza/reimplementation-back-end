@@ -127,7 +127,7 @@ RSpec.describe Assignment, type: :model do
     end
 
     it 'raises an error if the assignment does not belongs to any course' do
-
+      
       expect { assignment.remove_assignment_from_course }
         .to raise_error("The assignment does not belong to any course.")
     end

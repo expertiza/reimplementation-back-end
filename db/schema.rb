@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_12_01_012040) do
+ActiveRecord::Schema[7.0].define(version: 2023_12_01_024204) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -98,9 +98,9 @@ ActiveRecord::Schema[7.0].define(version: 2023_12_01_012040) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "instructor_id", null: false
-    t.boolean "has_teams"
     t.bigint "course_id"
     t.boolean "enable_pair_programming"
+    t.boolean "has_teams"
     t.boolean "has_topics"
     t.index ["course_id"], name: "index_assignments_on_course_id"
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
@@ -153,7 +153,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_12_01_012040) do
     t.datetime "updated_at", null: false
     t.boolean "can_submit", default: true
     t.boolean "can_review", default: true
-    t.boolean "can_take_quiz", default: true
     t.string "handle"
     t.boolean "permission_granted"
     t.index ["assignment_id"], name: "index_participants_on_assignment_id"

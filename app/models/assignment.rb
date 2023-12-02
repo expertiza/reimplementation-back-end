@@ -71,6 +71,9 @@ class Assignment < ApplicationRecord
   # This method sets the course_id of the assignment to nil, effectively removing its course association.
   # Returns the modified assignment object with course_id set to nil.
   def remove_assignment_from_course
+    if self.course_id == nil
+      raise "The assignment does not belong to any course."
+    end
     # Set the course_id of the assignment to nil
     self.course_id = nil
     # Return the modified assignment
