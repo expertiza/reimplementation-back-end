@@ -20,8 +20,8 @@ class Api::V1::QuizQuestionnairesController < ApplicationController
   # Action to create a new quiz questionnaire
   def create
     begin
-      # Extract parameters and validate user's privileges
-      @assignment_id = params[:assignmnet_id] # creating an instance variable to hold the assignment id
+
+      @assignment_id = params[:assignment_id] # creating an instance variable to hold the assignment id
       @participant_id = params[:participant_id] # creating an instance variable to hold the participant id
       @team_id = params[:team_id] # creating an instance variable to hold the team id
       @user_id = params[:user_id] # creating an instance variable to hold the user id
@@ -43,7 +43,15 @@ class Api::V1::QuizQuestionnairesController < ApplicationController
 
       if valid_request && check_questionnaire_type(params[:questionnaire_type])
         # Create a new QuizQuestionnaire instance and set its attributes
-        @questionnaire = QuizQuestionnaire.new(questionnaire_params)
+        @questionnaire = QuizQuestionnaire.new
+        if params[:id]
+          @questionnaire.id = params[:id]
+        end
+        @questionnaire.name = params[:name]
+        @questionnaire.questionnaire_type = params[:questionnaire_type]
+        @questionnaire.private = params[:private]
+        @questionnaire.min_question_score = params[:min_question_score]
+        @questionnaire.max_question_score = params[:max_question_score]
         @questionnaire.instructor_id = @team_id
         @questionnaire.display_type = params[:questionnaire_type].split('Questionnaire')[0]
         @questionnaire.assignment_id = @assignment_id
@@ -104,6 +112,7 @@ class Api::V1::QuizQuestionnairesController < ApplicationController
   end
 
   # Action to create a copy of a quiz questionnaire
+  # POST Method
   def copy
     begin
       @questionnaire = Questionnaire.copy_questionnaire_details(params)
