@@ -22,7 +22,7 @@ FactoryBot.define do
 
   factory :assignment do
     sequence(:name) { |n| "assignment#{n}" }
-    directory_path {"final_test"}
+    directory_path { 'final_test' }
   end
 
   factory :team, class: Team do
@@ -97,24 +97,17 @@ FactoryBot.define do
     institution { Institution.first || association(:institution) }
   end
 
-
   factory :participant, class: AssignmentParticipant do
-    assignment { Assignment.first || association(:assignment) }
+    assignment { association(:assignment) }
     association :user, factory: :student
     type { 'AssignmentParticipant' }
-    handle { 'handle' }
-  end
-
-  factory :course_participant, class: CourseParticipant do
-    course { Course.first || association(:course) }
-    association :user, factory: :student
-    type { 'CourseParticipant' }
     handle { 'handle' }
   end
 
   factory :assignment_participant, class: AssignmentParticipant do
     assignment { Assignment.first || association(:assignment) }
     association :user, factory: :student
+    association :assignment
     type { 'AssignmentParticipant' }
     handle { 'handle' }
   end
@@ -135,6 +128,18 @@ FactoryBot.define do
     master_permission_granted { 0 }
     handle { 'handle' }
     copy_of_emails { false }
+  end
+
+  factory :team_user, class: TeamsUser do
+    team { AssignmentTeam.first || association(:assignment_team) }
+    # Beware: it is fragile to assume that role_id of student is 2 (or any other unchanging value)
+    user { User.where(role_id: 2).first || association(:student) }
+  end
+  factory :signed_up_team, class: SignedUpTeam do
+    topic { SignUpTopic.first || association(:topic) }
+    team_id {1}
+    is_waitlisted {false}
+    preference_priority_number {nil}
   end
 
 end

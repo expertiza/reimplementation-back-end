@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_11_29_232010) do
+ActiveRecord::Schema[7.0].define(version: 2023_12_01_013628) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -114,13 +114,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_29_232010) do
     t.index ["instructor_id"], name: "index_courses_on_instructor_id"
   end
 
-  create_table "courses_users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.integer "user_id"
-    t.integer "course_id"
-    t.boolean "active"
-    t.index ["user_id"], name: "fk_courses_users"
-  end
-
   create_table "institutions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -144,11 +137,11 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_29_232010) do
     t.bigint "parent_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "type"
     t.float "grade"
     t.text "comments_to_student"
     t.text "private_instructor_comments"
     t.string "handle"
+    t.string "type"
     t.index ["parent_id"], name: "index_participants_on_parent_id"
     t.index ["user_id"], name: "fk_participant_users"
     t.index ["user_id"], name: "index_participants_on_user_id"
@@ -216,6 +209,19 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_29_232010) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "signed_up_teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "topic_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "signed_up_users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "topic_id", null: false
+    t.integer "creator_id", null: false
+    t.boolean "is_waitlisted", null: false
+    t.integer "preference_priority_number"
+  end
+
   create_table "ta_mappings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "course_id", null: false
     t.bigint "user_id", null: false
@@ -231,6 +237,11 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_29_232010) do
     t.datetime "updated_at", null: false
     t.text "submitted_hyperlinks"
     t.integer "directory_num"
+  end
+
+  create_table "teams_users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "team_id"
+    t.integer "user_id"
   end
 
   create_table "update_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -257,9 +268,9 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_29_232010) do
     t.integer "locale"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "institution_id"
     t.bigint "role_id", null: false
     t.integer "parent_id"
-    t.bigint "institution_id"
     t.index ["institution_id"], name: "index_users_on_institution_id"
     t.index ["role_id"], name: "index_users_on_role_id"
   end
