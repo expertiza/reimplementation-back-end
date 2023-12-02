@@ -66,7 +66,7 @@ RSpec.describe "api/v1/questionnaires", type: :request do
   path '/api/v1/quiz_questionnaires' do
 
     get 'Get quiz Questionnaires' do
-      tags 'QuizQuestionnaires'
+      tags 'Quiz Questionnaires'
       produces 'application/json'
 
       parameter name: 'Authorization', in: :header, type: :string
@@ -84,7 +84,7 @@ RSpec.describe "api/v1/questionnaires", type: :request do
     end
 
     post 'create Quiz questionnaire' do
-      tags 'QuizQuestionnaires'
+      tags 'Quiz Questionnaires'
       consumes 'application/json'
       produces 'application/json'
 

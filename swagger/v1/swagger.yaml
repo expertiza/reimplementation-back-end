@@ -809,7 +809,7 @@ paths:
     get:
       summary: Get quiz Questionnaires
       tags:
-      - QuizQuestionnaires
+      - Quiz Questionnaires
       parameters:
       - name: Authorization
         in: header
@@ -825,7 +825,7 @@ paths:
     post:
       summary: create Quiz questionnaire
       tags:
-      - QuizQuestionnaires
+      - Quiz Questionnaires
       parameters:
       - name: Authorization
         in: header
@@ -839,7 +839,7 @@ paths:
         '201':
           description: created
         '422':
-          description: unprocessable entity
+          description: 'Unprocessable Entity: Assignment does not require Quiz'
       requestBody:
         content:
           application/json:
@@ -864,6 +864,30 @@ paths:
                   type: integer
                 max_question_score:
                   type: integer
+  "/api/v1/quiz_questionnaires/copy/{id}":
+    post:
+      summary: Copy a quiz Questionnaire
+      tags:
+      - Quiz Questionnaires
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Quiz questionnaire copied
+        '404':
+          description: Not Found
   "/api/v1/quiz_questionnaires/{id}":
     get:
       summary: Retrieve a quiz questionnaire
@@ -910,7 +934,7 @@ paths:
         '200':
           description: Quiz questionnaire updated
         '422':
-          description: Unprocessable Entity
+          description: 'Unprocessable Entity: Require Permission to Update'
       requestBody:
         content:
           application/json:
@@ -952,8 +976,12 @@ paths:
         schema:
           type: string
       responses:
+        '204':
+          description: Quiz questionnaire deleted
         '404':
           description: Not Found
+        '422':
+          description: 'unprocessable_entity: Require Permission to Delete'
   "/api/v1/roles":
     get:
       summary: list roles
