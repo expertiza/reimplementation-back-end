@@ -1,40 +1,49 @@
 # frozen_string_literal: true
 
 class ScoredQuestion < ChoiceQuestion
-
   self.table_name = 'questions'
+
   def scorable?
     true
   end
 
-  ##############
-
   def edit
-    html = '<div>'
-    html += "<label for='question_#{id}'>Question #{count}:</label>"
-    html += "<input type='text' id='question_#{id}' name='question[#{id}]' value='#{txt}' />"
-    html += "<input type='number' name='weight[#{id}]' value='#{weight}' />"
-    html += '</div>'
-    html
+    {
+      question_id: id,
+      label: "Question #{count}:",
+      input_type: 'text',
+      input_id: "question_#{id}",
+      input_name: "question[#{id}]",
+      input_value: txt,
+      weight_name: "weight[#{id}]",
+      weight_value: weight
+    }.to_json
   end
 
   def view_question_text
-
+    # You may need to adjust the JSON structure based on your requirements
+    {
+      question_text: txt,
+      type: nil, # Update with the actual type value
+      weight: weight,
+      score_range: nil # Update with the actual score range value
+    }.to_json
   end
 
   def compute
     score = (weight.to_i * 2) # Adjust your scoring logic here
-    "Score: #{score}"
+    { score: score }.to_json
   end
 
   def view_completed_question
-    result = "Question #{count}: #{txt}"
-    result += "<p>Answer: #{answer}</p>" unless answer.nil?
-    result += "<p>Score: #{compute}</p>"
+    result = { question: "Question #{count}: #{txt}" }.to_json
+    result[:answer] = answer unless answer.nil?
+    result[:score] = compute[:score]
     result
   end
 
   def self.compute_question_score
-    # Compute scored question score logic
+    # Compute scored question score logic and return as JSON
+    { computed_score: nil }.to_json
   end
 end

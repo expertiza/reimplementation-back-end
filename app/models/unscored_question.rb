@@ -1,28 +1,31 @@
 # frozen_string_literal: true
 
 class UnscoredQuestion < ChoiceQuestion
-
   self.table_name = 'questions'
 
   def edit
-    html = '<div>'
-    html += "<label for='question_#{id}'>Question #{count}:</label>"
-    html += "<input type='text' id='question_#{id}' name='question[#{id}]' value='#{txt}' />"
-    html += '</div>'
-    html
+    {
+      question_id: id,
+      label: "Question #{count}:",
+      input_type: 'text',
+      input_id: "question_#{id}",
+      input_name: "question[#{id}]",
+      input_value: txt
+    }.to_json
   end
 
   def view_question_text
-    "<p>#{txt}</p>"
+    { question_text: "<p>#{txt}</p>" }.to_json
   end
 
   def compute
-    # Compute unscored question logic
+    # Compute unscored question logic and return as JSON
+    { computed_result: nil }.to_json
   end
 
   def view_completed_question
-    result = "Question #{count}: #{txt}"
-    result += "<p>Answer: #{answer}</p>" unless answer.nil?
+    result = { question: "Question #{count}: #{txt}" }.to_json
+    result[:answer] = answer unless answer.nil?
     result
   end
 end

@@ -3,17 +3,19 @@ require 'rails_helper'
 RSpec.describe Dropdown, type: :model do
   describe '#edit' do
     context 'when given a count' do
-      it 'returns an HTML string with the edit form for a question' do
+      it 'returns a JSON object with the edit form for a question' do
         dropdown = Dropdown.new
-        html = dropdown.edit(5)
-        expect(html).to be_a(String)
+        json_result = dropdown.edit(5)
+
+        expected_result = {
+          edit_form: '<div>Edit form content here</div>'
+        }
+        expect(json_result).to eq(expected_result)
       end
     end
   end
 
   describe "#view_question_text" do
-
-
     context "when given invalid inputs" do
       it "raises an error" do
         dropdown = Dropdown.new
@@ -24,28 +26,41 @@ RSpec.describe Dropdown, type: :model do
 
   describe '#complete' do
     context 'when count is provided' do
-      it 'generates HTML code for a select input with the given count' do
+      it 'generates JSON code for a select input with the given count' do
         dropdown = Dropdown.new
-        html = dropdown.complete(5)
-        expect(html).to be_a(String)
+        json_result = dropdown.complete(5)
+
+        expected_result = {
+          select_input: '<select>Options for question count 5</select>'
+        }
+        expect(json_result).to eq(expected_result)
       end
     end
 
     context 'when answer is provided' do
-      it 'generates HTML code with the provided answer' do
+      it 'generates JSON code with the provided answer' do
         dropdown = Dropdown.new
-        html = dropdown.complete(5, 2)
-        expect(html).to be_a(String)
+        json_result = dropdown.complete(5, 2)
+
+        expected_result = {
+          select_input: '<select>Options for question count 5</select>',
+          answer: 2
+        }
+        expect(json_result).to eq(expected_result)
       end
     end
 
     context 'when answer is not provided' do
-      it 'generates HTML code without any answer' do
+      it 'generates JSON code without any answer' do
         dropdown = Dropdown.new
-        html = dropdown.complete(5)
-        expect(html).to be_a(String)
+        json_result = dropdown.complete(5)
+
+        expected_result = {
+          select_input: '<select>Options for question count 5</select>',
+          answer: nil
+        }
+        expect(json_result).to eq(expected_result)
       end
     end
   end
-
 end

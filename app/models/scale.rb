@@ -1,51 +1,43 @@
 # frozen_string_literal: true
 
 class Scale < ScoredQuestion
-
   attr_accessor :txt, :type, :weight, :min_label, :max_label, :answer
   attr_reader :min_question_score, :max_question_score
 
   def edit
-    html = ''
-    html += '<form>'
-    html += "<label for='question'>Question:</label>"
-    html += "<input type='text' name='question' value='Scale Question'>"
-    html += '</form>'
-    return html
+    {
+      form: true,
+      label: 'Question:',
+      input_type: 'text',
+      input_name: 'question',
+      input_value: 'Scale Question'
+    }.to_json
   end
 
   def view_question_text
-    if txt.nil? || type.nil? || weight.nil?
-      raise ArgumentError, 'Invalid input values (given 0, expected 1)'
-    end
-
-    if min_label.nil? && max_label.nil?
-      score_range = "#{@min_question_score} to #{@max_question_score}"
-    else
-      score_range = "#{min_label} #{@min_question_score} to #{@max_question_score} #{max_label}"
-    end
-
-    "#{txt} (#{type}, #{weight}, #{score_range})"
+    # Update with your specific logic for generating JSON
+    { text: txt, type: type, weight: weight, score_range: score_range }.to_json
   end
 
   def complete
-    html = '<select>'
-    if answer
-      (@min_question_score..@max_question_score).each do |option|
-        selected = (option == answer) ? 'selected' : ''
-        option_text = min_label.nil? ? option.to_s : "#{min_label} #{option} #{max_label}"
-        html << "<option value='#{option}' #{selected}>#{option_text}</option>"
-      end
+    options = (@min_question_score..@max_question_score).map do |option|
+      { value: option, selected: (option == answer) }.to_json
     end
-    html += '</select>'
+    { scale_options: options }.to_json
   end
 
-  def view_completed_question(options = {})    #initially nil
+  def view_completed_question(options = {})
     if options[:count] && options[:answer] && options[:questionnaire_max]
-      html = "Count: #{options[:count]}, Answer: #{options[:answer]}, Questionnaire Max: #{options[:questionnaire_max]}"
+      { count: options[:count], answer: options[:answer], questionnaire_max: options[:questionnaire_max] }.to_json
     else
-      html = "Question not answered."
+      { message: 'Question not answered.' }.to_json
     end
-    return html
+  end
+
+  private
+
+  def score_range
+    min_label.nil? && max_label.nil? ? "#{@min_question_score} to #{@max_question_score}" :
+      "#{min_label} #{@min_question_score} to #{@max_question_score} #{max_label}"
   end
 end
