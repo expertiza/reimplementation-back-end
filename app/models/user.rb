@@ -76,6 +76,20 @@ class User < ApplicationRecord
     end
   end
 
+  # locate User based on provided login.
+  # If user supplies e-mail or name, the
+  # helper will try to find that User account.
+  def self.find_by_login(login)
+    user = User.find_by(email: login)
+    if user.nil?
+      items = login.split('@')
+      short_name = items[0]
+      user_list = User.where('name = ?', short_name)
+      user = user_list.first if user_list.any? && user_list.length == 1
+    end
+    user
+  end
+
   def self.from_params(params)
     user = params[:user_id] ? User.find(params[:user_id]) : User.find_by(name: params[:user][:name])
     raise "User #{params[:user_id] || params[:user][:name]} not found" if user.nil?
