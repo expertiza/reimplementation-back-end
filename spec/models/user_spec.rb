@@ -37,91 +37,72 @@ RSpec.describe User, type: :model do
   #   end
   # end
 
-  # describe '.search_users' do
-  #   context 'when searching by name' do
-  #     it 'returns users with matching names' do
-  #       # Test scenario 1
-  #       # Description: When searching by name, it should return users whose names contain the specified letter.
-  #       # Method call: search_users(role, user_id, letter, 1)
-  #       # Expected result: Returns users with names containing the specified letter.
-  #
-  #       # Test scenario 2
-  #       # Description: When searching by name, it should return an empty array if no users have names containing the specified letter.
-  #       # Method call: search_users(role, user_id, letter, 1)
-  #       # Expected result: Returns an empty array.
-  #     end
-  #   end
 
   describe '.search_users' do
-    let(:super_admin_role) { Role.find_or_create_by(name: 'Super Administrator') }
-    let(:user) { create(:user, role: super_admin_role) }
+    # Creating dummy objects for the test with the help of let statement
+    let(:role) { Role.create(name: 'Instructor', parent_id: nil, id: 2, default_page_id: nil) }
+    let(:instructor) do
+      Instructor.create(id: 1234, name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor',
+                        password: '123456', role_id: 2)
+    end
 
-    context 'when the user is a Super Administrator' do
+    context 'when searching by name' do
+      it 'returns users with matching names' do
+        # Test scenario 1
+        search_result = User.search_users(nil, 'testins', 'name')
+        expect(search_result).to include(instructor)
+
+        # Test scenario 2
+        search_result = User.search_users(nil, 'unknown', 'name')
+        expect(search_result).to be_empty
+      end
+    end
+
+    context 'when searching by fullname' do
+      it 'returns users with matching fullnames' do
+        # Test scenario 1
+        search_result = User.search_users(nil, 'Test', 'full_name')
+        expect(search_result).to include(instructor)
+
+        # Test scenario 2
+        search_result = User.search_users(nil, 'UnknownName', 'full_name')
+        expect(search_result).to be_empty
+      end
+    end
+
+    context 'when searching by email' do
+      it 'returns users with matching emails' do
+        # Test scenario 1
+        search_result = User.search_users(nil, 'test@test.com', 'email')
+        expect(search_result).to include(instructor)
+
+        # Test scenario 2
+        search_result = User.search_users(nil, 'unknown@test.com', 'email')
+        expect(search_result).to be_empty
+      end
+    end
+
+    context 'when searching by default' do
+      it 'returns users with names starting with the specified id' do
+        # Test scenario 1
+        search_result = User.search_users(instructor.id, nil, nil)
+        expect(search_result.map(&:id)).to include(instructor.id)
+
+        # Test scenario 2
+        search_result = User.search_users(9999, nil, nil) # Use an invalid user_id
+        expect(search_result).to be_empty
+      end
+    end
+    context 'when searching by role' do
       it 'returns users with matching roles' do
-        # Test scenario: When searching by role, it should return users with matching roles.
-        result = User.search_users(user, 'Admin', 'role')
-        expect(result).to include(user)
-      end
+        # Test scenario 1
+        search_result = User.search_users(nil, 'admin', 'role')
+        expect(search_result.map(&:id)).to include(instructor.role_id)
 
-      it 'returns an empty array if no users match the criteria' do
-        # Test scenario: When no users match the specified criteria, it should return an empty array.
-        result = User.search_users(user, 'Nonexistent', 'name')
-        expect(result).to eq([])
+        # Test scenario 2
+        search_result = User.search_users(nil, 'unknown', 'role')
+        expect(search_result).to be_empty
       end
     end
-
-    context 'when the user is not a Super Administrator' do
-      let(:regular_user) { create(:user) }
-
-      it 'returns unauthorized when the user is not a Super Administrator' do
-        result = User.search_users(regular_user, 'paolajones', 'name')
-        expect(result).to eq('Not Authorized')
-      end
-    end
-
-
-  #
-  #   context 'when searching by fullname' do
-  #     it 'returns users with matching fullnames' do
-  #       # Test scenario 1
-  #       # Description: When searching by fullname, it should return users whose fullnames contain the specified letter.
-  #       # Method call: search_users(role, user_id, letter, 2)
-  #       # Expected result: Returns users with fullnames containing the specified letter.
-  #
-  #       # Test scenario 2
-  #       # Description: When searching by fullname, it should return an empty array if no users have fullnames containing the specified letter.
-  #       # Method call: search_users(role, user_id, letter, 2)
-  #       # Expected result: Returns an empty array.
-  #     end
-  #   end
-  #
-  #   context 'when searching by email' do
-  #     it 'returns users with matching emails' do
-  #       # Test scenario 1
-  #       # Description: When searching by email, it should return users whose emails contain the specified letter.
-  #       # Method call: search_users(role, user_id, letter, 3)
-  #       # Expected result: Returns users with emails containing the specified letter.
-  #
-  #       # Test scenario 2
-  #       # Description: When searching by email, it should return an empty array if no users have emails containing the specified letter.
-  #       # Method call: search_users(role, user_id, letter, 3)
-  #       # Expected result: Returns an empty array.
-  #     end
-  #   end
-  #
-  #   context 'when searching by default' do
-  #     it 'returns users with names starting with the specified letter' do
-  #       # Test scenario 1
-  #       # Description: When searching by default, it should return users whose names start with the specified letter.
-  #       # Method call: search_users(role, user_id, letter, 4)
-  #       # Expected result: Returns users with names starting with the specified letter.
-  #
-  #       # Test scenario 2
-  #       # Description: When searching by default, it should return an empty array if no users have names starting with the specified letter.
-  #       # Method call: search_users(role, user_id, letter, 4)
-  #       # Expected result: Returns an empty array.
-  #     end
-  #   end
-   end
-
+  end
 end
