@@ -98,9 +98,9 @@ ActiveRecord::Schema[7.0].define(version: 2023_12_01_012040) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "instructor_id", null: false
+    t.boolean "has_teams"
     t.bigint "course_id"
     t.boolean "enable_pair_programming"
-    t.boolean "has_teams"
     t.boolean "has_topics"
     t.index ["course_id"], name: "index_assignments_on_course_id"
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
@@ -138,6 +138,14 @@ ActiveRecord::Schema[7.0].define(version: 2023_12_01_012040) do
     t.index ["to_id"], name: "fk_invitationto_users"
   end
 
+  create_table "nodes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "parent_id"
+    t.integer "node_object_id"
+    t.string "type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "user_id"
     t.bigint "assignment_id"
@@ -145,9 +153,9 @@ ActiveRecord::Schema[7.0].define(version: 2023_12_01_012040) do
     t.datetime "updated_at", null: false
     t.boolean "can_submit", default: true
     t.boolean "can_review", default: true
+    t.boolean "can_take_quiz", default: true
     t.string "handle"
     t.boolean "permission_granted"
-    t.boolean "can_take_quiz"
     t.index ["assignment_id"], name: "index_participants_on_assignment_id"
     t.index ["user_id"], name: "fk_participant_users"
     t.index ["user_id"], name: "index_participants_on_user_id"

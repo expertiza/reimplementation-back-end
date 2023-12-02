@@ -38,6 +38,7 @@ Rails.application.routes.draw do
           get '/:assignment_id/staggered_and_no_topic', action: :staggered_and_no_topic
           get '/:assignment_id/valid_num_review/:review_type', action: :valid_num_review
           get '/:assignment_id/varying_rubrics_by_round', action: :varying_rubrics_by_round?
+          post '/:assignment_id/create_node',action: :create_node
         end
       end
 
