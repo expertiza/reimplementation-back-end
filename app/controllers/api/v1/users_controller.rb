@@ -77,18 +77,18 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def search_users
-    current_user = User.find(params[:user_id])
+    user_id = params[:user_id]
     word = params[:word]
     search_by = params[:search_by]
 
-    result = User.search_users(current_user, word, search_by)
+    result = User.search_users(user_id, word, search_by)
 
-    if result.is_a?(ActiveRecord::Relation)
-      # If the result is a collection of users, render them as JSON
+    if result.present?
+      # If the result is not empty, render the users as JSON
       render json: result
     else
-      # If the result is a message (e.g., 'Not Authorized'), render it as JSON with an error status
-      render json: { error: result }, status: :unauthorized
+      # If the result is empty, render a message as JSON with a not found status
+      render json: { error: 'User not found or no matching results' }, status: :not_found
     end
   end
 

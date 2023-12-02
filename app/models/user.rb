@@ -124,18 +124,31 @@ class User < ApplicationRecord
     self.etc_icons_on_homepage ||= true
   end
 
-  def self.search_users(user, word, search_by)
-    # Check if the user's role is "Super Administrator"
-    if user.role.name == 'Super Administrator'
-      # If the user is a super admin, perform the LIKE query on the specified field
-      if search_by == 'role'
-        User.joins(:role).where("roles.name LIKE ?", "%#{word}%")
-      else
-        User.where("#{search_by} LIKE ?", "%#{word}%")
-      end
+  # Search users based on the provided parameters
+  def self.search_users(user_id, word, search_by)
+    # Check if a valid user_id is provided
+    if user_id.present? && (user = User.find_by(id: user_id))
+      # If a valid user_id is provided, return the user with that specific user_id
+      [user]
     else
-      # If the user is not a super admin, return a message indicating unauthorized
-      'Not Authorized'
+      # If user_id is empty or invalid, perform the search based on word and search_by parameters
+      valid_search_fields = %w[name full_name email role]
+      search_by = valid_search_fields.include?(search_by) ? search_by : nil
+
+      # Validate search_by to avoid SQL injection
+      if search_by.present?
+        # Perform the LIKE query on the specified field (name, full_name, email, role) and order by name
+        if search_by == 'role'
+          # Join with roles table and search by role name
+          User.joins(:role).where("roles.name LIKE ?", "%#{word}%").order(:name)
+        else
+          # Use search_by directly in the where clause
+          User.where("#{search_by} LIKE ?", "%#{word}%").order(:name)
+        end
+      else
+        # If search_by is not recognized, return an empty result
+        []
+      end
     end
   end
 end
