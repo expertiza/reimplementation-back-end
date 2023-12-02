@@ -104,33 +104,6 @@ RSpec.describe "api/v1/questionnaires", type: :request do
         }
       }
 
-      let(:valid_questionnaire_params) do
-        {
-          assignment_id: 1,
-          participant_id: 1,
-          team_id: 1,
-          user_id: 1,
-          questionnaire_type: 'Quiz Questionnaire',
-          name: 'TestCreateQuizQ101',
-          private: false,
-          min_question_score: 0,
-          max_question_score: 100
-        }
-      end
-
-      let(:invalid_questionnaire_params) do
-        {
-          assignment_id: 1,
-          participant_id: 1,
-          team_id: 1,
-          user_id: 1,
-          questionnaire_type: 'Quiz Questionnaire',
-          name: "InvalidQuizQuestionnaire",
-          private: false,
-          min_question_score: 100,
-          max_question_score: 0
-        }
-      end
 
       parameter name: 'Authorization', in: :header, type: :string
       parameter name: 'Content-Type', in: :header, type: :string
@@ -141,6 +114,19 @@ RSpec.describe "api/v1/questionnaires", type: :request do
       # post request on /api/v1/questionnaires creates questionnaire with response 201 when correct params are passed
       response(201, 'created') do
 
+        let(:valid_questionnaire_params) do
+          {
+            assignment_id: 1,
+            participant_id: 1,
+            team_id: 1,
+            user_id: 1,
+            questionnaire_type: 'Quiz Questionnaire',
+            name: 'TestCreateQuizQ101',
+            private: false,
+            min_question_score: 0,
+            max_question_score: 100
+          }
+        end
         let('quiz_questionnaire') { valid_questionnaire_params }
 
         run_test! do
@@ -150,8 +136,57 @@ RSpec.describe "api/v1/questionnaires", type: :request do
       end
 
       # post request on /api/v1/questionnaires returns 422 response - unprocessable entity when wrong params is passed toc reate questionnaire
-      response(422, 'unprocessable entity') do
+      response(422, 'Unprocessable Entity: Invalid Params') do
+        let(:invalid_questionnaire_params) do
+          {
+            assignment_id: 1,
+            participant_id: 1,
+            team_id: 1,
+            user_id: 1,
+            questionnaire_type: 'Quiz Questionnaire',
+            name: "InvalidQuizQuestionnaire",
+            private: false,
+            min_question_score: 100,
+            max_question_score: 0
+          }
+        end
         let('quiz_questionnaire') { invalid_questionnaire_params }
+        run_test!
+      end
+
+      response(422, 'Unprocessable Entity: Require Permission to Create') do
+        let(:valid_questionnaire_params_no_permission) do
+          {
+            assignment_id: 1,
+            participant_id: 1,
+            team_id: 1,
+            user_id: 2,
+            questionnaire_type: 'Quiz Questionnaire',
+            name: 'TestCreateQuizQ102',
+            private: false,
+            min_question_score: 0,
+            max_question_score: 100
+          }
+        end
+        let('quiz_questionnaire') { valid_questionnaire_params_no_permission }
+        run_test!
+      end
+
+      response(422, 'Unprocessable Entity: Assignment does not require Quiz') do
+        let(:valid_questionnaire_params_assignment_no_quiz) do
+          {
+            assignment_id: 2,
+            participant_id: 1,
+            team_id: 1,
+            user_id: 1,
+            questionnaire_type: 'Quiz Questionnaire',
+            name: 'TestCreateQuizQ102',
+            private: false,
+            min_question_score: 0,
+            max_question_score: 100
+          }
+        end
+        let('quiz_questionnaire') { valid_questionnaire_params_assignment_no_quiz }
         run_test!
       end
 
