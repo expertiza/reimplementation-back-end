@@ -173,5 +173,12 @@ class Assignment < ApplicationRecord
     # Check if any rubric has a specified round
     rubric_with_round.present?
   end
+  def create_node
+    parent = CourseNode.find_by(node_object_id: course_id)
+    node = AssignmentNode.create(node_object_id: id)
+    node.parent_id = parent.id unless parent.nil?
+    node.save
+  end
+
 
 end

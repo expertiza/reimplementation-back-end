@@ -188,6 +188,17 @@ class Api::V1::AssignmentsController < ApplicationController
       render json: assignment.staggered_and_no_topic?(topic_id), status: :ok
     end
   end
+
+  def create_node
+    assignment = Assignment.find(params[:assignment_id])
+    if assignment.nil?
+      render json: { error: "Assignment not found" }, status: :not_found
+    else
+      node = assignment.create_node
+      render json: node, status: :ok
+    end
+  end
+
   # PATCH/PUT /api/v1/assignments/:id
   def update
     assignment = Assignment.find(params[:id])
