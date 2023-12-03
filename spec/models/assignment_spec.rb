@@ -295,5 +295,137 @@ RSpec.describe Assignment, type: :model do
     end
   end
 
+  describe "pair_programming_enabled?" do
+    let(:assignment) {create(:assignment)}
+    context "when pair programming is enabled" do
+      before do
+        # Enable pair programming before each test in this context
+        assignment.enable_pair_programming = true
+      end
+
+      it "returns true" do
+        expect(assignment.pair_programming_enabled?).to eq(true)
+      end
+    end
+
+    context "when pair programming is disabled" do
+      before do
+        # Disable pair programming before each test in this context
+        assignment.enable_pair_programming=false
+        # You may need a method to disable pair programming if it's not the inverse of enable_pair_programming
+      end
+
+      it "returns false" do
+        expect(assignment.pair_programming_enabled?).to eq(false)
+      end
+    end
+  end
+
+
+  describe "staggered_and_no_topic?" do
+    let(:assignment) {create(:assignment)}
+    context "when staggered deadline is enabled and topic_id is not provided" do
+      it "returns true" do
+        allow(assignment).to receive(:staggered_deadline?).and_return(true)
+        expect(assignment.staggered_and_no_topic?(nil)).to eq(true)
+      end
+    end
+
+    context "when staggered deadline is enabled and topic_id is provided" do
+      it "returns false" do
+        allow(assignment).to receive(:staggered_deadline?).and_return(true)
+        expect(assignment.staggered_and_no_topic?("some_topic_id")).to eq(false)
+      end
+    end
+
+    context "when staggered deadline is disabled and topic_id is not provided" do
+      it "returns false" do
+        allow(subject).to receive(:staggered_deadline?).and_return(false)
+        expect(assignment.staggered_and_no_topic?(nil)).to eq(false)
+      end
+    end
+
+    context "when staggered deadline is disabled and topic_id is provided" do
+      it "returns false" do
+        allow(assignment).to receive(:staggered_deadline?).and_return(false)
+        expect(assignment.staggered_and_no_topic?("some_topic_id")).to eq(false)
+      end
+    end
+  end
+
+
+  describe "#create_node" do
+    let(:assignment) { create(:assignment) }
+
+    context "when the parent node exists" do
+      it "creates a new assignment node with the given id, sets parent_id, and saves the new node" do
+        # Stub CourseNode.find_by to return a mock parent node
+        allow(CourseNode).to receive(:find_by).and_return(double("CourseNode", id: 10))
+
+        # Expectations for AssignmentNode creation
+        expect(AssignmentNode).to receive(:create).with(node_object_id: assignment.id).and_call_original
+
+        # Expectations for any_instance of AssignmentNode
+        assignment_node_instance = instance_double(AssignmentNode)
+        allow(assignment_node_instance).to receive(:parent_id=)
+        allow(assignment_node_instance).to receive(:save)
+
+        expect(AssignmentNode).to receive(:new).and_return(assignment_node_instance)
+
+        # Call the method under test
+        assignment.create_node
+      end
+    end
+
+    context "when the parent node does not exist" do
+      it "creates a new assignment node with the given id, does not set parent_id, and saves the new node" do
+        # Stub CourseNode.find_by to return nil (no parent node)
+        allow(CourseNode).to receive(:find_by).and_return(nil)
+
+        # Expectations for AssignmentNode creation
+        expect(AssignmentNode).to receive(:create).with(node_object_id: assignment.id).and_call_original
+
+        # Expectations for any_instance of AssignmentNode
+        assignment_node_instance = instance_double(AssignmentNode)
+        expect(assignment_node_instance).not_to receive(:parent_id=)
+        allow(assignment_node_instance).to receive(:save)
+
+        expect(AssignmentNode).to receive(:new).and_return(assignment_node_instance)
+
+        # Call the method under test
+        assignment.create_node
+      end
+    end
+  end
+
+
+  describe 'team_assignment?' do
+    let(:assignment) { create(:assignment) }
+    context 'when max_team_size is greater than 0' do
+      it 'returns true' do
+        assignment.max_team_size = 5
+        expect(assignment.team_assignment?).to be true
+      end
+    end
+
+    context 'when max_team_size is equal to 0' do
+      it 'returns false' do
+        assignment.max_team_size = 0
+        expect(assignment.team_assignment?).to be false
+      end
+    end
+
+    context 'when max_team_size is less than 0' do
+      it 'returns false' do
+        assignment.max_team_size = -3
+        expect(assignment.team_assignment?).to be false
+      end
+    end
+  end
+
+
+
+
+
 
 end

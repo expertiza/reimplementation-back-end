@@ -14,6 +14,7 @@ FactoryBot.define do
   factory :assignment do
     name {"Sample Assignment"}
     instructor { association(:instructor) }
+    
   end
 
   factory :role do
