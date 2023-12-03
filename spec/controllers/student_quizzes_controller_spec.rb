@@ -250,9 +250,13 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
     end
 
     context "when an exception occurs during transaction" do
-      it "returns an error message with status :unprocessable_entity" do
+      it "returns an error message with status :unprocescrsable_entity" do
         # Test scenario 5
+        # Unsure how to throw an error on transaction
         pending 'unimplemented'
+        # allow(questionnaire1).to receive(:create!).and_raise(ActiveRecord::TransactionIsolationError)
+        # post :create_questionnaire, params: questionnaire1_params
+        # expect(response).to have_http_status(:unprocessable_entity)
       end
     end
   end
@@ -344,52 +348,70 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
     end
 
     context "when there is an error saving the response map" do
+      before do
+        allow(response_map).to receive(:save).and_return(false)
+        post :assign_quiz_to_student, params: assign_quiz_params
+      end
       it "returns an error message" do
-        pending 'unimplemented'
+        json_response = JSON.parse(response.body)
+        puts ">>>>>>>>>>>>#{json_response}"
+        expect(json_response).to include('error')
       end
 
       it "returns an unprocessable entity status" do
-        pending 'unimplemented'
+        expect(response).to have_http_status(:unprocessable_entity)
       end
     end
   end
 
   describe 'POST #submit_answers' do
+    let!(:question1) do
+      create(:question, questionnaire: questionnaire1,
+             txt: "What is the capital of France?", correct_answer: "Paris")
+    end
+    let!(:question2) do
+      create(:question, questionnaire: questionnaire1,
+             txt: "What is the largest planet in our solar system?", correct_answer: "Jupiter")
+    end
+
+    let(:submit_answers_params) do
+      {
+        questionnaire_id: questionnaire1.id,
+        answers: [
+          { question_id: question1.id, answer_value: "Paris" },
+          { question_id: question2.id, answer_value: "Jupiter" }
+        ]
+      }
+    end
+
+    let!(:response_map) do
+      create(:response_map, reviewee_id: student.id, reviewed_object_id: questionnaire1.id)
+    end
+    let(:another_student) { create(:student) }
     context "when the user is not assigned to take the quiz" do
       it "returns a forbidden status and an error message" do
         # Test setup
         # ...
+        allow_any_instance_of(Api::V1::StudentQuizzesController)
+          .to receive(:current_user)
+                .and_return(another_student)
+        # Ensure questions are linked to answers correctly
+        # Manually create answers for question1 and question2
+        create(:answer, question: question1, answer_text: "Paris", correct: true)
+        create(:answer, question: question1, answer_text: "Madrid", correct: false)
+        create(:answer, question: question2, answer_text: "Jupiter", correct: true)
+        create(:answer, question: question2, answer_text: "Mars", correct: false)
+
+        post :submit_answers, params: submit_answers_params
 
         # Test execution and assertion
         # ...
-        pending 'unimplemented'
+        json_response = JSON.parse(response.body)
+        expect(json_response).to include('error')
       end
     end
 
     context "when the user is assigned to take the quiz" do
-      let!(:question1) do
-        create(:question, questionnaire: questionnaire1,
-               txt: "What is the capital of France?", correct_answer: "Paris")
-      end
-      let!(:question2) do
-        create(:question, questionnaire: questionnaire1,
-               txt: "What is the largest planet in our solar system?", correct_answer: "Jupiter")
-      end
-
-      let(:submit_answers_params) do
-        {
-          questionnaire_id: questionnaire1.id,
-          answers: [
-            { question_id: question1.id, answer_value: "Paris" },
-            { question_id: question2.id, answer_value: "Jupiter" }
-          ]
-        }
-      end
-
-      let!(:response_map) do
-        create(:response_map, reviewee_id: student.id, reviewed_object_id: questionnaire1.id)
-      end
-
       context "when all answers are correct" do
         before do
           allow_any_instance_of(Api::V1::StudentQuizzesController)
@@ -429,11 +451,24 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
 
           # Test execution and assertion
           # ...
-          pending 'unimplemented'
+          expect(response).to have_http_status(:success)
         end
       end
 
       context "when some answers are incorrect" do
+        before do
+          allow_any_instance_of(Api::V1::StudentQuizzesController)
+            .to receive(:current_user)
+                  .and_return(student)
+          # Ensure questions are linked to answers correctly
+          # Manually create answers for question1 and question2
+          create(:answer, question: question1, answer_text: "Paris", correct: true)
+          create(:answer, question: question1, answer_text: "Madrid", correct: false)
+          create(:answer, question: question2, answer_text: "Jupiter", correct: true)
+          create(:answer, question: question2, answer_text: "Mars", correct: false)
+
+          post :submit_answers, params: submit_answers_params
+        end
         it "saves the responses and updates the score of the ResponseMap" do
           # Test setup
           # ...
@@ -449,18 +484,31 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
 
           # Test execution and assertion
           # ...
-          pending 'unimplemented'
+          expect(response).to have_http_status(:success)
         end
       end
 
       context "when there is an error saving the responses" do
+        before do
+          allow_any_instance_of(Api::V1::StudentQuizzesController)
+            .to receive(:current_user)
+                  .and_return(student)
+          # Ensure questions are linked to answers correctly
+          # Manually create answers for question1 and question2
+          create(:answer, question: question1, answer_text: "Paris", correct: true)
+          create(:answer, question: question1, answer_text: "Madrid", correct: false)
+          create(:answer, question: question2, answer_text: "Jupiter", correct: true)
+          create(:answer, question: question2, answer_text: "Mars", correct: false)
+          allow(response).to receive(:save).and_raise(ActiveRecord::RecordInvalid)
+          post :submit_answers, params: submit_answers_params
+        end
         it "returns an unprocessable entity status and an error message" do
           # Test setup
           # ...
 
           # Test execution and assertion
           # ...
-          pending 'unimplemented'
+          expect(response).to have_http_status(:unprocessable_entity)
         end
       end
     end
@@ -469,80 +517,88 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
   # describe "calculate_score" do
   # end
 
-  describe 'GET #calculate_score' do
+  describe 'GET #calculate_score' do# manually create the questionnaire questions and answers for the test
+    let!(:question1) do
+      create(:question, questionnaire: questionnaire1,
+             txt: "What is the capital of France?", correct_answer: "Paris")
+    end
+    let!(:question2) do
+      create(:question, questionnaire: questionnaire1,
+             txt: "What is the largest planet in our solar system?", correct_answer: "Jupiter")
+    end
+    # Submit the answers in the json format for the test
+    let(:submit_answers_params) do
+      {
+        questionnaire_id: questionnaire1.id,
+        answers: [
+          { question_id: question1.id, answer_value: "Paris" },
+          { question_id: question2.id, answer_value: "Jupiter" }
+        ]
+      }
+    end
+    # Create the response map that links the student to the assignment
+    let!(:response_map) do
+      create(:response_map, reviewee_id: student.id, reviewed_object_id: questionnaire1.id, score: 2)
+    end
+
+    before do
+      # take the quiz as the assigned student
+      allow_any_instance_of(Api::V1::StudentQuizzesController)
+        .to receive(:current_user)
+              .and_return(student)
+
+      # Manually create answers for question1 and question2
+      create(:answer, question: question1, answer_text: "Paris", correct: true)
+      create(:answer, question: question1, answer_text: "Madrid", correct: false)
+      create(:answer, question: question2, answer_text: "Jupiter", correct: true)
+      create(:answer, question: question2, answer_text: "Mars", correct: false)
+
+      # Submit answers
+      post :submit_answers, params: submit_answers_params
+
+      # Switch to instructor for calculating score
+      allow_any_instance_of(Api::V1::StudentQuizzesController)
+        .to receive(:current_user)
+              .and_return(instructor)
+
+
+    end
     context "when the response map exists" do
-      # manually create the questionnaire questions and answers for the test
-      let!(:question1) do
-        create(:question, questionnaire: questionnaire1,
-               txt: "What is the capital of France?", correct_answer: "Paris")
-      end
-      let!(:question2) do
-        create(:question, questionnaire: questionnaire1,
-               txt: "What is the largest planet in our solar system?", correct_answer: "Jupiter")
-      end
-      # Submit the answers in the json format for the test
-      let(:submit_answers_params) do
-        {
-          questionnaire_id: questionnaire1.id,
-          answers: [
-            { question_id: question1.id, answer_value: "Paris" },
-            { question_id: question2.id, answer_value: "Jupiter" }
-          ]
-        }
-      end
-      # Create the response map that links the student to the assignment
-      let!(:response_map) do
-        create(:response_map, reviewee_id: student.id, reviewed_object_id: questionnaire1.id, score: 2)
-      end
 
-      before do
-        # take the quiz as the assigned student
-        allow_any_instance_of(Api::V1::StudentQuizzesController)
-          .to receive(:current_user)
-                .and_return(student)
-
-        # Manually create answers for question1 and question2
-        create(:answer, question: question1, answer_text: "Paris", correct: true)
-        create(:answer, question: question1, answer_text: "Madrid", correct: false)
-        create(:answer, question: question2, answer_text: "Jupiter", correct: true)
-        create(:answer, question: question2, answer_text: "Mars", correct: false)
-
-        # Submit answers
-        post :submit_answers, params: submit_answers_params
-
-        # Switch to instructor for calculating score
-        allow_any_instance_of(Api::V1::StudentQuizzesController)
-          .to receive(:current_user)
-                .and_return(instructor)
-
-        # Retrieve score
-        get :calculate_score, params: { id: response_map.id }
-
-      end
       it "returns the score of the response map" do
         # Test scenario 1
         # Given a valid response map ID
         # When the calculate_score method is called with the ID
         # Then it should return the score of the response map
+        # Retrieve score
+        get :calculate_score, params: { id: response_map.id }
         json_response = JSON.parse(response.body)
         expect(json_response['score']).to eq(2)
+      end
 
+      it "returns an error message if given an invalid response map" do
         # Test scenario 2
         # Given an invalid response map ID
         # When the calculate_score method is called with the ID
         # Then it should return an error message indicating that the attempt was not found or the user does not have permission to view the score
-        #
-        pending 'unimplemented'
+        # Skeleton placed this above in previous test but thought it would be better as a separate test
+        get :calculate_score, params: { id: ResponseMap.count + 1 }
+        json_response = JSON.parse(response.body)
+        expect(json_response).to include('error')
       end
     end
 
     context "when the response map does not exist" do
+
       it "returns an error message" do
         # Test scenario 3
         # Given a non-existent response map ID
         # When the calculate_score method is called with the ID
         # Then it should return an error message indicating that the attempt was not found or the user does not have permission to view the score
-        pending 'unimplemented'
+
+        get :calculate_score, params: { id: ResponseMap.count + 1 }
+        json_response = JSON.parse(response.body)
+        expect(json_response).to include('error')
       end
     end
   end

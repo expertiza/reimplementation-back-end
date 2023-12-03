@@ -62,6 +62,8 @@ module Api
         else
           render json: { error: response_map.errors.full_messages.to_sentence }, status: :unprocessable_entity
         end
+      rescue ActiveRecord::RecordInvalid => e
+        render json: { error: e.message }, status: :unprocessable_entity
       end
 
       # POST /student_quizzes/create_questionnaire
