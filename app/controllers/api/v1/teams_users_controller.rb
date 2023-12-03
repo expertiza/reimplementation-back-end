@@ -1,83 +1,89 @@
-class TeamsUsersController < ApplicationController
+class Api::V1::TeamsUsersController < ApplicationController
+  before_action :find_teams_user, only: [:update, :delete]
 
+  rescue_from ActiveRecord::RecordNotFound, with: :teams_user_not_found
+  rescue_from ActionController::ParameterMissing, with: :parameter_missing
+
+  # GET /teams_users
+  # List all the teams_users
   def index
     teams_users = TeamsUser.all
     render json: teams_users, status: :ok
   end
-  def list
+
+  # GET /teams/1
+  # Get the users of a particular team
+  def show
     team = Team.find(params[:id])
-    teams_users = TeamsUser.where(['team_id = ?', params[:id]])
+    teams_users = TeamsUser.where(team_id: params[:id])
     render json: teams_users, status: :ok
   end
 
+  # GET /teams/1/teams_users/new
+  # Render form to create a new teams_user for a specific team
   def new
     @team = Team.find(params[:id])
+    render json: team, status: :ok
   end
 
+  # POST /teams_users
+  # Create a new teams_user
   def create
-    user = User.find_by(name: params[:user][:name].strip)
-
-    unless user
-      flash[:error] = user_not_defined_flash_error
-      redirect_to controller: 'users', action: 'new'
-      return
+    teams_user = TeamsUser.new(teams_user_params)
+    if teams_user.save
+      render json: teams_user, status: :created
+    else
+      render json: { error: teams_user.errors.full_messages }, status: :unprocessable_entity
     end
-
-    team = Team.find(params[:id])
-
-    return if user_already_assigned?(user, team)
-
-    handle_course_team(user, team)
-    redirect_to_team_list(team)
   end
 
+  # PATCH/PUT /teams_users/1
+  # Update an existing teams_user
+  def update
+    if @teams_user.update(teams_user_params)
+      render json: @teams_user, status: :ok
+    else
+      render json: { error: @teams_user.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  # DELETE /teams_users/1
+  # Remove a teams_user
   def delete
-    @teams_user = TeamsUser.find(params[:id])
     parent_id = Team.find(@teams_user.team_id).parent_id
     @user = User.find(@teams_user.user_id)
-    @teams_user.destroy
-    undo_link("The team user \"#{@user.name}\" has been successfully removed. ")
-    redirect_to controller: 'teams', action: 'list', id: parent_id
-  end
 
-  def delete_selected
-    params[:item].each do |item_id|
-      team_user = TeamsUser.find(item_id)
-      team_user.destroy
+    if @teams_user.destroy
+      flash_message = "The team user \"#{@user.name}\" has been successfully removed."
+    else
+      flash_message = "Failed to remove the team user."
     end
-    redirect_to action: 'list', id: params[:id]
+
+    respond_to do |format|
+      format.html { redirect_to_teams_list(parent_id, flash_message) }
+      format.json { render json: { message: flash_message }, status: (@teams_user.destroyed? ? :no_content : :unprocessable_entity) }
+    end
   end
 
   private
 
-  def user_not_defined_flash_error
-    url_create = url_for(controller: 'users', action: 'new')
-    "\"#{params[:user][:name].strip}\" is not defined. Please <a href=\"#{url_create}\">create</a> this user before continuing."
+  def find_teams_user
+    @teams_user = TeamsUser.find(params[:id])
   end
 
-  def handle_course_team(user, team)
-    course = Course.find(team.parent_id)
-    return if course_team_checks_fail(user, team, course)
-
-    add_member_return = team.add_member(user, team.parent_id)
-    handle_add_member_result(add_member_return, user, team, course)
+  def teams_user_params
+    params.require(:teams_user).permit(:team_id, :user_id, :duty_id, :pair_programming_status, :participant_id)
   end
 
-  def course_team_checks_fail(user, team, course)
-    return if user_already_assigned_to_course?(user, team, course)
-
-    url_course_participant_list = url_for(controller: 'participants', action: 'list', id: course.id, model: 'Course', authorization: 'participant')
-    flash[:error] = "\"#{user.name}\" is not a participant of the current course. Please <a href=\"#{url_course_participant_list}\">add</a> this user before continuing."
-    true
+  def teams_user_not_found
+    render json: { error: "TeamsUser with id #{params[:id]} not found" }, status: :not_found
   end
 
-  def user_already_assigned_to_course?(user, team, course)
-    if course.user_on_team?(user)
-      flash[:error] = "This user is already assigned to a team for this course"
-      redirect_back fallback_location: root_path
-      true
-    else
-      false
-    end
+  def parameter_missing
+    render json: { error: "Parameter missing" }, status: :unprocessable_entity
+  end
+
+  def redirect_to_teams_list(parent_id, flash_message)
+    redirect_to controller: 'teams', action: 'list', id: parent_id, flash: { success: flash_message }
   end
 end
