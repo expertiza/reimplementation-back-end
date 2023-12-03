@@ -8,7 +8,7 @@ class Assignment < ApplicationRecord
   has_many :questionnaires, through: :assignment_questionnaires
   has_many :response_maps, foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
-  
+  has_many :sign_up_topics , class_name: 'SignUpTopic', foreign_key: 'assignment_id', dependent: :destroy
   belongs_to :course, optional: true
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments
 
@@ -127,7 +127,12 @@ class Assignment < ApplicationRecord
   end
   
   def has_badge?
-    has_badge
+    if has_badge.nil?
+      return false
+    else
+      has_badge
+    end
+
   end
 
   def topics?
@@ -155,7 +160,7 @@ class Assignment < ApplicationRecord
     if review_type=='review'
 
       if num_reviews_greater?(num_reviews_required,num_reviews_allowed)
-        {success: false, message: 'Number of metareviews required cannot be greater than number of reviews allowed'}
+        {success: false, message: 'Number of reviews required cannot be greater than number of reviews allowed'}
       else
         {success: true}
       end
