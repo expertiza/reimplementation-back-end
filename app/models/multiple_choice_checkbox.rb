@@ -1,58 +1,65 @@
 class MultipleChoiceCheckbox < QuizQuestion
   # Override the edit method for MultipleChoiceCheckbox
   def edit
-    # Provide your custom implementation here, e.g., render a specific partial template
-    render partial: '_edit_multi_checkbox'
+    {
+      id: id,
+      txt: txt,
+      question_type: question_type,
+    }.to_json
   end
 
   # Override the complete method for MultipleChoiceCheckbox
   def complete
     quiz_question_choices = QuizQuestionChoice.where(question_id: id)
-    html = "<label for=\"#{id.to_s}\">#{txt}</label><br>"
+    choices = []
 
-    # Customize the display for multiple choice checkbox questions
     quiz_question_choices.each_with_index do |choice, index|
-      html += "<input name=\"#{id}[]\" "
-      html += "id=\"#{id}_#{index + 1}\" "
-      html += "value=\"#{choice.txt}\" "
-      html += 'type="checkbox"/>'
-      html += choice.txt.to_s
-      html += '</br>'
+      choices << {
+        name: id.to_s,
+        id: "#{id}_#{index + 1}",
+        value: choice.txt,
+        type: 'checkbox'
+      }
     end
-    html.html_safe
+
+    {
+      label: txt,
+      choices: choices
+    }.to_json
   end
 
   # Override the view_completed_question method for MultipleChoiceCheckbox
   def view_completed_question(user_answer)
     quiz_question_choices = QuizQuestionChoice.where(question_id: id)
-    html = ''
+    answers = []
 
     quiz_question_choices.each do |answer|
-      html += if answer.correct
-                "<b>#{answer.txt}</b> -- Correct <br>"
-              else
-                "#{answer.txt} <br>"
-              end
+      if answer.correct
+        answers << {
+          text: answer.txt,
+          correctness: 'Correct'
+        }
+      else
+        answers << {
+          text: answer.txt
+        }
+      end
     end
 
-    html += '<br>Your answer is:'
-    html += if user_answer[0].answer == 1
-              '<img src="/assets/Check-icon.png"/><br>'
-            else
-              '<img src="/assets/delete_icon.png"/><br>'
-            end
+    user_answer_info = {
+      answer: user_answer[0].answer == 1 ? '<img src="/assets/Check-icon.png"/>' : '<img src="/assets/delete_icon.png"/>',
+      comments: user_answer.map { |ans| ans.comments.to_s }
+    }
 
-    user_answer.each do |answer|
-      html += "<b>#{answer.comments.to_s}</b><br>"
-    end
-    html += '<br><hr>'
-    html.html_safe
+    {
+      answers: answers,
+      user_answer: user_answer_info
+    }.to_json
   end
 
   # Override the is_valid method for MultipleChoiceCheckbox
   def is_valid(choice_info)
     valid = 'Valid'
-    #valid = 'Please make sure all questions have text.' if txt.blank?
     correct_count = 0
 
     choice_info.each_value do |value|
@@ -61,10 +68,7 @@ class MultipleChoiceCheckbox < QuizQuestion
         break
       end
 
-      # Check if the 'correct' attribute is truthy (not nil or false)
-      if value[:correct]
-        correct_count += 1
-      end
+      correct_count += 1 if value[:correct]
     end
 
     if correct_count.zero?
@@ -75,5 +79,4 @@ class MultipleChoiceCheckbox < QuizQuestion
 
     valid
   end
-
 end
