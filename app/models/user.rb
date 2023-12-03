@@ -110,7 +110,9 @@ class User < ApplicationRecord
     self.etc_icons_on_homepage ||= true
   end
 
-  def can_impersonate?
+  def can_impersonate?(user)
+    true
+    
 
   end
 end

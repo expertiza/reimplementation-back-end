@@ -24,6 +24,13 @@ Rails.application.routes.draw do
       end
       resources :assignments
 
+      resources :impersonate, only: [] do
+        collection do
+          post '', action: :impersonate, as: :impersonate
+        end
+      end
+      
+
       resources :courses do
         collection do
           get ':id/add_ta/:ta_id', action: :add_ta

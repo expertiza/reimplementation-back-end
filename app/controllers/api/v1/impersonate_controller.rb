@@ -1,4 +1,5 @@
 # Controller for performing Impersonate Operation in Expertiza
+require 'json_web_token'
 
 class Api::V1::ImpersonateController < ApplicationController
 
@@ -74,29 +75,32 @@ class Api::V1::ImpersonateController < ApplicationController
   # warn_for_special_chars takes the output from above method and flashes an error if there are any special characters(/\?<>|&$#) in the string
 
   def check_if_input_is_valid
-    if params[:user].blank? || warn_for_special_chars(params[:user_name], 'Username')
-      render json: { success: false, error: 'Please enter valid user name' }, status: :unprocessable_entity
-    elsif params[:impersonate].blank? || warn_for_special_chars(params[:impersonate], 'Username')
+    # if params[:user].blank? || warn_for_special_chars(params[:user_name], 'Username')
+    #   render json: { success: false, error: 'Please enter valid user name' }, status: :unprocessable_entity
+    if params[:impersonate].blank? 
+      
+      # || warn_for_special_chars(params[:impersonate], 'Username')
       render json: { success: false, error: 'Please enter valid user name' }, status: :unprocessable_entity
     end
   end
 
 
-  def warn_for_special_chars(str, field_name)
-    if contains_special_chars? str
-      render json: { success: false, error: field_name + " must not contain special characters '" + special_chars + "'." }, status: :unprocessable_entity
-      return true
-    end
-    false
-  end
+  # def warn_for_special_chars(str, field_name)
+  #   if contains_special_chars? str
+  #     render json: { success: false, error: field_name + " must not contain special characters '" + special_chars + "'." }, status: :unprocessable_entity
+  #     return true
+  #   end
+  #   false
+  # end
 
-  def contains_special_chars?(str)
-    special = special_chars
-    regex = /[#{special.gsub(/./) { |char| "\\#{char}" }}]/
+  # def contains_special_chars?(str)
+  #   special = special_chars
+  #   regex = /[#{special.gsub(/./) { |char| "\\#{char}" }}]/
 
-    def special_chars
-      '/\\?<>|&$#'
-    end
+  # end
+  #   def special_chars
+  #     '/\\?<>|&$#'
+  #   end
 
   # Checking if the username provided can be impersonated or not
   # If the user is in anonymized view,then fetch the real user else fetch the user using params
@@ -124,7 +128,7 @@ class Api::V1::ImpersonateController < ApplicationController
     def check_if_user_impersonateable?
       user = User.find(params[:impersonate] )
       if user
-        @current_user.can_impersonate? user
+        return @current_user.can_impersonate? user
       end
       false
       end
@@ -164,11 +168,32 @@ class Api::V1::ImpersonateController < ApplicationController
   #   end
   # end
 
+
+
+  
     def impersonate
       if check_if_user_impersonateable?
-
+        user = User.find(params[:impersonate])
+        if user
+          # Assuming JsonWebToken has methods to encode and decode tokens
+          # You might need to adjust this based on your JWT library
+  
+          # Encode user information into a new token
+          new_payload = { id: user.id, name: user.name, full_name: user.full_name, role: user.role.name,
+                          institution_id: user.institution.id }
+          new_token = JsonWebToken.encode(new_payload, 24.hours.from_now)
+  
+          render json: { success: true, token: new_token, message: "Successfully impersonated #{user.name}" }
+        else
+          render json: { success: false, error: 'User not found' }, status: :not_found
+        end
+      else
+        render json: { success: false, error: "You don't have permission to impersonate this user" }, status: :forbidden
       end
     end
+  
+
+  
 
   # This method checks if the user is in anonymized view and accordingly returns the user object associated with the parameter
 
