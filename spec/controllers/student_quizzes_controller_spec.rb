@@ -547,161 +547,168 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
     end
   end
 
-  describe "#set_student_quiz" do
-    context "when given a valid questionnaire id" do
-      it "sets @student_quiz to the questionnaire with the specified id" do
-        # Test body
-        pending 'unimplemented'
-      end
-    end
 
-    context "when given an invalid questionnaire id" do
-      it "does not set @student_quiz" do
-        # Test body
-        pending 'unimplemented'
-      end
-    end
-  end
+  # The tests below have been commented because they were provided by the test skeleton
+  # but they are private methods.
+  # In the Lecture 15 video called "The Magic Tricks of Testing" Sandi Metz says that to simplify
+  # testing that private methods should not be tested.
+  # https://www.youtube.com/watch?v=URSWYvyc42M&t=1094s
 
-
-  describe "#questionnaire_params" do
-    context "when valid parameters are provided" do
-      it "returns the permitted parameters for a questionnaire" do
-        # Test scenario 1
-        # Description: All required parameters and nested attributes are provided
-        # Method call: questionnaire_params
-        # Input: {
-        #   questionnaire: {
-        #     name: "Sample Questionnaire",
-        #     instructor_id: 1,
-        #     min_question_score: 0,
-        #     max_question_score: 10,
-        #     assignment_id: 1,
-        #     questions_attributes: [
-        #       {
-        #         id: 1,
-        #         txt: "Question 1",
-        #         question_type: "Multiple Choice",
-        #         break_before: false,
-        #         correct_answer: "Option A",
-        #         score_value: 2,
-        #         answers_attributes: [
-        #           {
-        #             id: 1,
-        #             answer_text: "Option A",
-        #             correct: true
-        #           },
-        #           {
-        #             id: 2,
-        #             answer_text: "Option B",
-        #             correct: false
-        #           }
-        #         ]
-        #       }
-        #     ]
-        #   }
-        # }
-        # Expected output: {
-        #   name: "Sample Questionnaire",
-        #   instructor_id: 1,
-        #   min_question_score: 0,
-        #   max_question_score: 10,
-        #   assignment_id: 1,
-        #   questions_attributes: [
-        #     {
-        #       id: 1,
-        #       txt: "Question 1",
-        #       question_type: "Multiple Choice",
-        #       break_before: false,
-        #       correct_answer: "Option A",
-        #       score_value: 2,
-        #       answers_attributes: [
-        #         {
-        #           id: 1,
-        #           answer_text: "Option A",
-        #           correct: true
-        #         },
-        #         {
-        #           id: 2,
-        #           answer_text: "Option B",
-        #           correct: false
-        #         }
-        #       ]
-        #     }
-        #   ]
-        # }
-
-        # Test scenario 2
-        # Description: Only required parameters are provided
-        # Method call: questionnaire_params
-        # Input: {
-        #   questionnaire: {
-        #     name: "Sample Questionnaire",
-        #     instructor_id: 1,
-        #     min_question_score: 0,
-        #     max_question_score: 10,
-        #     assignment_id: 1
-        #   }
-        # }
-        # Expected output: {
-        #   name: "Sample Questionnaire",
-        #   instructor_id: 1,
-        #   min_question_score: 0,
-        #   max_question_score: 10,
-        #   assignment_id: 1
-        # }
-
-        # Test scenario 3
-        # Description: No parameters are provided
-        # Method call: questionnaire_params
-        # Input: {}
-        # Expected output: {}
-        pending 'unimplemented'
-      end
-    end
-  end
-
-  describe "#response_map_params" do
-    context "when valid parameters are provided" do
-      it "returns the permitted parameters for response_map" do
-        # Test scenario 1: Valid student_id and questionnaire_id parameters are provided
-        # Expected result: The method should return a hash with the permitted parameters
-        pending 'unimplemented'
-
-        # Test scenario 2: Only student_id parameter is provided
-        # Expected result: The method should return a hash with the permitted student_id parameter
-        pending 'unimplemented'
-
-        # Test scenario 3: Only questionnaire_id parameter is provided
-        # Expected result: The method should return a hash with the permitted questionnaire_id parameter
-        pending 'unimplemented'
-      end
-    end
-
-    context "when invalid parameters are provided" do
-      it "raises an error" do
-        # Test scenario 4: Invalid parameters are provided
-        # Expected result: The method should raise an error indicating missing or invalid parameters
-        pending 'unimplemented'
-      end
-    end
-  end
-
-
-
-  describe "#check_instructor_role" do
-    context "when the current user is an instructor" do
-      it "does not render an error message" do
-        # Test body
-        pending 'unimplemented'
-      end
-    end
-
-    context "when the current user is not an instructor" do
-      it "renders an error message with status :forbidden" do
-        # Test body
-        pending 'unimplemented'
-      end
-    end
-  end
+  # describe "#set_student_quiz" do
+  #   context "when given a valid questionnaire id" do
+  #     it "sets @student_quiz to the questionnaire with the specified id" do
+  #       # Test body
+  #       pending 'unimplemented'
+  #     end
+  #   end
+  #
+  #   context "when given an invalid questionnaire id" do
+  #     it "does not set @student_quiz" do
+  #       # Test body
+  #       pending 'unimplemented'
+  #     end
+  #   end
+  # end
+  #
+  #
+  # describe "#questionnaire_params" do
+  #   context "when valid parameters are provided" do
+  #     it "returns the permitted parameters for a questionnaire" do
+  #       # Test scenario 1
+  #       # Description: All required parameters and nested attributes are provided
+  #       # Method call: questionnaire_params
+  #       # Input: {
+  #       #   questionnaire: {
+  #       #     name: "Sample Questionnaire",
+  #       #     instructor_id: 1,
+  #       #     min_question_score: 0,
+  #       #     max_question_score: 10,
+  #       #     assignment_id: 1,
+  #       #     questions_attributes: [
+  #       #       {
+  #       #         id: 1,
+  #       #         txt: "Question 1",
+  #       #         question_type: "Multiple Choice",
+  #       #         break_before: false,
+  #       #         correct_answer: "Option A",
+  #       #         score_value: 2,
+  #       #         answers_attributes: [
+  #       #           {
+  #       #             id: 1,
+  #       #             answer_text: "Option A",
+  #       #             correct: true
+  #       #           },
+  #       #           {
+  #       #             id: 2,
+  #       #             answer_text: "Option B",
+  #       #             correct: false
+  #       #           }
+  #       #         ]
+  #       #       }
+  #       #     ]
+  #       #   }
+  #       # }
+  #       # Expected output: {
+  #       #   name: "Sample Questionnaire",
+  #       #   instructor_id: 1,
+  #       #   min_question_score: 0,
+  #       #   max_question_score: 10,
+  #       #   assignment_id: 1,
+  #       #   questions_attributes: [
+  #       #     {
+  #       #       id: 1,
+  #       #       txt: "Question 1",
+  #       #       question_type: "Multiple Choice",
+  #       #       break_before: false,
+  #       #       correct_answer: "Option A",
+  #       #       score_value: 2,
+  #       #       answers_attributes: [
+  #       #         {
+  #       #           id: 1,
+  #       #           answer_text: "Option A",
+  #       #           correct: true
+  #       #         },
+  #       #         {
+  #       #           id: 2,
+  #       #           answer_text: "Option B",
+  #       #           correct: false
+  #       #         }
+  #       #       ]
+  #       #     }
+  #       #   ]
+  #       # }
+  #
+  #       # Test scenario 2
+  #       # Description: Only required parameters are provided
+  #       # Method call: questionnaire_params
+  #       # Input: {
+  #       #   questionnaire: {
+  #       #     name: "Sample Questionnaire",
+  #       #     instructor_id: 1,
+  #       #     min_question_score: 0,
+  #       #     max_question_score: 10,
+  #       #     assignment_id: 1
+  #       #   }
+  #       # }
+  #       # Expected output: {
+  #       #   name: "Sample Questionnaire",
+  #       #   instructor_id: 1,
+  #       #   min_question_score: 0,
+  #       #   max_question_score: 10,
+  #       #   assignment_id: 1
+  #       # }
+  #
+  #       # Test scenario 3
+  #       # Description: No parameters are provided
+  #       # Method call: questionnaire_params
+  #       # Input: {}
+  #       # Expected output: {}
+  #       pending 'unimplemented'
+  #     end
+  #   end
+  # end
+  #
+  # describe "#response_map_params" do
+  #   context "when valid parameters are provided" do
+  #     it "returns the permitted parameters for response_map" do
+  #       # Test scenario 1: Valid student_id and questionnaire_id parameters are provided
+  #       # Expected result: The method should return a hash with the permitted parameters
+  #       pending 'unimplemented'
+  #
+  #       # Test scenario 2: Only student_id parameter is provided
+  #       # Expected result: The method should return a hash with the permitted student_id parameter
+  #       pending 'unimplemented'
+  #
+  #       # Test scenario 3: Only questionnaire_id parameter is provided
+  #       # Expected result: The method should return a hash with the permitted questionnaire_id parameter
+  #       pending 'unimplemented'
+  #     end
+  #   end
+  #
+  #   context "when invalid parameters are provided" do
+  #     it "raises an error" do
+  #       # Test scenario 4: Invalid parameters are provided
+  #       # Expected result: The method should raise an error indicating missing or invalid parameters
+  #       pending 'unimplemented'
+  #     end
+  #   end
+  # end
+  #
+  #
+  #
+  # describe "#check_instructor_role" do
+  #   context "when the current user is an instructor" do
+  #     it "does not render an error message" do
+  #       # Test body
+  #       pending 'unimplemented'
+  #     end
+  #   end
+  #
+  #   context "when the current user is not an instructor" do
+  #     it "renders an error message with status :forbidden" do
+  #       # Test body
+  #       pending 'unimplemented'
+  #     end
+  #   end
+  # end
 end
