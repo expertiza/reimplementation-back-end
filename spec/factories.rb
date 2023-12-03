@@ -112,6 +112,13 @@ FactoryBot.define do
     handle { 'handle' }
   end
 
+  factory :course_participant, class: CourseParticipant do
+    course { Course.first || association(:course) }
+    association :user, factory: :student
+    type { 'CourseParticipant' }
+    handle { 'handle' }
+  end
+
   factory :student, class: User do
     # Zhewei: In order to keep students the same names (2065, 2066, 2064) before each example.
     name {'studentname'}
