@@ -109,4 +109,8 @@ class User < ApplicationRecord
     self.email_on_review_of_review ||= false
     self.etc_icons_on_homepage ||= true
   end
+
+  def can_impersonate?
+
+  end
 end
