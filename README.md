@@ -13,7 +13,7 @@ Things you may want to cover:
 - Verify that [Docker Desktop](https://www.docker.com/products/docker-desktop/) is installed and running.
 - [Download](https://www.jetbrains.com/ruby/download/) RubyMine
 - Make sure that the Docker plugin [is enabled](https://www.jetbrains.com/help/ruby/docker.html#enable_docker).
-
+ 
 
 ### Instructions
 Tutorial: [Docker Compose as a remote interpreter](https://www.jetbrains.com/help/ruby/using-docker-compose-as-a-remote-interpreter.html)
