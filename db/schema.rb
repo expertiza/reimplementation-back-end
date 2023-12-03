@@ -33,7 +33,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_25_205748) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "correct", default: false
-    t.string "answer_text"
+    t.text "answer_text"
     t.index ["question_id"], name: "fk_score_questions"
     t.index ["response_id"], name: "fk_score_response"
   end
@@ -211,14 +211,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_25_205748) do
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
   end
 
-  create_table "student_quizzes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.string "title"
-    t.bigint "created_by_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["created_by_id"], name: "index_student_quizzes_on_created_by_id"
-  end
-
   create_table "ta_mappings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "course_id", null: false
     t.bigint "user_id", null: false
@@ -272,7 +264,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_11_25_205748) do
   add_foreign_key "responses", "questions"
   add_foreign_key "responses", "response_maps"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
-  add_foreign_key "student_quizzes", "users", column: "created_by_id"
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
   add_foreign_key "users", "institutions"

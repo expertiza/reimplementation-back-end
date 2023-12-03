@@ -136,12 +136,16 @@ module Api
       def destroy
         @student_quiz.destroy
         head :no_content
+      rescue ActiveRecord::RecordNotFound => e
+        render json: { error: 'Record does not exist' }, status: :no_content
       end
 
       private
 
       def set_student_quiz
         @student_quiz = Questionnaire.find(params[:id])
+      rescue ActiveRecord::RecordNotFound => e
+        render json: { error: 'Record does not exist' }, status: :no_content
       end
 
       def questionnaire_params
