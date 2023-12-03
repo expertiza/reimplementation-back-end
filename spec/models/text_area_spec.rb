@@ -1,25 +1,40 @@
 require 'rails_helper'
-include ActionView::Helpers::SanitizeHelper
 
-describe TextArea do
-  let(:text_area) { TextArea.create(id: 1, question_type: 'TextArea', seq: 1.0, txt: 'test txt', weight: 5) }
-  let(:answer) { Answer.new(answer: 1, comments: 'test answer') }
+RSpec.describe TextArea, type: :model do
+  describe '#complete' do
+    it 'returns JSON with question_id, type, cols, rows, and count' do
+      text_area = TextArea.new(id: 1, type: 'text', size: '40,5')
 
-  let(:completed_question_html) do
-    text_area.view_completed_question(3, answer)
+      json_result = JSON.parse(text_area.complete(1))
+
+      expect(json_result['question_id']).to eq(1)
+      expect(json_result['type']).to eq('text')
+      expect(json_result['cols']).to eq(40)
+      expect(json_result['rows']).to eq(5)
+      expect(json_result['count']).to eq(1)
+    end
+
+    it 'handles size not provided' do
+      text_area = TextArea.new(id: 1, type: 'text', size: nil)
+
+      json_result = JSON.parse(text_area.complete(1))
+
+      expect(json_result['cols']).to eq(70) # default value
+      expect(json_result['rows']).to eq(1)  # default value
+    end
   end
 
-  let(:completed_html) do
-    text_area.complete(3, nil)
-  end
+  describe '#view_completed_question' do
+    it 'returns JSON with question_id, type, comments, and count' do
+      answer = double('Answer', comments: 'Test comments^pLine 1\nLine 2')
+      text_area = TextArea.new(id: 1, type: 'text')
 
-  it 'returns the completed question HTML' do
-    expected_html = '<b>3. test txt</b><BR/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;test answer<BR/><BR/>'
-    expect(completed_question_html.gsub(/\s+/, ' ').strip).to eq(expected_html.gsub(/\s+/, ' ').strip)
-  end
+      json_result = JSON.parse(text_area.view_completed_question(1, answer))
 
-  it 'returns the completed HTML' do
-    expected_html = '<p><label for="responses_3">test txt</label></p> <input id="responses_3_score" name="responses[3][score]" type="hidden" value=""> <p><textarea cols="70" rows="1" id="responses_3_comments" name="responses[3][comment]" class="tinymce"></textarea></p>'
-    expect(completed_html.strip.gsub(/\s+/, ' ')).to eq(expected_html.strip.gsub(/\s+/, ' '))
+      expect(json_result['question_id']).to eq(1)
+      expect(json_result['type']).to eq('text')
+      expect(json_result['comments']).to eq('Test commentsLine 1\\nLine 2')
+      expect(json_result['count']).to eq(1)
+    end
   end
 end
