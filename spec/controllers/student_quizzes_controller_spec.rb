@@ -10,14 +10,15 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
   # Creates a course for the tests
   let(:course) { create(:course, instructor: instructor) }
   # Creates an assignment
-  let(:assignment) { create(:assignment, course: course) }
+  let(:assignment1) { create(:assignment, course: course) }
+  let(:assignment2) { create(:assignment, course: course) }
   # Creates the questionnaire json for testing the api
-  let(:questionnaire_params) do
+  let(:questionnaire1_params) do
     {
       "questionnaire": {
         "name": "General Knowledge Quiz",
         "instructor_id": instructor.id,
-        "assignment_id": assignment.id,
+        "assignment_id": assignment1.id,
         "min_question_score": 0,
         "max_question_score": 5,
         "questions_attributes": [
@@ -50,28 +51,68 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
         ]
       }
     }
+    end
+  let(:questionnaire2_params) do
+    {
+      "questionnaire": {
+        "name": "Another General Knowledge Quiz",
+        "instructor_id": instructor.id,
+        "assignment_id": assignment2.id,
+        "min_question_score": 0,
+        "max_question_score": 5,
+        "questions_attributes": [
+          {
+            "txt": "What is the capital of North Carolina?",
+            "question_type": "multiple_choice",
+            "break_before": true,
+            "correct_answer": "Raleigh",
+            "score_value": 1,
+            "answers_attributes": [
+              { "answer_text": "Raleigh", "correct": true },
+              { "answer_text": "Charlotte", "correct": false },
+              { "answer_text": "Wilmington", "correct": false },
+              { "answer_text": "Durham", "correct": false }
+            ]
+          },
+          {
+            "txt": "Who shot Alexander Hamilton?",
+            "question_type": "multiple_choice",
+            "break_before": true,
+            "correct_answer": "Aaron Burr",
+            "score_value": 1,
+            "answers_attributes": [
+              { "answer_text": "Thomas Jefferson", "correct": false },
+              { "answer_text": "Aaron Burr", "correct": true },
+              { "answer_text": "Lee Harvey Oswald", "correct": false },
+              { "answer_text": "George Washington", "correct": false }
+            ]
+          }
+        ]
+      }
+    }
   end
   # Creates a questionnaire
-  let(:questionnaire) { create(:questionnaire, assignment: assignment, instructor: instructor) }
+  let(:questionnaire1) { create(:questionnaire, assignment: assignment1, instructor: instructor) }
+  let(:questionnaire2) { create(:questionnaire, assignment: assignment2, instructor: instructor) }
   # mock a questionnaire update
   let(:updated_attributes) do
     { name: "Updated Quiz Name" }
   end
   # Creates a questionnaire to delete to tests api endpoint
-  let(:questionnaire_to_delete) { create(:questionnaire, assignment: assignment, instructor: instructor) }
+  let(:questionnaire1_to_delete) { create(:questionnaire, assignment: assignment1, instructor: instructor) }
   # Create the participant that links student to assignments
-  let(:participant) { create(:participant, assignment: assignment, user: student) }
+  let(:participant) { create(:participant, assignment: assignment1, user: student) }
   # Creates the json for assigning a student to an assignment which is needed for the questionnaire
   let(:assign_quiz_params) do
     {
       participant_id: participant.id,
-      questionnaire_id: questionnaire.id
+      questionnaire_id: questionnaire1.id
     }
   end
   # Score to test the student quiz
   let(:known_score) { 2 }
   # create the response map needed for the student test and score api
-  let(:response_map) { create(:response_map, reviewee_id: student.id, reviewed_object_id: questionnaire.id) }
+  let(:response_map) { create(:response_map, reviewee_id: student.id, reviewed_object_id: questionnaire1.id) }
 
   before do
     allow_any_instance_of(Api::V1::StudentQuizzesController)
@@ -88,7 +129,7 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
   describe 'GET #index' do
     # Created by the group
     it 'returns a success response' do
-      create_list(:questionnaire, 3, assignment: assignment)
+      create_list(:questionnaire, 3, assignment: assignment1)
 
       get :index
       expect(response).to be_successful
@@ -98,7 +139,7 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
     # Method call: index
     # Expected output: []
     it 'returns all three quizzes' do
-      create_list(:questionnaire, 0, assignment: assignment)
+      create_list(:questionnaire, 0, assignment: assignment1)
 
       get :index
       json_response = JSON.parse(response.body)
@@ -110,7 +151,7 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
     # Method call: index
     # Expected output: [questionnaire1, questionnaire2, questionnaire3, ...]
     it 'returns all three quizzes' do
-      create_list(:questionnaire, 3, assignment: assignment)
+      create_list(:questionnaire, 3, assignment: assignment1)
 
       get :index
       json_response = JSON.parse(response.body)
@@ -122,7 +163,7 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
     # Method call: index
     # Expected output: [questionnaire]
     it 'returns a total of one quiz' do
-      create_list(:questionnaire, 1, assignment: assignment)
+      create_list(:questionnaire, 1, assignment: assignment1)
 
       get :index
       json_response = JSON.parse(response.body)
@@ -134,15 +175,21 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
     # Method call: index
     # Expected output: [questionnaire1, questionnaire2, questionnaire3, ...]
     it 'returns correct quiz attributes' do
-      pending 'unimplemented'
+      create_list(:questionnaire, 1, assignment: assignment1)
+      create_list(:questionnaire, 1, assignment: assignment2)
+      get :index
+      json_response = JSON.parse(response.body)
+      expect(json_response.count).to eq(2)
+      expect(json_response[0]).to include(assignment1.questionnaires.name)
+      expect(json_response[1]).to include(assignment2.questionnaires.name)
     end
   end
   
   describe 'GET #show' do
-    let(:questionnaire) { create(:questionnaire, assignment: assignment, instructor: instructor) }
+    let(:questionnaire1) { create(:questionnaire, assignment: assignment1, instructor: instructor) }
 
     before do
-      get :show, params: { id: questionnaire.id }
+      get :show, params: { id: questionnaire1.id }
     end
     context "when called" do
       it 'returns a success response' do
@@ -151,7 +198,7 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
 
       it "renders the student quiz as JSON" do
         json_response = JSON.parse(response.body)
-        expect(json_response['id']).to eq(questionnaire.id)
+        expect(json_response['id']).to eq(questionnaire1.id)
       end
     end
   end
@@ -159,17 +206,17 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
   describe 'POST #create_questionnaire' do
     context "when all parameters are valid" do
       it 'creates a new questionnaire' do
-        post :create_questionnaire, params: questionnaire_params
+        post :create_questionnaire, params: questionnaire1_params
         unless response.status == 200
           puts response.body
         end
         expect(response).to have_http_status(:success)
       end
       it "creates a new questionnaire with questions and answers" do
-        post :create_questionnaire, params: questionnaire_params
+        post :create_questionnaire, params: questionnaire1_params
         questionnaire = Questionnaire.last
-        expect(questionnaire.questions.count).not_to be_zero
-        expect(questionnaire.questions.first.answers.count).not_to be_zero
+        expect(questionnaire1.questions.count).not_to be_zero
+        expect(questionnaire1.questions.first.answers.count).not_to be_zero
       end
     end
 
@@ -186,8 +233,8 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
       it "returns an error message with status :no_content" do
         # Test scenario 3
         # For some reason the skeleton gave :unprocessable_entity but was returning :no_content
-        questionnaire = nil
-        post :create_questionnaire, params: questionnaire_params
+        questionnaire1 = nil
+        post :create_questionnaire, params: questionnaire1_params
         expect(response).to have_http_status(:no_content)
       end
     end
@@ -197,7 +244,7 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
         # Test scenario 4
         # For some reason the skeleton gave :unprocessable_entity but was returning :no_content
         answer_attributes = nil
-        post :create_questionnaire, params: questionnaire_params
+        post :create_questionnaire, params: questionnaire1_params
         expect(response).to have_http_status(:no_content)
       end
     end
@@ -214,21 +261,24 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
   describe 'PATCH/PUT #update' do
     context "when the student quiz is successfully updated" do
       before do
-        put :update, params: { id: questionnaire.id, questionnaire: updated_attributes }
+        put :update, params: { id: questionnaire1.id, questionnaire: updated_attributes }
       end
       it 'returns a success response' do
         expect(response).to have_http_status(:success)
       end
       it "returns the updated student quiz as JSON" do
-        questionnaire.reload
-        expect(questionnaire.name).to eq("Updated Quiz Name")
+        questionnaire1.reload
+        expect(questionnaire1.name).to eq("Updated Quiz Name")
       end
     end
 
     context "when the student quiz fails to update" do
       it "returns the errors of the student quiz as JSON with status code 422" do
         # Test body
-        pending 'unimplemented'
+        put :update, params: { id: questionnaire1.id, questionnaire: nil }
+        json_response = JSON.parse(response.body)
+        expect(json_response).to include('error')
+
       end
     end
   end
@@ -236,15 +286,15 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
   describe 'DELETE #destroy' do
     context "when a student quiz exists" do
       it "deletes the student quiz" do
-        questionnaire_to_delete  # This line is to create the questionnaire before the test
+        questionnaire1_to_delete  # This line is to create the questionnaire before the test
 
         expect do
-          delete :destroy, params: { id: questionnaire_to_delete.id }
+          delete :destroy, params: { id: questionnaire1_to_delete.id }
         end.to change(Questionnaire, :count).by(-1)
       end
 
       it "returns a no_content status" do
-        delete :destroy, params: { id: questionnaire_to_delete.id }
+        delete :destroy, params: { id: questionnaire1_to_delete.id }
         expect(response).to have_http_status(:no_content)
       end
     end
@@ -265,7 +315,7 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
         post :assign_quiz_to_student, params: assign_quiz_params
       end
       it "assigns the quiz to the student" do
-        expect(ResponseMap.where(reviewee_id: student.id, reviewed_object_id: questionnaire.id).exists?).to be true
+        expect(ResponseMap.where(reviewee_id: student.id, reviewed_object_id: questionnaire1.id).exists?).to be true
       end
 
       it "returns a success response" do
@@ -275,16 +325,17 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
 
     context "when the quiz is already assigned to the student" do
       before do
-        create(:response_map, reviewee_id: student.id, reviewed_object_id: questionnaire.id)
+        create(:response_map, reviewee_id: student.id, reviewed_object_id: questionnaire1.id)
         post :assign_quiz_to_student, params: assign_quiz_params
       end
 
       it 'does not create a new assignment' do
-        expect(ResponseMap.where(reviewee_id: student.id, reviewed_object_id: questionnaire.id).count).to eq(1)
+        expect(ResponseMap.where(reviewee_id: student.id, reviewed_object_id: questionnaire1.id).count).to eq(1)
       end
       
       it "returns an error message" do
-        expect(response.body).to include("error")
+        json_response = JSON.parse(response.body)
+        expect(json_response).to include('error')
       end
 
       it "returns an unprocessable entity status" do
@@ -317,17 +368,17 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
 
     context "when the user is assigned to take the quiz" do
       let!(:question1) do
-        create(:question, questionnaire: questionnaire,
+        create(:question, questionnaire: questionnaire1,
                txt: "What is the capital of France?", correct_answer: "Paris")
       end
       let!(:question2) do
-        create(:question, questionnaire: questionnaire,
+        create(:question, questionnaire: questionnaire1,
                txt: "What is the largest planet in our solar system?", correct_answer: "Jupiter")
       end
 
       let(:submit_answers_params) do
         {
-          questionnaire_id: questionnaire.id,
+          questionnaire_id: questionnaire1.id,
           answers: [
             { question_id: question1.id, answer_value: "Paris" },
             { question_id: question2.id, answer_value: "Jupiter" }
@@ -336,7 +387,7 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
       end
 
       let!(:response_map) do
-        create(:response_map, reviewee_id: student.id, reviewed_object_id: questionnaire.id)
+        create(:response_map, reviewee_id: student.id, reviewed_object_id: questionnaire1.id)
       end
 
       context "when all answers are correct" do
@@ -422,17 +473,17 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
     context "when the response map exists" do
       # manually create the questionnaire questions and answers for the test
       let!(:question1) do
-        create(:question, questionnaire: questionnaire,
+        create(:question, questionnaire: questionnaire1,
                txt: "What is the capital of France?", correct_answer: "Paris")
       end
       let!(:question2) do
-        create(:question, questionnaire: questionnaire,
+        create(:question, questionnaire: questionnaire1,
                txt: "What is the largest planet in our solar system?", correct_answer: "Jupiter")
       end
       # Submit the answers in the json format for the test
       let(:submit_answers_params) do
         {
-          questionnaire_id: questionnaire.id,
+          questionnaire_id: questionnaire1.id,
           answers: [
             { question_id: question1.id, answer_value: "Paris" },
             { question_id: question2.id, answer_value: "Jupiter" }
@@ -441,7 +492,7 @@ RSpec.describe Api::V1::StudentQuizzesController, type: :controller do
       end
       # Create the response map that links the student to the assignment
       let!(:response_map) do
-        create(:response_map, reviewee_id: student.id, reviewed_object_id: questionnaire.id, score: 2)
+        create(:response_map, reviewee_id: student.id, reviewed_object_id: questionnaire1.id, score: 2)
       end
 
       before do

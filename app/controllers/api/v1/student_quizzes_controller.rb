@@ -130,6 +130,8 @@ module Api
         else
           render json: @student_quiz.errors, status: :unprocessable_entity
         end
+      rescue => e
+        render json: { error: e.message }, status: :unprocessable_entity
       end
 
       # DELETE /student_quizzes/:id
