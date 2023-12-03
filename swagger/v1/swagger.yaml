@@ -3,17 +3,6 @@ openapi: 3.0.1
 info:
   title: EXPERTIZA API V1
   version: v1
-
-components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-
-security:
-  - bearerAuth: []
-
 paths:
   "/api/v1/teams_users":
     get:
@@ -1251,6 +1240,19 @@ paths:
           description: signed up team deleted
         '422':
           description: invalid request
+
+  "/api/v1/teams_users":
+    get:
+      summary: List all the teams_users
+      tags:
+        - Teams Users
+      responses:
+        '200':
+          description: List of teams_users
+          content:
+            application/json:
+              schema:
+                type: array
   "/login":
     post:
       summary: Logs in a user
