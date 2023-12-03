@@ -22,8 +22,7 @@ FactoryBot.define do
 
 
   factory :instructor, class: Instructor do
-    before(:create) { |instructor| instructor.name = instructor.name.downcase }
-    name { 'instructor6'.downcase }
+    sequence(:name) { |n| "instructor#{n}".downcase }
     role { Role.find_or_create_by(name: 'Instructor') }
     full_name { '6, instructor' }
     password { 'sample_password' }
@@ -44,8 +43,33 @@ FactoryBot.define do
     factory :institution, class: Institution do
       name {'North Carolina State University'}
     end
+  factory :team do
+    association :assignment
+  end
+
+  factory :sign_up_topic do
+    association :assignment
+  end
+
+  factory :questionnaire do
+    sequence(:name) { |n| "questionnaire#{n}".downcase }
+
+    association :instructor
+    max_question_score {2}
+    min_question_score {1}
+  end
+
+  factory :assignment_questionnaire do
+    association :assignment
+    association :questionnaire
+  end
+
+
+
+
 
 end
+
 
 # FactoryBot.define do
 #   factory :user do

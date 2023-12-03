@@ -147,6 +147,153 @@ RSpec.describe Assignment, type: :model do
       expect(copied_assignment.instructor).to eq(assignment.instructor)
     end
   end
+  describe '#is_calibrated?' do
+    let(:assignment) { create(:assignment) }
+
+    context 'when is_calibrated is true' do
+      it 'returns true' do
+        assignment.is_calibrated = true
+        expect(assignment.is_calibrated?).to be true
+      end
+    end
+
+    context 'when is_calibrated is false' do
+      it 'returns false' do
+        assignment.is_calibrated = false
+        expect(assignment.is_calibrated?).to be false
+      end
+    end
+  end
+  describe '#has_badge?' do
+    let(:assignment) { Assignment.new }
+
+    context 'when has_badge is nil' do
+      it 'returns false' do
+        assignment.has_badge = nil
+        expect(assignment.has_badge?).to be false
+      end
+    end
+
+    context 'when has_badge is true' do
+      it 'returns true' do
+        assignment.has_badge = true
+        expect(assignment.has_badge?).to be true
+      end
+    end
+
+    context 'when has_badge is false' do
+      it 'returns false' do
+        assignment.has_badge = false
+        expect(assignment.has_badge?).to be false
+      end
+    end
+  end
+  describe '#valid_num_review' do
+    let(:assignment) { Assignment.new }
+
+    context 'when review_type is "review"' do
+      it 'returns success: true if num_reviews_required is less than or equal to num_reviews_allowed' do
+        assignment.num_reviews_required = 2
+        assignment.num_reviews_allowed = 5
+
+        result = assignment.valid_num_review('review')
+
+        expect(result[:success]).to be true
+        expect(result[:message]).to be_nil
+      end
+
+      it 'returns an error message if num_reviews_required is greater than num_reviews_allowed' do
+        assignment.num_reviews_required = 5
+        assignment.num_reviews_allowed = 2
+
+        result = assignment.valid_num_review('review')
+
+        expect(result[:success]).to be false
+        expect(result[:message]).to eq('Number of reviews required cannot be greater than number of reviews allowed')
+      end
+    end
+
+    context 'when review_type is "metareview"' do
+      it 'returns success: true if num_metareviews_required is less than or equal to num_metareviews_allowed' do
+        assignment.num_metareviews_required = 2
+        assignment.num_metareviews_allowed = 5
+
+        result = assignment.valid_num_review('metareview')
+
+        expect(result[:success]).to be true
+        expect(result[:message]).to be_nil
+      end
+
+      it 'returns an error message if num_metareviews_required is greater than num_metareviews_allowed' do
+        assignment.num_metareviews_required = 5
+        assignment.num_metareviews_allowed = 2
+
+        result = assignment.valid_num_review('metareview')
+
+        expect(result[:success]).to be false
+        expect(result[:message]).to eq('Number of metareviews required cannot be greater than number of reviews allowed')
+      end
+    end
+  end
+  describe '#teams?' do
+    let(:assignment) {create(:assignment)}
+
+    context 'when teams are associated with the assignment' do
+      it 'returns true' do
+        # Create a team associated with the assignment using FactoryBot
+        team = create(:team, assignment: assignment)
+
+        expect(assignment.teams?).to be true
+      end
+    end
+
+    context 'when no teams are associated with the assignment' do
+      it 'returns false' do
+
+        expect(assignment.teams?).to be false
+      end
+    end
+  end
+
+  describe '#topics?' do
+    let(:assignment) { create(:assignment) }
+
+    context 'when sign_up_topics is empty' do
+      it 'returns false' do
+        # Assuming sign_up_topics is an empty collection
+
+        expect(assignment.topics?).to be false
+      end
+    end
+
+    context 'when sign_up_topics is not empty' do
+      it 'returns true' do
+        # Assuming sign_up_topics is a non-empty collection
+        sign_up_topic = create(:sign_up_topic, assignment: assignment)
+        expect(assignment.topics?).to be true
+      end
+    end
+  end
+
+  describe '#varying_rubrics_by_round?' do
+    let(:assignment) { create(:assignment) }
+    let(:questionnaire) {create(:questionnaire)}
+    context 'when rubrics with specified rounds are present' do
+      it 'returns true' do
+        # Assuming rubrics with specified rounds exist for the assignment
+        create(:assignment_questionnaire, assignment: assignment, questionnaire: questionnaire, used_in_round: 1)
+
+        expect(assignment.varying_rubrics_by_round?).to be true
+      end
+    end
+
+    context 'when no rubrics with specified rounds are present' do
+      it 'returns false' do
+        # Assuming no rubrics with specified rounds exist for the assignment
+        expect(assignment.varying_rubrics_by_round?).to be false
+      end
+    end
+  end
 
 
 end
