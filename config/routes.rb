@@ -74,7 +74,7 @@ Rails.application.routes.draw do
         end
 
       end
-      resources :teams_users, only: [:index, :create, :destroy]
+      resources :teams_users, only: [:index, :show, :create, :update, :destroy]
 
     end
   end
