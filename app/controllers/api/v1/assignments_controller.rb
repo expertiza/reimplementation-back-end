@@ -12,6 +12,40 @@ class Api::V1::AssignmentsController < ApplicationController
     render json: assignment
   end
 
+  # POST /api/v1/assignments
+  def create
+    assignment = Assignment.new(assignment_params)
+    if assignment.save
+      render json: assignment, status: :created
+    else
+      render json: assignment.errors, status: :unprocessable_entity
+    end
+  end
+
+  # PATCH/PUT /api/v1/assignments/:id
+  def update
+    assignment = Assignment.find(params[:id])
+    if assignment.update(assignment_params)
+      render json: assignment, status: :ok
+    else
+      render json: assignment.errors, status: :unprocessable_entity
+    end
+  end
+
+  # DELETE /api/v1/assignments/:id
+  def destroy
+    assignment = Assignment.find_by(id: params[:id])
+    if assignment
+      if assignment.destroy
+        render json: { message: "Assignment deleted successfully!" }, status: :ok
+      else
+        render json: { error: "Failed to delete assignment", details: assignment.errors.full_messages }, status: :unprocessable_entity
+      end
+    else
+      render json: { error: "Assignment not found" }, status: :not_found
+    end
+  end
+  
   #add participant to assignment
   # input: assignment id
   # output: status code and json of assignment
@@ -38,7 +72,7 @@ class Api::V1::AssignmentsController < ApplicationController
     if user && assignment
       assignment.remove_participant(user.id)
       if assignment.save
-        head :ok
+        render json: { message: "Participant removed successfully!" }, status: :ok
       else
         render json: assignment.errors, status: :unprocessable_entity
       end
@@ -65,7 +99,6 @@ class Api::V1::AssignmentsController < ApplicationController
         render json: assignment.errors, status: :unprocessable_entity
       end
     end
-    
   end
 
   #update course id of an assignment/ assign the assign to some together course
@@ -128,7 +161,7 @@ class Api::V1::AssignmentsController < ApplicationController
     if assignment.nil?
       render json: { error: "Assignment not found" }, status: :not_found
     else
-      render json: assignment.has_topics?, status: :ok
+      render json: assignment.topics?, status: :ok
     end
   end
 
@@ -150,16 +183,7 @@ class Api::V1::AssignmentsController < ApplicationController
       render json: assignment.valid_num_review(review_type), status: :ok
     end
   end
-
-  # POST /api/v1/assignments
-  def create
-    assignment = Assignment.new(assignment_params)
-    if assignment.save
-      render json: assignment, status: :created
-    else
-      render json: assignment.errors, status: :unprocessable_entity
-    end
-  end
+  
   def is_calibrated
     assignment = Assignment.find(params[:assignment_id])
     if assignment.nil?
@@ -199,35 +223,20 @@ class Api::V1::AssignmentsController < ApplicationController
     end
   end
 
-  # PATCH/PUT /api/v1/assignments/:id
-  def update
-    assignment = Assignment.find(params[:id])
-    if assignment.update(assignment_params)
-      render json: assignment, status: :ok
-    else
-      render json: assignment.errors, status: :unprocessable_entity
-    end
-  end
-
-  # DELETE /api/v1/assignments/:id
-  def destroy
-    assignment = Assignment.find(params[:id])
-    assignment.destroy
-    head :no_content
-  end
-
   def varying_rubrics_by_round?
     assignment = Assignment.find(params[:assignment_id])
     if assignment.nil?
       render json: { error: "Assignment not found" }, status: :not_found
     else
-      render json: assignment.varying_rubrics_by_round?, status: :ok
+      if AssignmentQuestionnaire.exists?(assignment_id: assignment.id)
+        render json: assignment.varying_rubrics_by_round?, status: :ok
+      else
+        render json: { error: "No questionnaire/rubric exists for this assignment." }, status: :not_found
+      end
     end
   end
-
-
+  
   private
-
   # Only allow a list of trusted parameters through.
   def assignment_params
     params.require(:assignment).permit(:title, :description)
