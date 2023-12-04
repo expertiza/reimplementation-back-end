@@ -13,7 +13,7 @@ class Api::V1::TeamsUsersController < ApplicationController
   end
 
   # GET /teams/1
-  # Get the users of a particular team
+  # Get the team_users of a particular team
   def show
     team = Team.find(params[:id])
     teams_users = TeamsUser.where(team_id: params[:id])
