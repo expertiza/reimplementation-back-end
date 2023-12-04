@@ -69,13 +69,9 @@ Rails.application.routes.draw do
         collection do
           get :pending, action: :pending_requests
           get :processed, action: :processed_requests
-
-
         end
-
       end
       resources :teams_users, only: [:index, :show, :create, :update, :destroy]
-
     end
   end
 end
