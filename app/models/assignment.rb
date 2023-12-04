@@ -140,7 +140,7 @@ class Assignment < ApplicationRecord
   end
 
   def team_assignment?
-    max_team_size > 0
+    !max_team_size.nil? && max_team_size > 0
   end
 
   def staggered_and_no_topic?(topic_id)
@@ -172,6 +172,9 @@ class Assignment < ApplicationRecord
         else
           {success: true}
         end
+      
+    else
+      {success: false, message: 'Please enter a valid review type.'}
     end
   end
 
@@ -186,6 +189,7 @@ class Assignment < ApplicationRecord
     node = AssignmentNode.create(node_object_id: id)
     node.parent_id = parent.id unless parent.nil?
     node.save
+    node
   end
 
 
