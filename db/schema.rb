@@ -59,7 +59,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_12_01_024204) do
     t.integer "num_reviewers"
     t.text "spec_location"
     t.integer "max_team_size"
-    t.boolean "staggered_deadline"
+    t.boolean "staggered_deadline", default: false
     t.boolean "allow_suggestions"
     t.integer "days_between_submissions"
     t.string "review_assignment_strategy"
@@ -81,7 +81,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_12_01_024204) do
     t.boolean "use_bookmark"
     t.boolean "can_review_same_topic"
     t.boolean "can_choose_topic_to_review"
-    t.boolean "is_calibrated"
+    t.boolean "is_calibrated", default: false
     t.boolean "is_selfreview_enabled"
     t.string "reputation_algorithm"
     t.boolean "is_anonymous"
@@ -92,16 +92,16 @@ ActiveRecord::Schema[7.0].define(version: 2023_12_01_024204) do
     t.integer "simicheck"
     t.integer "simicheck_threshold"
     t.boolean "is_answer_tagging_allowed"
-    t.boolean "has_badge"
+    t.boolean "has_badge", default: false
     t.boolean "allow_selecting_additional_reviews_after_1st_round"
     t.integer "sample_assignment_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "instructor_id", null: false
     t.bigint "course_id"
-    t.boolean "enable_pair_programming"
-    t.boolean "has_teams"
-    t.boolean "has_topics"
+    t.boolean "enable_pair_programming", default: false
+    t.boolean "has_teams", default: false
+    t.boolean "has_topics", default: false
     t.index ["course_id"], name: "index_assignments_on_course_id"
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
