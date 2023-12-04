@@ -14,7 +14,7 @@ class CreateAssignments < ActiveRecord::Migration[7.0]
       t.integer :num_reviewers
       t.text :spec_location
       t.integer :max_team_size
-      t.boolean :staggered_deadline
+      t.boolean :staggered_deadline, default: false
       t.boolean :allow_suggestions
       t.integer :days_between_submissions
       t.string :review_assignment_strategy
@@ -36,7 +36,7 @@ class CreateAssignments < ActiveRecord::Migration[7.0]
       t.boolean :use_bookmark
       t.boolean :can_review_same_topic
       t.boolean :can_choose_topic_to_review
-      t.boolean :is_calibrated
+      t.boolean :is_calibrated, default: false
       t.boolean :is_selfreview_enabled
       t.string :reputation_algorithm
       t.boolean :is_anonymous
@@ -47,7 +47,7 @@ class CreateAssignments < ActiveRecord::Migration[7.0]
       t.integer :simicheck
       t.integer :simicheck_threshold
       t.boolean :is_answer_tagging_allowed
-      t.boolean :has_badge
+      t.boolean :has_badge, default: false
       t.boolean :allow_selecting_additional_reviews_after_1st_round
       t.integer :sample_assignment_id
 
