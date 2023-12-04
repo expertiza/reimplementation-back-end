@@ -100,6 +100,33 @@ class Api::V1::UsersController < ApplicationController
                                  :handle, :copy_of_emails, :password, :password_confirmation)
   end
 
+  # for displaying the list of users
+  def list
+    # code here
+    letter = params[:letter]
+    search_by = params[:search_by]
+    # If search parameters present
+    if letter.present? && search_by.present?
+      case search_by.to_i
+      when 1 # Search by username
+        @paginated_users = paginate_list&.where('name LIKE ?', "%#{letter}%")
+      when 2 # Search by fullname
+        @paginated_users = paginate_list&.where('fullname LIKE ?', "%#{letter}%")
+      when 3 # Search by email
+        @paginated_users = paginate_list&.where('email LIKE ?', "%#{letter}%")
+      else
+        @paginated_users = paginate_list
+      end
+    else # Display all users if no search parameters present
+      @paginated_users = paginate_list
+      if @paginated_users
+        puts("Not empty" + @paginated_users.to_s) else puts("Empty")
+      end
+
+    end
+    render json: @paginated_users
+  end
+
   def user_not_found
     render json: { error: "User with id #{params[:id]} not found" }, status: :not_found
   end

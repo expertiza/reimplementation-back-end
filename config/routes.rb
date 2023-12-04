@@ -21,6 +21,7 @@ Rails.application.routes.draw do
           get ':id/managed', action: :managed_users
           get 'role/:name', action: :role_users
           get 'search/', action: :search_users
+          get 'list/', action: :list
         end
       end
       resources :assignments
