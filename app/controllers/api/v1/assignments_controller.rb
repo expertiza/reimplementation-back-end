@@ -122,7 +122,7 @@ class Api::V1::AssignmentsController < ApplicationController
 
   #copy existing assignment
   # input: assignment id
-  # output: status code and json fo assignment
+  # output: status code and json of assignment
   def copy_assignment
     assignment = Assignment.find(params[:assignment_id])
     if assignment.nil?
@@ -137,7 +137,10 @@ class Api::V1::AssignmentsController < ApplicationController
     end
   end
 
-
+  # check if assignment has badge
+  # input: assignment id
+  # output: boolean value of has_badge field in assignment table
+  # true is assignment has badge
   def has_badge
     assignment = Assignment.find(params[:assignment_id])
     if assignment.nil?
@@ -147,6 +150,10 @@ class Api::V1::AssignmentsController < ApplicationController
     end
   end
 
+  # check if assignment has pair programming enabled
+  # input: assignment id
+  # output: boolean value of enable_pair_programming field in assignment table
+  # true if pair programming is enabled
   def pair_programming_enabled
     assignment = Assignment.find(params[:assignment_id])
     if assignment.nil?
@@ -156,6 +163,10 @@ class Api::V1::AssignmentsController < ApplicationController
     end
   end
 
+  # check if assignment has topics
+  # input: assignment id
+  # output: boolean value of has_topics field in assignment table 
+  # has_topics is set to true if there is SignUpTopic corresponding to the input assignment id 
   def has_topics
     assignment = Assignment.find(params[:assignment_id])
     if assignment.nil?
@@ -165,6 +176,10 @@ class Api::V1::AssignmentsController < ApplicationController
     end
   end
 
+  # check if assignment is a team assignment 
+  # input: assignment id
+  # output: boolean value of max_team_size field in assignment table
+  # true if assignment's max team size is greater than 1
   def team_assignment
     assignment = Assignment.find(params[:assignment_id])
     if assignment.nil?
@@ -173,7 +188,11 @@ class Api::V1::AssignmentsController < ApplicationController
       render json: assignment.team_assignment?, status: :ok
     end
   end
-  
+
+  # check if assignment has valid number of reviews
+  # input: assignment id
+  # output: boolean value which is true if number of allowed reviews are 
+  # greater than required reviews for a valid review type
   def valid_num_review
     assignment = Assignment.find(params[:assignment_id])
     review_type = params[:review_type]
@@ -183,7 +202,11 @@ class Api::V1::AssignmentsController < ApplicationController
       render json: assignment.valid_num_review(review_type), status: :ok
     end
   end
-  
+
+  # check if assignment is calibrated 
+  # input: assignment id
+  # output: boolean value of is_calibrated field in assignment table
+  # true if assignment is calibrated
   def is_calibrated
     assignment = Assignment.find(params[:assignment_id])
     if assignment.nil?
@@ -192,6 +215,11 @@ class Api::V1::AssignmentsController < ApplicationController
       render json: assignment.is_calibrated? , status: :ok
     end
   end
+
+  # check if assignment has teams
+  # input: assignment id
+  # output: boolean value of has_teams field in assignment table
+  # true if there exists a team corresponding to the input assignment id
   def has_teams
     assignment = Assignment.find(params[:assignment_id])
     if assignment.nil?
@@ -200,6 +228,12 @@ class Api::V1::AssignmentsController < ApplicationController
       render json: assignment.teams?, status: :ok
     end
   end
+
+  # check if assignment is staggered and has no assigned topic for current user
+  # input: assignment id
+  # output: boolean value 
+  # true if staggered_deadline field of assignment table is set to true and 
+  # if it has no topics associated with the current user
   def staggered_and_no_topic
     assignment = Assignment.find(params[:assignment_id])
     topic_id = SignedUpTeam
@@ -213,6 +247,9 @@ class Api::V1::AssignmentsController < ApplicationController
     end
   end
 
+  # create notes for assignment 
+  # input: assignment id
+  # output: returns the created node
   def create_node
     assignment = Assignment.find(params[:assignment_id])
     if assignment.nil?
@@ -223,6 +260,10 @@ class Api::V1::AssignmentsController < ApplicationController
     end
   end
 
+  # check if assignment has varying rubric across rounds
+  # input: assignment id
+  # output: boolean value indicating if rubric varies or not
+  # set to true if rubrics vary across rounds in assignment else false
   def varying_rubrics_by_round?
     assignment = Assignment.find(params[:assignment_id])
     if assignment.nil?
