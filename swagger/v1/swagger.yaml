@@ -1,9 +1,110 @@
 ---
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
 openapi: 3.0.1
 info:
   title: EXPERTIZA API V1
   version: v1
 paths:
+  "/api/v1/teams_users":
+    get:
+      summary: List all TeamsUsers
+      tags:
+        - TeamsUsers
+      responses:
+        '200':
+          description: List all TeamsUsers
+
+    post:
+      summary: Create a new TeamsUser
+      tags:
+        - TeamsUsers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                team_id:
+                  type: integer
+                user_id:
+                  type: integer
+                duty_id:
+                  type: integer
+                pair_programming_status:
+                  type: string
+                participant_id:
+                  type: integer
+              required:
+                - team_id
+                - user_id
+                - duty_id
+      responses:
+        '201':
+          description: TeamsUser created successfully
+        '422':
+          description: Unprocessable entity
+
+  "/api/v1/teams_users/{id}":
+    put:
+      summary: Update an existing TeamsUser
+      tags:
+        - TeamsUsers
+      parameters:
+        - name: id
+          in: path
+          description: ID of the TeamsUser
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                team_id:
+                  type: integer
+                user_id:
+                  type: integer
+                duty_id:
+                  type: integer
+                pair_programming_status:
+                  type: string
+                participant_id:
+                  type: integer
+              required:
+                - team_id
+                - user_id
+                - duty_id
+      responses:
+        '200':
+          description: TeamsUser updated successfully
+        '422':
+          description: Unprocessable entity
+
+    delete:
+      summary: Remove a TeamsUser
+      tags:
+        - TeamsUsers
+      parameters:
+        - name: id
+          in: path
+          description: ID of the TeamsUser
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: TeamsUser removed successfully
+
   "/api/v1/account_requests/pending":
     get:
       summary: List all Pending Account Requests
@@ -1148,19 +1249,6 @@ paths:
           description: signed up team deleted
         '422':
           description: invalid request
-
-  "/api/v1/teams_users":
-    get:
-      summary: List all the teams_users
-      tags:
-        - Teams Users
-      responses:
-        '200':
-          description: List of teams_users
-          content:
-            application/json:
-              schema:
-                type: array
   "/login":
     post:
       summary: Logs in a user

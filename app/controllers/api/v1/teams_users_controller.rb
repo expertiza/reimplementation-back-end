@@ -1,5 +1,6 @@
 class Api::V1::TeamsUsersController < ApplicationController
-  before_action :find_teams_user, only: [:update, :delete]
+  before_action :find_teams_user, only: [:update, :destroy]
+
 
   rescue_from ActiveRecord::RecordNotFound, with: :teams_user_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
@@ -49,19 +50,13 @@ class Api::V1::TeamsUsersController < ApplicationController
 
   # DELETE /teams_users/1
   # Remove a teams_user
-  def delete
-    parent_id = Team.find(@teams_user.team_id).parent_id
-    @user = User.find(@teams_user.user_id)
+  def destroy
+    @teams_user = TeamsUser.find(params[:id])
 
     if @teams_user.destroy
-      flash_message = "The team user \"#{@user.name}\" has been successfully removed."
+      render json: { message: 'TeamsUser removed successfully' }, status: :no_content
     else
-      flash_message = "Failed to remove the team user."
-    end
-
-    respond_to do |format|
-      format.html { redirect_to_teams_list(parent_id, flash_message) }
-      format.json { render json: { message: flash_message }, status: (@teams_user.destroyed? ? :no_content : :unprocessable_entity) }
+      render json: { error: 'Failed to remove TeamsUser' }, status: :unprocessable_entity
     end
   end
 

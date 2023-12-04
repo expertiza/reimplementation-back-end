@@ -1,4 +1,8 @@
 FactoryBot.define do
+  factory :duty do
+    name { "MyString" }
+  end
+
   factory :user do
     sequence(:name) { |_n| Faker::Name.name.to_s.delete(" \t\r\n").downcase }
     sequence(:email) { |_n| Faker::Internet.email.to_s }
