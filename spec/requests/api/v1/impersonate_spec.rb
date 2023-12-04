@@ -1,10 +1,12 @@
 require 'swagger_helper'
 
-RSpec.describe 'api/v1/impersonate', type: :request do
+RSpec.describe 'Impersonate Controller', type: :request do
 
   path '/api/v1/impersonate' do
+    parameter name: 'impersonate', in: :path, type: :string, description: 'impersonate'
 
     post('impersonate impersonate') do
+      tags 'Impersonate'
       response(200, 'successful') do
 
         after do |example|

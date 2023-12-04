@@ -3,17 +3,14 @@ openapi: 3.0.1
 info:
   title: EXPERTIZA API V1
   version: v1
-
+security:
+  - JWT: []
 components:
   securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-
-security:
-  - bearerAuth: []
-
+    JWT:
+      type: apiKey
+      name: Authorization
+      in: header
 paths:
   "/api/v1/account_requests/pending":
     get:
@@ -311,6 +308,21 @@ paths:
       - Courses
       responses:
         '204':
+          description: successful
+  "/api/v1/impersonate":
+    parameters:
+    - name: impersonate
+      in: path
+      description: impersonate
+      required: true
+      schema:
+        type: string
+    post:
+      summary: impersonate impersonate
+      tags:
+      - Impersonate
+      responses:
+        '200':
           description: successful
   "/api/v1/institutions":
     get:
