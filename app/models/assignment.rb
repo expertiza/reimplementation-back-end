@@ -118,75 +118,97 @@ class Assignment < ApplicationRecord
     copied_assignment
 
   end
+  #This method return the value of the is_calibrate field for the given assignment object.
   def is_calibrated?
     is_calibrated
   end
-  
+
+  #This method return the value of the enable_pair_programming field for the given assignment object.
   def pair_programming_enabled?
     enable_pair_programming
   end
-  
-  def has_badge?
-    if has_badge.nil?
-      return false
-    else
-      has_badge
-    end
 
+  #This method return the value of the has_badge field for the given assignment object.
+  def has_badge?
+    has_badge
   end
 
+  #This method return the value of the has_topics field for the given assignment object.
+  # has_topics is of boolean type and is set true if there is any topic associated with the assignment.
   def topics?
     @has_topics ||= sign_up_topics.any?
   end
 
+  #This method return if the given assignment is a team assignment.
+  # Checks if the value of max_team_size for the given assignment object is greater than 1
   def team_assignment?
-    !max_team_size.nil? && max_team_size > 0
+    !max_team_size.nil? && max_team_size > 1
   end
 
+  #This method return if the given assignment has a staggered deadline and no topic has been signed by the user's team.
+  # Receives a parameter topic_id of the SignUpTopic for which the user's team has signed up.
+  # Checks the boolean field staggered_field and topic_id for being nil
   def staggered_and_no_topic?(topic_id)
     staggered_deadline? && topic_id.nil?
   end
 
-
+  #Auxillary method for checking the validity of the field reviews_allowed for the given assignment object
+  # Checks if review_allowed is not null and not negative.
   def valid_reviews_allowed?(reviews_allowed)
     reviews_allowed && reviews_allowed != -1
   end
 
+  #method for checking if reviews_required are smaller than reviews_allowed for the given assignment object.
   def num_reviews_greater?(reviews_required, reviews_allowed)
     valid_reviews_allowed?(reviews_allowed) and reviews_required > reviews_allowed
   end
 
+  #This method checks if for the given review type, required reviews and allowed reviews have valid order of values
+  # Receives a parameter review_type and return an object with boolean value of 'success' and corresponding message
+  # If the parameter is of a invalid type, the corresponding error message is received.
   def valid_num_review(review_type)
     if review_type=='review'
-
+      #checks for reviews
       if num_reviews_greater?(num_reviews_required,num_reviews_allowed)
         {success: false, message: 'Number of reviews required cannot be greater than number of reviews allowed'}
       else
         {success: true}
       end
 
-
+      #checks for meta-reviews
     elsif review_type == 'metareview'
         if num_reviews_greater?(num_metareviews_required,num_metareviews_allowed)
           {success: false, message: 'Number of metareviews required cannot be greater than number of reviews allowed'}
         else
           {success: true}
         end
-      
+
+        #for invalid review_type
     else
       {success: false, message: 'Please enter a valid review type.'}
     end
   end
 
+
+  #This method check if for the given assignment,different type of rubrics are used in different round.
+  # Checks if for the given assignment any questionnaire is present with used_in_round field not nil.
+  # Returns a bolean value whether such questionnaire is present.
   def varying_rubrics_by_round?
     rubric_with_round = AssignmentQuestionnaire.where(assignment_id: id).where.not(used_in_round: nil).first
 
     # Check if any rubric has a specified round
     rubric_with_round.present?
   end
+
+  #This method creates a assignment node for the given assignment.
+  # Finds the corresponding CourseNode using course_id for the course with which the assignment is associated.
+  # Associates the AssignmentNode with the CourseNode by updating parent_id for the assignment.
   def create_node
+    #Find associated Course
     parent = CourseNode.find_by(node_object_id: course_id)
+    #Creates the Assignment Node
     node = AssignmentNode.create(node_object_id: id)
+    #Updates parent_id of the AssigmentNode with parent_id of CourseNode
     node.parent_id = parent.id unless parent.nil?
     node.save
     node
