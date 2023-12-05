@@ -3,12 +3,11 @@ require 'rails_helper'
 
 RSpec.describe "api/v1/questionnaires", type: :request do
 
+  #Precode that will be executed before running any test
   before do
     Role.create(id: 1, name: 'Teaching Assistant', parent_id: nil, default_page_id: nil)
     Role.create(id: 2, name: 'Administrator', parent_id: nil, default_page_id: nil)
 
-    # Team.create(id: 1, name: "team1")
-    #
     Institution.create(id: 2, name: 'Not_NCSU')
     User.create(id: 2, name: "nopermission", full_name: "nopermission", email: "nopermission@gmail.com", password_digest: "nopermission", role_id: 1, institution_id: 2)
 
@@ -25,11 +24,6 @@ RSpec.describe "api/v1/questionnaires", type: :request do
     institution
     User.create(id: 1, name: "admin", full_name: "admin", email: "admin@gmail.com", password_digest: "admin", role_id: 2, institution_id: institution.id)
   end
-
-  # let(:user_no_permission) do
-  #   institution
-  #   User.create(id: 2, name: "nopermission", full_name: "nopermission", email: "nopermission@gmail.com", password_digest: "nopermission", role_id: 1, institution_id: institution.id)
-  # end
 
   let(:team) { Team.create(id: 1, name: "team1") }
 
@@ -61,10 +55,13 @@ RSpec.describe "api/v1/questionnaires", type: :request do
     )
   end
 
+  #storing authorization token for the user
   let(:auth_token) { generate_auth_token(user) }
+
 
   path '/api/v1/quiz_questionnaires' do
 
+    #testing the get all quiz questionnaire api
     get 'Get quiz Questionnaires' do
       tags 'Quiz Questionnaires'
       produces 'application/json'
@@ -72,8 +69,8 @@ RSpec.describe "api/v1/questionnaires", type: :request do
       parameter name: 'Authorization', in: :header, type: :string
       parameter name: 'Content-Type', in: :header, type: :string
 
+      #If the number of quiz questionnaire returned is equal to 2 then the test is success as we created 2 quiz questionnaire in our precode.
       response(200, 'successful') do
-
         let('Authorization') { "Bearer #{auth_token}" }
         let('Content-Type') { 'application/json' }
 
@@ -83,12 +80,13 @@ RSpec.describe "api/v1/questionnaires", type: :request do
       end
     end
 
+    #We will test the create quiz questionnaire API
     post 'create Quiz questionnaire' do
       tags 'Quiz Questionnaires'
       consumes 'application/json'
       produces 'application/json'
 
-
+      #declaring the parameters
       parameter name: 'quiz_questionnaire', in: :body, schema: {
         type: :object,
         properties: {
@@ -135,7 +133,7 @@ RSpec.describe "api/v1/questionnaires", type: :request do
         end
       end
 
-      # post request on /api/v1/questionnaires returns 422 response - unprocessable entity when wrong params is passed toc reate questionnaire
+      # post request on /api/v1/questionnaires returns 422 response - unprocessable entity when wrong params is passed to quiz questionnaire
       response(422, 'Unprocessable Entity: Invalid Params') do
         let(:invalid_questionnaire_params) do
           {
@@ -154,6 +152,7 @@ RSpec.describe "api/v1/questionnaires", type: :request do
         run_test!
       end
 
+      # post request on /api/v1/questionnaires returns 422 response - unprocessable entity when user dont have permission
       response(422, 'Unprocessable Entity: Require Permission to Create') do
         let(:valid_questionnaire_params_no_permission) do
           {
@@ -172,6 +171,7 @@ RSpec.describe "api/v1/questionnaires", type: :request do
         run_test!
       end
 
+      # post request on /api/v1/questionnaires returns 422 response - unprocessable entity when assignment dont require a quiz
       response(422, 'Unprocessable Entity: Assignment does not require Quiz') do
         let(:valid_questionnaire_params_assignment_no_quiz) do
           {
@@ -193,6 +193,7 @@ RSpec.describe "api/v1/questionnaires", type: :request do
     end
   end
 
+  #testing the copy API
   path '/api/v1/quiz_questionnaires/copy/{id}' do
 
     post 'Copy a quiz Questionnaire' do
@@ -218,6 +219,7 @@ RSpec.describe "api/v1/questionnaires", type: :request do
 
       end
 
+      # returns 200 success code if the cloning of the quiz questionnaire with ID = {id} is successful
       response '200', 'Quiz questionnaire copied' do
         let('Authorization') { "Bearer #{auth_token}" }
         let('Content-Type') { 'application/json' }
@@ -225,6 +227,7 @@ RSpec.describe "api/v1/questionnaires", type: :request do
         run_test!
       end
 
+      # returns 404 not found status code if quiz questionnaire with ID = {id} is not there
       response '404', 'Not Found' do
         let('Authorization') { "Bearer #{auth_token}" }
         let('Content-Type') { 'application/json' }
@@ -236,8 +239,10 @@ RSpec.describe "api/v1/questionnaires", type: :request do
 
   end
 
+
   path '/api/v1/quiz_questionnaires/{id}' do
 
+    #Test for fetching a quiz questionnaire with specific {id}
     get 'Retrieve a quiz questionnaire' do
       tags 'Quiz Questionnaires'
       produces 'application/json'
@@ -260,6 +265,7 @@ RSpec.describe "api/v1/questionnaires", type: :request do
         )
       end
 
+      # return status code 200 if fetching of the quiz questionnaire is successful
       response '200', 'Quiz questionnaire details' do
         let('Authorization') { "Bearer #{auth_token}" }
         let('Content-Type') { 'application/json' }
@@ -269,6 +275,7 @@ RSpec.describe "api/v1/questionnaires", type: :request do
         run_test!
       end
 
+      # return status code 404 not found if the quiz questionnaire is not there in DB
       response '404', 'Not Found' do
         let('Authorization') { "Bearer #{auth_token}" }
         let('Content-Type') { 'application/json' }
@@ -277,6 +284,7 @@ RSpec.describe "api/v1/questionnaires", type: :request do
       end
     end
 
+    #test for updating the quiz questionnaire
     put 'Update a quiz questionnaire' do
 
       tags 'Quiz Questionnaires'
@@ -314,7 +322,7 @@ RSpec.describe "api/v1/questionnaires", type: :request do
         )
       end
 
-
+      # return status code 200 if the questionnaire update is success
       response '200', 'Quiz questionnaire updated' do
 
         let('Authorization') { "Bearer #{auth_token}" }
@@ -336,6 +344,7 @@ RSpec.describe "api/v1/questionnaires", type: :request do
 
       end
 
+      # return status code 422 if the questionnaire parameters are invalid
       response '422', 'Unprocessable Entity' do
 
         let('Authorization') { "Bearer #{auth_token}" }
@@ -355,6 +364,7 @@ RSpec.describe "api/v1/questionnaires", type: :request do
         run_test!
       end
 
+      # return status code 422 if the user dont have permission to update
       response '422', 'Unprocessable Entity: Require Permission to Update' do
         let('Authorization') { "Bearer #{auth_token}" }
         let('Content-Type') { 'application/json' }
@@ -375,6 +385,7 @@ RSpec.describe "api/v1/questionnaires", type: :request do
       end
     end
 
+    #Test for delete API
     delete 'Delete a quiz questionnaire' do
       tags 'Quiz Questionnaires'
 
@@ -405,6 +416,7 @@ RSpec.describe "api/v1/questionnaires", type: :request do
 
       end
 
+      # return status code 204 if deletion is success
       response '204', 'Quiz questionnaire deleted' do
         let('Authorization') { "Bearer #{auth_token}" }
         let('Content-Type') { 'application/json' }
@@ -414,6 +426,7 @@ RSpec.describe "api/v1/questionnaires", type: :request do
         run_test!
       end
 
+      # return status code 402 not found if no questionnaire with that {id} exists in DB.
       response '404', 'Not Found' do
         let('Authorization') { "Bearer #{auth_token}" }
         let('Content-Type') { 'application/json' }
@@ -422,6 +435,7 @@ RSpec.describe "api/v1/questionnaires", type: :request do
         run_test!
       end
 
+      # return status code 422 unprocessable entity if user dont have the permission to delete the questionnaire.
       response '422', 'unprocessable_entity: Require Permission to Delete' do
         let('Authorization') { "Bearer #{auth_token}" }
         let('Content-Type') { 'application/json' }
@@ -429,8 +443,6 @@ RSpec.describe "api/v1/questionnaires", type: :request do
         let('quiz_questionnaire') {{user_id: 2}}
         run_test!
       end
-
-
     end
 
   end
