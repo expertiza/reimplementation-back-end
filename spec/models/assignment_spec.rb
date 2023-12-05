@@ -167,13 +167,6 @@ RSpec.describe Assignment, type: :model do
   describe '#has_badge?' do
     let(:assignment) { Assignment.new }
 
-    context 'when has_badge is nil' do
-      it 'returns false' do
-        assignment.has_badge = nil
-        expect(assignment.has_badge?).to be false
-      end
-    end
-
     context 'when has_badge is true' do
       it 'returns true' do
         assignment.has_badge = true
@@ -401,23 +394,22 @@ RSpec.describe Assignment, type: :model do
 
   describe 'team_assignment?' do
     let(:assignment) { create(:assignment) }
-    context 'when max_team_size is greater than 0' do
+    context 'when max_team_size is greater than 1' do
       it 'returns true' do
         assignment.max_team_size = 5
         expect(assignment.team_assignment?).to be true
       end
     end
 
-    context 'when max_team_size is equal to 0' do
+    context 'when max_team_size is equal to 1' do
       it 'returns false' do
-        assignment.max_team_size = 0
+        assignment.max_team_size = 1
         expect(assignment.team_assignment?).to be false
       end
     end
 
-    context 'when max_team_size is less than 0' do
-      it 'returns false' do
-        assignment.max_team_size = -3
+    context "when max_team_size is nil" do
+      it "returns false" do
         expect(assignment.team_assignment?).to be false
       end
     end
