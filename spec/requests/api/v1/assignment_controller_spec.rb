@@ -536,4 +536,39 @@ end
       end
     end
   end
+
+  path '/api/v1/assignments/{assignment_id}/varying_rubrics_by_round' do
+    parameter name: 'assignment_id', in: :path, type: :integer, description: 'Assignment ID'
+
+    get('Check if an assignment has varying rubrics by round') do
+      tags 'Assignments'
+      produces 'application/json'
+      parameter name: 'Authorization', in: :header, type: :string
+      parameter name: 'Content-Type', in: :header, type: :string
+      let('Authorization') { "Bearer #{auth_token}" }
+      let('Content-Type') { 'application/json' }
+
+      response(200, 'successful') do
+        let(:questionnaire) { create(:questionnaire) }
+        let(:assignment) { create(:assignment) }
+        let(:assignment_id) {assignment.id}
+        let(:assignment_questionnaire) { create(:assignment_questionnaire, assignment: assignment, questionnaire: questionnaire, used_in_round: 1) }
+
+
+        run_test! do |response|
+          expect(response).to have_http_status(:ok)
+        end
+      end
+
+      response(404, 'Assignment not found') do
+        let(:assignment_id) { 999 } # Non-existent ID
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['error']).to eq('Assignment not found')
+        end
+      end
+    end
+  end
+
 end
