@@ -110,6 +110,7 @@ class User < ApplicationRecord
     self.etc_icons_on_homepage ||= true
   end
 
+  
   # Checks if the current user can impersonate the specified user
   # Returns true if allowed, otherwise false.
   def can_impersonate?(user)
@@ -143,7 +144,6 @@ class User < ApplicationRecord
     return false if p.nil?
     return true if p == self
     return false if p.role.super_administrator?
-
     recursively_parent_of(p)
   end
 end

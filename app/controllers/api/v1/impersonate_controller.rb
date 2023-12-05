@@ -6,7 +6,6 @@ class Api::V1::ImpersonateController < ApplicationController
   # Rails will execute the method check_if_input_is_valid before every action in the controller.
   before_action :check_if_input_is_valid
 
-
   # Checks if special characters are present in the username provided, only alphanumeric should be used
   def check_if_input_is_valid
     if params[:impersonate].blank? || warn_for_special_chars(params[:impersonate], 'Username')
@@ -46,7 +45,7 @@ class Api::V1::ImpersonateController < ApplicationController
       false
       end
 
-      
+
     # can_impersonate method in user.rb checks whether the original user can impersonate the other user in params
 
 
