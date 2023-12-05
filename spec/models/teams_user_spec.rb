@@ -12,12 +12,6 @@ RSpec.describe TeamsUser, type: :model do
     end
   end
 
-  describe '#get_team_members' do
-    it 'returns team members' do
-      # Implement this test as per your specific requirements
-    end
-  end
-
   describe '.remove_team' do
     it 'removes the team user entry' do
       teams_user = create(:teams_user, user: user, team: team)
