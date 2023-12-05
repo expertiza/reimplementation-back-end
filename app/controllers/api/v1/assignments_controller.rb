@@ -88,15 +88,17 @@ class Api::V1::AssignmentsController < ApplicationController
   # input: assignment id
   # output: status code and json of assignment
   def remove_assignment_from_course
-    assignment = Assignment.find(params[:assignment_id])
+    assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
       render json: { error: "Assignment not found" }, status: :not_found
     else
       assignment = assignment.remove_assignment_from_course
-      if assignment.save
-        render json: assignment , status: :ok
-      else
-        render json: assignment.errors, status: :unprocessable_entity
+      if assignment.valid?
+        if assignment.save
+          render json: assignment , status: :ok
+        else
+          render json: assignment.errors, status: :unprocessable_entity
+        end
       end
     end
   end
@@ -105,7 +107,7 @@ class Api::V1::AssignmentsController < ApplicationController
   # input: assignment id and course id
   # output: status code and json of assignment
   def assign_courses_to_assignment
-    assignment = Assignment.find(params[:assignment_id])
+    assignment = Assignment.find_by(id: params[:assignment_id])
     course = Course.find(params[:course_id])
     if assignment && course
       assignment = assignment.assign_courses_to_assignment(course.id)
@@ -124,7 +126,7 @@ class Api::V1::AssignmentsController < ApplicationController
   # input: assignment id
   # output: status code and json of assignment
   def copy_assignment
-    assignment = Assignment.find(params[:assignment_id])
+    assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
       render json: { error: "Assignment not found" }, status: :not_found
     else
@@ -142,7 +144,7 @@ class Api::V1::AssignmentsController < ApplicationController
   # output: boolean value of has_badge field in assignment table
   # true is assignment has badge
   def has_badge
-    assignment = Assignment.find(params[:assignment_id])
+    assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
       render json: { error: "Assignment not found" }, status: :not_found
     else
@@ -155,7 +157,7 @@ class Api::V1::AssignmentsController < ApplicationController
   # output: boolean value of enable_pair_programming field in assignment table
   # true if pair programming is enabled
   def pair_programming_enabled
-    assignment = Assignment.find(params[:assignment_id])
+    assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
       render json: { error: "Assignment not found" }, status: :not_found
     else
@@ -168,7 +170,7 @@ class Api::V1::AssignmentsController < ApplicationController
   # output: boolean value of has_topics field in assignment table 
   # has_topics is set to true if there is SignUpTopic corresponding to the input assignment id 
   def has_topics
-    assignment = Assignment.find(params[:assignment_id])
+    assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
       render json: { error: "Assignment not found" }, status: :not_found
     else
@@ -181,7 +183,7 @@ class Api::V1::AssignmentsController < ApplicationController
   # output: boolean value of max_team_size field in assignment table
   # true if assignment's max team size is greater than 1
   def team_assignment
-    assignment = Assignment.find(params[:assignment_id])
+    assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
       render json: { error: "Assignment not found" }, status: :not_found
     else
@@ -194,7 +196,7 @@ class Api::V1::AssignmentsController < ApplicationController
   # output: boolean value which is true if number of allowed reviews are 
   # greater than required reviews for a valid review type
   def valid_num_review
-    assignment = Assignment.find(params[:assignment_id])
+    assignment = Assignment.find_by(id: params[:assignment_id])
     review_type = params[:review_type]
     if assignment.nil?
       render json: { error: "Assignment not found" }, status: :not_found
@@ -208,7 +210,7 @@ class Api::V1::AssignmentsController < ApplicationController
   # output: boolean value of is_calibrated field in assignment table
   # true if assignment is calibrated
   def is_calibrated
-    assignment = Assignment.find(params[:assignment_id])
+    assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
       render json: { error: "Assignment not found" }, status: :not_found
     else
@@ -221,7 +223,7 @@ class Api::V1::AssignmentsController < ApplicationController
   # output: boolean value of has_teams field in assignment table
   # true if there exists a team corresponding to the input assignment id
   def has_teams
-    assignment = Assignment.find(params[:assignment_id])
+    assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
       render json: { error: "Assignment not found" }, status: :not_found
     else
@@ -235,7 +237,7 @@ class Api::V1::AssignmentsController < ApplicationController
   # true if staggered_deadline field of assignment table is set to true and 
   # if it has no topics associated with the current user
   def staggered_and_no_topic
-    assignment = Assignment.find(params[:assignment_id])
+    assignment = Assignment.find_by(id: params[:assignment_id])
     topic_id = SignedUpTeam
                  .joins(team: :teams_users)
                  .where(teams_users: { user_id: 1, team_id: Team.where(assignment_id: params[:assignment_id]).pluck(:id) })
@@ -251,7 +253,7 @@ class Api::V1::AssignmentsController < ApplicationController
   # input: assignment id
   # output: returns the created node
   def create_node
-    assignment = Assignment.find(params[:assignment_id])
+    assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
       render json: { error: "Assignment not found" }, status: :not_found
     else
@@ -265,7 +267,7 @@ class Api::V1::AssignmentsController < ApplicationController
   # output: boolean value indicating if rubric varies or not
   # set to true if rubrics vary across rounds in assignment else false
   def varying_rubrics_by_round?
-    assignment = Assignment.find(params[:assignment_id])
+    assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
       render json: { error: "Assignment not found" }, status: :not_found
     else
