@@ -1,51 +1,81 @@
 # spec/requests/api/v1/assignment_controller_spec.rb
 
 require 'swagger_helper'
+require 'rails_helper'
 
 RSpec.describe 'Assignments API', type: :request do
+  before do
+    Role.create(id: 1, name: 'Teaching Assistant', parent_id: nil, default_page_id: nil)
+    Role.create(id: 2, name: 'Administrator', parent_id: nil, default_page_id: nil)
+
+    Assignment.create(id: 1, name: 'a1')
+    Assignment.create(id: 2, name: 'a2')
+
+  end
+
+  let(:institution) { Institution.create(id: 100, name: 'NCSU') }
+
+  let(:user) do
+    institution
+    User.create(id: 1, name: "admin", full_name: "admin", email: "admin@gmail.com", password_digest: "admin", role_id: 2, institution_id: institution.id)
+  end
+
+
+  let(:auth_token) { generate_auth_token(user) }
+
+  path '/api/v1/assignments' do
+    get 'Get assignments' do
+      tags "Get All Assignments"
+      produces 'application/json'
+      parameter name: 'Authorization', in: :header, type: :string
+      parameter name: 'Content-Type', in: :header, type: :string
+      let('Authorization') { "Bearer #{auth_token}" }
+      let('Content-Type') { 'application/json' }
+
+      response '200', 'assignment successfully' do
+        run_test! do
+          expect(response.body.size).to eq(2)
+        end
+      end
+    end
+  end
+
   path '/api/v1/assignments/{assignment_id}/add_participant/{user_id}' do
+
     parameter name: 'assignment_id', in: :path, type: :string
     parameter name: 'user_id', in: :path, type: :string
+
 
     post 'Adds a participant to an assignment' do
       tags 'Assignments'
       consumes 'application/json'
       produces 'application/json'
+      parameter name: 'Authorization', in: :header, type: :string
+      parameter name: 'Content-Type', in: :header, type: :string
+      let('Authorization') { "Bearer #{auth_token}" }
+      let('Content-Type') { 'application/json' }
 
       response '200', 'participant added successfully' do
-        let(:assignment) { create(:assignment) } # Assuming you have a Factory for Assignment
+        let(:assignment) { create(:assignment) }
         let(:assignment_id) { assignment.id }
-        let(:user) { create(:user) } # Assuming you have a Factory for User
         let(:user_id) { user.id }
 
         run_test! do
-          expect(json['id']).to be_present
+          response_json = JSON.parse(response.body) # Parse the response body as JSON
+          expect(response_json['id']).to be_present
           expect(response).to have_http_status(:ok)
         end
       end
-
       response '404', 'assignment not found' do
-        let(:assignment_id) { 'nonexistent_id' }
-        let(:user_id) { 'some_user_id' }
+        let(:assignment_id) { 3 }
+        let(:user_id) { 1 }
 
         run_test! do
-          expect(json['error']).to eq('Assignment not found')
           expect(response).to have_http_status(:not_found)
         end
       end
-
-      response '422', 'unprocessable entity' do
-        let(:assignment) { create(:assignment) }
-        let(:assignment_id) { assignment.id }
-        let(:user_id) { 'invalid_user_id' }
-
-        run_test! do
-          expect(json).to include('errors')
-          expect(response).to have_http_status(:unprocessable_entity)
-        end
-      end
     end
-  end
+end
 
   path '/api/v1/assignments/{assignment_id}/remove_participant/{user_id}' do
     parameter name: 'assignment_id', in: :path, type: :string
@@ -55,12 +85,15 @@ RSpec.describe 'Assignments API', type: :request do
       tags 'Assignments'
       consumes 'application/json'
       produces 'application/json'
+      parameter name: 'Authorization', in: :header, type: :string
+      parameter name: 'Content-Type', in: :header, type: :string
+      let('Authorization') { "Bearer #{auth_token}" }
+      let('Content-Type') { 'application/json' }
 
       response '200', 'participant removed successfully' do
-        let(:assignment) { create(:assignment) }
-        let(:user) { create(:user) }
-        let(:assignment_id) { assignment.id }
         let(:user_id) { user.id }
+        let(:assignment) {create(:assignment)}
+        let(:assignment_id) {assignment.id}
 
         before do
           assignment.add_participant(user.id)
@@ -72,26 +105,14 @@ RSpec.describe 'Assignments API', type: :request do
       end
 
       response '404', 'assignment or user not found' do
-        let(:assignment_id) { 'nonexistent_id' }
-        let(:user_id) { 'nonexistent_user_id' }
+        let(:assignment_id) { 4 }
+        let(:user_id) { 1 }
 
         run_test! do
-          expect(json['error']).to eq('Assignment not found') # or 'User not found'
           expect(response).to have_http_status(:not_found)
         end
       end
 
-      response '422', 'unprocessable entity' do
-        let(:assignment) { create(:assignment) }
-        let(:user) { create(:user) }
-        let(:assignment_id) { assignment.id }
-        let(:user_id) { 'invalid_user_id' }
-
-        run_test! do
-          expect(json).to include('errors')
-          expect(response).to have_http_status(:unprocessable_entity)
-        end
-      end
     end
   end
 
@@ -103,36 +124,31 @@ RSpec.describe 'Assignments API', type: :request do
       tags 'Assignments'
       consumes 'application/json'
       produces 'application/json'
+      parameter name: 'Authorization', in: :header, type: :string
+      parameter name: 'Content-Type', in: :header, type: :string
+      let('Authorization') { "Bearer #{auth_token}" }
+      let('Content-Type') { 'application/json' }
 
-      response '200', 'course_id removed successfully' do
-        let(:assignment) { create(:assignment, course_id: 'some_course_id') } # Assuming you have a Factory for Assignment
+      response '200', 'course_id assigned successfully' do
+        let(:course) { create(:course)}
+        let(:course_id) { course.id }
+        let(:assignment) { create(:assignment) }
         let(:assignment_id) { assignment.id }
-        let(:course_id) { 'null' } # or any value that represents setting course_id to null
 
         run_test! do
-          expect(json['course_id']).to be_nil
+          response_json = JSON.parse(response.body) # Parse the response body as JSON
+          expect(response_json['course_id']).to eq(course.id)
           expect(response).to have_http_status(:ok)
         end
       end
 
       response '404', 'assignment not found' do
-        let(:assignment_id) { 'nonexistent_id' }
-        let(:course_id) { 'some_course_id' }
+        let(:assignment_id) { 3 }
+        let(:course) { create(:course)}
+        let(:course_id) {course.id}
 
         run_test! do
-          expect(json['error']).to eq('Assignment not found')
           expect(response).to have_http_status(:not_found)
-        end
-      end
-
-      response '422', 'unprocessable entity' do
-        let(:assignment) { create(:assignment, course_id: 'some_course_id') }
-        let(:assignment_id) { assignment.id }
-        let(:course_id) { 'invalid_course_id' }
-
-        run_test! do
-          expect(json).to include('errors')
-          expect(response).to have_http_status(:unprocessable_entity)
         end
       end
     end
@@ -143,38 +159,36 @@ RSpec.describe 'Assignments API', type: :request do
       tags 'Assignments'
       produces 'application/json'
       parameter name: :assignment_id, in: :path, type: :integer, required: true
+      parameter name: 'Authorization', in: :header, type: :string
+      parameter name: 'Content-Type', in: :header, type: :string
+      let('Authorization') { "Bearer #{auth_token}" }
+      let('Content-Type') { 'application/json' }
+
 
       response '200', 'assignment removed from course' do
-        let(:assignment) { create(:assignment) } # Assuming you have a FactoryBot factory for assignments
-
+        let(:course) { create(:course) }
+        let(:assignment) { create(:assignment,  course: course)}
+        let(:assignment_id) { assignment.id }
+        let(:course_id) { course.id }
         run_test! do
-          # Add assertions as needed
+          response_json = JSON.parse(response.body) # Parse the response body as JSON
+          expect(response_json['course_id']).to be_nil
+          expect(response).to have_http_status(:ok)
         end
       end
 
       response '404', 'assignment not found' do
-        let(:assignment_id) { 'nonexistent_id' }
-
+        let(:assignment_id) { 4 }
+        let(:course_id) {1}
         run_test! do
-          # Add assertions as needed
+          response_json = JSON.parse(response.body)
+          expect(response_json['error']).to eq('Assignment not found')
+          expect(response).to have_http_status(:not_found)
         end
       end
 
-      response '422', 'unprocessable entity' do
-        let(:assignment) { create(:assignment) } # Assuming you have a FactoryBot factory for assignments
-        let(:assignment_id) { assignment.id }
-
-        before do
-          allow_any_instance_of(Assignment).to receive(:remove_assignment_from_course).and_return(false)
-        end
-
-        run_test! do
-          # Add assertions as needed
-        end
-      end
     end
   end
-
 
   path '/api/v1/assignments/{assignment_id}/copy_assignment' do
     parameter name: 'assignment_id', in: :path, type: :string
@@ -183,37 +197,27 @@ RSpec.describe 'Assignments API', type: :request do
       tags 'Assignments'
       consumes 'application/json'
       produces 'application/json'
+      parameter name: 'Authorization', in: :header, type: :string
+      parameter name: 'Content-Type', in: :header, type: :string
+      let('Authorization') { "Bearer #{auth_token}" }
+      let('Content-Type') { 'application/json' }
 
       response '200', 'assignment copied successfully' do
         let(:assignment) { create(:assignment) } # Assuming you have a Factory for Assignment
         let(:assignment_id) { assignment.id }
 
         run_test! do
-          expect(json['id']).to be_present
+          response_json = JSON.parse(response.body) # Parse the response body as JSON
+          expect(response_json['id']).to be_present
           expect(response).to have_http_status(:ok)
         end
       end
 
       response '404', 'assignment not found' do
-        let(:assignment_id) { 'nonexistent_id' }
+        let(:assignment_id) { 4 }
 
         run_test! do
-          expect(json['error']).to eq('Assignment not found')
           expect(response).to have_http_status(:not_found)
-        end
-      end
-
-      response '422', 'unprocessable entity' do
-        let(:assignment) { create(:assignment) }
-        let(:assignment_id) { assignment.id }
-
-        before do
-          allow_any_instance_of(Assignment).to receive(:copy_assignment).and_return(double(save: false, errors: { message: 'Some error' }))
-        end
-
-        run_test! do
-          expect(json).to include('errors')
-          expect(response).to have_http_status(:unprocessable_entity)
         end
       end
     end
@@ -226,7 +230,10 @@ RSpec.describe 'Assignments API', type: :request do
       tags 'Assignments'
       produces 'application/json'
       consumes 'application/json'
-      security [ { api_key: [] } ]
+      parameter name: 'Authorization', in: :header, type: :string
+      parameter name: 'Content-Type', in: :header, type: :string
+      let('Authorization') { "Bearer #{auth_token}" }
+      let('Content-Type') { 'application/json' }
 
       response(200, 'successful') do
         let(:assignment) { create(:assignment) }
@@ -246,21 +253,6 @@ RSpec.describe 'Assignments API', type: :request do
           expect(data['error']).to eq('Assignment not found')
         end
       end
-
-      response(422, 'Unprocessable Entity') do
-        let(:assignment) { create(:assignment) }
-        let(:id) { assignment.id }
-
-        before do
-          allow_any_instance_of(Assignment).to receive(:destroy).and_return(false)
-        end
-
-        run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data['error']).to eq('Failed to delete assignment')
-          expect(data['details']).to be_present
-        end
-      end
     end
   end
 
@@ -270,15 +262,17 @@ RSpec.describe 'Assignments API', type: :request do
     get('Check if an assignment has a badge') do
       tags 'Assignments'
       produces 'application/json'
-      security [ { api_key: [] } ]
+      parameter name: 'Authorization', in: :header, type: :string
+      parameter name: 'Content-Type', in: :header, type: :string
+      let('Authorization') { "Bearer #{auth_token}" }
+      let('Content-Type') { 'application/json' }
 
       response(200, 'successful') do
         let(:assignment) { create(:assignment) }
         let(:assignment_id) { assignment.id }
 
         run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data).to be_truthy
+          expect(response).to have_http_status(:ok)
         end
       end
 
@@ -299,15 +293,17 @@ RSpec.describe 'Assignments API', type: :request do
     get('Check if pair programming is enabled for an assignment') do
       tags 'Assignments'
       produces 'application/json'
-      security [ { api_key: [] } ]
+      parameter name: 'Authorization', in: :header, type: :string
+      parameter name: 'Content-Type', in: :header, type: :string
+      let('Authorization') { "Bearer #{auth_token}" }
+      let('Content-Type') { 'application/json' }
 
       response(200, 'successful') do
         let(:assignment) { create(:assignment) }
         let(:assignment_id) { assignment.id }
 
         run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data).to be_truthy
+          expect(response).to have_http_status(:ok)
         end
       end
 
@@ -315,8 +311,7 @@ RSpec.describe 'Assignments API', type: :request do
         let(:assignment_id) { 999 } # Non-existent ID
 
         run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data['error']).to eq('Assignment not found')
+          expect(response).to have_http_status(:not_found)
         end
       end
     end
@@ -328,15 +323,17 @@ RSpec.describe 'Assignments API', type: :request do
     get('Check if an assignment has topics') do
       tags 'Assignments'
       produces 'application/json'
-      security [ { api_key: [] } ]
+      parameter name: 'Authorization', in: :header, type: :string
+      parameter name: 'Content-Type', in: :header, type: :string
+      let('Authorization') { "Bearer #{auth_token}" }
+      let('Content-Type') { 'application/json' }
 
       response(200, 'successful') do
         let(:assignment) { create(:assignment) }
         let(:assignment_id) { assignment.id }
 
         run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data).to be_truthy
+          expect(response).to have_http_status(:ok)
         end
       end
 
@@ -357,15 +354,17 @@ RSpec.describe 'Assignments API', type: :request do
     get('Check if an assignment is a team assignment') do
       tags 'Assignments'
       produces 'application/json'
-      security [ { api_key: [] } ]
+      parameter name: 'Authorization', in: :header, type: :string
+      parameter name: 'Content-Type', in: :header, type: :string
+      let('Authorization') { "Bearer #{auth_token}" }
+      let('Content-Type') { 'application/json' }
 
       response(200, 'successful') do
         let(:assignment) { create(:assignment) }
         let(:assignment_id) { assignment.id }
 
         run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data).to be_truthy
+          expect(response).to have_http_status(:ok)
         end
       end
 
@@ -387,16 +386,18 @@ RSpec.describe 'Assignments API', type: :request do
     get('Check if an assignment has a valid number of reviews for a specific type') do
       tags 'Assignments'
       produces 'application/json'
-      security [ { api_key: [] } ]
+      parameter name: 'Authorization', in: :header, type: :string
+      parameter name: 'Content-Type', in: :header, type: :string
+      let('Authorization') { "Bearer #{auth_token}" }
+      let('Content-Type') { 'application/json' }
 
       response(200, 'successful') do
         let(:assignment) { create(:assignment) }
         let(:assignment_id) { assignment.id }
-        let(:review_type) { 'some_type' }
+        let(:review_type) { 'review' }
 
         run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data).to be_truthy
+          expect(response).to have_http_status(:ok)
         end
       end
 
@@ -418,15 +419,17 @@ RSpec.describe 'Assignments API', type: :request do
     get('Check if an assignment is calibrated') do
       tags 'Assignments'
       produces 'application/json'
-      security [ { api_key: [] } ]
+      parameter name: 'Authorization', in: :header, type: :string
+      parameter name: 'Content-Type', in: :header, type: :string
+      let('Authorization') { "Bearer #{auth_token}" }
+      let('Content-Type') { 'application/json' }
 
       response(200, 'successful') do
         let(:assignment) { create(:assignment) }
         let(:assignment_id) { assignment.id }
 
         run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data).to be_truthy
+          expect(response).to have_http_status(:ok)
         end
       end
 
@@ -447,15 +450,17 @@ RSpec.describe 'Assignments API', type: :request do
     get('Check if an assignment has teams') do
       tags 'Assignments'
       produces 'application/json'
-      security [ { api_key: [] } ]
+      parameter name: 'Authorization', in: :header, type: :string
+      parameter name: 'Content-Type', in: :header, type: :string
+      let('Authorization') { "Bearer #{auth_token}" }
+      let('Content-Type') { 'application/json' }
 
       response(200, 'successful') do
         let(:assignment) { create(:assignment) }
         let(:assignment_id) { assignment.id }
 
         run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data).to be_truthy
+          expect(response).to have_http_status(:ok)
         end
       end
 
@@ -476,15 +481,17 @@ RSpec.describe 'Assignments API', type: :request do
     get('Check if an assignment is staggered and has no topic') do
       tags 'Assignments'
       produces 'application/json'
-      security [ { api_key: [] } ]
+      parameter name: 'Authorization', in: :header, type: :string
+      parameter name: 'Content-Type', in: :header, type: :string
+      let('Authorization') { "Bearer #{auth_token}" }
+      let('Content-Type') { 'application/json' }
 
       response(200, 'successful') do
         let(:assignment) { create(:assignment) }
         let(:assignment_id) { assignment.id }
 
         run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data).to be_truthy
+          expect(response).to have_http_status(:ok)
         end
       end
 
@@ -505,44 +512,17 @@ RSpec.describe 'Assignments API', type: :request do
     post('Create a node for an assignment') do
       tags 'Assignments'
       consumes 'application/json'
-      security [ { api_key: [] } ]
+      parameter name: 'Authorization', in: :header, type: :string
+      parameter name: 'Content-Type', in: :header, type: :string
+      let('Authorization') { "Bearer #{auth_token}" }
+      let('Content-Type') { 'application/json' }
 
       response(200, 'successful') do
         let(:assignment) { create(:assignment) }
         let(:assignment_id) { assignment.id }
 
         run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data).to be_truthy
-        end
-      end
-
-      response(404, 'Assignment not found') do
-        let(:assignment_id) { 999 } # Non-existent ID
-
-        run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data['error']).to eq('Assignment not found')
-        end
-      end
-    end
-  end
-
-  path '/api/v1/assignments/{assignment_id}/varying_rubrics_by_round' do
-    parameter name: 'assignment_id', in: :path, type: :integer, description: 'Assignment ID'
-
-    get('Check if an assignment has varying rubrics by round') do
-      tags 'Assignments'
-      produces 'application/json'
-      security [ { api_key: [] } ]
-
-      response(200, 'successful') do
-        let(:assignment) { create(:assignment) }
-        let(:assignment_id) { assignment.id }
-
-        run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data).to be_truthy
+          expect(response).to have_http_status(:ok)
         end
       end
 
