@@ -79,7 +79,7 @@ class User < ApplicationRecord
   # locate User based on provided login.
   # If user supplies e-mail or name, the
   # helper will try to find that User account.
-  def self.find_by_login(login)
+  def self.find_by_userid(userid)
     user = User.find_by(email: login)
     if user.nil?
       items = login.split('@')
