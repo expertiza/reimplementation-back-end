@@ -80,9 +80,9 @@ class User < ApplicationRecord
   # If user supplies e-mail or name, the
   # helper will try to find that User account.
   def self.find_by_userid(userid)
-    user = User.find_by(email: login)
+    user = User.find_by(email: userid)
     if user.nil?
-      items = login.split('@')
+      items = userid.split('@')
       short_name = items[0]
       user_list = User.where('name = ?', short_name)
       user = user_list.first if user_list.any? && user_list.length == 1
