@@ -2,11 +2,11 @@ require 'rails_helper'
 
 RSpec.describe User, type: :model do
 
-  describe '.find_by_login' do
-    context 'when login is an email' do
+  describe '.find_by_userid' do
+    context 'when userid is an email' do
       let!(:user) { create(:user, name: 'testname', email: 'test@test.com') }
       it 'returns the user with the matching email' do
-        result = User.find_by_login('test@test.com')
+        result = User.find_by_userid('test@test.com')
         expect(result).to eq(user)
       end
 
@@ -16,20 +16,20 @@ RSpec.describe User, type: :model do
       end
     end
 
-    context 'when login is not an email' do
+    context 'when userid is not an email' do
       let!(:user) { create(:user, name: 'testname', email: 'test@test.com') }
       let!(:user2) { build(:user, name: 'testname', email: 'test@test2.com') }
       it 'returns the user with the matching name' do
-        result = User.find_by_login('testname')
+        result = User.find_by_userid('testname')
         expect(result).to eq(user)
       end
       it 'return first user with the matching name' do
         user2.save
-        result = User.find_by_login('testname')
+        result = User.find_by_userid('testname')
         expect(result).to eq(user)
       end
       it 'return nil when no user with matching name' do
-        result = User.find_by_login('unknown')
+        result = User.find_by_userid('unknown')
         expect(result).to eq(nil)
       end
     end
