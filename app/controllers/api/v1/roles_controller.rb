@@ -42,14 +42,6 @@ class Api::V1::RolesController < ApplicationController
     render json: { message: "Role #{role_name} with id #{params[:id]} deleted successfully!" }, status: :no_content
   end
 
-  def role
-    if @user&.role_id
-      @role = Role.find(@user.role_id)
-    elsif @user
-      @role = Role.new(id: nil, name: '(none)')
-    end
-  end
-
   def subordinate_roles
     role = current_user.role
     roles = role.subordinate_roles
