@@ -76,12 +76,15 @@ class Api::V1::UsersController < ApplicationController
     render json: { error: e.message }, status: :not_found
   end
 
+  # GET /search_users
+  # search users by userid or name, fullname, emailid, role. If user with userid is found, result is returned.
+  # Else user is searched by key. search_by can be name, fullname, emailid, role.
   def search_users
     user_id = params[:user_id]
-    word = params[:word]
+    key = params[:key]
     search_by = params[:search_by]
 
-    result = User.search_users(user_id, word, search_by)
+    result = User.search_users(user_id, key, search_by)
 
     if result.present?
       # If the result is not empty, render the users as JSON
