@@ -125,13 +125,13 @@ class User < ApplicationRecord
   end
 
   # Search users based on the provided parameters
-  def self.search_users(user_id, word, search_by)
+  def self.search_users(user_id, key, search_by)
     # Check if a valid user_id is provided
     if user_id.present? && (user = User.find_by(id: user_id))
       # If a valid user_id is provided, return the user with that specific user_id
       [user]
     else
-      # If user_id is empty or invalid, perform the search based on word and search_by parameters
+      # If user_id is empty or invalid, perform the search based on key and search_by parameters
       valid_search_fields = %w[name full_name email role]
       search_by = valid_search_fields.include?(search_by) ? search_by : nil
 
@@ -140,10 +140,10 @@ class User < ApplicationRecord
         # Perform the LIKE query on the specified field (name, full_name, email, role) and order by name
         if search_by == 'role'
           # Join with roles table and search by role name
-          User.joins(:role).where("roles.name LIKE ?", "%#{word}%").order(:name)
+          User.joins(:role).where("roles.name LIKE ?", "%#{key}%").order(:name)
         else
           # Use search_by directly in the where clause
-          User.where("#{search_by} LIKE ?", "%#{word}%").order(:name)
+          User.where("#{search_by} LIKE ?", "%#{key}%").order(:name)
         end
       else
         # If search_by is not recognized, return an empty result
