@@ -103,7 +103,10 @@ class Api::V1::UsersController < ApplicationController
                                  :handle, :copy_of_emails, :password, :password_confirmation)
   end
 
-  # for displaying the list of users
+  # GET /list
+  # for displaying the list of users. The API provides paginated response of users
+  # This list method is used to fetch the users and display them on certain criterias which are as follows: The search_by parameter accepts 'username', 'fullname' or 'email' as values.
+  # If no value for search_by is passed, all the users are displayed. The 'letter' parameter indicates the value used to match the users based on the field obtained via the search_by parameter mentioned above.
   def list
     # code here
     letter = params[:letter]
@@ -139,6 +142,8 @@ class Api::V1::UsersController < ApplicationController
   end
   
   # For filtering the users list with proper search and pagination.
+  # This list method is used to fetch the users and display them on certain criterias which are as follows: The search_by parameter accepts 'username', 'fullname' or 'email' as values.
+  # If no value for search_by is passed, all the users are displayed. The 'letter' parameter indicates the value used to match the users based on the field obtained via the search_by parameter mentioned above.
   def paginate_list
     paginate_options = { '1' => 25, '2' => 50, '3' => 100 }
 
