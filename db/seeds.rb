@@ -6,7 +6,7 @@ TeamsUser.create(
   team_id: 1,
   user_id: 1,
   duty_id: 1,
-  pair_programming_status: 'A', # Assuming 'A' represents some status
+  pair_programming_status: 'Accepted', # Assuming 'A' represents some status
   participant_id: 3
 )
 
@@ -14,6 +14,6 @@ TeamsUser.create(
   team_id: 2,
   user_id: 2,
   duty_id: 2,
-  pair_programming_status: 'B', # Assuming 'B' represents some other status
+  pair_programming_status: 'Invited', # Assuming 'B' represents some other status
   participant_id: 5
 )

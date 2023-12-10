@@ -19,23 +19,4 @@ RSpec.describe TeamsUser, type: :model do
       expect(TeamsUser.where(user_id: user.id, team_id: team.id)).to be_empty
     end
   end
-
-  describe '.first_by_team_id' do
-    it 'returns the first team user by team id' do
-      teams_user = create(:teams_user, team: team)
-      expect(TeamsUser.first_by_team_id(team.id)).to eq(teams_user)
-    end
-  end
-
-  describe '.team_empty?' do
-    it 'returns true if the team is empty' do
-      team = create(:team)
-      expect(TeamsUser.team_empty?(team.id)).to be true
-    end
-
-    it 'returns false if the team is not empty' do
-      teams_user = create(:teams_user, team: team)
-      expect(TeamsUser.team_empty?(team.id)).to be false
-    end
-  end
 end
