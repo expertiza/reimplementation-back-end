@@ -17,20 +17,20 @@ module AuthorizationHelper
     # Given user information from the JWT and a required privilege, determine if the user has the required privilege.
     # Returns true if the user has the required privilege, false otherwise.
 
-    def check_user_privileges(user_info, required_privilege)
-        return false unless user_info.present? && user_info['role'].present?
+    def user_has_needed_privileges?(user_rights, required_privilege)
+        return false unless user_rights.present? && user_rights['role'].present?
     
         case required_privilege
         when 'Super-Administrator'
-        return user_info['role'] == 'Super-Administrator'
+        return user_rights['role'] == 'Super-Administrator'
         when 'Administrator'
-        return user_info['role'] == 'Administrator'
+        return user_rights['role'] == 'Administrator'
         when 'Instructor'
-        return user_info['role'] == 'Instructor'
+        return user_rights['role'] == 'Instructor'
         when 'Teaching Assistant'
-        return user_info['role'] == 'Teaching Assistant'
+        return user_rights['role'] == 'Teaching Assistant'
         when 'Student'
-        return user_info['role'] == 'Student'
+        return user_rights['role'] == 'Student'
         else
         return false
         end
@@ -40,8 +40,8 @@ module AuthorizationHelper
     # Determine if the currently logged-in user has the privileges of a Super-Admin
     # Checks if the user has Super-Administrator privileges based on the JWT token.
     def current_user_has_super_admin_privileges?(token)
-      user_info = jwt_verify_and_decode(token)
-      return check_user_privileges(user_info, 'Super-Administrator') if user_info.present?
+      user_rights = jwt_verify_and_decode(token)
+      return user_has_needed_privileges?(user_rights, 'Super-Administrator') if user_rights.present?
   
       false
     end
@@ -49,8 +49,8 @@ module AuthorizationHelper
     # Determine if the currently logged-in user has the privileges of an Admin (or higher)
     # Checks if the user has Administrator privileges based on the JWT token.
     def current_user_has_admin_privileges?(token)
-      user_info = jwt_verify_and_decode(token)
-      return check_user_privileges(user_info, 'Administrator') if user_info.present?
+      user_rights = jwt_verify_and_decode(token)
+      return user_has_needed_privileges?(user_rights, 'Administrator') if user_rights.present?
   
       false
     end
@@ -58,8 +58,8 @@ module AuthorizationHelper
     # Determine if the currently logged-in user has the privileges of an Instructor (or higher)
     # Checks if the user has Instructor privileges based on the JWT token.
     def current_user_has_instructor_privileges?(token)
-      user_info = jwt_verify_and_decode(token)
-      return check_user_privileges(user_info, 'Instructor') if user_info.present?
+      user_rights = jwt_verify_and_decode(token)
+      return user_has_needed_privileges?(user_rights, 'Instructor') if user_rights.present?
   
       false
     end
@@ -67,8 +67,8 @@ module AuthorizationHelper
     # Determine if the currently logged-in user has the privileges of a TA (or higher)
     # Checks if the user has Teaching Assistant privileges based on the JWT token.
     def current_user_has_ta_privileges?(token)
-      user_info = jwt_verify_and_decode(token)
-      return check_user_privileges(user_info, 'Teaching Assistant') if user_info.present?
+      user_rights = jwt_verify_and_decode(token)
+      return user_has_needed_privileges?(user_rights, 'Teaching Assistant') if user_rights.present?
   
       false
     end
@@ -76,8 +76,8 @@ module AuthorizationHelper
     # Determine if the currently logged-in user has the privileges of a Student (or higher)
     # Checks if the user has Student privileges based on the JWT token.
     def current_user_has_student_privileges?(token)
-      user_info = jwt_verify_and_decode(token)
-      return check_user_privileges(user_info, 'Student') if user_info.present?
+      user_rights = jwt_verify_and_decode(token)
+      return user_has_needed_privileges?(user_rights, 'Student') if user_rights.present?
   
       false
     end
@@ -85,8 +85,8 @@ module AuthorizationHelper
     # Determine if the currently logged-in user is participating in an Assignment based on the assignment_id argument
     # Checks if the user is a participant in a specific assignment based on the JWT token.
     def current_user_is_assignment_participant?(token, assignment_id)
-      user_info = jwt_verify_and_decode(token)
-      return AssignmentParticipant.exists?(parent_id: assignment_id, user_id: user_info[:id]) if user_info.present?
+      user_rights = jwt_verify_and_decode(token)
+      return AssignmentParticipant.exists?(parent_id: assignment_id, user_id: user_rights[:id]) if user_rights.present?
   
       false
     end
@@ -95,61 +95,61 @@ module AuthorizationHelper
     # Checks if the user is an instructor or has TA mapping for a specific assignment based on the JWT token.
     def current_user_teaching_staff_of_assignment?(token, assignment_id)
       assignment = Assignment.find(assignment_id)
-      user_info = jwt_verify_and_decode(token)
-      user_info.present? &&
+      user_rights = jwt_verify_and_decode(token)
+      user_rights.present? &&
         (
-          current_user_instructs_assignment?(assignment, user_info) ||
-          current_user_has_ta_mapping_for_assignment?(assignment, user_info)
+          current_user_instructs_assignment?(assignment, user_rights) ||
+          current_user_has_ta_mapping_for_assignment?(assignment, user_rights)
         )
     end
   
     # Determine if the currently logged-in user IS of the given role name
     # Checks if the user's role in the JWT token matches the provided role name.
     def current_user_is_a?(token, role_name)
-      user_info = jwt_verify_and_decode(token)
-      return user_info.present? && user_info[:role] == role_name
+      user_rights = jwt_verify_and_decode(token)
+      return user_rights.present? && user_rights[:role] == role_name
     end
   
     # Determine if the current user has the passed in id value
     # Checks if the user's ID in the JWT token matches the provided ID.
     def current_user_has_id?(token, id)
-      user_info = jwt_verify_and_decode(token)
-      return user_info.present? && user_info[:id].to_i == id.to_i
+      user_rights = jwt_verify_and_decode(token)
+      return user_rights.present? && user_rights[:id].to_i == id.to_i
     end
   
     # Determine if the currently logged-in user created the bookmark with the given ID
     # Checks if the user in the JWT token created the bookmark with the specified ID.
     def current_user_created_bookmark_id?(token, bookmark_id)
-      user_info = jwt_verify_and_decode(token)
-      return user_info.present? &&
+      user_rights = jwt_verify_and_decode(token)
+      return user_rights.present? &&
              !bookmark_id.nil? &&
-             Bookmark.find(bookmark_id.to_i).user_id == user_info[:id]
+             Bookmark.find(bookmark_id.to_i).user_id == user_rights[:id]
     rescue ActiveRecord::RecordNotFound
       false
     end
   
     # Determine if the given user can submit work
     # Checks if the user in the JWT token can submit work.
-    def given_user_can_submit?(token, user_id)
-      given_user_can?(token, user_id, 'submit')
+    def current_user_can_submit?(token, user_id)
+      current_user_can?(token, user_id, 'submit')
     end
   
     # Determine if the given user can review work
     # Checks if the user in the JWT token can review work.
-    def given_user_can_review?(token, user_id)
-      given_user_can?(token, user_id, 'review')
+    def current_user_can_review?(token, user_id)
+      current_user_can?(token, user_id, 'review')
     end
   
     # Determine if the given user can take quizzes
     # Checks if the user in the JWT token can take quizzes.
-    def given_user_can_take_quiz?(token, user_id)
-      given_user_can?(token, user_id, 'take_quiz')
+    def current_user_can_take_quiz?(token, user_id)
+      current_user_can?(token, user_id, 'take_quiz')
     end
   
     # Determine if the given user can read work
     # Checks if the user in the JWT token can read work.
-    def given_user_can_read?(token, user_id)
-      given_user_can_take_quiz?(token, user_id)
+    def current_user_can_read?(token, user_id)
+      current_user_can_take_quiz?(token, user_id)
     end
   
     # Determine if response editing is allowed for the given user in the specified map
@@ -158,18 +158,18 @@ module AuthorizationHelper
       assignment = map.reviewer.assignment
       if map.is_a? ReviewResponseMap
         reviewee_team = AssignmentTeam.find(map.reviewee_id)
-        return user_info.present? &&
+        return user_rights.present? &&
                (
                  current_user_has_id?(token, user_id) ||
-                 reviewee_team.user?(user_info) ||
+                 reviewee_team.user?(user_rights) ||
                  current_user_has_admin_privileges?(token) ||
-                 (current_user_is_a?(token, 'Instructor') && current_user_instructs_assignment?(assignment, user_info)) ||
-                 (current_user_is_a?(token, 'Teaching Assistant') && current_user_has_ta_mapping_for_assignment?(assignment, user_info))
+                 (current_user_is_a?(token, 'Instructor') && current_user_instructs_assignment?(assignment, user_rights)) ||
+                 (current_user_is_a?(token, 'Teaching Assistant') && current_user_has_ta_mapping_for_assignment?(assignment, user_rights))
                )
       end
       current_user_has_id?(token, user_id) ||
-        (current_user_is_a?(token, 'Instructor') && current_user_instructs_assignment?(assignment, user_info)) ||
-        (assignment.course && current_user_is_a?(token, 'Teaching Assistant') && current_user_has_ta_mapping_for_assignment?(assignment, user_info))
+        (current_user_is_a?(token, 'Instructor') && current_user_instructs_assignment?(assignment, user_rights)) ||
+        (assignment.course && current_user_is_a?(token, 'Teaching Assistant') && current_user_has_ta_mapping_for_assignment?(assignment, user_rights))
     end
   
     # Determine if there is a current user
@@ -181,8 +181,8 @@ module AuthorizationHelper
     # Determine if the currently logged-in user is an ancestor of the passed in user
     # Checks if the user in the JWT token is an ancestor of the specified user.
     def current_user_ancestor_of?(user, token)
-      user_info = jwt_verify_and_decode(token)
-      return user_info.present? && user_info[:id].recursively_parent_of(user) if user
+      user_rights = jwt_verify_and_decode(token)
+      return user_rights.present? && user_rights[:id].recursively_parent_of(user) if user
   
       false
     end
@@ -207,18 +207,22 @@ module AuthorizationHelper
       end
     end
   
-    private
+    #private
   
     # Determine if the currently logged-in user has the privileges of the given role name (or higher privileges)
     # Let the Role model define this logic for the sake of DRY
     # If there is no currently logged-in user simply return false
-    def current_user_has_privileges_of?(role_name, user_info)
-      user_info.present? && user_info[:role].has_all_privileges_of?(Role.find_by(name: role_name))
+    def current_user_has_privileges_of?(role_name, user_rights)
+      user_rights.present? && user_rights[:role].has_all_privileges_of?(Role.find_by(name: role_name))
     end
   
     # Determine if the given user is a participant of some kind
     # who is allowed to perform the given action ("submit", "review", "take_quiz")
-    def given_user_can?(token, user_id, action)
+    def current_user_can?(token, user_id, action)
+
+      user_rights = jwt_verify_and_decode(token)
+      return false unless current_user_and_role_exist?(user_rights)
+
       participant = Participant.find_by(id: user_id)
       return false if participant.nil?
   
@@ -234,8 +238,8 @@ module AuthorizationHelper
       end
     end
   
-    def current_user_and_role_exist?(user_info)
-      user_info.present? && user_info['role'].present?
+    def current_user_and_role_exist?(user_rights)
+      user_rights.present? && user_rights['role'].present?
     end
   end
   
