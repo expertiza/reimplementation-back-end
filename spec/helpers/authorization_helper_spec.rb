@@ -2,14 +2,14 @@ require 'rails_helper'
 require 'json_web_token'
 
 describe AuthorizationHelper do
-    let(:user_info) { { user_id: 1, role: 'Student' } }
-    let(:token) { JsonWebToken.encode(user_info) }
+    let(:user_rights) { { user_id: 1, role: 'Student' } }
+    let(:token) { JsonWebToken.encode(user_rights) }
 
     describe "#current_user_and_role_exist?" do
         context "when user is logged in but does not have a role" do
             it "returns false" do
-                user_info_without_role = { user_id: 1 }
-                result = helper.current_user_and_role_exist?(user_info_without_role)
+                user_rights_without_role = { user_id: 1 }
+                result = helper.current_user_and_role_exist?(user_rights_without_role)
                 expect(result).to be false
             end
         end
@@ -26,29 +26,29 @@ describe AuthorizationHelper do
     describe "#jwt_verify_and_decode" do
       context "when a valid token is provided" do
         it "decodes and returns user information" do
-            decoded_user_info = helper.jwt_verify_and_decode(token)
-            expect(decoded_user_info).to be_a(HashWithIndifferentAccess)
-            expect(decoded_user_info['user_id']).to eq(1)
-            expect(decoded_user_info['role']).to eq('Student')
+            decoded_user_rights = helper.jwt_verify_and_decode(token)
+            expect(decoded_user_rights).to be_a(HashWithIndifferentAccess)
+            expect(decoded_user_rights['user_id']).to eq(1)
+            expect(decoded_user_rights['role']).to eq('Student')
         end
        end
 
       context "when an invalid token is provided" do
         let(:invalid_token) { 'invalid_token' }
         it "returns nil" do
-            decoded_user_info = helper.jwt_verify_and_decode(invalid_token)
-            expect(decoded_user_info).to be_nil
+            decoded_user_rights = helper.jwt_verify_and_decode(invalid_token)
+            expect(decoded_user_rights).to be_nil
         end
       end
   end   
 
 
-  describe "#check_user_privileges" do
+  describe "#user_has_needed_privileges?" do
 
     context "when user information or required privilege is missing" do
         it "returns false" do
-        expect(helper.check_user_privileges(nil, 'Student')).to be_falsey
-        expect(helper.check_user_privileges(user_info, nil)).to be_falsey
+        expect(helper.user_has_needed_privileges?(nil, 'Student')).to be_falsey
+        expect(helper.user_has_needed_privileges?(user_rights, nil)).to be_falsey
         end
     end
   end
