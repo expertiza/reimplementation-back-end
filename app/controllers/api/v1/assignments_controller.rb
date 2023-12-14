@@ -87,12 +87,12 @@ class Api::V1::AssignmentsController < ApplicationController
   # the method is not working as of now because rails is not allowing the course id to be null
   # input: assignment id
   # output: status code and json of assignment
-  def remove_assignment_from_course
+  def remove_from_course
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
       render json: { error: "Assignment not found" }, status: :not_found
     else
-      assignment = assignment.remove_assignment_from_course
+      assignment = assignment.remove_from_course
       if assignment.valid?
         if assignment.save
           render json: assignment , status: :ok
@@ -106,11 +106,11 @@ class Api::V1::AssignmentsController < ApplicationController
   #update course id of an assignment/ assign the assign to some together course
   # input: assignment id and course id
   # output: status code and json of assignment
-  def assign_courses_to_assignment
+  def assign_to_course
     assignment = Assignment.find_by(id: params[:assignment_id])
     course = Course.find(params[:course_id])
     if assignment && course
-      assignment = assignment.assign_courses_to_assignment(course.id)
+      assignment = assignment.assign_to_course(course.id)
       if assignment.save
         render json: assignment, status: :ok
       else
@@ -130,7 +130,7 @@ class Api::V1::AssignmentsController < ApplicationController
     if assignment.nil?
       render json: { error: "Assignment not found" }, status: :not_found
     else
-      new_assignment = assignment.copy_assignment
+      new_assignment = assignment.copy
       if new_assignment.save
         render json: new_assignment, status: :ok
       else
@@ -139,31 +139,6 @@ class Api::V1::AssignmentsController < ApplicationController
     end
   end
 
-  # check if assignment has badge
-  # input: assignment id
-  # output: boolean value of has_badge field in assignment table
-  # true is assignment has badge
-  def has_badge
-    assignment = Assignment.find_by(id: params[:assignment_id])
-    if assignment.nil?
-      render json: { error: "Assignment not found" }, status: :not_found
-    else
-      render json: assignment.has_badge?, status: :ok
-    end
-  end
-
-  # check if assignment has pair programming enabled
-  # input: assignment id
-  # output: boolean value of enable_pair_programming field in assignment table
-  # true if pair programming is enabled
-  def pair_programming_enabled
-    assignment = Assignment.find_by(id: params[:assignment_id])
-    if assignment.nil?
-      render json: { error: "Assignment not found" }, status: :not_found
-    else
-      render json: assignment.pair_programming_enabled?, status: :ok
-    end
-  end
 
   # check if assignment has topics
   # input: assignment id
@@ -205,18 +180,6 @@ class Api::V1::AssignmentsController < ApplicationController
     end
   end
 
-  # check if assignment is calibrated 
-  # input: assignment id
-  # output: boolean value of is_calibrated field in assignment table
-  # true if assignment is calibrated
-  def is_calibrated
-    assignment = Assignment.find_by(id: params[:assignment_id])
-    if assignment.nil?
-      render json: { error: "Assignment not found" }, status: :not_found
-    else
-      render json: assignment.is_calibrated? , status: :ok
-    end
-  end
 
   # check if assignment has teams
   # input: assignment id
@@ -228,24 +191,6 @@ class Api::V1::AssignmentsController < ApplicationController
       render json: { error: "Assignment not found" }, status: :not_found
     else
       render json: assignment.teams?, status: :ok
-    end
-  end
-
-  # check if assignment is staggered and has no assigned topic for current user
-  # input: assignment id
-  # output: boolean value 
-  # true if staggered_deadline field of assignment table is set to true and 
-  # if it has no topics associated with the current user
-  def staggered_and_no_topic
-    assignment = Assignment.find_by(id: params[:assignment_id])
-    topic_id = SignedUpTeam
-                 .joins(team: :teams_users)
-                 .where(teams_users: { user_id: 1, team_id: Team.where(assignment_id: params[:assignment_id]).pluck(:id) })
-                 .pluck(:sign_up_topic_id).first
-    if assignment.nil?
-      render json: { error: "Assignment not found" }, status: :not_found
-    else
-      render json: assignment.staggered_and_no_topic?(topic_id), status: :ok
     end
   end
 
