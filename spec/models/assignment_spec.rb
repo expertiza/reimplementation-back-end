@@ -96,11 +96,11 @@ RSpec.describe Assignment, type: :model do
     end
   end
 
-  describe '.assign_courses_to_assignment' do
+  describe '.assign_to_course' do
     let(:assignment) {create(:assignment)}  # Create a new Assignment using the factory
     let(:course) {create(:course)}
     it 'assigns a course to an assignment' do
-      updated_assignment = assignment.assign_courses_to_assignment(course.id)
+      updated_assignment = assignment.assign_to_course(course.id)
       expect(updated_assignment.course_id).to eq(course.id)
     end
 
@@ -108,19 +108,19 @@ RSpec.describe Assignment, type: :model do
       assignment.course_id = course.id
       assignment.save
 
-      expect { assignment.assign_courses_to_assignment(course.id) }
+      expect { assignment.assign_to_course(course.id) }
         .to raise_error("The assignment already belongs to this course id.")
     end
   end
   
-  describe '#remove_assignment_from_course' do
+  describe '#remove_from_course' do
     let(:assignment) {create(:assignment)}  # Create a new Assignment using the factory
     let(:course) {create(:course)}
     it 'sets course_id to nil' do
 
       assignment.course_id = course.id
       # Call the method to remove the course
-      modified_assignment = assignment.remove_assignment_from_course
+      modified_assignment = assignment.remove_from_course
 
       # Verify that the course_id is set to nil
       expect(modified_assignment.course_id).to be_nil
@@ -128,7 +128,7 @@ RSpec.describe Assignment, type: :model do
 
     it 'raises an error if the assignment does not belongs to any course' do
       
-      expect { assignment.remove_assignment_from_course }
+      expect { assignment.remove_from_course }
         .to raise_error("The assignment does not belong to any course.")
     end
   end
@@ -138,7 +138,7 @@ RSpec.describe Assignment, type: :model do
     let(:assignment) {create(:assignment)}
     it 'creates a copy of the assignment with a new name' do
       # Call the copy_assignment method on the original assignment
-      copied_assignment = assignment.copy_assignment
+      copied_assignment = assignment.copy
 
       # Expectations
       expect(copied_assignment).to be_an_instance_of(Assignment)
@@ -147,63 +147,6 @@ RSpec.describe Assignment, type: :model do
       expect(copied_assignment.instructor).to eq(assignment.instructor)
     end
   end
-
-
-  describe '#is_calibrated?' do
-    # Create an instance of the Assignment model.
-    let(:assignment) { create(:assignment) }
-
-    # Context for when is_calibrated is true.
-    context 'when is_calibrated is true' do
-      # Test case: It should return true.
-      it 'returns true' do
-        # Set is_calibrated to true.
-        assignment.is_calibrated = true
-        # Expectation for the method result.
-        expect(assignment.is_calibrated?).to be true
-      end
-    end
-
-    # Context for when is_calibrated is false.
-    context 'when is_calibrated is false' do
-      # Test case: It should return false.
-      it 'returns false' do
-        # Set is_calibrated to false.
-        assignment.is_calibrated = false
-        # Expectation for the method result.
-        expect(assignment.is_calibrated?).to be false
-      end
-    end
-  end
-
-
-  describe '#has_badge?' do
-    # Create an instance of the Assignment model.
-    let(:assignment) { Assignment.new }
-
-    # Context for when has_badge is true.
-    context 'when has_badge is true' do
-      # Test case: It should return true.
-      it 'returns true' do
-        # Set has_badge to true.
-        assignment.has_badge = true
-        # Expectation for the method result.
-        expect(assignment.has_badge?).to be true
-      end
-    end
-
-    # Context for when has_badge is false.
-    context 'when has_badge is false' do
-      # Test case: It should return false.
-      it 'returns false' do
-        # Set has_badge to false.
-        assignment.has_badge = false
-        # Expectation for the method result.
-        expect(assignment.has_badge?).to be false
-      end
-    end
-  end
-
 
   describe '#valid_num_review' do
     # Create an instance of the Assignment model.
@@ -267,7 +210,7 @@ RSpec.describe Assignment, type: :model do
 
         # Expectations for success: false and an error message.
         expect(result[:success]).to be false
-        expect(result[:message]).to eq('Number of metareviews required cannot be greater than number of reviews allowed')
+        expect(result[:message]).to eq('Number of metareviews required cannot be greater than number of metareviews allowed')
       end
     end
   end
@@ -362,91 +305,6 @@ RSpec.describe Assignment, type: :model do
 
 
 
-  describe "pair_programming_enabled?" do
-    # Create an instance of the Assignment model using FactoryBot.
-    let(:assignment) { create(:assignment) }
-
-    # Context for when pair programming is enabled.
-    context "when pair programming is enabled" do
-      # Before each test in this context, enable pair programming.
-      before do
-        assignment.enable_pair_programming = true
-      end
-
-      # Test case: It should return true.
-      it "returns true" do
-        # Expect that 'pair_programming_enabled?' returns true.
-        expect(assignment.pair_programming_enabled?).to eq(true)
-      end
-    end
-
-    # Context for when pair programming is disabled.
-    context "when pair programming is disabled" do
-      # Before each test in this context, disable pair programming.
-      before do
-        assignment.enable_pair_programming = false
-        # You may need a method to disable pair programming if it's not the inverse of enable_pair_programming.
-      end
-
-      # Test case: It should return false.
-      it "returns false" do
-        # Expect that 'pair_programming_enabled?' returns false.
-        expect(assignment.pair_programming_enabled?).to eq(false)
-      end
-    end
-  end
-
-
-
-
-  describe "staggered_and_no_topic?" do
-    # Create an instance of the Assignment model using FactoryBot.
-    let(:assignment) { create(:assignment) }
-
-    # Context for when staggered deadline is enabled and topic_id is not provided.
-    context "when staggered deadline is enabled and topic_id is not provided" do
-      # Test case: It should return true.
-      it "returns true" do
-        # Stub staggered_deadline? to return true.
-        allow(assignment).to receive(:staggered_deadline?).and_return(true)
-        # Expect that 'staggered_and_no_topic?' returns true.
-        expect(assignment.staggered_and_no_topic?(nil)).to eq(true)
-      end
-    end
-
-    # Context for when staggered deadline is enabled and topic_id is provided.
-    context "when staggered deadline is enabled and topic_id is provided" do
-      # Test case: It should return false.
-      it "returns false" do
-        # Stub staggered_deadline? to return true.
-        allow(assignment).to receive(:staggered_deadline?).and_return(true)
-        # Expect that 'staggered_and_no_topic?' returns false.
-        expect(assignment.staggered_and_no_topic?("some_topic_id")).to eq(false)
-      end
-    end
-
-    # Context for when staggered deadline is disabled and topic_id is not provided.
-    context "when staggered deadline is disabled and topic_id is not provided" do
-      # Test case: It should return false.
-      it "returns false" do
-        # Stub staggered_deadline? to return false.
-        allow(assignment).to receive(:staggered_deadline?).and_return(false)
-        # Expect that 'staggered_and_no_topic?' returns false.
-        expect(assignment.staggered_and_no_topic?(nil)).to eq(false)
-      end
-    end
-
-    # Context for when staggered deadline is disabled and topic_id is provided.
-    context "when staggered deadline is disabled and topic_id is provided" do
-      # Test case: It should return false.
-      it "returns false" do
-        # Stub staggered_deadline? to return false.
-        allow(assignment).to receive(:staggered_deadline?).and_return(false)
-        # Expect that 'staggered_and_no_topic?' returns false.
-        expect(assignment.staggered_and_no_topic?("some_topic_id")).to eq(false)
-      end
-    end
-  end
 
 
 

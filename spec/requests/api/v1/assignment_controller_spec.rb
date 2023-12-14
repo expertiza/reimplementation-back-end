@@ -116,7 +116,7 @@ end
     end
   end
 
-  path '/api/v1/assignments/{assignment_id}/assign_courses_to_assignment/{course_id}' do
+  path '/api/v1/assignments/{assignment_id}/assign_to_course/{course_id}' do
     parameter name: 'assignment_id', in: :path, type: :string
     parameter name: 'course_id', in: :path, type: :string
 
@@ -154,7 +154,7 @@ end
     end
   end
 
-  path '/api/v1/assignments/{assignment_id}/remove_assignment_from_course' do
+  path '/api/v1/assignments/{assignment_id}/remove_from_course' do
     patch 'Removes assignment from course' do
       tags 'Assignments'
       produces 'application/json'
@@ -167,7 +167,7 @@ end
 
       response '200', 'assignment removed from course' do
         let(:course) { create(:course) }
-        let(:assignment) { create(:assignment,  course: course)}
+        let(:assignment) { create(:assignment, course: course)}
         let(:assignment_id) { assignment.id }
         let(:course_id) { course.id }
         run_test! do
@@ -251,67 +251,6 @@ end
         run_test! do |response|
           data = JSON.parse(response.body)
           expect(data['error']).to eq('Assignment not found')
-        end
-      end
-    end
-  end
-
-  path '/api/v1/assignments/{assignment_id}/has_badge' do
-    parameter name: 'assignment_id', in: :path, type: :integer, description: 'Assignment ID'
-
-    get('Check if an assignment has a badge') do
-      tags 'Assignments'
-      produces 'application/json'
-      parameter name: 'Authorization', in: :header, type: :string
-      parameter name: 'Content-Type', in: :header, type: :string
-      let('Authorization') { "Bearer #{auth_token}" }
-      let('Content-Type') { 'application/json' }
-
-      response(200, 'successful') do
-        let(:assignment) { create(:assignment) }
-        let(:assignment_id) { assignment.id }
-
-        run_test! do |response|
-          expect(response).to have_http_status(:ok)
-        end
-      end
-
-      response(404, 'Assignment not found') do
-        let(:assignment_id) { 999 } # Non-existent ID
-
-        run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data['error']).to eq('Assignment not found')
-        end
-      end
-    end
-  end
-
-  path '/api/v1/assignments/{assignment_id}/pair_programming_enabled' do
-    parameter name: 'assignment_id', in: :path, type: :integer, description: 'Assignment ID'
-
-    get('Check if pair programming is enabled for an assignment') do
-      tags 'Assignments'
-      produces 'application/json'
-      parameter name: 'Authorization', in: :header, type: :string
-      parameter name: 'Content-Type', in: :header, type: :string
-      let('Authorization') { "Bearer #{auth_token}" }
-      let('Content-Type') { 'application/json' }
-
-      response(200, 'successful') do
-        let(:assignment) { create(:assignment) }
-        let(:assignment_id) { assignment.id }
-
-        run_test! do |response|
-          expect(response).to have_http_status(:ok)
-        end
-      end
-
-      response(404, 'Assignment not found') do
-        let(:assignment_id) { 999 } # Non-existent ID
-
-        run_test! do |response|
-          expect(response).to have_http_status(:not_found)
         end
       end
     end
@@ -413,72 +352,10 @@ end
     end
   end
 
-  path '/api/v1/assignments/{assignment_id}/is_calibrated' do
-    parameter name: 'assignment_id', in: :path, type: :integer, description: 'Assignment ID'
-
-    get('Check if an assignment is calibrated') do
-      tags 'Assignments'
-      produces 'application/json'
-      parameter name: 'Authorization', in: :header, type: :string
-      parameter name: 'Content-Type', in: :header, type: :string
-      let('Authorization') { "Bearer #{auth_token}" }
-      let('Content-Type') { 'application/json' }
-
-      response(200, 'successful') do
-        let(:assignment) { create(:assignment) }
-        let(:assignment_id) { assignment.id }
-
-        run_test! do |response|
-          expect(response).to have_http_status(:ok)
-        end
-      end
-
-      response(404, 'Assignment not found') do
-        let(:assignment_id) { 999 } # Non-existent ID
-
-        run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data['error']).to eq('Assignment not found')
-        end
-      end
-    end
-  end
-
   path '/api/v1/assignments/{assignment_id}/has_teams' do
     parameter name: 'assignment_id', in: :path, type: :integer, description: 'Assignment ID'
 
     get('Check if an assignment has teams') do
-      tags 'Assignments'
-      produces 'application/json'
-      parameter name: 'Authorization', in: :header, type: :string
-      parameter name: 'Content-Type', in: :header, type: :string
-      let('Authorization') { "Bearer #{auth_token}" }
-      let('Content-Type') { 'application/json' }
-
-      response(200, 'successful') do
-        let(:assignment) { create(:assignment) }
-        let(:assignment_id) { assignment.id }
-
-        run_test! do |response|
-          expect(response).to have_http_status(:ok)
-        end
-      end
-
-      response(404, 'Assignment not found') do
-        let(:assignment_id) { 999 } # Non-existent ID
-
-        run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data['error']).to eq('Assignment not found')
-        end
-      end
-    end
-  end
-
-  path '/api/v1/assignments/{assignment_id}/staggered_and_no_topic' do
-    parameter name: 'assignment_id', in: :path, type: :integer, description: 'Assignment ID'
-
-    get('Check if an assignment is staggered and has no topic') do
       tags 'Assignments'
       produces 'application/json'
       parameter name: 'Authorization', in: :header, type: :string

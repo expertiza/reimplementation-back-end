@@ -12,6 +12,10 @@ class Assignment < ApplicationRecord
   belongs_to :course, optional: true
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments
 
+  #This method return the value of the has_badge field for the given assignment object.
+  attr_accessor :has_badge, :enable_pair_programming, :is_calibrated, :staggered_deadline
+
+
 
   def review_questionnaire_id
     Questionnaire.find_by_assignment_id id
@@ -70,7 +74,7 @@ class Assignment < ApplicationRecord
   # Remove the assignment from the associated course.
   # This method sets the course_id of the assignment to nil, effectively removing its course association.
   # Returns the modified assignment object with course_id set to nil.
-  def remove_assignment_from_course
+  def remove_from_course
     if self.course_id == nil
       raise "The assignment does not belong to any course."
     end
@@ -85,7 +89,7 @@ class Assignment < ApplicationRecord
   # Assign a course to the assignment based on the provided course_id.
   # If the assignment already belongs to the specified course, an error is raised.
   # Returns the modified assignment object with the updated course assignment.
-  def assign_courses_to_assignment(course_id)
+  def assign_to_course(course_id)
     # Find the assignment by its ID
     assignment = Assignment.where(id: id).first
     # Check if the assignment already belongs to the provided course_id
@@ -103,7 +107,7 @@ class Assignment < ApplicationRecord
   # Create a copy of the assignment, including its name, instructor, and course assignment.
   # The new assignment is named "Copy of [original assignment name]".
   # Returns the newly created assignment object, which is a copy of the original assignment.
-  def copy_assignment()
+  def copy
     copied_assignment = Assignment.new(
         name: "Copy of #{self.name}",
         course_id: self.course_id
@@ -118,20 +122,6 @@ class Assignment < ApplicationRecord
     copied_assignment
 
   end
-  #This method return the value of the is_calibrate field for the given assignment object.
-  def is_calibrated?
-    is_calibrated
-  end
-
-  #This method return the value of the enable_pair_programming field for the given assignment object.
-  def pair_programming_enabled?
-    enable_pair_programming
-  end
-
-  #This method return the value of the has_badge field for the given assignment object.
-  def has_badge?
-    has_badge
-  end
 
   #This method return the value of the has_topics field for the given assignment object.
   # has_topics is of boolean type and is set true if there is any topic associated with the assignment.
@@ -143,13 +133,6 @@ class Assignment < ApplicationRecord
   # Checks if the value of max_team_size for the given assignment object is greater than 1
   def team_assignment?
     !max_team_size.nil? && max_team_size > 1
-  end
-
-  #This method return if the given assignment has a staggered deadline and no topic has been signed by the user's team.
-  # Receives a parameter topic_id of the SignUpTopic for which the user's team has signed up.
-  # Checks the boolean field staggered_field and topic_id for being nil
-  def staggered_and_no_topic?(topic_id)
-    staggered_deadline? && topic_id.nil?
   end
 
   #Auxillary method for checking the validity of the field reviews_allowed for the given assignment object
@@ -178,7 +161,7 @@ class Assignment < ApplicationRecord
       #checks for meta-reviews
     elsif review_type == 'metareview'
         if num_reviews_greater?(num_metareviews_required,num_metareviews_allowed)
-          {success: false, message: 'Number of metareviews required cannot be greater than number of reviews allowed'}
+          {success: false, message: 'Number of metareviews required cannot be greater than number of metareviews allowed'}
         else
           {success: true}
         end

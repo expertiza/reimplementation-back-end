@@ -26,16 +26,12 @@ Rails.application.routes.draw do
         collection do
           post '/:assignment_id/add_participant/:user_id',action: :add_participant
           delete '/:assignment_id/remove_participant/:user_id',action: :remove_participant
-          patch '/:assignment_id/remove_assignment_from_course',action: :remove_assignment_from_course
-          patch '/:assignment_id/assign_courses_to_assignment/:course_id',action: :assign_courses_to_assignment
+          patch '/:assignment_id/remove_from_course',action: :remove_from_course
+          patch '/:assignment_id/assign_to_course/:course_id',action: :assign_to_course
           post '/:assignment_id/copy_assignment', action: :copy_assignment
-          get '/:assignment_id/has_badge',action: :has_badge
-          get '/:assignment_id/pair_programming_enabled', action: :pair_programming_enabled
           get '/:assignment_id/has_topics',action: :has_topics
           get '/:assignment_id/team_assignment', action: :team_assignment
-          get '/:assignment_id/is_calibrated', action: :is_calibrated
           get '/:assignment_id/has_teams', action: :has_teams
-          get '/:assignment_id/staggered_and_no_topic', action: :staggered_and_no_topic
           get '/:assignment_id/valid_num_review/:review_type', action: :valid_num_review
           get '/:assignment_id/varying_rubrics_by_round', action: :varying_rubrics_by_round?
           post '/:assignment_id/create_node',action: :create_node
