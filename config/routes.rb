@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+
   mount Rswag::Api::Engine => 'api-docs'
   mount Rswag::Ui::Engine => 'api-docs'
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
@@ -54,6 +55,15 @@ Rails.application.routes.draw do
           post '/sign_up_student', to: 'signed_up_teams#sign_up_student'
         end
       end
+
+      resources :join_team_requests do
+        collection do
+          post 'decline/:id', to:'join_team_requests#decline'
+        end
+      end
+
+
+
       resources :sign_up_topics do
         collection do
           get :filter
