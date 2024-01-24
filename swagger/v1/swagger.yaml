@@ -3,6 +3,14 @@ openapi: 3.0.1
 info:
   title: EXPERTIZA API V1
   version: v1
+security:
+  - JWT: []
+components:
+  securitySchemes:
+    JWT:
+      type: apiKey
+      name: Authorization
+      in: header
 paths:
   "/api/v1/account_requests/pending":
     get:
@@ -497,6 +505,120 @@ paths:
           description: Show all invitations for the user for an assignment
         '404':
           description: Not found
+  "/api/v1/join_team_requests/decline/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: string
+    post:
+      summary: decline join_team_request
+      tags:
+      - Join Team Requests
+      responses:
+        '200':
+          description: successful
+  "/api/v1/join_team_requests":
+    get:
+      summary: list join_team_requests
+      tags:
+      - Join Team Requests
+      responses:
+        '200':
+          description: successful
+    post:
+      summary: create join_team_request
+      parameters:
+      - name: comments
+        in: query
+        description: comments
+        schema:
+          type: string
+      - name: team_id
+        in: query
+        description: team_id
+        schema:
+          type: integer
+      - name: assignment_id
+        in: query
+        description: assignment_id
+        schema:
+          type: integer
+      tags:
+      - Join Team Requests
+      responses:
+        '200':
+          description: success
+        '201':
+          description: created
+        '422':
+          description: unprocessable entity
+  "/api/v1/join_team_requests/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: show join_team_request
+      tags:
+      - Join Team Requests
+      responses:
+        '404':
+          description: not_found
+        '200':
+          description: successful
+    patch:
+      summary: update join_team_request
+      parameters:
+      - name: join_team_request[comments]
+        in: query
+        description: comments
+        schema:
+          type: string
+      - name: join_team_request[status]
+        in: query
+        description: status
+        schema:
+          type: string
+      tags:
+      - Join Team Requests
+      responses:
+        '200':
+          description: successful
+    put:
+      summary: update join_team_request
+      parameters:
+      - name: join_team_request[comments]
+        in: query
+        description: comments
+        schema:
+          type: string
+      - name: join_team_request[status]
+        in: query
+        description: status
+        schema:
+          type: string
+      tags:
+      - Join Team Requests
+      responses:
+        '200':
+          description: successful
+        '422':
+          description: unprocessable entity
+    delete:
+      summary: delete join_team_request
+      tags:
+      - Join Team Requests
+      responses:
+        '204':
+          description: successful
+        '404':
+          description: not found
   "/api/v1/questionnaires":
     get:
       summary: list questionnaires
@@ -1353,4 +1475,4 @@ servers:
 - url: http://{defaultHost}
   variables:
     defaultHost:
-      default: 127.0.0.1:3000
+      default: localhost:3002

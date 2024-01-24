@@ -58,3 +58,5 @@ if ENV['UNDO_SEED']
   User.where(name: ['admin']).destroy_all
 end
 # UNDO_SEED=true rails db:seed
+
+#   Character.create(name: "Luke", movie: movies.first)
