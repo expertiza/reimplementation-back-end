@@ -1,0 +1,2 @@
+class QuizQuestionnaire < Questionnaire
+end
