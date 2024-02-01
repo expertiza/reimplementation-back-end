@@ -51,7 +51,7 @@ class Api::V1::CoursesController < ApplicationController
     if result[:success]
       render json: result[:data], status: :created
     else
-      render json: { status: 'error', message: result[:message] }, status: :bad_request
+      render json: { status: "error", message: result[:message] }, status: :bad_request
     end
   end
 
