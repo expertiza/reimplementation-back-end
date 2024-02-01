@@ -1,6 +1,6 @@
 FactoryBot.define do
-  factory :duty do
-    name { "MyString" }
+  factory :join_team_request do
+    
   end
 
   factory :user do

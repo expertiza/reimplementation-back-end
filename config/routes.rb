@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+
   mount Rswag::Api::Engine => 'api-docs'
   mount Rswag::Ui::Engine => 'api-docs'
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
@@ -54,6 +55,15 @@ Rails.application.routes.draw do
           post '/sign_up_student', to: 'signed_up_teams#sign_up_student'
         end
       end
+
+      resources :join_team_requests do
+        collection do
+          post 'decline/:id', to:'join_team_requests#decline'
+        end
+      end
+
+
+
       resources :sign_up_topics do
         collection do
           get :filter
@@ -65,13 +75,18 @@ Rails.application.routes.draw do
         get 'user/:user_id/assignment/:assignment_id/', on: :collection, action: :invitations_for_user_assignment
       end
 
+      resources :quiz_questionnaires do
+        collection do
+          post 'copy/:id', to: 'quiz_questionnaires#copy', as: 'copy'
+        end
+      end
+
       resources :account_requests do
         collection do
           get :pending, action: :pending_requests
           get :processed, action: :processed_requests
         end
       end
-      resources :teams_users, only: [:index, :show, :create, :update, :destroy]
     end
   end
 end
