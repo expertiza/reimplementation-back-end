@@ -114,6 +114,12 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_28_184749) do
     t.index ["instructor_id"], name: "index_courses_on_instructor_id"
   end
 
+  create_table "duties", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "institutions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -220,6 +226,17 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_28_184749) do
   end
 
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "teams_users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "team_id"
+    t.integer "user_id"
+    t.integer "duty_id"
+    t.string "pair_programming_status", limit: 1
+    t.integer "participant_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "name"
