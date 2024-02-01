@@ -5,7 +5,7 @@ class JsonWebToken
   RSA_KEYS_FILE = 'rsa_keys.yml'.freeze
 
   if File.exist?(RSA_KEYS_FILE)
-    rsa_keys = YAML.load_file(RSA_KEYS_FILE, permitted_classes: [OpenSSL::PKey::RSA])
+    rsa_keys = YAML.load_file(RSA_KEYS_FILE)
     RSA_PRIVATE_KEY = OpenSSL::PKey::RSA.new(rsa_keys['private_key'])
     RSA_PUBLIC_KEY = OpenSSL::PKey::RSA.new(rsa_keys['public_key'])
   else
