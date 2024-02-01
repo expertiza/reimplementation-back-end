@@ -69,6 +69,13 @@ Rails.application.routes.draw do
           post '/sign_up_student', to: 'signed_up_teams#sign_up_student'
         end
       end
+
+      resources :join_team_requests do
+        collection do
+          post 'decline/:id', to:'join_team_requests#decline'
+        end
+      end
+
       resources :sign_up_topics do
         collection do
           get :filter
@@ -78,6 +85,12 @@ Rails.application.routes.draw do
 
       resources :invitations do
         get 'user/:user_id/assignment/:assignment_id/', on: :collection, action: :invitations_for_user_assignment
+      end
+
+      resources :quiz_questionnaires do
+        collection do
+          post 'copy/:id', to: 'quiz_questionnaires#copy', as: 'copy'
+        end
       end
 
       resources :account_requests do
