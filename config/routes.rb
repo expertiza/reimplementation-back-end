@@ -22,7 +22,14 @@ Rails.application.routes.draw do
           get 'role/:name', action: :role_users
         end
       end
-      resources :assignments
+      resources :assignments do
+        collection do
+          get '/etc', action: :etc
+        end
+      end
+
+      resources :teams do
+      end
 
       resources :courses do
         collection do
