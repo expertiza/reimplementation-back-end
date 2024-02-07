@@ -1,10 +1,12 @@
 Rails.application.routes.draw do
+
   mount Rswag::Api::Engine => 'api-docs'
   mount Rswag::Ui::Engine => 'api-docs'
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Defines the root path route ("/")
   # root "articles#index"
+
   post '/login', to: 'authentication#login'
   namespace :api do
     namespace :v1 do
@@ -24,18 +26,11 @@ Rails.application.routes.draw do
       end
       resources :assignments do
         collection do
-          post '/:assignment_id/add_participant/:user_id',action: :add_participant
-          delete '/:assignment_id/remove_participant/:user_id',action: :remove_participant
-          patch '/:assignment_id/remove_from_course',action: :remove_from_course
-          patch '/:assignment_id/assign_to_course/:course_id',action: :assign_to_course
-          post '/:assignment_id/copy_assignment', action: :copy_assignment
-          get '/:assignment_id/has_topics',action: :has_topics
-          get '/:assignment_id/team_assignment', action: :team_assignment
-          get '/:assignment_id/has_teams', action: :has_teams
-          get '/:assignment_id/valid_num_review/:review_type', action: :valid_num_review
-          get '/:assignment_id/varying_rubrics_by_round', action: :varying_rubrics_by_round?
-          post '/:assignment_id/create_node',action: :create_node
+          get '/etc', action: :etc
         end
+      end
+
+      resources :teams do
       end
 
       resources :courses do
@@ -68,6 +63,15 @@ Rails.application.routes.draw do
           post '/sign_up_student', to: 'signed_up_teams#sign_up_student'
         end
       end
+
+      resources :join_team_requests do
+        collection do
+          post 'decline/:id', to:'join_team_requests#decline'
+        end
+      end
+
+
+
       resources :sign_up_topics do
         collection do
           get :filter
@@ -77,6 +81,12 @@ Rails.application.routes.draw do
 
       resources :invitations do
         get 'user/:user_id/assignment/:assignment_id/', on: :collection, action: :invitations_for_user_assignment
+      end
+
+      resources :quiz_questionnaires do
+        collection do
+          post 'copy/:id', to: 'quiz_questionnaires#copy', as: 'copy'
+        end
       end
 
       resources :account_requests do

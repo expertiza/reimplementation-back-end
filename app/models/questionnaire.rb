@@ -1,5 +1,5 @@
 class Questionnaire < ApplicationRecord
-  has_many :assignments, through: :assignment_questionnaires
+  belongs_to :assignment, foreign_key: 'assignment_id', inverse_of: false
   belongs_to :instructor
   has_many :questions, dependent: :destroy # the collection of questions associated with this Questionnaire
   before_destroy :check_for_question_associations
