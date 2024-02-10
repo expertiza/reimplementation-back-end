@@ -24,6 +24,7 @@ Rails.application.routes.draw do
           get 'role/:name', action: :role_users
         end
       end
+
       resources :assignments do
         collection do
           get '/etc', action: :etc
