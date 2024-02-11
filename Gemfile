@@ -43,7 +43,6 @@ group :development, :test do
   gem 'rspec-rails'
   gem 'rswag-specs'
   gem 'rubocop'
-  gem 'rubocop', require: false
   gem 'simplecov', require: false, group: :test
 end
 

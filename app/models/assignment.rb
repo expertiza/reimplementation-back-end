@@ -1,4 +1,3 @@
-
 class Assignment < ApplicationRecord
   include MetricHelper
   has_many :invitations
@@ -13,4 +12,3 @@ class Assignment < ApplicationRecord
     rounds_of_reviews
   end
 end
-
