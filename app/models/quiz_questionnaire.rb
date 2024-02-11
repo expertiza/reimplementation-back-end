@@ -1,2 +1,0 @@
-class QuizQuestionnaire < Questionnaire
-end
