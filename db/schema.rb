@@ -42,7 +42,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_28_184749) do
     t.integer "notification_limit", default: 15, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "used_in_round"
     t.index ["assignment_id"], name: "fk_aq_assignments_id"
     t.index ["questionnaire_id"], name: "fk_aq_questionnaire_id"
   end
@@ -51,6 +50,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_28_184749) do
     t.string "name"
     t.string "directory_path"
     t.integer "submitter_count"
+    t.integer "course_id"
+    t.integer "instructor_id"
     t.boolean "private"
     t.integer "num_reviews"
     t.integer "num_review_of_reviews"
@@ -59,7 +60,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_28_184749) do
     t.integer "num_reviewers"
     t.text "spec_location"
     t.integer "max_team_size"
-    t.boolean "staggered_deadline", default: false
+    t.boolean "staggered_deadline"
     t.boolean "allow_suggestions"
     t.integer "days_between_submissions"
     t.string "review_assignment_strategy"
@@ -81,7 +82,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_28_184749) do
     t.boolean "use_bookmark"
     t.boolean "can_review_same_topic"
     t.boolean "can_choose_topic_to_review"
-    t.boolean "is_calibrated", default: false
+    t.boolean "is_calibrated"
     t.boolean "is_selfreview_enabled"
     t.string "reputation_algorithm"
     t.boolean "is_anonymous"
@@ -92,18 +93,11 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_28_184749) do
     t.integer "simicheck"
     t.integer "simicheck_threshold"
     t.boolean "is_answer_tagging_allowed"
-    t.boolean "has_badge", default: false
+    t.boolean "has_badge"
     t.boolean "allow_selecting_additional_reviews_after_1st_round"
     t.integer "sample_assignment_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "instructor_id", null: false
-    t.bigint "course_id"
-    t.boolean "enable_pair_programming", default: false
-    t.boolean "has_teams", default: false
-    t.boolean "has_topics", default: false
-    t.index ["course_id"], name: "index_assignments_on_course_id"
-    t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
 
   create_table "courses", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -142,14 +136,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_28_184749) do
     t.index ["assignment_id"], name: "fk_invitation_assignments"
     t.index ["from_id"], name: "fk_invitationfrom_users"
     t.index ["to_id"], name: "fk_invitationto_users"
-  end
-
-  create_table "nodes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.integer "parent_id"
-    t.integer "node_object_id"
-    t.string "type"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -229,32 +215,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_28_184749) do
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
   end
 
-  create_table "sign_up_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.text "topic_name"
-    t.bigint "assignment_id", null: false
-    t.integer "max_choosers"
-    t.text "category"
-    t.string "topic_identifier"
-    t.integer "micropayment"
-    t.integer "private_to"
-    t.text "description"
-    t.string "link"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["assignment_id"], name: "index_sign_up_topics_on_assignment_id"
-  end
-
-  create_table "signed_up_teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.bigint "sign_up_topic_id", null: false
-    t.bigint "team_id", null: false
-    t.boolean "is_waitlisted"
-    t.integer "preference_priority_number"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["sign_up_topic_id"], name: "index_signed_up_teams_on_sign_up_topic_id"
-    t.index ["team_id"], name: "index_signed_up_teams_on_team_id"
-  end
-
   create_table "ta_mappings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "course_id", null: false
     t.bigint "user_id", null: false
@@ -313,8 +273,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_28_184749) do
 
   add_foreign_key "account_requests", "institutions"
   add_foreign_key "account_requests", "roles"
-  add_foreign_key "assignments", "courses"
-  add_foreign_key "assignments", "users", column: "instructor_id"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
   add_foreign_key "participants", "assignments"
@@ -323,14 +281,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_28_184749) do
   add_foreign_key "questionnaires", "assignments"
   add_foreign_key "questions", "questionnaires"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
-  add_foreign_key "sign_up_topics", "assignments"
-  add_foreign_key "signed_up_teams", "sign_up_topics"
-  add_foreign_key "signed_up_teams", "teams"
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
-  add_foreign_key "teams", "assignments"
-  add_foreign_key "teams_users", "teams"
-  add_foreign_key "teams_users", "users"
   add_foreign_key "users", "institutions"
   add_foreign_key "users", "roles"
   add_foreign_key "users", "teams"
