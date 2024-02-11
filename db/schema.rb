@@ -264,11 +264,9 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_28_184749) do
     t.bigint "institution_id"
     t.bigint "role_id", null: false
     t.bigint "parent_id"
-    t.bigint "team_id"
     t.index ["institution_id"], name: "index_users_on_institution_id"
     t.index ["parent_id"], name: "index_users_on_parent_id"
     t.index ["role_id"], name: "index_users_on_role_id"
-    t.index ["team_id"], name: "fk_rails_b2bbf87303"
   end
 
   add_foreign_key "account_requests", "institutions"
@@ -285,6 +283,5 @@ ActiveRecord::Schema[7.0].define(version: 2023_10_28_184749) do
   add_foreign_key "ta_mappings", "users"
   add_foreign_key "users", "institutions"
   add_foreign_key "users", "roles"
-  add_foreign_key "users", "teams"
   add_foreign_key "users", "users", column: "parent_id"
 end
