@@ -109,4 +109,41 @@ class User < ApplicationRecord
     self.email_on_review_of_review ||= false
     self.etc_icons_on_homepage ||= true
   end
+
+  
+  # Checks if the current user can impersonate the specified user
+  # Returns true if allowed, otherwise false.
+  def can_impersonate?(user)
+    return true if role.super_administrator?
+    return true if teaching_assistant_for?(user)
+    return true if recursively_parent_of(user)
+    false
+  end
+
+  # Checks if the current user, identified as a TA, is assigned as a TA for the specified student
+  # Returning true if so; otherwise, returns false.
+  def teaching_assistant_for?(student)
+    return false unless ta?
+    return false unless student.role.name == 'Student'
+
+    # We have to use the TA object instead of User object
+    # because single table inheritance is not currently functioning
+    ta = Ta.find(id)
+    ta.managed_users.each { |user|
+      if user.id == student.id
+        return true
+      end
+    }
+    false
+  end
+
+  # Checks if the current user is a recursive parent of the specified user avoiding super administrator roles 
+  # Returns true if so, otherwise false.
+  def recursively_parent_of(user)
+    p = user.parent
+    return false if p.nil?
+    return true if p == self
+    return false if p.role.super_administrator?
+    recursively_parent_of(p)
+  end
 end
