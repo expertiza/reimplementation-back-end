@@ -71,6 +71,8 @@ Rails.application.routes.draw do
           get :processed, action: :processed_requests
         end
       end
+
+      resources :responses
     end
   end
 end

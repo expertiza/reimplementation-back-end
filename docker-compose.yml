@@ -36,6 +36,18 @@ services:
     volumes:
       - expertiza-redis:/var/lib/redis/data
 
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: expertiza
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+
 volumes:
   expertiza-mysql:
   expertiza-redis:
