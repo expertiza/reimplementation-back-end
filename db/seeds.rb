@@ -64,7 +64,7 @@ instructor = User.find_or_create_by(name: 'instructor') do |user|
 end
 
 # Find or create the course
-OODD = Course.find_or_create_by(name: 'Object Oriented Design and Development') do |course|
+course1 = Course.find_or_create_by(name: 'Object Oriented Design and Development') do |course|
   course.update!(
     directory_path: '/programming101',
     info: 'This is an introductory course on Design Patterns.',
@@ -73,96 +73,113 @@ OODD = Course.find_or_create_by(name: 'Object Oriented Design and Development') 
     institution: institution
   )
 end
-user1 = User.find_or_create_by(name:'Demo User1') do |user|
+user1 = User.find_or_create_by(name: 'smith') do |user|
   user.update!(
     password_digest: BCrypt::Password.create('password'), # Hashed password
-    full_name: 'Demo User1',
-    email: 'demo.user1@example.com',
+    full_name: 'Smith Student',
+    email: 'smith.student@example.com',
     mru_directory_path: '/path/to/directory',
     email_on_review: true,
-    email_on_submission: false,
+    email_on_submission: true,
     email_on_review_of_review: true,
     is_new_user: true,
     master_permission_granted: false,
-    handle: 'admin123',
+    handle: 'smith123',
     persistence_token: 'token123',
     timeZonePref: 'UTC',
     copy_of_emails: false,
     etc_icons_on_homepage: true,
     locale: 1,
-    role_id: 2,
+    role_id: 1,
     institution: institution
   )
 end
-user2 = User.find_or_create_by(name:'Demo User2') do |user|
+user2 = User.find_or_create_by(name: 'john') do |user|
   user.update!(
     password_digest: BCrypt::Password.create('password'), # Hashed password
-    full_name: 'Demo User2',
-    email: 'demo.user2@example.com',
+    full_name: 'John Student',
+    email: 'john.student@example.com',
     mru_directory_path: '/path/to/directory',
     email_on_review: true,
     email_on_submission: false,
     email_on_review_of_review: true,
     is_new_user: true,
     master_permission_granted: false,
-    handle: 'admin123',
+    handle: 'john123',
     persistence_token: 'token123',
     timeZonePref: 'UTC',
     copy_of_emails: false,
     etc_icons_on_homepage: true,
     locale: 1,
-    role_id: 2,
+    role_id: 1,
     institution: institution
+  )
+end
+assignment1 = Assignment.find_or_create_by(name: 'Test Assignment1') do |assignment|
+  assignment.update!(
+    id:1,
+    name: 'Test Assignment1'
   )
 end
 team = Team.new
-participant1 = Participant.find_or_create_by do |participant|
+participant1 = Participant.find_or_create_by(id: 1) do |participant|
   participant.update!(
     id:1,
-    user:user1
+    user:user1,
+    assignment:assignment1
   )
 end
-assignment1 = Assignment.find_or_create_by do |assignment|
-  assignment.update!(
+questionnaire1 = Questionnaire.find_or_create_by(id:1) do |questionnaire|
+  questionnaire.update!(
     id:1,
-    name: "Test Assignment"
+    max_question_score:5
   )
 end
-answer1 = Answer.find_or_create_by do |answer|
-  answer.update!(
-    answer:1,
-    comments:'Answer text',
-    question_id: 1
-  )
+question1 = question.find_or_create_by(id:1) do |question|
+  question.new(id: 1, weight: 2, questionnaire: questionnaire1)
 end
-question1 = ScoredQuestion.find_or_create_by do |question|
-  ScoredQuestion.new(id: 1, weight: 2)
-end
-questionnaire1 = Questionnaire.find_or_create_by do |questionnaire|
+questionnaire1 = Questionnaire.find_or_create_by(id:1) do |questionnaire|
   questionnaire.update!(
     id:1,
     questions:[question1],
     max_question_score:5
   )
 end
-review_response_map1 = ReviewResponseMap.find_or_create_by do |review_response_map|
-  review_response_map.update!(
-    assignment: assignment1,
-    reviewee: team
-  )
-end
-response_map1 = ResponseMap.find_or_create_by do |response_map|
+
+response_map1 = ResponseMap.find_or_create_by(assignment:assignment1) do |response_map|
   response_map.update!(
     assignmet:assignment1,
     reviewee:participant1,
     reviewer:participant1
   )
 end
-response1 = Response.find_or_create_by(map_id:1) do |response|
-  response.update!(
-    map_id: 1,
-    review_response_map: review_response_map1,
-    scores:[answer1],
+
+review_response_map1 = ReviewResponseMap.find_or_create_by(assignment:assignment1) do |review_response_map|
+  review_response_map.update!(
+    assignment: assignment1,
+    reviewee: team
   )
 end
+
+response1 = Response.find_or_create_by(map_id:1) do |response|
+  response.update!(
+    map_id: response_map1.id,
+    review_response_map: review_response_map1,
+  )
+end
+
+answer1 = Answer.find_or_create_by(answer:1) do |answer|
+  answer.update!(
+    answer:1,
+    comments:'Answer text',
+    question_id: question1.id
+  )
+end
+response2 = Response.find_or_create_by(map_id:1) do |response|
+  response.update!(
+    map_id: response_map1.id,
+    review_response_map: review_response_map1,
+    scores:[answer1],
+    )
+  end
 

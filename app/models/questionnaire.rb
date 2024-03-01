@@ -4,7 +4,7 @@ class Questionnaire < ApplicationRecord
   has_many :questions, dependent: :destroy # the collection of questions associated with this Questionnaire
   before_destroy :check_for_question_associations
 
-  validate :validate_questionnaire
+  # validate :validate_questionnaire
   validates :name, presence: true
   validates :max_question_score, :min_question_score, numericality: true 
 
@@ -37,7 +37,7 @@ class Questionnaire < ApplicationRecord
   # Check_for_question_associations checks if questionnaire has associated questions or not
   def check_for_question_associations
     if questions.any?
-      raise ActiveRecord::DeleteRestrictionError.new(:base, "Cannot delete record because dependent questions exist")
+      raise ActiveRecord::DeleteRestrictionError.new( :base)
     end
   end
 
