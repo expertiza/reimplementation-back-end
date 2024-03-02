@@ -73,7 +73,7 @@ course1 = Course.find_or_create_by(name: 'Object Oriented Design and Development
     institution: institution
   )
 end
-user1 = User.find_or_create_by(name: 'smith') do |user|
+reviewer1 = User.find_or_create_by(name: 'smith') do |user|
   user.update!(
     password_digest: BCrypt::Password.create('password'), # Hashed password
     full_name: 'Smith Student',
@@ -94,7 +94,7 @@ user1 = User.find_or_create_by(name: 'smith') do |user|
     institution: institution
   )
 end
-user2 = User.find_or_create_by(name: 'john') do |user|
+reviewee1 = User.find_or_create_by(name: 'john') do |user|
   user.update!(
     password_digest: BCrypt::Password.create('password'), # Hashed password
     full_name: 'John Student',
@@ -121,65 +121,84 @@ assignment1 = Assignment.find_or_create_by(name: 'Test Assignment1') do |assignm
     name: 'Test Assignment1'
   )
 end
-team = Team.new
-participant1 = Participant.find_or_create_by(id: 1) do |participant|
+team1 = Team.find_or_create_by(id: 1) do |team|
+  team.update!(
+    id: 1
+  )
+  end
+participant1 = Participant.find_or_create_by(user:reviewer1) do |participant|
   participant.update!(
-    id:1,
-    user:user1,
+    user:reviewer1,
     assignment:assignment1
   )
 end
-questionnaire1 = Questionnaire.find_or_create_by(id:1) do |questionnaire|
-  questionnaire.update!(
-    id:1,
-    max_question_score:5
+participant2 = Participant.find_or_create_by(user:reviewee1) do |participant|
+  participant.update!(
+    user:reviewee1,
+    assignment:assignment1
   )
 end
-question1 = question.find_or_create_by(id:1) do |question|
-  question.new(id: 1, weight: 2, questionnaire: questionnaire1)
-end
-questionnaire1 = Questionnaire.find_or_create_by(id:1) do |questionnaire|
+questionnaire1 = Questionnaire.find_or_create_by(name: 'questionnaire 1') do |questionnaire|
   questionnaire.update!(
     id:1,
-    questions:[question1],
-    max_question_score:5
+    instructor_id:instructor.id,
+    max_question_score:5,
+    min_question_score:0,
+    name: 'questionnaire 1'
+  )
+end
+assignment_questionnaire1 = AssignmentQuestionnaire.find_or_create_by(id:1) do |assignment_questionnaire|
+  assignment_questionnaire.update!(
+    id:1,
+    assignment_id:assignment1.id,
+    questionnaire_id:questionnaire1.id,
+    notification_limit: 3
+  )
+end
+question1 = Question.find_or_create_by(txt:'This is a question 1') do |question|
+  question.update!(
+    question_type:'qustion_type1',
+    max_label: 'max_label1',
+    min_label: 'min_label1',
+    txt: 'This is a question 1',
+    weight: 5,
+    questionnaire: questionnaire1
+  )
+end
+question2 = Question.find_or_create_by(txt:'This is a question 2') do |question|
+  question.update!(
+    question_type:'qustion_type2',
+    max_label: 'max_label2',
+    min_label: 'min_label2',
+    txt: 'This is a question 2',
+    weight: 5,
+    questionnaire: questionnaire1
+  )
+end
+questions = [question1, question2]
+answer1 = Answer.find_or_create_by(answer:1) do |answer|
+  answer.update!(
+    answer:1,
+    comments:'Answer1 text',
+    question_id: question1.id
   )
 end
 
-response_map1 = ResponseMap.find_or_create_by(assignment:assignment1) do |response_map|
-  response_map.update!(
-    assignmet:assignment1,
-    reviewee:participant1,
-    reviewer:participant1
-  )
-end
-
-review_response_map1 = ReviewResponseMap.find_or_create_by(assignment:assignment1) do |review_response_map|
+response_map1 = ResponseMap.find_or_create_by(reviewed_object_id: 1) do |review_response_map|
   review_response_map.update!(
+    reviewed_object_id:1,
+    reviewee_id:reviewee1.id,
+    reviewer_id:reviewer1.id,
     assignment: assignment1,
-    reviewee: team
+
   )
 end
 
 response1 = Response.find_or_create_by(map_id:1) do |response|
   response.update!(
     map_id: response_map1.id,
-    review_response_map: review_response_map1,
-  )
+    additional_commet: 'additional comment'
+    )
 end
 
-answer1 = Answer.find_or_create_by(answer:1) do |answer|
-  answer.update!(
-    answer:1,
-    comments:'Answer text',
-    question_id: question1.id
-  )
-end
-response2 = Response.find_or_create_by(map_id:1) do |response|
-  response.update!(
-    map_id: response_map1.id,
-    review_response_map: review_response_map1,
-    scores:[answer1],
-    )
-  end
 
