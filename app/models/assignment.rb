@@ -1,7 +1,9 @@
 class Assignment < ApplicationRecord
   include MetricHelper
   has_many :invitations
-  has_many :questionnaires
+  has_many :assignment_questionnaires, dependent: :destroy
+  has_many :questionnaires, through: :assignment_questionnaires
+
 
   def review_questionnaire_id
     Questionnaire.find_by_assignment_id id
