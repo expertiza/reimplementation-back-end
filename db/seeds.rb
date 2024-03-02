@@ -126,13 +126,13 @@ team1 = Team.find_or_create_by(id: 1) do |team|
     id: 1
   )
   end
-participant1 = Participant.find_or_create_by(user:reviewer1) do |participant|
+reviewer_participant1 = Participant.find_or_create_by(user:reviewer1) do |participant|
   participant.update!(
     user:reviewer1,
     assignment:assignment1
   )
 end
-participant2 = Participant.find_or_create_by(user:reviewee1) do |participant|
+reviewee_participant2 = Participant.find_or_create_by(user:reviewee1) do |participant|
   participant.update!(
     user:reviewee1,
     assignment:assignment1
@@ -162,6 +162,8 @@ question1 = Question.find_or_create_by(txt:'This is a question 1') do |question|
     min_label: 'min_label1',
     txt: 'This is a question 1',
     weight: 5,
+    seq: 1.0,
+    break_before: 1,
     questionnaire: questionnaire1
   )
 end
@@ -172,33 +174,37 @@ question2 = Question.find_or_create_by(txt:'This is a question 2') do |question|
     min_label: 'min_label2',
     txt: 'This is a question 2',
     weight: 5,
+    seq: 2.0,
+    break_before: 2,
     questionnaire: questionnaire1
   )
 end
 questions = [question1, question2]
-answer1 = Answer.find_or_create_by(answer:1) do |answer|
-  answer.update!(
-    answer:1,
-    comments:'Answer1 text',
-    question_id: question1.id
-  )
-end
-
 response_map1 = ResponseMap.find_or_create_by(reviewed_object_id: 1) do |review_response_map|
   review_response_map.update!(
     reviewed_object_id:1,
-    reviewee_id:reviewee1.id,
-    reviewer_id:reviewer1.id,
+    reviewee:reviewee_participant2,
+    reviewer:reviewer_participant1,
     assignment: assignment1,
 
-  )
+    )
 end
 
 response1 = Response.find_or_create_by(map_id:1) do |response|
   response.update!(
     map_id: response_map1.id,
-    additional_commet: 'additional comment'
-    )
+    additional_comment: 'additional comment'
+  )
 end
+answer1 = Answer.find_or_create_by(answer:1) do |answer|
+  answer.update!(
+    answer:1,
+    comments:'Answer1 text',
+    question_id: question1.id,
+    response_id: response1.id
+  )
+end
+
+
 
 
