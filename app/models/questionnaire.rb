@@ -1,12 +1,31 @@
 class Questionnaire < ApplicationRecord
-  belongs_to :assignment, foreign_key: 'assignment_id', inverse_of: false
-  belongs_to :instructor
+  # belongs_to :assignment, foreign_key: 'assignment_id', inverse_of: false
+  belongs_to :instructor # creator of the questionnaire
+  before_destroy :check_for_question_associations # need to check before association or they will be destroyed and this will never evaluate
   has_many :questions, dependent: :destroy # the collection of questions associated with this Questionnaire
-  before_destroy :check_for_question_associations
+  has_many :assignment_questionnaires, dependent: :destroy
+  has_many :assignments, through: :assignment_questionnaires
 
-  validate :validate_questionnaire
+
   validates :name, presence: true
-  validates :max_question_score, :min_question_score, numericality: true 
+  validate :name_is_unique
+  validates :max_question_score, numericality: { only_integer: true, greater_than: 0 }, presence: true
+  validates :min_question_score, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, presence: true
+  validate :min_less_than_max
+
+  def min_less_than_max
+    # do we have values if not then do not attempt to validate this
+    return unless min_question_score && max_question_score
+    errors.add(:min_question_score, 'must be less than max question score') if min_question_score >= max_question_score
+  end
+
+  def name_is_unique
+    # return if we do not have all the values to check
+    return unless id && name && instructor_id
+    # check for existing named questionnaire for this instructor that is not this questionnaire
+    existing = Questionnaire.where('name = ? and instructor_id = ? and id <> ?', name, instructor_id, id)
+    errors.add(:name, 'must be unique') if existing.present?
+  end
 
   # clones the contents of a questionnaire, including the questions and associated advice
   def self.copy_questionnaire_details(params)
@@ -25,19 +44,10 @@ class Questionnaire < ApplicationRecord
     questionnaire
   end
 
-  # validate the entries for this questionnaire
-  def validate_questionnaire
-    errors.add(:max_question_score, 'The maximum question score must be a positive integer.') if max_question_score < 1
-    errors.add(:min_question_score, 'The minimum question score must be a positive integer.') if min_question_score < 0
-    errors.add(:min_question_score, 'The minimum question score must be less than the maximum.') if min_question_score >= max_question_score
-    results = Questionnaire.where('id <> ? and name = ? and instructor_id = ?', id, name, instructor_id)
-    errors.add(:name, 'Questionnaire names must be unique.') if results.present?
-  end
-
   # Check_for_question_associations checks if questionnaire has associated questions or not
   def check_for_question_associations
     if questions.any?
-      raise ActiveRecord::DeleteRestrictionError.new(:base, "Cannot delete record because dependent questions exist")
+      raise ActiveRecord::DeleteRestrictionError.new("Cannot delete record because dependent questions exist")
     end
   end
 
