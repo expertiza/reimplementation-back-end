@@ -15,6 +15,98 @@ security:
   - bearerAuth: []
 
 paths:
+  "/api/v1/responses":
+    get:
+      summary: List Responses
+      tags:
+      - Responses
+      responses:
+        '200':
+          description: List Response Account Requests
+    post:
+      summary: create response
+      tags:
+      - Responses
+      parameters: []
+      responses:
+        '201':
+          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                map_id:
+                  type: integer
+                additional_comment:
+                  type: text
+                is_submitted:
+                  type: boolean   
+  "/api/v1/responses/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: show response
+      tags:
+      - Responses
+      responses:
+        '200':
+          description: successful
+    patch:
+      summary: update response
+      tags:
+      - Response
+      parameters: []
+      responses:
+        '200':
+          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                map_id:
+                  type: integer
+                additional_comment:
+                  type: text
+                is_submitted:
+                  type: boolean
+              required: []
+    put:
+      summary: update response
+      tags:
+      - Responses
+      parameters: []
+      responses:
+        '200':
+          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                map_id:
+                  type: integer
+                additional_comment:
+                  type: text
+                is_submitted:
+                  type: boolean
+              required: []
+    delete:
+      summary: delete response
+      tags:
+      - Responses
+      responses:
+        '204':
+          description: successful
   "/api/v1/account_requests/pending":
     get:
       summary: List all Pending Account Requests
