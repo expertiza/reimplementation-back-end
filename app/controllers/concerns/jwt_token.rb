@@ -8,7 +8,9 @@ module JwtToken
   end
 
   private
-
+  # def authenticate_request!
+  #   true
+  # end
   def authenticate_request!
     unless user_id_in_token?
       render json: { error: 'Not Authorized' }, status: :unauthorized

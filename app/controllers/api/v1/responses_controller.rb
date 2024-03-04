@@ -1,4 +1,6 @@
-require 'responses_helper'
+require 'response_dto'
+require 'response_dto_handler'
+require 'response_service'
 class Api::V1::ResponsesController < ApplicationController
   
   
@@ -10,6 +12,12 @@ class Api::V1::ResponsesController < ApplicationController
     response = set_content(Action.SHOW, params)
     
     render json: response
+  end
+  def new
+    response_dto = ResponseDto.new
+    response_handler = ResponseDtoHandler.new
+    response_handler.set_content(true, "new", response_dto, params)
+    render json: response_dto
   end
 
 

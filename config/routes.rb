@@ -73,6 +73,11 @@ Rails.application.routes.draw do
       end
 
       resources :responses
+      resources :responses do 
+        collection do
+          get 'new/:map_id', action: :new
+        end
+      end
     end
   end
 end

@@ -185,7 +185,7 @@ response_map1 = ResponseMap.find_or_create_by(reviewed_object_id: 1) do |review_
     reviewed_object_id:1,
     reviewee:reviewee_participant2,
     reviewer:reviewer_participant1,
-    assignment: assignment1,
+    assignment: assignment1
 
     )
 end
