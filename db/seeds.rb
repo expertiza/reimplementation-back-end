@@ -73,7 +73,7 @@ course1 = Course.find_or_create_by(name: 'Object Oriented Design and Development
     institution: institution
   )
 end
-reviewer1 = User.find_or_create_by(name: 'smith') do |user|
+student1 = User.find_or_create_by(name: 'smith') do |user|
   user.update!(
     password_digest: BCrypt::Password.create('password'), # Hashed password
     full_name: 'Smith Student',
@@ -94,7 +94,7 @@ reviewer1 = User.find_or_create_by(name: 'smith') do |user|
     institution: institution
   )
 end
-reviewee1 = User.find_or_create_by(name: 'john') do |user|
+student2 = User.find_or_create_by(name: 'john') do |user|
   user.update!(
     password_digest: BCrypt::Password.create('password'), # Hashed password
     full_name: 'John Student',
@@ -115,6 +115,48 @@ reviewee1 = User.find_or_create_by(name: 'john') do |user|
     institution: institution
   )
 end
+student3 = User.find_or_create_by(name: 'matt') do |user|
+  user.update!(
+    password_digest: BCrypt::Password.create('password'), # Hashed password
+    full_name: 'matt Student',
+    email: 'matt.student@example.com',
+    mru_directory_path: '/path/to/directory',
+    email_on_review: true,
+    email_on_submission: false,
+    email_on_review_of_review: true,
+    is_new_user: true,
+    master_permission_granted: false,
+    handle: 'matt123',
+    persistence_token: 'token123',
+    timeZonePref: 'UTC',
+    copy_of_emails: false,
+    etc_icons_on_homepage: true,
+    locale: 1,
+    role_id: 1,
+    institution: institution
+  )
+end
+student4 = User.find_or_create_by(name: 'david') do |user|
+  user.update!(
+    password_digest: BCrypt::Password.create('password'), # Hashed password
+    full_name: 'david Student',
+    email: 'david.student@example.com',
+    mru_directory_path: '/path/to/directory',
+    email_on_review: true,
+    email_on_submission: false,
+    email_on_review_of_review: true,
+    is_new_user: true,
+    master_permission_granted: false,
+    handle: 'david123',
+    persistence_token: 'token123',
+    timeZonePref: 'UTC',
+    copy_of_emails: false,
+    etc_icons_on_homepage: true,
+    locale: 1,
+    role_id: 1,
+    institution: institution
+  )
+end
 assignment1 = Assignment.find_or_create_by(name: 'Test Assignment1') do |assignment|
   assignment.update!(
     id:1,
@@ -123,18 +165,68 @@ assignment1 = Assignment.find_or_create_by(name: 'Test Assignment1') do |assignm
 end
 team1 = Team.find_or_create_by(id: 1) do |team|
   team.update!(
-    id: 1
+    id: 1,
+    name:"Team1",
+    parent_id: assignment1.id
   )
-  end
-reviewer_participant1 = Participant.find_or_create_by(user:reviewer1) do |participant|
+end
+team2 = Team.find_or_create_by(id: 1) do |team|
+  team.update!(
+    id: 1,
+    name:'Team2',
+    parent_id: assignment1.id
+  )
+end
+team_user1 = TeamsUser.find_or_create_by(id: 1) do |teamsUser|
+  teamsUser.update!(
+    id: 1,
+    team_id: team1.id,
+    user_id: student1.id,
+  )
+end
+team_user2 = TeamsUser.find_or_create_by(id: 2) do |teamsUser|
+  teamsUser.update!(
+    id: 2,
+    team_id: team1.id,
+    user_id: student2.id
+    )
+end
+team_user3 = TeamsUser.find_or_create_by(id: 3) do |teamsUser|
+  teamsUser.update!(
+    id: 3,
+    team_id: team2.id,
+    user_id: student3.id
+    )
+end
+team_user4 = TeamsUser.find_or_create_by(id: 4) do |teamsUser|
+  teamsUser.update!(
+    id: 4,
+    team_id: team2.id,
+    user_id: student4.id
+    )
+end
+
+participant1 = Participant.find_or_create_by(user:student1) do |participant|
   participant.update!(
-    user:reviewer1,
+    user:student1,
     assignment:assignment1
   )
 end
-reviewee_participant2 = Participant.find_or_create_by(user:reviewee1) do |participant|
+participant2 = Participant.find_or_create_by(user:student2) do |participant|
   participant.update!(
-    user:reviewee1,
+    user:student2,
+    assignment:assignment1
+  )
+end
+participant3 = Participant.find_or_create_by(user:student3) do |participant|
+  participant.update!(
+    user:student3,
+    assignment:assignment1
+  )
+end
+participant4 = Participant.find_or_create_by(user:student4) do |participant|
+  participant.update!(
+    user:student4,
     assignment:assignment1
   )
 end
@@ -180,11 +272,12 @@ question2 = Question.find_or_create_by(txt:'This is a question 2') do |question|
   )
 end
 questions = [question1, question2]
-response_map1 = ResponseMap.find_or_create_by(reviewed_object_id: 1) do |review_response_map|
+response_map1 = ResponseMap.find_or_create_by(reviewer_id:participant1.id) do |review_response_map|
   review_response_map.update!(
-    reviewed_object_id:assignment1,
-    reviewee:reviewee_participant2,
-    reviewer:reviewer_participant1
+    reviewed_object_id:assignment1.id,
+    reviewer_id:participant1.id,
+    reviewee_id:team2,
+    type: 'ReviewResponseMap'
     )
 end
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_03_05_152921) do
+ActiveRecord::Schema[7.0].define(version: 2024_03_05_170836) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -178,6 +178,9 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_05_152921) do
     t.integer "reviewee_id", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "type", default: "", null: false
+    t.boolean "calibrate_to", default: false
+    t.boolean "team_reviewing_enabled", default: false
     t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 
@@ -187,6 +190,9 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_05_152921) do
     t.boolean "is_submitted", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "version_num"
+    t.integer "round"
+    t.string "visibility", default: "private"
     t.index ["map_id"], name: "fk_response_response_map"
   end
 
