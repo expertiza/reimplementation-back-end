@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_03_05_150247) do
+ActiveRecord::Schema[7.0].define(version: 2024_03_05_152921) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -223,6 +223,15 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_05_150247) do
     t.text "comment_for_submission"
     t.boolean "make_public", default: false
     t.integer "pair_programming_request"
+  end
+
+  create_table "teams_users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "team_id"
+    t.integer "user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["team_id"], name: "fk_users_teams"
+    t.index ["user_id"], name: "fk_teams_users"
   end
 
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
