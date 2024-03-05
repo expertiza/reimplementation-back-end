@@ -182,11 +182,9 @@ end
 questions = [question1, question2]
 response_map1 = ResponseMap.find_or_create_by(reviewed_object_id: 1) do |review_response_map|
   review_response_map.update!(
-    reviewed_object_id:1,
+    reviewed_object_id:assignment1,
     reviewee:reviewee_participant2,
-    reviewer:reviewer_participant1,
-    assignment: assignment1
-
+    reviewer:reviewer_participant1
     )
 end
 

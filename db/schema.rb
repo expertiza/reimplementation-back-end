@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_03_02_162836) do
+ActiveRecord::Schema[7.0].define(version: 2024_03_05_150247) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -178,7 +178,6 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_02_162836) do
     t.integer "reviewee_id", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "assignment_id"
     t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 
@@ -213,6 +212,17 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_02_162836) do
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "name"
+    t.integer "parent_id"
+    t.string "type"
+    t.text "comments_for_advertisement"
+    t.boolean "advertise_for_partner"
+    t.text "submitted_hyperlinks"
+    t.integer "directory_num"
+    t.integer "grade_for_submission"
+    t.text "comment_for_submission"
+    t.boolean "make_public", default: false
+    t.integer "pair_programming_request"
   end
 
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
