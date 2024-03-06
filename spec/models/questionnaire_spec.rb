@@ -6,7 +6,7 @@ describe Questionnaire, type: :model do
   let(:instructor) { Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role: role) }
   let(:questionnaire) { FactoryBot.build(:questionnaire, { id: 1, name: 'abc', instructor_id: instructor.id }) }
   let(:questionnaire1) { FactoryBot.build(:questionnaire, { id: 2, name: 'xyz', max_question_score: 20, instructor_id: instructor.id }) }
-  let(:questionnaire2) { FactoryBot.build(:questionnaire, { name: 'pqr', instructor_id: instructor.id }) }
+  let(:questionnaire3) { FactoryBot.build(:review_questionnaire, { id: 3, name: 'pqr', instructor_id: instructor.id }) }
   let(:question1) { questionnaire.questions.build(weight: 1, id: 1, seq: 1, txt: "que 1", question_type: "Scale", break_before: true) }
   let(:question2) { questionnaire.questions.build(weight: 10, id: 2, seq: 2, txt: "que 2", question_type: "Checkbox", break_before: true) }
 
@@ -17,7 +17,7 @@ describe Questionnaire, type: :model do
       # Act Assert
       expect(questionnaire.name).to eq('abc')
       expect(questionnaire1.name).to eq('xyz')
-      expect(questionnaire2.name).to eq('pqr')
+      expect(questionnaire3.name).to eq('pqr')
     end
 
     # Test ensures that the name field of the questionnaire is not blank
@@ -34,14 +34,15 @@ describe Questionnaire, type: :model do
       # Arrange Act
       questionnaire.save!
       questionnaire1.name = questionnaire.name
-      questionnaire2.name = questionnaire.name
-      instructor2 = Instructor.create(name: 'testinstructortwo', email: 'test2@test.com', full_name: 'Test Instructor 2', password: '123456', role: role)
+      questionnaire3.name = questionnaire.name
+      instructor2 = Instructor.create(name: 'testinstructortwo', email: 'test2@test.com', 
+full_name: 'Test Instructor 2', password: '123456', role: role)
       instructor2.save!
-      questionnaire2.instructor_id = instructor2.id
+      questionnaire3.instructor_id = instructor2.id
       # Assert
       expect(questionnaire).to be_valid
       expect(questionnaire1).not_to be_valid
-      expect(questionnaire2).to be_valid
+      expect(questionnaire3).to be_valid
     end
   end
 
@@ -158,6 +159,45 @@ describe Questionnaire, type: :model do
       expect(copied_questionnaire.questions.count).to eq(2)
       expect(copied_questionnaire.questions.first.txt).to eq(question1.txt)
       expect(copied_questionnaire.questions.second.txt).to eq(question2.txt)
+    end
+  end
+
+  # This is the beginning of the skeleton implementation
+  describe '#get_weighted_score' do
+    before :each do
+      @questionnaire = FactoryBot.create(:review_questionnaire, { instructor_id: instructor.id })
+      @assignment = FactoryBot.create(:assignment)
+    end
+    context 'when the assignment has a round' do
+      it 'computes the weighted score using the questionnaire symbol with the round appended' do
+        # Test case 1
+        # Arrange
+        FactoryBot.create(:assignment_questionnaire, { assignment_id: @assignment.id, questionnaire_id: @questionnaire.id, used_in_round: 1 })
+        scores = { "#{@questionnaire.symbol}#{1}".to_sym => { scores: { avg: 100 } } }
+        # Act Assert
+        expect(@questionnaire.get_weighted_score(@assignment, scores)).to eq(100)
+        # Test case 2
+        # Arrange
+        scores = { "#{@questionnaire.symbol}#{1}".to_sym => { scores: { avg: 75 } } }
+        # Act Assert
+        expect(@questionnaire.get_weighted_score(@assignment, scores)).to eq(75)
+      end
+    end
+
+    context 'when the assignment does not have a round' do
+      it 'computes the weighted score using the questionnaire symbol' do
+        # Test case 3
+        # Arrange
+        FactoryBot.create(:assignment_questionnaire, { assignment_id: @assignment.id, questionnaire_id: @questionnaire.id })
+        scores = { @questionnaire.symbol => { scores: { avg: 100 } } }
+        # Act Assert
+        expect(@questionnaire.get_weighted_score(@assignment, scores)).to eq(100)
+        # Test case 4
+        # Arrange
+        scores = { @questionnaire.symbol => { scores: { avg: 75 } } }
+        # Act Assert
+        expect(@questionnaire.get_weighted_score(@assignment, scores)).to eq(75)
+      end
     end
   end
 
