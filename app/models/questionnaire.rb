@@ -5,7 +5,8 @@ class Questionnaire < ApplicationRecord
   has_many :questions, dependent: :destroy # the collection of questions associated with this Questionnaire
   has_many :assignment_questionnaires, dependent: :destroy
   has_many :assignments, through: :assignment_questionnaires
-
+  # Exists in current implementation but not reimplementation
+  # has_one :questionnaire_node, foreign_key: 'node_object_id', dependent: :destroy, inverse_of: :questionnaire
 
   validates :name, presence: true
   validate :name_is_unique
@@ -16,12 +17,14 @@ class Questionnaire < ApplicationRecord
   def min_less_than_max
     # do we have values if not then do not attempt to validate this
     return unless min_question_score && max_question_score
+
     errors.add(:min_question_score, 'must be less than max question score') if min_question_score >= max_question_score
   end
 
   def name_is_unique
     # return if we do not have all the values to check
     return unless id && name && instructor_id
+
     # check for existing named questionnaire for this instructor that is not this questionnaire
     existing = Questionnaire.where('name = ? and instructor_id = ? and id <> ?', name, instructor_id, id)
     errors.add(:name, 'must be unique') if existing.present?
@@ -32,7 +35,7 @@ class Questionnaire < ApplicationRecord
     orig_questionnaire = Questionnaire.find(params[:id])
     questions = Question.where(questionnaire_id: params[:id])
     questionnaire = orig_questionnaire.dup
-    questionnaire.name = 'Copy of ' + orig_questionnaire.name
+    questionnaire.name = "Copy of #{orig_questionnaire.name}"
     questionnaire.created_at = Time.zone.now
     questionnaire.updated_at = Time.zone.now
     questionnaire.save!
@@ -52,7 +55,7 @@ class Questionnaire < ApplicationRecord
   end
 
   def as_json(options = {})
-      super(options.merge({
+    super(options.merge({
                             only: %i[id name private min_question_score max_question_score created_at updated_at questionnaire_type instructor_id],
                             include: {
                               instructor: { only: %i[name email fullname password role]
@@ -61,5 +64,22 @@ class Questionnaire < ApplicationRecord
                           })).tap do |hash|
         hash['instructor'] ||= { id: nil, name: nil }
       end
+  end
+
+  def get_weighted_score(assignment, scores)
+    compute_weighted_score(questionnaire_symbol(assignment), assignment, scores)
+  end
+
+  def compute_weighted_score(symbol, assignment, scores)
+    aq = assignment_questionnaires.find_by(assignment_id: assignment.id)
+    scores[symbol][:scores][:avg].nil? ? 0 : scores[symbol][:scores][:avg] * aq.questionnaire_weight / 100.0
+  end
+
+  private
+  def questionnaire_symbol(assignment)
+    # create symbol for "varying rubrics" feature
+    # Credit ChatGPT to help me get from the inline below to the used inline, the yield self allowed me the work I wanted to do
+    # AssignmentQuestionnaire.find_by(assignment_id: assignment.id, questionnaire_id: id)&.used_in_round ? "#{symbol}#{round}".to_sym : symbol
+    AssignmentQuestionnaire.find_by(assignment_id: assignment.id, questionnaire_id: id)&.used_in_round&.yield_self { |round| "#{symbol}#{round}".to_sym } || symbol
   end
 end
