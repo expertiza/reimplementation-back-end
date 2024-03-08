@@ -14,6 +14,7 @@ class ResponseMap < ApplicationRecord
     return Participant.find(self.reviewer_id).assignment
   end
   
+  
   def self.assessments_for(team)
     responses = []
     # stime = Time.now

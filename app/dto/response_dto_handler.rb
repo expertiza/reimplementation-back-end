@@ -5,6 +5,44 @@ class ResponseDtoHandler
   def initialize
     @res_service = ResponseService.new
   end
+  
+  def accept_content(response, params, action)
+    map_id = params[:id]
+    unless params[:map_id].nil?
+      map_id = params[:map_id]
+    end # pass map_id as a hidden field in the review form
+    
+    map = ResponseMap.find(map_id)
+    round = nil
+    if params[:review][:questionnaire_id]
+      questionnaire = Questionnaire.find(params[:review][:questionnaire_id])
+      round = params[:review][:round]
+    else
+      round = nil
+    end
+    is_submitted = (params[:isSubmit] == 'Yes')
+    # There could be multiple responses per round, when re-submission is enabled for that round.
+    # Hence we need to pick the latest response.
+    response = Response.where(map_id: map.id, round: round.to_i).order(created_at: :desc).first
+    if response.nil?
+      response = Response.create(map_id: map.id, additional_comment: params[:review][:comments],
+                                  round: round.to_i, is_submitted: is_submitted)
+    end
+    was_submitted = response.is_submitted
+    # ignore if autoupdate try to save when the response object is not yet created.s
+    response.update(additional_comment: params[:review][:comments], is_submitted: is_submitted)
+    response.response_map = map
+    # :version_num=>@version)
+    # Change the order for displaying questions for editing response views.
+    questions = @res_service.sort_questions(questionnaire.questions)
+    @res_service.create_answers(response, params, questions) if params[:responses]
+    return {
+      response => response,
+      questionnaire => questionnaire,
+      was_submitted => was_submitted
+      }
+    
+  end
 
   # new_response if a flag parameter indicating that if user is requesting a new rubric to fill
   # if true: we figure out which questionnaire to use based on current time and records in assignment_questionnaires table
@@ -24,11 +62,20 @@ class ResponseDtoHandler
     # if response_dto.map.contributor.present?
     # response_dto.contributor = response_dto.map.contributor
     # end
-    new_response ? @res_service.questionnaire_from_response_map(response_dto) : @res_service.questionnaire_from_response(response_dto)
+    # Todo : skipped
+    # new_response ? @res_service.questionnaire_from_response_map(response_dto) : @res_service.questionnaire_from_response(response_dto)
+
     response_dto.dropdown_or_scale = @res_service.set_dropdown_or_scale(response_dto)
-    response_dto.review_questions = @res_service.sort_questions(response_dto.questionnaire.questions)
+    # Todo: created new methods for @res_service.questionnaire_from_response_map
+    # Onlu the ReviewResponseMap class will be used for testing.
+    # response_dto.questionnaire = Questionnaire.find(1)
+    # response_dto.review_questions = @res_service.get_all_questions_by_questionnaire_id(response_dto.questionnaire.id)
+    response_dto.questionnaire = Questionnaire.find(1)
+    response_dto.review_questions = Question.where("questionnaire_id = ?", response_dto.questionnaire.id).order('seq')
+    # response_dto.review_questions = @res_service.sort_questions([response_dto.review_questions])
     response_dto.min = response_dto.questionnaire.min_question_score
     response_dto.max = response_dto.questionnaire.max_question_score
+    response_dto.current_round = 1
     # The new response is created here so that the controller has access to it in the new method
     # This response object is populated later in the new method
     if new_response
