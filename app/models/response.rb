@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 require 'response_service'
-class Response < ApplicationRecord
-  include ScorableHelper
-  include MetricHelper
+class Response < ResponseCalculator
+
 
   belongs_to :response_map, class_name: 'ResponseMap', foreign_key: 'map_id', inverse_of: false
   has_many :scores, class_name: 'Answer', foreign_key: 'response_id', dependent: :destroy, inverse_of: false
@@ -10,6 +9,14 @@ class Response < ApplicationRecord
   alias map response_map
   delegate :questionnaire, :reviewee, :reviewer, to: :map
 
+  def get_response_map_by_type(map_id)
+    response_map.type.classify.constantize(map_id)
+  end
+
+end
+class ResponseCalculator < ApplicationRecord
+  include ScorableHelper
+  include MetricHelper
 
   def aggregate_questionnaire_score
     # only count the scorable questions, only when the answer is not nil
@@ -40,5 +47,7 @@ class Response < ApplicationRecord
     questionnaire
   end
 end
+
+
 
 

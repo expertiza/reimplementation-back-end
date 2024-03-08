@@ -1,4 +1,4 @@
-class ResponseService
+class ResponseHelper
   include Scoring
 
   # sorts the questions passed by sequence number in ascending order
@@ -41,9 +41,7 @@ class ResponseService
       end
     end
   end
-  def sort_questions(questions)
-    questions.sort_by(&:seq)
-  end
+
 
   # This method is called within set_content when the new_response flag is set to False
   # This method gets the questionnaire directly from the response object since it is available.
@@ -131,7 +129,7 @@ class ResponseService
   end
   # only two types of responses more should be added
   def email(partial = 'new_submission', map_id)
-    
+
     defn = {}
     defn[:body] = {}
     defn[:body][:partial_name] = partial
@@ -146,5 +144,5 @@ class ResponseService
     defn[:subject] = 'A new submission is available for ' + parent.name
     response_map.email(defn, participant, parent)
   end
-  
+
 end

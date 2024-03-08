@@ -1,6 +1,6 @@
 require 'response_dto'
 require 'response_dto_handler'
-require 'response_service'
+require 'response_helper'
 class Api::V1::ResponsesController < ApplicationController
   
   
@@ -14,24 +14,25 @@ class Api::V1::ResponsesController < ApplicationController
     render json: response
   end
   def new
-    response_dto = ResponseDto.new
-    response_handler = ResponseDtoHandler.new
-    response_handler.set_content(true, "new", response_dto, params)
+    errors = []
+    response = Response.new
+    response_handler = ResponseDtoHandler.new(response)
+    response_handler.set_content(true, "new", params, errors)
     render json: response_dto
   end
 
   def create
     response = Response.new
-    res_service = ResponseService.new
-    response_handler = ResponseDtoHandler.new
-    result = response_handler.accept_content(response, params, "create")
+    res_helper = ResponseHelper.new
+    response_handler = ResponseDtoHandler.new(response)
+    result = response_handler.accept_content(params, "create")
     msg = 'Your response was successfully saved.'
     error_msg = ''
     
     # only notify if is_submitted changes from false to true
-    if (result[:response].response_map.is_a? ReviewResponseMap) && (!result[:was_submitted] && result[:response].is_submitted) && res_service.significant_difference?(result[:response])
-      res_service.notify_instructor_on_difference(result[:response])
-      res_service.email(result[:response].response_map.map_id)
+    if (result[:response].response_map.is_a? ReviewResponseMap) && (!result[:was_submitted] && result[:response].is_submitted) && res_helper.significant_difference?(result[:response])
+      res_helper.notify_instructor_on_difference(result[:response])
+      res_helper.email(result[:response].response_map.map_id)
     end
     # question1
     redirect_to controller: 'response', action: 'save', id: result[:response].response_map.map_id,
@@ -59,9 +60,9 @@ class Api::V1::ResponsesController < ApplicationController
     #   @largest_version_num = @sorted[0]
     # end
     # Added for E1973, team-based reviewing
-    response_dto =  ResponseDto.new
-    response_handler = ResponseDtoHandler.new
-    response_handler.set_content(false, "edit", response_dto, params)
+    response = Response.find(params[:id])
+    response_handler = ResponseDtoHandler.new(response)
+    response_dto = response_handler.set_content(false, "edit", params)
     if response_dto.map.team_reviewing_enabled
       response = Lock.get_lock(response_dto.response, current_user, Lock::DEFAULT_TIMEOUT)
       if response.nil?
@@ -83,9 +84,10 @@ class Api::V1::ResponsesController < ApplicationController
     render nothing: true unless action_allowed?
     msg = ''
     begin
-      res_service = ResponseService.new
-      response_handler = ResponseDtoHandler.new
+      res_helper = ResponseHelper.new
       response = Response.find(params[:id])
+      response_handler = ResponseDtoHandler.new(response)
+
       # the response to be updated
       # Locking functionality added for E1973, team-based reviewing
       if response.response_map.team_reviewing_enabled && !Lock.lock_between?(response, current_user)
@@ -94,10 +96,10 @@ class Api::V1::ResponsesController < ApplicationController
         return
       end
       
-      result = response_handler.accept_content(response, params, "update")
+      result = response_handler.accept_content(params, "update")
       
-      if (result[:response].response_map.is_a? ReviewResponseMap) && result[:response].is_submitted && res_service.significant_difference?(result[:response])
-        res_service.notify_instructor_on_difference(result[:response])
+      if (result[:response].response_map.is_a? ReviewResponseMap) && result[:response].is_submitted && res_helper.significant_difference?(result[:response])
+        res_helper.notify_instructor_on_difference(result[:response])
       end
       
     rescue StandardError
@@ -107,6 +109,20 @@ class Api::V1::ResponsesController < ApplicationController
     render json :result
   end
 
+  def new_feedback
+    review = Response.find(params[:id]) unless params[:id].nil?
+    if review
+      reviewer = AssignmentParticipant.where(user_id: session[:user].id, parent_id: review.map.assignment.id).first
+      map = FeedbackResponseMap.where(reviewed_object_id: review.id, reviewer_id: reviewer.id).first
+      if map.nil?
+        # if no feedback exists by dat user den only create for dat particular response/review
+        map = FeedbackResponseMap.create(reviewed_object_id: review.id, reviewer_id: reviewer.id, reviewee_id: review.map.reviewer.id)
+      end
+      redirect_to action: 'new', id: map.id, return: 'feedback'
+    else
+      redirect_back fallback_location: root_path
+    end
+  end
   private
   # E2218: Method to initialize response and response map for update, delete and view methods
   def set_response
