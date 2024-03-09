@@ -225,6 +225,48 @@ describe Questionnaire, type: :model do
         end
       end
     end
+    describe "#true_false_questions?" do
+      before :each do
+        @questionnaire = FactoryBot.create(:review_questionnaire, { instructor_id: instructor.id })
+      end
+      context "when there are true/false questions" do
+        it "returns true" do
+          # Test scenario 2: Single question with type 'Checkbox'
+          # Arrange
+          @questionnaire.questions.create(weight: 1, id: 1, seq: 1, txt: "que 1", question_type: "Checkbox", break_before: true)
+
+          # Act Assert
+          expect(@questionnaire.true_false_questions?).to eq(true)
+
+          # Test scenario 1: Multiple questions with type 'Checkbox'
+          # Arrange
+          @questionnaire.questions.create(weight: 1, id: 2, seq: 1, txt: "que 1", question_type: "Checkbox", break_before: true)
+          @questionnaire.questions.create(weight: 1, id: 3, seq: 1, txt: "que 1", question_type: "Checkbox", break_before: true)
+
+          # Act Assert
+          expect(@questionnaire.true_false_questions?).to eq(true)
+        end
+      end
+
+      context "when there are no true/false questions" do
+        it "returns false" do
+          # Test scenario 2: Single question with no 'Checkbox' type
+          # Arrange
+          @questionnaire.questions.create(weight: 1, id: 1, seq: 1, txt: "que 1", question_type: "Scale", break_before: true)
+
+          # Act Assert
+          expect(@questionnaire.true_false_questions?).to eq(false)
+
+          # Test scenario 1: Multiple questions with no 'Checkbox' type
+          # Arrange
+          @questionnaire.questions.create(weight: 1, id: 2, seq: 1, txt: "que 1", question_type: "Scale", break_before: true)
+          @questionnaire.questions.create(weight: 1, id: 3, seq: 1, txt: "que 1", question_type: "Scale", break_before: true)
+
+          # Act Assert
+          expect(@questionnaire.true_false_questions?).to eq(false)
+        end
+      end
+    end
 end
 
 =begin

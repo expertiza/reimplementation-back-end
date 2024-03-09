@@ -75,6 +75,12 @@ class Questionnaire < ApplicationRecord
     scores[symbol][:scores][:avg].nil? ? 0 : scores[symbol][:scores][:avg] * aq.questionnaire_weight / 100.0
   end
 
+  # Does this questionnaire contain true/false questions?
+  def true_false_questions?
+    questions.each { |question| return true if question.question_type == 'Checkbox' }
+    false
+  end
+
   private
   def questionnaire_symbol(assignment)
     # create symbol for "varying rubrics" feature

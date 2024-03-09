@@ -23,5 +23,18 @@ FactoryBot.define do
     questionnaire_weight { 100 }
     used_in_round { nil }
   end
+
+  factory :question, class: Question do
+    txt { 'Test question:' }
+    weight { 1 }
+    questionnaire { Questionnaire.first || association(:questionnaire) }
+    seq { 1.00 }
+    question_type { 'Checkbox' }
+    size { '70,1' }
+    alternatives { nil }
+    break_before { 1 }
+    max_label { nil }
+    min_label { nil }
+  end
 end
 
