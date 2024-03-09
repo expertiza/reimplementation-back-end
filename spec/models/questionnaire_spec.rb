@@ -118,24 +118,15 @@ describe Questionnaire, type: :model do
     it 'has many questions' do
       expect(questionnaire.questions).to include(question1, question2)
     end
-
-    # Test ensures that a questionnaire is not deleted when it has questions associated
-    it 'restricts deletion of questionnaire when it has associated questions' do
-      instructor.save!
-      questionnaire.save!
-      question1.save!
-      question2.save!
-      expect { questionnaire.destroy! }.to raise_error(ActiveRecord::DeleteRestrictionError)
-    end
   end
 
   describe '.copy_questionnaire_details' do
-    # Test ensures calls from the method copy_questionnaire_details
+# Test ensures calls from the method copy_questionnaire_details
     it 'allowing calls from copy_questionnaire_details' do
       allow(Questionnaire).to receive(:find).with('1').and_return(questionnaire)
       allow(Question).to receive(:where).with(questionnaire_id: '1').and_return([Question])
     end
-    
+
     # Test ensures creation of a copy of given questionnaire
     it 'creates a copy of the questionnaire' do
       instructor.save!
@@ -225,49 +216,161 @@ describe Questionnaire, type: :model do
         end
       end
     end
-    describe "#true_false_questions?" do
-      before :each do
-        @questionnaire = FactoryBot.create(:review_questionnaire, { instructor_id: instructor.id })
+  end
+  describe "#true_false_questions?" do
+    before :each do
+      @questionnaire = FactoryBot.create(:review_questionnaire, { instructor_id: instructor.id })
+    end
+    context "when there are true/false questions" do
+      it "returns true" do
+        # Test scenario 2: Single question with type 'Checkbox'
+        # Arrange
+        @questionnaire.questions.create(weight: 1, id: 1, seq: 1, txt: "que 1", question_type: "Checkbox", break_before: true)
+
+        # Act Assert
+        expect(@questionnaire.true_false_questions?).to eq(true)
+
+        # Test scenario 1: Multiple questions with type 'Checkbox'
+        # Arrange
+        @questionnaire.questions.create(weight: 1, id: 2, seq: 1, txt: "que 1", question_type: "Checkbox", break_before: true)
+        @questionnaire.questions.create(weight: 1, id: 3, seq: 1, txt: "que 1", question_type: "Checkbox", break_before: true)
+
+        # Act Assert
+        expect(@questionnaire.true_false_questions?).to eq(true)
       end
-      context "when there are true/false questions" do
-        it "returns true" do
-          # Test scenario 2: Single question with type 'Checkbox'
-          # Arrange
-          @questionnaire.questions.create(weight: 1, id: 1, seq: 1, txt: "que 1", question_type: "Checkbox", break_before: true)
+    end
 
-          # Act Assert
-          expect(@questionnaire.true_false_questions?).to eq(true)
+    context "when there are no true/false questions" do
+      it "returns false" do
+        # Test scenario 2: Single question with no 'Checkbox' type
+        # Arrange
+        @questionnaire.questions.create(weight: 1, id: 1, seq: 1, txt: "que 1", question_type: "Scale", break_before: true)
 
-          # Test scenario 1: Multiple questions with type 'Checkbox'
-          # Arrange
-          @questionnaire.questions.create(weight: 1, id: 2, seq: 1, txt: "que 1", question_type: "Checkbox", break_before: true)
-          @questionnaire.questions.create(weight: 1, id: 3, seq: 1, txt: "que 1", question_type: "Checkbox", break_before: true)
+        # Act Assert
+        expect(@questionnaire.true_false_questions?).to eq(false)
 
-          # Act Assert
-          expect(@questionnaire.true_false_questions?).to eq(true)
+        # Test scenario 1: Multiple questions with no 'Checkbox' type
+        # Arrange
+        @questionnaire.questions.create(weight: 1, id: 2, seq: 1, txt: "que 1", question_type: "Scale", break_before: true)
+        @questionnaire.questions.create(weight: 1, id: 3, seq: 1, txt: "que 1", question_type: "Scale", break_before: true)
+
+        # Act Assert
+        expect(@questionnaire.true_false_questions?).to eq(false)
+      end
+    end
+  end
+  describe "#delete" do
+    context "when there are assignments using the questionnaire" do
+      it "raises an error with a message asking if the user wants to delete the assignment" do
+        # Arrange
+        questionnaire_single_assignment = FactoryBot.create(:review_questionnaire, { instructor_id: instructor.id })
+        single_assignment = FactoryBot.create(:assignment)
+        FactoryBot.create(:assignment_questionnaire, { assignment_id: single_assignment.id, questionnaire_id: questionnaire_single_assignment.id})
+        questionnaire_multi_assignment = FactoryBot.create(:review_questionnaire, { instructor_id: instructor.id })
+        multi_assignment1 = FactoryBot.create(:assignment)
+        FactoryBot.create(:assignment_questionnaire, { assignment_id: multi_assignment1.id, questionnaire_id: questionnaire_multi_assignment.id})
+        multi_assignment2 = FactoryBot.create(:assignment)
+        FactoryBot.create(:assignment_questionnaire, { assignment_id: multi_assignment2.id, questionnaire_id: questionnaire_multi_assignment.id})
+
+        # Test scenario 1
+        # Given: There are assignments using the questionnaire
+        # When: The delete method is called
+        # Then: An error is raised with a message asking if the user wants to delete the assignment
+        expect { questionnaire_single_assignment.delete }.to raise_exception(RuntimeError) do |error|
+          expect(error.message).to match(/^The assignment .* uses this questionnaire/)
         end
-      end
 
-      context "when there are no true/false questions" do
-        it "returns false" do
-          # Test scenario 2: Single question with no 'Checkbox' type
-          # Arrange
-          @questionnaire.questions.create(weight: 1, id: 1, seq: 1, txt: "que 1", question_type: "Scale", break_before: true)
-
-          # Act Assert
-          expect(@questionnaire.true_false_questions?).to eq(false)
-
-          # Test scenario 1: Multiple questions with no 'Checkbox' type
-          # Arrange
-          @questionnaire.questions.create(weight: 1, id: 2, seq: 1, txt: "que 1", question_type: "Scale", break_before: true)
-          @questionnaire.questions.create(weight: 1, id: 3, seq: 1, txt: "que 1", question_type: "Scale", break_before: true)
-
-          # Act Assert
-          expect(@questionnaire.true_false_questions?).to eq(false)
+        # Test scenario 2
+        assignment1_pattern = /^The assignment #{Regexp.escape(multi_assignment1.name)} uses this questionnaire/
+        assignment2_pattern = /^The assignment #{Regexp.escape(multi_assignment2.name)} uses this questionnaire/
+        # Given: There are multiple assignments using the questionnaire
+        # When: The delete method is called
+        # Then: An error is raised for each assignment with a message asking if the user wants to delete the assignment
+        expect { questionnaire_multi_assignment.delete }.to raise_exception(RuntimeError) do |error|
+          expect(error.message).to match(assignment1_pattern)
+        end
+        multi_assignment1.destroy!
+        expect { questionnaire_multi_assignment.delete }.to raise_exception(RuntimeError) do |error|
+          expect(error.message).to match(assignment2_pattern)
         end
       end
     end
-end
+
+    context "when there are no assignments using the questionnaire" do
+      it "deletes all the questions associated with the questionnaire" do
+        # Test scenario 1
+        # Given: There are no assignments using the questionnaire
+        # When: The delete method is called
+        # Then: All the questions associated with the questionnaire are deleted
+        # Arrange
+        questionnaire_one_question = FactoryBot.create(:review_questionnaire, { instructor_id: instructor.id })
+        question1 = questionnaire_one_question.questions.build(weight: 1, id: 1, seq: 1, txt: "que 1", question_type: "Scale", break_before: true)
+        question1.save!
+
+        # Act
+        questionnaire_one_question.delete
+
+        # Assert
+        expect(Question.find_by(id: question1.id)).to be_nil
+
+        # Test scenario 2
+        # Given: There are no assignments using the questionnaire and there are multiple questions
+        # When: The delete method is called
+        # Then: All the questions associated with the questionnaire are deleted
+        # Arrange
+        questionnaire_multi_question = FactoryBot.create(:review_questionnaire, { instructor_id: instructor.id })
+        question1 = questionnaire_multi_question.questions.build(weight: 1, id: 1, seq: 1, txt: "que 1", question_type: "Scale", break_before: true)
+        question1.save!
+        question2 = questionnaire_multi_question.questions.build(weight: 1, id: 2, seq: 1, txt: "que 1", question_type: "Scale", break_before: true)
+        question2.save!
+
+        # Act
+        questionnaire_multi_question.delete
+
+        # Assert
+        expect(Question.find_by(id: question1.id)).to be_nil
+        expect(Question.find_by(id: question2.id)).to be_nil
+      end
+
+      it "deletes the questionnaire node if it exists" do
+        # Test scenario 1
+        # Given: There are no assignments using the questionnaire and the questionnaire node exists
+        # When: The delete method is called
+        # Then: The questionnaire node is deleted
+        questionnaire = FactoryBot.create(:review_questionnaire, { instructor_id: instructor.id })
+        q_node = QuestionnaireNode.create(parent_id: 0, node_object_id: questionnaire.id, type: 'QuestionnaireNode')
+        # Act
+        questionnaire.delete
+
+        # Assert
+        expect(QuestionnaireNode.find_by(id: q_node.id)).to be_nil
+
+        # Test scenario 2
+        # Given: There are no assignments using the questionnaire and the questionnaire node does not exist
+        # When: The delete method is called
+        # Then: No error is raised and the method completes successfully
+        questionnaire = FactoryBot.create(:review_questionnaire, { instructor_id: instructor.id })
+
+        # Act Assert
+        expect { questionnaire.delete }.not_to raise_error
+        expect(Questionnaire.find_by(id: questionnaire.id)).to be_nil
+      end
+
+      # The below tests were redundant
+      # it "deletes the questionnaire" do
+        # Test scenario 1
+        # Given: There are no assignments using the questionnaire
+        # When: The delete method is called
+        # Then: The questionnaire is deleted
+
+        # Test scenario 2
+        # Given: There are no assignments using the questionnaire and there are multiple questionnaires
+        # When: The delete method is called
+        # Then: The questionnaire is deleted
+        # end
+    end
+  end
+
 
 =begin
    # Here are the skeleton rspec tests to be implemented as well, or to replace existing duplicate tests

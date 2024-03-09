@@ -1,18 +1,31 @@
 class Questionnaire < ApplicationRecord
   # belongs_to :assignment, foreign_key: 'assignment_id', inverse_of: false
   belongs_to :instructor # creator of the questionnaire
-  before_destroy :check_for_question_associations # need to check before association or they will be destroyed and this will never evaluate
   has_many :questions, dependent: :destroy # the collection of questions associated with this Questionnaire
   has_many :assignment_questionnaires, dependent: :destroy
   has_many :assignments, through: :assignment_questionnaires
-  # Exists in current implementation but not reimplementation
-  # has_one :questionnaire_node, foreign_key: 'node_object_id', dependent: :destroy, inverse_of: :questionnaire
+  has_one :questionnaire_node, foreign_key: 'node_object_id', dependent: :destroy, inverse_of: :questionnaire
 
   validates :name, presence: true
   validate :name_is_unique
   validates :max_question_score, numericality: { only_integer: true, greater_than: 0 }, presence: true
   validates :min_question_score, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, presence: true
   validate :min_less_than_max
+
+  def delete
+    # Check to see if we go further? we cannot proceed if there are any assignments
+    assignment = assignments.first
+    if assignment
+      raise "The assignment #{assignment.name} uses this questionnaire. Do you want to <A href='../assignment/delete/#{assignment.id}'>delete</A> the assignment?"
+    end
+
+    questions.each(&:delete)
+
+    node = QuestionnaireNode.find_by(node_object_id: id)
+    node&.destroy
+
+    destroy
+  end
 
   def min_less_than_max
     # do we have values if not then do not attempt to validate this
@@ -45,13 +58,6 @@ class Questionnaire < ApplicationRecord
       new_question.save!
     end
     questionnaire
-  end
-
-  # Check_for_question_associations checks if questionnaire has associated questions or not
-  def check_for_question_associations
-    if questions.any?
-      raise ActiveRecord::DeleteRestrictionError.new("Cannot delete record because dependent questions exist")
-    end
   end
 
   def as_json(options = {})
