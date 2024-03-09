@@ -1,7 +1,6 @@
 class Questionnaire < ApplicationRecord
   # belongs_to :assignment, foreign_key: 'assignment_id', inverse_of: false
   belongs_to :instructor # creator of the questionnaire
-  before_destroy :check_for_question_associations # need to check before association or they will be destroyed and this will never evaluate
   has_many :questions, dependent: :destroy # the collection of questions associated with this Questionnaire
   has_many :assignment_questionnaires, dependent: :destroy
   has_many :assignments, through: :assignment_questionnaires
@@ -59,13 +58,6 @@ class Questionnaire < ApplicationRecord
       new_question.save!
     end
     questionnaire
-  end
-
-  # Check_for_question_associations checks if questionnaire has associated questions or not
-  def check_for_question_associations
-    if questions.any?
-      raise ActiveRecord::DeleteRestrictionError.new("Cannot delete record because dependent questions exist")
-    end
   end
 
   def as_json(options = {})
