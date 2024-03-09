@@ -145,4 +145,28 @@ class ResponseHelper
     response_map.email(defn, participant, parent)
   end
 
+  # This method initialize answers for the questions in the response
+  # Iterates over each questions and create corresponding answer for that
+  def init_answers(response_dto)
+    response_dto.review_questions.each do |q|
+      # it's unlikely that these answers exist, but in case the user refresh the browser some might have been inserted.
+      answer = Answer.where(response_id: response_dto.response.id, question_id: q.id).first
+      if answer.nil?
+        Answer.create(response_id: response_dto.response.id, question_id: q.id, answer: nil, comments: '')
+      end
+    end
+  end
+  # For each question in the list, starting with the first one, you update the comment and score
+  def create_answers(response_id, answer_dto)
+    answer_dto.each do |v|
+      score = Answer.where(response_id: response_id, question_id: v[:question_id]).first
+      score ||= Answer.create(response_id: response_id, question_id: v[:question_id], answer: v[:answer], comments: v[:comments])
+      score.update_attribute('answer', v[:answer])
+      score.update_attribute('comments', v[:comments])
+    end
+  end
+  def get_answers_for_response(response_id)
+    Answer.where("response_id=?", response_id)
+
+  end
 end

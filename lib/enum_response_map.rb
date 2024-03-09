@@ -1,9 +1,23 @@
 module EnumResponseMap
-  QUIZ_RESPONSE_MAP = "QuizResponseMap"
-  FEEDBACK_RESPONSE_MAP = 'FeedbackResponseMap'
-  META_REVIEW_RESPONSE_MAP = 'MetareviewResponseMap'
-  REVIEW_RESPONSE_MAP = 'ReviewResponseMap'
-  SELF_REVIEW_RESPONSE_MAP = 'SelfReviewResponseMap'
-  SURVEY_RESPONSE_MAP = 'SurveyResponseMap'
-  TEAMMATE_REVIEW_RESPONSE_MAP = 'TeammateReviewResponseMap'
+  def self.quiz_response_map
+    "QuizResponseMap"
+  end
+  def self.feedback_response_map
+    "FeedbackResponseMap"
+  end
+  def self.meta_review_response_map
+    "MetareviewResponseMap"
+  end
+  def self.review_response_map
+    "ReviewResponseMap"
+  end
+  def self.self_review_response_map
+    "SelfReviewResponseMap"
+  end
+  def self.survey_response_map
+    "SurveyResponseMap"
+  end
+  def self.teammate_review_response_map
+    "TeammateReviewResponseMap"
+  end
 end

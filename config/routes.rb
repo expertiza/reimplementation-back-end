@@ -76,6 +76,7 @@ Rails.application.routes.draw do
       resources :responses do 
         collection do
           get 'new/:map_id', action: :new
+          get ':id/edit', action: :edit
         end
       end
     end

@@ -5,9 +5,9 @@ class ResponseMap < ApplicationRecord
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'reviewed_object_id', inverse_of: false
 
   alias map_id id
-
-  def get_title
-    'Review'
+  
+  def survey?
+    false
   end
   # returns the assignment related to the response map
   def response_assignment

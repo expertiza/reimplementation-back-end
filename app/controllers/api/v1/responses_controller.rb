@@ -9,16 +9,29 @@ class Api::V1::ResponsesController < ApplicationController
     render json: @responses, status: :ok
   end
   def show
-    response = set_content(Action.SHOW, params)
+    response = Response.find(params[:id])
+    response_handler = ResponseDtoHandler.new(response)
+    response_dto = response_handler.set_content(false, "show", params)
     
-    render json: response
+    render json: response_dto
   end
   def new
     errors = []
+    res_helper = ResponseHelper.new
     response = Response.new
     response_handler = ResponseDtoHandler.new(response)
-    response_handler.set_content(true, "new", params, errors)
-    render json: response_dto
+    response_dto = response_handler.set_content(true, "new", params)
+    if response_dto.errors.length > 0
+      error_message = ""
+      response_dto.each {|e| error_message += e + "\n"}
+      render json: {error: error_message}, status: :ok
+    else
+      res_helper.init_answers(response_dto)
+      response_dto.answers = res_helper.get_answers_for_response(response_dto.response.id)
+      #render json: response_dto.as_json(include: {response: {include: :response_map}}), status: :ok
+      render json: response_dto.as_json, status: :ok
+    end
+    
   end
 
   def create
@@ -34,9 +47,8 @@ class Api::V1::ResponsesController < ApplicationController
       res_helper.notify_instructor_on_difference(result[:response])
       res_helper.email(result[:response].response_map.map_id)
     end
-    # question1
-    redirect_to controller: 'response', action: 'save', id: result[:response].response_map.map_id,
-                return: params.permit(:return)[:return], msg: msg, error_msg: error_msg, review: params.permit(:review)[:review], save_options: params.permit(:save_options)[:save_options]
+    render json: result
+    
   end
 
   
@@ -63,7 +75,7 @@ class Api::V1::ResponsesController < ApplicationController
     response = Response.find(params[:id])
     response_handler = ResponseDtoHandler.new(response)
     response_dto = response_handler.set_content(false, "edit", params)
-    if response_dto.map.team_reviewing_enabled
+    if response_dto.response.response_map.team_reviewing_enabled
       response = Lock.get_lock(response_dto.response, current_user, Lock::DEFAULT_TIMEOUT)
       if response.nil?
         # Replaced response_lock_action with below
@@ -72,17 +84,17 @@ class Api::V1::ResponsesController < ApplicationController
       end
     end
 
-    response_dto.modified_object = response.response_id
+    response_dto.modified_object = response.response_map.id
     response_dto.review_scores = []
     response_dto.review_questions.each do |question|
-      response_dto.review_scores << Answer.where(response_id: response.response_id, question_id: question.id).first
+      response_dto.review_scores << Answer.where(response_id: response.id, question_id: question.id).first
     end
     render json: response_dto
   end
   # Update the response and answers when student "edit" existing response
   def update
-    render nothing: true unless action_allowed?
-    msg = ''
+    # render nothing: true unless action_allowed?
+    # msg = ''
     begin
       res_helper = ResponseHelper.new
       response = Response.find(params[:id])
@@ -105,8 +117,7 @@ class Api::V1::ResponsesController < ApplicationController
     rescue StandardError
       msg = "Your response was not saved. Cause:189 #{$ERROR_INFO}"
     end
-    ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Your response was submitted: #{result[:response].is_submitted}", request)
-    render json :result
+    render json: result
   end
 
   def new_feedback

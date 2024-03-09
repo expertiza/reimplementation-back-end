@@ -295,6 +295,14 @@ answer1 = Answer.find_or_create_by(answer:1) do |answer|
     response_id: response1.id
   )
 end
+answer2 = Answer.find_or_create_by(answer:2) do |answer|
+  answer.update!(
+    answer:2,
+    comments:'Answer2 text',
+    question_id: question2.id,
+    response_id: response1.id
+  )
+end
 
 
 
