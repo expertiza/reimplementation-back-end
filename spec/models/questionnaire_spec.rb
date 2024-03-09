@@ -35,8 +35,7 @@ describe Questionnaire, type: :model do
       questionnaire.save!
       questionnaire1.name = questionnaire.name
       questionnaire3.name = questionnaire.name
-      instructor2 = Instructor.create(name: 'testinstructortwo', email: 'test2@test.com', 
-full_name: 'Test Instructor 2', password: '123456', role: role)
+      instructor2 = Instructor.create(name: 'testinstructortwo', email: 'test2@test.com', full_name: 'Test Instructor 2', password: '123456', role: role)
       instructor2.save!
       questionnaire3.instructor_id = instructor2.id
       # Assert
@@ -199,7 +198,76 @@ full_name: 'Test Instructor 2', password: '123456', role: role)
         expect(@questionnaire.get_weighted_score(@assignment, scores)).to eq(75)
       end
     end
-  end
+    describe "#compute_weighted_score" do
+      before :each do
+        @questionnaire = FactoryBot.create(:review_questionnaire, { instructor_id: instructor.id })
+        @assignment = FactoryBot.create(:assignment)
+        FactoryBot.create(:assignment_questionnaire, { assignment_id: @assignment.id, questionnaire_id: @questionnaire.id, questionnaire_weight: 50 })
+      end
+      context "when the average score is nil" do
+        it "returns 0" do
+          # Test scenario
+          # Arrange
+          scores = { @questionnaire.symbol => { scores: { avg: nil } } }
+
+          # Act Assert
+          expect(@questionnaire.compute_weighted_score(@questionnaire.symbol, @assignment, scores)).to eq(0)
+        end
+      end
+      context "when the average score is not nil" do
+        it "calculates the weighted score based on the questionnaire weight" do
+          # Test scenario
+          # Arrange
+          scores = { @questionnaire.symbol => { scores: { avg: 75 } } }
+
+          # Act Assert
+          expect(@questionnaire.compute_weighted_score(@questionnaire.symbol, @assignment, scores)).to eq(75 * 0.5)
+        end
+      end
+    end
+    describe "#true_false_questions?" do
+      before :each do
+        @questionnaire = FactoryBot.create(:review_questionnaire, { instructor_id: instructor.id })
+      end
+      context "when there are true/false questions" do
+        it "returns true" do
+          # Test scenario 2: Single question with type 'Checkbox'
+          # Arrange
+          @questionnaire.questions.create(weight: 1, id: 1, seq: 1, txt: "que 1", question_type: "Checkbox", break_before: true)
+
+          # Act Assert
+          expect(@questionnaire.true_false_questions?).to eq(true)
+
+          # Test scenario 1: Multiple questions with type 'Checkbox'
+          # Arrange
+          @questionnaire.questions.create(weight: 1, id: 2, seq: 1, txt: "que 1", question_type: "Checkbox", break_before: true)
+          @questionnaire.questions.create(weight: 1, id: 3, seq: 1, txt: "que 1", question_type: "Checkbox", break_before: true)
+
+          # Act Assert
+          expect(@questionnaire.true_false_questions?).to eq(true)
+        end
+      end
+
+      context "when there are no true/false questions" do
+        it "returns false" do
+          # Test scenario 2: Single question with no 'Checkbox' type
+          # Arrange
+          @questionnaire.questions.create(weight: 1, id: 1, seq: 1, txt: "que 1", question_type: "Scale", break_before: true)
+
+          # Act Assert
+          expect(@questionnaire.true_false_questions?).to eq(false)
+
+          # Test scenario 1: Multiple questions with no 'Checkbox' type
+          # Arrange
+          @questionnaire.questions.create(weight: 1, id: 2, seq: 1, txt: "que 1", question_type: "Scale", break_before: true)
+          @questionnaire.questions.create(weight: 1, id: 3, seq: 1, txt: "que 1", question_type: "Scale", break_before: true)
+
+          # Act Assert
+          expect(@questionnaire.true_false_questions?).to eq(false)
+        end
+      end
+    end
+end
 
 =begin
    # Here are the skeleton rspec tests to be implemented as well, or to replace existing duplicate tests
