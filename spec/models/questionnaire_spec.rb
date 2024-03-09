@@ -267,6 +267,59 @@ describe Questionnaire, type: :model do
         end
       end
     end
+    describe "#delete" do
+      context "when there are assignments using the questionnaire" do
+        it "raises an error with a message asking if the user wants to delete the assignment" do
+          # Test scenario 1
+          # Given: There are assignments using the questionnaire
+          # When: The delete method is called
+          # Then: An error is raised with a message asking if the user wants to delete the assignment
+
+          # Test scenario 2
+          # Given: There are multiple assignments using the questionnaire
+          # When: The delete method is called
+          # Then: An error is raised for each assignment with a message asking if the user wants to delete the assignment
+        end
+      end
+
+      context "when there are no assignments using the questionnaire" do
+        it "deletes all the questions associated with the questionnaire" do
+          # Test scenario 1
+          # Given: There are no assignments using the questionnaire
+          # When: The delete method is called
+          # Then: All the questions associated with the questionnaire are deleted
+
+          # Test scenario 2
+          # Given: There are no assignments using the questionnaire and there are multiple questions
+          # When: The delete method is called
+          # Then: All the questions associated with the questionnaire are deleted
+        end
+
+        it "deletes the questionnaire node if it exists" do
+          # Test scenario 1
+          # Given: There are no assignments using the questionnaire and the questionnaire node exists
+          # When: The delete method is called
+          # Then: The questionnaire node is deleted
+
+          # Test scenario 2
+          # Given: There are no assignments using the questionnaire and the questionnaire node does not exist
+          # When: The delete method is called
+          # Then: No error is raised and the method completes successfully
+        end
+
+        it "deletes the questionnaire" do
+          # Test scenario 1
+          # Given: There are no assignments using the questionnaire
+          # When: The delete method is called
+          # Then: The questionnaire is deleted
+
+          # Test scenario 2
+          # Given: There are no assignments using the questionnaire and there are multiple questionnaires
+          # When: The delete method is called
+          # Then: The questionnaire is deleted
+        end
+      end
+    end
 end
 
 =begin
