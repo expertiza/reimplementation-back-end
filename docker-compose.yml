@@ -16,6 +16,7 @@ services:
       - db
       - redis
 
+
   db:
     image: mysql:8.0
     restart: always
