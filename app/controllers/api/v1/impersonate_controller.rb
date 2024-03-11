@@ -1,9 +1,9 @@
 class Api::V1::ImpersonateController < ApplicationController
   # before_action :check_if_input_is_valid
 
-  def user_name_list
-  #   Logic For Fetching User List
-  render json: { message: "Successfully Fetched User List!", userList:[] }, status: :ok
+  def get_users_list
+    users = current_user.get_available_users(params[:user_name])
+    render json: { message: "Successfully Fetched User List!", userList:users, success:true }, status: :ok
   end
 
   def impersonate
