@@ -1,3 +1,38 @@
+class ResponseHandler
+  attr_reader :response, :res_helper, :errors
+  def initialize(response)
+    @res_helper = ResponseHelper.new
+    @response = response
+    @errors = []
+  end
+
+  def accept_content(params, action)
+    if action == 'create'
+      map_id = params[:map_id]
+    else
+      map_id = @response.response_map.id
+    end
+    @response.response_map = ResponseMap.find(map_id)
+    if @response.response_map.nil?
+      errors.push("Not found response map")
+    else
+      @response.round = @response.round || params[:response][:round]
+      @response.additional_comment = params[:response][:comments] || @response.additional_comment
+      @response.is_submitted = params[:response][:is_submitted] || @response.is_submitted
+      @response.version_num = params[:response][:version_num] || @response.version_num
+    end
+  end
+
+  def set_content(params, action)
+    @response.response_map = ResponseMap.find(@response.map_id)
+    if @response.response_map.nil?
+      @errors.push(' Not found response map')
+    else
+      @response
+    end
+  end
+
+end
 class ResponseHelper
   include Scoring
 
@@ -199,6 +234,7 @@ class ResponseHelper
         answers.push(answer)
       end
     end
+    answers
   end
 
 end
