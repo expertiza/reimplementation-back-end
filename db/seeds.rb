@@ -221,7 +221,7 @@ assignment_questionnaire1 = AssignmentQuestionnaire.find_or_create_by(id:1) do |
 end
 question1 = Question.find_or_create_by(txt:'This is a question 1') do |question|
   question.update!(
-    question_type:'qustion_type1',
+    question_type:'TextField',
     max_label: 'max_label1',
     min_label: 'min_label1',
     txt: 'This is a question 1',
@@ -233,7 +233,7 @@ question1 = Question.find_or_create_by(txt:'This is a question 1') do |question|
 end
 question2 = Question.find_or_create_by(txt:'This is a question 2') do |question|
   question.update!(
-    question_type:'qustion_type2',
+    question_type:'Checkbox',
     max_label: 'max_label2',
     min_label: 'min_label2',
     txt: 'This is a question 2',
@@ -243,7 +243,44 @@ question2 = Question.find_or_create_by(txt:'This is a question 2') do |question|
     questionnaire: questionnaire1
   )
 end
-questions = [question1, question2]
+question3 = Question.find_or_create_by(txt:'This is a question 3') do |question|
+  question.update!(
+    question_type:'Criterion',
+    max_label: 'max_label3',
+    min_label: 'min_label3',
+    txt: 'This is a question 3',
+    weight: 5,
+    seq: 3.0,
+    break_before: 2,
+    questionnaire: questionnaire1
+  )
+end
+question4 = Question.find_or_create_by(txt:'This is a question 4') do |question|
+  question.update!(
+    question_type:'Dropdown',
+    max_label: 'max_label4',
+    min_label: 'min_label4',
+    txt: 'This is a question 4',
+    weight: 5,
+    seq: 4.0,
+    break_before: 2,
+    questionnaire: questionnaire1
+  )
+end
+question5 = Question.find_or_create_by(txt:'This is a question 5') do |question|
+  question.update!(
+    question_type:'TextArea',
+    max_label: 'max_label5',
+    min_label: 'min_label5',
+    txt: 'This is a question 5',
+    weight: 5,
+    seq: 5.0,
+    break_before: 2,
+    questionnaire: questionnaire1
+  )
+end
+
+questions = [question1, question2, question3,question4,question5]
 response_map1 = ResponseMap.find_or_create_by(reviewer_id:participant1.id) do |review_response_map|
   review_response_map.update!(
     reviewed_object_id:assignment1.id,

@@ -12,7 +12,7 @@ class Response < ApplicationRecord
   delegate :questionnaire, :reviewee, :reviewer, to: :map
 
   def get_response_map_by_type(map_id)
-    if response_map.present? && response_map.type.present?
+    if response_map.type.present?
       response_map.type.classify.constantize(map_id)
     end
   end

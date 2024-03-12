@@ -5,7 +5,7 @@ class ResponseSerializer < ActiveModel::Serializer
 
   class ResponseMapSerializer < ActiveModel::Serializer
     attributes :id, :reviewed_object_id, :reviewer_id, :reviewee_id, :type, :calibrate_to, :team_reviewing_enabled
-    attribute :title
+    # attribute :title
     # def title
     #   if object.response_map.present? && object.response_map.get_title.present?
     #     object.response_map.get_title

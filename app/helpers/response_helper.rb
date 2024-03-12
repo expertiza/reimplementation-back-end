@@ -6,7 +6,7 @@ class ResponseHelper
     questions.sort_by(&:seq)
   end
   # checks if the questionnaire is nil and opens drop down or rating accordingly
-  def set_dropdown_or_scale(response_dto)
+  def set_dropdown_or_scale(response)
     # todo: create a dropdown column to AssignmentQuestionnaire
     # use_dropdown = AssignmentQuestionnaire.where(assignment_id: response_dto.assignment.try(:id),
     #                                              questionnaire_id: response_dto.questionnaire.try(:id))
@@ -19,12 +19,13 @@ class ResponseHelper
   # This method is called within set_content and when the new_response flag is set to true
   # Depending on what type of response map corresponds to this response, the method gets the reference to the proper questionnaire
   # This is called after assign_instance_vars in the new method
-  def questionnaire_from_response_map(response_dto)
-    case response_dto.map.type
+  def questionnaire_from_response_map(response)
+    response_map = response.response_map
+    case response_map.type
     when 'ReviewResponseMap', 'SelfReviewResponseMap'
-      reviewees_topic = SignedUpTeam.topic_id_by_team_id(@contributor.id)
-      @current_round = @assignment.number_of_current_round(reviewees_topic)
-      @questionnaire = @map.questionnaire(@current_round, reviewees_topic)
+      reviewees_topic = SignedUpTeam.topic_id_by_team_id(response_map.reviewee_id)
+      current_round = response_map.assignment.number_of_current_round(reviewees_topic)
+      questionnaire = response_map.questionnaire(response.round, reviewees_topic)
     when
     'MetareviewResponseMap',
       'TeammateReviewResponseMap',
@@ -33,11 +34,11 @@ class ResponseHelper
       'AssignmentSurveyResponseMap',
       'GlobalSurveyResponseMap',
       'BookmarkRatingResponseMap'
-      if response_dto.assignment.duty_based_assignment?
+      if response_map.assignment.duty_based_assignment?
         # E2147 : gets questionnaire of a particular duty in that assignment rather than generic questionnaire
-        response_dto.questionnaire = response_dto.map.questionnaire_by_duty(response_dto.map.reviewee.duty_id)
+        questionnaire = response_map.questionnaire_by_duty(response_map.reviewee.duty_id)
       else
-        response_dto.questionnaire = response_dto.map.questionnaire
+        questionnaire = response_map.questionnaire
       end
     end
   end
@@ -45,11 +46,11 @@ class ResponseHelper
 
   # This method is called within set_content when the new_response flag is set to False
   # This method gets the questionnaire directly from the response object since it is available.
-  def questionnaire_from_response(response_dto)
+  def questionnaire_from_response(response)
     # if user is not filling a new rubric, the response_dtoresponse object should be available.
     # we can find the questionnaire from the question_id in answers
-    answer = response_dto.response.scores.first
-    response_dto.questionnaire = response_dto.response.questionnaire_by_answer(answer)
+    answer = response.scores.first
+    questionnaire = response.questionnaire_by_answer(answer)
   end
   def score(params)
     Class.new.extend(Scoring).assessment_score(params)
@@ -70,15 +71,6 @@ class ResponseHelper
       questionnaire = Question.find(answer.question_id).questionnaire
     end
     questionnaire
-  end
-  # For each question in the list, starting with the first one, you update the comment and score
-  def create_answers(response, params, questions)
-    params[:responses].each_pair do |k, v|
-      score = Answer.where(response_id: response.id, question_id: questions[k.to_i].id).first
-      score ||= Answer.create(response_id: response.id, question_id: questions[k.to_i].id, answer: v[:score], comments: v[:comment])
-      score.update_attribute('answer', v[:score])
-      score.update_attribute('comments', v[:comment])
-    end
   end
   def notify_instructor_on_difference(response)
     response_map = response.map
@@ -147,26 +139,66 @@ class ResponseHelper
 
   # This method initialize answers for the questions in the response
   # Iterates over each questions and create corresponding answer for that
-  def init_answers(response_dto)
-    response_dto.review_questions.each do |q|
+  def init_answers(response, questions)
+    answers = []
+    questions.each do |q|
       # it's unlikely that these answers exist, but in case the user refresh the browser some might have been inserted.
-      answer = Answer.where(response_id: response_dto.response.id, question_id: q.id).first
+      answer = Answer.where(response_id: (response.id || 0), question_id: q.id).first
       if answer.nil?
-        Answer.create(response_id: response_dto.response.id, question_id: q.id, answer: nil, comments: '')
+        answer = Answer.new(response_id: (response.id || 0), question_id: q.id, answer: nil, comments: '')
       end
+      answers.push(answer)
     end
+    answers
   end
   # For each question in the list, starting with the first one, you update the comment and score
-  def create_answers(response_id, answer_dto)
-    answer_dto.each do |v|
+  def create_answers(response_id, answers)
+    answers.each do |v|
       score = Answer.where(response_id: response_id, question_id: v[:question_id]).first
       score ||= Answer.create(response_id: response_id, question_id: v[:question_id], answer: v[:answer], comments: v[:comments])
       score.update_attribute('answer', v[:answer])
       score.update_attribute('comments', v[:comments])
     end
   end
-  def get_answers_for_response(response_id)
-    Answer.where("response_id=?", response_id)
-
+  def question_with_answers(questions, response)
+    questions_with_answers = []
+    questions.each do |question|
+      answer = Answer.where("response_id = ? and question_id = ?", response.id, question.id)
+      if answer.nil?
+        answer = Answer.new
+        answer.question_id = question.id
+        answer.response_id = response.id
+      end
+      question_with_answer = {
+        question => question,
+        answer => answer
+      }
+      questions_with_answers.push(question_with_answer)
+    end
+    questions_with_answers
   end
+  def get_questions(response)
+    #todo
+    #questionnaire = questionnaire_from_response_map(response)
+    questionnaire = Questionnaire.find(1)
+    questionnaire.questions
+    # review_questions = sort_questions(questionnaire.questions)
+    # question_with_answers(review_questions, response)
+  end
+  def get_answers(response, questions)
+    answers = []
+    questions = sort_questions(questions)
+    questions.each do |question|
+      answer = nil
+      if response.id.present?
+        answer = Answer.where("response_id = ? and question_id = ?", response.id, question.id)
+      end
+      if answer.nil?
+        answer = Answer.new
+        answer.question_id = question.id
+        answers.push(answer)
+      end
+    end
+  end
+
 end
