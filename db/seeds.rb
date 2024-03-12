@@ -170,40 +170,12 @@ team1 = Team.find_or_create_by(id: 1) do |team|
     parent_id: assignment1.id
   )
 end
-team2 = Team.find_or_create_by(id: 1) do |team|
+team2 = Team.find_or_create_by(id: 2) do |team|
   team.update!(
-    id: 1,
+    id: 2,
     name:'Team2',
     parent_id: assignment1.id
   )
-end
-team_user1 = TeamsUser.find_or_create_by(id: 1) do |teamsUser|
-  teamsUser.update!(
-    id: 1,
-    team_id: team1.id,
-    user_id: student1.id,
-  )
-end
-team_user2 = TeamsUser.find_or_create_by(id: 2) do |teamsUser|
-  teamsUser.update!(
-    id: 2,
-    team_id: team1.id,
-    user_id: student2.id
-    )
-end
-team_user3 = TeamsUser.find_or_create_by(id: 3) do |teamsUser|
-  teamsUser.update!(
-    id: 3,
-    team_id: team2.id,
-    user_id: student3.id
-    )
-end
-team_user4 = TeamsUser.find_or_create_by(id: 4) do |teamsUser|
-  teamsUser.update!(
-    id: 4,
-    team_id: team2.id,
-    user_id: student4.id
-    )
 end
 
 participant1 = Participant.find_or_create_by(user:student1) do |participant|
@@ -276,7 +248,7 @@ response_map1 = ResponseMap.find_or_create_by(reviewer_id:participant1.id) do |r
   review_response_map.update!(
     reviewed_object_id:assignment1.id,
     reviewer_id:participant1.id,
-    reviewee_id:team2,
+    reviewee_id:team2.id,
     type: 'ReviewResponseMap'
     )
 end

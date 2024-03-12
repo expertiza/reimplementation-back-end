@@ -1,121 +1,37 @@
 require 'response_helper'
 
 class ResponseDtoHandler
-
   attr_reader :response, :res_helper
-  include EnumResponseMap
   def initialize(response)
     @res_helper = ResponseHelper.new
     @response = response
   end
   
   def accept_content(params, action)
-    map_id = params[:id]
-    unless params[:map_id].nil?
+    if @response.response_map.id.present?
+      map_id = @response.response_map.id
+    else
       map_id = params[:map_id]
-    end # pass map_id as a hidden field in the review form
-    
-    map = ResponseMap.find(map_id)
-    round = nil
-    if params[:review][:questionnaire_id]
-      questionnaire = Questionnaire.find(params[:review][:questionnaire_id])
-      round = params[:review][:round]
+    end
+    @response.response_map = ResponseMap.find(map_id)
+    if @response.response_map.nil
+      errors.push("Not found response map")
     else
-      round = nil
+      @response.round = params[:response][:round]
+      @response.comments = params[:response][:comments]
+      @response.isSubmit = params[:response][:is_Submit]
+      @response.version_num = params[:response][:version_num]
+      @res_helper.create_answers(@response.id, params[:answers]) if params[:answers]
     end
-    is_submitted = (params[:isSubmit] == 'Yes')
-    # There could be multiple responses per round, when re-submission is enabled for that round.
-    # Hence we need to pick the latest response.
-    @response = Response.where(map_id: map.id, round: round.to_i).order(created_at: :desc).first
-    if @response.nil?
-      @response = Response.create(map_id: map.id, additional_comment: params[:review][:comments],
-                                  round: round.to_i, is_submitted: is_submitted)
-    end
-    was_submitted = @response.is_submitted
-    # ignore if autoupdate try to save when the response object is not yet created.s
-    @response.update(additional_comment: params[:review][:comments], is_submitted: is_submitted)
-    @response.response_map = map
-    # :version_num=>@version)
-    # Change the order for displaying questions for editing response views.
-    #questions = @res_helper.sort_questions(questionnaire.questions)
-    @res_helper.create_answers(@response.id, params[:answers]) if params[:answers]
-    result = {
-      response: @response,
-      questionnaire: questionnaire,
-      was_submitted: was_submitted
-      }
   end
 
-  # new_response if a flag parameter indicating that if user is requesting a new rubric to fill
-  # if true: we figure out which questionnaire to use based on current time and records in assignment_questionnaires table
-  # e.g. student click "Begin" or "Update" to start filling out a rubric for others' work
-  # if false: we figure out which questionnaire to display base on response_dto.response object
-  # e.g. student click "Edit" or "View"
-  def set_content(new_response = false, action, params)
-    response_dto = ResponseDto.new
-    response_dto.errors = []
-    assign_action_parameters(action, response_dto, params)
-    if response_dto.errors.length == 0
-      response_dto.title = response_dto.response.response_map.get_title
-
-      if response_dto.response.response_map.survey?
-        response_dto.survey_parent = response_dto.response.response_map.survey_parent
-      else
-        response_dto.assignment = response_dto.response.response_map.assignment
-      end
-      response_dto.participant = response_dto.response.response_map.reviewer
-      if response_dto.response.response_map.contributor.present?
-        response_dto.contributor = response_dto.response_map.contributor
-      end
-      # Todo : skipped, Get questionnaire for new and edit
-      # response_dto.questionnaire = response_dto.response.response_map.get_questionnaire
-      # response_dto.questionnaire = Questionnaire.find(1)
-      # response_dto.review_questions = @res_helper.get_all_questions_by_questionnaire_id(response_dto.questionnaire.id)
-
-      response_dto.questionnaire = Questionnaire.find(1)
-      response_dto.review_questions = Question.where("questionnaire_id = ?", response_dto.questionnaire.id).order('seq')
-      response_dto.min = response_dto.questionnaire.min_question_score
-      response_dto.max = response_dto.questionnaire.max_question_score
-      response_dto.current_round = 1
-      # The new response is created here so that the controller has access to it in the new method
-      # This response object is populated later in the new method
-      # if new_response
-      #   #Sometimes the response is already created and the new controller is called again (page refresh)
-      #   # response_dto.response = Response.where(map_id: response_dto.response.response_map.id, round: response_dto.current_round.to_i).order(updated_at: :desc).first
-      #   # if response_dto.response.nil?
-      #   #   response_dto.response = Response.create(map_id: response_dto.response.response_map.id, additional_comment: '', round: response_dto.current_round.to_i, is_submitted: 0)
-      #   # end
-      # end
-      response_dto.answers = @res_helper.get_answers_for_response(response_dto.response.id)  
-    end
-      return response_dto
-  end
-  # This method is called within the Edit or New actions
-  # It will create references to the objects that the controller will need when a user creates a new response or edits an existing one.
-  def assign_action_parameters(action, response_dto, params)
-    response_dto.header = action
-    if action == 'new'
-      response_dto.response = @response
-      response_dto.map = ResponseMap.find(params[:map_id])
-      if response_dto.map.nil?
-        response_dto.errors.push(' Not found response map')
-      end
-      response_dto.response.response_map = response_dto.map
-      response_dto.modified_object = response_dto.response.response_map.id
+  def set_content(params, action)
+    @response.response_map = ResponseMap.find(@response.map_id)
+    if @response.response_map.nil?
+      @errors.push(' Not found response map')
     else
-      if @response.present?
-        response_dto.response = @response
-        response_dto.map = ResponseMap.find(@response.map_id)
-        response_dto.response.response_map = response_dto.map
-        if response_dto.map.contributor.present?
-          response_dto.contributor = response_dto.map.contributor
-        end
-      else
-        response_dto.errors.push(' Not found response')
-      end
-    end
-    if params[:return].present?
-      response_dto.return = params[:return]
+      @response
     end
   end
+
 end
