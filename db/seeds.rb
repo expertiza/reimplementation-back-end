@@ -177,29 +177,94 @@ team2 = Team.find_or_create_by(id: 2) do |team|
     parent_id: assignment1.id
   )
 end
-
+teams_user1 = TeamsUser.find_or_create_by(id:1) do |teams_user|
+  teams_user.update!(
+    id: 1,
+    team_id:team1.id,
+    user_id:student1.id
+  )
+end
+teams_user2 = TeamsUser.find_or_create_by(id:2) do |teams_user|
+  teams_user.update!(
+    id: 2,
+    team_id:team1.id,
+    user_id:student2.id
+  )
+end
+teams_user3 = TeamsUser.find_or_create_by(id:3) do |teams_user|
+  teams_user.update!(
+    id: 3,
+    team_id:team2.id,
+    user_id:student3.id
+  )
+end
+teams_user4 = TeamsUser.find_or_create_by(id:4) do |teams_user|
+  teams_user.update!(
+    id: 4,
+    team_id:team2.id,
+    user_id:student4.id
+  )
+end
+sign_up_topic1 = SignUpTopic.find_or_create_by(id:1) do |sign_up_topic|
+  sign_up_topic.update!(
+    id:1,
+    topic_name: "Team Refactoring tools",
+    assignment_id:1,
+    category:"Refactoring",
+    topic_identifier: "TR1",
+    max_choosers: 2,
+  )
+end
+sign_up_topic2 = SignUpTopic.find_or_create_by(id:2) do |sign_up_topic|
+  sign_up_topic.update!(
+    id:2,
+    topic_name: "Team Applying refactoring",
+    assignment_id:1,
+    category:"Refactoring",
+    topic_identifier: "TR2",
+    max_choosers: 2,
+  )
+end
+signed_up_team1 = SignedUpTeam.find_or_create_by(id:1) do |signed_up_team|
+  signed_up_team.update!(
+    id:1,
+    topic_id: sign_up_topic1.id,
+    team_id: team1.id,
+  )
+end
+signed_up_team2 = SignedUpTeam.find_or_create_by(id:2) do |signed_up_team|
+  signed_up_team.update!(
+    id:2,
+    topic_id: sign_up_topic2.id,
+    team_id: team2.id,
+    )
+end
 participant1 = Participant.find_or_create_by(user:student1) do |participant|
   participant.update!(
     user:student1,
-    assignment:assignment1
+    assignment:assignment1,
+    parent_id:assignment1.id
   )
 end
 participant2 = Participant.find_or_create_by(user:student2) do |participant|
   participant.update!(
     user:student2,
-    assignment:assignment1
+    assignment:assignment1,
+    parent_id:assignment1.id
   )
 end
 participant3 = Participant.find_or_create_by(user:student3) do |participant|
   participant.update!(
     user:student3,
-    assignment:assignment1
+    assignment:assignment1,
+    parent_id:assignment1.id
   )
 end
 participant4 = Participant.find_or_create_by(user:student4) do |participant|
   participant.update!(
     user:student4,
-    assignment:assignment1
+    assignment:assignment1,
+    parent_id:assignment1.id
   )
 end
 questionnaire1 = Questionnaire.find_or_create_by(name: 'questionnaire 1') do |questionnaire|

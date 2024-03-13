@@ -43,9 +43,12 @@ class Api::V1::ResponsesController < ApplicationController
       if response_handler.errors.length == 0
         # response.save
         # res_helper.create_answers(response.id, params[:answers]) if params[:answers]
+        questions = res_helper.get_questions(response)
+        response.scores = res_helper.get_answers(response, questions)
         if is_submitted
           res_helper.notify_instructor_on_difference(response_handler.response)
-          res_helper.email(response_handler.response.response_map.map_id)
+          # todo : updated email method name to notify_peer_review_ready
+          res_helper.notify_peer_review_ready(response_handler.response.response_map.map_id)
           render json: 'Your response was successfully saved.', status: :ok
         else
           error_msg = response_handler.errors.join('\n')

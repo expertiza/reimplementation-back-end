@@ -109,32 +109,53 @@ class ResponseHelper
   end
   def notify_instructor_on_difference(response)
     response_map = response.map
-    reviewer_participant_id = response_map.reviewer_id
-    reviewer_participant = AssignmentParticipant.find(reviewer_participant_id)
-    reviewer_name = User.find(reviewer_participant.user_id).full_name
+    reviewer = AssignmentParticipant.includes(:user, :assignment).where("id=?", response_map.reviewer_id).first
+    reviewee = AssignmentParticipant.includes(:user, :assignment).where("id=?", response_map.reviewee_id).first
+    assignment = reviewee.assignment
+    instructor = User.find(assignment.id)
     # todo
-    # reviewee_team = AssignmentTeam.find(response_map.reviewee_id)
-    reviewee_team = Team.find(response_map.reviewee_id)
-    # todo
-    # reviewee_participant = reviewee_team.participants.first # for team assignment, use the first member's name.
-    # reviewee_participant = users.where(parent_id: parent_id || current_user_id).flat_map(&:participants)
-    reviewee_participant = users.where(parent_id: parent_id).flat_map(&:participants)
-    reviewee_name = User.find(reviewee_participant.user_id).full_name
-    assignment = Assignment.find(reviewer_participant.parent_id)
+    # To simplify the process and decouple it from other classes, retrieving all necessary information for emailing in this class.
     Mailer.notify_grade_conflict_message(
-      to: assignment.instructor.email,
+      to: instructor.email,
       subject: 'Expertiza Notification: A review score is outside the acceptable range',
       body: {
-        reviewer_name: reviewer_name,
+        reviewer_name: reviewer.user.full_name,
         type: 'review',
-        reviewee_name: reviewee_name,
-        new_score: aggregate_questionnaire_score.to_f / maximum_score,
+        reviewee_name: reviewee.user.full_name,
+        new_score: aggregate_questionnaire_score(response).to_f / maximum_score(response),
         assignment: assignment,
-        conflicting_response_url: 'https://expertiza.ncsu.edu/response/view?id=' + response_id.to_s,
-        summary_url: 'https://expertiza.ncsu.edu/grades/view_team?id=' + reviewee_participant.id.to_s,
+        conflicting_response_url: 'https://expertiza.ncsu.edu/response/view?id=' + response.id.to_s,
+        summary_url: 'https://expertiza.ncsu.edu/grades/view_team?id=' + response_map.reviewee_id.to_s,
         assignment_edit_url: 'https://expertiza.ncsu.edu/assignments/' + assignment.id.to_s + '/edit'
       }
     ).deliver_now
+  end
+  def aggregate_questionnaire_score(response)
+    # only count the scorable questions, only when the answer is not nil
+    # we accept nil as answer for scorable questions, and they will not be counted towards the total score
+    sum = 0
+    response.scores.each do |s|
+      question = Question.find(s.question_id)
+      # For quiz responses, the weights will be 1 or 0, depending on if correct
+      sum += s.answer * question.weight unless s.answer.nil? || !question.is_a?(ScoredQuestion)
+    end
+    sum
+  end
+  # Returns the maximum possible score for this response
+  def maximum_score(response)
+    # only count the scorable questions, only when the answer is not nil (we accept nil as
+    # answer for scorable questions, and they will not be counted towards the total score)
+    total_weight = 0
+    response.scores.each do |s|
+      question = Question.find(s.question_id)
+      total_weight += question.weight unless s.answer.nil? || !question.is_a?(ScoredQuestion)
+    end
+    questionnaire = if scores.empty?
+                      questionnaire_by_answer(nil)
+                    else
+                      questionnaire_by_answer(scores.first)
+                    end
+    total_weight * questionnaire.max_question_score
   end
   # compare the current response score with other scores on the same artifact, and test if the difference
   # is significant enough to notify instructor.
@@ -160,7 +181,7 @@ class ResponseHelper
     (average_score_on_same_artifact_from_others - score).abs * 100 > allowed_difference_percentage
   end
   # only two types of responses more should be added
-  def email(partial = 'new_submission', map_id)
+  def notify_peer_review_ready (partial = 'new_submission', map_id)
 
     defn = {}
     defn[:body] = {}
@@ -175,6 +196,13 @@ class ResponseHelper
              end
     defn[:subject] = 'A new submission is available for ' + parent.name
     response_map.email(defn, participant, parent)
+    defn[:body][:type] = 'Peer Review'
+    AssignmentTeam.find(reviewee_id).users.each do |user|
+      defn[:body][:obj_name] = assignment.name
+      defn[:body][:first_name] = User.find(user.id).fullname
+      defn[:to] = User.find(user.id).email
+      Mailer.sync_message(defn).deliver_now
+    end
   end
 
   # This method initialize answers for the questions in the response
