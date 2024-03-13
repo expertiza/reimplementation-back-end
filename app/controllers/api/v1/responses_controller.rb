@@ -41,8 +41,8 @@ class Api::V1::ResponsesController < ApplicationController
 
       # only notify if is_submitted changes from false to true
       if response_handler.errors.length == 0
-        response.save
-        res_helper.create_answers(response.id, params[:answers]) if params[:answers]
+        # response.save
+        # res_helper.create_answers(response.id, params[:answers]) if params[:answers]
         if is_submitted
           res_helper.notify_instructor_on_difference(response_handler.response)
           res_helper.email(response_handler.response.response_map.map_id)

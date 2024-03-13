@@ -167,7 +167,7 @@ team1 = Team.find_or_create_by(id: 1) do |team|
   team.update!(
     id: 1,
     name:"Team1",
-    parent_id: assignment1.id
+    parent_id: assignment1.id,
   )
 end
 team2 = Team.find_or_create_by(id: 2) do |team|
