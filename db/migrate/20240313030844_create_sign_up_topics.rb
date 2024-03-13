@@ -2,7 +2,7 @@ class CreateSignUpTopics < ActiveRecord::Migration[7.0]
   def change
     create_table :sign_up_topics do |t|
       t.column :topic_name, :text, null: false
-      t.column :assignment_id, :integer, null: false
+      t.column :assignment_id, :bigint, null: false
       t.column :max_choosers, :integer, null: false
       t.column :category, :text
       t.column :topic_identifier, :string, limit: 10

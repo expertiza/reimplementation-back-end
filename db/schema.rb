@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_03_12_235330) do
+ActiveRecord::Schema[7.0].define(version: 2024_03_13_032007) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -213,6 +213,27 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_12_235330) do
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
   end
 
+  create_table "sign_up_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.text "topic_name", null: false
+    t.bigint "assignment_id", null: false
+    t.integer "max_choosers", null: false
+    t.text "category"
+    t.string "topic_identifier", limit: 10
+    t.datetime "start_date"
+    t.datetime "due_date"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "fk_sign_up_categories_sign_up_topics"
+  end
+
+  create_table "signed_up_teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "topic_id", default: 0, null: false
+    t.integer "team_id", default: 0, null: false
+    t.boolean "is_waitlisted", default: false, null: false
+    t.integer "preference_priority_number"
+    t.index ["topic_id"], name: "fk_signed_up_users_sign_up_topics"
+  end
+
   create_table "ta_mappings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "course_id", null: false
     t.bigint "user_id", null: false
@@ -237,6 +258,13 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_12_235330) do
     t.text "comment_for_submission"
     t.boolean "make_public", default: false
     t.integer "pair_programming_request"
+  end
+
+  create_table "teams_users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "team_id"
+    t.bigint "user_id"
+    t.index ["team_id"], name: "fk_users_teams"
+    t.index ["user_id"], name: "fk_teams_users"
   end
 
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -274,8 +302,11 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_12_235330) do
   add_foreign_key "participants", "users"
   add_foreign_key "questions", "questionnaires"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
+  add_foreign_key "sign_up_topics", "assignments", name: "fk_sign_up_topics_assignments"
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
+  add_foreign_key "teams_users", "teams", name: "fk_users_teams"
+  add_foreign_key "teams_users", "users", name: "fk_teams_users"
   add_foreign_key "users", "institutions"
   add_foreign_key "users", "roles"
   add_foreign_key "users", "users", column: "parent_id"
