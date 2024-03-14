@@ -11,7 +11,7 @@ class Api::V1::ResponsesController < ApplicationController
     response_handler = ResponseHandler.new(response)
     response = response_handler.set_content(params, "show")
 
-    render json: response
+    render json: response, status: :ok
   end
 
   def new
@@ -25,8 +25,7 @@ class Api::V1::ResponsesController < ApplicationController
       response_handler.errors.each {|e| error_message += e + "\n"}
       render json: {error: error_message}, status: :ok
     else
-      questions = res_helper.get_questions(response)
-      response.scores = res_helper.get_answers(response, questions)
+      
       render json: response, status: :ok
     end
   end
@@ -49,14 +48,14 @@ class Api::V1::ResponsesController < ApplicationController
           res_helper.notify_instructor_on_difference(response_handler.response)
           # todo : updated email method name to notify_peer_review_ready
           res_helper.notify_peer_review_ready(response_handler.response.response_map.map_id)
-          render json: 'Your response was successfully saved.', status: :ok
-        else
-          error_msg = response_handler.errors.join('\n')
-          render json: error_msg, status: :ok
         end
+        render json: 'Your response was successfully saved.', status: :created
+      else
+        error_msg = response_handler.errors.join('\n')
+        render json: error_msg, status: :ok
       end
     rescue StandardError
-      render json: "Your response was not saved.", status: :unprocessable_entity
+      render json: "Request failed.", status: :unprocessable_entity
     end
   end
 
@@ -86,7 +85,7 @@ class Api::V1::ResponsesController < ApplicationController
       render json: {error: error_message}, status: :ok
     else
       questions = res_helper.get_questions(response)
-      response.answers = res_helper.get_answers(response, questions)
+      response.scores = res_helper.get_answers(response, questions)
       render json: response, status: :ok
     end
   end
@@ -112,20 +111,20 @@ class Api::V1::ResponsesController < ApplicationController
       response_handler.accept_content(params, "update")
 
       # only notify if is_submitted changes from false to true
-      if response_handler.error.length == 0
+      if response_handler.errors.length == 0
         response.save
         res_helper.create_answers(response.id, params[:answers]) if params[:answers].present?
-        if is_submitted == true && was_submitted == false
+        if response.is_submitted == true && was_submitted == true
           res_helper.notify_instructor_on_difference(response_handler.response)
-          render json: 'Your response was successfully saved.', status: :ok
-        else
-          error_msg = response_handler.errors.join('\n')
-          render json: error_msg, status: :ok
         end
+        render json: 'Your response was successfully saved.', status: :ok
+      else
+        error_msg = response_handler.errors.join('\n')
+        render json: error_msg, status: :ok
       end
       
     rescue StandardError
-      render json: "Your response was not saved. Cause:189 #{$ERROR_INFO}", status: :unprocessable_entity
+      render json: "Request failed. #{$ERROR_INFO}", status: :unprocessable_entity
     end
   end
 

@@ -1,6 +1,6 @@
 class ResponseSerializer < ActiveModel::Serializer
   attributes :id, :map_id, :additional_comment, :is_submitted, :created_at, :updated_at, :version_num, :round, :visibility
-  belongs_to :response_map
+  has_one :response_map
   has_many :scores
 
   class ResponseMapSerializer < ActiveModel::Serializer
@@ -12,9 +12,9 @@ class ResponseSerializer < ActiveModel::Serializer
     #   end
     # end
   end
-  class AnswerSerializer < ActiveModel::Serializer
+  class ScoreSerializer < ActiveModel::Serializer
     attributes :id, :question_id, :response_id, :answer, :comments, :created_at, :updated_at
-    belongs_to :question
+    has_one :question
     class QuestionSerializer < ActiveModel::Serializer
       attributes :id, :txt, :question_type, :weight
     end

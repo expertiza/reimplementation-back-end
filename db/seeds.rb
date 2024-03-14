@@ -177,32 +177,64 @@ team2 = Team.find_or_create_by(id: 2) do |team|
     parent_id: assignment1.id
   )
 end
+participant1 = Participant.find_or_create_by(user:student1) do |participant|
+  participant.update!(
+    user:student1,
+    assignment:assignment1,
+    parent_id:assignment1.id
+  )
+end
+participant2 = Participant.find_or_create_by(user:student2) do |participant|
+  participant.update!(
+    user:student2,
+    assignment:assignment1,
+    parent_id:assignment1.id
+  )
+end
+participant3 = Participant.find_or_create_by(user:student3) do |participant|
+  participant.update!(
+    user:student3,
+    assignment:assignment1,
+    parent_id:assignment1.id
+  )
+end
+participant4 = Participant.find_or_create_by(user:student4) do |participant|
+  participant.update!(
+    user:student4,
+    assignment:assignment1,
+    parent_id:assignment1.id
+  )
+end
 teams_user1 = TeamsUser.find_or_create_by(id:1) do |teams_user|
   teams_user.update!(
     id: 1,
     team_id:team1.id,
-    user_id:student1.id
+    user_id:student1.id,
+    participant_id:participant1.id
   )
 end
 teams_user2 = TeamsUser.find_or_create_by(id:2) do |teams_user|
   teams_user.update!(
     id: 2,
     team_id:team1.id,
-    user_id:student2.id
+    user_id:student2.id,
+    participant_id:participant2.id
   )
 end
 teams_user3 = TeamsUser.find_or_create_by(id:3) do |teams_user|
   teams_user.update!(
     id: 3,
     team_id:team2.id,
-    user_id:student3.id
+    user_id:student3.id,
+    participant_id:participant3.id
   )
 end
 teams_user4 = TeamsUser.find_or_create_by(id:4) do |teams_user|
   teams_user.update!(
     id: 4,
     team_id:team2.id,
-    user_id:student4.id
+    user_id:student4.id,
+    participant_id:participant4.id
   )
 end
 sign_up_topic1 = SignUpTopic.find_or_create_by(id:1) do |sign_up_topic|
@@ -239,34 +271,7 @@ signed_up_team2 = SignedUpTeam.find_or_create_by(id:2) do |signed_up_team|
     team_id: team2.id,
     )
 end
-participant1 = Participant.find_or_create_by(user:student1) do |participant|
-  participant.update!(
-    user:student1,
-    assignment:assignment1,
-    parent_id:assignment1.id
-  )
-end
-participant2 = Participant.find_or_create_by(user:student2) do |participant|
-  participant.update!(
-    user:student2,
-    assignment:assignment1,
-    parent_id:assignment1.id
-  )
-end
-participant3 = Participant.find_or_create_by(user:student3) do |participant|
-  participant.update!(
-    user:student3,
-    assignment:assignment1,
-    parent_id:assignment1.id
-  )
-end
-participant4 = Participant.find_or_create_by(user:student4) do |participant|
-  participant.update!(
-    user:student4,
-    assignment:assignment1,
-    parent_id:assignment1.id
-  )
-end
+
 questionnaire1 = Questionnaire.find_or_create_by(name: 'questionnaire 1') do |questionnaire|
   questionnaire.update!(
     id:1,
@@ -358,7 +363,9 @@ end
 response1 = Response.find_or_create_by(map_id:1) do |response|
   response.update!(
     map_id: response_map1.id,
-    additional_comment: 'additional comment'
+    additional_comment: 'additional comment',
+    round:1,
+    version_num:1
   )
 end
 answer1 = Answer.find_or_create_by(answer:1) do |answer|
