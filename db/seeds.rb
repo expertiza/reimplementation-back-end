@@ -356,6 +356,7 @@ response_map1 = ResponseMap.find_or_create_by(reviewer_id:participant1.id) do |r
     reviewed_object_id:assignment1.id,
     reviewer_id:participant1.id,
     reviewee_id:team2.id,
+    assignment_questionnaire_id:assignment_questionnaire1.id,
     type: 'ReviewResponseMap'
     )
 end

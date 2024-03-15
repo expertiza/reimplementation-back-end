@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_03_13_032007) do
+ActiveRecord::Schema[7.0].define(version: 2024_03_15_022929) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -189,6 +189,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_13_032007) do
     t.string "type", default: "", null: false
     t.boolean "calibrate_to", default: false
     t.boolean "team_reviewing_enabled", default: false
+    t.integer "assignment_questionnaire_id"
     t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 
