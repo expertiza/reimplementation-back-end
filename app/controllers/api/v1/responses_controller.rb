@@ -1,6 +1,5 @@
 require 'response_helper'
 class Api::V1::ResponsesController < ApplicationController
-  before_action :set_response, only: %i[update edit delete show]
   
   def index
     @responses = Response.all
@@ -36,12 +35,12 @@ class Api::V1::ResponsesController < ApplicationController
       response = Response.new
       res_helper = ResponseHelper.new
       response_handler = ResponseHandler.new(response)
-      response_handler.accept_content(params, "create")
+      response_handler.validate(params, "create")
 
       # only notify if is_submitted changes from false to true
       if response_handler.errors.length == 0
         response.save
-        res_helper.create_update_answers(response, params[:answers]) if params[:answers]
+        res_helper.create_update_answers(response, params[:scores]) if params[:scores]
         
         if is_submitted
           questions = res_helper.get_questions(response)
@@ -64,6 +63,7 @@ class Api::V1::ResponsesController < ApplicationController
 
   # Prepare the parameters when student clicks "Edit"
   # response questions with answers and scores are rendered in the edit page based on the version number
+  # redirect_to action: 'redirect', id: @map.map_id, return: 'locked', error_msg: 
   def edit
     begin
       response = Response.find(params[:id])
@@ -73,10 +73,8 @@ class Api::V1::ResponsesController < ApplicationController
       if response.response_map.team_reviewing_enabled
         response = Lock.get_lock(response, current_user, Lock::DEFAULT_TIMEOUT)
         if response.nil?
-          # todo Replaced response_lock_action with below
-          # Need to know more details of the response_lock_action
-          #response.locked = true
-          return
+          error_message = res_helper.response_lock_action(response.map_id, true)
+          render json: error_message, status: :ok
         end
       end
 
@@ -108,19 +106,18 @@ class Api::V1::ResponsesController < ApplicationController
       # the response to be updated
       # Locking functionality added for E1973, team-based reviewing
       if response.response_map.team_reviewing_enabled && !Lock.lock_between?(response, current_user)
-        # response_lock_action
-        locked = true
-        return
+        error_message = res_helper.response_lock_action(response.map_id, true)
+        render json: error_message, status: :ok
       end
       
-      response_handler.accept_content(params, "update")
+      response_handler.validate(params, "update")
 
       # only notify if is_submitted changes from false to true
       if response_handler.errors.length == 0
         response.save
-        res_helper.create_answers(response.id, params[:answers]) if params[:answers].present?
-        if response.is_submitted == true && was_submitted == true
-          res_helper.notify_instructor_on_difference(response_handler.response)
+        res_helper.create_update_answers(response, params[:scores]) if params[:scores].present?
+        if response.is_submitted == true && was_submitted == false
+          res_helper.notify_instructor_on_difference(response)
         end
         render json: 'Your response was successfully saved.', status: :ok
       else

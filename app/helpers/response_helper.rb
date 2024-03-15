@@ -12,7 +12,7 @@ class ResponseHandler
     else
       map_id = self.response.response_map.id
     end
-    response_map = ResponseMap.find(map_id)
+    response_map = ResponseMap.includes(:responses).find(map_id)
     if response_map.nil?
       self.errors.push("Not found response map")
       return
@@ -71,7 +71,7 @@ class ResponseHelper
       question = Question.find(s.question_id)
       total_weight += question.weight
     end
-    questionnaire = questionnaire_by_answer(response)
+    questionnaire = get_questionnaire(response)
     total_weight * questionnaire.max_question_score
   end
   
@@ -144,7 +144,7 @@ class ResponseHelper
   # For each question in the list, starting with the first one, you update the comment and score
   def create_update_answers(response, answers)
     answers.each do |v|
-      unless v.question_id.present?
+      unless v[:question_id].present?
         raise StandardError.new("Question Id required.")
       end
       score = Answer.where(response_id: response.id, question_id: v[:question_id]).first
@@ -154,7 +154,7 @@ class ResponseHelper
     end
   end
   def get_questions(response)
-    questionnaire = AssignmentQuestionnaire.find(response.response_map.assignment_questionnaire_id).questionnaire
+    questionnaire = aggregate_questionnaire_score(response)
     questionnaire.questions
   end
   def get_answers(response, questions)
@@ -173,5 +173,8 @@ class ResponseHelper
       answers.push(answer)
     end
     answers
+  end
+  def response_lock_action(map_id, locked)
+    erro_msg = 'Another user is modifying this response or has modified this response. Try again later.'
   end
 end

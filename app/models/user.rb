@@ -14,6 +14,7 @@ class User < ApplicationRecord
   belongs_to :parent, class_name: 'User', optional: true
   has_many :users, foreign_key: 'parent_id', dependent: :nullify
   has_many :invitations
+  has_many :locks, class_name: 'Lock', foreign_key: 'user_id', dependent: :destroy, inverse_of: false
 
   scope :students, -> { where role_id: Role::STUDENT }
   scope :tas, -> { where role_id: Role::TEACHING_ASSISTANT }
