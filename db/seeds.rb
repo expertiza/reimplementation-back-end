@@ -209,32 +209,32 @@ teams_user1 = TeamsUser.find_or_create_by(id:1) do |teams_user|
   teams_user.update!(
     id: 1,
     team_id:team1.id,
-    user_id:student1.id,
-    participant_id:participant1.id
+    user_id:student1.id
+    
   )
 end
 teams_user2 = TeamsUser.find_or_create_by(id:2) do |teams_user|
   teams_user.update!(
     id: 2,
     team_id:team1.id,
-    user_id:student2.id,
-    participant_id:participant2.id
+    user_id:student2.id
+    
   )
 end
 teams_user3 = TeamsUser.find_or_create_by(id:3) do |teams_user|
   teams_user.update!(
     id: 3,
     team_id:team2.id,
-    user_id:student3.id,
-    participant_id:participant3.id
+    user_id:student3.id
+    
   )
 end
 teams_user4 = TeamsUser.find_or_create_by(id:4) do |teams_user|
   teams_user.update!(
     id: 4,
     team_id:team2.id,
-    user_id:student4.id,
-    participant_id:participant4.id
+    user_id:student4.id
+    
   )
 end
 sign_up_topic1 = SignUpTopic.find_or_create_by(id:1) do |sign_up_topic|
@@ -286,6 +286,7 @@ assignment_questionnaire1 = AssignmentQuestionnaire.find_or_create_by(id:1) do |
     id:1,
     assignment_id:assignment1.id,
     questionnaire_id:questionnaire1.id,
+    topic_id:sign_up_topic1.id,
     notification_limit: 3
   )
 end
