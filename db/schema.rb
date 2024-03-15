@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_03_15_022929) do
+ActiveRecord::Schema[7.0].define(version: 2024_03_15_165435) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -130,6 +130,17 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_15_022929) do
     t.index ["assignment_id"], name: "fk_invitation_assignments"
     t.index ["from_id"], name: "fk_invitationfrom_users"
     t.index ["to_id"], name: "fk_invitationto_users"
+  end
+
+  create_table "locks", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "timeout_period"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.string "lockable_type"
+    t.bigint "lockable_id"
+    t.index ["lockable_type", "lockable_id"], name: "index_locks_on_lockable"
+    t.index ["user_id"], name: "index_locks_on_user_id"
   end
 
   create_table "participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -299,6 +310,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_15_022929) do
   add_foreign_key "account_requests", "roles"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
+  add_foreign_key "locks", "users"
   add_foreign_key "participants", "assignments"
   add_foreign_key "participants", "users"
   add_foreign_key "questions", "questionnaires"

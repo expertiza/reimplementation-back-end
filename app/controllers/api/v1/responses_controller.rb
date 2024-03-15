@@ -1,6 +1,6 @@
 require 'response_helper'
 class Api::V1::ResponsesController < ApplicationController
-  
+  before_action :set_response, only: %i[update edit delete show]
   
   def index
     @responses = Response.all
@@ -40,14 +40,14 @@ class Api::V1::ResponsesController < ApplicationController
 
       # only notify if is_submitted changes from false to true
       if response_handler.errors.length == 0
-        # response.save
-        # res_helper.create_answers(response.id, params[:answers]) if params[:answers]
-        questions = res_helper.get_questions(response)
-        response.scores = res_helper.get_answers(response, questions)
+        response.save
+        res_helper.create_update_answers(response, params[:answers]) if params[:answers]
+        
         if is_submitted
-          res_helper.notify_instructor_on_difference(response_handler.response)
-          # todo : updated email method name to notify_peer_review_ready
-          res_helper.notify_peer_review_ready(response_handler.response.response_map.map_id)
+          questions = res_helper.get_questions(response)
+          response.scores = res_helper.get_answers(response, questions)
+          res_helper.notify_instructor_on_difference(response)
+          res_helper.notify_peer_review_ready(response.response_map.id)
         end
         render json: 'Your response was successfully saved.', status: :created
       else
@@ -55,7 +55,7 @@ class Api::V1::ResponsesController < ApplicationController
         render json: error_msg, status: :ok
       end
     rescue StandardError
-      render json: "Request failed.", status: :unprocessable_entity
+      render json: "Request failed. #{$ERROR_INFO}", status: :unprocessable_entity
     end
   end
 
@@ -65,30 +65,35 @@ class Api::V1::ResponsesController < ApplicationController
   # Prepare the parameters when student clicks "Edit"
   # response questions with answers and scores are rendered in the edit page based on the version number
   def edit
-    response = Response.find(params[:id])
-    response_handler = ResponseHandler.new(response)
-    res_helper = ResponseHelper.new
-    response_handler.set_content(params, 'edit')
-    if response.response_map.team_reviewing_enabled
-      response = Lock.get_lock(response, current_user, Lock::DEFAULT_TIMEOUT)
-      if response.nil?
-        # todo Replaced response_lock_action with below
-        # Need to know more details of the response_lock_action
-        #response.locked = true
-        return
+    begin
+      response = Response.find(params[:id])
+      response_handler = ResponseHandler.new(response)
+      res_helper = ResponseHelper.new
+      response_handler.set_content(params, 'edit')
+      if response.response_map.team_reviewing_enabled
+        response = Lock.get_lock(response, current_user, Lock::DEFAULT_TIMEOUT)
+        if response.nil?
+          # todo Replaced response_lock_action with below
+          # Need to know more details of the response_lock_action
+          #response.locked = true
+          return
+        end
       end
-    end
 
-    if response_handler.errors.length > 0
-      error_message = ""
-      response_handler.errors.each {|e| error_message += e + "\n"}
-      render json: {error: error_message}, status: :ok
-    else
-      questions = res_helper.get_questions(response)
-      response.scores = res_helper.get_answers(response, questions)
-      render json: response, status: :ok
+      if response_handler.errors.length > 0
+        error_message = ""
+        response_handler.errors.each {|e| error_message += e + "\n"}
+        render json: {error: error_message}, status: :ok
+      else
+        questions = res_helper.get_questions(response)
+        response.scores = res_helper.get_answers(response, questions)
+        render json: response, status: :ok
+      end
+    rescue StandardError
+      render json: "Request failed. #{$ERROR_INFO}", status: :unprocessable_entity
     end
   end
+  
 
 
 
@@ -129,6 +134,5 @@ class Api::V1::ResponsesController < ApplicationController
   end
 
   private
-
-
+    
 end
