@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_03_13_214058) do
+ActiveRecord::Schema[7.0].define(version: 2024_03_15_004809) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -142,6 +142,15 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_13_214058) do
     t.index ["user_id"], name: "index_participants_on_user_id"
   end
 
+  create_table "question_advices", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "question_id", null: false
+    t.integer "score"
+    t.text "advice"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["question_id"], name: "index_question_advices_on_question_id"
+  end
+
   create_table "question_types", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -259,6 +268,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_13_214058) do
   add_foreign_key "courses", "users", column: "instructor_id"
   add_foreign_key "participants", "assignments"
   add_foreign_key "participants", "users"
+  add_foreign_key "question_advices", "questions"
   add_foreign_key "questions", "questionnaires"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
   add_foreign_key "ta_mappings", "courses"
