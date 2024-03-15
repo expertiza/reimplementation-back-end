@@ -10,7 +10,7 @@ class Api::V1::ResponsesController < ApplicationController
     response_handler = ResponseHandler.new(response)
     response = response_handler.set_content(params, "show")
 
-    render json: response, status: :ok
+    render json: response.serialize_response, status: :ok
   end
 
   def new
@@ -25,7 +25,7 @@ class Api::V1::ResponsesController < ApplicationController
       render json: {error: error_message}, status: :ok
     else
       
-      render json: response, status: :ok
+      render serialize_response(response), status: :ok
     end
   end
 

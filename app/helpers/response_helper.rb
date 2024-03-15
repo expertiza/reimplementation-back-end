@@ -154,7 +154,7 @@ class ResponseHelper
     end
   end
   def get_questions(response)
-    questionnaire = aggregate_questionnaire_score(response)
+    questionnaire = get_questionnaire(response)
     questionnaire.questions
   end
   def get_answers(response, questions)
