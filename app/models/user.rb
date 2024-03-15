@@ -76,6 +76,20 @@ class User < ApplicationRecord
     end
   end
 
+  # locate User based on provided login.
+  # If user supplies e-mail or name, the
+  # helper will try to find that User account.
+  def self.find_by_userid(userid)
+    user = User.find_by(email: userid)
+    if user.nil?
+      items = userid.split('@')
+      short_name = items[0]
+      user_list = User.where('name = ?', short_name)
+      user = user_list.first if user_list.any? && user_list.length == 1
+    end
+    user
+  end
+
   def self.from_params(params)
     user = params[:user_id] ? User.find(params[:user_id]) : User.find_by(name: params[:user][:name])
     raise "User #{params[:user_id] || params[:user][:name]} not found" if user.nil?
@@ -108,5 +122,33 @@ class User < ApplicationRecord
     self.email_on_submission ||= false
     self.email_on_review_of_review ||= false
     self.etc_icons_on_homepage ||= true
+  end
+
+  # Search users based on the provided parameters
+  def self.search_users(user_id, key, search_by)
+    # Check if a valid user_id is provided
+    if user_id.present? && (user = User.find_by(id: user_id))
+      # If a valid user_id is provided, return the user with that specific user_id
+      [user]
+    else
+      # If user_id is empty or invalid, perform the search based on key and search_by parameters
+      valid_search_fields = %w[name full_name email role]
+      search_by = valid_search_fields.include?(search_by) ? search_by : nil
+
+      # Validate search_by to avoid SQL injection
+      if search_by.present?
+        # Perform the LIKE query on the specified field (name, full_name, email, role) and order by name
+        if search_by == 'role'
+          # Join with roles table and search by role name
+          User.joins(:role).where("roles.name LIKE ?", "%#{key}%").order(:name)
+        else
+          # Use search_by directly in the where clause
+          User.where("#{search_by} LIKE ?", "%#{key}%").order(:name)
+        end
+      else
+        # If search_by is not recognized, return an empty result
+        []
+      end
+    end
   end
 end
