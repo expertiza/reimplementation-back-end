@@ -25,7 +25,7 @@ class Api::V1::ResponsesController < ApplicationController
       render json: {error: error_message}, status: :ok
     else
       
-      render serialize_response(response), status: :ok
+      render json:response.serialize_response, status: :ok
     end
   end
 
@@ -85,7 +85,7 @@ class Api::V1::ResponsesController < ApplicationController
       else
         questions = res_helper.get_questions(response)
         response.scores = res_helper.get_answers(response, questions)
-        render json: response, status: :ok
+        render json: response.serialize_response, status: :ok
       end
     rescue StandardError
       render json: "Request failed. #{$ERROR_INFO}", status: :unprocessable_entity

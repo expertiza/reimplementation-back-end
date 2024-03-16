@@ -32,6 +32,7 @@ class Response < ApplicationRecord
           id: score.id,
           answer: score.answer,
           comments: score.comments,
+          question_id: score.question_id,
           question: {
             id: score.question.id,
             txt: score.question.txt
