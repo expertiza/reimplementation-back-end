@@ -10,47 +10,52 @@ class Response < ApplicationRecord
   validates :map_id, presence: true
   def validate(params, action)
     if action == 'create'
-      map_id = params[:map_id]
+      self.map_id = params[:map_id]
     else
-      map_id = response_map.id
+      self.map_id = self.response_map.id
     end
-    response_map = ResponseMap.includes(:responses).find(map_id)
-    if response_map.nil?
-      self.errors.push("Not found response map")
+    response_map = ResponseMap.includes(:responses).find_by(id: self.map_id)
+    if self.response_map.nil?
+      errors.add(:response_map, 'Not found response map')
       return
     end
 
-    response_map = response_map
-    round = round || params[:response][:round]
-    additional_comment = params[:response][:comments] || additional_comment
-    version_num = params[:response][:version_num] || version_num
+    self.response_map = response_map
+    self.round = params[:response][:round] if params[:response]&.key?(:round)
+    self.additional_comment = params[:response][:comments] if params[:response]&.key?(:comments)
+    self.version_num = params[:response][:version_num] if params[:response]&.key?(:version_num)
 
     if action == 'create'
-      existing_response = response_map.responses.where("round = ? and version_num = ?", round, version_num)
+      if self.round.present? &&  self.version_num.present?
+        existing_response = response_map.responses.where("map_id = ? and round = ? and version_num = ?", self.map_id, self.round, self.version_num).first
+      elsif self.round.present? && !self.version_num.present?
+        existing_response = response_map.responses.where("map_id = ? and round = ?", self.map_id, self.round).first
+      elsif !self.round.present? && self.version_num.present?
+        existing_response = response_map.responses.where("map_id = ? and version_num = ?", self.map_id, self.version_num).first
+      end
+      
       if existing_response.present?
-        self.errors.push("Already existed.")
+        self.errors.add('response', 'Already existed.')
         return
       end
     elsif action == 'update'
-      if params[:response][:is_submitted].present?
-        if is_submitted
-          self.errors.push("Already submitted.")
-          return
-        end
+      if self.is_submitted
+        self.errors.add('response', "Already submitted.")
+        return
       end
     end
-    is_submitted = params[:response][:is_submitted] || is_submitted
+    self.is_submitted = params[:response][:is_submitted] if params[:response]&.key?(:is_submitted)
   end
 
   def set_content(params, action)
-    response_map = ResponseMap.find(map_id)
-    if response_map.nil?
-      self.errors.push(' Not found response map')
+    self.response_map = ResponseMap.find(map_id)
+    if self.response_map.nil?
+      self.errors.add(:response_map, ' Not found response map')
     else
       self
     end
     questions = get_questions(self)
-    scores = get_answers(self, questions)
+    self.scores = get_answers(self, questions)
     self
   end
   def serialize_response
@@ -69,7 +74,8 @@ class Response < ApplicationRecord
         reviewee_id: response_map.reviewee_id,
         type: response_map.type,
         calibrate_to: response_map.calibrate_to,
-        team_reviewing_enabled: response_map.team_reviewing_enabled
+        team_reviewing_enabled: response_map.team_reviewing_enabled,
+        assignment_questionnaire_id: response_map.assignment_questionnaire_id
       },
       scores: scores.map do |score|
         {
@@ -86,6 +92,9 @@ class Response < ApplicationRecord
     }.to_json
   end
 
+  private
+  
+  
 end
 
 

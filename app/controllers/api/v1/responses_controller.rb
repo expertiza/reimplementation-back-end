@@ -1,27 +1,23 @@
 require 'response_helper'
 class Api::V1::ResponsesController < ApplicationController
-  
+  include ResponseHelper
   def index
     @responses = Response.all
     render json: @responses, status: :ok
   end
   def show
     response = Response.find(params[:id])
-    response_handler = ResponseHandler.new(response)
-    response = response_handler.set_content(params, "show")
-
+    response = response.set_content(params, "show")
     render json: response.serialize_response, status: :ok
   end
 
   def new
-    res_helper = ResponseHelper.new
     response = Response.new
     response.map_id = params[:map_id]
-    response_handler = ResponseHandler.new(response)
-    response_handler.set_content(params, 'new')
-    if response_handler.errors.length > 0
+    response.set_content(params, 'new')
+    if response.errors.full_messages.length > 0
       error_message = ""
-      response_handler.errors.each {|e| error_message += e + "\n"}
+      response.errors.each {|e| error_message += e + "\n"}
       render json: {error: error_message}, status: :ok
     else
       
@@ -33,24 +29,23 @@ class Api::V1::ResponsesController < ApplicationController
     begin
       is_submitted = params[:response][:is_submitted]
       response = Response.new
-      res_helper = ResponseHelper.new
-      response_handler = ResponseHandler.new(response)
-      response_handler.validate(params, "create")
+      
+      response.validate(params, "create")
 
       # only notify if is_submitted changes from false to true
-      if response_handler.errors.length == 0
+      if response.errors.full_messages.length == 0
         response.save
-        res_helper.create_update_answers(response, params[:scores]) if params[:scores]
+        create_update_answers(response, params[:scores]) if params[:scores]
         
         if is_submitted
-          questions = res_helper.get_questions(response)
-          response.scores = res_helper.get_answers(response, questions)
-          res_helper.notify_instructor_on_difference(response)
-          res_helper.notify_peer_review_ready(response.response_map.id)
+          questions = get_questions(response)
+          response.scores = get_answers(response, questions)
+          notify_instructor_on_difference(response)
+          notify_peer_review_ready(response.response_map.id)
         end
         render json: 'Your response was successfully saved.', status: :created
       else
-        error_msg = response_handler.errors.join('\n')
+        error_msg = response.errors.full_messages.join('\n')
         render json: error_msg, status: :ok
       end
     rescue StandardError
@@ -67,24 +62,22 @@ class Api::V1::ResponsesController < ApplicationController
   def edit
     begin
       response = Response.find(params[:id])
-      response_handler = ResponseHandler.new(response)
-      res_helper = ResponseHelper.new
-      response_handler.set_content(params, 'edit')
+      response.set_content(params, 'edit')
       if response.response_map.team_reviewing_enabled
         response = Lock.get_lock(response, current_user, Lock::DEFAULT_TIMEOUT)
         if response.nil?
-          error_message = res_helper.response_lock_action(response.map_id, true)
+          error_message = response_lock_action(response.map_id, true)
           render json: error_message, status: :ok
         end
       end
 
-      if response_handler.errors.length > 0
+      if response.errors.full_messages.length > 0
         error_message = ""
-        response_handler.errors.each {|e| error_message += e + "\n"}
+        response.errors.each {|e| error_message += e + "\n"}
         render json: {error: error_message}, status: :ok
       else
-        questions = res_helper.get_questions(response)
-        response.scores = res_helper.get_answers(response, questions)
+        questions = get_questions(response)
+        response.scores = get_answers(response, questions)
         render json: response.serialize_response, status: :ok
       end
     rescue StandardError
@@ -98,30 +91,28 @@ class Api::V1::ResponsesController < ApplicationController
   # Update the response and answers when student "edit" existing response
   def update
     begin
-      res_helper = ResponseHelper.new
       response = Response.find(params[:id])
       was_submitted = response.is_submitted
-      response_handler = ResponseHandler.new(response)
 
       # the response to be updated
       # Locking functionality added for E1973, team-based reviewing
       if response.response_map.team_reviewing_enabled && !Lock.lock_between?(response, current_user)
-        error_message = res_helper.response_lock_action(response.map_id, true)
+        error_message = response_lock_action(response.map_id, true)
         render json: error_message, status: :ok
       end
       
-      response_handler.validate(params, "update")
+      response.validate(params, "update")
 
       # only notify if is_submitted changes from false to true
-      if response_handler.errors.length == 0
+      if response.errors.full_messages.length == 0
         response.save
-        res_helper.create_update_answers(response, params[:scores]) if params[:scores].present?
+        create_update_answers(response, params[:scores]) if params[:scores].present?
         if response.is_submitted == true && was_submitted == false
-          res_helper.notify_instructor_on_difference(response)
+          notify_instructor_on_difference(response)
         end
         render json: 'Your response was successfully saved.', status: :ok
       else
-        error_msg = response_handler.errors.join('\n')
+        error_msg = response.errors.full_messages.join('\n')
         render json: error_msg, status: :ok
       end
       
@@ -131,5 +122,5 @@ class Api::V1::ResponsesController < ApplicationController
   end
 
   private
-    
+  
 end
