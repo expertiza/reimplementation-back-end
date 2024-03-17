@@ -71,6 +71,12 @@ Rails.application.routes.draw do
           get :processed, action: :processed_requests
         end
       end
+
+      resources :impersonate do
+        get 'user/:user_name', on: :collection, to: 'impersonate#get_users_list'
+        post '', on: :collection, to: 'impersonate#impersonate'
+      end
+
     end
   end
 end

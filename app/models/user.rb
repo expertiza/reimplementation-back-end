@@ -83,6 +83,15 @@ class User < ApplicationRecord
     user
   end
 
+  # Fetches available users whose full names match the provided name prefix (case-insensitive).
+  # Returns a limited list of users (up to 10) who have roles similar or subordinate to the current user's role.
+  def get_available_users(name)
+    lesser_roles = role.subordinate_roles_and_self
+    all_users = User.where('full_name LIKE ?', "%#{name}%").limit(20)
+    visible_users = all_users.select { |user| lesser_roles.include? user.role }
+    visible_users[0, 10] # the first 10
+  end
+
   # This will override the default as_json method in the ApplicationRecord class and specify
   # that only the id, name, and email attributes should be included when a User object is serialized.
   def as_json(options = {})
