@@ -1,6 +1,6 @@
 require 'rails_helper'
+
 describe Questionnaire, type: :model do
-  
   # Creating dummy objects for the test with the help of let statement
   let(:role) {Role.create(name: 'Instructor', parent_id: nil, id: 2, default_page_id: nil)}
   let(:instructor) { Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role: role) }
@@ -371,231 +371,107 @@ describe Questionnaire, type: :model do
     end
   end
 
+  describe '#name_is_unique' do
+    context 'when no other questionnaire with the same name exists for the same instructor' do
+      it 'does not add error' do
+        questionnaire.name_is_unique
+        expect(questionnaire.errors[:name]).to_not include('must be unique')
+      end
+    end
 
-=begin
-   # Here are the skeleton rspec tests to be implemented as well, or to replace existing duplicate tests
+    context 'when two questionnaires with the same name exists for the same instructor' do
+      it 'adds error' do
+        existing_questionnaire = FactoryBot.create(:questionnaire, instructor: instructor)
+        duplicate_question = FactoryBot.create(:questionnaire, instructor: instructor)
+        duplicate_question.name_is_unique
+        expect(duplicate_question.errors[:name]).to include('must be unique')
+      end
+    end
 
-   describe "#get_weighted_score" do
-     context "when the assignment has a round" do
-       it "computes the weighted score using the questionnaire symbol with the round appended" do
-         # Test case 1
-         # Given an assignment with an ID and a questionnaire with a symbol
-         # And the questionnaire is used in a round
-         # And a set of scores
-         # When the get_weighted_score method is called with the assignment and scores
-         # Then it should compute the weighted score using the questionnaire symbol with the round appended
+    context 'when two questionnaires have the same name for different instructors' do
+      it 'does not throw an error' do
+        ## Creating a different instructor for this test.
+        instructor2 = Instructor.create(name: 'testinstructortwo', email: 'test2@test.com', full_name: 'Test Instructor 2', password: '123456', role: role)
 
-         # Test case 2
-         # Given an assignment with an ID and a questionnaire with a symbol
-         # And the questionnaire is used in a round
-         # And a different set of scores
-         # When the get_weighted_score method is called with the assignment and scores
-         # Then it should compute the weighted score using the questionnaire symbol with the round appended
-       end
-     end
+        original_questionnaire = FactoryBot.create(:questionnaire, instructor: instructor)
+        new_questionnaire = FactoryBot.create(:questionnaire, instructor: instructor2)
+        new_questionnaire.name_is_unique
+        expect(new_questionnaire.errors[:name]).to_not include('must be unique')
+      end
+    end
 
-     context "when the assignment does not have a round" do
-       it "computes the weighted score using the questionnaire symbol" do
-         # Test case 3
-         # Given an assignment with an ID and a questionnaire with a symbol
-         # And the questionnaire is not used in a round
-         # And a set of scores
-         # When the get_weighted_score method is called with the assignment and scores
-         # Then it should compute the weighted score using the questionnaire symbol
+    context 'when two questionnaires have different names for the same instructor' do
+      it 'does not throw an error' do
+        original_questionnaire = FactoryBot.create(:questionnaire, instructor: instructor)
+        new_questionnaire = FactoryBot.create(:questionnaire, instructor: instructor, name: "Super cool new questionnaire")
 
-         # Test case 4
-         # Given an assignment with an ID and a questionnaire with a symbol
-         # And the questionnaire is not used in a round
-         # And a different set of scores
-         # When the get_weighted_score method is called with the assignment and scores
-         # Then it should compute the weighted score using the questionnaire symbol
-       end
-     end
-   end
-   describe "#compute_weighted_score" do
-     context "when the average score is nil" do
-       it "returns 0" do
-         # Test scenario
-       end
-     end
+        new_questionnaire.name_is_unique
+        expect(new_questionnaire.errors[:name]).to_not include('must be unique')
+      end
+    end
 
-     context "when the average score is not nil" do
-       it "calculates the weighted score based on the questionnaire weight" do
-         # Test scenario
-       end
-     end
-   end
-   describe "#true_false_questions?" do
-     context "when there are true/false questions" do
-       it "returns true" do
-         # Test scenario 1: Multiple questions with type 'Checkbox'
+    context 'when any of the required values is missing' do
+      it 'returns nothing if id is nil' do
+        questionnaire.id = nil
+        result = questionnaire.name_is_unique
+        expect(result).to be_nil
+      end
 
-         # Test scenario 2: Single question with type 'Checkbox'
-       end
-     end
+      it 'returns nothing if name is nil' do
+        questionnaire.name = nil
+        result = questionnaire.name_is_unique
+        expect(result).to be_nil
+      end
 
-     context "when there are no true/false questions" do
-       it "returns false" do
-         # Test scenario 1: Multiple questions with no 'Checkbox' type
+      it 'returns nothing if instructor_id is nil' do
+        questionnaire.instructor_id = nil
+        result = questionnaire.name_is_unique
+        expect(result).to be_nil
+      end
+    end
+  end
 
-         # Test scenario 2: Single question with no 'Checkbox' type
-       end
-     end
-   end
-   describe "#delete" do
-     context "when there are assignments using the questionnaire" do
-       it "raises an error with a message asking if the user wants to delete the assignment" do
-         # Test scenario 1
-         # Given: There are assignments using the questionnaire
-         # When: The delete method is called
-         # Then: An error is raised with a message asking if the user wants to delete the assignment
+  describe '#min_less_than_max' do
+    context 'when either value is not there' do
+      it 'returns nil if min_score is nil.' do
+        questionnaire = FactoryBot.create( :questionnaire, instructor: instructor)
+        ## Must be added here or it will not pass validation when being created.
+        questionnaire.min_question_score = nil
+        result = questionnaire.min_less_than_max
+        expect(result).to be_nil
+      end
+    end
+    it 'returns nil if max_score is nil.' do
+      questionnaire = FactoryBot.create( :questionnaire, instructor: instructor)
+      ## Must be added here or it will not pass validation when being created.
+      questionnaire.max_question_score = nil
+      result = questionnaire.min_less_than_max
+      expect(result).to be_nil
+    end
+    context 'when it is given two integers' do
+      it 'adds an error if min is greater than max' do
+        questionnaire = FactoryBot.create( :questionnaire, instructor: instructor)
+        questionnaire.max_question_score = 20
+        questionnaire.min_question_score = 25 ## min is now greater than max.
+        questionnaire.min_less_than_max
+        expect(questionnaire.errors[:min_question_score]).to include('must be less than max question score')
+      end
+      it 'adds an error if min is equal to max' do
+        questionnaire = FactoryBot.create( :questionnaire, instructor: instructor)
+        questionnaire.max_question_score = 25
+        questionnaire.min_question_score = 25 ## min is now equal to max.
+        questionnaire.min_less_than_max
+        expect(questionnaire.errors[:min_question_score]).to include('must be less than max question score')
+      end
 
-         # Test scenario 2
-         # Given: There are multiple assignments using the questionnaire
-         # When: The delete method is called
-         # Then: An error is raised for each assignment with a message asking if the user wants to delete the assignment
-       end
-     end
-
-     context "when there are no assignments using the questionnaire" do
-       it "deletes all the questions associated with the questionnaire" do
-         # Test scenario 1
-         # Given: There are no assignments using the questionnaire
-         # When: The delete method is called
-         # Then: All the questions associated with the questionnaire are deleted
-
-         # Test scenario 2
-         # Given: There are no assignments using the questionnaire and there are multiple questions
-         # When: The delete method is called
-         # Then: All the questions associated with the questionnaire are deleted
-       end
-
-       it "deletes the questionnaire node if it exists" do
-         # Test scenario 1
-         # Given: There are no assignments using the questionnaire and the questionnaire node exists
-         # When: The delete method is called
-         # Then: The questionnaire node is deleted
-
-         # Test scenario 2
-         # Given: There are no assignments using the questionnaire and the questionnaire node does not exist
-         # When: The delete method is called
-         # Then: No error is raised and the method completes successfully
-       end
-
-       it "deletes the questionnaire" do
-         # Test scenario 1
-         # Given: There are no assignments using the questionnaire
-         # When: The delete method is called
-         # Then: The questionnaire is deleted
-
-         # Test scenario 2
-         # Given: There are no assignments using the questionnaire and there are multiple questionnaires
-         # When: The delete method is called
-         # Then: The questionnaire is deleted
-       end
-     end
-   end
-   describe "#max_possible_score" do
-     context "when the questionnaire has no questions" do
-       it "returns 0 as the maximum possible score" do
-         # test code
-       end
-     end
-
-     context "when the questionnaire has questions with different weights" do
-       it "returns the correct maximum possible score based on the weights and max_question_score" do
-         # test code
-       end
-     end
-
-     context "when the questionnaire has questions with the same weight" do
-       it "returns the correct maximum possible score based on the weight and max_question_score" do
-         # test code
-       end
-     end
-
-     context "when the questionnaire ID does not exist" do
-       it "returns nil as the maximum possible score" do
-         # test code
-       end
-     end
-   end
-   describe '.copy_questionnaire_details' do
-     context 'when given valid parameters' do
-       it 'creates a copy of the questionnaire with the instructor_id' do
-         # Test body
-       end
-
-       it 'sets the name of the copied questionnaire as "Copy of [original name]"' do
-         # Test body
-       end
-
-       it 'sets the created_at timestamp of the copied questionnaire to the current time' do
-         # Test body
-       end
-
-       it 'saves the copied questionnaire' do
-         # Test body
-       end
-
-       it 'creates copies of all the questions from the original questionnaire' do
-         # Test body
-       end
-
-       it 'sets the questionnaire_id of the copied questions to the id of the copied questionnaire' do
-         # Test body
-       end
-
-       it 'sets the size of the copied criterion and text response questions to "50,3" if size is nil' do
-         # Test body
-       end
-
-       it 'saves the copied questions' do
-         # Test body
-       end
-
-       it 'creates copies of all the question advices associated with the original questions' do
-         # Test body
-       end
-
-       it 'sets the question_id of the copied question advices to the id of the copied question' do
-         # Test body
-       end
-
-       it 'saves the copied question advices' do
-         # Test body
-       end
-
-       it 'returns the copied questionnaire' do
-         # Test body
-       end
-     end
-   end
-   describe "#validate_questionnaire" do
-     context "when the maximum question score is less than 1" do
-       it "should add an error message" do
-         # test code
-       end
-     end
-
-     context "when the minimum question score is less than 0" do
-       it "should add an error message" do
-         # test code
-       end
-     end
-
-     context "when the minimum question score is greater than or equal to the maximum question score" do
-       it "should add an error message" do
-         # test code
-       end
-     end
-
-     context "when a questionnaire with the same name and instructor already exists" do
-       it "should add an error message" do
-         # test code
-       end
-     end
-   end
-=end
+      it 'does not add an error if min is less than max' do
+        questionnaire = FactoryBot.create( :questionnaire, instructor: instructor)
+        questionnaire.max_question_score = 25
+        questionnaire.min_question_score = 20 ## min is now less than max.
+        questionnaire.min_less_than_max
+        expect(questionnaire.errors[:min_question_score]).to be_empty
+      end
+    end
+  end
 
 end
