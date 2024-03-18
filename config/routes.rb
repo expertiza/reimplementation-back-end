@@ -24,6 +24,14 @@ Rails.application.routes.draw do
       end
       resources :assignments
 
+      resources :bookmarks do
+        collection do
+          get 'list/:id', to: 'bookmarks#list', as: 'list'
+          # post 'copy/:id', to: 'questionnaires#copy', as: 'copy'
+          # get 'toggle_access/:id', to: 'questionnaires#toggle_access', as: 'toggle_access'
+        end
+      end
+
       resources :courses do
         collection do
           get ':id/add_ta/:ta_id', action: :add_ta
