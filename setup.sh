@@ -14,6 +14,6 @@ echo "Step 4: Seeding the database..."
 docker compose exec app rake db:seed
 
 echo "Step 5: Starting the Rails server..."
-docker compose exec app rails s -p 4000 -b '0.0.0.0'
+docker compose exec app rails s -p 3002 -b '0.0.0.0'
  
 echo "=== Setup script completed successfully ==="
