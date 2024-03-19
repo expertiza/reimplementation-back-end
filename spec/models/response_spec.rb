@@ -7,7 +7,34 @@ RSpec.describe Response, type: :model do
   let(:response) {
     Response.new(id:1, map_id: 1, additional_comment: 'comment 1', is_submitted: false, version_num: 1, round:1,
                  visibility: 'private', response_map:response_map) }
-  
+  let(:answer) { Answer.new(id: 1, answer: 5, comments: 'Answer comment', question_id: 1) }
+  let(:question) { Question.new(id: 1, weight: 2) }
+  let(:assignment_questionnaire) { AssignmentQuestionnaire.new(id: 1, assignment_id: 1, questionnaire_id: 1) }
+  let(:params) do
+    {
+      map_id: 1,
+      additional_comment: "This is a sample comment",
+      is_submitted: false,
+      version_num: 1,
+      round: 1,
+      visibility: "private",
+      response_map: {
+        id: 1,
+        reviewed_object_id: 1,
+        reviewer_id: 1,
+        reviewee_id: 2,
+        type: 'ReviewResponseMap',
+        calibrate_to: false,
+        team_reviewing_enabled: false,
+        assignment_questionnaire_id: 1
+      },
+      scores: [
+        { question_id: 1, answer: 5, comments: "Answer 1 comments" },
+        { question_id: 2, answer: 4, comments: "Answer 2 comments" },
+        { question_id: 3, answer: 3, comments: "Answer 3 comments" }
+      ]
+    }
+  end
 
   # Validations
   describe "validations" do

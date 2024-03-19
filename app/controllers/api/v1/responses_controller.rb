@@ -1,10 +1,6 @@
 require 'response_helper'
 class Api::V1::ResponsesController < ApplicationController
   include ResponseHelper
-  def index
-    @responses = Response.all
-    render json: @responses, status: :ok
-  end
   def show
     response = Response.find(params[:id])
     response = response.set_content(params, "show")
@@ -43,7 +39,7 @@ class Api::V1::ResponsesController < ApplicationController
           notify_instructor_on_difference(response)
           notify_peer_review_ready(response.response_map.id)
         end
-        render json: 'Your response was successfully saved.', status: :created
+        render json: { message: "Your response id #{response.id} was successfully saved."}, status: :created
       else
         error_msg = response.errors.full_messages.join('\n')
         render json: error_msg, status: :ok

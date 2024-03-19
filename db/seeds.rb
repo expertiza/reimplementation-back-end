@@ -13,6 +13,21 @@
 # )
 
 # db/seeds.rb
+super_administrator_role = Role.find_or_create_by(id:1) do |role|
+  role.update!(id: 1, name: 'Super Administrator')
+end
+administrator_role = Role.find_or_create_by(id:2) do |role|
+  role.update!(id: 2, name: 'Administrator')
+end
+instructor_role = Role.find_or_create_by(id:3) do |role|
+  role.update!(id: 3, name: 'Instructor')
+end
+teaching_assistant_role = Role.find_or_create_by(id:4) do |role|
+  role.update!(id: 4, name: 'Teaching Assistant')
+end
+student_role = Role.find_or_create_by(id:5) do |role|
+  role.update!(id: 5,name: 'Student')
+end
 
 # Find or create the Institution
 institution = Institution.find_or_create_by(name: 'NC State')
@@ -35,7 +50,7 @@ admin = User.find_or_create_by(name: 'admin') do |user|
     copy_of_emails: false,
     etc_icons_on_homepage: true,
     locale: 1,
-    role_id: 2,
+    role_id: administrator_role.id,
     institution: institution
   )
 end
@@ -58,7 +73,7 @@ instructor = User.find_or_create_by(name: 'instructor') do |user|
     copy_of_emails: false,
     etc_icons_on_homepage: true,
     locale: 1,
-    role_id: 3,
+    role_id: instructor_role.id,
     institution: institution
   )
 end
@@ -90,7 +105,7 @@ student1 = User.find_or_create_by(name: 'smith') do |user|
     copy_of_emails: false,
     etc_icons_on_homepage: true,
     locale: 1,
-    role_id: 1,
+    role_id: student_role.id,
     institution: institution
   )
 end
@@ -111,7 +126,7 @@ student2 = User.find_or_create_by(name: 'john') do |user|
     copy_of_emails: false,
     etc_icons_on_homepage: true,
     locale: 1,
-    role_id: 1,
+    role_id: student_role.id,
     institution: institution
   )
 end
@@ -132,7 +147,7 @@ student3 = User.find_or_create_by(name: 'matt') do |user|
     copy_of_emails: false,
     etc_icons_on_homepage: true,
     locale: 1,
-    role_id: 1,
+    role_id: student_role.id,
     institution: institution
   )
 end
@@ -153,7 +168,7 @@ student4 = User.find_or_create_by(name: 'david') do |user|
     copy_of_emails: false,
     etc_icons_on_homepage: true,
     locale: 1,
-    role_id: 1,
+    role_id: student_role.id,
     institution: institution
   )
 end
