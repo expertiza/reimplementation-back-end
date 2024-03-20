@@ -128,28 +128,30 @@ describe Questionnaire, type: :model do
     end
 
     # Test ensures creation of a copy of given questionnaire
+# Combined two tests into one to avoid performing the same functionalities again to test another feature.
     it 'creates a copy of the questionnaire' do
       instructor.save!
       questionnaire.save!
       question1.save!
       question2.save!
-      copied_questionnaire = Questionnaire.copy_questionnaire_details( { id: questionnaire.id})
+
+      # Stub the where method to return the questions associated with the original questionnaire
+      allow(questionnaire).to receive_message_chain(:questions, :each).and_yield(question1).and_yield(question2)
+
+      # Call the copy_questionnaire_details method
+      copied_questionnaire = Questionnaire.copy_questionnaire_details({ id: questionnaire.id })
+
+      # Assertions
       expect(copied_questionnaire.instructor_id).to eq(questionnaire.instructor_id)
       expect(copied_questionnaire.name).to eq("Copy of #{questionnaire.name}")
       expect(copied_questionnaire.created_at).to be_within(1.second).of(Time.zone.now)
-    end
 
-    # Test ensures creation of copy of all the present questionnaire in the database
-    it 'creates a copy of all questions belonging to the original questionnaire' do
-      instructor.save!
-      questionnaire.save!
-      question1.save!
-      question2.save!
-      copied_questionnaire = described_class.copy_questionnaire_details({ id: questionnaire.id })
+      # Verify that the copied questionnaire has associated questions
       expect(copied_questionnaire.questions.count).to eq(2)
       expect(copied_questionnaire.questions.first.txt).to eq(question1.txt)
       expect(copied_questionnaire.questions.second.txt).to eq(question2.txt)
     end
+
   end
 
   # This is the beginning of the skeleton implementation
