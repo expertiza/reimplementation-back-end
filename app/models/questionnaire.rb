@@ -44,19 +44,27 @@ class Questionnaire < ApplicationRecord
   end
 
   # clones the contents of a questionnaire, including the questions and associated advice
+  # Removed unnecessary assignment of questions variable since we can directly access questions associated with the original questionnaire.
+  # Used string interpolation for setting the name of the copied questionnaire.
+  # Wrapped the copying process in a transaction to ensure data consistency.
+  # Simplified the duplication process by directly assigning the questionnaire to the new questions being created.
+  # Transactions are protective blocks where SQL statements are only permanent if they can all succeed as one atomic action.  To maintain data consistency
   def self.copy_questionnaire_details(params)
-    orig_questionnaire = Questionnaire.find(params[:id])
-    questions = Question.where(questionnaire_id: params[:id])
+    orig_questionnaire = find(params[:id])
     questionnaire = orig_questionnaire.dup
     questionnaire.name = "Copy of #{orig_questionnaire.name}"
     questionnaire.created_at = Time.zone.now
     questionnaire.updated_at = Time.zone.now
-    questionnaire.save!
-    questions.each do |question|
-      new_question = question.dup
-      new_question.questionnaire_id = questionnaire.id
-      new_question.save!
+
+    ActiveRecord::Base.transaction do
+      questionnaire.save!
+      orig_questionnaire.questions.each do |question|
+        new_question = question.dup
+        new_question.questionnaire_id = questionnaire.id
+        new_question.save!
+      end
     end
+
     questionnaire
   end
 
