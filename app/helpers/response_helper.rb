@@ -4,14 +4,31 @@ module ResponseHelper
     questions.sort_by(&:seq)
   end
 
+  # Newly implemented method based on questionnaire_from_response_map, not yet tested.
+  # Retrieves the corresponding questionnaire for a given response based on the response map type.
+  # It determines the appropriate questionnaire by the type of response map and the current review round.
   def get_questionnaire(response)
-    quesionnaire = AssignmentQuestionnaire.find(response.response_map.assignment_questionnaire_id).questionnaire
+    reviewees_topic_id = SignedUpTeam.topic_id_by_team_id(response.response_map.contributor.id)
+    current_round = assignment.number_of_current_round(reviewees_topic_id)
+    questionnaire = nil
+    response.response_map.type =~ /(.+)ResponseMap$/
+    questionnaire_type = $1 + "Questionnaire"
+    assignment = Assignment.includes(assignment_questionnaires: :questionnaire).where("id = ?", reviewees_topic_id)
+    assignment_questionnaires = assignment.assignment_questionnaires.joins(:questionnaire).distinct
+    if(assignment_questionnaires.count == 1)
+      return assignment_questionnaires[0].questionnaire
+    else
+      assignment_questionnaires.each do |aq|
+        if aq.questionnaire.type == questionnaire_type && aq.used_in_round == current_round && aq.topic_id == reviewees_topic_id
+          questionnaire = aq.questionnaire
+        end
+      end
+    end
   end
 
-  # Returns the maximum possible score for this response
+  # Calculates the maximum possible score for a given response.
+  # Considers only scorable questions where the answer is not nil.
   def maximum_score(response)
-    # only count the scorable questions, only when the answer is not nil (we accept nil as
-    # answer for scorable questions, and they will not be counted towards the total score)
     total_weight = 0
     response.scores.each do |s|
       question = Question.find(s.question_id)
@@ -21,14 +38,13 @@ module ResponseHelper
     total_weight * questionnaire.max_question_score
   end
 
+  # Creates and sends a notification email to the instructor after a review is submitted,
   def notify_instructor_on_difference(response)
     response_map = response.response_map
     reviewer = AssignmentParticipant.includes(:user, :assignment).where('id=?', response_map.reviewer_id).first
     reviewee = AssignmentParticipant.includes(:user, :assignment).where('id=?', response_map.reviewee_id).first
     assignment = reviewee.assignment
     instructor = User.find(assignment.id)
-    # todo
-    # To simplify the process and decouple it from other classes, retrieving all necessary information for emailing in this class.
     email = EmailObject.new(
       to: instructor.email,
       from: 'expertiza.mailer@gmail.com',
@@ -47,22 +63,19 @@ module ResponseHelper
     Mailer.send_email(email)
   end
 
+  # Calculates the total score awarded for a review.
   def aggregate_questionnaire_score(response)
-    # only count the scorable questions, only when the answer is not nil
-    # we accept nil as answer for scorable questions, and they will not be counted towards the total score
     sum = 0
-    response.scores.each do |s|
-      question = Question.find(s.question_id)
-      # For quiz responses, the weights will be 1 or 0, depending on if correct
-      #  todo
-      sum += s.answer * question.weight unless s.answer.nil? || !question.is_a?(ScoredQuestion)
-      # sum += s.answer * question.weight
+    response.scores.each do |score|
+      question = Question.find(score.question_id)
+      sum += score.answer * question.weight unless score.answer.nil? || !question.is_a?(ScoredQuestion)
+      sum += score.answer * question.weight
     end
     sum
   end
 
-  # updated email method name to notify_peer_review_ready, as the previous method name wasn't appropriate name.
-  # only two types of responses more should be added
+  # Renamed from the previous method name for clarity. Notifies team members via email
+  # when a new submission version is available for review.
   def notify_peer_review_ready(map_id)
     email = EmailObject.new
     body = {}
@@ -86,24 +99,28 @@ module ResponseHelper
     end
   end
 
-  # For each question in the list, starting with the first one, you update the comment and score
+  # Creates or updates answers based on the provided parameters from a reviewer.
   def create_update_answers(response, answers)
-    answers.each do |v|
-      raise StandardError, 'Question Id required.' unless v[:question_id].present?
+    answers.each do |answer|
+      raise StandardError, 'Question Id required.' unless answer[:question_id].present?
 
-      score = Answer.where(response_id: response.id, question_id: v[:question_id]).first
-      score ||= Answer.create(response_id: response.id, question_id: v[:question_id], answer: v[:answer],
+      score = Answer.where(response_id: response.id, question_id: answer[:question_id]).first
+      score ||= Answer.create(response_id: response.id, question_id: answer[:question_id], answer: v[:answer],
                               comments: v[:comments])
       score.update_attribute('answer', v[:answer])
       score.update_attribute('comments', v[:comments])
     end
   end
 
+  # Retrieves the questionnaire associated with a given response.
+  # This method determines the relevant questionnaire by examining the response's type and related information.
   def get_questions(response)
     questionnaire = get_questionnaire(response)
     questionnaire.questions
   end
 
+  # Generates answer objects for the 'scores' attribute of the response model, based on the response to a request.
+  # This method organizes answers according to the questions sorted by their sequence numbers.
   def get_answers(response, questions)
     answers = []
     questions = sort_questions(questions)
@@ -121,7 +138,22 @@ module ResponseHelper
     end
     answers
   end
+  
+  # This method delete the answer objects of the response model before deleting the response model.
+  def delete_answer?(response)
+    questions = get_questions(response)
+    answers = get_answers(response, questions)
+    count = answers.length
+    answers.each do |answer|
+      answer.destroy!
+      count = count - 1
+    end
+    count == 0
+  end
 
+  # To be executed if the response is currently locked and cannot be edited.
+  # This action handles scenarios where a response is being modified by another user or has recently been modified,
+  # indicating that the user should attempt the operation again later.
   def response_lock_action(_map_id, _locked)
     erro_msg = 'Another user is modifying this response or has modified this response. Try again later.'
   end

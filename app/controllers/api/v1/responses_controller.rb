@@ -3,41 +3,46 @@ class Api::V1::ResponsesController < ApplicationController
   include ResponseHelper
 
   # GET /responses
+  # Returns a list of all responses.
   def index
     responses = Response.all
     render json: responses, status: :ok
   end
 
   # GET /responses/1
+  # # Retrieves and renders a single response based on its ID.
+  # The response's content is prepared before rendering.
   def show
     response = Response.find(params[:id])
-    response = response.set_content(params, 'show')
+    response = response.set_content
     render json: response.serialize_response, status: :ok
   end
 
   # GET /responses/new
+  # Initializes a new response object for creation.
+  # Prepares the response's content and renders it; handles errors if any are present.
   def new
     response = Response.new
     response.map_id = params[:map_id]
-    response.set_content(params, 'new')
+    response.set_content
     if response.errors.full_messages.length > 0
       error_message = ''
       response.errors.each { |e| error_message += e + "\n" }
-      render json: { error: error_message }, status: :ok
+      render json: { error: error_message }, status: :unprocessable_entity
     else
-
       render json: response.serialize_response, status: :ok
     end
   end
 
   # POST /responses
+  # Creates a new response based on the submitted parameters.
+  # Notifies the instructor if the response is newly submitted.
+  # Handles parameter validation and saving of associated answers.
   def create
     is_submitted = params[:response][:is_submitted]
     response = Response.new
+    response.validate_params(params, 'create')
 
-    response.validate(params, 'create')
-
-    # only notify if is_submitted changes from false to true
     if response.errors.full_messages.length == 0
       response.save
       create_update_answers(response, params[:scores]) if params[:scores]
@@ -51,30 +56,25 @@ class Api::V1::ResponsesController < ApplicationController
       render json: { message: "Your response id #{response.id} was successfully saved." }, status: :created
     else
       error_msg = response.errors.full_messages.join('\n')
-      render json: error_msg, status: :ok
+      render json: error_msg, status: :unprocessable_entity
     end
   rescue StandardError
     render json: "Request failed. #{$ERROR_INFO}", status: :unprocessable_entity
   end
 
   # GET /responses/1/edit
-  # Determining the current phase and check if a review is already existing for this stage.
-  # If so, edit that version otherwise create a new version.
-
-  # Prepare the parameters when student clicks "Edit"
-  # response questions with answers and scores are rendered in the edit page based on the version number
-  # redirect_to action: 'redirect', id: @map.map_id, return: 'locked', error_msg:
+  # Prepares a response for editing by retrieving the current questions and answers.
+  # Includes locking functionality to prevent concurrent edits.
   def edit
     response = Response.find(params[:id])
-    response.set_content(params, 'edit')
+    response.set_content
     if response.response_map.team_reviewing_enabled
       response = Lock.get_lock(response, current_user, Lock::DEFAULT_TIMEOUT)
       if response.nil?
         error_message = response_lock_action(response.map_id, true)
-        render json: error_message, status: :ok
+        render json: error_message, status: :unprocessable_entity
       end
     end
-
     if response.errors.full_messages.length > 0
       error_message = ''
       response.errors.each { |e| error_message += e + "\n" }
@@ -88,22 +88,18 @@ class Api::V1::ResponsesController < ApplicationController
     render json: "Request failed. #{$ERROR_INFO}", status: :unprocessable_entity
   end
 
-  # PATCH/PUT /responses/1 
-  # Update the response and answers when student "edit" existing response
+  # PATCH/PUT /responses/1
+  # Updates an existing response with new data.
+  # Validates parameters, saves changes, and notifies the instructor if the submission status changes.
   def update
     response = Response.find(params[:id])
     was_submitted = response.is_submitted
-
-    # the response to be updated
-    # Locking functionality added for E1973, team-based reviewing
     if response.response_map.team_reviewing_enabled && !Lock.lock_between?(response, current_user)
       error_message = response_lock_action(response.map_id, true)
       render json: error_message, status: :ok
     end
 
-    response.validate(params, 'update')
-
-    # only notify if is_submitted changes from false to true
+    response.validate_params(params, 'update')
     if response.errors.full_messages.length == 0
       response.save
       create_update_answers(response, params[:scores]) if params[:scores].present?
@@ -111,16 +107,23 @@ class Api::V1::ResponsesController < ApplicationController
       render json: 'Your response was successfully saved.', status: :ok
     else
       error_msg = response.errors.full_messages.join('\n')
-      render json: error_msg, status: :ok
+      render json: error_msg, status: :unprocessable_entity
     end
   rescue StandardError
     render json: "Request failed. #{$ERROR_INFO}", status: :unprocessable_entity
   end
-  
+
+  # DELETE /responses/1
+  # Deletes a response after checking if it is eligible for deletion.
   def destroy
     response = Response.find(params[:id])
     if delete_response?(response)
+      response.destroy!
       render json: 'Your response was successfully deleted.', status: :ok
+    else
+      render json: 'Deletion conditions not met.', status: :unprocessable_entity
     end
+  rescue StandardError => e
+    render json: "Request failed. #{e.message}", status: :unprocessable_entity
   end
 end

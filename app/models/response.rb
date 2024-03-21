@@ -10,8 +10,14 @@ class Response < ApplicationRecord
 
   alias map response_map
   delegate :questionnaire, :reviewee, :reviewer, to: :map
-  
-  def validate(params, action)
+
+  # Validates parameters for creating or updating a response. The method checks for the presence and validity
+  # of the response map and specific fields based on the action (create or update). It ensures that
+  # new responses do not duplicate existing ones and that updates are not made to already submitted responses.
+  #
+  # @param params [Hash] The parameters to be validated.
+  # @param action [String] Specifies the action, either 'create' or 'update'.
+  def validate_params(params, action)
     self.map_id = if action == 'create'
                     params[:map_id]
                   else
@@ -52,7 +58,10 @@ class Response < ApplicationRecord
     self.is_submitted = params[:response][:is_submitted] if params[:response]&.key?(:is_submitted)
   end
 
-  def set_content(_params, _action)
+  # Prepares the response object with necessary content including generating answer objects
+  # for each question associated with the response. This method retrieves the questionnaire and its questions
+  # for the current response, generating a new Answer object for each question if one doesn't already exist.
+  def set_content
     self.response_map = ResponseMap.find(map_id)
     if response_map.nil?
       errors.add(:response_map, ' Not found response map')
@@ -63,20 +72,20 @@ class Response < ApplicationRecord
     self.scores = get_answers(self, questions)
     self
   end
-
+  
   def serialize_response
     {
-      id:,
-      map_id:,
-      additional_comment:,
-      is_submitted:,
-      version_num:,
-      round:,
-      visibility:,
+      id: id,
+      map_id: map_id,
+      additional_comment: additional_comment,
+      is_submitted: is_submitted,
+      version_num: version_num,
+      round: round,
+      visibility: visibility,
       response_map: {
         id: response_map.id,
         reviewed_object_id: response_map.reviewed_object_id,
-        reviewer_id: response_map.reviewer_id,
+        reviewer_id:response_map.reviewer_id,
         reviewee_id: response_map.reviewee_id,
         type: response_map.type,
         calibrate_to: response_map.calibrate_to,
