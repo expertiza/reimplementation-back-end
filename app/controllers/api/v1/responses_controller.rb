@@ -26,9 +26,7 @@ class Api::V1::ResponsesController < ApplicationController
     response.map_id = params[:map_id]
     response.set_content
     if response.errors.full_messages.length > 0
-      error_message = ''
-      response.errors.each { |e| error_message += e + "\n" }
-      render json: { error: error_message }, status: :unprocessable_entity
+      render json: response.errors, status: :unprocessable_entity
     else
       render json: response.serialize_response, status: :ok
     end
@@ -55,8 +53,7 @@ class Api::V1::ResponsesController < ApplicationController
       end
       render json: { message: "Your response id #{response.id} was successfully saved." }, status: :created
     else
-      error_msg = response.errors.full_messages.join('\n')
-      render json: error_msg, status: :unprocessable_entity
+      render json: response.errors, status: :unprocessable_entity
     end
   rescue StandardError
     render json: "Request failed. #{$ERROR_INFO}", status: :unprocessable_entity
@@ -76,9 +73,7 @@ class Api::V1::ResponsesController < ApplicationController
       end
     end
     if response.errors.full_messages.length > 0
-      error_message = ''
-      response.errors.each { |e| error_message += e + "\n" }
-      render json: { error: error_message }, status: :ok
+      render json: response.errors, status: :unprocessable_entity
     else
       questions = get_questions(response)
       response.scores = get_answers(response, questions)
@@ -98,7 +93,6 @@ class Api::V1::ResponsesController < ApplicationController
       error_message = response_lock_action(response.map_id, true)
       render json: error_message, status: :ok
     end
-
     response.validate_params(params, 'update')
     if response.errors.full_messages.length == 0
       response.save
@@ -106,8 +100,7 @@ class Api::V1::ResponsesController < ApplicationController
       notify_instructor_on_difference(response) if response.is_submitted == true && was_submitted == false
       render json: 'Your response was successfully saved.', status: :ok
     else
-      error_msg = response.errors.full_messages.join('\n')
-      render json: error_msg, status: :unprocessable_entity
+      render json: response.errors, status: :unprocessable_entity
     end
   rescue StandardError
     render json: "Request failed. #{$ERROR_INFO}", status: :unprocessable_entity
