@@ -1,2 +1,0 @@
-require 'response_helper'
-
