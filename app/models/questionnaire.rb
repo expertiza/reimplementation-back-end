@@ -43,6 +43,16 @@ class Questionnaire < ApplicationRecord
     errors.add(:name, 'must be unique') if existing.present?
   end
 
+  ## Computes the max possible score of all the questions
+  def max_possible_score
+    ## Just return 0 if there are no questions; don't throw an error.
+    return 0 if questions.empty?
+
+    ## Sums up the weight of all the questions. This is not necessarily 1.
+    sum_of_weights = questions.sum{ | question| quesitons.weight}
+    max_possible_score = sum_of_weights * max_possible_score
+  end
+
   # clones the contents of a questionnaire, including the questions and associated advice
   # Removed unnecessary assignment of questions variable since we can directly access questions associated with the original questionnaire.
   # Used string interpolation for setting the name of the copied questionnaire.
