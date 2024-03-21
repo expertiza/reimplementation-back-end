@@ -1,14 +1,12 @@
 require 'swagger_helper'
 
 RSpec.describe 'Roles API', type: :request do
-
   path '/api/v1/roles' do
     get('list roles') do
       tags 'Roles'
       produces 'application/json'
 
       response(200, 'successful') do
-
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -30,7 +28,7 @@ RSpec.describe 'Roles API', type: :request do
           parent_id: { type: :integer },
           default_page_id: { type: :integer }
         },
-        required: [ 'name' ]
+        required: ['name']
       }
 
       response(201, 'Created a role') do
@@ -70,7 +68,6 @@ RSpec.describe 'Roles API', type: :request do
     get('show role') do
       tags 'Roles'
       response(200, 'successful') do
-
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -92,11 +89,10 @@ RSpec.describe 'Roles API', type: :request do
           parent_id: { type: :integer },
           default_page_id: { type: :integer }
         },
-        required: [ 'name' ]
+        required: ['name']
       }
-      
-      response(200, 'successful') do
 
+      response(200, 'successful') do
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -122,7 +118,7 @@ RSpec.describe 'Roles API', type: :request do
       end
     end
 
-    put('update role') do 
+    put('update role') do
       tags 'Roles'
       consumes 'application/json'
       parameter name: :role, in: :body, schema: {
@@ -132,11 +128,10 @@ RSpec.describe 'Roles API', type: :request do
           parent_id: { type: :integer },
           default_page_id: { type: :integer }
         },
-        required: [ 'name' ]
+        required: ['name']
       }
 
       response(200, 'successful') do
-
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -165,7 +160,6 @@ RSpec.describe 'Roles API', type: :request do
     delete('delete role') do
       tags 'Roles'
       response(204, 'successful') do
-
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {

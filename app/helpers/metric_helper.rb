@@ -9,10 +9,10 @@ module MetricHelper
     comments_in_round, counter_in_round = get_all_review_comments(reviewer_id)
     num_rounds = comments_in_round.count - 1 # ignore nil element (index 0)
 
-    comments = ""
+    comments = ''
     comment_count = 0
-    comments_in_round.each { |comment| comments += comment unless comment == nil}
-    counter_in_round.each { |count| comment_count += count unless count == nil}
+    comments_in_round.each { |comment| comments += comment unless comment.nil? }
+    counter_in_round.each { |count| comment_count += count unless count.nil? }
 
     overall_avg_vol = (Lingua::EN::Readability.new(comments).num_words / (comment_count.zero? ? 1 : comment_count)).round(0)
     review_comments_volume = []
@@ -33,7 +33,7 @@ module MetricHelper
     comments_in_round = []
     counter_in_round = []
 
-    ReviewResponseMap.where(reviewed_object_id: id, reviewer_id: reviewer_id).find_each do |response_map|
+    ReviewResponseMap.where(reviewed_object_id: id, reviewer_id:).find_each do |response_map|
       (1..num_review_rounds + 1).each do |round|
         comments_in_round[round] = ''
         counter_in_round[round] = 0
@@ -50,5 +50,4 @@ module MetricHelper
     end
     [comments_in_round, counter_in_round]
   end
-
 end

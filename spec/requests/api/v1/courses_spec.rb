@@ -1,29 +1,35 @@
 require 'swagger_helper'
 
 RSpec.describe 'api/v1/courses', type: :request do
-
   # GET /courses/{id}/add_ta/{ta_id}
   path '/api/v1/courses/{id}/add_ta/{ta_id}' do
     parameter name: :id, in: :path, type: :integer, required: true
     parameter name: :ta_id, in: :path, type: :integer, required: true
-    let(:institution) { Institution.create(name: "NC State") }
-    let(:prof) { User.create(
-      name: "profa",
-      password_digest: "password",
-      role_id: 4,
-      fullname: "Prof A",
-      email: "testuser@example.com",
-      mru_directory_path: "/home/testuser",
-    ) }
-    let(:ta) { User.create(
-      name: "taa",
-      password_digest: "password",
-      role_id: 3,
-      fullname: "TA A",
-      email: "testuser@example.com",
-      mru_directory_path: "/home/testuser",
-    ) }
-    let(:course) { Course.create(institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: 'OODD', info: 'blank') }
+    let(:institution) { Institution.create(name: 'NC State') }
+    let(:prof) do
+      User.create(
+        name: 'profa',
+        password_digest: 'password',
+        role_id: 4,
+        fullname: 'Prof A',
+        email: 'testuser@example.com',
+        mru_directory_path: '/home/testuser'
+      )
+    end
+    let(:ta) do
+      User.create(
+        name: 'taa',
+        password_digest: 'password',
+        role_id: 3,
+        fullname: 'TA A',
+        email: 'testuser@example.com',
+        mru_directory_path: '/home/testuser'
+      )
+    end
+    let(:course) do
+      Course.create(institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: 'OODD',
+                    info: 'blank')
+    end
     let(:id) { course.id }
     let(:ta_id) { ta.id }
     get('add_ta course') do
@@ -59,16 +65,21 @@ RSpec.describe 'api/v1/courses', type: :request do
   # GET /courses/{id}/tas
   path '/api/v1/courses/{id}/tas' do
     parameter name: 'id', in: :path, type: :string, description: 'id'
-    let(:institution) { Institution.create(name: "NC State") }
-    let(:prof) { User.create(
-      name: "profa",
-      password_digest: "password",
-      role_id: 4,
-      fullname: "Prof A",
-      email: "testuser@example.com",
-      mru_directory_path: "/home/testuser",
-    ) }
-    let(:course) { Course.create(institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: 'OODD', info: 'blank') }
+    let(:institution) { Institution.create(name: 'NC State') }
+    let(:prof) do
+      User.create(
+        name: 'profa',
+        password_digest: 'password',
+        role_id: 4,
+        fullname: 'Prof A',
+        email: 'testuser@example.com',
+        mru_directory_path: '/home/testuser'
+      )
+    end
+    let(:course) do
+      Course.create(institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: 'OODD',
+                    info: 'blank')
+    end
     let(:id) { course.id }
     get('view_tas course') do
       tags 'Courses'
@@ -89,25 +100,32 @@ RSpec.describe 'api/v1/courses', type: :request do
   path '/api/v1/courses/{id}/remove_ta/{ta_id}' do
     parameter name: 'id', in: :path, type: :string, description: 'id'
     parameter name: 'ta_id', in: :path, type: :string, description: 'ta_id'
-    let(:institution) { Institution.create(name: "NC State") }
-    let(:prof) { User.create(
-      name: "profa",
-      password_digest: "password",
-      role_id: 4,
-      fullname: "Prof A",
-      email: "testuser@example.com",
-      mru_directory_path: "/home/testuser",
-    ) }
-    let(:course) { Course.create(institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: 'OODD', info: 'blank') }
+    let(:institution) { Institution.create(name: 'NC State') }
+    let(:prof) do
+      User.create(
+        name: 'profa',
+        password_digest: 'password',
+        role_id: 4,
+        fullname: 'Prof A',
+        email: 'testuser@example.com',
+        mru_directory_path: '/home/testuser'
+      )
+    end
+    let(:course) do
+      Course.create(institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: 'OODD',
+                    info: 'blank')
+    end
     let(:id) { course.id }
-    let(:ta) { User.create(
-      name: "taa",
-      password_digest: "password",
-      role_id: 3,
-      fullname: "TA A",
-      email: "testuser@example.com",
-      mru_directory_path: "/home/testuser",
-    ) }
+    let(:ta) do
+      User.create(
+        name: 'taa',
+        password_digest: 'password',
+        role_id: 3,
+        fullname: 'TA A',
+        email: 'testuser@example.com',
+        mru_directory_path: '/home/testuser'
+      )
+    end
     let(:ta_id) { ta.id }
     let(:ta_mapping) { TaMapping.create(course_id: course.id, ta_id: ta.id) }
     get('remove_ta course') do
@@ -121,7 +139,7 @@ RSpec.describe 'api/v1/courses', type: :request do
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
-              example: { message: "The TA taa has been removed." }
+              example: { message: 'The TA taa has been removed.' }
             }
           }
         end
@@ -133,16 +151,21 @@ RSpec.describe 'api/v1/courses', type: :request do
   # GET /courses/{id}/copy
   path '/api/v1/courses/{id}/copy' do
     parameter name: 'id', in: :path, type: :string, description: 'id'
-    let(:institution) { Institution.create(name: "NC State") }
-    let(:prof) { User.create(
-      name: "profa",
-      password_digest: "password",
-      role_id: 4,
-      fullname: "Prof A",
-      email: "testuser@example.com",
-      mru_directory_path: "/home/testuser",
-    ) }
-    let(:course) { Course.create(institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: 'OODD', info: 'blank') }
+    let(:institution) { Institution.create(name: 'NC State') }
+    let(:prof) do
+      User.create(
+        name: 'profa',
+        password_digest: 'password',
+        role_id: 4,
+        fullname: 'Prof A',
+        email: 'testuser@example.com',
+        mru_directory_path: '/home/testuser'
+      )
+    end
+    let(:course) do
+      Course.create(institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: 'OODD',
+                    info: 'blank')
+    end
     let(:id) { course.id }
     get('copy course') do
       tags 'Courses'
@@ -188,19 +211,24 @@ RSpec.describe 'api/v1/courses', type: :request do
           institution_id: { type: :integer },
           info: { type: :string }
         },
-        required: ['name', 'directory_path', 'institution_id', 'instructor_id']
+        required: %w[name directory_path institution_id instructor_id]
       }
       response(201, 'successful') do
-        let(:institution) { Institution.create(name: "NC State") }
-        let(:prof) { User.create(
-          name: "profa",
-          password_digest: "password",
-          role_id: 4,
-          fullname: "Prof A",
-          email: "testuser@example.com",
-          mru_directory_path: "/home/testuser",
-        ) }
-        let(:course) { { institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: 'OODD', info: 'blank' } }
+        let(:institution) { Institution.create(name: 'NC State') }
+        let(:prof) do
+          User.create(
+            name: 'profa',
+            password_digest: 'password',
+            role_id: 4,
+            fullname: 'Prof A',
+            email: 'testuser@example.com',
+            mru_directory_path: '/home/testuser'
+          )
+        end
+        let(:course) do
+          { institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: 'OODD',
+            info: 'blank' }
+        end
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -216,16 +244,21 @@ RSpec.describe 'api/v1/courses', type: :request do
   # GET /courses/{id}
   path '/api/v1/courses/{id}' do
     parameter name: 'id', in: :path, type: :string, description: 'id'
-    let(:institution) { Institution.create(name: "NC State") }
-    let(:prof) { User.create(
-      name: "profa",
-      password_digest: "password",
-      role_id: 4,
-      fullname: "Prof A",
-      email: "testuser@example.com",
-      mru_directory_path: "/home/testuser",
-    ) }
-    let(:course) { Course.create(institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: 'OODD', info: 'blank') }
+    let(:institution) { Institution.create(name: 'NC State') }
+    let(:prof) do
+      User.create(
+        name: 'profa',
+        password_digest: 'password',
+        role_id: 4,
+        fullname: 'Prof A',
+        email: 'testuser@example.com',
+        mru_directory_path: '/home/testuser'
+      )
+    end
+    let(:course) do
+      Course.create(institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: 'OODD',
+                    info: 'blank')
+    end
     let(:id) { course.id }
     get('show course') do
       tags 'Courses'
@@ -256,16 +289,21 @@ RSpec.describe 'api/v1/courses', type: :request do
         },
         required: %w[]
       }
-      let(:institution) { Institution.create(name: "NC State") }
-      let(:prof) { User.create(
-        name: "profa",
-        password_digest: "password",
-        role_id: 4,
-        fullname: "Prof A",
-        email: "testuser@example.com",
-        mru_directory_path: "/home/testuser",
-      ) }
-      let(:course) { Course.create(institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: 'OODD', info: 'blank') }
+      let(:institution) { Institution.create(name: 'NC State') }
+      let(:prof) do
+        User.create(
+          name: 'profa',
+          password_digest: 'password',
+          role_id: 4,
+          fullname: 'Prof A',
+          email: 'testuser@example.com',
+          mru_directory_path: '/home/testuser'
+        )
+      end
+      let(:course) do
+        Course.create(institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: 'OODD',
+                      info: 'blank')
+      end
       let(:id) { course.id }
       response(200, 'successful') do
         after do |example|
@@ -294,16 +332,21 @@ RSpec.describe 'api/v1/courses', type: :request do
         },
         required: %w[]
       }
-      let(:institution) { Institution.create(name: "NC State") }
-      let(:prof) { User.create(
-        name: "profa",
-        password_digest: "password",
-        role_id: 4,
-        fullname: "Prof A",
-        email: "testuser@example.com",
-        mru_directory_path: "/home/testuser",
-      ) }
-      let(:course) { Course.create(institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: 'OODD', info: 'blank') }
+      let(:institution) { Institution.create(name: 'NC State') }
+      let(:prof) do
+        User.create(
+          name: 'profa',
+          password_digest: 'password',
+          role_id: 4,
+          fullname: 'Prof A',
+          email: 'testuser@example.com',
+          mru_directory_path: '/home/testuser'
+        )
+      end
+      let(:course) do
+        Course.create(institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: 'OODD',
+                      info: 'blank')
+      end
       let(:id) { course.id }
       response(200, 'successful') do
         after do |example|
@@ -320,16 +363,21 @@ RSpec.describe 'api/v1/courses', type: :request do
     # DELETE /courses/{id}
     delete('delete course') do
       tags 'Courses'
-      let(:institution) { Institution.create(name: "NC State") }
-      let(:prof) { User.create(
-        name: "profa",
-        password_digest: "password",
-        role_id: 4,
-        fullname: "Prof A",
-        email: "testuser@example.com",
-        mru_directory_path: "/home/testuser",
-      ) }
-      let(:course) { Course.create(institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: 'OODD', info: 'blank') }
+      let(:institution) { Institution.create(name: 'NC State') }
+      let(:prof) do
+        User.create(
+          name: 'profa',
+          password_digest: 'password',
+          role_id: 4,
+          fullname: 'Prof A',
+          email: 'testuser@example.com',
+          mru_directory_path: '/home/testuser'
+        )
+      end
+      let(:course) do
+        Course.create(institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: 'OODD',
+                      info: 'blank')
+      end
       let(:id) { course.id }
       response(204, 'successful') do
         after do |example|

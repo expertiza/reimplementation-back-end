@@ -16,7 +16,5 @@ class CreateTeamsUsers < ActiveRecord::Migration[7.0]
     execute "alter table teams_users
                add constraint fk_teams_users
                foreign key (user_id) references users(id)"
-
-
   end
 end

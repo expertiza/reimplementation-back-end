@@ -38,7 +38,6 @@ class Api::V1::InvitationsController < ApplicationController
     else
       render json: @invitation.errors, status: :unprocessable_entity
     end
-
   end
 
   # DELETE /api/v1/invitations/:id
@@ -83,5 +82,4 @@ class Api::V1::InvitationsController < ApplicationController
   def invite_not_found
     render json: { error: "Invitation with id #{params[:id]} not found" }, status: :not_found
   end
-
 end

@@ -17,7 +17,7 @@ describe 'SignedUpTeams API' do
         type: :object,
         properties: {
           team_id: { type: :integer },
-          topic_id: { type: :integer },
+          topic_id: { type: :integer }
         },
         required: %w[team_id topic_id]
       }
@@ -46,7 +46,7 @@ describe 'SignedUpTeams API' do
         type: :object,
         properties: {
           # team_id: { type: :integer },
-          topic_id: { type: :integer },
+          topic_id: { type: :integer }
         },
         required: %w[topic_id]
       }
@@ -69,7 +69,7 @@ describe 'SignedUpTeams API' do
     parameter name: 'topic_id', in: :query, type: :integer, description: 'Topic ID', required: true
 
     let(:team) { create(:team) }
-    let(:signed_up_team) { create(:signed_up_team, team: team) }
+    let(:signed_up_team) { create(:signed_up_team, team:) }
 
     get 'Retrieves signed up teams' do
       tags 'SignedUpTeams'
@@ -84,7 +84,7 @@ describe 'SignedUpTeams API' do
                  is_waitlisted: { type: :boolean },
                  preference_priority_number: { type: :integer }
                },
-               required: ['id', 'topic_id', 'team_id', 'is_waitlisted', 'preference_priority_number']
+               required: %w[id topic_id team_id is_waitlisted preference_priority_number]
 
         run_test!
       end

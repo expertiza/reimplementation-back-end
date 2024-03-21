@@ -1,5 +1,4 @@
 class Api::V1::AccountRequestsController < ApplicationController
-
   # GET /account_requests/pending
   def pending_requests
     @account_requests = AccountRequest.where(status: 'Under Review').order('created_at DESC')
@@ -62,7 +61,7 @@ class Api::V1::AccountRequestsController < ApplicationController
     @account_request.destroy
     render json: { message: 'Account Request deleted' }, status: :no_content
   rescue ActiveRecord::RecordNotFound => e
-      render json: { error: e.message }, status: :not_found
+    render json: { error: e.message }, status: :not_found
   end
 
   private
@@ -73,17 +72,19 @@ class Api::V1::AccountRequestsController < ApplicationController
     if params[:account_request][:status].nil?
       params[:account_request][:status] = 'Under Review'
     # For Approval or Rejection of an existing request, raise error if user sends a status other than Approved or Rejected
-    elsif !['Approved', 'Rejected'].include?(params[:account_request][:status])
+    elsif !%w[Approved Rejected].include?(params[:account_request][:status])
       raise StandardError, 'Status can only be Approved or Rejected'
     end
-    params.require(:account_request).permit(:username, :full_name, :email, :status, :introduction, :role_id, :institution_id)
+    params.require(:account_request).permit(:username, :full_name, :email, :status, :introduction, :role_id,
+                                            :institution_id)
   end
 
   # Create a new user if account request is approved
   def create_approved_user
-    @new_user = User.new(name: @account_request.username, role_id: @account_request.role_id, institution_id: @account_request.institution_id, fullname: @account_request.full_name, email: @account_request.email, password: 'password')
+    @new_user = User.new(name: @account_request.username, role_id: @account_request.role_id,
+                         institution_id: @account_request.institution_id, fullname: @account_request.full_name, email: @account_request.email, password: 'password')
     if @new_user.save
-      render json: { success: 'Account Request Approved and User successfully created.', user: @new_user}, status: :ok
+      render json: { success: 'Account Request Approved and User successfully created.', user: @new_user }, status: :ok
     else
       render json: @new_user.errors, status: :unprocessable_entity
     end

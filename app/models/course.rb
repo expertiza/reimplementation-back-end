@@ -9,35 +9,36 @@ class Course < ApplicationRecord
   # Returns the submission directory for the course
   def path
     raise 'Path can not be created as the course must be associated with an instructor.' if instructor_id.nil?
-    Rails.root + '/' + Institution.find(institution_id).name.gsub(" ", "") + '/' + User.find(instructor_id).name.gsub(" ", "") + '/' + directory_path + '/'
+
+    Rails.root + '/' + Institution.find(institution_id).name.gsub(' ',
+                                                                  '') + '/' + User.find(instructor_id).name.gsub(' ',
+                                                                                                                 '') + '/' + directory_path + '/'
   end
 
   # Add a Teaching Assistant to the course
   def add_ta(user)
     if user.nil?
-      return { success: false, message: "The user with id #{user.id} does not exist" }
+      { success: false, message: "The user with id #{user.id} does not exist" }
     elsif TaMapping.exists?(ta_id: user.id, course_id: id)
-      return { success: false, message: "The user with id #{user.id} is already a TA for this course." }
+      { success: false, message: "The user with id #{user.id} is already a TA for this course." }
     else
       ta_mapping = TaMapping.create(ta_id: user.id, course_id: id)
       user.update(role: Role::TEACHING_ASSISTANT)
-      if ta_mapping.save
-        return { success: true, data: ta_mapping.slice(:course_id, :ta_id) }
-      else
-        return { success: false, message: ta_mapping.errors }
-      end
+      return { success: true, data: ta_mapping.slice(:course_id, :ta_id) } if ta_mapping.save
+
+      { success: false, message: ta_mapping.errors }
+
     end
   end
 
   # Removes Teaching Assistant from the course
   def remove_ta(ta_id)
-    ta_mapping = ta_mappings.find_by(ta_id: ta_id, course_id: :id)
-    return { success: false, message: "No TA mapping found for the specified course and TA" } if ta_mapping.nil?
+    ta_mapping = ta_mappings.find_by(ta_id:, course_id: :id)
+    return { success: false, message: 'No TA mapping found for the specified course and TA' } if ta_mapping.nil?
+
     ta = User.find(ta_mapping.ta_id)
-    ta_count = TaMapping.where(ta_id: ta_id).size - 1
-    if ta_count.zero?
-      ta.update(role: Role::STUDENT)
-    end
+    ta_count = TaMapping.where(ta_id:).size - 1
+    ta.update(role: Role::STUDENT) if ta_count.zero?
     ta_mapping.destroy
     { success: true, ta_name: ta.name }
   end

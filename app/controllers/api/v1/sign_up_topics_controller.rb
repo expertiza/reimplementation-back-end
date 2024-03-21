@@ -1,5 +1,5 @@
 class Api::V1::SignUpTopicsController < ApplicationController
-  before_action :set_sign_up_topic, only: %i[ show update ]
+  before_action :set_sign_up_topic, only: %i[show update]
 
   # GET /api/v1/sign_up_topics?assignment_id=&topic_ids[]=
   # Retrieve SignUpTopics by two query parameters - assignment_id (compulsory) and an array of topic_ids (optional)
@@ -26,7 +26,8 @@ class Api::V1::SignUpTopicsController < ApplicationController
     @sign_up_topic.micropayment = params[:micropayment] if @assignment.microtask?
     if @sign_up_topic.save
       # undo_link "The topic: \"#{@sign_up_topic.topic_name}\" has been created successfully. "
-      render json: { message: "The topic: \"#{@sign_up_topic.topic_name}\" has been created successfully. " }, status: :created
+      render json: { message: "The topic: \"#{@sign_up_topic.topic_name}\" has been created successfully. " },
+             status: :created
     else
       render json: { message: @sign_up_topic.errors }, status: :unprocessable_entity
     end
@@ -36,7 +37,8 @@ class Api::V1::SignUpTopicsController < ApplicationController
   # updates parameters present in sign_up_topic_params.
   def update
     if @sign_up_topic.update(sign_up_topic_params)
-      render json: { message: "The topic: \"#{@sign_up_topic.topic_name}\" has been updated successfully. " }, status: 200
+      render json: { message: "The topic: \"#{@sign_up_topic.topic_name}\" has been updated successfully. " },
+             status: 200
     else
       render json: @sign_up_topic.errors, status: :unprocessable_entity
     end
@@ -64,7 +66,7 @@ class Api::V1::SignUpTopicsController < ApplicationController
     end
 
     if @sign_up_topics.each(&:delete)
-      render json: { message: "The topic has been deleted successfully. " }, status: :no_content
+      render json: { message: 'The topic has been deleted successfully. ' }, status: :no_content
     else
       render json: @sign_up_topic.errors, status: :unprocessable_entity
     end

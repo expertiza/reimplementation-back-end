@@ -2,6 +2,6 @@
 
 class ScoredQuestion < ChoiceQuestion
   def scorable?
-      true
-    end
+    true
+  end
 end

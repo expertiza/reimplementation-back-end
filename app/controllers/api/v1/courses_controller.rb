@@ -1,5 +1,5 @@
 class Api::V1::CoursesController < ApplicationController
-  before_action :set_course, only: %i[ show update destroy add_ta view_tas remove_ta copy ]
+  before_action :set_course, only: %i[show update destroy add_ta view_tas remove_ta copy]
   rescue_from ActiveRecord::RecordNotFound, with: :course_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
@@ -51,7 +51,7 @@ class Api::V1::CoursesController < ApplicationController
     if result[:success]
       render json: result[:data], status: :created
     else
-      render json: { status: "error", message: result[:message] }, status: :bad_request
+      render json: { status: 'error', message: result[:message] }, status: :bad_request
     end
   end
 
@@ -67,7 +67,7 @@ class Api::V1::CoursesController < ApplicationController
     if result[:success]
       render json: { message: "The TA #{result[:ta_name]} has been removed." }, status: :ok
     else
-      render json: { status: "error", message: result[:message] }, status: :not_found
+      render json: { status: 'error', message: result[:message] }, status: :not_found
     end
   end
 
@@ -78,7 +78,7 @@ class Api::V1::CoursesController < ApplicationController
     if success
       render json: { message: "The course #{@course.name} has been successfully copied" }, status: :ok
     else
-      render json: { message: "The course was not able to be copied" }, status: :unprocessable_entity
+      render json: { message: 'The course was not able to be copied' }, status: :unprocessable_entity
     end
   end
 
@@ -99,6 +99,6 @@ class Api::V1::CoursesController < ApplicationController
   end
 
   def parameter_missing
-    render json: { error: "Parameter missing" }, status: :unprocessable_entity
+    render json: { error: 'Parameter missing' }, status: :unprocessable_entity
   end
 end

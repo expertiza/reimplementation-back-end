@@ -43,8 +43,8 @@ Rails.application.routes.draw do
       resources :questions do
         collection do
           get :types
-          get 'show_all/questionnaire/:id', to:'questions#show_all#questionnaire', as: 'show_all'
-          delete 'delete_all/questionnaire/:id', to:'questions#delete_all#questionnaire', as: 'delete_all'
+          get 'show_all/questionnaire/:id', to: 'questions#show_all#questionnaire', as: 'show_all'
+          delete 'delete_all/questionnaire/:id', to: 'questions#delete_all#questionnaire', as: 'delete_all'
         end
       end
 
@@ -73,7 +73,7 @@ Rails.application.routes.draw do
       end
 
       resources :responses
-      resources :responses do 
+      resources :responses do
         collection do
           get 'new/:map_id', action: :new
           get ':id/edit', action: :edit

@@ -7,7 +7,8 @@ class InvitationValidator < ActiveModel::Validator
   DUPLICATE_INVITATION_ERROR_MSG = 'You cannot have duplicate invitations'.freeze
   TO_FROM_SAME_ERROR_MSG = 'to and from users should be different'.freeze
   REPLY_STATUS_ERROR_MSG = 'must be present and have a maximum length of 1'.freeze
-  REPLY_STATUS_INCLUSION_ERROR_MSG = "must be one of #{[ACCEPT_STATUS, REJECT_STATUS, WAITING_STATUS].to_sentence}".freeze
+  REPLY_STATUS_INCLUSION_ERROR_MSG = "must be one of #{[ACCEPT_STATUS, REJECT_STATUS,
+                                                        WAITING_STATUS].to_sentence}".freeze
 
   def validate(record)
     validate_reply_status(record)
@@ -19,15 +20,15 @@ class InvitationValidator < ActiveModel::Validator
   private
 
   def validate_reply_status(record)
-    unless record.reply_status.present? && record.reply_status.length <= 1
-      record.errors.add(:reply_status, REPLY_STATUS_ERROR_MSG)
-    end
+    return if record.reply_status.present? && record.reply_status.length <= 1
+
+    record.errors.add(:reply_status, REPLY_STATUS_ERROR_MSG)
   end
 
   def validate_reply_status_inclusion(record)
-    unless [ACCEPT_STATUS, REJECT_STATUS, WAITING_STATUS].include?(record.reply_status)
-      record.errors.add(:reply_status, REPLY_STATUS_INCLUSION_ERROR_MSG)
-    end
+    return if [ACCEPT_STATUS, REJECT_STATUS, WAITING_STATUS].include?(record.reply_status)
+
+    record.errors.add(:reply_status, REPLY_STATUS_INCLUSION_ERROR_MSG)
   end
 
   def validate_duplicate_invitation(record)
@@ -37,14 +38,14 @@ class InvitationValidator < ActiveModel::Validator
       assignment_id: record.assignment_id,
       reply_status: record.reply_status
     }
-    if Invitation.where(conditions).exists?
-      record.errors[:base] << DUPLICATE_INVITATION_ERROR_MSG
-    end
+    return unless Invitation.where(conditions).exists?
+
+    record.errors[:base] << DUPLICATE_INVITATION_ERROR_MSG
   end
 
   def validate_to_from_different(record)
-    if record.from_id == record.to_id
-      record.errors.add(:from_id, TO_FROM_SAME_ERROR_MSG)
-    end
+    return unless record.from_id == record.to_id
+
+    record.errors.add(:from_id, TO_FROM_SAME_ERROR_MSG)
   end
 end

@@ -1,5 +1,5 @@
 class Questionnaire < ApplicationRecord
-  #belongs_to :assignment, foreign_key: 'assignment_id', inverse_of: false
+  # belongs_to :assignment, foreign_key: 'assignment_id', inverse_of: false
   belongs_to :instructor
   has_many :questions, dependent: :destroy # the collection of questions associated with this Questionnaire
   has_many :assignment_questionnaires, dependent: :destroy
@@ -31,24 +31,27 @@ class Questionnaire < ApplicationRecord
   def validate_questionnaire
     errors.add(:max_question_score, 'The maximum question score must be a positive integer.') if max_question_score < 1
     errors.add(:min_question_score, 'The minimum question score must be a positive integer.') if min_question_score < 0
-    errors.add(:min_question_score, 'The minimum question score must be less than the maximum.') if min_question_score >= max_question_score
+    if min_question_score >= max_question_score
+      errors.add(:min_question_score,
+                 'The minimum question score must be less than the maximum.')
+    end
     results = Questionnaire.where('id <> ? and name = ? and instructor_id = ?', id, name, instructor_id)
     errors.add(:name, 'Questionnaire names must be unique.') if results.present?
   end
 
   # Check_for_question_associations checks if questionnaire has associated questions or not
   def check_for_question_associations
-    if questions.any?
-      raise ActiveRecord::DeleteRestrictionError.new(:base, "Cannot delete record because dependent questions exist")
-    end
+    return unless questions.any?
+
+    raise ActiveRecord::DeleteRestrictionError.new(:base, 'Cannot delete record because dependent questions exist')
   end
 
   def as_json(options = {})
     super(options.merge({
-                          only: %i[id name private min_question_score max_question_score created_at updated_at questionnaire_type instructor_id],
+                          only: %i[id name private min_question_score max_question_score created_at updated_at
+                                   questionnaire_type instructor_id],
                           include: {
-                            instructor: { only: %i[name email fullname password role]
-                            }
+                            instructor: { only: %i[name email fullname password role] }
                           }
                         })).tap do |hash|
       hash['instructor'] ||= { id: nil, name: nil }

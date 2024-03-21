@@ -1,10 +1,9 @@
 require 'rails_helper'
 
 RSpec.describe Assignment, type: :model do
-
-  let(:team) {Team.new}
+  let(:team) { Team.new }
   let(:assignment) { Assignment.new(id: 1, name: 'Test Assignment') }
-  let(:review_response_map) { ReviewResponseMap.new(assignment: assignment, reviewee: team) }
+  let(:review_response_map) { ReviewResponseMap.new(assignment:, reviewee: team) }
   let(:answer) { Answer.new(answer: 1, comments: 'Answer text', question_id: 1) }
   let(:answer2) { Answer.new(answer: 1, comments: 'Answer text', question_id: 1) }
 
@@ -28,7 +27,10 @@ RSpec.describe Assignment, type: :model do
   describe '.volume_of_review_comments' do
     it 'returns volumes of review comments in each round' do
       allow(assignment).to receive(:get_all_review_comments).with(1)
-                                                                  .and_return([[nil, 'Answer text', 'Answer textLGTM', ''], [nil, 1, 1, 0]])
+                                                            .and_return([
+                                                                          [nil, 'Answer text', 'Answer textLGTM',
+                                                                           ''], [nil, 1, 1, 0]
+                                                                        ])
       expect(assignment.volume_of_review_comments(1)).to eq([1, 2, 2, 0])
     end
   end

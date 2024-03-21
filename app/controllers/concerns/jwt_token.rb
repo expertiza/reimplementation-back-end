@@ -8,6 +8,7 @@ module JwtToken
   end
 
   private
+
   # def authenticate_request!
   #   true
   # end

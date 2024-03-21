@@ -2,7 +2,10 @@ require 'rails_helper'
 
 RSpec.describe Course, type: :model do
   let(:course) { build(:course, id: 1, name: 'ECE517') }
-  let(:user1) { User.new name: 'abc', fullname: 'abc bbc', email: 'abcbbc@gmail.com', password: '123456789', password_confirmation: '123456789' }
+  let(:user1) do
+    User.new name: 'abc', fullname: 'abc bbc', email: 'abcbbc@gmail.com', password: '123456789',
+             password_confirmation: '123456789'
+  end
   let(:institution) { build(:institution, id: 1) }
   describe 'validations' do
     it 'validates presence of name' do
@@ -18,7 +21,9 @@ RSpec.describe Course, type: :model do
     context 'when there is no associated instructor' do
       it 'an error is raised' do
         allow(course).to receive(:instructor_id).and_return(nil)
-        expect { course.path }.to raise_error('Path can not be created as the course must be associated with an instructor.')
+        expect do
+          course.path
+        end.to raise_error('Path can not be created as the course must be associated with an instructor.')
       end
     end
     context 'when there is an associated instructor' do
@@ -31,5 +36,4 @@ RSpec.describe Course, type: :model do
       end
     end
   end
-
 end

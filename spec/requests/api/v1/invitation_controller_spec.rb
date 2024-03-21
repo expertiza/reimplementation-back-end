@@ -6,10 +6,9 @@ RSpec.describe 'Invitations API', type: :request do
   let(:user2) { create :user, name: 'superman' }
   let(:invalid_user) { build :user, name: 'INVALID' }
   let(:assignment) { create(:assignment) }
-  let(:invitation) { create :invitation, from_user: user1, to_user: user2, assignment: assignment }
+  let(:invitation) { create :invitation, from_user: user1, to_user: user2, assignment: }
 
   path '/api/v1/invitations' do
-
     get('list invitations') do
       tags 'Invitations'
       produces 'application/json'

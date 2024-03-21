@@ -1,5 +1,4 @@
 class Api::V1::SignedUpTeamsController < ApplicationController
-
   # Returns signed up topics using sign_up_topic assignment id
   # Retrieves sign_up_topic using topic_id as a parameter
   def index
@@ -16,7 +15,7 @@ class Api::V1::SignedUpTeamsController < ApplicationController
   def update
     @signed_up_team = SignedUpTeam.find(params[:id])
     if @signed_up_team.update(signed_up_teams_params)
-      render json: { message: "The team has been updated successfully. " }, status: 200
+      render json: { message: 'The team has been updated successfully. ' }, status: 200
     else
       render json: @signed_up_team.errors, status: :unprocessable_entity
     end
@@ -29,7 +28,7 @@ class Api::V1::SignedUpTeamsController < ApplicationController
     topic_id = params[:topic_id]
     @signed_up_team = SignedUpTeam.create_signed_up_team(topic_id, team_id)
     if @signed_up_team
-      render json: { message: "Signed up team successful!" }, status: :created
+      render json: { message: 'Signed up team successful!' }, status: :created
     else
       render json: { message: @signed_up_team.errors }, status: :unprocessable_entity
     end
@@ -48,7 +47,7 @@ class Api::V1::SignedUpTeamsController < ApplicationController
     @signed_up_team = SignedUpTeam.create_signed_up_team(topic_id, team_id)
     # create(topic_id, team_id)
     if @signed_up_team
-      render json: { message: "Signed up team successful!" }, status: :created
+      render json: { message: 'Signed up team successful!' }, status: :created
     else
       render json: { message: @signed_up_team.errors }, status: :unprocessable_entity
     end
@@ -69,5 +68,4 @@ class Api::V1::SignedUpTeamsController < ApplicationController
   def signed_up_teams_params
     params.require(:signed_up_team).permit(:topic_id, :team_id, :is_waitlisted, :preference_priority_number)
   end
-
 end

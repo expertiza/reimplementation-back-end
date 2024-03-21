@@ -1,14 +1,12 @@
 require 'swagger_helper'
 
 RSpec.describe 'Institutions API', type: :request do
-
   path '/api/v1/institutions' do
     get('list institutions') do
       tags 'Institutions'
       produces 'application/json'
 
       response(200, 'successful') do
-
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -28,7 +26,7 @@ RSpec.describe 'Institutions API', type: :request do
         properties: {
           name: { type: :string }
         },
-        required: [ 'name' ]
+        required: ['name']
       }
 
       response(201, 'Created a institution') do
@@ -68,7 +66,6 @@ RSpec.describe 'Institutions API', type: :request do
     get('show institution') do
       tags 'Institutions'
       response(200, 'successful') do
-
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -88,11 +85,10 @@ RSpec.describe 'Institutions API', type: :request do
         properties: {
           name: { type: :string }
         },
-        required: [ 'name' ]
+        required: ['name']
       }
-      
-      response(200, 'successful') do
 
+      response(200, 'successful') do
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -118,7 +114,7 @@ RSpec.describe 'Institutions API', type: :request do
       end
     end
 
-    put('update institution') do 
+    put('update institution') do
       tags 'Institutions'
       consumes 'application/json'
       parameter name: :institution, in: :body, schema: {
@@ -126,11 +122,10 @@ RSpec.describe 'Institutions API', type: :request do
         properties: {
           name: { type: :string }
         },
-        required: [ 'name' ]
+        required: ['name']
       }
 
       response(200, 'successful') do
-
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -159,7 +154,6 @@ RSpec.describe 'Institutions API', type: :request do
     delete('delete institution') do
       tags 'Institutions'
       response(200, 'successful') do
-
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {

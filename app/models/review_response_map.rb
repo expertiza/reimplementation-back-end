@@ -7,8 +7,9 @@ class ReviewResponseMap < ResponseMap
 
   # returns the assignment related to the response map
   def response_assignment
-    return assignment
+    assignment
   end
+
   def get_title
     'Review'
   end

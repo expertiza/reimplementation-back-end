@@ -24,7 +24,7 @@ class Lock < ApplicationRecord
   def self.get_lock(lockable, user, timeout)
     return nil if lockable.nil? || user.nil?
 
-    lock = find_by(lockable: lockable)
+    lock = find_by(lockable:)
     return create_lock(lockable, user, timeout) if lock.nil?
 
     # We need to put an actual database lock on this object to prevent concurrent acquisition of this object
@@ -56,21 +56,19 @@ class Lock < ApplicationRecord
   # This method will also renew the timeout period on the lock to avoid race conditions
   def self.lock_between?(lockable, user)
     lock = find_by(lockable_id: lockable.id, user_id: user.id)
-    if lock.nil?
-      return false
-    else
-      lock.destroy
-      create_lock(lockable, user, lock.timeout_period)
-      return true
-    end
+    return false if lock.nil?
+
+    lock.destroy
+    create_lock(lockable, user, lock.timeout_period)
+    true
   end
 
   # Destroys the lock on the given resource by the given user (if it exists)
   def self.release_lock(lockable)
     return if lockable.nil?
 
-    lock = find_by(lockable: lockable)
-    Lock.where(lockable: lockable).destroy_all unless lock.nil?
+    lock = find_by(lockable:)
+    Lock.where(lockable:).destroy_all unless lock.nil?
   end
 
   # Just a little helper method to help keep this code DRY
@@ -81,7 +79,7 @@ class Lock < ApplicationRecord
     # Unfortunately, database locks can't be created for nonexistent entries.
     # This was the way I found online avoid the race condition but I'm not sure exactly how it works
     transaction do
-      lock = Lock.new(lockable: lockable, user: user, timeout_period: timeout)
+      lock = Lock.new(lockable:, user:, timeout_period: timeout)
       lock.save!
       return lockable
     end

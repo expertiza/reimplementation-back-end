@@ -1,16 +1,28 @@
 require 'rails_helper'
 describe Questionnaire, type: :model do
-  
   # Creating dummy objects for the test with the help of let statement
-  let(:role) {Role.create(name: 'Instructor', parent_id: nil, id: 2, default_page_id: nil)}
-  let(:instructor) { Instructor.create(name: 'testinstructor', email: 'test@test.com', fullname: 'Test Instructor', password: '123456', role: role) }
-  let(:questionnaire) { Questionnaire.new id: 1, name: 'abc', private: 0, min_question_score: 0, max_question_score: 10, instructor_id: instructor.id }
-  let(:questionnaire1) { Questionnaire.new name: 'xyz', private: 0, max_question_score: 20, instructor_id: instructor.id }
-  let(:questionnaire2) { Questionnaire.new name: 'pqr', private: 0, max_question_score: 10, instructor_id: instructor.id }
-  let(:question1) { questionnaire.questions.build(weight: 1, id: 1, seq: 1, txt: "que 1", question_type: "Scale", break_before: true) }
-  let(:question2) { questionnaire.questions.build(weight: 10, id: 2, seq: 2, txt: "que 2", question_type: "Checkbox", break_before: true) }
-  
-
+  let(:role) { Role.create(name: 'Instructor', parent_id: nil, id: 2, default_page_id: nil) }
+  let(:instructor) do
+    Instructor.create(name: 'testinstructor', email: 'test@test.com', fullname: 'Test Instructor', password: '123456',
+                      role:)
+  end
+  let(:questionnaire) do
+    Questionnaire.new id: 1, name: 'abc', private: 0, min_question_score: 0, max_question_score: 10,
+                      instructor_id: instructor.id
+  end
+  let(:questionnaire1) do
+    Questionnaire.new name: 'xyz', private: 0, max_question_score: 20, instructor_id: instructor.id
+  end
+  let(:questionnaire2) do
+    Questionnaire.new name: 'pqr', private: 0, max_question_score: 10, instructor_id: instructor.id
+  end
+  let(:question1) do
+    questionnaire.questions.build(weight: 1, id: 1, seq: 1, txt: 'que 1', question_type: 'Scale', break_before: true)
+  end
+  let(:question2) do
+    questionnaire.questions.build(weight: 10, id: 2, seq: 2, txt: 'que 2', question_type: 'Checkbox',
+                                  break_before: true)
+  end
 
   describe '#name' do
     # Test validates the name of the questionnaire
@@ -28,14 +40,14 @@ describe Questionnaire, type: :model do
   end
 
   describe '#instructor_id' do
-    # Test validates the instructor id in the questionnaire 
+    # Test validates the instructor id in the questionnaire
     it 'returns the instructor id' do
       expect(questionnaire.instructor_id).to eq(instructor.id)
     end
   end
 
   describe '#maximum_score' do
-    # Test validates the maximum score in the questionnaire 
+    # Test validates the maximum score in the questionnaire
     it 'validate maximum score' do
       expect(questionnaire.max_question_score).to eq(10)
     end
@@ -87,9 +99,7 @@ describe Questionnaire, type: :model do
       questionnaire.min_question_score = 'a'
       expect(questionnaire).not_to be_valid
     end
-
   end
-
 
   describe 'associations' do
     # Test validates the association that a questionnaire comprises of several questions
@@ -113,14 +123,14 @@ describe Questionnaire, type: :model do
       allow(Questionnaire).to receive(:find).with('1').and_return(questionnaire)
       allow(Question).to receive(:where).with(questionnaire_id: '1').and_return([Question])
     end
-    
+
     # Test ensures creation of a copy of given questionnaire
     it 'creates a copy of the questionnaire' do
       instructor.save!
       questionnaire.save!
       question1.save!
       question2.save!
-      copied_questionnaire = Questionnaire.copy_questionnaire_details( { id: questionnaire.id})
+      copied_questionnaire = Questionnaire.copy_questionnaire_details({ id: questionnaire.id })
       expect(copied_questionnaire.instructor_id).to eq(questionnaire.instructor_id)
       expect(copied_questionnaire.name).to eq("Copy of #{questionnaire.name}")
       expect(copied_questionnaire.created_at).to be_within(1.second).of(Time.zone.now)
@@ -138,5 +148,4 @@ describe Questionnaire, type: :model do
       expect(copied_questionnaire.questions.second.txt).to eq(question2.txt)
     end
   end
-
 end
