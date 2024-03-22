@@ -72,6 +72,7 @@ Rails.application.routes.draw do
         end
       end
       resources :student_quizzes
+      resources :participants, only: [:create]
     end
   end
 end
