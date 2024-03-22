@@ -31,7 +31,56 @@ class Api::V1::StudentQuizzesController < ApplicationController
     render json: { error: e.message }, status: :unprocessable_entity
   end
 
+  # POST /student_quizzes/assign
+  def assign_quiz_to_student
+    participant = find_participant(params[:participant_id])
+    questionnaire = find_questionnaire(params[:questionnaire_id])
+
+    if quiz_already_assigned?(participant, questionnaire)
+      render json: { error: "This student is already assigned to the quiz." }, status: :unprocessable_entity
+      return
+    end
+
+    response_map = build_response_map(participant.user_id, questionnaire)
+
+    if response_map.save
+      # Handle success, render a success message or the response_map itself
+    else
+      render json: { error: response_map.errors.full_messages.to_sentence }, status: :unprocessable_entity
+    end
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
   private
+
+  def find_participant(id)
+    Participant.find(id)
+  end
+
+  def find_questionnaire(id)
+    Questionnaire.find(id)
+  end
+
+  def quiz_already_assigned?(participant, questionnaire)
+    ResponseMap.exists?(
+      reviewee_id: participant.user_id,
+      reviewed_object_id: questionnaire.id
+    )
+  end
+
+  def build_response_map(student_id, questionnaire)
+    instructor_id = find_instructor_id_for_questionnaire(questionnaire)
+    ResponseMap.new(
+      reviewee_id: student_id,
+      reviewer_id: instructor_id,
+      reviewed_object_id: questionnaire.id
+    )
+  end
+
+  def find_instructor_id_for_questionnaire(questionnaire)
+    Assignment.find(questionnaire.assignment_id).instructor_id
+  end
 
   def questionnaire_params
     params.require(:questionnaire).permit(
