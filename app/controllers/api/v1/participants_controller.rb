@@ -2,13 +2,13 @@ class Api::V1::ParticipantsController < ApplicationController
   # POST /api/v1/participants
   def create
     # Check if the user and the assignment exist
-    # unless User.exists?(participant_params[:user_id])
-    #   return render json: { error: 'User does not exist' }, status: :not_found
-    # end
-    #
-    # unless Assignment.exists?(participant_params[:assignment_id])
-    #   return render json: { error: 'Assignment does not exist' }, status: :not_found
-    # end
+    unless User.exists?(participant_params[:user_id])
+      return render json: { error: 'User does not exist' }, status: :not_found
+    end
+
+    unless Assignment.exists?(participant_params[:assignment_id])
+      return render json: { error: 'Assignment does not exist' }, status: :not_found
+    end
 
     # Instantiate a new Participant object with the permitted parameters
     participant = Participant.new(participant_params)
