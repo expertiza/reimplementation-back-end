@@ -44,7 +44,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
 
   # Check for instructor
   def check_instructor_role
-    return if current_user.role_id == 3
+    return if current_user.role_id == 1
 
     render json: { error: 'Only instructors are allowed to perform this action' }, status: :forbidden
     nil

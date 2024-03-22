@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
+ActiveRecord::Schema[7.0].define(version: 2024_03_22_232203) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -32,6 +32,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.text "comments"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "answer_text"
+    t.boolean "correct", default: false
     t.index ["question_id"], name: "fk_score_questions"
     t.index ["response_id"], name: "fk_score_response"
   end
@@ -153,6 +155,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.text "instruction_loc"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "assignment_id", null: false
+    t.index ["assignment_id"], name: "index_questionnaires_on_assignment_id"
   end
 
   create_table "questions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -165,10 +169,13 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.boolean "break_before"
     t.string "max_label"
     t.string "min_label"
-    t.integer "questionnaire_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "questionnaire_id", null: false
+    t.string "correct_answer"
+    t.integer "score_value"
     t.index ["questionnaire_id"], name: "fk_question_questionnaires"
+    t.index ["questionnaire_id"], name: "index_questions_on_questionnaire_id"
   end
 
   create_table "response_maps", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -246,6 +253,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
   add_foreign_key "courses", "users", column: "instructor_id"
   add_foreign_key "participants", "assignments"
   add_foreign_key "participants", "users"
+  add_foreign_key "questionnaires", "assignments"
+  add_foreign_key "questions", "questionnaires"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"

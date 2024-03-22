@@ -92,12 +92,14 @@ class Api::V1::QuestionnairesController < ApplicationController
   end
 
   def sanitize_display_type(type)
+    return nil if type.nil? # Return immediately if type is nil
+
     display_type = type.split('Questionnaire')[0]
-    if %w[AuthorFeedback CourseSurvey TeammateReview GlobalSurvey AssignmentSurvey 
-BookmarkRating].include?(display_type)
+    if %w[AuthorFeedback CourseSurvey TeammateReview GlobalSurvey AssignmentSurvey BookmarkRating].include?(display_type)
       display_type = (display_type.split(/(?=[A-Z])/)).join('%')
     end
     display_type
   end
+
 
 end

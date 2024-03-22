@@ -9,6 +9,7 @@ class Question < ApplicationRecord
   validates :question_type, presence: true # user must define type for a question
   validates :break_before, inclusion: { in: [true, false] }
   validates :correct_answer, presence: true
+  validates :score_value, presence: true
 
 
   def scorable?
