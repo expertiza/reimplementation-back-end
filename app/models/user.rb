@@ -125,7 +125,7 @@ class User < ApplicationRecord
     return true if p == self.role
     return false if p.super_administrator?
     recursively_parent_of(p)
-  end
+  end
 
   # This will override the default as_json method in the ApplicationRecord class and specify
   # that only the id, name, and email attributes should be included when a User object is serialized.
