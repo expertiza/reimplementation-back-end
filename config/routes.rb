@@ -73,7 +73,7 @@ Rails.application.routes.draw do
       end
 
       resources :impersonate do
-        get 'user/:user_name', on: :collection, to: 'impersonate#get_users_list'
+        get ':user_name', on: :collection, to: 'impersonate#get_users_list'
         post '', on: :collection, to: 'impersonate#impersonate'
       end
 
