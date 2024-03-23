@@ -46,8 +46,8 @@ class Api::V1::ResponsesController < ApplicationController
       create_update_answers(response, params[:scores]) if params[:scores]
 
       if is_submitted
-        questions = get_questions(response)
-        response.scores = get_answers(response, questions)
+        items = get_items(response)
+        response.scores = get_answers(response, items)
         notify_instructor_on_difference(response)
         notify_peer_review_ready(response.response_map.id)
       end
@@ -60,7 +60,7 @@ class Api::V1::ResponsesController < ApplicationController
   end
 
   # GET /responses/1/edit
-  # Prepares a response for editing by retrieving the current questions and answers.
+  # Prepares a response for editing by retrieving the current items and answers.
   # Includes locking functionality to prevent concurrent edits.
   def edit
     response = Response.find(params[:id])
@@ -75,8 +75,8 @@ class Api::V1::ResponsesController < ApplicationController
     if response.errors.full_messages.length > 0
       render json: response.errors, status: :unprocessable_entity
     else
-      questions = get_questions(response)
-      response.scores = get_answers(response, questions)
+      items = get_items(response)
+      response.scores = get_answers(response, items)
       render json: response.serialize_response, status: :ok
     end
   rescue StandardError

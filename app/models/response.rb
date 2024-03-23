@@ -66,11 +66,10 @@ class Response < ApplicationRecord
     if response_map.nil?
       errors.add(:response_map, ' Not found response map')
     else
+      items = get_items(self)
+      self.scores = get_answers(self, questions)
       self
     end
-    questions = get_questions(self)
-    self.scores = get_answers(self, questions)
-    self
   end
   
   def serialize_response
@@ -89,8 +88,7 @@ class Response < ApplicationRecord
         reviewee_id: response_map.reviewee_id,
         type: response_map.type,
         calibrate_to: response_map.calibrate_to,
-        team_reviewing_enabled: response_map.team_reviewing_enabled,
-        assignment_questionnaire_id: response_map.assignment_questionnaire_id
+        team_reviewing_enabled: response_map.team_reviewing_enabled
       },
       scores: scores.map do |score|
         {
@@ -101,9 +99,9 @@ class Response < ApplicationRecord
           question: {
             id: score.question.id,
             txt: score.question.txt,
-            type: score.type,
-            seq: score.seq,
-            questionnaire_id: score.question_id
+            question_type: score.question.question_type,
+            seq: score.question.seq,
+            questionnaire_id: score.question.questionnaire_id
           }
         }
       end

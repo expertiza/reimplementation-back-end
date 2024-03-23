@@ -8,31 +8,32 @@ module ResponseHelper
   # Retrieves the corresponding questionnaire for a given response based on the response map type.
   # It determines the appropriate questionnaire by the type of response map and the current review round.
   def get_questionnaire(response)
-    reviewees_topic_id = SignedUpTeam.topic_id_by_team_id(response.response_map.contributor.id)
-    current_round = assignment.number_of_current_round(reviewees_topic_id)
-    questionnaire = nil
-    response.response_map.type =~ /(.+)ResponseMap$/
-    questionnaire_type = $1 + "Questionnaire"
-    assignment = Assignment.includes(assignment_questionnaires: :questionnaire).where("id = ?", reviewees_topic_id)
-    assignment_questionnaires = assignment.assignment_questionnaires.joins(:questionnaire).distinct
-    if(assignment_questionnaires.count == 1)
-      return assignment_questionnaires[0].questionnaire
-    else
-      assignment_questionnaires.each do |aq|
-        if aq.questionnaire.type == questionnaire_type && aq.used_in_round == current_round && aq.topic_id == reviewees_topic_id
-          questionnaire = aq.questionnaire
-        end
-      end
-    end
+    questionnaire = Questionnaire.find(1)
+    # reviewees_topic_id = SignedUpTeam.topic_id_by_team_id(response.response_map.contributor.id)
+    # current_round = assignment.number_of_current_round(reviewees_topic_id)
+    # questionnaire = nil
+    # response.response_map.type =~ /(.+)ResponseMap$/
+    # questionnaire_type = $1 + "Questionnaire"
+    # assignment = Assignment.includes(assignment_questionnaires: :questionnaire).where("id = ?", reviewees_topic_id)
+    # assignment_questionnaires = assignment.assignment_questionnaires.joins(:questionnaire).distinct
+    # if(assignment_questionnaires.count == 1)
+    #   return assignment_questionnaires[0].questionnaire
+    # else
+    #   assignment_questionnaires.each do |aq|
+    #     if aq.questionnaire.type == questionnaire_type && aq.used_in_round == current_round && aq.topic_id == reviewees_topic_id
+    #       questionnaire = aq.questionnaire
+    #     end
+    #   end
+    # end
   end
 
   # Calculates the maximum possible score for a given response.
   # Considers only scorable questions where the answer is not nil.
   def maximum_score(response)
     total_weight = 0
-    response.scores.each do |s|
-      question = Question.find(s.question_id)
-      total_weight += question.weight
+    response.scores.each do |score|
+      question = Question.find(score.question_id)
+      total_weight += question.weight unless score.answer.nil? || !question.is_a?(ScoredQuestion)
     end
     questionnaire = get_questionnaire(response)
     total_weight * questionnaire.max_question_score
