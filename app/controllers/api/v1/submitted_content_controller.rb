@@ -16,4 +16,8 @@ class Api::V1::SubmittedContentController < ApplicationController
         current_user_has_student_privileges?
       end
     end
+
+    def controller_locale
+      locale_for_student
+    end
 end  
