@@ -1,8 +1,28 @@
 class Api::V1::StudentQuizzesController < ApplicationController
-  before_action :check_instructor_role
+  before_action :check_instructor_role, except: [:submit_answers]
+  before_action :set_student_quiz, only: [:show, :edit, :update, :destroy]
   def index
     @quizzes = Questionnaire.all
     render json: @quizzes
+  end
+
+  # GET /student_quizzes/:id
+  def show
+    render json: @student_quiz
+  end
+
+  # GET /student_quizzes/:id/calculate_score
+  def calculate_score
+    # Find the ResponseMap by its ID.
+    # Make sure this ID is the ID of the ResponseMap, not the Questionnaire or the Participant.
+    response_map = ResponseMap.find_by(id: params[:id])
+
+    if response_map
+      # Return the score of the ResponseMap
+      render json: { score: response_map.score }, status: :ok
+    else
+      render json: { error: 'Attempt not found or you do not have permission to view this score.' }, status: :not_found
+    end
   end
 
   # POST /student_quizzes/create_questionnaire
@@ -52,7 +72,98 @@ class Api::V1::StudentQuizzesController < ApplicationController
     render json: { error: e.message }, status: :unprocessable_entity
   end
 
+  # POST /student_quizzes/submit_answers
+  # Method to submit answers for a quiz
+  def submit_answers
+    ActiveRecord::Base.transaction do
+      response_map = find_response_map_for_current_user
+
+      # Return error if no ResponseMap exists for the current user
+      unless response_map
+        render json: { error: "You are not assigned to take this quiz." }, status: :forbidden
+        return
+      end
+
+      total_score = process_answers(params[:answers], response_map)
+
+      # Update the score of the ResponseMap with the total score from answers
+      response_map.update!(score: total_score)
+
+      # Respond with the total score calculated from the submitted answers
+      render json: { total_score: total_score }, status: :ok
+    end
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
+  # PATCH/PUT /student_quizzes/:id
+  def update
+    if @student_quiz.update(questionnaire_params)
+      render json: @student_quiz
+    else
+      render json: @student_quiz.errors, status: :unprocessable_entity
+    end
+  rescue => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
+  # DELETE /student_quizzes/:id
+  def destroy
+    @student_quiz.destroy
+    head :no_content
+  rescue ActiveRecord::RecordNotFound => e
+    render json: { error: 'Record does not exist' }, status: :no_content
+  end
+
+
   private
+
+  # New method to permit parameters for submitting answers
+  def response_map_params
+    params.require(:response_map).permit(:student_id, :questionnaire_id)
+  end
+
+  def set_student_quiz
+    @student_quiz = Questionnaire.find(params[:id])
+  rescue ActiveRecord::RecordNotFound => e
+    render json: { error: 'Record does not exist' }, status: :no_content
+  end
+
+  # Find the existing ResponseMap for the current user and the questionnaire
+  def find_response_map_for_current_user
+    ResponseMap.find_by(
+      reviewee_id: current_user.id,
+      reviewed_object_id: params[:questionnaire_id]
+    )
+  end
+
+  # Process each submitted answer, calculate total score
+  def process_answers(answers, response_map)
+    answers.sum do |answer|
+      process_answer(answer, response_map)
+    end
+  end
+
+  # Process a single answer, return score value
+  def process_answer(answer, response_map)
+    question = Question.find(answer[:question_id])
+    submitted_answer = answer[:answer_value]
+
+    response = find_or_initialize_response(response_map.id, question.id)
+    response.submitted_answer = submitted_answer
+    response.save!
+
+    # Return the question's score value if the answer is correct, otherwise return 0
+    question.correct_answer == submitted_answer ? question.score_value : 0
+  end
+
+  # Find or initialize a response for the given response_map_id and question_id
+  def find_or_initialize_response(response_map_id, question_id)
+    Response.find_or_initialize_by(
+      response_map_id: response_map_id,
+      question_id: question_id
+    )
+  end
 
   def find_participant(id)
     Participant.find(id)
@@ -93,7 +204,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
 
   # Check for instructor
   def check_instructor_role
-    return if current_user.role_id == 1
+    return if current_user.role_id == 3
 
     render json: { error: 'Only instructors are allowed to perform this action' }, status: :forbidden
     nil
