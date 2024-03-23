@@ -37,7 +37,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
       create_questions_and_answers(questionnaire, questionnaire_params[:questions_attributes])
       questionnaire # Ensure questionnaire is returned from the transaction block
     end
-    render_success(questionnaire)
+    render_success(questionnaire, :created)
   rescue StandardError => e
     render_error(e.message, :unprocessable_entity)
   end
@@ -56,7 +56,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
 
     response_map = build_response_map(participant.user_id, questionnaire)
     if response_map.save
-      render_success(response_map)
+      render_success(response_map, :created)
     else
       render_error(response_map.errors.full_messages.to_sentence, :unprocessable_entity)
     end
