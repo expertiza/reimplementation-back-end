@@ -92,6 +92,41 @@ class User < ApplicationRecord
     visible_users[0, 10] # the first 10
   end
 
+  # Check if the user can impersonate another user
+  def can_impersonate?(user)
+    return true if role.super_administrator?
+    return true if recursively_parent_of(user.role)
+    false
+  end
+
+  # Check if the user is a teaching assistant for the student's course
+  def teaching_assistant_for?(student)
+    return false unless teaching_assistant?
+    return false unless student.role.name == 'Student'
+
+    # We have to use the Ta object instead of User object
+    # because single table inheritance is not currently functioning
+    ta = Ta.find(id)
+    ta.managed_users.each do |user|
+      return true if user.id == student.id
+    end
+    false
+  end
+
+  # Check if the user is a teaching assistant
+  def teaching_assistant?
+    true if role.ta?
+  end
+
+  # Recursively check if parent child relationship exists
+  def recursively_parent_of(user_role)
+    p = user_role.parent
+    return false if p.nil?
+    return true if p == self.role
+    return false if p.super_administrator?
+    recursively_parent_of(p)
+  end
+
   # This will override the default as_json method in the ApplicationRecord class and specify
   # that only the id, name, and email attributes should be included when a User object is serialized.
   def as_json(options = {})
