@@ -1183,7 +1183,7 @@ paths:
               required:
               - user_name
               - password
-  "/api/v1/submitted_content_controller/{id}/edit":
+  "/api/v1/submitted_content/{id}/edit":
     get:
       summary: 'Edit participant'
       description: | 
