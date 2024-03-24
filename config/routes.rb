@@ -24,6 +24,13 @@ Rails.application.routes.draw do
       end
       resources :assignments
 
+      resources :bookmarks, except: %i[index show] do
+        collection do
+          get 'list/:id', to: 'bookmarks#list', as: 'list'
+          post :save_bookmark_rating_score
+        end
+      end
+
       resources :courses do
         collection do
           get ':id/add_ta/:ta_id', action: :add_ta
