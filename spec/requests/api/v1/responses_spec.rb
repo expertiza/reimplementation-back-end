@@ -123,7 +123,7 @@ RSpec.describe 'Responses API Controller', type: :request do
     end
   end
 
-  path '/api/1/responses/{id}' do
+  path '/api/v1/responses/{id}' do
     parameter name: 'id', in: :path, type: :integer, description: 'id of the response'
 
     get('show response') do
@@ -146,7 +146,6 @@ RSpec.describe 'Responses API Controller', type: :request do
       parameter name: :response, in: :body, schema: {
         type: :object,
         properties: {
-          id: {type: :integer},
           map_id: {type: :integer},
           additional_comment: {type: :text},
           is_submitted: { type: :boolean},
@@ -177,7 +176,7 @@ RSpec.describe 'Responses API Controller', type: :request do
 
           ]
         },
-        required: [ 'name' ]
+        required: [ 'id' ]
       }
 
       response(200, 'successful') do
@@ -211,7 +210,6 @@ RSpec.describe 'Responses API Controller', type: :request do
       parameter name: :response, in: :body, schema: {
         type: :object,
         properties: {
-          id: {type: :integer},
           map_id: {type: :integer},
           additional_comment: {type: :text},
           is_submitted: { type: :boolean},
@@ -242,7 +240,7 @@ RSpec.describe 'Responses API Controller', type: :request do
 
           ]
         },
-        required: [ 'name' ]
+        required: [ 'id' ]
       }
 
       response(200, 'successful') do
@@ -264,6 +262,20 @@ RSpec.describe 'Responses API Controller', type: :request do
           example.metadata[:response][:content] = {
             'application/json' => {
               example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+    end
+    # DELETE /responses/{id}
+    delete('delete response') do
+      tags 'Responses'
+      response(204, 'successful') do
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: response.body
             }
           }
         end

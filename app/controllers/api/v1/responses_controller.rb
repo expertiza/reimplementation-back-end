@@ -50,6 +50,7 @@ class Api::V1::ResponsesController < ApplicationController
   def create
     is_submitted = params[:response][:is_submitted]
     response = Response.new
+    response.map_id = params[:response][:map_id]
     response.validate_params(params, 'create')
 
     if response.errors.full_messages.length == 0
@@ -110,7 +111,7 @@ class Api::V1::ResponsesController < ApplicationController
       return
     end
     was_submitted = response.is_submitted
-    if response.response_map.team_reviewing_enabled && !Lock.lock_between?(response, current_user)
+    if response.response_map.team_reviewing_enabled && false   # !Lock.lock_between?(response, current_user)
       error_message = response_lock_action(response.map_id, true)
       render json: error_message, status: :ok
     end
@@ -124,6 +125,7 @@ class Api::V1::ResponsesController < ApplicationController
       render json: response.errors, status: :unprocessable_entity
     end
   rescue StandardError
+    
     render json: "Request failed. #{$ERROR_INFO}", status: :unprocessable_entity
   end
 
@@ -133,7 +135,7 @@ class Api::V1::ResponsesController < ApplicationController
     response = Response.find(params[:id])
     if delete_answers?(response)
       response.destroy!
-      render json: 'Your response was successfully deleted.', status: :ok
+      render json: "The response id #{params[:id]} was successfully deleted.", status: :ok
     else
       render json: 'Deletion conditions not met.', status: :unprocessable_entity
     end
