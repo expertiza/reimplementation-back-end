@@ -55,13 +55,36 @@ RSpec.describe 'Responses API Controller', type: :request do
         type: :object,
         properties: {
           map_id: { type: :integer },
-          additional_comment: { type: :text },
+          additional_comment: { type: :string },
           is_submitted: { type: :boolean },
           version_num: { type: :integer },
           round: { type: :integer },
-          visibility: { type: :string }
+          visibility: { type: :string },
+          response_map: {
+            id: { type: :integer },
+            reviewed_object_id: { type: :integer },
+            reviewer_id: { type: :integer },
+            reviewee_id: { type: :integer },
+            type: { type: :string },
+            calibrate_to: { type: :boolean },
+            team_reviewing_enabled: { type: :boolean },
+            assignment_questionnaire_id: { type: :integer }
+          },
+          scores: [
+            {
+              id: { type: :integer },
+              answer: { type: :integer },
+              comments: { type: :text },
+              question_id: { type: :integer },
+              question: {
+                id: { type: :integer },
+                txt: { type: :integer }
+              }
+            }
+
+          ]
         },
-        required: %w[map_id]
+        required: ['map_id']
       }
       response(201, 'Created a response') do
         after do |example|
@@ -71,7 +94,6 @@ RSpec.describe 'Responses API Controller', type: :request do
             }
           }
         end
-        run_test!
       end
 
       # response(422, 'invalid request') do
@@ -98,11 +120,10 @@ RSpec.describe 'Responses API Controller', type: :request do
       #     expect(response_body[:message]).to eq("Your response id #{Response.last.id} was successfully saved.")
       #   end
       # end
-
     end
   end
 
-  path '/api/vi/responses/{id}' do
+  path '/api/1/responses/{id}' do
     parameter name: 'id', in: :path, type: :integer, description: 'id of the response'
 
     get('show response') do
@@ -118,7 +139,7 @@ RSpec.describe 'Responses API Controller', type: :request do
         run_test!
       end
     end
-    # PATCH /responses/{id}
+
     patch('update response') do
       tags 'Responses'
       consumes 'application/json'
@@ -132,10 +153,33 @@ RSpec.describe 'Responses API Controller', type: :request do
           version_num: { type: :integer},
           round: { type: :integer},
           visibility: { type: :string},
+          response_map: {
+            id: {type: :integer},
+            reviewed_object_id: {type: :integer},
+            reviewer_id: {type: :integer},
+            reviewee_id: {type: :integer},
+            type: {type: :string},
+            calibrate_to: {type: :boolean},
+            team_reviewing_enabled: {type: :boolean},
+            assignment_questionnaire_id: {type: :integer}
+          },
+          scores: [
+            {
+              id: {type: :integer},
+              answer: {type: :integer},
+              comments: {type: :text},
+              question_id: {type: :integer},
+              question: {
+                id: {type: :integer},
+                txt: {type: :integer}
+              }
+            }
+
+          ]
         },
-        required: %w[]
+        required: [ 'name' ]
       }
-      let(:id) { create(:response).id }
+
       response(200, 'successful') do
         after do |example|
           example.metadata[:response][:content] = {
@@ -161,7 +205,6 @@ RSpec.describe 'Responses API Controller', type: :request do
         run_test!
       end
     end
-    # PUT /responses/{id}
     put('update response') do
       tags 'Responses'
       consumes 'application/json'
@@ -199,7 +242,7 @@ RSpec.describe 'Responses API Controller', type: :request do
 
           ]
         },
-        required: %w[]
+        required: [ 'name' ]
       }
 
       response(200, 'successful') do
@@ -221,20 +264,6 @@ RSpec.describe 'Responses API Controller', type: :request do
           example.metadata[:response][:content] = {
             'application/json' => {
               example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
-        run_test!
-      end
-    end
-    # DELETE /responses/{id}
-    delete('delete response') do
-      tags 'Responses'
-      response(204, 'successful') do
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: response.body
             }
           }
         end

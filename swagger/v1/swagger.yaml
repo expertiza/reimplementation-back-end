@@ -3,6 +3,15 @@ openapi: 3.0.1
 info:
   title: EXPERTIZA API V1
   version: v1
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
 paths:
   "/api/v1/account_requests/pending":
     get:
