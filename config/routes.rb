@@ -77,7 +77,7 @@ Rails.application.routes.draw do
         end
         collection do
           post 'assign', to: 'student_quizzes#assign_quiz_to_student'
-          post :create_questionnaire
+          post :create
         end
       end
       post 'student_quizzes/submit_answers', to: 'student_quizzes#submit_answers'

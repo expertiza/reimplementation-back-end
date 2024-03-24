@@ -1,135 +1,109 @@
 class Api::V1::StudentQuizzesController < ApplicationController
+  # Ensure only instructors can access most actions
   before_action :check_instructor_role, except: [:submit_answers]
-  before_action :set_student_quiz, only: [:show, :edit, :update, :destroy]
+  # Set the student quiz for actions that operate on a specific quiz
+  before_action :set_student_quiz, only: [:show, :update, :destroy]
+
+  # Handle common ActiveRecord validation failures across actions
+  rescue_from ActiveRecord::RecordInvalid do |exception|
+    render_error(exception.message)
+  end
+
+  # Lists all questionnaires (quizzes)
   def index
-    @quizzes = Questionnaire.all
-    render json: @quizzes
+    quizzes = Questionnaire.all
+    render_success(quizzes)
   end
 
-  # GET /student_quizzes/:id
+  # Show a specific student quiz
   def show
-    render json: @student_quiz
+    render_success(@student_quiz)
   end
 
-  # GET /student_quizzes/:id/calculate_score
+  # Calculate and show the score for a specific attempt
   def calculate_score
-    # Find the ResponseMap by its ID.
-    # Make sure this ID is the ID of the ResponseMap, not the Questionnaire or the Participant.
     response_map = ResponseMap.find_by(id: params[:id])
-
     if response_map
-      # Return the score of the ResponseMap
-      render json: { score: response_map.score }, status: :ok
+      render_success({ score: response_map.score })
     else
-      render json: { error: 'Attempt not found or you do not have permission to view this score.' }, status: :not_found
+      render_error('Attempt not found or you do not have permission to view this score.', :not_found)
     end
   end
 
-  # POST /student_quizzes/create_questionnaire
-  def create_questionnaire
-    # Wrap the entire questionnaire creation process in a transaction
-    # to ensure data integrity. All changes are rolled back if any part fails.
-    ActiveRecord::Base.transaction do
-      # Create the questionnaire without the nested questions to avoid deep nesting issues.
-      questionnaire = Questionnaire.create!(questionnaire_params.except(:questions_attributes))
-
-      # Iterate over each question within the questionnaire
-      questionnaire_params[:questions_attributes].each do |question_attributes|
-        # Create individual questions for the questionnaire,
-        # excluding the answers to simplify the creation process.
-        question = questionnaire.questions.create!(question_attributes.except(:answers_attributes))
-
-        # Iterate over each answer for the current question
-        question_attributes[:answers_attributes].each do |answer_attributes|
-          # Create answers for the question
-          question.answers.create!(answer_attributes)
-        end
-      end
+  # Create a new questionnaire with questions and answers
+  def create
+    questionnaire = ActiveRecord::Base.transaction do
+      questionnaire = create_questionnaire(questionnaire_params.except(:questions_attributes))
+      create_questions_and_answers(questionnaire, questionnaire_params[:questions_attributes])
+      questionnaire # Ensure questionnaire is returned from the transaction block
     end
+    render_success(questionnaire, :created)
   rescue StandardError => e
-    # If an error occurs at any point in the process, catch it and render a JSON error response
-    render json: { error: e.message }, status: :unprocessable_entity
+    render_error(e.message, :unprocessable_entity)
   end
 
-  # POST /student_quizzes/assign
+
+  # Assign a quiz to a student
   def assign_quiz_to_student
-    participant = find_participant(params[:participant_id])
-    questionnaire = find_questionnaire(params[:questionnaire_id])
+    participant = find_resource_by_id(Participant, params[:participant_id])
+    questionnaire = find_resource_by_id(Questionnaire, params[:questionnaire_id])
+    return unless participant && questionnaire
 
     if quiz_already_assigned?(participant, questionnaire)
-      render json: { error: "This student is already assigned to the quiz." }, status: :unprocessable_entity
+      render_error("This student is already assigned to the quiz.", :unprocessable_entity)
       return
     end
 
     response_map = build_response_map(participant.user_id, questionnaire)
-
     if response_map.save
-      # Handle success, render a success message or the response_map itself
+      render_success(response_map, :created)
     else
-      render json: { error: response_map.errors.full_messages.to_sentence }, status: :unprocessable_entity
+      render_error(response_map.errors.full_messages.to_sentence, :unprocessable_entity)
     end
-  rescue ActiveRecord::RecordInvalid => e
-    render json: { error: e.message }, status: :unprocessable_entity
   end
 
-  # POST /student_quizzes/submit_answers
-  # Method to submit answers for a quiz
+  # Submit answers for a quiz and calculate the total score
   def submit_answers
     ActiveRecord::Base.transaction do
       response_map = find_response_map_for_current_user
-
-      # Return error if no ResponseMap exists for the current user
       unless response_map
-        render json: { error: "You are not assigned to take this quiz." }, status: :forbidden
+        render_error("You are not assigned to take this quiz.", :forbidden)
         return
       end
 
       total_score = process_answers(params[:answers], response_map)
-
-      # Update the score of the ResponseMap with the total score from answers
       response_map.update!(score: total_score)
-
-      # Respond with the total score calculated from the submitted answers
-      render json: { total_score: total_score }, status: :ok
+      render_success({ total_score: total_score })
     end
   rescue ActiveRecord::RecordInvalid => e
-    render json: { error: e.message }, status: :unprocessable_entity
+    render_error(e.message, :unprocessable_entity)
   end
 
-  # PATCH/PUT /student_quizzes/:id
+  # Update a student quiz
   def update
     if @student_quiz.update(questionnaire_params)
-      render json: @student_quiz
+      render_success(@student_quiz)
     else
-      render json: @student_quiz.errors, status: :unprocessable_entity
+      render_error(@student_quiz.errors.full_messages.to_sentence, :unprocessable_entity)
     end
-  rescue => e
-    render json: { error: e.message }, status: :unprocessable_entity
   end
 
-  # DELETE /student_quizzes/:id
+  # Delete a student quiz
   def destroy
     @student_quiz.destroy
     head :no_content
-  rescue ActiveRecord::RecordNotFound => e
-    render json: { error: 'Record does not exist' }, status: :no_content
+  rescue ActiveRecord::RecordNotFound
+    render_error('Record does not exist', :not_found)
   end
-
 
   private
 
-  # New method to permit parameters for submitting answers
-  def response_map_params
-    params.require(:response_map).permit(:student_id, :questionnaire_id)
-  end
-
+  # Set the student quiz based on the ID provided in the route
   def set_student_quiz
-    @student_quiz = Questionnaire.find(params[:id])
-  rescue ActiveRecord::RecordNotFound => e
-    render json: { error: 'Record does not exist' }, status: :no_content
+    @student_quiz = find_resource_by_id(Questionnaire, params[:id])
   end
 
-  # Find the existing ResponseMap for the current user and the questionnaire
+  # Find the response map for the current user's attempt to submit quiz answers
   def find_response_map_for_current_user
     ResponseMap.find_by(
       reviewee_id: current_user.id,
@@ -137,27 +111,21 @@ class Api::V1::StudentQuizzesController < ApplicationController
     )
   end
 
-  # Process each submitted answer, calculate total score
+  # Process and calculate the total score for submitted answers
   def process_answers(answers, response_map)
     answers.sum do |answer|
-      process_answer(answer, response_map)
+      question = Question.find(answer[:question_id])
+      submitted_answer = answer[:answer_value]
+
+      response = find_or_initialize_response(response_map.id, question.id)
+      response.submitted_answer = submitted_answer
+      response.save!
+
+      question.correct_answer == submitted_answer ? question.score_value : 0
     end
   end
 
-  # Process a single answer, return score value
-  def process_answer(answer, response_map)
-    question = Question.find(answer[:question_id])
-    submitted_answer = answer[:answer_value]
-
-    response = find_or_initialize_response(response_map.id, question.id)
-    response.submitted_answer = submitted_answer
-    response.save!
-
-    # Return the question's score value if the answer is correct, otherwise return 0
-    question.correct_answer == submitted_answer ? question.score_value : 0
-  end
-
-  # Find or initialize a response for the given response_map_id and question_id
+  # Find or initialize a response for a specific question within an attempt
   def find_or_initialize_response(response_map_id, question_id)
     Response.find_or_initialize_by(
       response_map_id: response_map_id,
@@ -165,14 +133,15 @@ class Api::V1::StudentQuizzesController < ApplicationController
     )
   end
 
-  def find_participant(id)
-    Participant.find(id)
+  # Find a specific resource by ID, handling the case where it's not found
+  def find_resource_by_id(model, id)
+    model.find(id)
+  rescue ActiveRecord::RecordNotFound
+    render_error("#{model.name} not found", :not_found)
+    nil
   end
 
-  def find_questionnaire(id)
-    Questionnaire.find(id)
-  end
-
+  # Check if a quiz has already been assigned to a participant
   def quiz_already_assigned?(participant, questionnaire)
     ResponseMap.exists?(
       reviewee_id: participant.user_id,
@@ -180,8 +149,9 @@ class Api::V1::StudentQuizzesController < ApplicationController
     )
   end
 
+  # Build a new ResponseMap instance for assigning a quiz to a student
   def build_response_map(student_id, questionnaire)
-    instructor_id = find_instructor_id_for_questionnaire(questionnaire)
+    instructor_id = questionnaire.assignment.instructor_id
     ResponseMap.new(
       reviewee_id: student_id,
       reviewer_id: instructor_id,
@@ -189,25 +159,44 @@ class Api::V1::StudentQuizzesController < ApplicationController
     )
   end
 
-  def find_instructor_id_for_questionnaire(questionnaire)
-    Assignment.find(questionnaire.assignment_id).instructor_id
+  # Create a new questionnaire along with its questions and answers
+  def create_questionnaire(params)
+    Questionnaire.create!(params)
   end
 
+  # Create questions and their respective answers for a questionnaire
+  def create_questions_and_answers(questionnaire, questions_attributes)
+    questions_attributes.each do |question_attr|
+      question = questionnaire.questions.create!(question_attr.except(:answers_attributes))
+      question_attr[:answers_attributes]&.each do |answer_attr|
+        question.answers.create!(answer_attr)
+      end
+    end
+  end
+
+  # Permit and require the necessary parameters for creating/updating a questionnaire
   def questionnaire_params
     params.require(:questionnaire).permit(
       :name, :instructor_id, :min_question_score, :max_question_score, :assignment_id,
       questions_attributes: [:id, :txt, :question_type, :break_before, :correct_answer, :score_value,
-                             { answers_attributes: %i[id answer_text correct] }
-      ]
+                             { answers_attributes: %i[id answer_text correct] }]
     )
   end
 
-  # Check for instructor
-  def check_instructor_role
-    return if current_user.role_id == 3
-
-    render json: { error: 'Only instructors are allowed to perform this action' }, status: :forbidden
-    nil
+  # Render a success response with optional custom status code
+  def render_success(data, status = :ok)
+    render json: data, status: status
   end
 
+  # Render an error response with message and status code
+  def render_error(message, status = :unprocessable_entity)
+    render json: { error: message }, status: status
+  end
+
+  # Ensure only instructors can perform certain actions
+  def check_instructor_role
+    unless current_user.role_id == 3 # Assuming 3 is the role ID for instructors
+      render_error('Only instructors are allowed to perform this action', :forbidden)
+    end
+  end
 end
