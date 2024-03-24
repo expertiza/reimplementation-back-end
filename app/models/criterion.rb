@@ -1,7 +1,7 @@
 class Criterion < ScoredQuestion
   validates :size, presence: true
 
-  def edit(_count)
+  def edit
     {
       remove_link: "/questions/#{id}",
       sequence_input: seq.to_s,
@@ -26,7 +26,7 @@ class Criterion < ScoredQuestion
     question_data
   end
 
-  def complete(count, answer = nil, questionnaire_min, questionnaire_max, dropdown_or_scale)
+  def complete(count,answer = nil, questionnaire_min, questionnaire_max, dropdown_or_scale)
     question_advices = QuestionAdvice.to_json_by_question_id(id)
     advice_total_length = question_advices.sum { |advice| advice.advice.length unless advice.advice.blank? }
 
@@ -46,7 +46,7 @@ class Criterion < ScoredQuestion
   end
 
   # Assuming now these methods should be public based on the test cases
-  def dropdown_criterion_question(count, answer, questionnaire_min, questionnaire_max)
+  def dropdown_criterion_question(count,answer, questionnaire_min, questionnaire_max)
     options = (questionnaire_min..questionnaire_max).map do |score|
       option = { value: score, label: score.to_s }
       option[:selected] = 'selected' if answer && score == answer.answer
@@ -55,7 +55,7 @@ class Criterion < ScoredQuestion
     { type: 'dropdown', options: options, current_answer: answer.try(:answer), comments: answer.try(:comments) }
   end
 
-  def scale_criterion_question(count, answer, questionnaire_min, questionnaire_max)
+  def scale_criterion_question(count,answer, questionnaire_min, questionnaire_max)
     {
       type: 'scale',
       min: questionnaire_min,
@@ -70,7 +70,7 @@ class Criterion < ScoredQuestion
 
   private
 
-  def advices_criterion_question(count, question_advices)
+  def advices_criterion_question(question_advices)
     question_advices.map do |advice|
       {
         score: advice.score,
