@@ -6,6 +6,5 @@ FactoryBot.define do
     type { 'ReviewResponseMap' } # Replace "SomeType" with a default value appropriate for your model
     calibrate_to { false }
     team_reviewing_enabled { false }
-    assignment_questionnaire_id { 1 }
   end
 end

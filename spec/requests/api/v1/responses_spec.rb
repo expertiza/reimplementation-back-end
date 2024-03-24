@@ -22,8 +22,7 @@ RSpec.describe 'Responses API Controller', type: :request do
         reviewee_id: 2,
         type: 'ReviewResponseMap',
         calibrate_to: false,
-        team_reviewing_enabled: false,
-        assignment_questionnaire_id: 1
+        team_reviewing_enabled: false
       },
       scores: [
         { question_id: 1, answer: 5, comments: 'Answer 1 comments' },

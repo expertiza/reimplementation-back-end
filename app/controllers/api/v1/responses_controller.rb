@@ -7,15 +7,24 @@ class Api::V1::ResponsesController < ApplicationController
   def index
     responses = Response.all
     render json: responses, status: :ok
+  rescue StandardError
+    render json: "Request failed. #{$ERROR_INFO}", status: :unprocessable_entity
   end
 
   # GET /responses/1
   # # Retrieves and renders a single response based on its ID.
   # The response's content is prepared before rendering.
   def show
-    response = Response.find(params[:id])
+    begin
+      response = Response.find(params[:id])
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: "Not found" }, status: :not_found
+      return
+    end
     response = response.set_content
     render json: response.serialize_response, status: :ok
+  rescue StandardError
+    render json: "Request failed. #{$ERROR_INFO}", status: :unprocessable_entity
   end
 
   # GET /responses/new
@@ -30,6 +39,8 @@ class Api::V1::ResponsesController < ApplicationController
     else
       render json: response.serialize_response, status: :ok
     end
+  rescue StandardError
+    render json: "Request failed. #{$ERROR_INFO}", status: :unprocessable_entity
   end
 
   # POST /responses
@@ -63,7 +74,12 @@ class Api::V1::ResponsesController < ApplicationController
   # Prepares a response for editing by retrieving the current items and answers.
   # Includes locking functionality to prevent concurrent edits.
   def edit
-    response = Response.find(params[:id])
+    begin
+      response = Response.find(params[:id])
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: "Not found" }, status: :not_found
+      return
+    end
     response.set_content
     if response.response_map.team_reviewing_enabled
       response = Lock.get_lock(response, current_user, Lock::DEFAULT_TIMEOUT)
@@ -87,7 +103,12 @@ class Api::V1::ResponsesController < ApplicationController
   # Updates an existing response with new data.
   # Validates parameters, saves changes, and notifies the instructor if the submission status changes.
   def update
-    response = Response.find(params[:id])
+    begin
+      response = Response.find(params[:id])
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: "Not found" }, status: :not_found
+      return
+    end
     was_submitted = response.is_submitted
     if response.response_map.team_reviewing_enabled && !Lock.lock_between?(response, current_user)
       error_message = response_lock_action(response.map_id, true)

@@ -3,7 +3,7 @@ require 'rails_helper'
 RSpec.describe Response, type: :model do
   let(:response_map) do
     ResponseMap.new(id: 1, reviewed_object_id: 1, reviewer_id: 1, reviewee_id: 2, type: 'ReviewResponseMap',
-                    calibrate_to: false, team_reviewing_enabled: false, assignment_questionnaire_id: 1)
+                    calibrate_to: false, team_reviewing_enabled: false)
   end
   let(:response) do
     Response.new(id: 1, map_id: 1, additional_comment: 'comment 1', is_submitted: false, version_num: 1, round: 1,
@@ -27,8 +27,7 @@ RSpec.describe Response, type: :model do
         reviewee_id: 2,
         type: 'ReviewResponseMap',
         calibrate_to: false,
-        team_reviewing_enabled: false,
-        assignment_questionnaire_id: 1
+        team_reviewing_enabled: false
       },
       scores: [
         { question_id: 1, answer: 5, comments: 'Answer 1 comments' },
@@ -60,21 +59,17 @@ RSpec.describe Response, type: :model do
 
   # validate method
   describe 'Validate the incomming parameters' do
-    # Assuming you have factories set up for your models
-    # let(:response_map) { create(:response_map) }
-    # let(:response) { build(:response, response_map: response_map) }
-
     context 'when creating a new response' do
       it 'validates not existing of response_map in database' do
         params = { map_id: 3 }
         response = Response.new
-        response.validate(params, 'create')
+        response.validate_params(params, 'create')
         expect(response.errors[:response_map]).to include('Not found response map')
       end
       it 'validates creating a new response' do
         response = Response.new
         params[:map_id] = 1
-        response.validate(params, 'create')
+        response.validate_params(params, 'create')
         expect(response.errors.full_messages.length).to eq(0)
       end
     end
@@ -85,7 +80,7 @@ RSpec.describe Response, type: :model do
         params1 = {}
         params1[:response] = params
         params1[:response][:is_submitted] = true
-        response.validate(params1, 'update')
+        response.validate_params(params1, 'update')
         expect(response.is_submitted).to eq(true)
       end
       it 'validates cannot update the submitted response' do
@@ -94,7 +89,7 @@ RSpec.describe Response, type: :model do
         response.is_submitted = true
         params1 = {}
         params1[:response] = params
-        response.validate(params1, 'update')
+        response.validate_params(params1, 'update')
         expect(response.errors[:response]).to include('Already submitted.')
       end
     end
@@ -105,7 +100,7 @@ RSpec.describe Response, type: :model do
     it 'sets the response content based on provided response id' do
       params = { id: 1 }
       response = Response.find(params[:id])
-      response.set_content(params, 'show')
+      response.set_content
       expect(response.errors.full_messages.length).to eq(0)
     end
   end
