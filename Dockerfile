@@ -5,7 +5,8 @@ LABEL maintainer="Ankur Mundra <ankurmundra0212@gmail.com>"
 RUN apt-get update && \
     apt-get install -y curl && \
     curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs
+    apt-get install -y nodejs && \
+    apt-get install -y netcat
 
 # Set the working directory
 WORKDIR /app
@@ -17,6 +18,7 @@ COPY . .
 RUN gem update --system && gem install bundler:2.4.7
 RUN bundle install
 
-EXPOSE 4000
+EXPOSE 3002 
 
-CMD ["bash"]
+# Set the entry point
+ENTRYPOINT ["/app/setup.sh"]
