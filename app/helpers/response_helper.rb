@@ -106,16 +106,16 @@ module ResponseHelper
       raise StandardError, 'Question Id required.' unless answer[:question_id].present?
 
       score = Answer.where(response_id: response.id, question_id: answer[:question_id]).first
-      score ||= Answer.create(response_id: response.id, question_id: answer[:question_id], answer: v[:answer],
-                              comments: v[:comments])
-      score.update_attribute('answer', v[:answer])
-      score.update_attribute('comments', v[:comments])
+      score ||= Answer.create(response_id: response.id, question_id: answer[:question_id], answer: answer[:answer],
+                              comments: answer[:comments])
+      score.update_attribute('answer', answer[:answer])
+      score.update_attribute('comments', answer[:comments])
     end
   end
 
   # Retrieves the questionnaire associated with a given response.
   # This method determines the relevant questionnaire by examining the response's type and related information.
-  def get_questions(response)
+  def get_items(response)
     questionnaire = get_questionnaire(response)
     questionnaire.questions
   end
@@ -141,9 +141,9 @@ module ResponseHelper
   end
   
   # This method delete the answer objects of the response model before deleting the response model.
-  def delete_answer?(response)
-    questions = get_questions(response)
-    answers = get_answers(response, questions)
+  def delete_answers?(response)
+    items = get_items(response)
+    answers = get_answers(response, items)
     count = answers.length
     answers.each do |answer|
       answer.destroy!

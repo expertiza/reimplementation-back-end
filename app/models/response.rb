@@ -23,7 +23,7 @@ class Response < ApplicationRecord
                   else
                     response_map.id
                   end
-    response_map = ResponseMap.includes(:responses).find_by(id: map_id)
+    response_map = ResponseMap.includes(:responses).find_by(id: self.map_id)
     if self.response_map.nil?
       errors.add(:response_map, 'Not found response map')
       return
@@ -35,23 +35,23 @@ class Response < ApplicationRecord
     self.version_num = params[:response][:version_num] if params[:response]&.key?(:version_num)
 
     if action == 'create'
-      if round.present? && version_num.present?
-        existing_response = response_map.responses.where('map_id = ? and round = ? and version_num = ?', map_id,
-                                                         round, version_num).first
+      if self.round.present? && self.version_num.present?
+        existing_response = response_map.responses.where('map_id = ? and round = ? and version_num = ?', self.map_id,
+                                                         self.round, self.version_num).first
       elsif round.present? && !version_num.present?
-        existing_response = response_map.responses.where('map_id = ? and round = ?', map_id, round).first
+        existing_response = response_map.responses.where('map_id = ? and round = ?', self.map_id, round).first
       elsif !round.present? && version_num.present?
-        existing_response = response_map.responses.where('map_id = ? and version_num = ?', map_id,
-                                                         version_num).first
+        existing_response = response_map.responses.where('map_id = ? and version_num = ?', self.map_id,
+                                                         self.version_num).first
       end
 
       if existing_response.present?
-        errors.add('response', 'Already existed.')
+        self.errors.add('response', 'Already existed.')
         return
       end
     elsif action == 'update'
       if is_submitted
-        errors.add('response', 'Already submitted.')
+        self.errors.add('response', 'Already submitted.')
         return
       end
     end
@@ -64,10 +64,10 @@ class Response < ApplicationRecord
   def set_content
     self.response_map = ResponseMap.find(map_id)
     if response_map.nil?
-      errors.add(:response_map, ' Not found response map')
+      self.errors.add(:response_map, ' Not found response map')
     else
       items = get_items(self)
-      self.scores = get_answers(self, questions)
+      self.scores = get_answers(self, items)
       self
     end
   end

@@ -34,21 +34,21 @@ RSpec.describe 'Responses API Controller', type: :request do
   end
 
   path '/api/v1/responses' do
-    # get('list responses') do
-    #   tags 'Responses'
-    #   produces 'application/json'
-    #   response(200, 'successful') do
-    #
-    #     after do |example|
-    #       example.metadata[:response][:content] = {
-    #         'application/json' => {
-    #           example: JSON.parse(response.body, symbolize_names: true)
-    #         }
-    #       }
-    #     end
-    #     run_test!
-    #   end
-    # end
+    get('list responses') do
+      tags 'Responses'
+      produces 'application/json'
+      response(200, 'successful') do
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+    end
     post('create response') do
       tags 'Responses'
       consumes 'application/json'
@@ -141,135 +141,135 @@ RSpec.describe 'Responses API Controller', type: :request do
       end
     end
 
-    # patch('update response') do
-    #   tags 'Responses'
-    #   consumes 'application/json'
-    #   parameter name: :response, in: :body, schema: {
-    #     type: :object,
-    #     properties: {
-    #       id: {type: :integer},
-    #       map_id: {type: :integer},
-    #       additional_comment: {type: :text},
-    #       is_submitted: { type: :boolean},
-    #       version_num: { type: :integer},
-    #       round: { type: :integer},
-    #       visibility: { type: :string},
-    #       response_map: {
-    #         id: {type: :integer},
-    #         reviewed_object_id: {type: :integer},
-    #         reviewer_id: {type: :integer},
-    #         reviewee_id: {type: :integer},
-    #         type: {type: :string},
-    #         calibrate_to: {type: :boolean},
-    #         team_reviewing_enabled: {type: :boolean},
-    #         assignment_questionnaire_id: {type: :integer}
-    #       },
-    #       scores: [
-    #         {
-    #           id: {type: :integer},
-    #           answer: {type: :integer},
-    #           comments: {type: :text},
-    #           question_id: {type: :integer},
-    #           question: {
-    #             id: {type: :integer},
-    #             txt: {type: :integer}
-    #           }
-    #         }
-    #
-    #       ]
-    #     },
-    #     required: [ 'name' ]
-    #   }
-    #
-    #   response(200, 'successful') do
-    #     after do |example|
-    #       example.metadata[:response][:content] = {
-    #         'application/json' => {
-    #           example: JSON.parse(response.body, symbolize_names: true)
-    #         }
-    #       }
-    #     end
-    #     run_test!
-    #   end
-    #
-    #   response(422, 'invalid request') do
-    #     let(:response) { { id: '' } }
-    #     let(:id) { create(:response).id }
-    #
-    #     after do |example|
-    #       example.metadata[:response][:content] = {
-    #         'application/json' => {
-    #           example: JSON.parse(response.body, symbolize_names: true)
-    #         }
-    #       }
-    #     end
-    #     run_test!
-    #   end
-    # end
-    # put('update response') do
-    #   tags 'Responses'
-    #   consumes 'application/json'
-    #   parameter name: :response, in: :body, schema: {
-    #     type: :object,
-    #     properties: {
-    #       id: {type: :integer},
-    #       map_id: {type: :integer},
-    #       additional_comment: {type: :text},
-    #       is_submitted: { type: :boolean},
-    #       version_num: { type: :integer},
-    #       round: { type: :integer},
-    #       visibility: { type: :string},
-    #       response_map: {
-    #         id: {type: :integer},
-    #         reviewed_object_id: {type: :integer},
-    #         reviewer_id: {type: :integer},
-    #         reviewee_id: {type: :integer},
-    #         type: {type: :string},
-    #         calibrate_to: {type: :boolean},
-    #         team_reviewing_enabled: {type: :boolean},
-    #         assignment_questionnaire_id: {type: :integer}
-    #       },
-    #       scores: [
-    #         {
-    #           id: {type: :integer},
-    #           answer: {type: :integer},
-    #           comments: {type: :text},
-    #           question_id: {type: :integer},
-    #           question: {
-    #             id: {type: :integer},
-    #             txt: {type: :integer}
-    #           }
-    #         }
-    #
-    #       ]
-    #     },
-    #     required: [ 'name' ]
-    #   }
-    #
-    #   response(200, 'successful') do
-    #     after do |example|
-    #       example.metadata[:response][:content] = {
-    #         'application/json' => {
-    #           example: JSON.parse(response.body, symbolize_names: true)
-    #         }
-    #       }
-    #     end
-    #     run_test!
-    #   end
-    #
-    #   response(422, 'invalid request') do
-    #     let(:response) { { id: '' } }
-    #     let(:id) { create(:response).id }
-    #
-    #     after do |example|
-    #       example.metadata[:response][:content] = {
-    #         'application/json' => {
-    #           example: JSON.parse(response.body, symbolize_names: true)
-    #         }
-    #       }
-    #     end
-    #     run_test!
-    #   end
-    # end
+    patch('update response') do
+      tags 'Responses'
+      consumes 'application/json'
+      parameter name: :response, in: :body, schema: {
+        type: :object,
+        properties: {
+          id: {type: :integer},
+          map_id: {type: :integer},
+          additional_comment: {type: :text},
+          is_submitted: { type: :boolean},
+          version_num: { type: :integer},
+          round: { type: :integer},
+          visibility: { type: :string},
+          response_map: {
+            id: {type: :integer},
+            reviewed_object_id: {type: :integer},
+            reviewer_id: {type: :integer},
+            reviewee_id: {type: :integer},
+            type: {type: :string},
+            calibrate_to: {type: :boolean},
+            team_reviewing_enabled: {type: :boolean},
+            assignment_questionnaire_id: {type: :integer}
+          },
+          scores: [
+            {
+              id: {type: :integer},
+              answer: {type: :integer},
+              comments: {type: :text},
+              question_id: {type: :integer},
+              question: {
+                id: {type: :integer},
+                txt: {type: :integer}
+              }
+            }
+
+          ]
+        },
+        required: [ 'name' ]
+      }
+
+      response(200, 'successful') do
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+
+      response(422, 'invalid request') do
+        let(:response) { { id: '' } }
+        let(:id) { create(:response).id }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+    end
+    put('update response') do
+      tags 'Responses'
+      consumes 'application/json'
+      parameter name: :response, in: :body, schema: {
+        type: :object,
+        properties: {
+          id: {type: :integer},
+          map_id: {type: :integer},
+          additional_comment: {type: :text},
+          is_submitted: { type: :boolean},
+          version_num: { type: :integer},
+          round: { type: :integer},
+          visibility: { type: :string},
+          response_map: {
+            id: {type: :integer},
+            reviewed_object_id: {type: :integer},
+            reviewer_id: {type: :integer},
+            reviewee_id: {type: :integer},
+            type: {type: :string},
+            calibrate_to: {type: :boolean},
+            team_reviewing_enabled: {type: :boolean},
+            assignment_questionnaire_id: {type: :integer}
+          },
+          scores: [
+            {
+              id: {type: :integer},
+              answer: {type: :integer},
+              comments: {type: :text},
+              question_id: {type: :integer},
+              question: {
+                id: {type: :integer},
+                txt: {type: :integer}
+              }
+            }
+
+          ]
+        },
+        required: [ 'name' ]
+      }
+
+      response(200, 'successful') do
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+
+      response(422, 'invalid request') do
+        let(:response) { { id: '' } }
+        let(:id) { create(:response).id }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+    end
   end
 end

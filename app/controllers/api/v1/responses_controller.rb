@@ -110,7 +110,7 @@ class Api::V1::ResponsesController < ApplicationController
   # Deletes a response after checking if it is eligible for deletion.
   def destroy
     response = Response.find(params[:id])
-    if delete_response?(response)
+    if delete_answers?(response)
       response.destroy!
       render json: 'Your response was successfully deleted.', status: :ok
     else
