@@ -24,11 +24,10 @@ Rails.application.routes.draw do
       end
       resources :assignments
 
-      resources :bookmarks do
+      resources :bookmarks, except: %i[index show] do
         collection do
           get 'list/:id', to: 'bookmarks#list', as: 'list'
-          # post 'copy/:id', to: 'questionnaires#copy', as: 'copy'
-          # get 'toggle_access/:id', to: 'questionnaires#toggle_access', as: 'toggle_access'
+          post :save_bookmark_rating_score
         end
       end
 

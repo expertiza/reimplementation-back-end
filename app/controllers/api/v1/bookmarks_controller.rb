@@ -1,8 +1,8 @@
 class Api::V1::BookmarksController < ApplicationController
 #   include AuthorizationHelper
 #   include Scoring
-#   helper_method :specific_average_score
-#   helper_method :total_average_score
+  # helper_method :specific_average_score
+  # helper_method :total_average_score
   before_action :set_bookmark, only: %i[ update ]
 
   def action_allowed?
@@ -62,19 +62,20 @@ class Api::V1::BookmarksController < ApplicationController
 
   def save_bookmark_rating_score
     @bookmark = Bookmark.find(params[:id])
-    @bookmark_rating = BookmarkRating.where(bookmark_id: @bookmark.id, user_id: session[:user].id).first
+    @bookmark_rating = BookmarkRating.where(bookmark_id: @bookmark.id, user_id: @current_user.id).first
     if @bookmark_rating.blank?
-      BookmarkRating.create(bookmark_id: @bookmark.id, user_id: session[:user].id, rating: create_bookmark_params[:rating])
+      @bookmark_rating = BookmarkRating.create(bookmark_id: @bookmark.id, user_id: @current_user.id, rating: params[:rating])
     else
-      @bookmark_rating.update_attribute('rating', create_bookmark_params[:rating].to_i)
+      @bookmark_rating.update({'rating': params[:rating].to_i})
     end
-    redirect_to action: 'list', id: @bookmark.topic_id
+    render json: {"bookmark": @bookmark, "rating": @bookmark_rating}, status: :ok
   end
 
   # calculate average questionnaire score for 'Your rating' for specific bookmark
-  def specific_average_score(bookmark)
-    if bookmark.nil?
-      '-'
+  def specific_average_score
+    @bookmark = Bookmark.find(params[:id])
+    if @bookmark.nil?
+      render json: {"score": "-"}, status: :ok  
     else
       assessment = SignUpTopic.find(bookmark.topic_id).assignment
       questions = assessment.questionnaires.where(type: 'BookmarkRatingQuestionnaire').flat_map(&:questions)
@@ -83,31 +84,32 @@ class Api::V1::BookmarksController < ApplicationController
         reviewee_id: bookmark.id,
         reviewer_id: AssignmentParticipant.find_by(user_id: current_user.id).id
       ).flat_map { |r| Response.where(map_id: r.id) }
-      score = assessment_score(response: responses, questions: questions)
+      score = 10 # assessment_score(response: responses, questions: questions) # Scoring module not implemented
       if score.nil?
-        return '-'
+        render json: {"score": "-"}, status: :ok  
       else
-        (score * 5.0 / 100.0).round(2)
+        render json: {"score": (score * 5.0 / 100.0).round(2)}, status: :ok  
       end
     end
   end
-
+  
   # calculate average questionnaire score for 'Avg. rating' for specific bookmark
   def total_average_score(bookmark)
     if bookmark.nil?
-      '-'
+      render json: {"score": "-"}, status: :ok  
     else
       assessment = SignUpTopic.find(bookmark.topic_id).assignment
       questions = assessment.questionnaires.where(type: 'BookmarkRatingQuestionnaire').flat_map(&:questions)
       responses = BookmarkRatingResponseMap.where(
         reviewed_object_id: assessment.id,
         reviewee_id: bookmark.id
-      ).flat_map { |r| Response.where(map_id: r.id) }
-      totalScore = aggregate_assessment_scores(responses, questions)
-      if totalScore[:avg].nil?
-        return '-'
-      else
-        (totalScore[:avg] * 5.0 / 100.0).round(2)
+        ).flat_map { |r| Response.where(map_id: r.id) }
+        totalScore = {"avg": 10} # aggregate_assessment_scores(responses, questions) # Scoring module not implemented
+        if totalScore[:avg].nil?
+          render json: {"score": "-"}, status: :ok  
+        else
+          render json: {"score": (totalScore[:avg] * 5.0 / 100.0).round(2)}, status: :ok  
+        
       end
     end
   end

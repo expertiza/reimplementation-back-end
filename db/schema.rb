@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_03_18_205124) do
+ActiveRecord::Schema[7.0].define(version: 2024_03_24_003238) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -34,6 +34,11 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_18_205124) do
     t.datetime "updated_at", null: false
     t.index ["question_id"], name: "fk_score_questions"
     t.index ["response_id"], name: "fk_score_response"
+  end
+
+  create_table "assignment_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "assignment_questionnaires", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -96,6 +101,14 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_18_205124) do
     t.boolean "has_badge"
     t.boolean "allow_selecting_additional_reviews_after_1st_round"
     t.integer "sample_assignment_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "bookmark_ratings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "bookmark_id"
+    t.integer "user_id"
+    t.integer "rating"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -207,6 +220,22 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_18_205124) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
+  end
+
+  create_table "sign_up_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.text "topic_name", null: false
+    t.integer "assignment_id", default: 0, null: false
+    t.integer "max_choosers", default: 0, null: false
+    t.text "category"
+    t.string "topic_identifier", limit: 10
+    t.integer "micropayment", default: 0
+    t.integer "private_to"
+    t.text "description"
+    t.string "link"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "fk_sign_up_categories_sign_up_topics"
+    t.index ["assignment_id"], name: "index_sign_up_topics_on_assignment_id"
   end
 
   create_table "ta_mappings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
