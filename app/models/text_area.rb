@@ -1,5 +1,5 @@
 class TextArea < Question
-  def complete(count, answer = nil)
+  def complete(count,answer = nil)
     {
       action: 'complete',
       data: {
