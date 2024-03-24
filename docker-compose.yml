@@ -23,11 +23,11 @@ services:
       MYSQL_USER: dev
       MYSQL_PASSWORD: expertiza
       MYSQL_ROOT_PASSWORD: expertiza
-      MYSQL_DATABASE: reimplementation_development
     ports:
       - "3307:3306"
     volumes:
       - expertiza-mysql:/var/lib/mysql2/data
+      - ./db:/docker-entrypoint-initdb.d
 
   redis:
     image: redis:latest
