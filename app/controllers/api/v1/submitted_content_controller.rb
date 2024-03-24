@@ -1,36 +1,30 @@
 class Api::V1::SubmittedContentController < ApplicationController
-    require 'mimemagic'
-    require 'mimemagic/overlay'
-  
-    include AuthorizationHelper
-  
-    def action_allowed?
-      case params[:action]
-      when 'edit'
-        current_user_has_student_privileges? &&
-          are_needed_authorizations_present?(params[:id], 'reader', 'reviewer')
-      when 'submit_file', 'submit_hyperlink'
-        current_user_has_student_privileges? &&
-          one_team_can_submit_work?
-      else
-        current_user_has_student_privileges?
-      end
-    end
 
-    def controller_locale
-      locale_for_student
-    end
-
-    def edit
-      participant = AssignmentParticipant.find(params[:id])
-      return unless current_user_id?(participant.user_id)
-
-      assignment = participant.assignment
-      # As we have to check if this participant has team or not
-      # hence using team count for the check
-      SignUpSheet.signup_team(assignment.id, participant.user_id, nil) if participant.team.nil?
-      # @can_submit is the flag indicating if the user can submit or not in current stage
-      @can_submit = !params.key?(:view)
-      stage = assignment.current_stage(SignedUpTeam.topic_id(@participant.parent_id, @participant.user_id))
+  # Get /api/v1/submit_content
+  def index
+    @submission_record = SubmissionRecord.all
+    render json: @submission_record, status: :ok
   end
-end  
+
+  def show
+    @submission_record = SubmissionRecord.find(params[:id])
+    render json: @submission_record, status: :ok
+  rescue ActiveRecord::RecordNotFound => e
+    render json: { error: e.message }, status: :not_found
+  end
+  
+  def create
+    @submission_record = SubmissionRecord.create(submitted_content_params)
+    if @submission_record.save
+      render json: @submission_record, status: :created
+    else
+      render json: @submission_record.errors, status: :unprocessable_entity
+    end
+  end
+  
+  private
+  
+  def submitted_content_params
+    params.require(:submitted_content).permit(:id, :content, :operation, :team_id, :user, :assignment_id)
+  end
+end
