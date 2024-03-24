@@ -31,6 +31,3 @@
 /config/master.key
 coverage/
 rsa_keys.yml
-
-# Ignore Ruby version
-.ruby-version
