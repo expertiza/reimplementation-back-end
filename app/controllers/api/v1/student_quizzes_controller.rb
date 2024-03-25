@@ -1,26 +1,23 @@
 class Api::V1::StudentQuizzesController < ApplicationController
-  # Ensuring that only instructors can access most actions
   before_action :check_instructor_role, except: [:submit_answers]
-  # Setting the student quiz for actions that operate on a specific quiz
   before_action :set_student_quiz, only: [:show, :update, :destroy]
 
-  # Handle common ActiveRecord validation failures across actions
   rescue_from ActiveRecord::RecordInvalid do |exception|
     render_error(exception.message)
   end
 
-  # Lists all questionnaires (quizzes)
+  #GET /student_quizzes
   def index
     quizzes = Questionnaire.all
     render_success(quizzes)
   end
 
-  # Show a specific student quiz
+  #GET /student_quizzes/:id
   def show
     render_success(@student_quiz)
   end
 
-  # Calculate and show the score for a specific attempt
+  #GET /student_quizzes/:id/calculate_score
   def calculate_score
     response_map = ResponseMap.find_by(id: params[:id])
     if response_map
@@ -30,20 +27,19 @@ class Api::V1::StudentQuizzesController < ApplicationController
     end
   end
 
-  # Create a new questionnaire with questions and answers
+  #POST /student_quizzes
   def create
     questionnaire = ActiveRecord::Base.transaction do
       questionnaire = create_questionnaire(questionnaire_params.except(:questions_attributes))
       create_questions_and_answers(questionnaire, questionnaire_params[:questions_attributes])
-      questionnaire # Ensure questionnaire is returned from the transaction block
+      questionnaire
     end
     render_success(questionnaire, :created)
   rescue StandardError => e
     render_error(e.message, :unprocessable_entity)
   end
 
-
-  # Assign a quiz to a student
+  #POST /student_quizzes/assign
   def assign_quiz_to_student
     participant = find_resource_by_id(Participant, params[:participant_id])
     questionnaire = find_resource_by_id(Questionnaire, params[:questionnaire_id])
@@ -62,7 +58,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
     end
   end
 
-  # Submit answers for a quiz and calculate the total score
+  #POST /student_quizzes/submit_answers
   def submit_answers
     ActiveRecord::Base.transaction do
       response_map = find_response_map_for_current_user
@@ -79,7 +75,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
     render_error(e.message, :unprocessable_entity)
   end
 
-  # Update a student quiz
+  #PUT /student_quizzes/:id
   def update
     if @student_quiz.update(questionnaire_params)
       render_success(@student_quiz)
@@ -88,7 +84,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
     end
   end
 
-  # Delete a student quiz
+  #DELETE /student_quizzes/:id
   def destroy
     @student_quiz.destroy
     head :no_content
@@ -98,7 +94,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
 
   private
 
-  # Set the student quiz based on the ID provided in the route
+  #To get quiz from db
   def set_student_quiz
     @student_quiz = find_resource_by_id(Questionnaire, params[:id])
   end
@@ -195,7 +191,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
 
   # Ensure only instructors can perform certain actions
   def check_instructor_role
-    unless current_user.role_id == 2 # Assuming 2 is the role ID for instructors
+    unless current_user.role_id == 2
       render_error('Only instructors are allowed to perform this action', :forbidden)
     end
   end
