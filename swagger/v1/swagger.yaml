@@ -3,15 +3,6 @@ openapi: 3.0.1
 info:
   title: EXPERTIZA API V1
   version: v1
-components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-
-security:
-  - bearerAuth: []
 paths:
   "/api/v1/account_requests/pending":
     get:
@@ -822,43 +813,24 @@ paths:
       responses:
         '200':
           description: successful
-  "/api/v1/responses/{id}":
-    parameters:
-    - name: id
-      in: path
-      description: id of the response
-      required: true
-      schema:
-        type: integer
-    get:
-      summary: show response
-      tags:
-      - Responses
-      responses:
-        '200':
-          description: successful
-    patch:
-      summary: update response
+    post:
+      summary: create response
       tags:
       - Responses
       parameters: []
       responses:
-        '200':
-          description: successful
-        '422':
-          description: invalid request
+        '201':
+          description: Created a response
       requestBody:
         content:
           application/json:
             schema:
               type: object
               properties:
-                id:
-                  type: integer
                 map_id:
                   type: integer
                 additional_comment:
-                  type: text
+                  type: string
                 is_submitted:
                   type: boolean
                 version_num:
@@ -867,102 +839,9 @@ paths:
                   type: integer
                 visibility:
                   type: string
-                response_map:
-                  id:
-                    type: integer
-                  reviewed_object_id:
-                    type: integer
-                  reviewer_id:
-                    type: integer
-                  reviewee_id:
-                    type: integer
-                  type:
-                    type: string
-                  calibrate_to:
-                    type: boolean
-                  team_reviewing_enabled:
-                    type: boolean
-                  assignment_questionnaire_id:
-                    type: integer
-                scores:
-                - id:
-                    type: integer
-                  answer:
-                    type: integer
-                  comments:
-                    type: text
-                  question_id:
-                    type: integer
-                  question:
-                    id:
-                      type: integer
-                    txt:
-                      type: integer
               required:
-              - name
-    put:
-      summary: update response
-      tags:
-      - Responses
-      parameters: []
-      responses:
-        '200':
-          description: successful
-        '422':
-          description: invalid request
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                id:
-                  type: integer
-                map_id:
-                  type: integer
-                additional_comment:
-                  type: text
-                is_submitted:
-                  type: boolean
-                version_num:
-                  type: integer
-                round:
-                  type: integer
-                visibility:
-                  type: string
-                response_map:
-                  id:
-                    type: integer
-                  reviewed_object_id:
-                    type: integer
-                  reviewer_id:
-                    type: integer
-                  reviewee_id:
-                    type: integer
-                  type:
-                    type: string
-                  calibrate_to:
-                    type: boolean
-                  team_reviewing_enabled:
-                    type: boolean
-                  assignment_questionnaire_id:
-                    type: integer
-                scores:
-                - id:
-                    type: integer
-                  answer:
-                    type: integer
-                  comments:
-                    type: text
-                  question_id:
-                    type: integer
-                  question:
-                    id:
-                      type: integer
-                    txt:
-                      type: integer
-              required:
-              - name
+              - map_id
+  
   "/api/v1/responses/{id}":
     parameters:
     - name: id
@@ -1006,39 +885,7 @@ paths:
                   type: integer
                 visibility:
                   type: string
-                response_map:
-                  id:
-                    type: integer
-                  reviewed_object_id:
-                    type: integer
-                  reviewer_id:
-                    type: integer
-                  reviewee_id:
-                    type: integer
-                  type:
-                    type: string
-                  calibrate_to:
-                    type: boolean
-                  team_reviewing_enabled:
-                    type: boolean
-                  assignment_questionnaire_id:
-                    type: integer
-                scores:
-                - id:
-                    type: integer
-                  answer:
-                    type: integer
-                  comments:
-                    type: text
-                  question_id:
-                    type: integer
-                  question:
-                    id:
-                      type: integer
-                    txt:
-                      type: integer
-              required:
-              - name
+              required: []
     put:
       summary: update response
       tags:
@@ -1058,7 +905,7 @@ paths:
                 map_id:
                   type: integer
                 additional_comment:
-                  type: text
+                  type: string
                 is_submitted:
                   type: boolean
                 version_num:
@@ -1067,39 +914,7 @@ paths:
                   type: integer
                 visibility:
                   type: string
-                response_map:
-                  id:
-                    type: integer
-                  reviewed_object_id:
-                    type: integer
-                  reviewer_id:
-                    type: integer
-                  reviewee_id:
-                    type: integer
-                  type:
-                    type: string
-                  calibrate_to:
-                    type: boolean
-                  team_reviewing_enabled:
-                    type: boolean
-                  assignment_questionnaire_id:
-                    type: integer
-                scores:
-                - id:
-                    type: integer
-                  answer:
-                    type: integer
-                  comments:
-                    type: text
-                  question_id:
-                    type: integer
-                  question:
-                    id:
-                      type: integer
-                    txt:
-                      type: integer
-              required:
-              - name
+              required: []
     delete:
       summary: delete response
       tags:

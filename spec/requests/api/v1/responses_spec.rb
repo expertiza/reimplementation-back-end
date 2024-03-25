@@ -2,7 +2,7 @@ require 'swagger_helper'
 require 'rails_helper'
 
 RSpec.describe 'Responses API Controller', type: :request do
-  let(:user) { User.new(name: 'Smith') }
+  
   let(:auth_token) { authenticate_user(user) } # This should be obtained or mocked according to your auth system
 
   let(:headers) { { 'Authorization': "Bearer #{auth_token}" } }
@@ -59,32 +59,9 @@ RSpec.describe 'Responses API Controller', type: :request do
           is_submitted: { type: :boolean },
           version_num: { type: :integer },
           round: { type: :integer },
-          visibility: { type: :string },
-          response_map: {
-            id: { type: :integer },
-            reviewed_object_id: { type: :integer },
-            reviewer_id: { type: :integer },
-            reviewee_id: { type: :integer },
-            type: { type: :string },
-            calibrate_to: { type: :boolean },
-            team_reviewing_enabled: { type: :boolean },
-            assignment_questionnaire_id: { type: :integer }
-          },
-          scores: [
-            {
-              id: { type: :integer },
-              answer: { type: :integer },
-              comments: { type: :text },
-              question_id: { type: :integer },
-              question: {
-                id: { type: :integer },
-                txt: { type: :integer }
-              }
-            }
-
-          ]
+          visibility: { type: :string }
         },
-        required: ['map_id']
+        required: %w[map_id]
       }
       response(201, 'Created a response') do
         after do |example|
@@ -94,6 +71,7 @@ RSpec.describe 'Responses API Controller', type: :request do
             }
           }
         end
+        run_test!
       end
 
       # response(422, 'invalid request') do
@@ -151,32 +129,9 @@ RSpec.describe 'Responses API Controller', type: :request do
           is_submitted: { type: :boolean},
           version_num: { type: :integer},
           round: { type: :integer},
-          visibility: { type: :string},
-          response_map: {
-            id: {type: :integer},
-            reviewed_object_id: {type: :integer},
-            reviewer_id: {type: :integer},
-            reviewee_id: {type: :integer},
-            type: {type: :string},
-            calibrate_to: {type: :boolean},
-            team_reviewing_enabled: {type: :boolean},
-            assignment_questionnaire_id: {type: :integer}
-          },
-          scores: [
-            {
-              id: {type: :integer},
-              answer: {type: :integer},
-              comments: {type: :text},
-              question_id: {type: :integer},
-              question: {
-                id: {type: :integer},
-                txt: {type: :integer}
-              }
-            }
-
-          ]
+          visibility: { type: :string}
         },
-        required: [ 'id' ]
+        required: %w[]
       }
 
       response(200, 'successful') do
@@ -211,36 +166,13 @@ RSpec.describe 'Responses API Controller', type: :request do
         type: :object,
         properties: {
           map_id: {type: :integer},
-          additional_comment: {type: :text},
+          additional_comment: {type: :string},
           is_submitted: { type: :boolean},
           version_num: { type: :integer},
           round: { type: :integer},
           visibility: { type: :string},
-          response_map: {
-            id: {type: :integer},
-            reviewed_object_id: {type: :integer},
-            reviewer_id: {type: :integer},
-            reviewee_id: {type: :integer},
-            type: {type: :string},
-            calibrate_to: {type: :boolean},
-            team_reviewing_enabled: {type: :boolean},
-            assignment_questionnaire_id: {type: :integer}
-          },
-          scores: [
-            {
-              id: {type: :integer},
-              answer: {type: :integer},
-              comments: {type: :text},
-              question_id: {type: :integer},
-              question: {
-                id: {type: :integer},
-                txt: {type: :integer}
-              }
-            }
-
-          ]
         },
-        required: [ 'id' ]
+        required: %w[]
       }
 
       response(200, 'successful') do
