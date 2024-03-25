@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_03_22_232203) do
+ActiveRecord::Schema[7.0].define(version: 2024_03_23_155906) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -184,6 +184,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_22_232203) do
     t.integer "reviewee_id", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "score", default: 0
     t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 
@@ -193,7 +194,12 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_22_232203) do
     t.boolean "is_submitted", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "response_map_id"
+    t.bigint "question_id"
+    t.string "submitted_answer"
     t.index ["map_id"], name: "fk_response_response_map"
+    t.index ["question_id"], name: "index_responses_on_question_id"
+    t.index ["response_map_id"], name: "index_responses_on_response_map_id"
   end
 
   create_table "roles", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -255,6 +261,8 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_22_232203) do
   add_foreign_key "participants", "users"
   add_foreign_key "questionnaires", "assignments"
   add_foreign_key "questions", "questionnaires"
+  add_foreign_key "responses", "questions"
+  add_foreign_key "responses", "response_maps"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
