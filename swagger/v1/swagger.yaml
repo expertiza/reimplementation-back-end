@@ -3,6 +3,15 @@ openapi: 3.0.1
 info:
   title: EXPERTIZA API V1
   version: v1
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
 paths:
   "/api/v1/account_requests/pending":
     get:
@@ -1293,4 +1302,4 @@ servers:
 - url: http://{defaultHost}
   variables:
     defaultHost:
-      default: 127.0.0.1:3000
+      default: 152.7.177.248:3002
