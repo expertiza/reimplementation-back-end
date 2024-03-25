@@ -1,7 +1,7 @@
 class Api::V1::StudentQuizzesController < ApplicationController
-  # Ensure only instructors can access most actions
+  # Ensuring that only instructors can access most actions
   before_action :check_instructor_role, except: [:submit_answers]
-  # Set the student quiz for actions that operate on a specific quiz
+  # Setting the student quiz for actions that operate on a specific quiz
   before_action :set_student_quiz, only: [:show, :update, :destroy]
 
   # Handle common ActiveRecord validation failures across actions

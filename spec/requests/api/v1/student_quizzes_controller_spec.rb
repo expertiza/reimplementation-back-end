@@ -1,10 +1,9 @@
-require 'rails_helper'
+require 'swagger_helper'
 
 RSpec.describe 'StudentQuizzes API', type: :request do
-  # Setup and authentication
-  # Depending on your authentication mechanism, you might need to log in a user here or set some headers
-  let!(:instructor) { create(:user, role: 'Instructor') }
-  let!(:student) { create(:user, role: 'Student') }
+  let!(:role) { create(:role, name: "Instructor") } # Creating a role with the name "Instructor"
+  let!(:instructor) { create(:user, role: role) } # Creating a user with the role created above
+  let!(:student) { create(:user, role:'Student') }
   let!(:questionnaire) { create(:questionnaire, instructor_id: instructor.id) }
   let(:questionnaire_id) { questionnaire.id }
   let(:valid_attributes) do
@@ -61,7 +60,6 @@ RSpec.describe 'StudentQuizzes API', type: :request do
     it 'calculates score for a given quiz' do
       get "/api/v1/student_quizzes/#{questionnaire_id}/calculate_score"
       expect(response).to have_http_status(:ok)
-      # You need to adjust the expectation based on how your score calculation is reflected in the response
     end
   end
 
@@ -73,7 +71,6 @@ RSpec.describe 'StudentQuizzes API', type: :request do
     it 'assigns a quiz to a student' do
       post '/api/v1/student_quizzes/assign', params: assign_attributes
       expect(response).to have_http_status(:created)
-      # Verify the assignment is done correctly, possibly by checking the database or the response body
     end
   end
 
@@ -90,18 +87,15 @@ RSpec.describe 'StudentQuizzes API', type: :request do
     it 'submits answers and calculates the total score' do
       post '/api/v1/student_quizzes/submit_answers', params: submit_attributes
       expect(response).to have_http_status(:ok)
-      # Additional assertions on the score calculation or response content may be necessary
     end
   end
 
-  # Assuming continuation from the previous example
 
   describe 'PUT /api/v1/student_quizzes/{id}' do
     let(:valid_attributes_update) do
       {
         questionnaire: {
           name: 'Updated Quiz Name',
-          # Add other fields as necessary
         }
       }
     end
@@ -113,7 +107,6 @@ RSpec.describe 'StudentQuizzes API', type: :request do
         expect(response).to have_http_status(:ok)
         updated_quiz = Questionnaire.find(questionnaire_id)
         expect(updated_quiz.name).to match(/Updated Quiz Name/)
-        # Add more expectations as necessary
       end
     end
 

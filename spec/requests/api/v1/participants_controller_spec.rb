@@ -2,10 +2,7 @@ require 'rails_helper'
 
 RSpec.describe Api::V1::ParticipantsController, type: :request do
   before(:each) do
-    @user = User.create!( username: 'testuser',
-                           email: 'test@example.com',
-                           password: 'password123',
-                           role_id: 2)
+    @user = User.create!(username: 'testuser', email: 'test@example.com', password: 'password123', role_id: 2)
     @course = Course.create!(
       name: 'Intro to Testing',
       subject: 'Software Engineering'
