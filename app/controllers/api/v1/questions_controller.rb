@@ -124,6 +124,6 @@ end
   # Only allow a list of trusted parameters through.
   def question_params
     params.permit(:txt, :weight, :seq, :questionnaire_id, :question_type, :size,
-                                     :alternatives, :break_before, :max_label, :min_label)
+                  :alternatives, :assignment_id, :break_before, :max_label, :min_label)
   end
 end

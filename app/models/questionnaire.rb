@@ -2,11 +2,12 @@ class Questionnaire < ApplicationRecord
   belongs_to :assignment, foreign_key: 'assignment_id', inverse_of: false
   belongs_to :instructor
   has_many :questions, dependent: :destroy # the collection of questions associated with this Questionnaire
+  accepts_nested_attributes_for :questions # Allows nested attributes for questions
   before_destroy :check_for_question_associations
 
   validate :validate_questionnaire
   validates :name, presence: true
-  validates :max_question_score, :min_question_score, numericality: true 
+  validates :max_question_score, :min_question_score, numericality: true
 
   # clones the contents of a questionnaire, including the questions and associated advice
   def self.copy_questionnaire_details(params)
@@ -25,31 +26,39 @@ class Questionnaire < ApplicationRecord
     questionnaire
   end
 
-  # validate the entries for this questionnaire
+
   def validate_questionnaire
-    errors.add(:max_question_score, 'The maximum question score must be a positive integer.') if max_question_score < 1
-    errors.add(:min_question_score, 'The minimum question score must be a positive integer.') if min_question_score < 0
-    errors.add(:min_question_score, 'The minimum question score must be less than the maximum.') if min_question_score >= max_question_score
-    results = Questionnaire.where('id <> ? and name = ? and instructor_id = ?', id, name, instructor_id)
-    errors.add(:name, 'Questionnaire names must be unique.') if results.present?
+    if max_question_score.nil? || max_question_score < 1
+      errors.add(:max_question_score, 'The maximum question score must be a positive integer.')
+    end
+
+    if min_question_score.nil? || min_question_score.negative?
+      errors.add(:min_question_score, 'The minimum question score must be a positive integer.')
+    end
+
+    return unless min_question_score && max_question_score && min_question_score >= max_question_score
+
+    errors.add(:min_question_score, 'The minimum question score must be less than the maximum.')
+
   end
 
   # Check_for_question_associations checks if questionnaire has associated questions or not
   def check_for_question_associations
-    if questions.any?
-      raise ActiveRecord::DeleteRestrictionError.new(:base, "Cannot delete record because dependent questions exist")
-    end
+    return unless questions.any?
+
+    raise ActiveRecord::DeleteRestrictionError, :base
+
   end
 
   def as_json(options = {})
-      super(options.merge({
-                            only: %i[id name private min_question_score max_question_score created_at updated_at questionnaire_type instructor_id],
-                            include: {
-                              instructor: { only: %i[name email fullname password role]
-                            }
-                            }
-                          })).tap do |hash|
-        hash['instructor'] ||= { id: nil, name: nil }
-      end
+    super(options.merge({
+                          only: %i[id name private min_question_score max_question_score created_at updated_at
+                                   questionnaire_type instructor_id],
+                          include: {
+                            instructor: { only: %i[name email fullname password role] }
+                          }
+                        })).tap do |hash|
+      hash['instructor'] ||= { id: nil, name: nil }
+    end
   end
 end

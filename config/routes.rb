@@ -71,6 +71,22 @@ Rails.application.routes.draw do
           get :processed, action: :processed_requests
         end
       end
+
+      resources :student_quizzes do
+        member do
+          get :calculate_score
+        end
+        collection do
+          post 'assign', to: 'student_quizzes#assign_quiz_to_student'
+          post :create_questionnaire
+        end
+      end
+      post 'student_quizzes/submit_answers', to: 'student_quizzes#submit_answers'
+
+
+      resources :participants, only: [:create]
+
+
     end
   end
 end
