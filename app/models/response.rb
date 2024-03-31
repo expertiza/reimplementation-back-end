@@ -10,7 +10,7 @@ class Response < ApplicationRecord
 
   alias map response_map
   delegate :questionnaire, :reviewee, :reviewer, to: :map
-  
+
   def create_response_map
     response_map = ResponseMap.new
     response_map.reviewed_object_id = 1
@@ -30,12 +30,11 @@ class Response < ApplicationRecord
   def validate_params(params, action)
     message = ''
     if action == 'create'
-      # No reponse
-      if  self.map_id == 0
-        self.map_id = create_response_map
+      if params[:map_id].present?
+        self.map_id = params[:map_id]
+      else
+        self.map_id = params[:response][:map_id]
       end
-    else
-      self.map_id
     end
     response_map = ResponseMap.includes(:responses).find_by(id: self.map_id)
     if self.response_map.nil?
