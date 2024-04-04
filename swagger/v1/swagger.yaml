@@ -3,17 +3,14 @@ openapi: 3.0.1
 info:
   title: EXPERTIZA API V1
   version: v1
-
 components:
   securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-
+    jwt:
+      type: apiKey
+      in: header
+      name: Authorization
 security:
-  - bearerAuth: []
-
+  - jwt: [ ]
 paths:
   "/api/v1/account_requests/pending":
     get:
@@ -133,6 +130,307 @@ paths:
       responses:
         '204':
           description: successful
+  "/api/v1/assignments/{assignment_id}/add_participant/{user_id}":
+    parameters:
+    - name: assignment_id
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: user_id
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Adds a participant to an assignment
+      tags:
+      - Assignments
+      responses:
+        '200':
+          description: participant added successfully
+        '404':
+          description: assignment not found
+        '422':
+          description: unprocessable entity
+  "/api/v1/assignments/{assignment_id}/remove_participant/{user_id}":
+    parameters:
+    - name: assignment_id
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: user_id
+      in: path
+      required: true
+      schema:
+        type: string
+    delete:
+      summary: Removes a participant from an assignment
+      tags:
+      - Assignments
+      responses:
+        '200':
+          description: participant removed successfully
+        '404':
+          description: assignment or user not found
+        '422':
+          description: unprocessable entity
+  "/api/v1/assignments/{assignment_id}/assign_courses_to_assignment/{course_id}":
+    parameters:
+    - name: assignment_id
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: course_id
+      in: path
+      required: true
+      schema:
+        type: string
+    patch:
+      summary: Sets course id of assignment
+      tags:
+      - Assignments
+      responses:
+        '200':
+          description: course_id assigned successfully
+        '404':
+          description: assignment not found
+        '422':
+          description: unprocessable entity
+  "/api/v1/assignments/{assignment_id}/remove_assignment_from_course":
+    patch:
+      summary: Removes course from assignment
+      tags:
+      - Assignments
+      parameters:
+      - name: assignment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: course removed from assignment
+        '404':
+          description: assignment not found
+        '422':
+          description: unprocessable entity
+  "/api/v1/assignments/{assignment_id}/copy_assignment":
+    parameters:
+    - name: assignment_id
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Copy an existing assignment
+      tags:
+      - Assignments
+      responses:
+        '200':
+          description: assignment copied successfully
+        '404':
+          description: assignment not found
+        '422':
+          description: unprocessable entity
+  "/api/v1/assignments/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    delete:
+      summary: Delete an assignment
+      tags:
+      - Assignments
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+        '422':
+          description: Unprocessable Entity
+  "/api/v1/assignments/{assignment_id}/has_badge":
+    parameters:
+    - name: assignment_id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Check if an assignment has a badge
+      tags:
+      - Assignments
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/api/v1/assignments/{assignment_id}/pair_programming_enabled":
+    parameters:
+    - name: assignment_id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Check if pair programming is enabled for an assignment
+      tags:
+      - Assignments
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/api/v1/assignments/{assignment_id}/has_topics":
+    parameters:
+    - name: assignment_id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Check if an assignment has topics
+      tags:
+      - Assignments
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/api/v1/assignments/{assignment_id}/team_assignment":
+    parameters:
+    - name: assignment_id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Check if an assignment is a team assignment
+      tags:
+      - Assignments
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/api/v1/assignments/{assignment_id}/valid_num_review/{review_type}":
+    parameters:
+    - name: assignment_id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    - name: review_type
+      in: path
+      description: Review Type
+      required: true
+      schema:
+        type: string
+    get:
+      summary: Check if an assignment has a valid number of reviews for a specific
+        type
+      tags:
+      - Assignments
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/api/v1/assignments/{assignment_id}/is_calibrated":
+    parameters:
+    - name: assignment_id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Check if an assignment is calibrated
+      tags:
+      - Assignments
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/api/v1/assignments/{assignment_id}/has_teams":
+    parameters:
+    - name: assignment_id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Check if an assignment has teams
+      tags:
+      - Assignments
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/api/v1/assignments/{assignment_id}/staggered_and_no_topic":
+    parameters:
+    - name: assignment_id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Check if an assignment has a staggered deadline and no topics
+      tags:
+      - Assignments
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/api/v1/assignments/{assignment_id}/create_node":
+    parameters:
+    - name: assignment_id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: Create a node for an assignment
+      tags:
+      - Assignments
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/api/v1/assignments/{assignment_id}/varying_rubrics_by_round":
+    parameters:
+    - name: assignment_id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Check if an assignment has varying rubrics by round
+      tags:
+      - Assignments
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
   "/api/v1/courses/{id}/add_ta/{ta_id}":
     parameters:
     - name: id
@@ -1187,4 +1485,4 @@ servers:
 - url: http://{defaultHost}
   variables:
     defaultHost:
-      default: 127.0.0.1:3000
+      default: localhost:3002
