@@ -5,6 +5,8 @@ class Course < ApplicationRecord
   validates :directory_path, presence: true
   has_many :ta_mappings, dependent: :destroy
   has_many :tas, through: :ta_mappings
+  has_many :participants, class_name: 'CourseParticipant', foreign_key: 'parent_id', dependent: :destroy
+
 
   # Returns the submission directory for the course
   def path

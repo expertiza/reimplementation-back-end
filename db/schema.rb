@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
+ActiveRecord::Schema[7.0].define(version: 2023_12_01_013628) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -134,10 +134,15 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
 
   create_table "participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "user_id"
-    t.bigint "assignment_id"
+    t.bigint "parent_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["assignment_id"], name: "index_participants_on_assignment_id"
+    t.float "grade"
+    t.text "comments_to_student"
+    t.text "private_instructor_comments"
+    t.string "handle"
+    t.string "type"
+    t.index ["parent_id"], name: "index_participants_on_parent_id"
     t.index ["user_id"], name: "fk_participant_users"
     t.index ["user_id"], name: "index_participants_on_user_id"
   end
@@ -165,10 +170,11 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.boolean "break_before"
     t.string "max_label"
     t.string "min_label"
-    t.integer "questionnaire_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "questionnaire_id", null: false
     t.index ["questionnaire_id"], name: "fk_question_questionnaires"
+    t.index ["questionnaire_id"], name: "index_questions_on_questionnaire_id"
   end
 
   create_table "response_maps", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -198,6 +204,24 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
   end
 
+  create_table "sign_up_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "signed_up_teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "topic_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "signed_up_users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "topic_id", null: false
+    t.integer "creator_id", null: false
+    t.boolean "is_waitlisted", null: false
+    t.integer "preference_priority_number"
+  end
+
   create_table "ta_mappings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "course_id", null: false
     t.bigint "user_id", null: false
@@ -209,6 +233,18 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
   end
 
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "submitted_hyperlinks"
+    t.integer "directory_num"
+  end
+
+  create_table "teams_users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "team_id"
+    t.integer "user_id"
+  end
+
+  create_table "update_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -234,9 +270,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.datetime "updated_at", null: false
     t.bigint "institution_id"
     t.bigint "role_id", null: false
-    t.bigint "parent_id"
+    t.integer "parent_id"
     t.index ["institution_id"], name: "index_users_on_institution_id"
-    t.index ["parent_id"], name: "index_users_on_parent_id"
     t.index ["role_id"], name: "index_users_on_role_id"
   end
 
@@ -244,12 +279,12 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
   add_foreign_key "account_requests", "roles"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
-  add_foreign_key "participants", "assignments"
+  add_foreign_key "participants", "assignments", column: "parent_id"
   add_foreign_key "participants", "users"
+  add_foreign_key "questions", "questionnaires"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
   add_foreign_key "users", "institutions"
   add_foreign_key "users", "roles"
-  add_foreign_key "users", "users", column: "parent_id"
 end
