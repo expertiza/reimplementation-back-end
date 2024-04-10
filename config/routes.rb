@@ -73,4 +73,11 @@ Rails.application.routes.draw do
       end
     end
   end
+  resources :advice, only: [] do
+    collection do
+      post :save_advice
+      put :edit_advice
+      get :edit_advice
+    end
+  end
 end
