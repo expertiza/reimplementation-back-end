@@ -1,7 +1,9 @@
-describe AdviceController do
-  let(:super_admin) { build(:superadmin, id: 1, role_id: 5) }
+require 'rails_helper'
+
+describe AdviceController, type: :controller do
+  let(:super_admin) { build(:superadmin, id: 1, role_id: 1) }
   let(:instructor1) { build(:instructor, id: 10, role_id: 3, parent_id: 3, name: 'Instructor1') }
-  let(:student1) { build(:student, id: 21, role_id: 1) }
+  let(:student1) { build(:student, id: 21, role_id: 5) }
 
   describe '#action_allowed?' do
     context 'when the role of current user is Super-Admin' do
@@ -126,8 +128,8 @@ describe AdviceController do
 
       it "edit advice redirects correctly when called" do
         allow(Questionnaire).to receive(:find).with('1').and_return(questionnaire)
-        params = {id: 1}
-        session = {user: instructor1}
+        params = { id: 1 }
+        session = { user: instructor1 }
         result = get :edit_advice, params: params, session: session
         expect(result.status).to eq 200
         expect(result).to render_template(:edit_advice)

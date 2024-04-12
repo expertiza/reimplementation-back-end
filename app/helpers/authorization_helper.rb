@@ -27,7 +27,7 @@ module AuthorizationHelper
   # Let the Role model define this logic for the sake of DRY
   # If there is no currently logged-in user simply return false
   def current_user_has_privileges_of?(role_name)
-    current_user_and_role_exist? && session[:user].role.has_all_privileges_of?(Role.find_by(name: role_name))
+    current_user_and_role_exist? && session[:user].role.all_privileges_of?(Role.find_by(name: role_name))
   end
 
   def current_user_and_role_exist?
