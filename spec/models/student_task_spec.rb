@@ -45,8 +45,8 @@ RSpec.describe StudentTask, type: :model do
   describe ".parse_stage_deadline" do
     context "valid date string" do
       it "parses the date string into a Time object" do
-        date_string = "2024-04-25"
-        expect(StudentTask.send(:parse_stage_deadline, date_string)).to eq(Time.parse("2024-04-25"))
+        valid_date = "2024-04-25"
+        expect(StudentTask.send(:parse_stage_deadline, valid_date)).to eq(Time.parse("2024-04-25"))
       end
     end
 
