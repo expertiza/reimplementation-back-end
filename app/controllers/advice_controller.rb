@@ -23,6 +23,8 @@ class AdviceController < ApplicationController
   end
 
   # Modify the advice associated with a questionnaire
+  # Separate methods were introduced to calculate the number of advices and sort the advices related to the current question attribute
+  # This is done to adhere to Single Responsibility Principle
   def edit_advice
     # Stores the questionnaire with given id in URL
     @questionnaire = Questionnaire.find(params[:id])
@@ -31,14 +33,12 @@ class AdviceController < ApplicationController
     # the max or min score of the advices does not correspond to the max or min score of questionnaire respectively.
     @questionnaire.questions.each do |question|
       # if the question is a scored question, store the number of advices corresponding to that question (max_score - min_score), else 0
-      num_advices = if question.is_a?(ScoredQuestion)
-                      @questionnaire.max_question_score - @questionnaire.min_question_score + 1
-                    else
-                      0
-                    end
+      # # Call to a separate method to adhere to Single Responsibility Principle
+      num_advices = calculate_num_advices(question)
 
       # sorting question advices in descending order by score
-      sorted_advice = question.question_advices.sort_by { |x| x.score }.reverse
+      # Call to a separate method to adhere to Single Responsibility Principle
+      sorted_advice = sort_question_advices(question)
 
       # Checks the condition for adjusting the advice size
       if invalid_advice?(sorted_advice, num_advices, question)
@@ -46,6 +46,22 @@ class AdviceController < ApplicationController
         QuestionnaireHelper.adjust_advice_size(@questionnaire, question)
       end
     end
+  end
+
+  # Function to calculate number of advices for the current question attribute based on max and min question score.
+  # Method name is consistent with the functionality
+  def calculate_num_advices(question)
+    if question.is_a?(ScoredQuestion)
+      @questionnaire.max_question_score - @questionnaire.min_question_score + 1
+    else
+      0
+    end
+  end
+
+  # Function to sort question advices related to the current question attribute
+  # While sorting questions, sort_by(&:score) is used instead of using a block. It is a shorthand notation and avoids creating a new Proc object for every element in the collection of the questions.
+  def sort_question_advices(question)
+    question.question_advices.sort_by(&:score).reverse
   end
 
   # save the advice for a questionnaire
