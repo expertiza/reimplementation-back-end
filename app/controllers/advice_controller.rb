@@ -50,13 +50,11 @@ class AdviceController < ApplicationController
 
   # Function to calculate number of advices for the current question attribute based on max and min question score.
   # Method name is consistent with the functionality
+  # Refactored the 'if' statement into a ternary operator. This accomplishes the same logic in a more concise manner.
   def calculate_num_advices(question)
-    if question.is_a?(ScoredQuestion)
-      @questionnaire.max_question_score - @questionnaire.min_question_score + 1
-    else
-      0
-    end
+    question.is_a?(ScoredQuestion) ? @questionnaire.max_question_score - @questionnaire.min_question_score + 1 : 0
   end
+
 
   # Function to sort question advices related to the current question attribute
   # While sorting questions, sort_by(&:score) is used instead of using a block. It is a shorthand notation and avoids creating a new Proc object for every element in the collection of the questions.
