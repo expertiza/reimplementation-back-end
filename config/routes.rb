@@ -23,6 +23,11 @@ Rails.application.routes.draw do
         end
       end
       resources :assignments
+      resources :student_tasks do
+        collection do
+          get :list, action: :list
+        end
+      end
 
       resources :courses do
         collection do
