@@ -1,4 +1,5 @@
 class AdviceController < ApplicationController
+  before_action :set_questionnaire, only: %i[ edit_advice save_advice ]
   # Advice_controller first checks whether current user has TA privileges or not by implementing action_allowed? method. Secondly it sets the number of advices based on score and sort it in descending order. Then it checks four conditions for the advices.
   # 1. If number of advices is not equal to given advices
   # 2. If the sorted advices is empty
@@ -26,9 +27,6 @@ class AdviceController < ApplicationController
   # Separate methods were introduced to calculate the number of advices and sort the advices related to the current question attribute
   # This is done to adhere to Single Responsibility Principle
   def edit_advice
-    # Stores the questionnaire with given id in URL
-    @questionnaire = Questionnaire.find(params[:id])
-
     # For each question in a questionnaire, this method adjusts the advice size if the advice size is <,> number of advices or
     # the max or min score of the advices does not correspond to the max or min score of questionnaire respectively.
     @questionnaire.questions.each do |question|
@@ -64,8 +62,6 @@ class AdviceController < ApplicationController
 
   # save the advice for a questionnaire
   def save_advice
-    # Stores the questionnaire with given id in URL
-    @questionnaire = Questionnaire.find(params[:id])
     begin
       # checks if advice is present or not
       unless params[:advice].nil?
@@ -83,4 +79,12 @@ class AdviceController < ApplicationController
     # regardless of action above redirect to edit and show flash message if one exists
     redirect_to action: 'edit_advice', id: params[:id]
   end
+
+  private
+
+  # Common code for set questionnaire
+  def set_questionnaire
+    # Stores the questionnaire with given id in URL
+    @questionnaire = Questionnaire.find(params[:id])
+    end
 end
