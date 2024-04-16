@@ -86,7 +86,7 @@ class Assignment < ApplicationRecord
  # Assign a course to the assignment based on the provided course_id.
   # If the assignment already belongs to the specified course, an error is raised.
   # Returns the modified assignment object with the updated course assignment.
-  def assign_courses_to_assignment(course_id)
+  def assign_course(course_id)
     # Find the assignment by its ID
     assignment = Assignment.where(id: id).first
     # Check if the assignment already belongs to the provided course_id
@@ -191,24 +191,10 @@ class Assignment < ApplicationRecord
   # Returns a bolean value whether such questionnaire is present.
   def varying_rubrics_by_round?
     rubric_with_round = AssignmentQuestionnaire.where(assignment_id: id).where.not(used_in_round: nil).first
-
     # Check if any rubric has a specified round
     rubric_with_round.present?
   end
 
-  #This method creates a assignment node for the given assignment.
-  # Finds the corresponding CourseNode using course_id for the course with which the assignment is associated.
-  # Associates the AssignmentNode with the CourseNode by updating parent_id for the assignment.
-  def create_node
-    #Find associated Course
-    parent = CourseNode.find_by(node_object_id: course_id)
-    #Creates the Assignment Node
-    node = AssignmentNode.create(node_object_id: id)
-    #Updates parent_id of the AssigmentNode with parent_id of CourseNode
-    node.parent_id = parent.id unless parent.nil?
-    node.save
-    node
-  end
 
 
 end

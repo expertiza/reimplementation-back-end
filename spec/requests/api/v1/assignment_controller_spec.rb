@@ -116,7 +116,7 @@ end
     end
   end
 
-  path '/api/v1/assignments/{assignment_id}/assign_to_course/{course_id}' do
+  path '/api/v1/assignments/{assignment_id}/assign_course/{course_id}' do
     parameter name: 'assignment_id', in: :path, type: :string
     parameter name: 'course_id', in: :path, type: :string
 
@@ -154,7 +154,7 @@ end
     end
   end
 
-  path '/api/v1/assignments/{assignment_id}/remove_from_course' do
+  path '/api/v1/assignments/{assignment_id}/remove_assignment_from_course' do
     patch 'Removes assignment from course' do
       tags 'Assignments'
       produces 'application/json'
@@ -383,12 +383,12 @@ end
     end
   end
 
-  path '/api/v1/assignments/{assignment_id}/create_node' do
-    parameter name: 'assignment_id', in: :path, type: :integer, description: 'Assignment ID'
+  path '/api/v1/assignments/{id}/show_assignment_details' do
+    parameter name: 'id', in: :path, type: :integer, description: 'Assignment ID'
 
-    post('Create a node for an assignment') do
+    get('Retrieve assignment details') do
       tags 'Assignments'
-      consumes 'application/json'
+      produces 'application/json'
       parameter name: 'Authorization', in: :header, type: :string
       parameter name: 'Content-Type', in: :header, type: :string
       let('Authorization') { "Bearer #{auth_token}" }
@@ -396,18 +396,26 @@ end
 
       response(200, 'successful') do
         let(:assignment) { create(:assignment) }
-        let(:assignment_id) { assignment.id }
+        let(:id) { assignment.id }
 
         run_test! do |response|
+          data = JSON.parse(response.body)
           expect(response).to have_http_status(:ok)
+          expect(data['id']).to eq(assignment.id)
+          expect(data['name']).to eq(assignment.name)
+          expect(data['has_badge']).to eq(assignment.has_badge?)
+          expect(data['pair_programming_enabled']).to eq(assignment.pair_programming_enabled?)
+          expect(data['is_calibrated']).to eq(assignment.is_calibrated?)
+          expect(data['staggered_and_no_topic']).to eq(assignment.staggered_and_no_topic?)
         end
       end
 
       response(404, 'Assignment not found') do
-        let(:assignment_id) { 999 } # Non-existent ID
+        let(:id) { 999 } # Non-existent ID
 
         run_test! do |response|
           data = JSON.parse(response.body)
+          expect(response).to have_http_status(:not_found)
           expect(data['error']).to eq('Assignment not found')
         end
       end
