@@ -1,4 +1,5 @@
 require 'rails_helper'
+require 'questionnaire_helper'
 
 describe AdviceController, type: :controller do
   let(:super_admin) { build(:superadmin, id: 1, role_id: 1) }
@@ -133,6 +134,46 @@ describe AdviceController, type: :controller do
         result = get(:edit_advice, params:, session:)
         expect(result.status).to eq 200
         expect(result).to render_template(:edit_advice)
+      end
+    end
+
+    context 'when advice adjustment is necessary' do
+      let(:questionAdvice1) { build(:question_advice, id: 1, score: 1, question_id: 1, advice: 'Advice1') }
+      let(:questionAdvice2) { build(:question_advice, id: 2, score: 2, question_id: 1, advice: 'Advice2') }
+      let(:questionnaire) do
+        build(:questionnaire, id: 1, min_question_score: 1,
+              questions: [build(:question, id: 1, weight: 2, question_advices: [questionAdvice1, questionAdvice2])], max_question_score: 2)
+      end
+
+      before do
+        allow(Questionnaire).to receive(:find).with('1').and_return(questionnaire)
+        allow(controller).to receive(:invalid_advice?).and_return(true)
+      end
+
+      it 'calculates the number of advices for each question' do
+        expect(controller).to receive(:calculate_num_advices).once # Expecting it to be called once for the question
+        get :edit_advice, params: { id: 1 }
+      end
+
+      it 'sorts question advices in descending order by score' do
+        expect(controller).to receive(:sort_question_advices).once # Expecting it to be called once for the question
+        get :edit_advice, params: { id: 1 }
+      end
+    end
+
+    context 'when advice adjustment is not necessary' do
+      let(:questionAdvice1) { build(:question_advice, id: 1, score: 1, question_id: 1, advice: 'Advice1') }
+      let(:questionAdvice2) { build(:question_advice, id: 2, score: 2, question_id: 1, advice: 'Advice2') }
+      let(:questionnaire) do
+        build(:questionnaire, id: 1, min_question_score: 1,
+              questions: [build(:question, id: 1, weight: 2, question_advices: [questionAdvice1, questionAdvice2])], max_question_score: 2)
+      end
+
+      it 'does not adjust advice size when called' do
+        allow(Questionnaire).to receive(:find).with('1').and_return(questionnaire)
+        allow(controller).to receive(:invalid_advice?).and_return(false)
+        expect(QuestionnaireHelper).not_to receive(:adjust_advice_size)
+        get :edit_advice, params: { id: 1 }
       end
     end
   end
