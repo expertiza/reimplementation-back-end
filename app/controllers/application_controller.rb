@@ -1,4 +1,4 @@
-class ApplicationController < ActionController::API
+class ApplicationController < ActionController::Base
   #include JwtToken
   def current_user
     @current_user ||= session[:user]

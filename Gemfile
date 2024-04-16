@@ -44,6 +44,7 @@ group :development, :test do
   gem 'rswag-specs'
   gem 'rubocop'
   gem 'simplecov', require: false, group: :test
+  gem 'rails-controller-testing'
 end
 
 group :development do

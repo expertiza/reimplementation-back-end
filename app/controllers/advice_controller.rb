@@ -69,16 +69,18 @@ class AdviceController < ApplicationController
     begin
       # checks if advice is present or not
       unless params[:advice].nil?
-        params[:advice].keys.each do |advice_key|
-          # Updates the advice corresponding to the key
-          QuestionAdvice.update(advice_key, advice: params[:advice][advice_key.to_sym][:advice])
+        params[:advice].each do |advice_key, advice_params|
+          # get existing advice to update by key with the passed in advice param
+          QuestionAdvice.update(advice_key, advice: advice_params.slice(:advice)[:advice])
         end
+        # we made it here so it was saved
         flash[:notice] = 'The advice was successfully saved!'
       end
     rescue ActiveRecord::RecordNotFound
-      # If record not found, redirects to edit_advice
-      render action: 'edit_advice', id: params[:id]
+      # If record not found, redirects to edit_advice and sends flash
+      flash[:notice] = 'The advice record was not found and saved!'
     end
+    # regardless of action above redirect to edit and show flash message if one exists
     redirect_to action: 'edit_advice', id: params[:id]
   end
 end
