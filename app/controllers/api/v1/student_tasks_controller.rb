@@ -25,26 +25,62 @@ class Api::V1::StudentTasksController < ApplicationController
     render json: @student_tasks
   end
 
-  # GET /student_tasks/1/view
+  # GET /student_task/view
   def view
-    denied unless current_user_id?(@student_task.participant.user_id)
+    # We use @student_task to access the participant
+    @participant = @student_task.participant
 
-    task_details = {
-      id: @student_task.participant.id,
-      fullname: @student_task.participant.fullname,
-      assignment_name: @student_task.assignment,
-      topic: @student_task.topic,
-      current_stage: @student_task.current_stage,
-      # review_comment: @student_task.participant.review_comment, # Double check this method / attribute exists
-      # (Not sure if necessary in table)
-      has_badge: @student_task.participant.has_badge, # //TODO Check method / attribute path
-      stage_deadline: @student_task.stage_deadline,
-      publishing_rights: @student_task.participant.publishing_rights # //TODO Check method / attribute path
+    # Checking if the participant can perform submission, review, or take quizzes
+    @can_submit = @participant.can_submit
+    @can_review = @participant.can_review
+    @can_take_quiz = @participant.can_take_quiz
+
+    # Authorization for the current stage of the task
+    @authorization = @participant.authorization
+
+    # Getting the team associated with the participant
+    @team = @participant.team
+
+    # Ensuring the current user has permission to view this participant's information
+    return denied unless current_user_id?(@participant.user_id)
+
+    # Assignment-related checks and setup
+    # Fetching the assignment related to the participant
+    @assignment = @participant.assignment
+
+    # Checking if suggestions are allowed for the assignment
+    @can_provide_suggestions = @assignment.allow_suggestions
+
+    # Fetching topics for the assignment
+    @topics = SignUpTopic.where(assignment_id: @assignment.id)
+
+    # Checking if bookmarks are used in the assignment
+    @use_bookmark = @assignment.use_bookmark
+
+    # Timeline setup
+    # Generating timeline data for the assignment based on participant and team
+    @timeline_list = StudentTask.get_timeline_data(@assignment, @participant, @team)
+
+    # Email functionality setup
+    # Fetching review mappings if the participant is part of a team
+    @review_mappings = review_mappings(@assignment, @team.id) if @team
+
+    # Rendering the JSON response with all the necessary information for the view
+    render json: {
+      can_submit: @can_submit,
+      can_review: @can_review,
+      can_take_quiz: @can_take_quiz,
+      authorization: @authorization,
+      team: @team,
+      assignment: @assignment,
+      can_provide_suggestions: @can_provide_suggestions,
+      topics: @topics,
+      timeline_list: @timeline_list,
+      review_mappings: @review_mappings
     }
-
-    render json: task_details
   end
 
+  private
   # GET /student_tasks/1
   def show
     render json: @student_task
