@@ -8,17 +8,24 @@ require 'yaml'
 # the idiomatic ruby method names (without get_)
 
 class AssignmentParticipant < Participant
-  belongs_to  :assignment, class_name: 'Assignment', foreign_key: 'parent_id'
+  belongs_to  :assignment, class_name: 'Assignment', foreign_key: 'assignment_id'
   has_many    :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewee_id'
   has_many    :response_maps, foreign_key: 'reviewee_id'
-  has_many    :quiz_mappings, class_name: 'QuizResponseMap', foreign_key: 'reviewee_id'
-  has_many :quiz_response_maps, foreign_key: 'reviewee_id'
-  has_many :quiz_responses, through: :quiz_response_maps, foreign_key: 'map_id'
-  # has_many    :quiz_responses,  :class_name => 'Response', :finder_sql => 'SELECT r.* FROM responses r, response_maps m, participants p WHERE r.map_id = m.id AND m.type = \'QuizResponseMap\' AND m.reviewee_id = p.id AND p.id = #{id}'
-  # has_many    :responses, :finder_sql => 'SELECT r.* FROM responses r, response_maps m, participants p WHERE r.map_id = m.id AND m.type = \'ReviewResponseMap\' AND m.reviewee_id = p.id AND p.id = #{id}'
   belongs_to :user
   validates :handle, presence: true
-  # array of the average volume in each round of reviews
-  attr_accessor :avg_vol_per_round
-  attr_accessor :overall_avg_vol
+
+  # Fetches the team for specific participant
+  def self.team
+    AssignmentTeam.team(self)
+  end
+
+  # Fetches Assignment Directory.
+  def dir_path
+    assignment.try :directory_path
+  end
+
+  # Gets the student directory path
+  def path
+    "#{assignment.path}/#{team.directory_num}"
+  end
 end
