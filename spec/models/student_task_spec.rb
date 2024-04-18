@@ -2,43 +2,50 @@ require 'rails_helper'
 
 
 RSpec.describe StudentTask, type: :model do
+  before(:each) do
+    @assignment = double(name: "Final Project")
+    @participant = double(
+      assignment: @assignment,
+      topic: "E2442",
+      current_stage: "finished",
+      stage_deadline: "2024-04-23",
+      permission_granted: true
+    )
+
+  end
 
   describe ".initialize" do
     it "correctly assigns all attributes" do
       args = {
-        assignment: "Final Project",
+        assignment: @assignment,
         current_stage: "finished",
         participant: "John Doe",
         stage_deadline: "2024-04-23",
-        topic: "E2442"
+        topic: "E2442",
+        permission_granted: false
       }
+
       student_task = StudentTask.new(args)
-      expect(student_task.assignment).to eq("Final Project")
+
+      expect(student_task.assignment.name).to eq("Final Project")
       expect(student_task.current_stage).to eq("finished")
       expect(student_task.participant).to eq("John Doe")
       expect(student_task.stage_deadline).to eq("2024-04-23")
       expect(student_task.topic).to eq("E2442")
+      expect(student_task.permission_granted).to be false
     end
   end
 
   describe ".from_participant" do
     it "creates an instance from a participant instance" do
-      # This is a simplified instance to represent participant, after the participant model is implemented
-      # Please improve this test
-      participant = double(
-        assignment: "Final Project",
-        topic: "E2442",
-        current_stage: "finished",
-        stage_deadline: "2024-04-23"
-      )
-      allow(StudentTask).to receive(:parse_stage_deadline).with("2024-04-23").and_return(Time.parse("2024-04-23"))
 
-      student_task = StudentTask.from_participant(participant)
+      student_task = StudentTask.create_from_participant(@participant)
 
-      expect(student_task.assignment).to eq("Final Project")
-      expect(student_task.topic).to eq("E2442")
-      expect(student_task.current_stage).to eq("finished")
-      expect(student_task.stage_deadline).to eq(Time.parse("2024-04-23"))
+      expect(student_task.assignment).to eq(@participant.assignment.name)
+      expect(student_task.topic).to eq(@participant.topic)
+      expect(student_task.current_stage).to eq(@participant.current_stage)
+      expect(student_task.stage_deadline).to eq(Time.parse(@participant.stage_deadline))
+      expect(student_task.permission_granted).to be @participant.permission_granted
     end
   end
 
