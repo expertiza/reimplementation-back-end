@@ -113,7 +113,7 @@ begin
                             stage_deadline: 2.weeks.from_now,
                             created_at: Time.current,
                             updated_at: Time.current,
-                            permisison_granted: true
+                            permission_granted: true
                           },
                           {
                             user_id: 2,

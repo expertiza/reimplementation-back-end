@@ -3,23 +3,7 @@ class Api::V1::StudentTasksController < ApplicationController
 
     # GET /student_tasks
     def list
-  
-      # Authentication Tasks
-      # if current_user.is_new_user
-      #   redirect_to(controller: 'eula', action: 'display')
-      # end
-      # session[:user] = User.find_by(id: current_user.id)
-      puts current_user.name
       @student_tasks = StudentTask.from_user current_user
-
-      # @student_tasks.select! { |t| t.assignment.availability_flag }
-      #
-      # # #######Tasks and Notifications##################
-      # @tasknotstarted = @student_tasks.select(&:not_started?)
-      # @taskrevisions = @student_tasks.select(&:revision?)
-      #
-      # ######## Students Teamed With###################
-      # @students_teamed_with = StudentTask.teamed_students(current_user, session[:ip])
       render json: @student_tasks
     end
   
