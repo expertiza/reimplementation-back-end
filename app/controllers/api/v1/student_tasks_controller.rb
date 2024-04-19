@@ -1,5 +1,4 @@
 class Api::V1::StudentTasksController < ApplicationController
-    before_action :set_student_task, only: %i[ show ]
 
     # GET /student_tasks
     def list
@@ -13,12 +12,6 @@ class Api::V1::StudentTasksController < ApplicationController
     end
   
 
-
-    private
-      # Use callbacks to share common setup or constraints between actions.
-      def set_student_task
-        @student_task = StudentTask.find(params[:id])
-      end
 
   end
   
