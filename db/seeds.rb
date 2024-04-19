@@ -92,7 +92,8 @@ begin
                             current_stage: 'In Progress',
                             stage_deadline: 2.weeks.from_now,
                             created_at: Time.current,
-                            updated_at: Time.current
+                            updated_at: Time.current,
+                            permission_granted: false
                           },
                           {
                             user_id: 2,
@@ -101,7 +102,8 @@ begin
                             current_stage: 'In Progress',
                             stage_deadline: 2.weeks.from_now,
                             created_at: Time.current,
-                            updated_at: Time.current
+                            updated_at: Time.current,
+                            permission_granted: false
                           },
                           {
                             user_id: 2,
@@ -110,7 +112,8 @@ begin
                             current_stage: 'In Progress',
                             stage_deadline: 2.weeks.from_now,
                             created_at: Time.current,
-                            updated_at: Time.current
+                            updated_at: Time.current,
+                            permission_granted: true
                           },
                           {
                             user_id: 2,
@@ -119,7 +122,8 @@ begin
                             current_stage: 'In Progress',
                             stage_deadline: 2.weeks.from_now,
                             created_at: Time.current,
-                            updated_at: Time.current
+                            updated_at: Time.current,
+                            permission_granted: true
                           },
                           {
                             user_id: 2,
@@ -128,10 +132,10 @@ begin
                             current_stage: 'In Progress',
                             stage_deadline: 2.weeks.from_now,
                             created_at: Time.current,
-                            updated_at: Time.current
+                            updated_at: Time.current,
+                            permission_granted: false
                           }
                         ])
-
 
     Course.create!([
                      {
@@ -146,6 +150,6 @@ begin
                      }
                    ])
 rescue ActiveRecord::RecordInvalid => e
-    puts e
-    puts 'The db has already been seeded'
+  puts e.backtrace
+  puts 'The db has already been seeded'
 end
