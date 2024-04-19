@@ -136,6 +136,18 @@ begin
                             permission_granted: false
                           }
                         ])
+    Course.create!([
+                     {
+                       name: "CSC/ECE517- Object-Oriented Design and Development",
+                       directory_path: "/CSC_ECE_517/",
+                       info: "This is a test data, please improve it later if necessary",
+                       private: false,
+                       created_at: Time.now,
+                       updated_at: Time.now,
+                       instructor_id: 1,
+                       institution_id: 1
+                     }
+                   ])
 rescue ActiveRecord::RecordInvalid => e
   puts e.backtrace
   puts 'The db has already been seeded'
