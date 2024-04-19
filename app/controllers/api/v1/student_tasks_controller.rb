@@ -5,13 +5,17 @@ class Api::V1::StudentTasksController < ApplicationController
       @student_tasks = StudentTask.from_user current_user
       render json: @student_tasks
     end
-  
+
     # GET /student_tasks/1
     def show
       render json: @student_task
     end
-  
+
+    def view
+      # Testing proper API / route (see routes.rb)
+      @student_tasks = StudentTask.from_user current_user
+      render json: @student_tasks
+    end
 
 
   end
-  
