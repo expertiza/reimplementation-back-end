@@ -136,6 +136,7 @@ begin
                             permission_granted: false
                           }
                         ])
+
     Course.create!([
                      {
                        name: "CSC/ECE517- Object-Oriented Design and Development",
