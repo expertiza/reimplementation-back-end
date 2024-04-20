@@ -90,7 +90,7 @@ begin
                             assignment_id: 1,
                             topic: 'Rails Assignment',
                             current_stage: 'In Progress',
-                            stage_deadline: 2.weeks.from_now,
+                            stage_deadline: Time.now + (7*24*60*60),
                             created_at: Time.current,
                             updated_at: Time.current,
                             permission_granted: false
@@ -100,7 +100,7 @@ begin
                             assignment_id: 2,
                             topic: 'Ruby Assignment',
                             current_stage: 'In Progress',
-                            stage_deadline: 2.weeks.from_now,
+                            stage_deadline: Time.now + (7*24*60*60),
                             created_at: Time.current,
                             updated_at: Time.current,
                             permission_granted: false
@@ -110,7 +110,7 @@ begin
                             assignment_id: 3,
                             topic: 'Design Pattern Assignment',
                             current_stage: 'In Progress',
-                            stage_deadline: 2.weeks.from_now,
+                            stage_deadline: Time.now + 2 * (7*24*60*60),
                             created_at: Time.current,
                             updated_at: Time.current,
                             permission_granted: true
@@ -120,7 +120,7 @@ begin
                             assignment_id: 4,
                             topic: 'Code Principles Assignment',
                             current_stage: 'In Progress',
-                            stage_deadline: 2.weeks.from_now,
+                            stage_deadline: Time.now + (3*7*24*60*60),
                             created_at: Time.current,
                             updated_at: Time.current,
                             permission_granted: true
@@ -130,7 +130,7 @@ begin
                             assignment_id: 5,
                             topic: 'Object Oriented Assignment',
                             current_stage: 'In Progress',
-                            stage_deadline: 2.weeks.from_now,
+                            stage_deadline: Time.now + (4*7*24*60*60),
                             created_at: Time.current,
                             updated_at: Time.current,
                             permission_granted: false
