@@ -1183,6 +1183,17 @@ paths:
               required:
               - user_name
               - password
+  /api/v1/student_tasks/list:
+      get:
+        summary: List all Student Tasks
+        tags:
+          - Student Tasks
+        responses:
+          '200':
+            description: An array of student tasks
+
+
+
 servers:
 - url: http://{defaultHost}
   variables:
