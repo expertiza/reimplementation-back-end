@@ -2,17 +2,21 @@ default: &default
   adapter: mysql2
   encoding: utf8mb4
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  port: 3306
+  port: 3305
   socket: /var/run/mysqld/mysqld.sock
+  database: reimplementation_development
+  username: root
+  password: password
+
 
 development:
   <<: *default
-  url: <%= ENV['DATABASE_URL'].gsub('?', '_development?') %>
+  url: <%= ENV['DATABASE_URL'].to_s.gsub('?', '_development?') %>
 
 test:
   <<: *default
-  url: <%= ENV['DATABASE_URL'].gsub('?', '_test?') %>
+  url: <%= ENV['DATABASE_URL'].to_s.gsub('?', '_test?') %>
 
 production:
   <<: *default
-  url: <%= ENV['DATABASE_URL'].gsub('?', '_production?') %>
+  url: <%= ENV['DATABASE_URL'].to_s.gsub('?', '_production?') %>
