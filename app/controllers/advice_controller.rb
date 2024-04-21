@@ -87,4 +87,19 @@ class AdviceController < ApplicationController
     # Stores the questionnaire with given id in URL
     @questionnaire = Questionnaire.find(params[:id])
     end
+
+  ## Checks to see if the advice is the correct length.
+  #  Checks to see if the number of advices is different than the question_advices or advice is empty
+  def invalid_advice_length?(num_advices, question, sorted_advice)
+    question.question_advices.length != num_advices ||
+      sorted_advice.empty?
+  end
+
+  ## Checks to see if the scores are valid
+  # Checks to see if the first and last index of the sorted_advice array are different than expected.
+  def invalid_advice_scores?(sorted_advice)
+    sorted_advice[0].score != @questionnaire.max_question_score ||
+      sorted_advice[sorted_advice.length - 1].score != @questionnaire.min_question_score
+  end
+
 end
