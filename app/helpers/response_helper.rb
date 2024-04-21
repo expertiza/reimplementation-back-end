@@ -100,18 +100,54 @@ module ResponseHelper
     end
   end
 
-  # Creates or updates answers based on the provided parameters from a reviewer.
-  def create_update_answers(response, answers)
-    answers.each do |answer|
-      raise StandardError, 'Question Id required.' unless answer[:question_id].present?
-
-      score = Answer.where(response_id: response.id, question_id: answer[:question_id]).first
-      score ||= Answer.create(response_id: response.id, question_id: answer[:question_id], answer: answer[:answer],
-                              comments: answer[:comments])
-      score.update_attribute('answer', answer[:answer])
-      score.update_attribute('comments', answer[:comments])
+  # Creates answers based on the provided parameters from a reviewer.
+  def create_answers(response, answers)
+    Answer.transaction do
+      answers.each do |answer|
+        raise StandardError, 'Question Id required.' unless answer[:question_id].present?
+  
+        # Check if the answer already exists
+        existing_answer = Answer.find_by(response_id: response.id, question_id: answer[:question_id])
+        
+        # Only create a new answer if it doesn't exist
+        unless existing_answer
+          Answer.create!(
+            response_id: response.id,
+            question_id: answer[:question_id],
+            answer: answer[:answer],
+            comments: answer[:comments]
+          )
+        end
+      end
     end
   end
+
+# Updates answers based on the provided parameters from a reviewer.
+  def update_answers(response, answers)
+    Answer.transaction do
+      answers.each do |answer|
+        raise StandardError, 'Question Id required.' unless answer[:question_id].present?
+  
+        # Find the existing answer
+        existing_answer = Answer.find_by(response_id: response.id, question_id: answer[:question_id])
+  
+        # Update it if it exists
+        if existing_answer
+          existing_answer.update!(
+            answer: answer[:answer],
+            comments: answer[:comments]
+          )
+        else
+          # Log or handle the case where an expected existing answer is not found
+          Rails.logger.error("Expected to find an answer to update but did not for response_id: #{response.id}, question_id: #{answer[:question_id]}")
+        end
+      end
+    end
+  end
+  
+
+
+
 
   # Retrieves the questionnaire associated with a given response.
   # This method determines the relevant questionnaire by examining the response's type and related information.

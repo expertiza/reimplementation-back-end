@@ -55,7 +55,7 @@ class Api::V1::ResponsesController < ApplicationController
 
     if response.errors.full_messages.length == 0
       response.save
-      create_update_answers(response, params[:scores]) if params[:scores]
+      create_answers(response, params[:scores]) if params[:scores]
 
       if is_submitted
         items = get_items(response)
@@ -118,7 +118,7 @@ class Api::V1::ResponsesController < ApplicationController
     response.validate_params(params, 'update')
     if response.errors.full_messages.length == 0
       response.save
-      create_update_answers(response, params[:scores]) if params[:scores].present?
+      update_answers(response, params[:scores]) if params[:scores].present?
       notify_instructor_on_difference(response) if response.is_submitted == true && was_submitted == false
       render json: 'Your response was successfully saved.', status: :ok
     else
