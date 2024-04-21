@@ -68,7 +68,9 @@ Rails.application.routes.draw do
         get 'user/:user_id/assignment/:assignment_id/', on: :collection, action: :invitations_for_user_assignment
       end
 
-      resources :participants
+      resources :participants do
+          get 'assignment', action: :participant_assignment
+      end
 
       resources :account_requests do
         collection do

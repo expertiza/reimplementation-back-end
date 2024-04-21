@@ -6,6 +6,14 @@ info:
 
 components:
   schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: "A description of the error that occurred."
+      required:
+        - error
     Participant:
       type: "object"
       properties:
@@ -220,6 +228,33 @@ paths:
       responses:
         '204':
           description: "Assignment deleted successfully"
+
+  "/api/v1/participants/{participant_id}/assignment":
+    get:
+      summary: "Get the assignment associated with a specific participant"
+      tags:
+      - "Participants"
+      description: "Retrieves the assignment linked to the specified participant."
+      parameters:
+      - name: "participant_id"
+        in: "path"
+        required: true
+        description: "The ID of the participant to retrieve the assignment for."
+        schema:
+          type: "integer"
+      responses:
+        '200':
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Assignment"
+        '404':
+          description: "Participant not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   
   "/api/v1/assignments/{assignment_id}/participants":
     get:
@@ -1501,4 +1536,4 @@ servers:
 - url: http://{defaultHost}
   variables:
     defaultHost:
-      default: 127.0.0.1:3000
+      default: localhost:3002

@@ -1,5 +1,5 @@
 class Api::V1::ParticipantsController < ApplicationController
-    # rescue_from ActiveRecord::RecordNotFound, with: :invite_not_found
+    rescue_from ActiveRecord::RecordNotFound, with: :invite_not_found
     
   
     # GET /participants
@@ -51,6 +51,16 @@ class Api::V1::ParticipantsController < ApplicationController
       @participant.destroy
       render json: { message: "Participant was successfully destroyed." }, status: :ok
     end
+
+    def participant_assignment
+        participant = Participant.find(params[:participant_id])
+        assignment = participant.assignment
+    
+        render json: assignment, status: :ok
+    rescue ActiveRecord::RecordNotFound
+        render json: { error: "Participant not found" }, status: :not_found
+    end
+    
   
     private
   
