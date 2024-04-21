@@ -30,6 +30,83 @@ describe AdviceController, type: :controller do
     end
   end
 
+  describe "#invalid_advice?" do
+  let(:questionAdvice1) { build(:question_advice, id: 1, score: 1, question_id: 1) }
+  let(:questionAdvice2) { build(:question_advice, id: 2, score: 3, question_id: 1) }
+  let(:questionnaire) do
+    build(:questionnaire, id: 1, min_question_score: 1,
+      questions: [build(:question, id: 1, weight: 2, question_advices: [questionAdvice1, questionAdvice2])], max_question_score: 2)
+  end
+    context "when the sorted advice is empty" do
+      it "returns true" do
+        ## Set sorted advice to empty.
+        sorted_advice = []
+        num_advices = 5
+        expect(controller.invalid_advice?(sorted_advice, num_advices, questionnaire.questions[0])).to be_truthy
+      end
+    end
+
+    context "when the number of advices does not match the expected number" do
+      it "returns true" do
+        ## Set sorted advice to be different length the num_advices.
+        sorted_advice = [questionAdvice1, questionAdvice2]
+        num_advices = 1
+        expect(controller.invalid_advice?(sorted_advice, num_advices, questionnaire.questions[0])).to be_truthy
+      end
+    end
+
+    context "when the highest scoring advice does not have the maximum question score" do
+      it "returns true" do
+        # Create a question advice with a score lower than the maximum question score
+        questionAdvice1 = build(:question_advice, id: 1, score: 3, question_id: 1)
+        questionnaire = build(:questionnaire, id: 1, min_question_score: 1,
+                              questions: [build(:question, id: 1, weight: 2, question_advices: [questionAdvice1])], max_question_score: 5)
+
+        num_advices = questionnaire.max_question_score - questionnaire.min_question_score + 1
+        sorted_advice = questionnaire.questions[0].question_advices.sort_by(&:score).reverse
+    
+        expect(controller.invalid_advice?(sorted_advice, num_advices, questionnaire.questions[0])).to be_truthy
+      end
+    end
+    
+
+    context "when the lowest scoring advice does not have the minimum question score" do
+      it "returns true" do
+        # Create a question advice with a score higher than the minimum question score
+        questionAdvice1 = build(:question_advice, id: 1, score: 1, question_id: 1) # Assuming minimum question score is 2
+        questionnaire = build(:questionnaire, id: 1, min_question_score: 2,
+                              questions: [build(:question, id: 1, weight: 2, question_advices: [questionAdvice1])], max_question_score: 5)
+    
+        num_advices = questionnaire.max_question_score - questionnaire.min_question_score + 1
+        sorted_advice = questionnaire.questions[0].question_advices.sort_by(&:score).reverse
+    
+        expect(controller.invalid_advice?(sorted_advice, num_advices, questionnaire.questions[0])).to be_truthy
+      end
+    end
+
+    context 'when invalid_advice? is called with all conditions satisfied' do
+      # Question Advices passing all conditions
+      let(:questionAdvice1) { build(:question_advice, id: 1, score: 1, question_id: 1, advice: 'Advice1') }
+      let(:questionAdvice2) { build(:question_advice, id: 2, score: 2, question_id: 1, advice: 'Advice2') }
+      let(:questionnaire) do
+        build(:questionnaire, id: 1, min_question_score: 1,
+                              questions: [build(:question, id: 1, weight: 2, question_advices: [questionAdvice1, questionAdvice2])], max_question_score: 2)
+      end
+
+      it 'invalid_advice? returns false when called with all correct pre-conditions ' do
+        sorted_advice = questionnaire.questions[0].question_advices.sort_by { |x| x.score }.reverse
+        num_advices = questionnaire.max_question_score - questionnaire.min_question_score + 1
+        controller.instance_variable_set(:@questionnaire, questionnaire)
+        expect(controller.invalid_advice?(sorted_advice, num_advices, questionnaire.questions[0])).to eq(false)
+      end
+    end
+    
+    
+    
+  end
+
+  ########################################################################################
+  ### These are the old invalid_advice tests. Waiting for Anuj to give feedback on what to do with these.
   describe '#invalid_advice?' do
     context 'when invalid_advice? is called with question advice score > max score of questionnaire' do
       # max score of advice = 3 (!=2)
@@ -115,6 +192,9 @@ describe AdviceController, type: :controller do
       end
     end
   end
+
+  ########################################################################################
+
 
   describe '#edit_advice' do
 
