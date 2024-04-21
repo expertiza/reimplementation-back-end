@@ -17,7 +17,8 @@ class StudentTask
         topic: participant.topic,
         current_stage: participant.current_stage,
         stage_deadline: parse_stage_deadline(participant.stage_deadline),
-        permission_granted: participant.permission_granted
+        permission_granted: participant.permission_granted,
+        participant: participant
       )
     end
 
