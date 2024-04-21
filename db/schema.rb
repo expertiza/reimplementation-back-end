@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
+ActiveRecord::Schema[7.0].define(version: 2024_04_21_013529) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -42,6 +42,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.integer "notification_limit", default: 15, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "used_in_round"
     t.index ["assignment_id"], name: "fk_aq_assignments_id"
     t.index ["questionnaire_id"], name: "fk_aq_questionnaire_id"
   end
@@ -114,6 +115,30 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.index ["instructor_id"], name: "index_courses_on_instructor_id"
   end
 
+  create_table "deadline_types", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "name", limit: 32
+  end
+
+  create_table "due_dates", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "due_at"
+    t.bigint "deadline_type_id"
+    t.bigint "parent_id"
+    t.bigint "late_policy_id"
+    t.integer "submission_allowed_id"
+    t.integer "review_allowed_id"
+    t.integer "resubmission_allowed_id"
+    t.integer "rereview_allowed_id"
+    t.integer "review_of_review_allowed_id"
+    t.index ["deadline_type_id"], name: "fk_deadline_type_due_date"
+    t.index ["late_policy_id"], name: "fk_due_date_late_policies"
+    t.index ["parent_id"], name: "fk_due_dates_assignments"
+    t.index ["rereview_allowed_id"], name: "idx_rereview_allowed"
+    t.index ["resubmission_allowed_id"], name: "idx_resubmission_allowed"
+    t.index ["review_allowed_id"], name: "idx_review_allowed"
+    t.index ["review_of_review_allowed_id"], name: "idx_review_of_review_allowed"
+    t.index ["submission_allowed_id"], name: "idx_submission_allowed"
+  end
+
   create_table "institutions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -132,12 +157,23 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.index ["to_id"], name: "fk_invitationto_users"
   end
 
+  create_table "late_policies", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "penalty_period_in_minutes"
+    t.integer "penalty_per_unit"
+    t.boolean "expressed_as_percentage"
+    t.integer "max_penalty", default: 0, null: false
+    t.index ["penalty_period_in_minutes"], name: "penalty_period_length_unit"
+  end
+
   create_table "participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "user_id"
-    t.bigint "assignment_id"
+    t.bigint "parent_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["assignment_id"], name: "index_participants_on_assignment_id"
+    t.float "grade"
+    t.text "comments_to_student"
+    t.text "private_instructor_comments"
+    t.index ["parent_id"], name: "index_participants_on_parent_id"
     t.index ["user_id"], name: "fk_participant_users"
     t.index ["user_id"], name: "index_participants_on_user_id"
   end
@@ -165,10 +201,11 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.boolean "break_before"
     t.string "max_label"
     t.string "min_label"
-    t.integer "questionnaire_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "questionnaire_id", null: false
     t.index ["questionnaire_id"], name: "fk_question_questionnaires"
+    t.index ["questionnaire_id"], name: "index_questions_on_questionnaire_id"
   end
 
   create_table "response_maps", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -209,8 +246,16 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
   end
 
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.string "name"
+    t.bigint "parent_id", default: 0, null: false
+    t.index ["parent_id"], name: "fk_teams_assignments"
+  end
+
+  create_table "teams_users", id: :integer, charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "team_id"
+    t.bigint "user_id"
+    t.index ["team_id"], name: "fk_users_teams"
+    t.index ["user_id"], name: "fk_teams_users"
   end
 
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -244,11 +289,15 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
   add_foreign_key "account_requests", "roles"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
-  add_foreign_key "participants", "assignments"
+  add_foreign_key "due_dates", "deadline_types", name: "fk_deadline_type_due_date"
+  add_foreign_key "due_dates", "late_policies", name: "fk_due_date_late_policies"
   add_foreign_key "participants", "users"
+  add_foreign_key "questions", "questionnaires"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
+  add_foreign_key "teams_users", "teams", name: "fk_users_teams"
+  add_foreign_key "teams_users", "users", name: "fk_teams_users"
   add_foreign_key "users", "institutions"
   add_foreign_key "users", "roles"
   add_foreign_key "users", "users", column: "parent_id"
