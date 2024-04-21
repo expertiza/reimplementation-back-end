@@ -38,10 +38,15 @@ class Api::V1::AssignmentsController < ApplicationController
     head :no_content
   end
 
+  def assignment_participants
+    participants = Participant.where(assignment_id: params[:assignment_id])
+    render json: participants, status: :ok
+  end
+
   private
 
   # Only allow a list of trusted parameters through.
   def assignment_params
-    params.require(:assignment).permit(:title, :description)
+    params.require(:assignment).permit(:name, :title, :description)
   end
 end

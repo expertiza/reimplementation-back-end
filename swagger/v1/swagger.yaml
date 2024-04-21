@@ -5,6 +5,143 @@ info:
   version: v1
 
 components:
+  schemas:
+    Participant:
+      type: "object"
+      properties:
+        user_id:
+          type: "integer"
+          format: "int64"
+          description: "The ID of the user participating in the assignment"
+        assignment_id:
+          type: "integer"
+          format: "int64"
+          description: "The ID of the assignment this participant is associated with"
+        created_at:
+          type: "string"
+          format: "date-time"
+          description: "The date and time when the participant record was created"
+        updated_at:
+          type: "string"
+          format: "date-time"
+          description: "The date and time when the participant record was last updated"
+        type:
+          type: "string"
+          description: "The type or role of the participant within the assignment context"
+      required:
+      - user_id
+      - assignment_id
+      - type
+    Assignment:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+        directory_path:
+          type: "string"
+        submitter_count:
+          type: "integer"
+        course_id:
+          type: "integer"
+        instructor_id:
+          type: "integer"
+        private:
+          type: "boolean"
+        num_reviews:
+          type: "integer"
+        num_review_of_reviews:
+          type: "integer"
+        num_review_of_reviewers:
+          type: "integer"
+        reviews_visible_to_all:
+          type: "boolean"
+        num_reviewers:
+          type: "integer"
+        spec_location:
+          type: "string"
+        max_team_size:
+          type: "integer"
+        staggered_deadline:
+          type: "boolean"
+        allow_suggestions:
+          type: "boolean"
+        days_between_submissions:
+          type: "integer"
+        review_assignment_strategy:
+          type: "string"
+        max_reviews_per_submission:
+          type: "integer"
+        review_topic_threshold:
+          type: "integer"
+        copy_flag:
+          type: "boolean"
+        rounds_of_reviews:
+          type: "integer"
+        microtask:
+          type: "boolean"
+        require_quiz:
+          type: "boolean"
+        num_quiz_questions:
+          type: "integer"
+        is_coding_assignment:
+          type: "boolean"
+        is_intelligent:
+          type: "boolean"
+        calculate_penalty:
+          type: "boolean"
+        late_policy_id:
+          type: "integer"
+        is_penalty_calculated:
+          type: "boolean"
+        max_bids:
+          type: "integer"
+        show_teammate_reviews:
+          type: "boolean"
+        availability_flag:
+          type: "boolean"
+        use_bookmark:
+          type: "boolean"
+        can_review_same_topic:
+          type: "boolean"
+        can_choose_topic_to_review:
+          type: "boolean"
+        is_calibrated:
+          type: "boolean"
+        is_selfreview_enabled:
+          type: "boolean"
+        reputation_algorithm:
+          type: "string"
+        is_anonymous:
+          type: "boolean"
+        num_reviews_required:
+          type: "integer"
+        num_metareviews_required:
+          type: "integer"
+        num_metareviews_allowed:
+          type: "integer"
+        num_reviews_allowed:
+          type: "integer"
+        simicheck:
+          type: "integer"
+        simicheck_threshold:
+          type: "integer"
+        is_answer_tagging_allowed:
+          type: "boolean"
+        has_badge:
+          type: "boolean"
+        allow_selecting_additional_reviews_after_1st_round:
+          type: "boolean"
+        sample_assignment_id:
+          type: "integer"
+        created_at:
+          type: "string"
+          format: "date-time"
+        updated_at:
+          type: "string"
+          format: "date-time"
+      required:
+      - name
+      - course_id
   securitySchemes:
     bearerAuth:
       type: http
@@ -15,6 +152,98 @@ security:
   - bearerAuth: []
 
 paths:
+
+  "/api/v1/assignments":
+    get:
+      summary: "List all assignments"
+      tags:
+      - "Assignments"
+      responses:
+        '200':
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Assignment"
+    post:
+      summary: "Create a new assignment"
+      tags:
+      - "Assignments"
+      description: "Create a new assignment"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Assignment"
+      responses:
+        '201':
+          description: "Assignment created successfully"
+
+  "/api/v1/assignments/{id}":
+    parameters:
+    - name: "id"
+      in: "path"
+      description: "Unique identifier of the assignment"
+      required: true
+      schema:
+        type: "integer"
+    get:
+      summary: "Get an assignment by ID"
+      tags:
+      - "Assignments"
+      responses:
+        '200':
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Assignment"
+    patch:
+      summary: "Update an assignment"
+      tags:
+      - "Assignments"
+      description: "Update an assignment"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Assignment"
+      responses:
+        '200':
+          description: "Assignment updated successfully"
+    delete:
+      summary: "Delete an assignment"
+      tags:
+      - "Assignments"
+      responses:
+        '204':
+          description: "Assignment deleted successfully"
+  
+  "/api/v1/assignments/{assignment_id}/participants":
+    get:
+      summary: "List all participants for a specific assignment"
+      tags:
+      - "Participants"
+      description: "Retrieve a list of participants for a given assignment ID."
+      parameters:
+      - name: "assignment_id"
+        in: "path"
+        required: true
+        description: "The ID of the assignment to retrieve participants for."
+        schema:
+          type: "integer"
+      responses:
+        '200':
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Participant"
+
   
   "/api/v1/account_requests/pending":
     get:
