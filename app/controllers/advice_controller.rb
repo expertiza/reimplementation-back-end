@@ -14,13 +14,11 @@ class AdviceController < ApplicationController
     current_user_has_ta_privileges?
   end
 
-  # checks whether the advices for a question in questionnaire have valid attributes
-  # return true if the number of advices and their scores are invalid, else returns false
+  ## This method will return true if the advice and its scores is invalid.
+  # Validates by utilizing the private methods invalid_advice_length? and invalid_advice_scores?
   def invalid_advice?(sorted_advice, num_advices, question)
-    return ((question.question_advices.length != num_advices) ||
-      sorted_advice.empty? ||
-      (sorted_advice[0].score != @questionnaire.max_question_score) ||
-      (sorted_advice[sorted_advice.length - 1].score != @questionnaire.min_question_score))
+    invalid_advice_length?(num_advices, question, sorted_advice) ||
+      invalid_advice_scores?(sorted_advice)
   end
 
   # Modify the advice associated with a questionnaire
