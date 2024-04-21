@@ -7,6 +7,7 @@
 class Assignment < ApplicationRecord
   include MetricHelper
   belongs_to :course
+  belongs_to :instructor, class_name: 'User', inverse_of: :assignments
   has_many :invitations
   has_many :questionnaires
   has_many :participants, class_name: 'AssignmentParticipant', foreign_key: 'assignment_id', dependent: :destroy

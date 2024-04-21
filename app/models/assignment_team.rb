@@ -13,7 +13,7 @@ class AssignmentTeam < Team
     hyperlink = "https://#{hyperlink}" unless hyperlink.start_with?('http://', 'https://')
     # If not a valid URL, it will throw an exception
     response_code = Net::HTTP.get_response(URI(hyperlink))
-    raise "HTTP status code: #{response_code}" if response_code =~ /[45][0-9]{2}/
+    raise "HTTP status code: #{response_code}" if response_code.code =~ /[45][0-9]{2}/
 
     hyperlinks = self.hyperlinks
     hyperlinks << hyperlink
@@ -43,7 +43,7 @@ class AssignmentTeam < Team
       if teams_user.teams_id.nil?
         next
       end
-      team = Team.find(teams_user.teams_id)
+      team = AssignmentTeam.find(teams_user.teams_id)
       return team if team.assignment_id == participant.assignment_id
     end
     nil
@@ -60,6 +60,6 @@ class AssignmentTeam < Team
 
   # Gets the student directory path
   def path
-    "#{assignment.path}/#{team.directory_num}"
+    "#{assignment.path}/#{directory_num}"
   end
 end

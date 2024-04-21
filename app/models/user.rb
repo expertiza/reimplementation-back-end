@@ -9,6 +9,12 @@ class User < ApplicationRecord
   validates :password, length: { minimum: 6 }, presence: true, allow_nil: true
   validates :full_name, presence: true, length: { maximum: 50 }
 
+  has_many :participants, class_name: 'Participant', foreign_key: 'user_id', dependent: :destroy
+  has_many :assignment_participants, class_name: 'AssignmentParticipant', foreign_key: 'user_id', dependent: :destroy
+  has_many :assignments, through: :participants
+  has_many :teams_users, dependent: :destroy
+  has_many :teams, through: :teams_users
+
   belongs_to :role
   belongs_to :institution, optional: true
   belongs_to :parent, class_name: 'User', optional: true

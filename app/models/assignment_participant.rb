@@ -15,7 +15,7 @@ class AssignmentParticipant < Participant
   validates :handle, presence: true
 
   # Fetches the team for specific participant
-  def self.team
+  def team
     AssignmentTeam.team(self)
   end
 

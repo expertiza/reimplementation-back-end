@@ -35,7 +35,7 @@ module SubmittedContentHelper
 
   # Returns the entire path for the particular file name ()from params).
   def get_filename
-    params[:directories][params[:chk_files]] + '/' + params[:filenames][params[:chk_files]]
+    "#{params[:directories][params[:chk_files]]}/#{params[:filenames][params[:chk_files]]}"
   end
 
   # Generalize wrapper function to print Internal Server Errors for file operations

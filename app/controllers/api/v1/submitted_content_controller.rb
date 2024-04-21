@@ -1,4 +1,5 @@
 class Api::V1::SubmittedContentController < ApplicationController
+  skip_before_action :authenticate_request!
 
   include SubmittedContentHelper
 
@@ -31,7 +32,7 @@ class Api::V1::SubmittedContentController < ApplicationController
     team = @participant.team
     team_hyperlinks = team.hyperlinks
     if team_hyperlinks.include?(params[:'submission'])
-      render json: { message: 'You or your teammate(s) have already submitted the same hyperlink.', status: :unprocessable_entity }
+      render json: { message: 'You or your teammate(s) have already submitted the same hyperlink.'},  status: :unprocessable_entity
     else
       submit_hyperlink_and_create_record(team)
     end
@@ -39,10 +40,10 @@ class Api::V1::SubmittedContentController < ApplicationController
 
   # Removes hyperlink from team submissions and creates a record.
   def remove_hyperlink
-    @participant = AssignmentParticipant.find(params[:hyperlinks][:participant_id])
+    set_participant
 
     team = @participant.team
-    hyperlink_to_delete = team.hyperlinks[params['chk_links'],to_i]
+    hyperlink_to_delete = team.hyperlinks[params['chk_links'].to_i]
 
     remove_hyperlink_and_create_record(hyperlink_to_delete, team)
   end
@@ -51,22 +52,23 @@ class Api::V1::SubmittedContentController < ApplicationController
   def submit_file
     set_participant
 
-    file = params[:uploaded_file]
+    @file = params[:uploaded_file]
     file_size_limit = 5    # 5mb
 
-    unless check_content_size(file, file_size_limit)
+    unless check_content_size(@file, file_size_limit)
       return render json: { message:"File size must be smaller than #{file_size_limit}MB" }, status: :bad_request
     end
 
-    unless check_extension_integrity(file.original_filename)
+    unless check_extension_integrity(@file.original_filename)
       return render json: { message: 'File extension does not match. '\
         'Please upload one of the following: '\
         'pdf, png, jpeg, zip, tar, gz, 7z, odt, docx, md, rb, mp4, txt' }, status: :bad_request
     end
 
-    @file_content = file.read
+    @file_content = @file.read
 
-    @participant.team.set_student_directory_num
+    team = @participant.team
+    team.set_student_directory_num
 
     submit_file_and_create_record
 
@@ -74,7 +76,6 @@ class Api::V1::SubmittedContentController < ApplicationController
 
   # Perform CRUD operations on the file uploaded.
   def folder_action
-    set_participant
 
     if params[:faction][:delete]
       delete_selected_files
@@ -133,12 +134,11 @@ class Api::V1::SubmittedContentController < ApplicationController
   def delete_selected_files
     filename = get_filename
     FileUtils.rm_r(filename)
-    participant = Participant.find_by(id: params[:id])
-    assignment = participant.try(:assignment)
-    team = participant.try(:team)
+    assignment = @participant.try(:assignment)
+    team = @participant.try(:team)
     SubmissionRecord.create(team_id: team.try(:id),
                             content: filename,
-                            user: participant.id,
+                            user: participant.user.try(:name),
                             assignment_id: assignment.try(:id),
                             operation: 'Remove File')
     render json: { message: 'The selected file has been deleted.' }, status: :no_content
@@ -159,7 +159,7 @@ class Api::V1::SubmittedContentController < ApplicationController
     team = @participant.team
     SubmissionRecord.create(team_id: team.id,
                             content: full_filename,
-                            user: @participant.id,
+                            user: @participant.user.name,
                             assignment_id: assignment.id,
                             operation: 'Submit File')
     render json: { message: 'The file has been submitted.' }, status: :ok
@@ -173,7 +173,7 @@ class Api::V1::SubmittedContentController < ApplicationController
       team.submit_hyperlink(params['submission'])
       SubmissionRecord.create(team_id: team.id,
                               content: params['submission'],
-                              user: @participant.id,
+                              user: @participant.user.name,
                               assignment_id: @participant.assignment.id,
                               operation: 'Submit Hyperlink')
     rescue StandardError
@@ -188,7 +188,7 @@ class Api::V1::SubmittedContentController < ApplicationController
       team.remove_hyperlink(hyperlink_to_delete)
       SubmissionRecord.create(team_id: team.id,
                               content: hyperlink_to_delete,
-                              user: @participant.id,
+                              user: @participant.user.name,
                               assignment_id: @participant.assignment.id,
                               operation: 'Remove Hyperlink')
     rescue StandardError
