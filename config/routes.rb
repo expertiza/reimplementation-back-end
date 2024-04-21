@@ -22,7 +22,24 @@ Rails.application.routes.draw do
           get 'role/:name', action: :role_users
         end
       end
-      resources :assignments
+
+      resources :grades do
+        collection do
+          get '/api/v1/grades/:id/view_team', action: :view_team
+          get '/api/v1/grades/:id/view', action: :view
+          get '/api/v1/grades/:id/view_scores', action: :view_scores
+          # put '/grades/update?id=:id', action: update
+          get '/api/v1/grades/:id', action: :show
+          # get :view
+          # get :view_team
+          # get :view_reviewer
+          # get :view_my_scores
+          # get :instructor_review
+          # post :remove_hyperlink
+          # post :save_grade_and_comment_for_submission
+
+        end
+      end
 
       resources :courses do
         collection do
