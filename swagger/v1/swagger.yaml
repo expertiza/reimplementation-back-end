@@ -15,6 +15,7 @@ security:
   - bearerAuth: []
 
 paths:
+  
   "/api/v1/account_requests/pending":
     get:
       summary: List all Pending Account Requests
@@ -133,6 +134,90 @@ paths:
       responses:
         '204':
           description: successful
+
+  "/api/v1/participants":
+    get:
+      summary: List all participants
+      tags:
+      - Participants
+      responses:
+        '200':
+          description: Successful
+    post:
+      summary: Create a new participant
+      tags:
+      - Participants
+      description: Create a new participant
+      parameters: []
+      responses:
+        '201':
+          description: Successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                assignment_id:
+                  type: integer
+                type:
+                  type: string
+              required:
+              - user_id
+              - assignment_id
+              - type
+
+  "/api/v1/participants/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: Unique identifier of the participant
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Get a participant by ID
+      tags:
+      - Participants
+      responses:
+        '200':
+          description: Successful
+    patch:
+      summary: Update a participant
+      tags:
+      - Participants
+      description: Update a participant
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                assignment_id:
+                  type: integer
+                type:
+                  type: string
+    delete:
+      summary: Delete a participant
+      tags:
+      - Participants
+      responses:
+        '200':
+          description: Successful
+
   "/api/v1/courses/{id}/add_ta/{ta_id}":
     parameters:
     - name: id

@@ -22,7 +22,10 @@ Rails.application.routes.draw do
           get 'role/:name', action: :role_users
         end
       end
-      resources :assignments
+
+      resources :assignments do
+        get 'participants', action: :assignment_participants
+      end
 
       resources :courses do
         collection do
@@ -64,6 +67,8 @@ Rails.application.routes.draw do
       resources :invitations do
         get 'user/:user_id/assignment/:assignment_id/', on: :collection, action: :invitations_for_user_assignment
       end
+
+      resources :participants
 
       resources :account_requests do
         collection do
