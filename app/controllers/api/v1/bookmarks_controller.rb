@@ -1,5 +1,4 @@
 class Api::V1::BookmarksController < ApplicationController
-  before_action :set_bookmark, only: %i[ update ]
 
   # Index method returns the list of JSON objects of the bookmark
   # GET on /bookmarks
@@ -23,6 +22,7 @@ class Api::V1::BookmarksController < ApplicationController
   # POST on /bookmarks
   def create
     begin
+      # params[:user_id] = @current_user.id
       @bookmark = Bookmark.new(bookmark_params)
       @bookmark.user_id = @current_user.id
       @bookmark.save!
@@ -35,8 +35,8 @@ class Api::V1::BookmarksController < ApplicationController
   # Update method updates the bookmark object with id - {:id} and returns the updated bookmark JSON object
   # PUT on /bookmarks/:id
   def update
-    @bookmark = Bookmark.find(params[:id])
-    if @bookmark.update(bookmark_params)
+    @bookmark = Bookmark.find(update_bookmark_params[:id])
+    if @bookmark.update(update_bookmark_params)
       render json: @bookmark, status: :ok
     else
       render json: @bookmark.errors.full_messages, status: :unprocessable_entity
@@ -54,10 +54,20 @@ class Api::V1::BookmarksController < ApplicationController
     end
   end
 
-  def bookmark_rating
-    @bookmark = Bookmark.find(params[:id])
+  # get_bookmark_rating_score method gets the bookmark rating of the bookmark object with id- {:id}
+  # GET on /bookmarks/:id/bookmarkratings
+  def get_bookmark_rating_score
+    begin
+      @bookmark = Bookmark.find(params[:id])
+      @bookmark_rating = BookmarkRating.where(bookmark_id: @bookmark.id, user_id: @current_user.id).first
+      render json: @bookmark_rating, status: :ok and return
+    rescue ActiveRecord::RecordNotFound
+      render json: $ERROR_INFO.to_s, status: :not_found and return
+    end
   end
 
+  # save_bookmark_rating_score method creates or updates the bookmark rating of the bookmark object with id- {:id}
+  # POST on /bookmarks/:id/bookmarkratings
   def save_bookmark_rating_score
     @bookmark = Bookmark.find(params[:id])
     @bookmark_rating = BookmarkRating.where(bookmark_id: @bookmark.id, user_id: @current_user.id).first
@@ -71,18 +81,12 @@ class Api::V1::BookmarksController < ApplicationController
 
   private
 
-  # TODO: Create a common definition for both create and update to reduce it to single params method
-  # Change create method to take bookmark param as required.
-  def create_bookmark_params
+  def bookmark_params
     params.require(:bookmark).permit(:url, :title, :description, :topic_id, :rating, :id)
   end
 
   def update_bookmark_params
     params.require(:bookmark).permit(:url, :title, :description)
-  end
-
-  def set_bookmark
-    @bookmark = Bookmark.find(params[:id])
   end
 
 end
