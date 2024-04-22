@@ -28,6 +28,10 @@ class StudentTask
                  .map { |participant| StudentTask.create_from_participant(participant) }
                  .sort_by(&:stage_deadline)
     end
+
+    def self.from_participant_id(id)
+      create_from_participant(Participant.find_by(id: id))
+    end
   
     private
   
