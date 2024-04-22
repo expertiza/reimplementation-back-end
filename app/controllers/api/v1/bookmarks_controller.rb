@@ -35,7 +35,7 @@ class Api::V1::BookmarksController < ApplicationController
   # Update method updates the bookmark object with id - {:id} and returns the updated bookmark JSON object
   # PUT on /bookmarks/:id
   def update
-    @bookmark = Bookmark.find(update_bookmark_params[:id])
+    @bookmark = Bookmark.find(params[:id])
     if @bookmark.update(update_bookmark_params)
       render json: @bookmark, status: :ok
     else
