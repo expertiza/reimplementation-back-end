@@ -80,4 +80,46 @@ describe 'StudentTasks API', type: :request do
       end
     end
   end
+
+  path '/api/v1/student_tasks/view' do
+    get 'Retrieve a specific student task by ID' do
+      tags 'StudentTasks'
+      produces 'application/json'
+      parameter name: 'id', in: :query, type: :Integer, required: true
+      parameter name: 'Authorization', in: :header, type: :string
+
+      response '200', 'successful retrieval of a student task' do
+        let(:'Authorization') { "Bearer #{@token}" }
+        let(:id) { 1 }
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['assignment']).to be_instance_of(String)
+          expect(data['current_stage']).to be_instance_of(String)
+          expect(data['stage_deadline']).to be_instance_of(String)
+          expect(data['topic']).to be_instance_of(String)
+          expect(data['permission_granted']).to be_in([true, false])
+        end
+      end
+
+      response '500', 'participant not found' do
+        let(:'Authorization') { "Bearer #{@token}" }
+        let(:id) { -1 }
+
+        run_test! do |response|
+          expect(response.status).to eq(500)
+        end
+      end
+
+      response '401', 'unauthorized request has error response' do
+        let(:'Authorization') { "Bearer " }
+        let(:id) { 'any_id' }
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data["error"]).to eql("Not Authorized")
+        end
+      end
+    end
+
+  end
 end

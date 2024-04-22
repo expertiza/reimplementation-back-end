@@ -12,9 +12,8 @@ class Api::V1::StudentTasksController < ApplicationController
     end
 
     def view
-      # Testing proper API / route (see routes.rb)
-      @student_tasks = StudentTask.from_user current_user
-      render json: @student_tasks
+      @student_task =  StudentTask.from_participant_id params[:id]
+      render json: @student_task
     end
 
 

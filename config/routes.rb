@@ -26,7 +26,7 @@ Rails.application.routes.draw do
       resources :student_tasks do
         collection do
           get :list, action: :list
-          get :view, action: :view
+          get :view
         end
       end
 

@@ -69,4 +69,15 @@ RSpec.describe StudentTask, type: :model do
     end
   end
 
+  describe ".from_participant_id" do
+    it "fetches a participant by id and creates a student task from it" do
+      allow(Participant).to receive(:find_by).with(id: 1).and_return(@participant)
+
+      expect(Participant).to receive(:find_by).with(id: 1).and_return(@participant)
+      expect(StudentTask).to receive(:create_from_participant).with(@participant)
+
+      StudentTask.from_participant_id(1)
+    end
+  end
+
 end
