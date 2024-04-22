@@ -24,58 +24,78 @@ class Response < ApplicationRecord
   # Validates parameters for creating or updating a response. The method checks for the presence and validity
   # of the response map and specific fields based on the action (create or update). It ensures that
   # new responses do not duplicate existing ones and that updates are not made to already submitted responses.
-  #
-  # @param params [Hash] The parameters to be validated.
-  # @param action [String] Specifies the action, either 'create' or 'update'.
   def validate_params(params, action)
-    message = ''
-    if action == 'create'
-      if params[:map_id].present?
-        self.map_id = params[:map_id]
-      else
-        self.map_id = params[:response][:map_id]
-      end
-    end
-    response_map = ResponseMap.includes(:responses).find_by(id: self.map_id)
-    if self.response_map.nil?
-      errors.add(:response_map, 'Not found response map')
-      return
-    end
+    assign_map_id(params, action)
+    return unless set_and_validate_response_map
 
-    self.response_map = response_map
-    self.round = params[:response][:round] if params[:response]&.key?(:round)
-    self.version_num = params[:response][:version_num] if params[:response]&.key?(:version_num)
-    self.additional_comment = params[:response][:additional_comment] if params[:response]&.key?(:additional_comment)
-    self.visibility = params[:response][:visibility] if params[:response]&.key?(:visibility)
-    
-    if action == 'create'
-      if self.round.present? && self.version_num.present?
-        existing_response = response_map.responses.where('map_id = ? and round = ? and version_num = ?', self.map_id,
-                                                         self.round, self.version_num).first
-        message = "This response is created based on a ResponseMap's id existing in the database. You can set the map_id 0, it will be created a new ResponseMap or update the version_num and round"
-      elsif round.present? && !version_num.present?
-        existing_response = response_map.responses.where('map_id = ? and round = ?', self.map_id, round).first
-        message = "To create a response, change the version_num attribute"
-      elsif !round.present? && version_num.present?
-        existing_response = response_map.responses.where('map_id = ? and version_num = ?', self.map_id,
-                                                         self.version_num).first
-        message = "To create a response, change the round attribute"
-      end
-      if existing_response.present?
-        self.errors.add('response', "Already existed the response round #{existing_response.round} and version_num #{existing_response.version_num}. #{message}")
-        return
-      end
-    elsif action == 'update'
-      if is_submitted
-        self.errors.add('response', "Response id #{self.id} is already submitted.")
-        return
-      end
-      if params[:response][:map_id] != self.map_id
-        self.errors.add('response', "Response id #{self.id} has map_id #{self.map_id}.")
-      end
-    end
-    self.is_submitted = params[:response][:is_submitted] if params[:response]&.key?(:is_submitted)
+    set_response_attributes(params)
+    return if action_specific_validation(params, action)
+
+    validate_submission_status(params) if action == 'update'
   end
+
+  private
+
+  # Assign map_id based on the action
+  def assign_map_id(params, action)
+    self.map_id = action == 'create' ? (params[:map_id] || params.dig(:response, :map_id)) : self.map_id
+  end
+
+  # Set and validate the existence of the response map
+  def set_and_validate_response_map
+    self.response_map = ResponseMap.includes(:responses).find_by(id: self.map_id)
+    unless response_map
+      errors.add(:response_map, 'not found')
+      return false
+    end
+    true
+  end
+
+  # Set response attributes from params
+  def set_response_attributes(params)
+    self.round = params.dig(:response, :round)
+    self.version_num = params.dig(:response, :version_num)
+    self.additional_comment = params.dig(:response, :additional_comment)
+    self.visibility = params.dig(:response, :visibility)
+  end
+
+  # Validate parameters specific to create or update actions
+  def action_specific_validation(params, action)
+    case action
+    when 'create'
+      validate_create_conditions
+    when 'update'
+      validate_update_conditions(params)
+    end
+  end
+
+  # Validate conditions specific to the create action
+  def validate_create_conditions
+    existing_response = response_map.responses.find_by(map_id: self.map_id, round: self.round, version_num: self.version_num)
+    if existing_response
+      errors.add('response', "Already existed the response round #{existing_response.round} and version_num #{existing_response.version_num}. Please update the version or round.")
+      return true
+    end
+    false
+  end
+
+  # Validate conditions specific to the update action
+  def validate_update_conditions(params)
+    if self.is_submitted
+      errors.add('response', "Response id #{self.id} is already submitted and cannot be updated.")
+      return true
+    elsif params.dig(:response, :map_id) && params[:response][:map_id] != self.map_id
+      errors.add('response', "Response id #{self.id} cannot change its map_id.")
+      return true
+    end
+    false
+  end
+
+  # Validate the submission status of the response
+  def validate_submission_status(params)
+    self.is_submitted = params.dig(:response, :is_submitted)
+  end
+
 
   # Prepares the response object with necessary content including generating answer objects
   # for each question associated with the response. This method retrieves the questionnaire and its questions
