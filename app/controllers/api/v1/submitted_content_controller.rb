@@ -9,6 +9,7 @@ class Api::V1::SubmittedContentController < ApplicationController
     render json: @submission_record, status: :ok
   end
 
+  # GET /api/v1/submitted_content/:id
   def show
     @submission_record = SubmissionRecord.find(params[:id])
     render json: @submission_record, status: :ok
@@ -16,6 +17,7 @@ class Api::V1::SubmittedContentController < ApplicationController
     render json: { error: e.message }, status: :not_found
   end
 
+  # POST   /api/v1/submitted_content
   def create
     @submission_record = SubmissionRecord.create(submitted_content_params)
     if @submission_record.save
@@ -25,19 +27,23 @@ class Api::V1::SubmittedContentController < ApplicationController
     end
   end
 
+  # POST   /api/v1/submitted_content/submit_hyperlink
+  # GET   /api/v1/submitted_content/submit_hyperlink
   # Creates a submission record and submits the hyperlink.
   def submit_hyperlink
     set_participant
 
     team = @participant.team
     team_hyperlinks = team.hyperlinks
-    if team_hyperlinks.include?(params[:'submission'])
+    if team_hyperlinks.include?(params[:submission])
       render json: { message: 'You or your teammate(s) have already submitted the same hyperlink.'},  status: :unprocessable_entity
     else
       submit_hyperlink_and_create_record(team)
     end
   end
 
+  # POST   /api/v1/submitted_content/remove_hyperlink
+  # GET   /api/v1/submitted_content/remove_hyperlink
   # Removes hyperlink from team submissions and creates a record.
   def remove_hyperlink
     set_participant
@@ -48,6 +54,8 @@ class Api::V1::SubmittedContentController < ApplicationController
     remove_hyperlink_and_create_record(hyperlink_to_delete, team)
   end
 
+  # POST   /api/v1/submitted_content/submit_file
+  # GET   /api/v1/submitted_content/submit_file
   # To submit file to a specific student directory.
   def submit_file
     set_participant
@@ -74,6 +82,8 @@ class Api::V1::SubmittedContentController < ApplicationController
 
   end
 
+  # POST   /api/v1/submitted_content/folder_action
+  # GET   /api/v1/submitted_content/folder_action
   # Perform CRUD operations on the file uploaded.
   def folder_action
 
@@ -90,6 +100,7 @@ class Api::V1::SubmittedContentController < ApplicationController
     end
   end
 
+  # GET    /api/v1/submitted_content/download
   # Checks for the required file and route and downloads the file.
   def download
     folder_name = params['current_folder']['name']
