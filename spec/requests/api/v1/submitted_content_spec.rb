@@ -10,7 +10,7 @@ RSpec.describe 'Submitted Content API', type: :request do
       parameter name: 'current_folder[name]', in: :query, type: :string, required: true
       parameter name: :download, in: :query, type: :string, required: true
 
-      response '400', 'Bad request: Folder_name is nil or File name is nil' do
+      response '400', 'Bad request: Folder name is nil or File name is nil' do
         let(:current_folder) { { name: nil } }
         let(:download) { 'test_file.pdf' }
         
@@ -19,6 +19,15 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
       end
 
+      response '400', 'Bad request: Cannot send a whole folder' do
+        let(:current_folder) { { name: 'test_folder' } }
+        let(:download) { 'test_folder' }
+        
+        run_test! do
+          expect(json['message']).to eq('Cannot send a whole folder.')
+        end
+      end
+      
       response '200', 'File downloaded' do
         let(:current_folder) { { name: 'test_folder' } }
         let(:download) { 'test_file.txt' }
