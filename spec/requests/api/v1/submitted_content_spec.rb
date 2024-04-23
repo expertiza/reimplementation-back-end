@@ -10,6 +10,15 @@ RSpec.describe 'Submitted Content API', type: :request do
       parameter name: 'current_folder[name]', in: :query, type: :string, required: true
       parameter name: :download, in: :query, type: :string, required: true
 
+      response '400', 'Bad request: Folder_name is nil or File name is nil' do
+        let(:current_folder) { { name: nil } }
+        let(:download) { 'test_file.pdf' }
+        
+        run_test! do
+          expect(json['message']).to eq('Folder_name is nil.')
+        end
+      end
+
       response '200', 'File downloaded' do
         let(:current_folder) { { name: 'test_folder' } }
         let(:download) { 'test_file.txt' }
