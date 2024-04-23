@@ -1,20 +1,25 @@
 class Api::V1::StudentTasksController < ApplicationController
 
-    # GET /student_tasks
-    def list
-      @student_tasks = StudentTask.from_user current_user
-      render json: @student_tasks
-    end
-
-    # GET /student_tasks/1
-    def show
-      render json: @student_task
-    end
-
-    def view
-      @student_task =  StudentTask.from_participant_id params[:id]
-      render json: @student_task
-    end
-
-
+  # List retrieves all student tasks associated with the current logged-in user.
+  def list
+    # Retrieves all tasks that belong to the current user.
+    @student_tasks = StudentTask.from_user(current_user)
+    # Render the list of student tasks as JSON.
+    render json: @student_tasks
   end
+
+  def show
+    render json: @student_task
+  end
+
+  # The view function retrieves a student task based on a participant's ID.
+  # It is meant to provide an endpoint where tasks can be queried based on participant ID.
+  def view
+    # Retrieves the student task where the participant's ID matches the provided parameter.
+    # This function will be used for clicking on a specific student task to "view" its details.
+    @student_task = StudentTask.from_participant_id(params[:id])
+    # Render the found student task as JSON.
+    render json: @student_task
+  end
+
+end
