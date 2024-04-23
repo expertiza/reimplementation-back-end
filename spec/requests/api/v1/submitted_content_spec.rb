@@ -2,12 +2,47 @@ require 'swagger_helper'
 
 RSpec.describe 'Submitted Content API', type: :request do
 
+  path '/api/v1/submitted_content/submit_file' do
+
+    post('submit_file submitted_content') do
+      tags 'SubmittedContent'
+      consumes 'multipart/form-data'
+      parameter name: :uploaded_file, in: :formData, type: :file, required: true
+      parameter name: :id, in: :query, type: :string, required: true
+
+      response(422, 'There was a problem in performing file operations.') do
+        run_test!
+      end
+      response(409, 'A file already exists in this directory with the same name. Please delete the existing file before copying.') do
+        run_test!
+      end
+      response(404, 'The referenced file does not exist.') do
+        run_test!
+      end
+      response(400, 'A file with this name already exists.') do
+        run_test!
+      end
+      response(204, 'Requested operation has been performed.') do
+        run_test!
+      end
+      response(200, 'Requested operation has been performed.') do
+        run_test!
+      end
+
+    end
+  end
+
   path '/api/v1/submitted_content/download' do
-    
     get('download submitted_content') do
       tags 'SubmittedContent'
       produces 'application/octet-stream'
-      parameter name: 'current_folder[name]', in: :query, type: :string, required: true
+      parameter name: :current_folder, in: :query, schema: {
+        type: :object,
+        properties: {
+          name: { type: :string },
+        },
+        required: ['name']
+      }
       parameter name: :download, in: :query, type: :string, required: true
 
       response '400', 'Bad request: Folder name is nil or File name is nil' do
@@ -36,7 +71,7 @@ RSpec.describe 'Submitted Content API', type: :request do
           expect(json['message']).to eq('File does not exist.')
         end
       end    
-        
+
       response '200', 'File downloaded' do
         let(:current_folder) { { name: 'test_folder' } }
         let(:download) { 'test_file.txt' }
@@ -51,14 +86,9 @@ RSpec.describe 'Submitted Content API', type: :request do
     post('submit_hyperlink submitted_content') do
       tags 'SubmittedContent'      
       consumes 'application/json'
-      parameter name: :submission, in: :body, schema: {
-        type: :object,
-        properties: {
-          submission: { type: :string },
-          id: { type: :integer }
-        },
-        required: ['submission', 'id']
-      }
+      parameter name: :id, in: :query, type: :string, required: true
+      parameter name: :submission, in: :query, type: :string, required: true
+
 
       response '422', 'You or your teammate(s) have already submitted the same hyperlink' do
         let(:participant) { create(:assignment_participant) }
@@ -127,14 +157,8 @@ RSpec.describe 'Submitted Content API', type: :request do
     get('submit_hyperlink submitted_content') do
       tags 'SubmittedContent'      
       consumes 'application/json'
-      parameter name: :submission, in: :body, schema: {
-        type: :object,
-        properties: {
-          submission: { type: :string },
-          id: { type: :integer }
-        },
-        required: ['submission', 'id']
-      }
+      parameter name: :id, in: :query, type: :string, required: true
+      parameter name: :submission, in: :query, type: :string, required: true
 
       response '422', 'You or your teammate(s) have already submitted the same hyperlink' do
         let(:participant) { create(:assignment_participant) }
