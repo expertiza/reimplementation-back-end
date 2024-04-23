@@ -150,10 +150,12 @@ class Api::V1::SubmittedContentController < ApplicationController
     team = @participant.try(:team)
     SubmissionRecord.create(team_id: team.try(:id),
                             content: filename,
-                            user: participant.user.try(:name),
+                            user: @participant.user.try(:name),
                             assignment_id: assignment.try(:id),
                             operation: 'Remove File')
-    render json: { message: 'The selected file has been deleted.' }, status: :no_content
+    render json: { message: 'The selected file has been deleted.' }, status: :ok
+  rescue StandardError
+    render json: { error: "Failed to delete the file. Reason: #{$ERROR_INFO}" }, status: :unprocessable_entity
   end
 
   # Saving file to the newly created directory for submission
@@ -206,7 +208,7 @@ class Api::V1::SubmittedContentController < ApplicationController
     rescue StandardError
       return render json: { error: "There was an error deleting the hyperlink. Reason: #{$ERROR_INFO}" }, status: :unprocessable_entity
     end
-    render json: { message: 'The link has been successfully removed.' }, status: :no_content
+    render json: { message: 'The link has been successfully removed.' }, status: :ok
   end
 
   def submit_file_and_create_record
