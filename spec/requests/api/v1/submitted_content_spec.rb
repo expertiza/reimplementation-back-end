@@ -79,7 +79,82 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
       end
     end
+    
+    get('submit_hyperlink submitted_content') do
+      tags 'SubmittedContent'      
+      consumes 'application/json'
+      parameter name: :submission, in: :body, schema: {
+        type: :object,
+        properties: {
+          submission: { type: :string },
+          id: { type: :integer }
+        },
+        required: ['submission', 'id']
+      }
 
+      response '422', 'You or your teammate(s) have already submitted the same hyperlink' do
+        let(:participant) { create(:assignment_participant) }
+        let(:team) { create(:team) }
+        let(:team_hyperlinks) { create_list(:hyperlink, 2, team: team) }
+        let(:submission) { team_hyperlinks.first }
+
+        before do
+          allow(AssignmentParticipant).to receive(:find).and_return(participant)
+          allow(participant).to receive_message_chain(:team, :hyperlinks).and_return(team_hyperlinks)
+          allow_any_instance_of(SubmittedContentController).to receive(:render).and_return(json: { message: 'You or your teammate(s) have already submitted the same hyperlink.' }, status: :unprocessable_entity)
+          get '/submit_hyperlink', params: { id: participant.id, submission: submission }, as: :json
+        end
+
+        it 'returns a 422 status code' do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+
+        it 'returns the error message' do
+          expect(json['message']).to eq('You or your teammate(s) have already submitted the same hyperlink.')
+        end
+      end
+
+      response '200', 'Hyperlink submitted successfully' do
+        let(:participant) { create(:assignment_participant) }
+        let(:team) { create(:team) }
+        let(:submission) { 'New Hyperlink' }
+
+        before do
+          allow(AssignmentParticipant).to receive(:find).and_return(participant)
+          allow(participant).to receive_message_chain(:team, :hyperlinks).and_return([])
+          allow_any_instance_of(Team).to receive(:submit_hyperlink)
+          allow(SubmissionRecord).to receive(:create)
+          allow_any_instance_of(SubmittedContentController).to receive(:render).and_return(json: { message: 'The link has been successfully submitted.' }, status: :ok)
+          get '/submit_hyperlink', params: { id: participant.id, submission: submission }, as: :json
+        end
+
+        it 'returns a 200 status code' do
+          expect(response).to have_http_status(:ok)
+        end
+      end
+
+      response '422', 'Invalid URL or URI' do
+        let(:participant) { create(:assignment_participant) }
+        let(:team) { create(:team) }
+        let(:submission) { 'Invalid Hyperlink' }
+
+        before do
+          allow(AssignmentParticipant).to receive(:find).and_return(participant)
+          allow(participant).to receive_message_chain(:team, :hyperlinks).and_return([])
+          allow_any_instance_of(Team).to receive(:submit_hyperlink).and_raise(StandardError, 'Invalid URL or URI')
+          allow_any_instance_of(SubmittedContentController).to receive(:render).and_return(json: { error: 'The URL or URI is invalid. Reason: Invalid URL or URI' }, status: :unprocessable_entity)
+          get '/submit_hyperlink', params: { id: participant.id, submission: submission }, as: :json
+        end
+
+        it 'returns a 422 status code' do
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+
+        it 'returns the error message' do
+          expect(json['error']).to eq('The URL or URI is invalid')
+        end
+      end
+    end
   end
 
   path '/api/v1/submitted_content' do
