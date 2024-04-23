@@ -180,8 +180,8 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
         run_test!
       end
-      response(422, 'There was a problem in file operation.') do
 
+      response(422, 'There was a problem in file operation.') do
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -288,7 +288,12 @@ RSpec.describe 'Submitted Content API', type: :request do
     post('submit_file submitted_content') do
       tags 'SubmittedContent'
       consumes 'multipart/form-data'
-      parameter name: :uploaded_file, in: :formData, type: :file, required: true
+      parameter name: :file, in: :formData, type: :object, schema: {
+        type: :object,
+        properties: {
+          uploaded_file: { type: :string, format: :binary },
+        }
+      }
       parameter name: :id, in: :query, type: :string, required: true
 
       response(422, 'There was a problem in performing file operations.') do
