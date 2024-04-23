@@ -931,6 +931,27 @@ paths:
       responses:
         '204':
           description: successful
+  "/api/v1/responses/show_calibration_results_for_student":
+    post:
+      summary: get the calibration results for a student. 
+      tags:
+      - Responses
+      responses:
+        '200':
+          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                calibration_response_map_id:
+                  type: integer
+                  default: 1
+                review_response_map_id:
+                  type: integer
+                  default: 2
+              required: []
   "/api/v1/roles":
     get:
       summary: list roles
@@ -1293,8 +1314,10 @@ paths:
               properties:
                 user_name:
                   type: string
+                  default: admin
                 password:
                   type: string
+                  default: admin
               required:
               - user_name
               - password
