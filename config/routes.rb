@@ -25,18 +25,23 @@ Rails.application.routes.draw do
 
       resources :grades do
         collection do
-          get '/api/v1/grades/:id/view_team', action: :view_team
-          get '/api/v1/grades/:id/view', action: :view
-          get '/api/v1/grades/:id/view_scores', action: :view_scores
-          # put '/grades/update?id=:id', action: update
-          get '/api/v1/grades/:id', action: :show
+          get ':id/view_team', action: :view_team
+          get ':id/view', action: :view
+          get ':id/view_scores', action: :view_scores
+          put ':id/update', action: :update
+          get ':id', action: :show
+          # put ':id/edit', action: :edit
+          get ':id/action_allowed', action: :action_allowed
+          post ':id/save_grade_and_comment_for_submission', action: :save_grade_and_comment_for_submission
+          # get ':id/redirect_when_disallowed', action: :redirect_when_disallowed
+          # post ':id/assign_all_penalties', action: :assign_all_penalties
+          # get ':id/instructor_review', action: :instructor_review
           # get :view
           # get :view_team
           # get :view_reviewer
           # get :view_my_scores
           # get :instructor_review
           # post :remove_hyperlink
-          # post :save_grade_and_comment_for_submission
 
         end
       end
