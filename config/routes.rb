@@ -72,7 +72,11 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :responses
+      resources :responses do
+		collection do
+		  post 'show_calibration_results_for_student', action: :show_calibration_results_for_student
+		end
+	  end
       
     end
   end

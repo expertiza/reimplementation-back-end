@@ -142,4 +142,40 @@ class Api::V1::ResponsesController < ApplicationController
   rescue StandardError => e
     render json: "Request failed. #{e.message}", status: :unprocessable_entity
   end
+  
+  # POST /responses/show_calibration_results_for_student
+  # Can't be a GET as we expect the following arguments to be passed in: calibration_response_map_id, review_response_map_id
+  # Returns the response information for both map_ids.     
+  def show_calibration_results_for_student	
+	calibration_response_map_id = params[:calibration_response_map_id]
+	review_response_map_id = params[:review_response_map_id]
+	
+	# Get the responses from the respective map_ids
+	begin
+      calibration_response = Response.find_by!(map_id: calibration_response_map_id)
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: "Calibration response not found" }, status: :not_found
+      return
+    end
+	begin
+      review_response = Response.find_by!(map_id: review_response_map_id)
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: "Review response not found" }, status: :not_found
+      return
+    end
+	
+	# Get the questions and answeres for each response
+	calibration_items = get_items(calibration_response)
+    calibration_response.scores = get_answers(calibration_response, calibration_items)
+	
+	review_items = get_items(review_response)
+    review_response.scores = get_answers(review_response, review_items)
+	
+	# return the results as a formatted json object
+	render json: {calibration_response: JSON.parse(calibration_response.serialize_response), review_response: JSON.parse(review_response.serialize_response)}, status: :ok
+	
+	rescue StandardError
+      render json: "Request failed. #{$ERROR_INFO}", status: :unprocessable_entity
+  end
+  
 end
