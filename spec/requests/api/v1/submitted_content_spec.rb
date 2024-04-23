@@ -2,6 +2,23 @@ require 'swagger_helper'
 
 RSpec.describe 'Submitted Content API', type: :request do
 
+  path '/api/v1/submitted_content/download' do
+    
+    get('download submitted_content') do
+      tags 'SubmittedContent'
+      produces 'application/octet-stream'
+      parameter name: 'current_folder[name]', in: :query, type: :string, required: true
+      parameter name: :download, in: :query, type: :string, required: true
+
+      response '200', 'File downloaded' do
+        let(:current_folder) { { name: 'test_folder' } }
+        let(:download) { 'test_file.txt' }
+        
+        run_test!
+      end
+    end
+  end
+
   path '/api/v1/submitted_content/submit_hyperlink' do
 
     post('submit_hyperlink submitted_content') do
@@ -79,7 +96,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
       end
     end
-    
+
     get('submit_hyperlink submitted_content') do
       tags 'SubmittedContent'      
       consumes 'application/json'
