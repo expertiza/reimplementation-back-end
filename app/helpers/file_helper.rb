@@ -21,9 +21,9 @@ module FileHelper
   def self.move_file(old_loc, new_loc)
     new_dir, filename = File.split(new_loc)
     new_dir = FileHelper.clean_path(new_dir)
-
+    
     FileHelper.create_directory_from_path(new_dir)
-    FileUtils.mv old_loc, new_dir + filename
+    FileUtils.mv old_loc, File.join(new_dir, filename)
   end
 
   # Removes parent directory '..' from folder path.
@@ -35,6 +35,6 @@ module FileHelper
   def self.create_directory_from_path(path)
     FileUtils.mkdir_p(path) unless File.exist? path
   rescue StandardError => e
-    raise 'An error occurred while creating this directory: ' + e.message
+    raise "An error occurred while creating this directory: #{e.message}"
   end
 end

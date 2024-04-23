@@ -114,7 +114,7 @@ module SubmittedContentHelper
     location = File.join(@participant.dir_path, params[:faction][:create])
     handle_file_operation_error('creating directory') do
       FileHelper.create_directory_from_path(location)
-      render json: { message: "The directory #{params[:faction][:create]} was created."}, status: :no_content
+      render json: { message: "The directory #{params[:faction][:create]} was created."}, status: :ok
     end
   end
 end
