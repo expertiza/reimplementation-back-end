@@ -312,6 +312,126 @@ paths:
       responses:
         '204':
           description: successful
+  "/grades/{id}/view_team":
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: id
+        type: integer
+    get:
+      summary: Get team view for grade
+      responses:
+        '200':
+          description: successful
+  /grades/{id}/view:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: id
+        type: integer
+    get:
+      summary: Get view for grade
+      responses:
+        '200':
+          description: successful
+  /grades/{id}/view_scores:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: id
+        type: integer
+    get:
+      summary: Get scores view for grade
+      responses:
+        '200':
+          description: successful
+  /grades/{id}/update:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: id
+        type: integer
+    put:
+      summary: Update grade
+      responses:
+        '200':
+          description: successful
+  /grades/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: id
+        type: integer
+    get:
+      summary: Get grade details
+      responses:
+        '200':
+          description: successful
+#  /grades/{id}/edit:
+#    parameters:
+#      - name: id
+#        in: path
+#        required: true
+#        description: id
+#        type: integer
+#    put:
+#      summary: Edit grade
+#      responses:
+#        '200':
+#          description: successful
+  /grades/{id}/action_allowed:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: id
+        type: integer
+    get:
+      summary: Check if action is allowed for grade
+      responses:
+        '200':
+          description: successful
+  /grades/{id}/save_grade_and_comment_for_submission:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: id
+        type: integer
+    post:
+      summary: Save grade and comment for submission
+      responses:
+        '200':
+          description: successful
+#  /grades/{id}/redirect_when_disallowed:
+#    parameters:
+#      - name: id
+#        in: path
+#        required: true
+#        description: id
+#        type: integer
+#    get:
+#      summary: Redirect when disallowed
+#      responses:
+#        '200':
+#          description: successful
+#  /grades/{id}/assign_all_penalties:
+#    parameters:
+#      - name: id
+#        in: path
+#        required: true
+#        description: id
+#        type: integer
+#    post:
+#      summary: Assign all penalties
+#      responses:
+#        '200':
+#          description: successful
   "/api/v1/institutions":
     get:
       summary: list institutions
