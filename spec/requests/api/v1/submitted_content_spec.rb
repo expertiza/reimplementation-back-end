@@ -1,6 +1,103 @@
 require 'swagger_helper'
 
 RSpec.describe 'Submitted Content API', type: :request do
+  path '/api/v1/submitted_content/remove_hyperlink' do
+
+    get('remove_hyperlink submitted_content') do
+      tags 'SubmittedContent'
+      consumes 'application/json'
+      parameter name: :id, in: :query, type: :integer, required: true
+      parameter name: :chk_links, in: :query, type: :integer, required: true
+      
+      response '204', 'Hyperlink removed successfully' do
+        let(:participant) { create(:assignment_participant) }
+        let(:team) { create(:team) }
+        let(:hyperlink_to_delete) { create(:hyperlink, team: team) }
+
+        before do
+          allow(AssignmentParticipant).to receive(:find).and_return(participant)
+          allow(participant).to receive(:team).and_return(team)
+          allow(team.hyperlinks).to receive(:[]).and_return(hyperlink_to_delete)
+          allow(team).to receive(:remove_hyperlink)
+          allow(SubmissionRecord).to receive(:create)
+        end
+
+        let(:id) { participant.id }
+        let(:chk_links) { 0 } 
+
+        run_test!
+      end
+
+      response '422', 'Unprocessable Entity' do
+        let(:participant) { create(:assignment_participant) }
+        let(:team) { create(:team) }
+        let(:hyperlink_to_delete) { create(:hyperlink, team: team) }
+
+        before do
+          allow(AssignmentParticipant).to receive(:find).and_return(participant)
+          allow(participant).to receive(:team).and_return(team)
+          allow(team.hyperlinks).to receive(:[]).and_return(hyperlink_to_delete)
+          allow(team).to receive(:remove_hyperlink).and_raise(StandardError, 'Error deleting hyperlink')
+        end
+
+        let(:id) { participant.id }
+        let(:chk_links) { 0 } # Assuming the parameter corresponds to the index of the hyperlink to delete
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+          expect(json['error']).to include('There was an error deleting the hyperlink.')
+        end
+      end
+    end
+
+    post('remove_hyperlink submitted_content') do
+      tags 'SubmittedContent'
+      consumes 'application/json'
+      parameter name: :id, in: :query, type: :integer, required: true
+      parameter name: :chk_links, in: :query, type: :integer, required: true
+      
+      
+      response '204', 'Hyperlink removed successfully' do
+        let(:participant) { create(:assignment_participant) }
+        let(:team) { create(:team) }
+        let(:hyperlink_to_delete) { create(:hyperlink, team: team) }
+
+        before do
+          allow(AssignmentParticipant).to receive(:find).and_return(participant)
+          allow(participant).to receive(:team).and_return(team)
+          allow(team.hyperlinks).to receive(:[]).and_return(hyperlink_to_delete)
+          allow(team).to receive(:remove_hyperlink)
+          allow(SubmissionRecord).to receive(:create)
+        end
+
+        let(:id) { participant.id }
+        let(:chk_links) { 0 } 
+
+        run_test!
+      end
+
+      response '422', 'Unprocessable Entity' do
+        let(:participant) { create(:assignment_participant) }
+        let(:team) { create(:team) }
+        let(:hyperlink_to_delete) { create(:hyperlink, team: team) }
+
+        before do
+          allow(AssignmentParticipant).to receive(:find).and_return(participant)
+          allow(participant).to receive(:team).and_return(team)
+          allow(team.hyperlinks).to receive(:[]).and_return(hyperlink_to_delete)
+          allow(team).to receive(:remove_hyperlink).and_raise(StandardError, 'Error deleting hyperlink')
+        end
+
+        let(:id) { participant.id }
+        let(:chk_links) { 0 } # Assuming the parameter corresponds to the index of the hyperlink to delete
+
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+          expect(json['error']).to include('There was an error deleting the hyperlink.')
+        end
+      end
+    end
+  end
 
   path '/api/v1/submitted_content/folder_action' do
     post('folder_action submitted_content') do
