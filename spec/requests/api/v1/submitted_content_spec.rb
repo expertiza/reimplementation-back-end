@@ -27,7 +27,16 @@ RSpec.describe 'Submitted Content API', type: :request do
           expect(json['message']).to eq('Cannot send a whole folder.')
         end
       end
-      
+
+      response '404', 'File not found' do
+        let(:current_folder) { { name: 'test_folder' } }
+        let(:download) { 'nonexistent_file.pdf' }
+        
+        run_test! do
+          expect(json['message']).to eq('File does not exist.')
+        end
+      end    
+        
       response '200', 'File downloaded' do
         let(:current_folder) { { name: 'test_folder' } }
         let(:download) { 'test_file.txt' }
