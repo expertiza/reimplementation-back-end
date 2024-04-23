@@ -76,6 +76,7 @@ class Api::V1::SubmittedContentController < ApplicationController
 
   # Perform CRUD operations on the file uploaded.
   def folder_action
+    set_participant
 
     if params[:faction][:delete]
       delete_selected_files
