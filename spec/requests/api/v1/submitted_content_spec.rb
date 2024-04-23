@@ -2,6 +2,190 @@ require 'swagger_helper'
 
 RSpec.describe 'Submitted Content API', type: :request do
 
+  path '/api/v1/submitted_content/folder_action' do
+    post('folder_action submitted_content') do
+      tags 'SubmittedContent'
+      consumes 'application/json'
+      parameter name: :valid_params, in: :body, schema: {
+        type: :object,
+        properties: {
+          directories: { type: :array, items: { type: :string } },
+          chk_files: { type: :integer },
+          filenames: { type: :array, items: { type: :string } },
+          faction: { 
+            type: :object, properties: { 
+            delete: { type: :boolean },
+            rename: { type: :string },
+            move: { type: :string },
+            copy: { type: :string },
+            create: { type: :string }
+          },
+          required: %w(delete rename move copy create) },
+        },
+      }
+      parameter name: :id, in: :query, type: :integer, required: true
+
+      response(200, 'Action completed successfully.') do
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+
+      response(204, 'File has been deleted.') do
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+
+      response(400, 'A file with this name already exists. Please delete the existing file before copying.') do
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+
+      response(404, 'The referenced file does not exist.') do
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+
+      response(409, 'A file already exists in this directory with the name') do
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+      response(422, 'There was a problem in file operation.') do
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+    end
+
+    get('folder_action submitted_content') do
+      tags 'SubmittedContent'
+      consumes 'application/json'
+      parameter name: :valid_params, in: :body, schema: {
+        type: :object,
+        properties: {
+          directories: { type: :array, items: { type: :string } },
+          chk_files: { type: :integer },
+          filenames: { type: :array, items: { type: :string } },
+          faction: { 
+            type: :object, properties: { 
+            delete: { type: :boolean },
+            rename: { type: :string },
+            move: { type: :string },
+            copy: { type: :string },
+            create: { type: :string }
+          },
+          required: %w(delete rename move copy create) },
+        },
+      }
+      parameter name: :id, in: :query, type: :integer, required: true
+
+      response(200, 'Action completed successfully.') do
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+      response(204, 'File has been deleted.') do
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+      response(400, 'A file with this name already exists. Please delete the existing file before copying.') do
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+      response(404, 'The referenced file does not exist.') do
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+      response(409, 'A file already exists in this directory with the name') do
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+      response(422, 'There was a problem in file operation.') do
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+    end
+  end
+
   path '/api/v1/submitted_content/submit_file' do
 
     post('submit_file submitted_content') do
