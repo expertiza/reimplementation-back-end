@@ -5,5 +5,9 @@ class Instructor < User
     User.where(parent_id: id).to_a
   end
 
+  def self.list_all(object_type, user_id)
+    object_type.where('instructor_id = ? AND private = 0', user_id)
+  end
+
 
 end

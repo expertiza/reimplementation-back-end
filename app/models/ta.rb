@@ -1,4 +1,6 @@
 class Ta < User
+  has_many :ta_mappings, dependent: :destroy
+
   # Get all users whose parent is the TA
   # @return [Array<User>] all users that belongs to courses that is mapped to the TA
   def managed_users

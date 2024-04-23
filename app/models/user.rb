@@ -13,7 +13,7 @@ class User < ApplicationRecord
   belongs_to :institution, optional: true
   belongs_to :parent, class_name: 'User', optional: true
   has_many :users, foreign_key: 'parent_id', dependent: :nullify
-  has_many :invitations
+  has_many :assignments, through: :participants
 
   scope :students, -> { where role_id: Role::STUDENT }
   scope :tas, -> { where role_id: Role::TEACHING_ASSISTANT }
@@ -95,8 +95,62 @@ class User < ApplicationRecord
   # Check if the user can impersonate another user
   def can_impersonate?(user)
     return true if role.super_administrator?
+    return true if instructor_for?(user)
+    # Skip below check if user's role is "Instructor"
+    return false if instructor?
+    return true if teaching_assistant_for?(user)
+    # Skip recursively_parent_of check if user's role is "Teaching Assistant"
+    return false if teaching_assistant?
     return true if recursively_parent_of(user.role)
     false
+  end
+
+  # Check if the current user is an instructor and has any relationship with the given user (student or TA)
+  def instructor_for?(user)
+    return false unless instructor?
+    return true if instructor_for_student?(user)
+    return true if instructor_for_ta?(user)
+  end
+
+  # Helper method to check if there are any courses where a student is enrolled in assignments
+  def courses_with_student_participation(courses, student)
+    courses.any? do |course|
+      course.assignments.any? do |assignment|
+        assignment.participants.map(&:user_id).include?(student.id)
+      end
+    end
+  end
+
+  # Check if the instructor has any relationship with the given student
+  def instructor_for_student?(student)
+    return false unless student.role.name == 'Student'  # Ensure the role is 'Student'
+
+    instructor = Instructor.find(id)
+
+    # Check if the instructor has any courses where the student is enrolled in an assignment
+    return courses_with_student_participation(Instructor.list_all(Course, instructor),student)
+  end
+
+  # Check if the instructor has common courses with the given teaching assistant
+  def instructor_for_ta?(ta)
+    return false unless ta.role.name == 'Teaching Assistant'  # Ensure the role is 'Teaching Assistant'
+
+    instructor = Instructor.find(id)
+
+    # Get all courses taught by the instructor
+    instructor_courses = Instructor.list_all(Course, instructor)
+
+    # Get all courses associated with the TA
+    ta_courses = TaMapping.get_courses(ta)
+
+    # Convert lists to sets for efficient intersection
+    instructor_course_set = instructor_courses.to_set
+    ta_course_set = ta_courses.to_set
+
+    # Check for common courses using set intersection
+    has_common_course = !(instructor_course_set & ta_course_set).empty?
+
+    return has_common_course
   end
 
   # Check if the user is a teaching assistant for the student's course
@@ -107,9 +161,10 @@ class User < ApplicationRecord
     # We have to use the Ta object instead of User object
     # because single table inheritance is not currently functioning
     ta = Ta.find(id)
-    ta.managed_users.each do |user|
-      return true if user.id == student.id
-    end
+
+    # Check if the TA has any courses where the student is enrolled in an assignment
+    return courses_with_student_participation(TaMapping.get_courses(ta),student)
+
     false
   end
 
@@ -126,6 +181,7 @@ class User < ApplicationRecord
     return false if p.super_administrator?
     recursively_parent_of(p)
   end
+
 
   # This will override the default as_json method in the ApplicationRecord class and specify
   # that only the id, name, and email attributes should be included when a User object is serialized.
