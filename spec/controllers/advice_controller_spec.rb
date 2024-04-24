@@ -246,12 +246,12 @@ describe AdviceController, type: :controller do
       end
 
       it "calculates the number of advices for each question" do
-        expect(controller).to receive(:calculate_num_advices).once # Assuming there are two questions in the questionnaire
+        expect(controller).to receive(:calculate_num_advices).once # Assuming there is one question in the questionnaire
         get :edit_advice, params: { id: 1 }
       end
 
       it "sorts question advices in descending order by score" do
-        expect(controller).to receive(:sort_question_advices).once # Assuming there are two questions in the questionnaire
+        expect(controller).to receive(:sort_question_advices).once # Assuming there is one question in the questionnaire
         get :edit_advice, params: { id: 1 }
       end
 
