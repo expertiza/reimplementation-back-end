@@ -5,7 +5,7 @@ RSpec.describe 'Submitted Content API', type: :request do
     let(:role) { Role.create(name: 'Student', parent_id: nil, default_page_id: nil) }
 
     let(:student) {
-      User.create(name: 'student 1', email: 'student@test.com', full_name: 'Student Test', password: 'student', role: :role) 
+      User.create(name: 'student 1', email: 'student@test.com', full_name: 'Student Test', password: 'student', role: :role)
     }
 
     let(:assignment) { Assignment.create(id: 1) }
@@ -38,7 +38,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
       end
     end
-    
+
     # Post /api/v1/submitted_content, for creating new row.
     post('create a submitted record') do
       tags 'SubmittedContent'
@@ -58,7 +58,7 @@ RSpec.describe 'Submitted Content API', type: :request do
       }
 
       # valid parameters for test
-      let(:valid_params) do 
+      let(:valid_params) do
         {
           content: 'unknown',
           operation: 'serious',
@@ -67,9 +67,9 @@ RSpec.describe 'Submitted Content API', type: :request do
           assignment_id: 1
         }
       end
-      
+
       # invalid parameters for test
-      let(:invalid_params) do 
+      let(:invalid_params) do
         {
           content: 'unknown',
           operation: 'serious',
@@ -78,7 +78,7 @@ RSpec.describe 'Submitted Content API', type: :request do
           assignment_id: 1
         }
       end
-      
+
       # API response with valid parameters giving 201 status code.
       response(201, 'successful') do
         after do |example|
@@ -138,7 +138,7 @@ RSpec.describe 'Submitted Content API', type: :request do
   path '/api/v1/submitted_content/submit_hyperlink' do
 
     post('submit_hyperlink submitted_content') do
-      tags 'SubmittedContent'      
+      tags 'SubmittedContent'
       consumes 'application/json'
       parameter name: :id, in: :query, type: :string, required: true
       parameter name: :submission, in: :query, type: :string, required: true
@@ -209,7 +209,7 @@ RSpec.describe 'Submitted Content API', type: :request do
     end
 
     get('submit_hyperlink submitted_content') do
-      tags 'SubmittedContent'      
+      tags 'SubmittedContent'
       consumes 'application/json'
       parameter name: :id, in: :query, type: :string, required: true
       parameter name: :submission, in: :query, type: :string, required: true
@@ -286,7 +286,7 @@ RSpec.describe 'Submitted Content API', type: :request do
       consumes 'application/json'
       parameter name: :id, in: :query, type: :integer, required: true
       parameter name: :chk_links, in: :query, type: :integer, required: true
-      
+
       response '204', 'Hyperlink removed successfully' do
         let(:participant) { create(:assignment_participant) }
         let(:team) { create(:team) }
@@ -301,7 +301,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
 
         let(:id) { participant.id }
-        let(:chk_links) { 0 } 
+        let(:chk_links) { 0 }
 
         run_test!
       end
@@ -333,8 +333,8 @@ RSpec.describe 'Submitted Content API', type: :request do
       consumes 'application/json'
       parameter name: :id, in: :query, type: :integer, required: true
       parameter name: :chk_links, in: :query, type: :integer, required: true
-      
-      
+
+
       response '204', 'Hyperlink removed successfully' do
         let(:participant) { create(:assignment_participant) }
         let(:team) { create(:team) }
@@ -349,7 +349,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
 
         let(:id) { participant.id }
-        let(:chk_links) { 0 } 
+        let(:chk_links) { 0 }
 
         run_test!
       end
@@ -416,19 +416,13 @@ RSpec.describe 'Submitted Content API', type: :request do
     get('download submitted_content') do
       tags 'SubmittedContent'
       produces 'application/octet-stream'
-      parameter name: :current_folder, in: :query, schema: {
-        type: :object,
-        properties: {
-          name: { type: :string },
-        },
-        required: ['name']
-      }
+      parameter name: 'current_folder[name]', in: :query, type: :string, required: true
       parameter name: :download, in: :query, type: :string, required: true
 
       response '400', 'Bad request: Folder name is nil or File name is nil' do
         let(:current_folder) { { name: nil } }
         let(:download) { 'test_file.pdf' }
-        
+
         run_test! do
           expect(json['message']).to eq('Folder_name is nil.')
         end
@@ -437,7 +431,7 @@ RSpec.describe 'Submitted Content API', type: :request do
       response '400', 'Bad request: Cannot send a whole folder' do
         let(:current_folder) { { name: 'test_folder' } }
         let(:download) { 'test_folder' }
-        
+
         run_test! do
           expect(json['message']).to eq('Cannot send a whole folder.')
         end
@@ -446,16 +440,16 @@ RSpec.describe 'Submitted Content API', type: :request do
       response '404', 'File not found' do
         let(:current_folder) { { name: 'test_folder' } }
         let(:download) { 'nonexistent_file.pdf' }
-        
+
         run_test! do
           expect(json['message']).to eq('File does not exist.')
         end
-      end    
+      end
 
       response '200', 'File downloaded' do
         let(:current_folder) { { name: 'test_folder' } }
         let(:download) { 'test_file.txt' }
-        
+
         run_test!
       end
     end
@@ -471,9 +465,9 @@ RSpec.describe 'Submitted Content API', type: :request do
           directories: { type: :array, items: { type: :string } },
           chk_files: { type: :integer },
           filenames: { type: :array, items: { type: :string } },
-          faction: { 
-            type: :object, properties: { 
-            delete: { type: :boolean },
+          faction: {
+            type: :object, properties: {
+            delete: { type: :string },
             rename: { type: :string },
             move: { type: :string },
             copy: { type: :string },
@@ -564,9 +558,9 @@ RSpec.describe 'Submitted Content API', type: :request do
           directories: { type: :array, items: { type: :string } },
           chk_files: { type: :integer },
           filenames: { type: :array, items: { type: :string } },
-          faction: { 
-            type: :object, properties: { 
-            delete: { type: :boolean },
+          faction: {
+            type: :object, properties: {
+            delete: { type: :string },
             rename: { type: :string },
             move: { type: :string },
             copy: { type: :string },

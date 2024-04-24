@@ -1,5 +1,4 @@
 class Api::V1::SubmittedContentController < ApplicationController
-  skip_before_action :authenticate_request!
 
   include SubmittedContentHelper
 
