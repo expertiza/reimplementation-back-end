@@ -1,4 +1,7 @@
 require 'swagger_helper'
+require 'rails_helper'
+require 'action_dispatch/http/upload'
+
 
 RSpec.describe 'Submitted Content API', type: :request do
   path '/api/v1/submitted_content' do
@@ -390,25 +393,19 @@ RSpec.describe 'Submitted Content API', type: :request do
       }
       parameter name: :id, in: :query, type: :string, required: true
 
-      response(422, 'There was a problem in performing file operations.') do
-        run_test!
-      end
-      response(409, 'A file already exists in this directory with the same name. Please delete the existing file before copying.') do
-        run_test!
-      end
-      response(404, 'The referenced file does not exist.') do
-        run_test!
-      end
-      response(400, 'A file with this name already exists.') do
-        run_test!
-      end
-      response(204, 'Requested operation has been performed.') do
-        run_test!
-      end
-      response(200, 'Requested operation has been performed.') do
+      response(400, 'Bad Request') do
         run_test!
       end
 
+      response(200, 'File submitted successfully.') do
+        let(:id) { 1 }
+        let(:uploaded_file) { fixture_file_upload('test.png', 'image/png') }
+        let(:unzip) { true }
+
+        run_test! do
+          expect(response).to have_http_status(:ok)
+        end
+      end
     end
   end
 
@@ -416,13 +413,7 @@ RSpec.describe 'Submitted Content API', type: :request do
     get('download submitted_content') do
       tags 'SubmittedContent'
       produces 'application/octet-stream'
-      parameter name: :current_folder, in: :query, schema: {
-        type: :object,
-        properties: {
-          name: { type: :string },
-        },
-        required: ['name']
-      }
+      parameter name: 'current_folder[name]', in: :query, type: :string, required: true
       parameter name: :download, in: :query, type: :string, required: true
 
       response '400', 'Bad request: Folder name is nil or File name is nil' do
