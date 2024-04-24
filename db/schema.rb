@@ -211,6 +211,10 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "submitted_hyperlinks"
+    t.integer "directory_num"
+    t.bigint "assignment_id"
+    t.index ["assignment_id"], name: "index_teams_on_assignment_id"
   end
 
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -249,6 +253,11 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
+  add_foreign_key "teams", "assignments"
+  add_foreign_key "teams_users", "duties"
+  add_foreign_key "teams_users", "participants", column: "participants_id"
+  add_foreign_key "teams_users", "teams", column: "teams_id"
+  add_foreign_key "teams_users", "users", column: "users_id"
   add_foreign_key "users", "institutions"
   add_foreign_key "users", "roles"
   add_foreign_key "users", "users", column: "parent_id"

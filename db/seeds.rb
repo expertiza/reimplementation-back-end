@@ -34,7 +34,7 @@ admin = User.find_or_create_by(name: 'admin') do |user|
     etc_icons_on_homepage: true,
     locale: 1,
     role_id: 2,
-    institution: institution
+    institution: institution.id
   )
 end
 
@@ -57,7 +57,7 @@ instructor = User.find_or_create_by(name: 'instructor') do |user|
     etc_icons_on_homepage: true,
     locale: 1,
     role_id: 3,
-    institution: institution
+    institution: institution.id
   )
 end
 
@@ -79,7 +79,7 @@ student1 = User.find_or_create_by(name: 'studentone') do |user|
     etc_icons_on_homepage: true,
     locale: 1,
     role_id: 5,
-    institution: institution
+    institution: institution.id
   )
 end
 
@@ -101,32 +101,39 @@ student2 = User.find_or_create_by(name: 'studenttwo') do |user|
     etc_icons_on_homepage: true,
     locale: 1,
     role_id: 5,
-    institution: institution
-  )
-end
-
-team1 = Team.find_or_create_by(id: 1)
-
-assignment1 = Assignment.find_or_create_by(name: 'aone')
-assignment2 = Assignment.find_or_create_by(name: 'atwo')
-
-submission_record = SubmissionRecord.find_or_create_by(id: 1) do |submit|
-  submit.update!(
-    content: 'pdf',
-    operation: 'store',
-    team_id: 1,
-    user: student1.name,
-    assignment_id: 1
+    institution: institution.id
   )
 end
 
 # Find or create the course
-OODD = Course.find_or_create_by(name: 'Object Oriented Design and Development') do |course|
+odd = Course.find_or_create_by(name: 'Object Oriented Design and Development') do |course|
   course.update!(
     directory_path: '/programming101',
     info: 'This is an introductory course on Design Patterns.',
     private: false,
-    instructor: instructor,
-    institution: institution
+    instructor: instructor.id,
+    institution: institution.id
   )
 end
+
+assignment1 = Assignment.find_or_create_by(name: 'aone', directory_path: 'aone', instructor_id: instructor.id, course_id: odd.id)
+assignment2 = Assignment.find_or_create_by(name: 'atwo', directory_path: 'atwo', instructor_id: instructor.id, course_id: odd.id)
+
+participant_a1s1 = Participant.find_or_create_by(user_id: student1.id, assignment_id: assignment1.id)
+participant_a1s2 = Participant.find_or_create_by(user_id: student2.id, assignment_id: assignment1.id)
+participant_a2s1 = Participant.find_or_create_by(user_id: student1.id, assignment_id: assignment2.id)
+participant_a2s2 = Participant.find_or_create_by(user_id: student2.id, assignment_id: assignment2.id)
+
+team1 = Team.find_or_create_by(directory_num: 0, assignment_id: assignment1.id)
+team2 = Team.find_or_create_by(directory_num: 1, assignment_id: assignment2.id)
+
+team_usera1s1 = TeamsUser.find_or_create_by(teams_id: team1.id, users_id: student1.id, participants_id: participant_a1s1.id)
+team_usera1s2 = TeamsUser.find_or_create_by(teams_id: team1.id, users_id: student2.id, participants_id: participant_a1s2.id)
+team_usera2s1 = TeamsUser.find_or_create_by(teams_id: team2.id, users_id: student1.id, participants_id: participant_a2s1.id)
+team_usera2s2 = TeamsUser.find_or_create_by(teams_id: team2.id, users_id: student2.id, participants_id: participant_a2s2.id)
+
+submission_record = SubmissionRecord.find_or_create_by(content: 'pdf',
+                                                       operation: 'store',
+                                                       team_id: team1.id,
+                                                       user: student1.name,
+                                                       assignment_id: assignment1.id)
