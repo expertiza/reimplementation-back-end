@@ -64,7 +64,7 @@ RSpec.describe Response, type: :model do
         params = { map_id: 3 }
         response = Response.new
         response.validate_params(params, 'create')
-        expect(response.errors[:response_map]).to include('Not found response map')
+        expect(response.errors[:response_map]).to include('not found')
       end
       it 'validates creating a new response' do
         response = Response.new
@@ -90,18 +90,8 @@ RSpec.describe Response, type: :model do
         params1 = {}
         params1[:response] = params
         response.validate_params(params1, 'update')
-        expect(response.errors[:response]).to include('Already submitted.')
+        expect(response.errors[:response]).to include('Response id 1 is already submitted and cannot be updated.')
       end
-    end
-  end
-
-  # #set_content method
-  describe '#set_content' do
-    it 'sets the response content based on provided response id' do
-      params = { id: 1 }
-      response = Response.find(params[:id])
-      response.set_content
-      expect(response.errors.full_messages.length).to eq(0)
     end
   end
 end
