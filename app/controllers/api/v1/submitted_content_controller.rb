@@ -1,6 +1,7 @@
 class Api::V1::SubmittedContentController < ApplicationController
 
   include SubmittedContentHelper
+  include FileHelper
 
   # Get /api/v1/submit_content
   def index
@@ -136,7 +137,7 @@ class Api::V1::SubmittedContentController < ApplicationController
   def set_current_folder
     name = '/'
     if params[:current_folder]
-      name = FileHelper.sanitize_folder(params[:current_folder][:name])
+      name = sanitize_folder(params[:current_folder][:name])
     end
     name
   end
@@ -160,7 +161,7 @@ class Api::V1::SubmittedContentController < ApplicationController
   # Saving file to the newly created directory for submission
   def save_file_to_directory(current_directory)
     safe_filename = @file.original_filename.tr('\\', '/')
-    safe_filename = FileHelper.sanitize_filename(safe_filename)
+    safe_filename = sanitize_filename(safe_filename)
     full_filename = current_directory + File.split(safe_filename).last.tr(' ', '_')
     File.open(full_filename, 'wb') { |f| f.write(@file_content) }
     [full_filename, safe_filename]
