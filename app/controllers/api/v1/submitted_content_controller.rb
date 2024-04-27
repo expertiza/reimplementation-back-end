@@ -38,7 +38,7 @@ class Api::V1::SubmittedContentController < ApplicationController
     if team_hyperlinks.include?(params[:submission])
       render json: { message: 'You or your teammate(s) have already submitted the same hyperlink.'},  status: :unprocessable_entity
     else
-      submit_hyperlink_and_create_record(team)
+      store_hyperlink(team)
     end
   end
 
@@ -51,7 +51,7 @@ class Api::V1::SubmittedContentController < ApplicationController
     team = @participant.team
     hyperlink_to_delete = team.hyperlinks[params['chk_links'].to_i]
 
-    remove_hyperlink_and_create_record(hyperlink_to_delete, team)
+    delete_hyperlink(hyperlink_to_delete, team)
   end
 
   # POST   /api/v1/submitted_content/submit_file
@@ -78,7 +78,7 @@ class Api::V1::SubmittedContentController < ApplicationController
     team = @participant.team
     team.set_student_directory_num
 
-    submit_file_and_create_record
+    store_file
 
   end
 
@@ -182,7 +182,7 @@ class Api::V1::SubmittedContentController < ApplicationController
   end
 
   # Create a submission record for hyperlink submission.
-  def submit_hyperlink(team)
+  def store_hyperlink(team)
     begin
       team.submit_hyperlink(params['submission'])
       SubmissionRecord.create(team_id: team.id,
@@ -197,7 +197,7 @@ class Api::V1::SubmittedContentController < ApplicationController
   end
 
   # Remove hyperlink and create a submission record.
-  def remove_hyperlink(hyperlink_to_delete, team)
+  def delete_hyperlink(hyperlink_to_delete, team)
     begin
       team.remove_hyperlink(hyperlink_to_delete)
       SubmissionRecord.create(team_id: team.id,
@@ -211,7 +211,7 @@ class Api::V1::SubmittedContentController < ApplicationController
     render json: { message: 'The link has been successfully removed.' }, status: :ok
   end
 
-  def submit_file
+  def store_file
     current_folder = set_current_folder
     current_directory = @participant.team.path.to_s + current_folder
     FileUtils.mkdir_p(current_directory) unless File.exist? current_directory
