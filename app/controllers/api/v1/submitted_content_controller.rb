@@ -181,7 +181,7 @@ class Api::V1::SubmittedContentController < ApplicationController
   end
 
   # Create a submission record for hyperlink submission.
-  def submit_hyperlink_and_create_record(team)
+  def submit_hyperlink(team)
     begin
       team.submit_hyperlink(params['submission'])
       SubmissionRecord.create(team_id: team.id,
@@ -196,7 +196,7 @@ class Api::V1::SubmittedContentController < ApplicationController
   end
 
   # Remove hyperlink and create a submission record.
-  def remove_hyperlink_and_create_record(hyperlink_to_delete, team)
+  def remove_hyperlink(hyperlink_to_delete, team)
     begin
       team.remove_hyperlink(hyperlink_to_delete)
       SubmissionRecord.create(team_id: team.id,
@@ -210,7 +210,7 @@ class Api::V1::SubmittedContentController < ApplicationController
     render json: { message: 'The link has been successfully removed.' }, status: :ok
   end
 
-  def submit_file_and_create_record
+  def submit_file
     current_folder = set_current_folder
     current_directory = @participant.team.path.to_s + current_folder
     FileUtils.mkdir_p(current_directory) unless File.exist? current_directory

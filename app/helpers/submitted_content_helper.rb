@@ -66,7 +66,9 @@ module SubmittedContentHelper
   # Move the selected file
   def move_selected_file
     old_filename = get_filename
+    # participant.dir_path is the directory path for the assignment for which the current user is a participant.
     new_location = File.join(@participant.dir_path, params[:faction][:move])
+
     handle_file_operation_error('moving') do
       FileHelper.move_file(old_filename, new_location)
       render json: { message: "The file was successfully moved from \"/#{params[:filenames][params[:chk_files]]}\" to \"/#{params[:faction][:move]}\""}, 
@@ -78,8 +80,10 @@ module SubmittedContentHelper
   # Rename the selected file.
   def rename_selected_file
     old_filename = get_filename
+    # params[:directories][params[:chk_files]] is the directory path for the selected file which can also be retrieved through @participant.team.path which will get the same directory.
     new_filename = File.join(params[:directories][params[:chk_files]],
                              FileHelper.sanitize_filename(params[:faction][:rename]))
+
     handle_file_operation_error('renaming') do
       if File.exist?(new_filename)
         render json: { message: "A file already exists in this directory with the name \"#{params[:faction][:rename]}\"" },
@@ -93,8 +97,10 @@ module SubmittedContentHelper
   # Copy selected file.
   def copy_selected_file
     old_filename = get_filename
+    # params[:directories][params[:chk_files]] is the directory path for the selected file which can also be retrieved through @participant.team.path which will get the same directory.
     new_filename = File.join(params[:directories][params[:chk_files]],
                              FileHelper.sanitize_filename(params[:faction][:copy]))
+
     handle_file_operation_error('copying') do 
       if File.exist?(new_filename)
         render json: { message: 'A file with this name already exists. Please delete the existing file before copying.' },
