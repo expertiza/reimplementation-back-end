@@ -13,6 +13,7 @@ class User < ApplicationRecord
   belongs_to :institution, optional: true
   belongs_to :parent, class_name: 'User', optional: true
   has_many :users, foreign_key: 'parent_id', dependent: :nullify
+  has_many :invitations
   has_many :assignments, through: :participants
 
   scope :students, -> { where role_id: Role::STUDENT }
