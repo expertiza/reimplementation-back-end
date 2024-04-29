@@ -6,7 +6,7 @@ class Api::V1::ImpersonateController < ApplicationController
     render json: { message: "Successfully Fetched User List!", userList:users, success:true }, status: :ok
   end
 
-  def is_user_impersonateable?
+  def user_is_impersonatable?
     impersonate_user = User.find_by(id: params[:impersonate_id])
     if impersonate_user
       return current_user.can_impersonate? impersonate_user
@@ -21,7 +21,7 @@ class Api::V1::ImpersonateController < ApplicationController
       return
     end
 
-    if is_user_impersonateable?
+    if user_is_impersonatable?
       impersonate_user = User.find_by(id: params[:impersonate_id])
 
       payload = { id: impersonate_user.id, name: impersonate_user.name, full_name: impersonate_user.full_name, role: impersonate_user.role.name,

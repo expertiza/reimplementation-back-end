@@ -114,7 +114,7 @@ class User < ApplicationRecord
   end
 
   # Helper method to check if there are any courses where a student is enrolled in assignments
-  def courses_with_student_participation(courses, student)
+  def courses_where_student_participates(courses, student)
     courses.any? do |course|
       course.assignments.any? do |assignment|
         assignment.participants.map(&:user_id).include?(student.id)
@@ -129,7 +129,7 @@ class User < ApplicationRecord
     instructor = Instructor.find(id)
 
     # Check if the instructor has any courses where the student is enrolled in an assignment
-    return courses_with_student_participation(Instructor.list_all(Course, instructor),student)
+    return courses_where_student_participates(Instructor.list_all(Course, instructor),student)
   end
 
   # Check if the instructor has common courses with the given teaching assistant
@@ -164,7 +164,7 @@ class User < ApplicationRecord
     ta = Ta.find(id)
 
     # Check if the TA has any courses where the student is enrolled in an assignment
-    return courses_with_student_participation(TaMapping.get_courses(ta),student)
+    return courses_where_student_participates(TaMapping.get_courses(ta),student)
 
     false
   end
