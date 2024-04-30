@@ -318,7 +318,8 @@ paths:
         in: path
         required: true
         description: id
-        type: integer
+        schema:
+          type: integer
     get:
       summary: Get team view for grade
       tags:
@@ -332,7 +333,8 @@ paths:
         in: path
         required: true
         description: id
-        type: integer
+        schema:
+          type: integer
     get:
       summary: Get view for grade
       tags:
@@ -346,7 +348,8 @@ paths:
         in: path
         required: true
         description: id
-        type: integer
+        schema:
+          type: integer
     get:
       summary: Get scores view for grade
       tags:
@@ -397,7 +400,8 @@ paths:
         in: path
         required: true
         description: id
-        type: integer
+        schema:
+          type: integer
     put:
       summary: Update grade
       tags:
@@ -405,13 +409,32 @@ paths:
       responses:
         '200':
           description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                total_score:
+                  type: integer
+                participant:
+                  type: object
+                  properties:
+                    grade:
+                      type: integer
+
+              required:
+                - total_score
+                - participant
+
   /api/v1/grades/{id}:
     parameters:
       - name: id
         in: path
         required: true
         description: id
-        type: integer
+        schema:
+          type: integer
     get:
       summary: Get grade details
       tags:
@@ -419,25 +442,14 @@ paths:
       responses:
         '200':
           description: successful
-#  /grades/{id}/edit:
-#    parameters:
-#      - name: id
-#        in: path
-#        required: true
-#        description: id
-#        type: integer
-#    put:
-#      summary: Edit grade
-#      responses:
-#        '200':
-#          description: successful
   /api/v1/grades/{id}/action_allowed:
     parameters:
       - name: id
         in: path
         required: true
         description: id
-        type: integer
+        schema:
+          type: integer
     get:
       summary: Check if action is allowed for grade
       tags:
@@ -451,7 +463,8 @@ paths:
         in: path
         required: true
         description: id
-        type: integer
+        schema:
+          type: integer
     post:
       summary: Save grade and comment for submission
       tags:
@@ -459,32 +472,19 @@ paths:
       responses:
         '200':
           description: successful
-
-
-#  /grades/{id}/redirect_when_disallowed:
-#    parameters:
-#      - name: id
-#        in: path
-#        required: true
-#        description: id
-#        type: integer
-#    get:
-#      summary: Redirect when disallowed
-#      responses:
-#        '200':
-#          description: successful
-#  /grades/{id}/assign_all_penalties:
-#    parameters:
-#      - name: id
-#        in: path
-#        required: true
-#        description: id
-#        type: integer
-#    post:
-#      summary: Assign all penalties
-#      responses:
-#        '200':
-#          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                grade:
+                  type: integer
+                comment:
+                  type: string
+              required:
+                - grade
+                - comment
   "/api/v1/institutions":
     get:
       summary: list institutions
