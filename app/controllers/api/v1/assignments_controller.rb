@@ -204,7 +204,12 @@ class Api::V1::AssignmentsController < ApplicationController
       end
     end
   end
-  
+
+  def fetch_participants_for_assignment
+    participants = Participant.where(assignment_id: params[:assignment_id])
+    render json: participants, status: :ok
+  end
+
   private
   # Only allow a list of trusted parameters through.
   def assignment_params
