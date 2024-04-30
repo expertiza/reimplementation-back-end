@@ -52,7 +52,7 @@ class Api::V1::ParticipantsController < ApplicationController
       render json: { message: "Participant was successfully destroyed." }, status: :ok
     end
 
-    def participant_assignment
+    def fetch_assignment_for_participant
         participant = Participant.find(params[:participant_id])
         assignment = participant.assignment
     

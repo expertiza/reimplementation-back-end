@@ -205,7 +205,7 @@ class Api::V1::AssignmentsController < ApplicationController
     end
   end
 
-  def assignment_participants
+  def fetch_participants_for_assignment
     participants = Participant.where(assignment_id: params[:assignment_id])
     render json: participants, status: :ok
   end
