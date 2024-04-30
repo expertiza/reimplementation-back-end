@@ -312,7 +312,7 @@ paths:
       responses:
         '204':
           description: successful
-  "/grades/{id}/view_team":
+  "/api/v1/grades/{id}/view_team":
     parameters:
       - name: id
         in: path
@@ -321,10 +321,12 @@ paths:
         type: integer
     get:
       summary: Get team view for grade
+      tags:
+        - Grades
       responses:
         '200':
           description: successful
-  /grades/{id}/view:
+  /api/v1/grades/{id}/view:
     parameters:
       - name: id
         in: path
@@ -333,10 +335,12 @@ paths:
         type: integer
     get:
       summary: Get view for grade
+      tags:
+        - Grades
       responses:
         '200':
           description: successful
-  /grades/{id}/view_scores:
+  /api/v1/grades/{id}/view_scores:
     parameters:
       - name: id
         in: path
@@ -345,10 +349,49 @@ paths:
         type: integer
     get:
       summary: Get scores view for grade
+      tags:
+        - Grades
       responses:
         '200':
           description: successful
-  /grades/{id}/update:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  participant:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      user_id:
+                        type: integer
+                      parent_id:
+                        type: integer
+                      created_at:
+                        type: string
+                        format: date-time
+                      updated_at:
+                        type: string
+                        format: date-time
+                      grade:
+                        type: number
+                      comments_to_student:
+                        type: string
+                      private_instructor_comments:
+                        type: string
+                example:
+                  participant:
+                    id: 1
+                    user_id: 1
+                    parent_id: 4
+                    created_at: "2024-04-07T15:00:58.000Z"
+                    updated_at: "2024-04-24T03:52:35.783Z"
+                    grade: 70.0
+                    comments_to_student: "Great Work!!"
+                    private_instructor_comments: "Good job!! All the best"
+
+  /api/v1/grades/{id}/update:
     parameters:
       - name: id
         in: path
@@ -357,10 +400,12 @@ paths:
         type: integer
     put:
       summary: Update grade
+      tags:
+        - Grades
       responses:
         '200':
           description: successful
-  /grades/{id}:
+  /api/v1/grades/{id}:
     parameters:
       - name: id
         in: path
@@ -369,6 +414,8 @@ paths:
         type: integer
     get:
       summary: Get grade details
+      tags:
+        - Grades
       responses:
         '200':
           description: successful
@@ -384,7 +431,7 @@ paths:
 #      responses:
 #        '200':
 #          description: successful
-  /grades/{id}/action_allowed:
+  /api/v1/grades/{id}/action_allowed:
     parameters:
       - name: id
         in: path
@@ -393,10 +440,12 @@ paths:
         type: integer
     get:
       summary: Check if action is allowed for grade
+      tags:
+        - Grades
       responses:
         '200':
           description: successful
-  /grades/{id}/save_grade_and_comment_for_submission:
+  /api/v1/grades/{id}/save_grade_and_comment_for_submission:
     parameters:
       - name: id
         in: path
@@ -405,9 +454,13 @@ paths:
         type: integer
     post:
       summary: Save grade and comment for submission
+      tags:
+        - Grades
       responses:
         '200':
           description: successful
+
+
 #  /grades/{id}/redirect_when_disallowed:
 #    parameters:
 #      - name: id
@@ -1303,8 +1356,12 @@ paths:
               required:
               - user_name
               - password
+
+x-default-headers:
+  Content-Security-Policy: "default-src 'self' http://localhost:3000;"
+
 servers:
 - url: http://{defaultHost}
   variables:
     defaultHost:
-      default: 127.0.0.1:3000
+      default: localhost:3000
