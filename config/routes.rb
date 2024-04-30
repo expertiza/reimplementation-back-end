@@ -30,18 +30,8 @@ Rails.application.routes.draw do
           get ':id/view_scores', action: :view_scores
           put ':id/update', action: :update
           get ':id', action: :show
-          # put ':id/edit', action: :edit
           get ':id/action_allowed', action: :action_allowed
           post ':id/save_grade_and_comment_for_submission', action: :save_grade_and_comment_for_submission
-          # get ':id/redirect_when_disallowed', action: :redirect_when_disallowed
-          # post ':id/assign_all_penalties', action: :assign_all_penalties
-          # get ':id/instructor_review', action: :instructor_review
-          # get :view
-          # get :view_team
-          # get :view_reviewer
-          # get :view_my_scores
-          # get :instructor_review
-          # post :remove_hyperlink
 
         end
       end
