@@ -24,7 +24,7 @@ Rails.application.routes.draw do
       end
       resources :assignments do
         collection do
-          get ':assignment_id/participants', action: :assignment_participants
+          get ':assignment_id/participants', action: :fetch_participants_for_assignment
           post '/:assignment_id/add_participant/:user_id',action: :add_participant
           delete '/:assignment_id/remove_participant/:user_id',action: :remove_participant
           patch '/:assignment_id/remove_assignment_from_course',action: :remove_assignment_from_course
@@ -82,7 +82,7 @@ Rails.application.routes.draw do
       end
 
       resources :participants do
-          get 'assignment', action: :participant_assignment
+          get 'assignment', action: :fetch_assignment_for_participant
       end
 
       resources :account_requests do
