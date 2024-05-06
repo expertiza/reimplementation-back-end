@@ -19,41 +19,39 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   # gets a list of all the join team requests
   def index
     unless @current_user.administrator?
-      render json: { errors: 'Unauthorized' }, status: :unauthorized
+      return render json: { errors: 'Unauthorized' }, status: :unauthorized
     end
-    @join_team_requests = JoinTeamRequest.all
-    render json: @join_team_requests
+    join_team_requests = JoinTeamRequest.all
+    render json: join_team_requests, status: :ok
   end
 
   # GET api/v1join_team_requests/1
   # show the join team request that is passed into the route
   def show
-    render json: @join_team_request
+    render json: @join_team_request, status: :ok
   end
 
   # POST api/v1/join_team_requests
   # Creates a new join team request
   def create
-    @join_team_request = JoinTeamRequest.new
-    @join_team_request.comments = params[:comments]
-    @join_team_request.status = PENDING
-    @join_team_request.team_id = params[:team_id]
+    join_team_request = JoinTeamRequest.new
+    join_team_request.comments = params[:comments]
+    join_team_request.status = PENDING
+    join_team_request.team_id = params[:team_id]
     participant = Participant.where(user_id: @current_user.id, assignment_id: params[:assignment_id]).first
     team = Team.find(params[:team_id])
+
     if team.participants.include?(participant)
       render json: { error: 'You already belong to the team' }, status: :unprocessable_entity
-    else
-    if participant
-      @join_team_request.participant_id = participant.id
-      if @join_team_request.save
-        render json: @join_team_request, status: :created
+    elsif participant
+      join_team_request.participant_id = participant.id
+      if join_team_request.save
+        render json: join_team_request, status: :created
       else
-        render json: { errors: @join_team_request.errors.full_messages }, status: :unprocessable_entity
+        render json: { errors: join_team_request.errors.full_messages }, status: :unprocessable_entity
       end
     else
-      render json: { errors: "Participant not found" }, status: :unprocessable_entity
-    end
-
+      render json: { errors: 'Participant not found' }, status: :unprocessable_entity
     end
   end
 
@@ -70,7 +68,11 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   # DELETE api/v1/join_team_requests/1
   # delete a join team request
   def destroy
-     @join_team_request.destroy
+    if @join_team_request.destroy
+      render json: { message: 'JoinTeamRequest was successfully deleted' }, status: :ok
+    else
+      render json: { errors: 'Failed to delete JoinTeamRequest' }, status: :unprocessable_entity
+    end
   end
 
   # decline a join team request
