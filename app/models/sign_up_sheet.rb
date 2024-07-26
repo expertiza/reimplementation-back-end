@@ -91,7 +91,6 @@ class SignUpSheet < ApplicationRecord
     end
   
     def self.import(row_hash, session, _id = nil)
-      # Imports users to a sign-up topic in an assignment based on a row from a CSV file
       raise 'Not enough items: expect 2 or more columns: Topic Identifier, User Name 1, User Name 2, ...' if row_hash.length < 2
   
       imported_topic = SignUpTopic.where(topic_identifier: row_hash[:topic_identifier], assignment_id: session[:assignment_id]).first

@@ -13,24 +13,16 @@ class SignUpTopic < ApplicationRecord
   validates :topic_identifier, length: { maximum: 10 }
 
   def self.import(row_hash, session, _id = nil)
-    # Imports a topic from a row in a CSV file.
-    # If the topic does not exist, it creates a new one with the provided attributes.
-    # If the topic already exists, it updates the max choosers and topic identifier.
-  
-    # Check if the row has the minimum required length
     if row_hash.length < 3
       raise ArgumentError, 'The CSV File expects the format: Topic identifier, Topic name, Max choosers, Topic Category (optional), Topic Description (Optional), Topic Link (optional).'
     end
-  
-    # Find an existing topic with the same name and assignment ID
+
     topic = SignUpTopic.where(topic_name: row_hash[:topic_name], assignment_id: session[:assignment_id]).first
   
     if topic.nil?
-      # If the topic doesn't exist, define its attributes and create a new topic
       attributes = ImportTopicsHelper.define_attributes(row_hash)
       ImportTopicsHelper.create_new_sign_up_topic(attributes, session)
     else
-      # If the topic exists, update its max choosers and topic identifier
       topic.max_choosers = row_hash[:max_choosers]
       topic.topic_identifier = row_hash[:topic_identifier]
       topic.save
