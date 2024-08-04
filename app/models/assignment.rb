@@ -13,9 +13,7 @@ class Assignment < ApplicationRecord
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments
 
   #This method return the value of the has_badge field for the given assignment object.
-  attr_accessor :has_badge, :enable_pair_programming, :is_calibrated, :staggered_deadline
-
-
+  attr_accessor :title, :description, :has_badge, :enable_pair_programming, :is_calibrated, :staggered_deadline
 
   def review_questionnaire_id
     Questionnaire.find_by_assignment_id id
