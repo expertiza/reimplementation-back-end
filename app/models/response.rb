@@ -56,4 +56,32 @@ class Response < ApplicationRecord
     end
     sum
   end
+
+  # Calculate score based on provided answers
+  def calculate_score(params)
+    questionnaire = Questionnaire.find(map.reviewed_object_id)
+    questions = Question.where(questionnaire_id: questionnaire.id)
+    valid = true
+    scores = []
+
+    questions.each do |question|
+      score = calculate_question_score(question, params)
+      new_score = Answer.new(
+        comments: params[question.id.to_s],
+        question_id: question.id,
+        response_id: id,
+        answer: score
+      )
+
+      valid = false unless new_score.valid?
+      scores.push(new_score)
+    end
+
+    if valid
+      scores.each(&:save)
+      true
+    else
+      false
+    end
+  end
 end
