@@ -6,7 +6,7 @@ class Questionnaire < ApplicationRecord
 
   validate :validate_questionnaire
   validates :name, presence: true
-  validates :max_question_score, :min_question_score, numericality: true 
+  validates :max_question_score, :min_question_score, numericality: true
 
   # clones the contents of a questionnaire, including the questions and associated advice
   def self.copy_questionnaire_details(params)
@@ -51,5 +51,17 @@ class Questionnaire < ApplicationRecord
                           })).tap do |hash|
         hash['instructor'] ||= { id: nil, name: nil }
       end
+  end
+
+  # Check if the questionnaire has been started by any participant
+  # "Started" means there is at least one ResponseMap record associated with the Questionnaire. This indicates that a participant has begun to respond to the questionnaire, but it does not necessarily mean the response is complete.
+  def started_by_anyone?
+    !ResponseMap.where(reviewed_object_id: id).empty?
+  end
+
+  # Check if the questionnaire has been started by a specific participant
+  # "Started" means there is at least one ResponseMap record associated with the Questionnaire and the participant.
+  def started_by?(participant)
+    !ResponseMap.where(reviewed_object_id: id, reviewer_id: participant.id).empty?
   end
 end

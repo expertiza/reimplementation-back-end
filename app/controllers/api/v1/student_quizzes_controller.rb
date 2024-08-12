@@ -21,14 +21,13 @@ class Api::V1::StudentQuizzesController < ApplicationController
     return unless current_user_id?(@participant.user_id)
 
     @assignment = Assignment.find(@participant.parent_id)
-    @quiz_mappings = QuizResponseMap.mappings_for_reviewer(@participant.id) # TODO: Add QuizResponseMap class
+    @quiz_mappings = ResponseMap.mappings_for_reviewer(@participant.id)
   end
-
 
   # Displays the questions and participant responses for a completed quiz
   def show_quiz_responses
     @response = Response.find(params[:response_id])
-    @response_map = QuizResponseMap.find(params[:map_id])
+    @response_map = ResponseMap.find(params[:map_id])
     @questions = Question.where(questionnaire_id: @response_map.reviewed_object_id)
     @participant = AssignmentTeam.find(@response_map.reviewee_id).participants.first
     @quiz_score = @response.aggregate_questionnaire_score # Use the score calculated by Response model
@@ -45,10 +44,9 @@ class Api::V1::StudentQuizzesController < ApplicationController
 
       next unless reviewee_team.parent_id == assignment_id
 
-      quiz_questionnaire = QuizQuestionnaire.find_by(instructor_id: reviewee_team.id)
-      # TODO: Add QuizQuestionnaire class
+      quiz_questionnaire = Questionnaire.find_by(instructor_id: reviewee_team.id)
 
-      if quiz_questionnaire && !quiz_questionnaire.taken_by?(reviewer)
+      if quiz_questionnaire && !quiz_questionnaire.started_by?(reviewer)
         quizzes << quiz_questionnaire
       end
     end
@@ -59,7 +57,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
   # Submits the quiz response and calculates the score.
   def submit_quiz
     map = ResponseMap.find(params[:map_id])
-    # check if there is any response for this map_id. This is to prevent student take same quiz twice
+    # Check if there is any response for this map_id. This is to prevent student from taking the same quiz twice.
     if map.response.empty?
       response = Response.create(map_id: params[:map_id], created_at: DateTime.current, updated_at: DateTime.current)
       if response.calculate_score(params) # TODO: add score calculation logic
