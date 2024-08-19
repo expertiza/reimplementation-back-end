@@ -1,7 +1,9 @@
 class Api::V1::StudentQuizzesController < ApplicationController
   include AuthorizationHelper
 
-  # Check if the current user is authorized to perform the action
+  # Checks if the current user is authorized to perform the requested action.
+  # For students, it verifies if they have the necessary roles for the 'index' action.
+  # For TAs, it checks if they have TA privileges and are assigned to the current course.
   def action_allowed?
     if current_user_is_a? 'Student'
       if action_name.eql? 'index'
@@ -33,26 +35,21 @@ class Api::V1::StudentQuizzesController < ApplicationController
     @quiz_score = @response.aggregate_questionnaire_score # Use the score calculated by Response model
   end
 
-  # Fetches quizzes for a given assignment that a reviewer has not yet taken.
-  def fetch_available_quizzes_for_reviewer(assignment_id, reviewer_id)
-    quizzes = []
-    reviewer = Participant.find_by(user_id: reviewer_id, parent_id: assignment_id)
-    review_response_maps = ReviewResponseMap.where(reviewer_id: reviewer.id)
+# Fetches quizzes for a given assignment that a reviewer has not yet started.
+def fetch_available_quizzes_for_reviewer(assignment_id, reviewer_id)
+  reviewer = Participant.find_by(user_id: reviewer_id, parent_id: assignment_id)
+  return [] unless reviewer
 
-    review_response_maps.each do |response_map|
-      reviewee_team = Team.find(response_map.reviewee_id)
+  # Find quiz questionnaires created by teams in the assignment
+  quiz_questionnaires = Questionnaire.where(instructor_id: Team.where(parent_id: assignment_id).pluck(:id))
 
-      next unless reviewee_team.parent_id == assignment_id
-
-      quiz_questionnaire = Questionnaire.find_by(instructor_id: reviewee_team.id)
-
-      if quiz_questionnaire && !quiz_questionnaire.started_by?(reviewer)
-        quizzes << quiz_questionnaire
-      end
-    end
-
-    quizzes
+  # Filter out quizzes already started by the reviewer
+  available_quizzes = quiz_questionnaires.reject do |quiz|
+    quiz.started_by?(reviewer)
   end
+
+  available_quizzes
+end
 
   # Submits the quiz response and calculates the score.
   def submit_quiz
@@ -60,14 +57,14 @@ class Api::V1::StudentQuizzesController < ApplicationController
     # Check if there is any response for this map_id. This is to prevent student from taking the same quiz twice.
     if map.response.empty?
       response = Response.create(map_id: params[:map_id], created_at: DateTime.current, updated_at: DateTime.current)
-      if response.calculate_score(params) # TODO: add score calculation logic
+      if response.calculate_score(params)
         redirect_to controller: 'student_quizzes', action: 'show_finished_quiz', map_id: map.id
       else
         flash[:error] = 'Please answer every question.'
         redirect_to action: :fetch_available_quizzes_for_reviewer, assignment_id: params[:assignment_id], questionnaire_id: response.response_map.reviewed_object_id, map_id: map.id
       end
     else
-      flash[:error] = 'You have already taken this quiz, below are the records for your responses.'
+      flash[:error] = 'You have already taken this quiz, below is the record of your responses.'
       redirect_to controller: 'student_quizzes', action: 'show_finished_quiz', map_id: map.id
     end
   end

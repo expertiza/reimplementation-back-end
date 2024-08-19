@@ -65,7 +65,7 @@ class Response < ApplicationRecord
     scores = []
 
     questions.each do |question|
-      score = calculate_question_score(question, params)
+      score = score(question, params)
       new_score = Answer.new(
         comments: params[question.id.to_s],
         question_id: question.id,
@@ -83,5 +83,38 @@ class Response < ApplicationRecord
     else
       false
     end
+  end
+
+  # Calculates the score for a question based on the type and user answers.
+  def score(question, user_answers)
+    correct_answers = question.quiz_question_choices.where(iscorrect: true)
+
+    case question.question_type
+    when 'MultipleChoiceCheckbox'
+      checkbox_score(correct_answers, user_answers)
+    when 'TrueFalse', 'MultipleChoiceRadio'
+      calculate_score_for_truefalse_question(correct_answers.first, user_answers)
+    else
+      0 # Default score for unsupported question types
+    end
+  end
+
+  private
+
+  # Calculates score for Checkbox type questions.
+  def checkbox_score(correct_answers, user_answers)
+    return 0 if user_answers.nil?
+
+    score = 0
+    correct_answers.each do |correct|
+      score += 1 if user_answers.include?(correct.txt)
+    end
+
+    score == correct_answers.count && score == user_answers.count ? 1 : 0
+  end
+
+  # Calculates score for TrueFalse and MultipleChoice type questions.
+  def truefalse_score(correct_answer, user_answer)
+    correct_answer.txt == user_answer ? 1 : 0
   end
 end
