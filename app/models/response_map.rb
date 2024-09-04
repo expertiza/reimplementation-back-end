@@ -3,17 +3,20 @@ class ResponseMap < ApplicationRecord
   belongs_to :reviewer, class_name: 'Participant', foreign_key: 'reviewer_id', inverse_of: false
   belongs_to :reviewee, class_name: 'Participant', foreign_key: 'reviewee_id', inverse_of: false
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'reviewed_object_id', inverse_of: false
+  belongs_to :questionnaire, class_name: 'Questionnaire', foreign_key: 'reviewed_object_id', optional: true
 
   alias map_id id
 
-  # returns the assignment related to the response map
+  # Returns the assignment related to the response map.
   def response_assignment
-    return Participant.find(self.reviewer_id).assignment
+    Participant.find(self.reviewer_id).assignment
   end
 
+  # Retrieves all the responses for a given team.
+  # This method sorts the responses and returns the latest response for each map.
   def self.assessments_for(team)
     responses = []
-    # stime = Time.now
+
     if team
       array_sort = []
       sort_to = []
@@ -34,8 +37,20 @@ class ResponseMap < ApplicationRecord
         array_sort.clear
         sort_to.clear
       end
+      # Sort responses by the reviewer's full name.
       responses = responses.sort { |a, b| a.map.reviewer.fullname <=> b.map.reviewer.fullname }
     end
     responses
+  end
+
+  # Deletes the associated response and then destroys the response map itself.
+  def delete
+    response.delete unless response.nil?
+    destroy
+  end
+
+  # Retrieves all mappings for a given reviewer (participant).
+  def self.mappings_for_reviewer(participant_id)
+    where(reviewer_id: participant_id)
   end
 end
