@@ -1,6 +1,14 @@
 FactoryBot.define do
+
   factory :join_team_request do
-    
+  end
+
+  factory :bookmark do
+    url { "MyText" }
+    title { "MyText" }
+    description { "MyText" }
+    user_id { 1 }
+    topic_id { 1 }
   end
 
   factory :user do

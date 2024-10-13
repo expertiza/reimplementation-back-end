@@ -40,6 +40,13 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :bookmarks, except: [:new, :edit] do
+        member do
+          get 'bookmarkratings', to: 'bookmarks#get_bookmark_rating_score'
+          post 'bookmarkratings', to: 'bookmarks#save_bookmark_rating_score'
+        end
+      end
+
       resources :courses do
         collection do
           get ':id/add_ta/:ta_id', action: :add_ta
