@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_03_24_000112) do
+ActiveRecord::Schema[7.0].define(version: 2024_10_15_223136) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -106,24 +106,6 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_24_000112) do
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
 
-  create_table "bookmark_ratings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.integer "bookmark_id"
-    t.integer "user_id"
-    t.integer "rating"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "bookmarks", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.text "url"
-    t.text "title"
-    t.text "description"
-    t.integer "user_id"
-    t.integer "topic_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "courses", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -136,6 +118,30 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_24_000112) do
     t.index ["institution_id"], name: "index_courses_on_institution_id"
     t.index ["instructor_id"], name: "fk_course_users"
     t.index ["instructor_id"], name: "index_courses_on_instructor_id"
+  end
+
+  create_table "due_dates", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "due_at", null: false
+    t.integer "deadline_type_id", null: false
+    t.string "parent_id_type", null: false
+    t.bigint "parent_id_id", null: false
+    t.integer "submission_allowed_id", null: false
+    t.integer "review_allowed_id", null: false
+    t.integer "resubmission_allowed_id"
+    t.integer "rereview_allowed_id"
+    t.integer "review_of_review_allowed_id"
+    t.integer "round"
+    t.integer "threshold"
+    t.integer "teammate_review_allowed_id", default: 3
+    t.boolean "flag", default: false
+    t.integer "delayed_job_id"
+    t.string "deadline_name"
+    t.string "description_url"
+    t.integer "quiz_allowed_id", default: 1
+    t.string "type", default: "AssignmentDueDate"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_id_type", "parent_id_id"], name: "index_due_dates_on_parent_id"
   end
 
   create_table "institutions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -249,18 +255,17 @@ ActiveRecord::Schema[7.0].define(version: 2024_03_24_000112) do
   end
 
   create_table "sign_up_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.text "topic_name", null: false
+    t.text "topic_name"
     t.bigint "assignment_id", null: false
-    t.integer "max_choosers", default: 0, null: false
+    t.integer "max_choosers"
     t.text "category"
-    t.string "topic_identifier", limit: 10
-    t.integer "micropayment", default: 0
+    t.string "topic_identifier"
+    t.integer "micropayment"
     t.integer "private_to"
     t.text "description"
     t.string "link"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["assignment_id"], name: "fk_sign_up_categories_sign_up_topics"
     t.index ["assignment_id"], name: "index_sign_up_topics_on_assignment_id"
   end
 
