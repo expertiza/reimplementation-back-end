@@ -46,6 +46,12 @@ Rails.application.routes.draw do
           post 'bookmarkratings', to: 'bookmarks#save_bookmark_rating_score'
         end
       end
+      resources :student_tasks do
+        collection do
+          get :list, action: :list
+          get :view
+        end
+      end
 
       resources :courses do
         collection do
