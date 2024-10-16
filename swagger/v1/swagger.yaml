@@ -1303,6 +1303,34 @@ paths:
               required:
               - user_name
               - password
+  /api/v1/student_tasks/list:
+      get:
+        summary: List all Student Tasks
+        tags:
+          - Student Tasks
+        responses:
+          '200':
+            description: An array of student tasks
+  /api/v1/student_tasks/view:
+    get:
+      summary: View a student task
+      tags:
+        - Student Tasks
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The ID of the student task to retrieve
+      responses:
+        '200':
+          description: A specific student task
+
+
+
+
+
 servers:
 - url: http://{defaultHost}
   variables:
