@@ -109,6 +109,18 @@ Rails.application.routes.draw do
           get :processed, action: :processed_requests
         end
       end
+      
+      resources :grades, only: %i[edit update] do
+        collection do
+          get :view
+          get :view_team
+          get :view_reviewer
+          get :view_my_scores
+          get :instructor_review
+          post :remove_hyperlink
+          post :save_grade_and_comment_for_submission
+        end
+      end
     end
   end
 end
