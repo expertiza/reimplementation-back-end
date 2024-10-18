@@ -3,17 +3,14 @@ openapi: 3.0.1
 info:
   title: EXPERTIZA API V1
   version: v1
-
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
 security:
-  - bearerAuth: []
-
+- bearerAuth: []
 paths:
   "/api/v1/account_requests/pending":
     get:
@@ -133,6 +130,129 @@ paths:
       responses:
         '204':
           description: successful
+  "/api/v1/bookmarks":
+    get:
+      summary: list bookmarks
+      tags:
+      - Bookmarks
+      responses:
+        '200':
+          description: successful
+    post:
+      summary: create bookmark
+      tags:
+      - Bookmarks
+      parameters: []
+      responses:
+        '201':
+          description: created
+        '422':
+          description: unprocessable entity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                title:
+                  type: string
+                description:
+                  type: string
+                topic_id:
+                  type: integer
+                rating:
+                  type: integer
+              required:
+              - url
+              - title
+              - description
+              - topic_id
+              - rating
+  "/api/v1/bookmarks/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: show bookmark
+      tags:
+      - Bookmarks
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not_found
+    put:
+      summary: update bookmark
+      tags:
+      - Bookmarks
+      parameters: []
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+        '422':
+          description: unprocessable entity
+          content:
+            application/json:
+              schema:
+                type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+    delete:
+      summary: delete bookmark
+      tags:
+      - Bookmarks
+      responses:
+        '204':
+          description: successful
+        '404':
+          description: not found
+  "/api/v1/bookmarks/{id}/bookmarkratings":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: save bookmark rating score
+      tags:
+      - Bookmarks
+      parameters: []
+      responses:
+        '200':
+          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rating:
+                  type: integer
+              required:
+              - rating
+    get:
+      summary: get bookmark rating score
+      tags:
+      - Bookmarks
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
   "/api/v1/courses/{id}/add_ta/{ta_id}":
     parameters:
     - name: id
@@ -1183,8 +1303,36 @@ paths:
               required:
               - user_name
               - password
+  /api/v1/student_tasks/list:
+      get:
+        summary: List all Student Tasks
+        tags:
+          - Student Tasks
+        responses:
+          '200':
+            description: An array of student tasks
+  /api/v1/student_tasks/view:
+    get:
+      summary: View a student task
+      tags:
+        - Student Tasks
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The ID of the student task to retrieve
+      responses:
+        '200':
+          description: A specific student task
+
+
+
+
+
 servers:
 - url: http://{defaultHost}
   variables:
     defaultHost:
-      default: 127.0.0.1:3000
+      default: localhost:3002
