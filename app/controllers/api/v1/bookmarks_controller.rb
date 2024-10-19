@@ -1,4 +1,5 @@
 class Api::V1::BookmarksController < ApplicationController
+  include AuthorizationHelper
 
   # Index method returns the list of JSON objects of the bookmark
   # GET on /bookmarks
@@ -87,6 +88,12 @@ class Api::V1::BookmarksController < ApplicationController
 
   def update_bookmark_params
     params.require(:bookmark).permit(:url, :title, :description)
+  end
+
+  # Check if the user is allowed to perform the action
+  def action_allowed
+    # Check if the current assignment has use_bookmark set to true
+    # NFNF
   end
 
 end
