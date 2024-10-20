@@ -9,23 +9,18 @@ class GradesController < ApplicationController
   include AuthorizationHelper
   include Scoring
 
+  # Determines if an action is allowed for users to view my scores and view team or if they are a TA
   def action_allowed?
     case params[:action]
     when 'view_my_scores'
-      current_user_has_student_privileges? &&
-        are_needed_authorizations_present?(params[:id], 'reader', 'reviewer') &&
-        self_review_finished?
+      view_my_scores_allowed?
     when 'view_team'
-      if current_user_is_a? 'Student' # students can only see the heat map for their own team
-        participant = AssignmentParticipant.find(params[:id])
-        current_user_is_assignment_participant?(participant.assignment.id)
-      else
-        true
-      end
+      view_team_allowed?
     else
       current_user_has_ta_privileges?
     end
   end
+
 
   def controller_locale
     locale_for_student
@@ -211,7 +206,7 @@ class GradesController < ApplicationController
     vm
   end
 
-  def redirect_when_disallowed
+  def redirect_when_disallowed #Could refactor this to two methods using disalowed and redirect
     # For author feedback, participants need to be able to read feedback submitted by other teammates.
     # If response is anything but author feedback, only the person who wrote feedback should be able to see it.
     ## This following code was cloned from response_controller.
@@ -269,5 +264,22 @@ class GradesController < ApplicationController
     else
       true
     end
+  end
+end
+
+# Helper method to determine if a user can view their scores. Returns true if they can, false if not
+def view_my_scores_allowed?
+  current_user_has_student_privileges? &&
+    are_needed_authorizations_present?(params[:id], 'reader', 'reviewer') &&
+    self_review_finished?
+end
+
+# Helper method to determine if a user can view their team. Returns true if they can, false if not
+def view_team_allowed?
+  if current_user_is_a? 'Student' # students can only see the heat map for their own team
+    participant = AssignmentParticipant.find(params[:id])
+    current_user_is_assignment_participant?(participant.assignment.id)
+  else
+    true
   end
 end
