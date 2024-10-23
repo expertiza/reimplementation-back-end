@@ -9,7 +9,7 @@ class DueDate < ApplicationRecord
   validate :due_at_is_valid_datetime
   validates :due_at, presence: true
 
-  attr_accessor :teammate_review_allowed_id, :submission_allowed_id, :review_allowed_id
+  attr_accessor :teammate_review_allowed, :submission_allowed, :review_allowed
 
   def due_at_is_valid_datetime
     errors.add(:due_at, 'must be a valid datetime') unless due_at.is_a?(Time)
@@ -53,9 +53,9 @@ class DueDate < ApplicationRecord
   # factory method for retrieving due dates based on type of the parent
   def self.get_next_due_date
     case self.parent_type
-    when 'Assignment'
+    when 'AssignmentDueDate'
       self.next_due_date(AssignmentDueDate.get_due_dates(self.parent_id))
-    when 'ProjectTopic'
+    when 'ProjectTopicDueDate'
       self.next_due_date(TopicDueDate.get_due_dates(self.parent_id.assignment, self.parent_id))
     end
   end
