@@ -9,6 +9,8 @@ class DueDate < ApplicationRecord
   validate :due_at_is_valid_datetime
   validates :due_at, presence: true
 
+  attr_accessor :teammate_review_allowed, :submission_allowed, :review_allowed
+
   def due_at_is_valid_datetime
     errors.add(:due_at, 'must be a valid datetime') unless due_at.is_a?(Time)
   end
@@ -28,18 +30,12 @@ class DueDate < ApplicationRecord
     due_dates.find { |due_date| due_date.due_at > Time.zone.now }
   end
 
-  def self.teammate_review_allowed?(student)
-    due_date = next_due_date(student.assignment.due_dates)
-    student.assignment.find_current_stage == 'Finished' ||
-      due_date && (due_date.teammate_review_allowed_id == ALLOWED || due_date.teammate_review_allowed_id == LATE_ALLOWED)
-  end
-
   # Class method to check if any due date is in the future
   def self.any_future_due_dates?(due_dates)
     due_dates.any? { |due_date| due_date.due_at > Time.zone.now }
   end
 
-  def set_duedate(deadline, assign_id, max_round)
+  def set(deadline, assign_id, max_round)
     self.deadline_type_id = deadline
     self.parent_id = assign_id
     self.round = max_round
@@ -54,5 +50,14 @@ class DueDate < ApplicationRecord
     end
   end
 
+  # factory method for retrieving due dates based on type of the parent
+  def self.get_next_due_date
+    case self.parent_type
+    when 'AssignmentDueDate'
+      self.next_due_date(AssignmentDueDate.get_due_dates(self.parent_id))
+    when 'ProjectTopicDueDate'
+      self.next_due_date(TopicDueDate.get_due_dates(self.parent_id.assignment, self.parent_id))
+    end
+  end
 
 end

@@ -3,7 +3,7 @@ class CreateDueDates < ActiveRecord::Migration[7.0]
     create_table :due_dates do |t|
       t.datetime :due_at, null: false
       t.integer :deadline_type_id, null: false
-      t.references :parent_id, null: false, polymorphic: true
+      t.references :parent, null: false, polymorphic: true
       t.integer :submission_allowed_id, null: false
       t.integer :review_allowed_id, null: false
       t.integer :resubmission_allowed_id
