@@ -11,18 +11,18 @@ module Logging
   private
 
   def log_create
-    Rails.logger.info("Created #{self.class.name}: #{self.attributes}")
+    ExpertizaLogger.info("Created #{self.class.name}: #{self.attributes}")
   end
 
   def log_find
-    Rails.logger.info("Found #{self.class.name}: #{self.attributes}")
+    ExpertizaLogger.info("Found #{self.class.name}: #{self.attributes}")
   end
 
   def log_update
-    Rails.logger.info("Updated #{self.class.name}: #{self.attributes}")
+    ExpertizaLogger.info("Updated #{self.class.name}: #{self.attributes}")
   end
 
   def log_destroy
-    Rails.logger.info("Destroyed #{self.class.name}: #{self.attributes}")
+    ExpertizaLogger.info("Destroyed #{self.class.name}: #{self.attributes}")
   end
 end
