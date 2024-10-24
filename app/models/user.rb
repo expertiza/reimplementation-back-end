@@ -1,4 +1,5 @@
 class User < ApplicationRecord
+  include Logging
   has_secure_password
   after_initialize :set_defaults
 
