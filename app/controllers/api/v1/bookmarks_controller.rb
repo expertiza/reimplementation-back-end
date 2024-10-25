@@ -1,7 +1,6 @@
 class Api::V1::BookmarksController < ApplicationController
   include AuthorizationHelper
-  before_action :action_allowed, only: [:create]
-  before_action :user_match, only: [:update, :destroy]
+  before_action :action_allowed
 
   # Index method returns the list of JSON objects of the bookmark
   # GET on /bookmarks
@@ -93,19 +92,59 @@ class Api::V1::BookmarksController < ApplicationController
   end
 
   # Check if the user is allowed to perform the action
-  def action_allowed
-    # Check if the current assignment has use_bookmark set to true
-    # NFNF
+  def action_allowed?
+    user = session[:user]
+    case params[:action]
+    when 'list'
+      # Those with student privileges and above can view the list of bookmarks
+      current_user_has_student_privileges?
+    when 'new', 'create', 'bookmark_rating', 'save_bookmark_rating_score'
+      # Those with strictly student privileges can create a new bookmark, rate a bookmark, or save a bookmark rating
+      # current_user_has_student_privileges? && !current_user_has_ta_privileges?
+      # This should work in theory, and it is cleaner!
+      user.role.student?
+    when 'edit', 'update', 'destroy'
+      # Get the bookmark object
+      bookmark = Bookmark.find(params[:id])
+      case user.role.name
+        when 'Student'
+            # edit, update, delete bookmarks can only be done by owner
+            current_user_created_bookmark_id?(params[:id])
+        when 'Teaching Assistant'
+            # edit, update, delete bookmarks can only be done by TA of the assignment
+            current_user_has_ta_mapping_for_assignment?(bookmark.topic.assignment)
+        when 'Instructor'
+            # edit, update, delete bookmarks can only be done by instructor of the assignment
+            current_user_instructs_assignment?(bookmark.topic.assignment)
+        when 'Administrator'
+            # edit, update, delete bookmarks can only be done by administrator who is the parent of the instructor of the assignment
+            user == bookmark.topic.assignment.instructor.parent
+        when 'Super Administrator'
+            # edit, update, delete bookmarks can be done by super administrator
+            true
+        end
+    end
   end
 
   # Check if the user is allowed to perform the action
   def user_match
     # Check if the current user is the creator of the bookmark
     # The user can only update or delete the bookmark if they are the creator of the bookmark,
-    # or if they have TA privileges (or hihger)
-    if (current_user_created_bookmark_id(params[:id]) && !current_user_has_ta_privileges?)
-      render json: "You are not allowed to perform this action", status: :unauthorized and return
-    end
+    # or if they have TA privileges (or hihger) (must be TA of the course!)
+
+    # Set of all users who are instructors who have the parent equal to this admin?
+
+    # in course, is_my_TA? is_my_instructor? is_my_admin?
+    # add comments to these saying that they should be in a mixin later, for use in questionare.
+    # Well.... maybe just use the existing methods, according to Dr. Gehringer... okay.
+
+    # current_user_created_bookmark_id needs to be here, not in authorization_helper. Leave it, but recreate it here and use that.
+
+    # Don't need to check if assignment has bookmarks enabled, because bookmark creation would not be possible in UI otherwise.
+    current_user_has_student_privileges? && current_user_created_bookmark_id(params[:id])
+    # if (current_user_created_bookmark_id(params[:id]) && !current_user_has_ta_privileges?)
+    #   render json: "You are not allowed to perform this action", status: :unauthorized and return
+    # end
   end
 
 end
