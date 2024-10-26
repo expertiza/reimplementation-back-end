@@ -1,14 +1,14 @@
 require 'swagger_helper'
 
-RSpec.describe 'SignUpTopicController API', type: :request do
+RSpec.describe 'ProjectTopicController API', type: :request do
 
-    # GET /sign_up_topics
-    path '/api/v1/sign_up_topics' do
-      get('Get sign-up topics') do
+    # GET /project_topics
+    path '/api/v1/project_topics' do
+      get('Get project topics') do
         parameter name: 'assignment_id', in: :query, type: :integer, description: 'Assignment ID', required: true
         parameter name: 'topic_ids', in: :query, type: :string, description: 'Topic Identifier', required: false
 
-        tags 'SignUpTopic'
+        tags 'ProjectTopic'
         produces 'application/json'
         response(200, 'successful') do
           after do |example|
@@ -19,9 +19,9 @@ RSpec.describe 'SignUpTopicController API', type: :request do
             }
           end
           # context 'when assignment_id parameter is missing' do
-          #   let(:assignment) { create(:sign_up_topic, assignment_id: create(:assignment)) }
+          #   let(:assignment) { create(:project_topic, assignment_id: create(:assignment)) }
           #
-          #   before { get '/api/v1/sign_up_topics', params: { assignment_id: assignment_id } }
+          #   before { get '/api/v1/project_topics', params: { assignment_id: assignment_id } }
           #   it 'returns an error message with status 422' do
           #     expect(response).to have_http_status(422)
           #     expect(response_body).to eq({ message: 'Assignment ID is required!' })
@@ -29,30 +29,30 @@ RSpec.describe 'SignUpTopicController API', type: :request do
           # end
 
           context 'when assignment_id parameter is present' do
-            let!(:sign_up_topics) { create_list(:sign_up_topic, 3, assignment_id: 1) }
+            let!(:project_topics) { create_list(:project_topic, 3, assignment_id: 1) }
             let(:assignment_id) { 1 }
 
             context 'when topic_identifier parameter is missing' do
-              before { get "/api/v1/sign_up_topics?assignment_id=#{assignment_id}" }
+              before { get "/api/v1/project_topics?assignment_id=#{assignment_id}" }
 
-              it 'returns a list of all sign-up topics with the given assignment_id' do
+              it 'returns a list of all project topics with the given assignment_id' do
                 expect(response).to have_http_status(200)
                 expect(response_body[:message]).to eq('All selected topics have been loaded successfully.')
-                expect(response_body[:sign_up_topics].count).to eq(3)
+                expect(response_body[:project_topics].count).to eq(3)
               end
             end
 
             context 'when topic_identifier parameter is present' do
-              let!(:sign_up_topic) { create(:sign_up_topic, assignment_id: 1, topic_identifier: 'abc') }
+              let!(:project_topic) { create(:project_topic, assignment_id: 1, topic_identifier: 'abc') }
               let(:topic_identifier) { 'abc' }
 
-              before { get "/api/v1/sign_up_topics?assignment_id=#{assignment_id}&topic_identifier=#{topic_identifier}" }
+              before { get "/api/v1/project_topics?assignment_id=#{assignment_id}&topic_identifier=#{topic_identifier}" }
 
-              it 'returns a list of sign-up topics with the given assignment_id and topic_identifier' do
+              it 'returns a list of project topics with the given assignment_id and topic_identifier' do
                 expect(response).to have_http_status(200)
                 expect(response_body[:message]).to eq('All selected topics have been loaded successfully.')
-                expect(response_body[:sign_up_topics].count).to eq(1)
-                expect(response_body[:sign_up_topics].first[:topic_identifier]).to eq('abc')
+                expect(response_body[:project_topics].count).to eq(1)
+                expect(response_body[:project_topics].first[:topic_identifier]).to eq('abc')
               end
             end
           end
@@ -63,13 +63,13 @@ RSpec.describe 'SignUpTopicController API', type: :request do
     end
 
 
-    # DELETE /sign_up_topics
-    path '/api/v1/sign_up_topics' do
-      delete('Delete sign-up topics') do
+    # DELETE /project_topics
+    path '/api/v1/project_topics' do
+      delete('Delete project topics') do
         parameter name: 'assignment_id', in: :query, type: :integer, description: 'Assignment ID', required: true
         parameter name: 'topic_ids', in: :query, type: :array, items: { type: :string }, description: 'Topic Identifiers to delete', required: false
 
-        tags 'SignUpTopic'
+        tags 'ProjectTopic'
         produces 'application/json'
         response(200, 'successful') do
           after do |example|
@@ -83,7 +83,7 @@ RSpec.describe 'SignUpTopicController API', type: :request do
           context 'when assignment_id parameter is missing' do
             let(:assignment_id) { nil }
 
-            before { delete '/api/v1/sign_up_topics', params: { assignment_id: assignment_id } }
+            before { delete '/api/v1/project_topics', params: { assignment_id: assignment_id } }
 
             it 'returns an error message with status 422' do
               expect(response).to have_http_status(422)
@@ -95,26 +95,26 @@ RSpec.describe 'SignUpTopicController API', type: :request do
             context 'when topic_ids parameter is missing' do
               let(:assignment_id) { 1 }
 
-              before { delete "/api/v1/sign_up_topics?assignment_id=#{assignment_id}" }
+              before { delete "/api/v1/project_topics?assignment_id=#{assignment_id}" }
 
-              it 'deletes all sign-up topics with the given assignment_id' do
+              it 'deletes all project topics with the given assignment_id' do
                 expect(response).to have_http_status(200)
-                expect(response_body).to eq({ message: 'All sign-up topics have been deleted successfully.' })
-                expect(SignUpTopic.where(assignment_id: assignment_id)).to be_empty
+                expect(response_body).to eq({ message: 'All project topics have been deleted successfully.' })
+                expect(ProjectTopic.where(assignment_id: assignment_id)).to be_empty
               end
             end
 
             context 'when topic_ids parameter is present' do
-              let!(:sign_up_topic) { create(:sign_up_topic, assignment_id: 1, topic_identifier: 'abc') }
+              let!(:project_topic) { create(:project_topic, assignment_id: 1, topic_identifier: 'abc') }
               let(:topic_ids) { ['abc'] }
               let(:assignment_id) { 1 }
 
-              before { delete "/api/v1/sign_up_topics?assignment_id=#{assignment_id}&topic_ids=#{topic_ids.join(',')}" }
+              before { delete "/api/v1/project_topics?assignment_id=#{assignment_id}&topic_ids=#{topic_ids.join(',')}" }
 
               it 'deletes sign-up topics with the given assignment_id and topic_identifier' do
                 expect(response).to have_http_status(200)
                 expect(response_body).to eq({ message: 'All selected topics have been deleted successfully.' })
-                expect(SignUpTopic.where(assignment_id: assignment_id, topic_identifier: topic_ids)).to be_empty
+                expect(ProjectTopic.where(assignment_id: assignment_id, topic_identifier: topic_ids)).to be_empty
               end
             end
           end
@@ -122,14 +122,14 @@ RSpec.describe 'SignUpTopicController API', type: :request do
       end
     end
 
-    # CREATE /sign_up_topics
-    path '/api/v1/sign_up_topics' do
+    # CREATE /project_topics
+    path '/api/v1/project_topics' do
       post('create a new topic in the sheet') do
-        tags 'SignUpTopic'
+        tags 'ProjectTopic'
         consumes 'application/json'
-        #inputs are from the sign up topic table with properties as ID, name, choosers
+        #inputs are from the project topic table with properties as ID, name, choosers
         # assignment ID and micropayment
-        parameter name: :sign_up_topic, in: :body, schema: {
+        parameter name: :project_topic, in: :body, schema: {
           type: :object,
           properties: {
             topic_identifier: { type: :integer },
@@ -158,20 +158,20 @@ RSpec.describe 'SignUpTopicController API', type: :request do
       let!(:assignment) { create(:assignment) }
 
       context 'when the request is valid' do
-        let(:valid_attributes) { { sign_up_topic: attributes_for(:sign_up_topic, assignment_id: assignment.id), micropayment: 0.1 } }
+        let(:valid_attributes) { { project_topic: attributes_for(:project_topic, assignment_id: assignment.id), micropayment: 0.1 } }
 
-        before { post '/api/v1/sign_up_topics', params: valid_attributes }
+        before { post '/api/v1/project_topics', params: valid_attributes }
 
-        it 'creates a sign-up topic' do
+        it 'creates a project topic' do
           expect(response).to have_http_status(:created)
-          expect(response_body[:message]).to eq("The topic: \"#{SignUpTopic.last.topic_name}\" has been created successfully.")
+          expect(response_body[:message]).to eq("The topic: \"#{ProjectTopic.last.topic_name}\" has been created successfully.")
         end
       end
 
       context 'when the request is invalid' do
-        let(:invalid_attributes) { { sign_up_topic: { topic_name: '' }, micropayment: 0.1, assignment_id: assignment.id } }
+        let(:invalid_attributes) { { project_topic: { topic_name: '' }, micropayment: 0.1, assignment_id: assignment.id } }
 
-        before { post '/api/v1/sign_up_topics', params: invalid_attributes }
+        before { post '/api/v1/project_topics', params: invalid_attributes }
 
         it 'returns an error message' do
           expect(response).to have_http_status(:unprocessable_entity)
@@ -180,9 +180,9 @@ RSpec.describe 'SignUpTopicController API', type: :request do
       end
 
       context 'when the assignment does not exist' do
-        let(:invalid_attributes) { { sign_up_topic: attributes_for(:sign_up_topic), micropayment: 0.1, assignment_id: 999 } }
+        let(:invalid_attributes) { { project_topic: attributes_for(:project_topic), micropayment: 0.1, assignment_id: 999 } }
 
-        before { post '/api/v1/sign_up_topics', params: invalid_attributes }
+        before { post '/api/v1/project_topics', params: invalid_attributes }
 
         it 'returns an error message' do
           expect(response).to have_http_status(:unprocessable_entity)
@@ -191,42 +191,42 @@ RSpec.describe 'SignUpTopicController API', type: :request do
       end
 
       context 'when the assignment is a microtask' do
-        let(:valid_attributes) { { sign_up_topic: attributes_for(:sign_up_topic, assignment_id: assignment.id), micropayment: 0.1 } }
+        let(:valid_attributes) { { project_topic: attributes_for(:project_topic, assignment_id: assignment.id), micropayment: 0.1 } }
 
         before do
           assignment.update(microtask: true)
-          post '/api/v1/sign_up_topics', params: valid_attributes
+          post '/api/v1/project_topics', params: valid_attributes
         end
 
         it 'sets the micropayment' do
           expect(response).to have_http_status(:created)
-          expect(SignUpTopic.last.micropayment).to eq(0.1)
+          expect(ProjectTopic.last.micropayment).to eq(0.1)
         end
       end
 
       context 'when the assignment is not a microtask' do
-        let(:valid_attributes) { { sign_up_topic: attributes_for(:sign_up_topic, assignment_id: assignment.id), micropayment: 0.1 } }
+        let(:valid_attributes) { { project_topic: attributes_for(:project_topic, assignment_id: assignment.id), micropayment: 0.1 } }
 
         before do
           assignment.update(microtask: false)
-          post '/api/v1/sign_up_topics', params: valid_attributes
+          post '/api/v1/project_topics', params: valid_attributes
         end
 
         it 'does not set the micropayment' do
           expect(response).to have_http_status(:created)
-          expect(SignUpTopic.last.micropayment).to be_nil
+          expect(ProjectTopic.last.micropayment).to be_nil
         end
       end
     end
 
-    # UPDATE /sign_up_topics
-    path '/api/v1/sign_up_topics/{id}' do
-      parameter name: 'id', in: :path, type: :integer, description: 'id of the sign up topic'
+    # UPDATE /project_topics
+    path '/api/v1/project_topics/{id}' do
+      parameter name: 'id', in: :path, type: :integer, description: 'id of the project topic'
 
       put('update a new topic in the sheet') do
-        tags 'SignUpTopic'
+        tags 'ProjectTopic'
         consumes 'application/json'
-        parameter name: :sign_up_topic, in: :body, schema: {
+        parameter name: :project_topic, in: :body, schema: {
           type: :object,
           properties: {
             topic_identifier: { type: :integer },
@@ -250,12 +250,12 @@ RSpec.describe 'SignUpTopicController API', type: :request do
           run_test!
         end
 
-        let(:sign_up_topic) { create(:sign_up_topic) }
-        let(:url) { "/api/v1/sign_up_topics/#{sign_up_topic.id}" }
+        let(:project_topic) { create(:project_topic) }
+        let(:url) { "/api/v1/project_topics/#{project_topic.id}" }
 
         context "when valid params are provided" do
           let(:new_topic_name) { "New Topic Name" }
-          let(:params) { { sign_up_topic: { topic_name: new_topic_name } } }
+          let(:params) { { project_topic: { topic_name: new_topic_name } } }
 
           before { put url, params: params }
 
@@ -264,8 +264,8 @@ RSpec.describe 'SignUpTopicController API', type: :request do
           end
 
           it "updates the sign-up topic" do
-            sign_up_topic.reload
-            expect(sign_up_topic.topic_name).to eq new_topic_name
+            project_topic.reload
+            expect(project_topic.topic_name).to eq new_topic_name
           end
 
           it "returns a success message" do
@@ -274,7 +274,7 @@ RSpec.describe 'SignUpTopicController API', type: :request do
         end
 
         context "when invalid params are provided" do
-          let(:params) { { sign_up_topic: { topic_name: "" } } }
+          let(:params) { { project_topic: { topic_name: "" } } }
 
           before { put url, params: params }
 
@@ -282,9 +282,9 @@ RSpec.describe 'SignUpTopicController API', type: :request do
             expect(response).to have_http_status(422)
           end
 
-          it "does not update the sign-up topic" do
-            sign_up_topic.reload
-            expect(sign_up_topic.topic_name).not_to eq("")
+          it "does not update the project topic" do
+            project_topic.reload
+            expect(project_topic.topic_name).not_to eq("")
           end
 
           it "returns an error message" do

@@ -1,11 +1,11 @@
 class Api::V1::SignedUpTeamsController < ApplicationController
 
-  # Returns signed up topics using sign_up_topic assignment id
-  # Retrieves sign_up_topic using topic_id as a parameter
+  # Returns signed up topics using project_topic assignment id
+  # Retrieves project_topic using topic_id as a parameter
   def index
     # puts params[:topic_id]
-    @sign_up_topic = SignUpTopic.find(params[:topic_id])
-    @signed_up_team = SignedUpTeam.find_team_participants(@sign_up_topic.assignment_id)
+    @project_topic = ProjectTopic.find(params[:topic_id])
+    @signed_up_team = SignedUpTeam.find_team_participants(@project_topic.assignment_id)
     render json: @signed_up_team
   end
 
