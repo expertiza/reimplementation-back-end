@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_10_22_204506) do
+ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -192,18 +192,6 @@ ActiveRecord::Schema[7.0].define(version: 2024_10_22_204506) do
     t.index ["team_id"], name: "index_participants_on_team_id"
     t.index ["user_id"], name: "fk_participant_users"
     t.index ["user_id"], name: "index_participants_on_user_id"
-  end
-
-  create_table "project_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.text "topic_title"
-    t.integer "assignment_id", default: 0, null: false
-    t.integer "max_signups", default: 0, null: false
-    t.text "category"
-    t.string "topic_code", limit: 10
-    t.text "description"
-    t.string "link"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "questionnaires", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
