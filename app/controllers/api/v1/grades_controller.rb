@@ -8,43 +8,33 @@ class Api::V1::GradesController < ApplicationController
   include GradesHelper
   include AuthorizationHelper
   include Scoring
-# Determines if an action is allowed for users to view my scores and view team or if they are a TA
-  def action_allowed?
-    case params[:action]
-    when 'view_my_scores'
-      view_my_scores_allowed?
-    when 'view_team'
-      view_team_allowed?
-    else
-      user_ta_privileges?
-    end
+
+# Determines if an action is allowed for users to view my scores and
+#view team or if they are a TA
+  def action_allowed
+    permitted = case params[:action]
+                when 'view_team'
+                  view_team_allowed?
+                else
+                  user_ta_privileges?
+                end
+    render json: { allowed: permitted }, status: permitted ? :ok : :forbidden
   end
 
-  # the view grading report provides the instructor with an overall view of all the grades for
-  # an assignment. It lists all participants of an assignment and all the reviews they received.
-  # It also gives a final score, which is an average of all the reviews and greatest difference
-  # in the scores of all the reviews.
-
-  # Concerns: No list of all participants (Is that a requirement?) whilst mentioned in the documentation.
-  # Does not list any reviews for the participants.
-  # Instead it provides an (assumed) graph of scores, their averages for each question, and penalties.
-  # Too many functions we cannot locally access.
+  # Provides the needed functionality of rendering values required to view and render the
+  # review heat map in the frontend from the TA perspecyobe
   def view
     # Finds the assignment
-    @assignment = Assignment.find(params[:id])
+    assignment = Assignment.find(params[:id])
     # Extracts the questionnaires
-    @questions = filter_questionnaires
-    @scores = review_grades(@assignment, @questions)
-    @num_reviewers_assigned_scores = @scores[:teams].length # After rejecting nil scores need original length to iterate over hash
-    averages = vector(@scores)
-    @average_chart = bar_chart(averages, 300, 100, 5)
-    @avg_of_avg = mean(averages)
-    penalties(@assignment.id)
-    @show_reputation = false
+    questions = filter_questionnaires(assignment)
+    scores = review_grades(assignment, questions)
+    review_score_count = scores[:teams].length # After rejecting nil scores need original length to iterate over hash
+    averages = vector(scores)
+    avg_of_avg = mean(averages)
+    render json: {scores: scores, averages: averages, avg_of_avg: avg_of_avg, review_score_count: review_score_count }, status: :ok
   end
 
-
-  # method for alternative view
   # Allows the user to view information regarding their team that they have signed up with
   # This includes information such as the topic if relevant to the assignment, and some info related
   # to the rubrics or rounds of peer review
@@ -91,10 +81,15 @@ class Api::V1::GradesController < ApplicationController
   # Sets information for editing the grade information, setting the scores
   # for every question after listing the questions out
   def edit
-    @participant = AssignmentParticipant.find(params[:id])
-    @assignment = @participant.assignment
-    @questions = list_questions(@assignment)
-    @scores = participant_scores(@participant, @questions)
+    participant = AssignmentParticipant.find(params[:id])
+    if participant.nil?
+      render json: {message: "Assignment participant #{params[:id]} not found"}, status: :not_found
+      return
+    end
+    assignment = participant.assignment
+    questions = list_questions(assignment)
+    scores = participant_scores(participant, questions)
+    render json: {participant: participant, questions: questions, scores: scores, assignment: assignment}, status: :ok
   end
 
   #  Provides functionality for instructors to perform review on an assignment
@@ -186,73 +181,61 @@ class Api::V1::GradesController < ApplicationController
     false
   end
 
-  def assign_all_penalties(participant, penalties)
-    @all_penalties[participant.id] = {
-      submission: penalties[:submission],
-      review: penalties[:review],
-      meta_review: penalties[:meta_review],
-      total_penalty: @total_penalty
-    }
+  # Helper method to determine if a user can view their scores. Returns true if they can, false if not
+  def view_my_scores_allowed?
+    current_user_has_student_privileges? &&
+      are_needed_authorizations_present?(params[:id], 'reader', 'reviewer') &&
+      self_review_finished?
   end
 
- 
-  def self_review_finished?
-    participant = Participant.find(params[:id])
-    assignment = participant.try(:assignment)
-    self_review_enabled = assignment.try(:is_selfreview_enabled)
-    not_submitted = unsubmitted_self_review?(participant.try(:id))
-    if self_review_enabled
-      !not_submitted
+  # Helper method to determine if a user can view their team. Returns true if they can, false if not
+  def view_team_allowed?
+    if current_user_is_a? 'Student' # students can only see the heat map for their own team
+      participant = AssignmentParticipant.find(params[:id])
+      current_user_is_assignment_participant?(participant.assignment.id)
     else
       true
     end
   end
-end
 
-# Helper method to determine if a user can view their scores. Returns true if they can, false if not
-def view_my_scores_allowed?
-  current_user_has_student_privileges? &&
-    are_needed_authorizations_present?(params[:id], 'reader', 'reviewer') &&
-    self_review_finished?
-end
-
-# Helper method to determine if a user can view their team. Returns true if they can, false if not
-def view_team_allowed?
-  if current_user_is_a? 'Student' # students can only see the heat map for their own team
-    participant = AssignmentParticipant.find(params[:id])
-    current_user_is_assignment_participant?(participant.assignment.id)
-  else
-    true
-  end
-end
-
-# Checks if the rubric varies by round and then returns appropriate
-# questions based on the ruling
-def filter_questionnaires
-  questionnaires = @assignment.questionnaires
-  if @assignment.varying_rubrics_by_round?
-    retrieve_questions(questionnaires, @assignment.id)
-  else
-    questions = {}
-    questionnaires.each do |questionnaire|
-      questions[questionnaire.symbol] = questionnaire.questions
+  # Checks if the rubric varies by round and then returns appropriate
+  # questions based on the ruling
+  def filter_questionnaires(assignment)
+    questionnaires = assignment.questionnaires
+    if assignment.varying_rubrics_by_round?
+      retrieve_questions(questionnaires, assignment.id)
+    else
+      questions = {}
+      questionnaires.each do |questionnaire|
+        questions[questionnaire.symbol] = questionnaire.questions
+      end
+      questions
     end
-    questions
   end
-end
 
-# Helper method that finds the current user from the session and then determines
-# if that user has the privileges afforded to someone with the role of TA
-# or higher
-def user_ta_privileges?
-  user_id = session[:user_id]
-  user = User.find(user_id)
-  user.role.all_privileges_of?(Role.find_by(name: 'Teaching Assistant'))
-end
+  # Helper method that finds the current user from the session and then determines
+  # if that user has the privileges afforded to someone with the role of TA
+  # or higher
+  def user_ta_privileges?
+    user_id = session[:user_id]
+    user = User.find(user_id)
+    user.role.all_privileges_of?(Role.find_by(name: 'Teaching Assistant'))
+  end
 
-def review_grades(assignment, questions)
-  scores = { participants: {}, teams: {} }
-  assignment.participants.each do |participant|
-    scores[:participants][participant.id.to_s.to_sym] = participant_scores(participant, questions)
+  def review_grades(assignment, questions)
+    scores = { participants: {}, teams: {} }
+    assignment.participants.each do |participant|
+      scores[:participants][participant.id.to_s.to_sym] = participant_scores(participant, questions)
+    end
+  end
+
+  # from a given participant we find or create an AsssignmentParticipant to review the team of that participant, and set
+  # the handle if it is a new record.  Then using this information we locate or create a ReviewResponseMap in order to
+  # facilitate the response
+  def find_participant_review_mapping(participant)
+    reviewer = AssignmentParticipant.find_or_create_by(user_id: session[:user].id, parent_id: participant.assignment.id)
+    reviewer.set_handle if reviewer.new_record?
+    reviewee = participant.team
+    ReviewResponseMap.find_or_create_by(reviewee_id: reviewee.id, reviewer_id: reviewer.id, reviewed_object_id: participant.assignment.id)
   end
 end

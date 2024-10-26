@@ -112,13 +112,11 @@ Rails.application.routes.draw do
       
       resources :grades, only: %i[edit update] do
         collection do
-          get :view
-          get :view_team
-          get :view_reviewer
-          get :view_my_scores
-          get :instructor_review
-          post :remove_hyperlink
-          post :save_grade_and_comment_for_submission
+          get ':id/view', action: :view
+          get ':id/view_team', action: :view_team
+          get ':id/instructor_review', action: :instructor_review
+          get ':action/action_allowed', action: :action_allowed
+          post ':participant_id/save_grade_and_comment/:grade_for_submission', action
         end
       end
     end
