@@ -1,13 +1,4 @@
 class Api::V1::GradesController < ApplicationController
-  helper :file
-  helper :submitted_content
-  helper :penalty
-  include PenaltyHelper
-  include StudentTaskHelper
-  include AssignmentHelper
-  include GradesHelper
-  include AuthorizationHelper
-  include Scoring
 
 # Determines if an action is allowed for users to view my scores and
 #view team or if they are a TA
@@ -22,48 +13,20 @@ class Api::V1::GradesController < ApplicationController
   end
 
   # Provides the needed functionality of rendering values required to view and render the
-  # review heat map in the frontend from the TA perspecyobe
+  # review heat map in the frontend from the TA perspective
   def view
-    # Finds the assignment
-    assignment = Assignment.find(params[:id])
-    # Extracts the questionnaires
-    questions = filter_questionnaires(assignment)
-    scores = review_grades(assignment, questions)
-    review_score_count = scores[:teams].length # After rejecting nil scores need original length to iterate over hash
-    averages = vector(scores)
-    avg_of_avg = mean(averages)
-    render json: {scores: scores, averages: averages, avg_of_avg: avg_of_avg, review_score_count: review_score_count }, status: :ok
+    get_data_for_heat_map(params[:id])
+    render json: {scores: @scores, assignment: @assignment, averages: @averages, avg_of_avg: @avg_of_avg, review_score_count: @review_score_count }, status: :ok
   end
 
-  # Allows the user to view information regarding their team that they have signed up with
-  # This includes information such as the topic if relevant to the assignment, and some info related
-  # to the rubrics or rounds of peer review
+  # Provides all relevant data for the student perspective for the heat map page as well as the
+  # questionnaires.
   def view_team
-    @participant = AssignmentParticipant.find(params[:id])
-    @assignment = @participant.assignment
-    @team = @participant.team
-    @team_id = @team.id
+    get_data_for_heat_map(params[:id])
+    @scores[:participants] = hide_reviewers_from_student
     questionnaires = @assignment.questionnaires
     @questions = retrieve_questions(questionnaires, @assignment.id)
-    @pscore = participant_scores(@participant, @questions)
-    @penalties = calculate_penalty(@participant.id)
-
-    counter_for_same_rubric = 0
-    questionnaires.each do |questionnaire|
-      @round = nil
-
-      if @assignment.varying_rubrics_by_round? && questionnaire.type == 'ReviewQuestionnaire'
-        questionnaires = AssignmentQuestionnaire.where(assignment_id: @assignment.id, questionnaire_id: questionnaire.id)
-        if questionnaires.count > 1
-          @round = questionnaires[counter_for_same_rubric].used_in_round
-          counter_for_same_rubric += 1
-        else
-          @round = questionnaires[0].used_in_round
-          counter_for_same_rubric = 0
-        end
-      end
-    end
-    @current_role_name = session[:user].role.name
+    render json: {scores: @scores, assignment: @assignment, averages: @averages, avg_of_avg: @avg_of_avg, review_score_count: @review_score_count, questions: @questions }, status: :ok
   end
 
   # Sets information for editing the grade information, setting the scores
@@ -94,19 +57,6 @@ class Api::V1::GradesController < ApplicationController
     end
   end
 
-  # This method is used from edit methods
-  # Finds all questions in all relevant questionnaires associated with this
-  # assignment, this is a helper method
-  # TODO should be private.
-  def list_questions(assignment)
-    questions = {}
-    questionnaires = assignment.questionnaires
-    questionnaires.each do |questionnaire|
-      questions[questionnaire.symbol] = questionnaire.questions
-    end
-    questions
-  end
-
   # patch method to update the information regarding the total score for an
   # associated with this participant for the current assignment, as long as the total_score
   # is different from the grade
@@ -129,6 +79,18 @@ class Api::V1::GradesController < ApplicationController
   end
 
   private
+
+  # This method is used from edit methods
+  # Finds all questions in all relevant questionnaires associated with this
+  # assignment, this is a helper method
+  def list_questions(assignment)
+    questions = {}
+    questionnaires = assignment.questionnaires
+    questionnaires.each do |questionnaire|
+      questions[questionnaire.symbol] = questionnaire.questions
+    end
+    questions
+  end
 
   # Helper method to determine if a user can view their team. Returns true if they can, false if not
   def view_team_allowed?
@@ -179,5 +141,38 @@ class Api::V1::GradesController < ApplicationController
     reviewer.set_handle if reviewer.new_record?
     reviewee = participant.team
     ReviewResponseMap.find_or_create_by(reviewee_id: reviewee.id, reviewer_id: reviewer.id, reviewed_object_id: participant.assignment.id)
+  end
+
+
+  # Provides a vector of averaged scores after removing all nonexistant values
+  def vector(scores)
+    scores[:teams].reject! { |_k, v| v[:scores][:avg].nil? }
+    scores[:teams].map { |_k, v| v[:scores][:avg].to_i }
+  end
+
+  # Provides a float representing the average of the array with error handling
+  def mean(array)
+    return 0 if array.nil? || array.empty?
+    array.sum / array.length.to_f
+  end
+
+  # Provides data for the heat maps in the view statements
+  def get_data_for_heat_map(params)
+    # Finds the assignment
+    @assignment = Assignment.find(params[:id])
+    # Extracts the questionnaires
+    @questions = filter_questionnaires(@assignment)
+    @scores = review_grades(@assignment, @questions)
+    @review_score_count = @scores[:teams].length # After rejecting nil scores need original length to iterate over hash
+    @averages = vector(@scores)
+    @avg_of_avg = mean(@averages)
+  end
+
+  # Loop to filter out reviewers
+  # ChatGPT Assisted
+  def hide_reviewers_from_student
+    @scores[:participant].each_with_index.map do |(key, value), index|
+      ["reviewer_#{index}".to_sym, value]
+    end.to_h
   end
 end
