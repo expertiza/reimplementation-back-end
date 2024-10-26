@@ -116,7 +116,7 @@ Rails.application.routes.draw do
           get ':id/view_team', action: :view_team
           get ':id/instructor_review', action: :instructor_review
           get ':action/action_allowed', action: :action_allowed
-          post ':participant_id/save_grade_and_comment/:grade_for_submission', action
+          patch ':participant_id/update/:grade_for_submission', action: :update
         end
       end
     end

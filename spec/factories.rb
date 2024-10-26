@@ -1,4 +1,13 @@
 FactoryBot.define do
+  factory :participant_score do
+    assignment_participant { nil }
+    assignment { nil }
+    question { nil }
+    score { 1 }
+    total_score { 1 }
+    round { 1 }
+  end
+
   factory :student_task do
     assignment { nil }
     current_stage { "MyString" }
