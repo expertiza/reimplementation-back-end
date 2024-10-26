@@ -2,6 +2,7 @@
 
 class AssignmentParticipant < Participant
   belongs_to  :assignment, class_name: 'Assignment', foreign_key: 'assignment_id'
+  has_many :participant_scores, dependent: :destroy
   belongs_to :user
   validates :handle, presence: true
 

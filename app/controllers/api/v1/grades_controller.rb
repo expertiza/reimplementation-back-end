@@ -94,9 +94,9 @@ class Api::V1::GradesController < ApplicationController
 
   # Helper method to determine if a user can view their team. Returns true if they can, false if not
   def view_team_allowed?
-    if current_user_is_a? 'Student' # students can only see the heat map for their own team
+    if user_student_privileges? # students can only see the heat map for their own team
       participant = AssignmentParticipant.find(params[:id])
-      current_user_is_assignment_participant?(participant.assignment.id)
+      participant.user_id == session[:user_id]
     else
       true
     end
@@ -126,11 +126,27 @@ class Api::V1::GradesController < ApplicationController
     user.role.all_privileges_of?(Role.find_by(name: 'Teaching Assistant'))
   end
 
+def user_student_privileges?
+  user_id = session[:user_id]
+  user = User.find(user_id)
+  user.role.all_privileges_of?(Role.find_by(name: 'Student'))
+end
+
   def review_grades(assignment, questions)
     scores = { participants: {}, teams: {} }
+
     assignment.participants.each do |participant|
-      scores[:participants][participant.id.to_s.to_sym] = participant_scores(participant, questions)
+      scores[:participants][participant.id.to_s.to_sym] = participant.participant_scores.where(assignment: assignment).map do |score_record|
+        {
+          question_id: score_record.question_id,
+          score: score_record.score,
+          total_score: score_record.total_score,
+          round: score_record.round,
+          question: questions.find{|q| q.id == score_record.question_id}
+        }
+      end
     end
+    scores
   end
 
   # from a given participant we find or create an AsssignmentParticipant to review the team of that participant, and set
@@ -171,8 +187,23 @@ class Api::V1::GradesController < ApplicationController
   # Loop to filter out reviewers
   # ChatGPT Assisted
   def hide_reviewers_from_student
-    @scores[:participant].each_with_index.map do |(key, value), index|
+    @scores[:participant].each_with_index.map do |(_, value), index|
       ["reviewer_#{index}".to_sym, value]
     end.to_h
   end
 end
+
+def retrieve_questions(questionnaires, assignment_id)
+  questions = {}
+  questionnaires.each do |questionnaire|
+    round = AssignmentQuestionnaire.where(assignment_id: assignment_id, questionnaire_id: questionnaire.id).first&.used_in_round
+    questionnaire_symbol = if round.nil?
+                             questionnaire.symbol
+                           else
+                             (questionnaire.symbol.to_s + round.to_s).to_sym
+                           end
+    questions[questionnaire_symbol] = questionnaire.questions
+  end
+  questions
+end
+
