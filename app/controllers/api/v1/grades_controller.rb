@@ -115,22 +115,6 @@ class Api::V1::GradesController < ApplicationController
   # TODO message then, so error handling is bad here
   # FIXME potentially obsolete, remove? No API endpoint for this in the base code
   def update
-    participant = AssignmentParticipant.find(params[:id])
-    total_score = params[:total_score]
-    unless format('%.2f', total_score) == params[:participant][:grade]
-      participant.update_attribute(:grade, params[:participant][:grade])
-      message = if participant.grade.nil?
-                  'The computed score will be used for ' + participant.user.name + '.'
-                else
-                  'A score of ' + grade_to_string(params) + '% has been saved for ' + participant.user.name + '.'
-                end
-    end
-    flash[:note] = message
-    redirect_to action: 'edit', id: params[:id]
-  end
-
-
-  def save_grade_and_comment_for_submission
     participant = AssignmentParticipant.find_by(id: params[:participant_id])
     @team = participant.team
     @team.grade_for_submission = params[:grade_for_submission]
@@ -144,37 +128,7 @@ class Api::V1::GradesController < ApplicationController
     redirect_to controller: 'grades', action: 'view_team', id: participant.id
   end
 
-  
-
   private
-
-  def redirect_when_disallowed
-    # Could refactor this to two methods using disalowed and redirect
-    # For author feedback, participants need to be able to read feedback submitted by other teammates.
-    # If response is anything but author feedback, only the person who wrote feedback should be able to see it.
-    ## This following code was cloned from response_controller.
-
-    # ACS Check if team count is more than 1 instead of checking if it is a team assignment
-    if @participant.assignment.max_team_size > 1
-      team = @participant.team
-      unless team.nil? || (team.users.include? session[:user])
-        flash[:error] = 'You are not on the team that wrote this feedback'
-        redirect_to '/'
-        return true
-      end
-    else
-      reviewer = AssignmentParticipant.where(user_id: session[:user].id, parent_id: @participant.assignment.id).first
-      return true unless session[:user_id] == reviewer.try(:user_id)
-    end
-    false
-  end
-
-  # Helper method to determine if a user can view their scores. Returns true if they can, false if not
-  def view_my_scores_allowed?
-    current_user_has_student_privileges? &&
-      are_needed_authorizations_present?(params[:id], 'reader', 'reviewer') &&
-      self_review_finished?
-  end
 
   # Helper method to determine if a user can view their team. Returns true if they can, false if not
   def view_team_allowed?
