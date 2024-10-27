@@ -5,7 +5,9 @@ RSpec.describe describe 'Grades API', type: :request do
 
   # Chat GPT assisted on before method
   before do
-    post '/api/v1/login', params: { email: user.email, password: 'password' }
+    post '/api/v1/login', params: { user_name: user.name, password: 'password' }
+    puts "GOT here"
+    puts response.body
     @token = JSON.parse(response.body)['token']
   end
 
