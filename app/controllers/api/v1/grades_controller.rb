@@ -173,9 +173,9 @@ end
   end
 
   # Provides data for the heat maps in the view statements
-  def get_data_for_heat_map(params)
+  def get_data_for_heat_map(id)
     # Finds the assignment
-    @assignment = Assignment.find(params[:id])
+    @assignment = Assignment.find(id)
     # Extracts the questionnaires
     @questions = filter_questionnaires(@assignment)
     @scores = review_grades(@assignment, @questions)
