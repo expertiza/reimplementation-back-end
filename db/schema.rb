@@ -145,18 +145,18 @@ ActiveRecord::Schema[7.0].define(version: 2024_10_15_223136) do
     t.bigint "parent_id", null: false
     t.integer "submission_allowed_id", null: false
     t.integer "review_allowed_id", null: false
-    t.integer "resubmission_allowed_id"
-    t.integer "rereview_allowed_id"
-    t.integer "review_of_review_allowed_id"
     t.integer "round"
-    t.integer "threshold"
-    t.integer "teammate_review_allowed_id", default: 3
     t.boolean "flag", default: false
-    t.integer "delayed_job_id"
+    t.integer "threshold", default: 1
+    t.string "delayed_job_id"
     t.string "deadline_name"
     t.string "description_url"
     t.integer "quiz_allowed_id", default: 1
+    t.integer "teammate_review_allowed_id", default: 3
     t.string "type", default: "AssignmentDueDate"
+    t.integer "resubmission_allowed_id"
+    t.integer "rereview_allowed_id"
+    t.integer "review_of_review_allowed_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_type", "parent_id"], name: "index_due_dates_on_parent"
