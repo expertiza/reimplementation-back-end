@@ -102,7 +102,6 @@ ActiveRecord::Schema[7.0].define(version: 2024_10_26_193945) do
     t.boolean "enable_pair_programming", default: false
     t.boolean "has_teams", default: false
     t.boolean "has_topics", default: false
-    t.boolean "vary_by_topic?", default: false
     t.index ["course_id"], name: "index_assignments_on_course_id"
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
@@ -203,7 +202,6 @@ ActiveRecord::Schema[7.0].define(version: 2024_10_26_193945) do
     t.string "topic"
     t.string "current_stage"
     t.datetime "stage_deadline"
-    t.float "grade"
     t.index ["assignment_id"], name: "index_participants_on_assignment_id"
     t.index ["join_team_request_id"], name: "index_participants_on_join_team_request_id"
     t.index ["team_id"], name: "index_participants_on_team_id"
@@ -309,8 +307,6 @@ ActiveRecord::Schema[7.0].define(version: 2024_10_26_193945) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "assignment_id", null: false
-    t.integer "grade_for_submission"
-    t.text "comment_for_submission"
     t.index ["assignment_id"], name: "index_teams_on_assignment_id"
   end
 
