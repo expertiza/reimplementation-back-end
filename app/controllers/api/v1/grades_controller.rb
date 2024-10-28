@@ -126,30 +126,46 @@ class Api::V1::GradesController < ApplicationController
     user.role.all_privileges_of?(Role.find_by(name: 'Teaching Assistant'))
   end
 
-def user_student_privileges?
-  user_id = session[:user_id]
-  user = User.find(user_id)
-  user.role.all_privileges_of?(Role.find_by(name: 'Student'))
-end
+  def user_student_privileges?
+    user_id = session[:user_id]
+    user = User.find(user_id)
+    user.role.all_privileges_of?(Role.find_by(name: 'Student'))
+  end
 
   def review_grades(assignment, questions)
     scores = { participants: {}, teams: {} }
 
+    # Participant scores
     assignment.participants.each do |participant|
-      scores[:participants][participant.id.to_s.to_sym] = participant.participant_scores.where(assignment: assignment).map do |score_record|
+      participant_scores = participant.participant_scores.where(assignment: assignment).map do |score_record|
         {
           question_id: score_record.question_id,
           score: score_record.score,
           total_score: score_record.total_score,
           round: score_record.round,
-          question: questions.find{|q| q.id == score_record.question_id}
+          question: questions.values.flatten.find { |q| q.id == score_record.question_id }
         }
       end
+      # Chat GPT Assisted
+      scores[:participants][participant.id.to_s.to_sym] = participant_scores
+
+      # Team scores
+      team = participant.user.teams.find_by(assignment: assignment)
+      next unless team
+
+      team_id = team.id.to_s.to_sym
+      scores[:teams][team_id] ||= { scores: { avg: 0 } }
+
+      # Calculate average score for the team
+      team_scores = participant_scores.map { |s| s[:score].to_f / s[:total_score] * 100 }
+      scores[:teams][team_id][:scores][:avg] = team_scores.sum / team_scores.size
     end
+
     scores
   end
 
-  # from a given participant we find or create an AsssignmentParticipant to review the team of that participant, and set
+
+    # from a given participant we find or create an AsssignmentParticipant to review the team of that participant, and set
   # the handle if it is a new record.  Then using this information we locate or create a ReviewResponseMap in order to
   # facilitate the response
   def find_participant_review_mapping(participant)
