@@ -1,4 +1,6 @@
 class Api::V1::BookmarksController < ApplicationController
+  include AuthorizationHelper
+  before_action :action_allowed?
 
   # Index method returns the list of JSON objects of the bookmark
   # GET on /bookmarks
@@ -87,6 +89,41 @@ class Api::V1::BookmarksController < ApplicationController
 
   def update_bookmark_params
     params.require(:bookmark).permit(:url, :title, :description)
+  end
+
+  # Check if the user is allowed to perform the action
+  def action_allowed?
+    user = session[:user]
+    case params[:action]
+    when 'list'
+      # Those with student privileges and above can view the list of bookmarks
+      current_user_has_student_privileges?
+    when 'new', 'create', 'bookmark_rating', 'save_bookmark_rating_score'
+      # Those with strictly student privileges can create a new bookmark, rate a bookmark, or save a bookmark rating
+      # current_user_has_student_privileges? && !current_user_has_ta_privileges?
+      # This should work in theory, and it is cleaner!
+      user.role.student?
+    when 'edit', 'update', 'destroy'
+      # Get the bookmark object
+      bookmark = Bookmark.find(params[:id])
+      case user.role.name
+        when 'Student'
+            # edit, update, delete bookmarks can only be done by owner
+            current_user_created_bookmark_id?(params[:id])
+        when 'Teaching Assistant'
+            # edit, update, delete bookmarks can only be done by TA of the assignment
+            current_user_has_ta_mapping_for_assignment?(bookmark.topic.assignment)
+        when 'Instructor'
+            # edit, update, delete bookmarks can only be done by instructor of the assignment
+            current_user_instructs_assignment?(bookmark.topic.assignment)
+        when 'Administrator'
+            # edit, update, delete bookmarks can only be done by administrator who is the parent of the instructor of the assignment
+            user == bookmark.topic.assignment.instructor.parent
+        when 'Super Administrator'
+            # edit, update, delete bookmarks can be done by super administrator
+            true
+        end
+    end
   end
 
 end

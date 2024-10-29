@@ -53,4 +53,5 @@ RSpec.configure do |config|
   # Defaults to json. Accepts ':json' and ':yaml'.
   config.swagger_format = :yaml
   config.swagger_strict_schema_validation = true
+
 end
