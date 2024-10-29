@@ -16,33 +16,28 @@ RSpec.describe ResponseMap, type: :model do
 
 
   describe 'validations' do
-    # Basic validation test to confirm a ResponseMap with valid attributes is considered valid
     it 'is valid with valid attributes' do
       expect(response_map).to be_valid
     end
 
-    # Ensures that a ResponseMap without a reviewer_id is invalid
     it 'is not valid without a reviewer_id' do
       response_map.reviewer_id = nil
       expect(response_map).not_to be_valid
       expect(response_map.errors[:reviewer_id]).to include("can't be blank")
     end
 
-    # Ensures that a ResponseMap without a reviewee_id is invalid
     it 'is not valid without a reviewee_id' do
       response_map.reviewee_id = nil
       expect(response_map).not_to be_valid
       expect(response_map.errors[:reviewee_id]).to include("can't be blank")
     end
 
-    # Ensures that a ResponseMap without a reviewed_object_id is invalid
     it 'is not valid without a reviewed_object_id' do
       response_map.reviewed_object_id = nil
       expect(response_map).not_to be_valid
       expect(response_map.errors[:reviewed_object_id]).to include("can't be blank")
     end
 
-    # Tests for invalid values in reviewer_id, reviewee_id, and reviewed_object_id
     it 'is not valid with an invalid reviewer_id' do
       response_map.reviewer_id = 'invalid_id'
       expect(response_map).not_to be_valid
@@ -58,7 +53,6 @@ RSpec.describe ResponseMap, type: :model do
       expect(response_map).not_to be_valid
     end
 
-    # Ensure uniqueness validation works as expected
     it 'does not allow duplicate response maps with the same reviewee, reviewer, and reviewed_object' do
       # Using the same participant as both reviewer and reviewee
       ResponseMap.create(assignment: assignment, reviewee: participant, reviewer: participant)
@@ -77,54 +71,45 @@ RSpec.describe ResponseMap, type: :model do
   describe 'scopes' do
     let(:submitted_response) { Response.create!(map_id: response_map.id, response_map: response_map, is_submitted: true) }
 
-    # Scope test for retrieving response maps for a specific team
     it 'retrieves response maps for a specified team' do
       expect(ResponseMap.for_team(participant.id)).to include(response_map)
     end
 
-    # Scope test for retrieving response maps by reviewer
     it 'retrieves response maps by reviewer' do
       expect(ResponseMap.by_reviewer(participant.id)).to include(response_map)
     end
 
-    # Scope test for retrieving response maps for a specified assignment
     it 'retrieves response maps for a specified assignment' do
       expect(ResponseMap.for_assignment(assignment.id)).to include(response_map)
     end
 
-    # Scope test to check response maps with responses
     it 'retrieves response maps with responses' do
       submitted_response
       expect(ResponseMap.with_responses).to include(response_map)
     end
 
-    # Scope test to check response maps with submitted responses only
     it 'retrieves response maps with submitted responses' do
       submitted_response
       expect(ResponseMap.with_submitted_responses).to include(response_map)
     end
 
-    # Ensures non-submitted responses are not included in with_responses scope
     it 'does not include response maps without responses in with_responses' do
       expect(ResponseMap.with_responses).not_to include(response_map)
     end
   end
 
   describe '.assessments_for' do
-    # Test for sorting responses by reviewer name for a valid team
     it 'returns responses sorted by reviewer name for a valid team' do
       sorted_responses = ResponseMap.assessments_for(participant)
       expect(sorted_responses.map(&:reviewer_fullname)).to eq(sorted_responses.map(&:reviewer_fullname).sort)
     end
 
-    # Ensures assessments_for returns an empty array if team is nil
     it 'returns an empty array if team is nil' do
       expect(ResponseMap.assessments_for(nil)).to eq([])
     end
   end
 
   describe '.latest_responses_for_team_by_reviewer' do
-    # Test to confirm only the latest response for a team and reviewer is returned
     it 'returns only the latest response when multiple responses exist' do
       older_response = Response.create!(map_id: response_map.id, response_map: response_map, is_submitted: true, created_at: 1.day.ago)
       latest_response = Response.create!(map_id: response_map.id, response_map: response_map, is_submitted: true)
@@ -132,8 +117,6 @@ RSpec.describe ResponseMap, type: :model do
       expect(ResponseMap.latest_responses_for_team_by_reviewer(participant, participant)).not_to include(older_response)
     end
 
-
-    # Ensures an empty array is returned if team or reviewer is nil
     it 'returns an empty array if team or reviewer is nil' do
       expect(ResponseMap.latest_responses_for_team_by_reviewer(nil, participant)).to eq([])
       expect(ResponseMap.latest_responses_for_team_by_reviewer(participant, nil)).to eq([])
@@ -141,40 +124,34 @@ RSpec.describe ResponseMap, type: :model do
   end
 
   describe '.responses_by_reviewer' do
-    # Test for retrieving submitted responses by reviewer
     it 'returns submitted responses by reviewer' do
       response = Response.create!(map_id:response_map.id, response_map: response_map, is_submitted: true)
       expect(ResponseMap.responses_by_reviewer(participant)).to include(response)
     end
 
-    # Ensures responses_by_reviewer returns an empty array if reviewer is nil
     it 'returns an empty array if reviewer is nil' do
       expect(ResponseMap.responses_by_reviewer(nil)).to eq([])
     end
   end
 
   describe '.responses_for_assignment' do
-    # Test for retrieving submitted responses for a specified assignment
     it 'returns submitted responses for the specified assignment' do
       response = Response.create!(map_id: response_map.id, response_map: response_map, is_submitted: true)
       expect(ResponseMap.responses_for_assignment(assignment)).to include(response)
     end
 
-    # Ensures responses_for_assignment returns an empty array if assignment is nil
     it 'returns an empty array if assignment is nil' do
       expect(ResponseMap.responses_for_assignment(nil)).to eq([])
     end
   end
 
   describe '#response_assignment' do
-    # Test to verify that response_assignment returns the correct assignment associated with the team
     it 'returns the assignment associated with the reviewer’s team' do
       expect(response_map.response_assignment).to eq(participant.assignment)
     end
   end
 
   describe '#response_count' do
-    # Tests that response_count method correctly counts responses
     it 'returns the correct count of associated responses' do
       Response.create!(map_id: response_map.id, response_map: response_map, is_submitted: true)
       Response.create!(map_id: response_map.id, response_map: response_map, is_submitted: true)
