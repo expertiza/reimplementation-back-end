@@ -43,6 +43,7 @@ class DueDate < ApplicationRecord
     save
   end
 
+  # Creates duplicate due dates and assigns them to a new assignment
   def self.copy(due_dates, new_assignment_id)
     due_dates.each do |orig_due_date|
       new_due_date = orig_due_date.dup
@@ -51,6 +52,7 @@ class DueDate < ApplicationRecord
     end
   end
 
+  # Fetches due dates from parent then selects the next upcoming due date
   def self.next_due_date(parent_id)
     due_dates = fetch_due_dates(parent_id)
     due_dates.find { |due_date| due_date.due_at > Time.zone.now }
