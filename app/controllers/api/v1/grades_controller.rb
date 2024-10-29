@@ -26,7 +26,7 @@ class Api::V1::GradesController < ApplicationController
   end
 
   # Provides all relevant data for the student perspective for the heat map page as well as the
-  # needed information to showcase the questionaires from the student view.  Additionally, handles the removal of user
+  # needed information to showcase the questionnaires from the student view.  Additionally, handles the removal of user
   # identification in the reviews within the hide_reviewers_rom_student method.
   # GET /api/v1/grades/:id/view_team
   def view_team
@@ -70,9 +70,12 @@ class Api::V1::GradesController < ApplicationController
     end
   end
 
-  # patch method to update the information regarding the total score for an
-  # associated with this participant for the current assignment, as long as the total_score
-  # is different from the grade
+  # Update method for the grade associated with a team, allows an instructor to upgrade a team's grade with a grade
+  # and a comment on their assignment for submission.  The team is then saved with this change in order to be accessed
+  # elsewhere in the code for needed scoring evaluations.  If a failure occurs while saving the team then this will
+  # return a bad_request response complete with a message and the global ERROR_INFO which can be set elsewhere for
+  # further error handling mechanisms
+  # PATCH /api/v1/grades/:participant_id/update/:grade_for_submission
   def update
     participant = AssignmentParticipant.find_by(id: params[:participant_id])
     team = participant.team
@@ -82,7 +85,7 @@ class Api::V1::GradesController < ApplicationController
       team.save
       flash[:success] = 'Grade and comment for submission successfully saved.'
     rescue StandardError
-      render json: {message: "Error occured while updating grade for team #{team.id}", error:  $ERROR_INFO}, status: :bad_request
+      render json: {message: "Error occurred while updating grade for team #{team.id}", error:  $ERROR_INFO}, status: :bad_request
       return
     end
     render json: { controller: 'grades', action: 'view_team', id: participant.id}, status: :ok
