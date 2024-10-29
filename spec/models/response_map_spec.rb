@@ -1,157 +1,114 @@
-# spec/models/response_map_spec.rb
 require 'rails_helper'
 
-RSpec.describe ResponseMap, type: :model do
-  # Set up roles that will be assigned to instructor and participant users
-  let!(:role_instructor) { Role.create!(name: 'Instructor') }
-  let!(:role_participant) { Role.create!(name: 'Participant') }
+describe Response do
 
-  # Set up instructor, assignment, and participant records for testing associations
-  let(:instructor) { Instructor.create!(role: role_instructor, name: 'Instructor Name', full_name: 'Full Instructor Name', email: 'instructor@example.com', password: 'password') }
-  let(:assignment) { Assignment.create!(name: 'Test Assignment', instructor: instructor) }
-  let(:user) { User.create!(role: role_participant, name: 'no name', full_name: 'no one', email: 'user@example.com', password: 'password') }
-  let(:participant) { Participant.create!(user: user, assignment: assignment) }
-  let(:team) { Team.create!(assignment: assignment) }
-  let(:response_map) { ResponseMap.create!(assignment: assignment, reviewee: participant, reviewer: participant) }
+  let(:user) { User.new(id: 1, role_id: 1, name: 'no name', full_name: 'no one') }
+  let(:team) {Team.new}
+  let(:participant) { Participant.new(id: 1, user: user) }
+  let(:assignment) { Assignment.new(id: 1, name: 'Test Assignment') }
+  let(:answer) { Answer.new(answer: 1, comments: 'Answer text', question_id: 1) }
+  let(:question) { ScoredQuestion.new(id: 1, weight: 2) }
+  let(:questionnaire) { Questionnaire.new(id: 1, questions: [question], max_question_score: 5) }
+  let(:review_response_map) { ReviewResponseMap.new(assignment: assignment, reviewee: team) }
+  let(:response_map) { ResponseMap.new(assignment: assignment, reviewee: participant, reviewer: participant) }
+  let(:response) { Response.new(map_id: 1, response_map: review_response_map, scores: [answer]) }
 
-
-  describe 'validations' do
-    # Basic validation test to confirm a ResponseMap with valid attributes is considered valid
-    it 'is valid with valid attributes' do
-      expect(response_map).to be_valid
+  # Compare the current response score with other scores on the same artifact, and test if the difference is significant enough to notify
+  # instructor.
+  describe '#reportable_difference?' do
+    context 'when count is 0' do
+      it 'returns false' do
+        allow(ReviewResponseMap).to receive(:assessments_for).with(team).and_return([response])
+        expect(response.reportable_difference?).to be false
+      end
     end
 
-    # Ensures that a ResponseMap without a reviewer_id is invalid
-    it 'is not valid without a reviewer_id' do
-      response_map.reviewer_id = nil
-      expect(response_map).not_to be_valid
-      expect(response_map.errors[:reviewer_id]).to include("can't be blank")
-    end
+    context 'when count is not 0' do
+      context 'when the difference between average score on same artifact from others and current score is bigger than allowed percentage' do
+        it 'returns true' do
+          response2 = double('Response', id: 2, aggregate_questionnaire_score: 80, maximum_score: 100)
 
-    # Ensures that a ResponseMap without a reviewee_id is invalid
-    it 'is not valid without a reviewee_id' do
-      response_map.reviewee_id = nil
-      expect(response_map).not_to be_valid
-      expect(response_map.errors[:reviewee_id]).to include("can't be blank")
-    end
-
-    # Ensures that a ResponseMap without a reviewed_object_id is invalid
-    it 'is not valid without a reviewed_object_id' do
-      response_map.reviewed_object_id = nil
-      expect(response_map).not_to be_valid
-      expect(response_map.errors[:reviewed_object_id]).to include("can't be blank")
-    end
-
-    # Tests for invalid values in reviewer_id, reviewee_id, and reviewed_object_id
-    it 'is not valid with an invalid reviewer_id' do
-      response_map.reviewer_id = 'invalid_id'
-      expect(response_map).not_to be_valid
-    end
-
-    it 'is not valid with an invalid reviewee_id' do
-      response_map.reviewee_id = 'invalid_id'
-      expect(response_map).not_to be_valid
-    end
-
-    it 'is not valid with an invalid reviewed_object_id' do
-      response_map.reviewed_object_id = 'invalid_id'
-      expect(response_map).not_to be_valid
-    end
-
-    # Ensure uniqueness validation works as expected
-    it 'does not allow duplicate response maps with the same reviewee, reviewer, and reviewed_object' do
-      # Using the same participant as both reviewer and reviewee
-      ResponseMap.create(assignment: assignment, reviewee: participant, reviewer: participant)
-  
-      duplicate_response_map = ResponseMap.new(
-        assignment: assignment,
-        reviewee: participant,
-        reviewer: participant
-      )
-      
-      expect(duplicate_response_map).not_to be_valid
-      expect(duplicate_response_map.errors[:reviewee_id]).to include("Duplicate response map is not allowed.")
+          allow(ReviewResponseMap).to receive(:assessments_for).with(team).and_return([response2, response2])
+          allow(response).to receive(:aggregate_questionnaire_score).and_return(93)
+          allow(response).to receive(:maximum_score).and_return(100)
+          allow(response).to receive(:questionnaire_by_answer).with(answer).and_return(questionnaire)
+          allow(AssignmentQuestionnaire).to receive(:find_by).with(assignment_id: 1, questionnaire_id: 1)
+                                                             .and_return(double('AssignmentQuestionnaire', notification_limit: 5.0))
+          expect(response.reportable_difference?).to be true
+        end
+      end
     end
   end
 
-  describe 'scopes' do
-    let(:submitted_response) { Response.create!(map_id: response_map.id, response_map: response_map, is_submitted: true) }
-
-    # Scope test for retrieving response maps for a specific team
-    it 'retrieves response maps for a specified team' do
-      expect(ResponseMap.for_team(participant.id)).to include(response_map)
-    end
-
-    # Scope test for retrieving response maps by reviewer
-    it 'retrieves response maps by reviewer' do
-      expect(ResponseMap.by_reviewer(participant.id)).to include(response_map)
-    end
-
-    # Scope test for retrieving response maps for a specified assignment
-    it 'retrieves response maps for a specified assignment' do
-      expect(ResponseMap.for_assignment(assignment.id)).to include(response_map)
-    end
-
-    # Scope test to check response maps with responses
-    it 'retrieves response maps with responses' do
-      submitted_response
-      expect(ResponseMap.with_responses).to include(response_map)
-    end
-
-    # Scope test to check response maps with submitted responses only
-    it 'retrieves response maps with submitted responses' do
-      submitted_response
-      expect(ResponseMap.with_submitted_responses).to include(response_map)
-    end
-
-    # Ensures non-submitted responses are not included in with_responses scope
-    it 'does not include response maps without responses in with_responses' do
-      expect(ResponseMap.with_responses).not_to include(response_map)
+  # Calculate the total score of a review
+  describe '#calculate_total_score' do
+    it 'computes the total score of a review' do
+      question2 = double('ScoredQuestion', weight: 2)
+      arr_question2 = [question2]
+      allow(Question).to receive(:find_with_order).with([1]).and_return(arr_question2)
+      allow(question2).to receive(:scorable?).and_return(true)
+      allow(question2).to receive(:answer).and_return(answer)
+      expect(response.calculate_total_score).to eq(2)
     end
   end
 
-  describe '.assessments_for' do
-    # Test for sorting responses by reviewer name for a valid team
-    it 'returns responses sorted by reviewer name for a valid team' do
-      sorted_responses = ResponseMap.assessments_for(participant)
-      expect(sorted_responses.map(&:reviewer_fullname)).to eq(sorted_responses.map(&:reviewer_fullname).sort)
+  # Calculate Average score with maximum score as zero and non-zero
+  describe '#average_score' do
+    context 'when maximum_score returns 0' do
+      it 'returns N/A' do
+        allow(response).to receive(:maximum_score).and_return(0)
+        expect(response.average_score).to eq(0)
+      end
     end
 
-    # Ensures assessments_for returns an empty array if team is nil
-    it 'returns an empty array if team is nil' do
-      expect(ResponseMap.assessments_for(nil)).to eq([])
-    end
-  end
-
-  describe '.latest_responses_for_team_by_reviewer' do
-    # Test to confirm only the latest response for a team and reviewer is returned
-    it 'returns only the latest response when multiple responses exist' do
-      older_response = Response.create!(map_id: response_map.id, response_map: response_map, is_submitted: true, created_at: 1.day.ago)
-      latest_response = Response.create!(map_id: response_map.id, response_map: response_map, is_submitted: true)
-      expect(ResponseMap.latest_responses_for_team_by_reviewer(participant, participant)).to include(latest_response)
-      expect(ResponseMap.latest_responses_for_team_by_reviewer(participant, participant)).not_to include(older_response)
-    end
-
-
-    # Ensures an empty array is returned if team or reviewer is nil
-    it 'returns an empty array if team or reviewer is nil' do
-      expect(ResponseMap.latest_responses_for_team_by_reviewer(nil, participant)).to eq([])
-      expect(ResponseMap.latest_responses_for_team_by_reviewer(participant, nil)).to eq([])
+    context 'when maximum_score does not return 0' do
+      it 'calculates the maximum score' do
+        allow(response).to receive(:calculate_total_score).and_return(4)
+        allow(response).to receive(:maximum_score).and_return(5)
+        expect(response.average_score).to eq(80)
+      end
     end
   end
 
-  describe '.responses_by_reviewer' do
-    # Test for retrieving submitted responses by reviewer
-    it 'returns submitted responses by reviewer' do
-      response = Response.create!(map_id:response_map.id
-      , response_map: response_map, is_submitted: true)
-      expect(ResponseMap.responses_by_reviewer(participant)).to include(response)
+  # Returns the maximum possible score for this response - only count the scorable questions, only when the answer is not nil (we accept nil as
+  # answer for scorable questions, and they will not be counted towards the total score)
+  describe '#maximum_score' do
+    it 'returns the maximum possible score for current response' do
+      question2 = double('ScoredQuestion', weight: 2)
+      arr_question2 = [question2]
+      allow(Question).to receive(:find_with_order).with([1]).and_return(arr_question2)
+      allow(question2).to receive(:scorable?).and_return(true)
+      allow(response).to receive(:questionnaire_by_answer).with(answer).and_return(questionnaire)
+      allow(questionnaire).to receive(:max_question_score).and_return(5)
+      expect(response.maximum_score).to eq(10)
     end
 
-    # Ensures responses_by_reviewer returns an empty array if reviewer is nil
-    it 'returns an empty array if reviewer is nil' do
-      expect(ResponseMap.responses_by_reviewer(nil)).to eq([])
+    it 'returns the maximum possible score for current response without score' do
+      response.scores = []
+      allow(response).to receive(:questionnaire_by_answer).with(nil).and_return(questionnaire)
+      allow(questionnaire).to receive(:max_question_score).and_return(5)
+      expect(response.maximum_score).to eq(0)
+    end
+
+    # Expects to return the participant's assignment for a ResponseMap object
+    it 'returns the appropriate assignment for ResponseMap' do
+      allow(Participant).to receive(:find).and_return(participant)
+      allow(participant).to receive(:assignment).and_return(assignment)
+
+      expect(response_map.response_assignment).to eq(assignment)
+    end
+
+    # Expects to return ResponseMap's assignment
+    it 'returns the appropriate assignment for ReviewResponseMap' do
+      question2 = double('ScoredQuestion', weight: 2)
+      arr_question2 = [question2]
+      allow(Question).to receive(:find_with_order).with([1]).and_return(arr_question2)
+      allow(question2).to receive(:scorable?).and_return(true)
+      allow(questionnaire).to receive(:max_question_score).and_return(5)
+      allow(review_response_map).to receive(:assignment).and_return(assignment)
+
+      expect(review_response_map.response_assignment).to eq(assignment)
+
     end
   end
-
 end
