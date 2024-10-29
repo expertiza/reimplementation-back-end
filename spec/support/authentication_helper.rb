@@ -7,10 +7,8 @@ module AuthenticationHelper
   end
 
   def login_admin
-    # Raise an exception if there are no users
-    users = User.all
-    users.each { |user| puts "ID: #{user.id}, Name: #{user.name}, Email: #{user.email}" }
-
+    # There should always be an admin in the seeded database, so if there aren't
+    # any users, something has gone wrong
     if User.count.zero?
       raise 'No users found'
     end
