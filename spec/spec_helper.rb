@@ -13,6 +13,20 @@
 # it.
 #
 # See https://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
+require 'simplecov'
+SimpleCov.start do
+  # add_filter 'spec/' # Exclude spec files from coverage
+  SimpleCov.filters.clear # This will remove the :root_filter that comes with simplecov
+  # Only include specific files for coverage
+  add_group 'Bookmarks Controller' do |src_file|
+    src_file.filename.include?('app/controllers/api/v1/bookmarks_controller.rb')
+  end
+
+  add_group 'Bookmark Model' do |src_file|
+    src_file.filename.include?('app/models/bookmark.rb')
+  end
+  # minimum_coverage 90 # Set a minimum threshold for overall coverage
+end
 RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest
