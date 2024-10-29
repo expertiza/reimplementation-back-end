@@ -15,10 +15,13 @@ class SignedUpTeam < ApplicationRecord
     project_topic.sign_up_team(team_id)
   end
 
-  def self.get_team_participants(user_id)
+  def self.get_team_id(user_id, assignment_id)
+    team_ids = TeamsUser.select('team_id').where(user_id: user_id)
+    team_id = Team.where(team_id: team_ids, assignment_id: assignment_id).first.team_id
     team_id
   end
 
   def self.delete_signed_up_team(team_id)
+    SignedUpTeam.where(team_id: team_id).destroy_all
   end
 end

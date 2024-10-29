@@ -38,12 +38,13 @@ class Api::V1::SignedUpTeamsController < ApplicationController
 
   # Method for signing up as student
   # Params : topic_id
-  # Get team_id using model method get_team_participants
+  # Get team_id using model method get_team_id
   # Call create_signed_up_team Model method
   def sign_up_student
     user_id = params[:user_id]
     topic_id = params[:topic_id]
-    team_id = SignedUpTeam.get_team_participants(user_id)
+    assignment_id = params[:assignment_id]
+    team_id = SignedUpTeam.get_team_id(user_id, assignment_id)
     # @teams_user = TeamsUser.where(user_id: user_id).first
     # team_id = @teams_user.team_id
     @signed_up_team = SignedUpTeam.create_signed_up_team(topic_id, team_id)

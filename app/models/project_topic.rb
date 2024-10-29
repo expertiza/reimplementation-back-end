@@ -16,6 +16,7 @@ class ProjectTopic < ApplicationRecord
     else
       # Check if the number of teams who chose the topic is less than the max allowed and return
       return teams_who_chose_the_topic.size < self.max_choosers
+    end
   end
 
   def find_team_project_topics(assignment_id, team_id)
