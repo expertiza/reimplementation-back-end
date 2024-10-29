@@ -1,60 +1,59 @@
+# frozen_string_literal: true
+
+# The ResponseMap model represents the association between reviewers and reviewees for a specific assignment. 
+# In Expertiza, this model allows participants (students) to assess each other’s work, acting as a map or link
+# between reviewers (who perform evaluations) and reviewees (who are evaluated). This mapping is key to facilitating 
+# peer assessments, as it connects specific reviewers to their assigned reviewees within an assignment. 
+# The ResponseMap model provides various methods to retrieve responses based on factors like the team being reviewed, 
+# the reviewer, or the assignment.
+
 class ResponseMap < ApplicationRecord
+  # Relationships:
+  # - A ResponseMap can have multiple responses, forming a one-to-many association with the Response model.
+  # - It belongs to a reviewer and reviewee, both represented by the Participant model.
+  # - It also belongs to an assignment, where each response map is tied to a specific assignment being reviewed.
   has_many :response, foreign_key: 'map_id', dependent: :destroy, inverse_of: false
   belongs_to :reviewer, class_name: 'Participant', foreign_key: 'reviewer_id', inverse_of: false
   belongs_to :reviewee, class_name: 'Participant', foreign_key: 'reviewee_id', inverse_of: false
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'reviewed_object_id', inverse_of: false
 
+  # Validations: 
+  validates :reviewer_id, presence: true
+  validates :reviewee_id, presence: true
+  validates :reviewed_object_id, presence: true
+  validates :reviewee_id, uniqueness: { scope: [:reviewer_id, :reviewed_object_id], message: 'Duplicate response map is not allowed.' }
+
+
+  # Delegations:
+  # Simplifies access to the reviewer's fullname and the assignment's name attributes
+  # by allowing us to call `reviewer_fullname` and `assignment_name` on ResponseMap instances.
+  delegate :fullname, to: :reviewer, prefix: true, allow_nil: true
+  delegate :name, to: :assignment, prefix: true, allow_nil: true
+
+  # Aliases:
+  # Defines an alias for `id` as `map_id` for improved readability, especially when dealing with foreign key associations.
   alias map_id id
 
-  # returns the assignment related to the response map
-  def response_assignment
-    return Participant.find(self.reviewer_id).assignment
-  end
+  # Scopes:
+  
+  # Scope to find all maps for a specific team by reviewee_id
+  scope :for_team, ->(team_id) { where(reviewee_id: team_id) }
 
-  def self.assessments_for(team)
-    responses = []
-    # stime = Time.now
-    if team
-      array_sort = []
-      sort_to = []
-      maps = where(reviewee_id: team.id)
-      maps.each do |map|
-        next if map.response.empty?
+  # Scope to find all maps associated with a specific reviewer
+  scope :by_reviewer, ->(reviewer_id) { where(reviewer_id: reviewer_id) }
 
-        all_resp = Response.where(map_id: map.map_id).last
-        if map.type.eql?('ReviewResponseMap')
-          # If its ReviewResponseMap then only consider those response which are submitted.
-          array_sort << all_resp if all_resp.is_submitted
-        else
-          array_sort << all_resp
-        end
-        # sort all versions in descending order and get the latest one.
-        sort_to = array_sort.sort # { |m1, m2| (m1.updated_at and m2.updated_at) ? m2.updated_at <=> m1.updated_at : (m1.version_num ? -1 : 1) }
-        responses << sort_to[0] unless sort_to[0].nil?
-        array_sort.clear
-        sort_to.clear
-      end
-      responses = responses.sort { |a, b| a.map.reviewer.fullname <=> b.map.reviewer.fullname }
-    end
-    responses
-  end
+  # Scope to find all maps associated with a specific assignment
+  scope :for_assignment, ->(assignment_id) { where(reviewed_object_id: assignment_id) }
 
+  # Scope to get maps that have at least one response
+  scope :with_responses, -> { joins(:response).distinct }
 
-  #get responses by particular reviwer to specific team 
-  def self.response_of_reviwer_for_user()
-    
-  end  
+  # Scope to retrieve maps with at least one submitted response
+  scope :with_submitted_responses, -> { joins(:response).where(responses: { is_submitted: true }).distinct }
 
-  #function returns array of reponses given by reviwer to evryone in the expertiza 
-  def self.assessments_by_reviewr(reviewer_id)
-    responses_by_reviwer = []
-    response_maps = where(reviewer_id: reviewer_id)
-    response_maps.each do |map|
-      next if map.response.empty?
-      all_resp_for_user = Response.where(map_id: map.map_id)
-      responses_by_reviwer << all_resp_for_user.select {|response| response.is_submitted}
-    end
-    responses_by_reviwer
-  end 
+  # Class Methods:
+  #Create class methods (public and private) for the response map class
 
+  # Instance Methods:
+  # - Instance-level methods for ResponseMap objects
 end
