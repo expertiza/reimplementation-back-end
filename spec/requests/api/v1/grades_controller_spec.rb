@@ -3,36 +3,45 @@ require 'swagger_helper'
 RSpec.describe 'Grades API', type: :request do
   before do
     # Create roles
-    @student_role = Role.find_or_create_by(name: 'student', id: Role::STUDENT)
-    @instructor_role = Role.find_or_create_by(name: 'instructor', id: Role::INSTRUCTOR)
+    @instructor_role = Role.find_or_create_by(name: 'Instructor')
+    @student_role = Role.find_or_create_by(name: 'Student')
 
-    # Create an instructor user
+    # Create institution
     @institution = Institution.find_or_create_by(name: 'Test Institution')
-    @instructor = create(:user, :instructor, role: @instructor_role, institution: @institution)
 
-    # Create a course and assignment associated with the instructor
-    # In your test setup
+    # Create instructor and course
+    @instructor = create(:instructor, institution: @institution, role: @instructor_role)
     @course = create(:course, instructor: @instructor, institution: @institution)
 
+    # Create assignment
     @assignment = create(:assignment, instructor: @instructor, course: @course)
 
-    # Create a student user and participant
-    @student_user = create(:user, :student, role: @student_role, institution: @institution)
+    # Create questionnaire without validating assignment presence
+    allow_any_instance_of(Questionnaire).to receive(:assignment).and_return(@assignment)
+    @questionnaire = build(:questionnaire, instructor: @instructor)
+    @questionnaire.save(validate: false)
+
+    # Create question linked to questionnaire
+    @question = create(:question, questionnaire: @questionnaire)
+
+    # Create student user
+    @student_user = create(:user, role: @student_role, institution: @institution)
+
+    # Create assignment participant
     @participant = create(:assignment_participant, assignment: @assignment, user: @student_user)
 
-    # Create a team and add the participant
+    # Create team and add student to the team
     @team = create(:team, assignment: @assignment)
     TeamsUser.create(team: @team, user: @student_user)
 
-    # Create a questionnaire and question
-    @questionnaire = create(:questionnaire, instructor: @instructor)
-    @question = create(:question, questionnaire: @questionnaire)
-
-    # Associate questionnaire with assignment
+    # Link questionnaire to assignment
     create(:assignment_questionnaire, assignment: @assignment, questionnaire: @questionnaire)
 
-    # Create participant scores
-    create(
+    puts "Participant ID: #{@participant.id}" # Should output a valid ID
+    puts "AssignmentParticipant ID: #{@participant.id}" # Should output a valid ID
+
+    # Create participant score with all required associations
+    @participant_score = create(
       :participant_score,
       assignment_participant: @participant,
       assignment: @assignment,
@@ -41,10 +50,12 @@ RSpec.describe 'Grades API', type: :request do
       total_score: 100,
       round: 1
     )
+
+    puts "Participant Score ID: #{@participant_score.id}" # Should output a valid ID
   end
 
   before(:each) do
-    post '/login', params: { user_name: @user.name, password: 'password' }
+    post '/login', params: { user_name: @instructor.name, password: 'password' }
     @token = JSON.parse(response.body)['token']
   end
 

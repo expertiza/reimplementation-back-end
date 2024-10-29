@@ -1,10 +1,11 @@
 FactoryBot.define do
+  
   factory :participant_score do
-    assignment_participant { nil }
-    assignment { nil }
-    question { nil }
-    score { 1 }
-    total_score { 1 }
+    association :assignment_participant, factory: :assignment_participant
+    assignment { assignment_participant.assignment }
+    question
+    score { 90 }
+    total_score { 100 }
     round { 1 }
   end
 
@@ -28,64 +29,28 @@ FactoryBot.define do
     topic_id { 1 }
   end
 
-  # Modify the user factory to include role and institution associations
   factory :user do
     sequence(:name) { |n| "user#{n}_#{Faker::Internet.username}" }
     sequence(:email) { |n| "user#{n}_#{Faker::Internet.email}" }
     password { 'password' }
-    sequence(:full_name) { |n| "FullName#{n}_#{Faker::Name.name}" }
-    association :institution
+    full_name { Faker::Name.name }
+    institution
+    role { Role.find_by(name: 'student') || create(:role, name: 'student') }
 
-    # Default role can be set to 'student' or as per your application's default
-    association :role, factory: :student_role
-
-    trait :student do
-      association :role, factory: :student_role
-    end
-
-    trait :instructor do
-      association :role, factory: :instructor_role
-    end
-
-    trait :administrator do
-      association :role, factory: :administrator_role
-    end
-
-    # Additional traits for other roles as needed
   end
 
-  # Define role factories
-  factory :role do
-    name { "default_role" }  # Adjust as necessary
-
-    factory :student_role do
-      name { "student" }
-      id { Role::STUDENT }  # Use constants or IDs as per your Role model
-    end
-
-    factory :instructor_role do
-      name { "instructor" }
-      id { Role::INSTRUCTOR }
-    end
-
-    factory :administrator_role do
-      name { "administrator" }
-      id { Role::ADMINISTRATOR }
-    end
-
-    # Define other roles similarly
+  factory :instructor, class: 'Instructor' do
+    sequence(:name) { |n| "instructor#{n}_#{Faker::Internet.username}" }
+    sequence(:email) { |n| "instructor#{n}_#{Faker::Internet.email}" }
+    password { 'password' }
+    full_name { Faker::Name.name }
+    institution
+    role { Role.find_by(name: 'instructor') || create(:role, name: 'instructor') }
   end
 
   factory :institution do
     sequence(:name) { |n| "Institution_#{n}_#{SecureRandom.hex(4)}" }
   end
-
-  factory :instructor, parent: :user, class: 'Instructor' do
-    # Any instructor-specific attributes
-    # For STI, you might need to set the 'type' column
-    type { 'Instructor' }
-  end
-
 
   # spec/factories.rb
   factory :assignment do
@@ -134,10 +99,11 @@ FactoryBot.define do
   end
 
   factory :questionnaire do
+    skip_create
     name { "Sample Questionnaire" }
     max_question_score { 5 }
     min_question_score { 0 }
     private { false }
-    association :instructor, factory: :user
+    instructor
   end
 end

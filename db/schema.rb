@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_10_26_193945) do
+ActiveRecord::Schema[7.0].define(version: 2024_10_29_012430) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -174,7 +174,6 @@ ActiveRecord::Schema[7.0].define(version: 2024_10_26_193945) do
   end
 
   create_table "participant_scores", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.bigint "participant_id", null: false
     t.bigint "assignment_id", null: false
     t.bigint "question_id", null: false
     t.integer "score"
@@ -183,8 +182,8 @@ ActiveRecord::Schema[7.0].define(version: 2024_10_26_193945) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "comment"
+    t.bigint "assignment_participant_id"
     t.index ["assignment_id"], name: "index_participant_scores_on_assignment_id"
-    t.index ["participant_id"], name: "index_participant_scores_on_participant_id"
     t.index ["question_id"], name: "index_participant_scores_on_question_id"
   end
 
@@ -353,7 +352,6 @@ ActiveRecord::Schema[7.0].define(version: 2024_10_26_193945) do
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
   add_foreign_key "participant_scores", "assignments"
-  add_foreign_key "participant_scores", "participants"
   add_foreign_key "participant_scores", "questions"
   add_foreign_key "participants", "assignments"
   add_foreign_key "participants", "join_team_requests"
