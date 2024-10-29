@@ -1,6 +1,6 @@
 class Api::V1::BookmarksController < ApplicationController
   include AuthorizationHelper
-  before_action :action_allowed
+  before_action :action_allowed?
 
   # Index method returns the list of JSON objects of the bookmark
   # GET on /bookmarks
@@ -124,27 +124,6 @@ class Api::V1::BookmarksController < ApplicationController
             true
         end
     end
-  end
-
-  # Check if the user is allowed to perform the action
-  def user_match
-    # Check if the current user is the creator of the bookmark
-    # The user can only update or delete the bookmark if they are the creator of the bookmark,
-    # or if they have TA privileges (or hihger) (must be TA of the course!)
-
-    # Set of all users who are instructors who have the parent equal to this admin?
-
-    # in course, is_my_TA? is_my_instructor? is_my_admin?
-    # add comments to these saying that they should be in a mixin later, for use in questionare.
-    # Well.... maybe just use the existing methods, according to Dr. Gehringer... okay.
-
-    # current_user_created_bookmark_id needs to be here, not in authorization_helper. Leave it, but recreate it here and use that.
-
-    # Don't need to check if assignment has bookmarks enabled, because bookmark creation would not be possible in UI otherwise.
-    current_user_has_student_privileges? && current_user_created_bookmark_id(params[:id])
-    # if (current_user_created_bookmark_id(params[:id]) && !current_user_has_ta_privileges?)
-    #   render json: "You are not allowed to perform this action", status: :unauthorized and return
-    # end
   end
 
 end

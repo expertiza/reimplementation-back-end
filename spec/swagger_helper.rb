@@ -53,4 +53,11 @@ RSpec.configure do |config|
   # Defaults to json. Accepts ':json' and ':yaml'.
   config.swagger_format = :yaml
   config.swagger_strict_schema_validation = true
+  # enable coverage report
+  config.after(:each, type: :request) do |example|
+    if example.metadata[:response].present?
+      example.metadata[:response][:content] = { 'application/json' => { schema: { '$ref' => '#/components/schemas/error' } } }
+    end
+  end
+
 end
