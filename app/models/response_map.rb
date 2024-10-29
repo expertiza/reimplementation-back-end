@@ -52,7 +52,52 @@ class ResponseMap < ApplicationRecord
   scope :with_submitted_responses, -> { joins(:response).where(responses: { is_submitted: true }).distinct }
 
   # Class Methods:
-  #Create class methods (public and private) for the response map class
+  # These methods define various ways to retrieve response collections, each with specific filters
+  # to provide flexibility in fetching responses based on the reviewer, team, assignment, etc.
+  class << self
+    # Retrieves all responses associated with a specific team and sorts them by the reviewer’s fullname.
+    def assessments_for(team)
+      return [] if team.nil?
+
+      fetch_and_sort_responses(for_team(team.id))
+    end
+
+    private
+
+    # Collects and sorts valid responses for the specified maps by reviewer name.
+    def fetch_and_sort_responses(maps)
+      responses = collect_valid_responses(maps)
+      sort_responses_by_reviewer_name(responses)
+    end
+
+    # Collects responses from the provided maps, filtering out maps without responses or those with unsubmitted responses.
+    def collect_valid_responses(maps)
+      maps.includes(:response, reviewer: :user).map do |map|
+        next if map.response.empty?
+
+        process_response_by_type(map)
+      end.compact
+    end
+
+    # Fetches the latest response for a map based on the response type and submission status.
+    # For "ReviewResponseMap" types, only submitted responses are considered valid.
+    def process_response_by_type(map)
+      latest_response = map.response.last
+      return nil if latest_response.nil?
+
+      if map.type == 'ReviewResponseMap'
+        latest_response if latest_response.is_submitted
+      else
+        latest_response
+      end
+    end
+
+    # Sorts the responses alphabetically by the reviewer's fullname for consistent display.
+    def sort_responses_by_reviewer_name(responses)
+      responses.sort_by { |response| response.map.reviewer_fullname.to_s }
+    end
+
+  end
 
   # Instance Methods:
   # - Instance-level methods for ResponseMap objects
