@@ -26,8 +26,10 @@ class Api::V1::BookmarksController < ApplicationController
       @bookmark = Bookmark.new(bookmark_params)
       @bookmark.user_id = @current_user.id
       @bookmark.save!
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, 'Your bookmark has been successfully created!', request)
       render json: @bookmark, status: :created and return
     rescue ActiveRecord::RecordInvalid
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, $ERROR_INFO, request)
       render json: $ERROR_INFO.to_s, status: :unprocessable_entity
     end
   end
@@ -37,6 +39,7 @@ class Api::V1::BookmarksController < ApplicationController
   def update
     @bookmark = Bookmark.find(params[:id])
     if @bookmark.update(update_bookmark_params)
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, 'Your bookmark has been successfully updated!', request)
       render json: @bookmark, status: :ok
     else
       render json: @bookmark.errors.full_messages, status: :unprocessable_entity
@@ -49,6 +52,7 @@ class Api::V1::BookmarksController < ApplicationController
     begin
       @bookmark = Bookmark.find(params[:id])
       @bookmark.delete
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, 'Your bookmark has been successfully deleted!', request)
     rescue ActiveRecord::RecordNotFound
         render json: $ERROR_INFO.to_s, status: :not_found and return
     end

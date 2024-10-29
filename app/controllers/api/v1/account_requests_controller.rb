@@ -22,6 +22,7 @@ class Api::V1::AccountRequestsController < ApplicationController
       end
       render json: response, status: :created
     else
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, $ERROR_INFO, request)
       render json: @account_request.errors, status: :unprocessable_entity
     end
   rescue ActiveRecord::RecordNotFound => e

@@ -18,6 +18,7 @@ class Api::V1::SignedUpTeamsController < ApplicationController
     if @signed_up_team.update(signed_up_teams_params)
       render json: { message: "The team has been updated successfully. " }, status: 200
     else
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, $ERROR_INFO, request)
       render json: @signed_up_team.errors, status: :unprocessable_entity
     end
   end
