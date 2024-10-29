@@ -33,7 +33,7 @@ RSpec.describe 'Grades API', type: :request do
 
     # Create assignment participant
     @participant = create(:assignment_participant, assignment: @assignment, user: @student_user)
-
+    
     # Create team and add student to the team
     @team = create(:team, assignment: @assignment)
     TeamsUser.create(team: @team, user: @student_user)
@@ -56,7 +56,7 @@ RSpec.describe 'Grades API', type: :request do
   before(:each) do
     post '/login', params: { user_name: @instructor.name, password: 'password' }
     @token = JSON.parse(response.body)['token']
-    #allow_any_instance_of(GradesController).to receive(:session).and_return({ user: @instructor })
+    allow_any_instance_of(Api::V1::GradesController).to receive(:session).and_return({ user: @instructor })
   end
 
   path '/api/v1/grades/{action}/action_allowed' do
@@ -155,26 +155,32 @@ RSpec.describe 'Grades API', type: :request do
       let(:'Authorization') { "Bearer #{@token}" }
 
       response(200, 'successful when creating a new review mapping') do
-        # Here we let the actual method be called to set up the new mapping
+        before do
+          allow_any_instance_of(Api::V1::GradesController).to receive(:find_participant_review_mapping)
+                                                       .and_return(double(new_record?: true, map_id: 1))
+        end
+
         run_test! do |response|
           data = JSON.parse(response.body)
           expect(data['controller']).to eq('response')
           expect(data['action']).to eq('new')
-          expect(data['id']).to be_present
+          expect(data['id']).to eq(1)
           expect(data['return']).to eq('instructor')
         end
       end
 
       response(200, 'successful when editing an existing review') do
-        # Create a review mapping and response to test editing
-        let!(:review_mapping) { create(:review_mapping, assignment_participant: @participant) }
-        let!(:response_record) { create(:response, map_id: review_mapping.id) }
+        before do
+          allow_any_instance_of(Api::V1::GradesController).to receive(:find_participant_review_mapping)
+                                                       .and_return(double(new_record?: false, map_id: 1))
+          allow(Response).to receive(:find_by).with(map_id: 1).and_return(double(id: 1))
+        end
 
         run_test! do |response|
           data = JSON.parse(response.body)
           expect(data['controller']).to eq('response')
           expect(data['action']).to eq('edit')
-          expect(data['id']).to eq(response_record.id)
+          expect(data['id']).to eq(1)
           expect(data['return']).to eq('instructor')
         end
       end
@@ -185,6 +191,47 @@ RSpec.describe 'Grades API', type: :request do
         run_test! do |response|
           data = JSON.parse(response.body)
           expect(data['message']).to eq("Assignment participant 9999 not found")
+        end
+      end
+    end
+  end
+
+  path '/api/v1/grades/{participant_id}/update/{grade_for_submission}' do
+    parameter name: 'participant_id', in: :path, type: :integer, description: 'Assignment Participant ID', required: true
+    parameter name: 'grade_for_submission', in: :path, type: :string, description: 'Grade for Submission', required: true
+    parameter name: 'comment_for_submission', in: :formData, type: :string, description: 'Comment for Submission', required: false
+
+    let(:participant_id) { @participant.id }
+    let(:grade_for_submission) { 'A' }
+    let(:comment_for_submission) { 'Great work!' }
+
+    patch('update') do
+      tags 'Grades'
+      let(:'Authorization') { "Bearer #{@token}" }
+
+      response(200, 'successful') do
+        let(:grade_for_submission) { 'A' }
+        let(:comment_for_submission) { 'Excellent work!' }
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['controller']).to eq('grades')
+          expect(data['action']).to eq('view_team')
+          expect(data['id']).to eq(@participant.id)
+          expect(Team.find(@team.id).grade_for_submission).to eq('A')
+          expect(Team.find(@team.id).comment_for_submission).to eq('Excellent work!')
+        end
+      end
+
+      response(400, 'bad request') do
+        before do
+          allow_any_instance_of(Team).to receive(:save).and_raise(StandardError, 'Something went wrong')
+        end
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['message']).to eq("Error occurred while updating grade for team #{@team.id}")
+          expect(data['error']).to be_present
         end
       end
     end
