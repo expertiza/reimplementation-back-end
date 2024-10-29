@@ -95,7 +95,7 @@ class Api::V1::BookmarksController < ApplicationController
   def action_allowed?
     user = session[:user]
     case params[:action]
-    when 'list', 'index'
+    when 'list', 'index', 'show', 'get_bookmark_rating_score'
       # Those with student privileges and above can view the list of bookmarks
       current_user_has_student_privileges?
     when 'new', 'create', 'bookmark_rating', 'save_bookmark_rating_score'
