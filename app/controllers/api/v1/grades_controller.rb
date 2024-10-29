@@ -223,9 +223,9 @@ def retrieve_questions(questionnaires, assignment_id)
   questionnaires.each do |questionnaire|
     round = AssignmentQuestionnaire.where(assignment_id: assignment_id, questionnaire_id: questionnaire.id).first&.used_in_round
     questionnaire_symbol = if round.nil?
-                             questionnaire.symbol
+                             questionnaire.id.to_s.to_sym
                            else
-                             (questionnaire.symbol.to_s + round.to_s).to_sym
+                             (questionnaire.id.to_s + round.to_s).to_sym
                            end
     questions[questionnaire_symbol] = questionnaire.questions
   end
