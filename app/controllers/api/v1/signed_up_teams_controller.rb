@@ -28,6 +28,7 @@ class Api::V1::SignedUpTeamsController < ApplicationController
     team_id = params[:team_id]
     topic_id = params[:topic_id]
     @signed_up_team = SignedUpTeam.create_signed_up_team(topic_id, team_id)
+    @signed_up_team.save
     if @signed_up_team
       render json: { message: "Signed up team successful!" }, status: :created
     else
