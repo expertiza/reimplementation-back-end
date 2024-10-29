@@ -33,7 +33,7 @@ RSpec.describe 'Grades API', type: :request do
 
     # Create assignment participant
     @participant = create(:assignment_participant, assignment: @assignment, user: @student_user)
-    
+
     # Create team and add student to the team
     @team = create(:team, assignment: @assignment)
     TeamsUser.create(team: @team, user: @student_user)
@@ -196,30 +196,34 @@ RSpec.describe 'Grades API', type: :request do
     end
   end
 
-  path '/api/v1/grades/{participant_id}/update/{grade_for_submission}' do
+  path '/api/v1/grades/{participant_id}/update' do
     parameter name: 'participant_id', in: :path, type: :integer, description: 'Assignment Participant ID', required: true
-    parameter name: 'grade_for_submission', in: :path, type: :string, description: 'Grade for Submission', required: true
-    parameter name: 'comment_for_submission', in: :formData, type: :string, description: 'Comment for Submission', required: false
+    parameter name: 'body', in: :body, schema: {
+      type: :object,
+      properties: {
+        grade_for_submission: { type: :integer },
+        comment_for_submission: { type: :string }
+      },
+      required: ['grade_for_submission']
+    }
 
     let(:participant_id) { @participant.id }
-    let(:grade_for_submission) { 'A' }
-    let(:comment_for_submission) { 'Great work!' }
+    let(:request_body) { { grade_for_submission: 95, comment_for_submission: 'Great job!' } }
 
     patch('update') do
       tags 'Grades'
+      consumes 'application/json'
       let(:'Authorization') { "Bearer #{@token}" }
+      let(:body) { request_body }
 
       response(200, 'successful') do
-        let(:grade_for_submission) { 'A' }
-        let(:comment_for_submission) { 'Excellent work!' }
-
         run_test! do |response|
           data = JSON.parse(response.body)
           expect(data['controller']).to eq('grades')
           expect(data['action']).to eq('view_team')
           expect(data['id']).to eq(@participant.id)
-          expect(Team.find(@team.id).grade_for_submission).to eq('A')
-          expect(Team.find(@team.id).comment_for_submission).to eq('Excellent work!')
+          expect(Team.find(@participant.team.id).grade_for_submission).to eq(95)
+          expect(Team.find(@participant.team.id).comment_for_submission).to eq('Great job!')
         end
       end
 
@@ -230,7 +234,7 @@ RSpec.describe 'Grades API', type: :request do
 
         run_test! do |response|
           data = JSON.parse(response.body)
-          expect(data['message']).to eq("Error occurred while updating grade for team #{@team.id}")
+          expect(data['message']).to eq("Error occurred while updating grade for team #{@participant.team.id}")
           expect(data['error']).to be_present
         end
       end

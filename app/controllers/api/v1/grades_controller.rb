@@ -93,10 +93,9 @@ class Api::V1::GradesController < ApplicationController
     team.comment_for_submission = params[:comment_for_submission]
     begin
       team.save
-      flash[:success] = 'Grade and comment for submission successfully saved.'
-    rescue StandardError
+    rescue StandardError => e
       render json: {message: "Error occurred while updating grade for team #{team.id}",
-                    error: $ERROR_INFO }, status: :bad_request
+                    error: e.message }, status: :bad_request
       return
     end
     render json: { controller: 'grades', action: 'view_team', id: participant.id}, status: :ok

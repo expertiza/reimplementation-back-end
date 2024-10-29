@@ -82,6 +82,14 @@ FactoryBot.define do
     assignment
     user
     handle { user.name }
+
+    # Create and associate a team for this assignment participant
+    after(:create) do |participant, evaluator|
+      # Create a team and add this participant to the team
+      team = create(:team, assignment: participant.assignment)
+      participant.update(team: team)
+      team.participants << participant
+    end
   end
 
   factory :assignment_questionnaire do
@@ -91,6 +99,7 @@ FactoryBot.define do
 
   factory :team do
     assignment
+    
   end
 
   factory :question do
