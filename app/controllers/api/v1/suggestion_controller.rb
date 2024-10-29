@@ -1,116 +1,138 @@
 class SuggestionController < ApplicationController
-  before_action :set_suggestion, only: %i[add_comment approve reject show update]
-
-  # GETs should be safe (see http://www.w3.org/2001/tag/doc/whenToUseGet.html)
-  verify method: :post, only: %i[create update], redirect_to: { action: :index }
+  include PrivilegeHelper
 
   def add_comment
-    if SuggestionComment.new(commenter: session[:user].name, comments: params[:suggestion_comment][:comments],
-                             suggestion_id: params[:id], vote: params[:suggestion_comment][:vote]).save
-      flash[:notice] = 'Your comment has been successfully added.'
-    else
-      flash[:error] = 'There was an error in adding your comment.'
-    end
-    redirect_to action: 'show', id: @suggestion.id
+    render json: SuggestionComment.create!(
+      comment: params[:comment],
+      suggestion_id: params[:id],
+      user_id: session[:user].id
+    ), status: :ok
+  rescue ActiveRecord::RecordInvalid => e
+    render json: e.record.errors, status: :unprocessable_entity
   end
 
   def approve
-    @signuptopic = SignUpTopic.new_topic_from_suggestion(@suggestion)
-    @suggester = User.find_by(name: @suggestion.unityID)&.id
-    if @signuptopic != 'failed' && @suggester
-      approval_process if @suggestion.signup_preference == 'Y'
-      notice_of_approval
-      flash[:success] = 'The suggestion was successfully approved.'
+    if current_user_has_ta_privileges?
+      transaction do
+        @suggestion = Suggestion.find(params[:id])
+        @suggestion.update_attribute('status', 'Approved')
+        create_topic_from_suggestion!
+        unless @suggestion.user_id.nil?
+          @suggester = User.find(@suggestion.user_id)
+          sign_team_up_to_assignment_and_topic!
+          send_notice_of_approval!
+        end
+        render json: @suggestion, status: :ok
+      end
     else
-      flash[:error] = 'An error occurred when approving the suggestion.'
+      render json: { error: 'Students cannot approve a suggestion.' }, status: :forbidden
     end
-    redirect_to action: 'show', id: @suggestion.id
+  rescue ActiveRecord::RecordNotFound => e
+    render json: e, status: :not_found
+  rescue ActiveRecord::RecordInvalid => e
+    render json: e.record.errors, status: :unprocessable_entity
   end
 
   def create
-    @assignment = Assignment.find(session[:assignment_id])
-    @suggestion = Suggestion.new(assignment_id: session[:assignment_id], description: params[:description],
-                                 signup_preference: params[:signup_preference], status: 'Initialized',
-                                 title: params[:title], unityID: params[:suggestion_anonymous] ? '' : params[:unityID])
+    render json: Suggestion.create!(
+      title: params[:title],
+      description: params[:description],
+      status: 'Initialized',
+      auto_signup: params[:auto_signup],
+      assignment_id: params[:assignment_id],
+      user_id: params[:suggestion_anonymous] ? nil : session[:user].id
+    ), status: :ok
+  rescue ActiveRecord::RecordInvalid => e
+    render json: e.record.errors, status: :unprocessable_entity
+  end
 
-    if @suggestion.save
-      flash[:success] =
-        if @suggestion.unityID.empty?
-          'You have submitted an anonymous suggestion. It will not show in the suggested topic table below.'
-        else
-          'Thank you for your suggestion!'
-        end
-      redirect_to action: 'show', id: @suggestion.id
+  def destroy
+    if current_user_has_ta_privileges?
+      Suggestion.find(params[:id]).destroy!
+      render json: {}, status: :ok
     else
-      redirect_to action: :new, id: session[:assignment_id]
+      render json: { error: 'Students do not have permission to delete suggestions.' }, status: :forbidden
     end
+  rescue ActiveRecord::RecordNotFound => e
+    render json: e, status: :not_found
+  rescue ActiveRecord::RecordNotDestroyed => e
+    render json: e, status: :unprocessable_entity
   end
 
   def index
-    @suggestions = Suggestion.where(assignment_id: params[:id])
-    @assignment = Assignment.find(params[:id])
-    redirect_to @assignment unless current_user_has_ta_privileges?
-  end
-
-  def new
-    session[:assignment_id] = params[:id]
-    @suggestion = Suggestion.new
-    @suggestions = Suggestion.where(unityID: session[:user].name, assignment_id: params[:id])
-    @assignment = Assignment.find(params[:id])
+    if current_user_has_ta_privileges?
+      render json: Suggestion.where(assignment_id: params[:id]), status: :ok
+    else
+      render json: { error: 'Students do not have permission to view all suggestions.' }, status: :forbidden
+    end
   end
 
   def reject
-    if @suggestion.update_attribute('status', 'Rejected')
-      flash[:notice] = 'The suggestion has been successfully rejected.'
+    if current_user_has_ta_privileges?
+      suggestion = Suggestion.find(params[:id])
+      if suggestion.status == 'Initialized'
+        suggestion.update_attribute('status', 'Rejected')
+        render json: suggestion, status: :ok
+      else
+        render json: { error: 'Suggestion has already been approved or rejected.' }, status: :unprocessable_entity
+      end
     else
-      flash[:error] = 'An error occurred when rejecting the suggestion.'
+      render json: { error: 'Students cannot reject a suggestion.' }, status: :forbidden
     end
-    redirect_to action: 'show', id: @suggestion.id
+  rescue ActiveRecord::RecordNotFound => e
+    render json: e, status: :not_found
   end
 
-  def show; end
-
-  def update
-    @suggestion.update_attributes(title: params[:suggestion][:title], description: params[:suggestion][:description],
-                                  signup_preference: params[:suggestion][:signup_preference])
-    redirect_to action: 'show', id: @suggestion.id
+  def show
+    @suggestion = Suggestion.find(params[:id])
+    if @suggestion.user_id == session[:user].id || current_user_has_ta_privileges?
+      render json: {
+        suggestion: @suggestion,
+        comments: SuggestionComment.where(suggestion_id: params[:id])
+      }, status: :ok
+    else
+      render json: { error: 'Students can only view their own suggestions.' }, status: :forbidden
+    end
+  rescue ActiveRecord::RecordNotFound => e
+    render json: e, status: :not_found
   end
 
   private
 
-  def approval_process
-    @team_id = TeamsUser.team_id(@suggestion.assignment_id, @suggester)
-    @topic_id = SignedUpTeam.topic_id(@suggestion.assignment_id, @suggester)
-
-    if @team_id.nil?
-      AssignmentTeam.create(name: "Team_#{rand(10_000)}", parent_id: @signuptopic.assignment_id, type: 'AssignmentTeam')
-                    .create_new_team(@suggester, @signuptopic)
-    elsif @topic_id.nil?
-      SignedUpTeam.where(team_id: @team_id, is_waitlisted: 1).destroy_all
-      SignedUpTeam.create(team_id: @team_id, topic_id: @signuptopic.id, is_waitlisted: 0)
-    else
-      @signuptopic.private_to = @suggester
-      @signuptopic.save
-    end
+  def create_topic_from_suggestion!
+    @signuptopic = SignUpTopic.create!(
+      topic_identifier: "S#{Suggestion.where(assignment_id: @suggestion.assignment_id).count}",
+      topic_name: @suggestion.title,
+      assignment_id: @suggestion.assignment_id,
+      max_choosers: 1
+    )
   end
 
-  def notice_of_approval
-    Mailer.suggested_topic_approved_message(
+  def send_notice_of_approval!
+    Mailer.send_topic_approved_message(
       to: @suggester.email,
-      cc: User.joins(:teams).where(teams: { id: @team_id }).where.not(id: @suggester.id).map(&:email),
+      cc: User.joins(:teams_users).where(teams_users: { team_id: @team.id }).where.not(id: @suggester.id).map(&:email),
       subject: "Suggested topic '#{@suggestion.title}' has been approved",
       body: {
         approved_topic_name: @suggestion.title,
         suggester: @suggester.name
       }
-    ).deliver_now!
+    )
   end
 
-  def set_suggestion
-    @suggestion = Suggestion.find(params[:id])
-  end
+  def sign_team_up_to_assignment_and_topic!
+    return unless @suggestion.auto_signup == true
 
-  def suggestion_params
-    params.require(:suggestion).permit(:assignment_id, :title, :description, :status, :unityID, :signup_preference)
+    @team = Team.where(assignment_id: @signuptopic.assignment_id).joins(:teams_user)
+                .where(teams_user: { user_id: @suggester.id }).first
+    if @team.nil?
+      @team = Team.create!(assignment_id: @signuptopic.assignment_id)
+      TeamsUser.create!(team_id: @team.id, user_id: @suggester.id)
+    end
+    if SignedUpTeam.exists?(sign_up_topic_id: @signuptopic.id, team_id: @team.id, is_waitlisted: false)
+      SignedUpTeam.where(team_id: @team.id, is_waitlisted: 1).destroy_all
+      SignedUpTeam.create!(sign_up_topic_id: @signuptopic.id, team_id: @team.id, is_waitlisted: false)
+    end
+    @signuptopic.update_attribute(:private_to, @suggester.id)
   end
 end
