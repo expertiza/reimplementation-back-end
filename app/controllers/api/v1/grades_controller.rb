@@ -97,8 +97,7 @@ class Api::V1::GradesController < ApplicationController
   private
 
   # This method is used from edit methods
-  # Finds all questions in all relevant questionnaires associated with this
-  # assignment, this is a helper method
+  # Finds all questions in all relevant questionnaires associated with this assignment
   def list_questions(assignment)
     questions = {}
     questionnaires = assignment.questionnaires
@@ -108,7 +107,8 @@ class Api::V1::GradesController < ApplicationController
     questions
   end
 
-  # Helper method to determine if a user can view their team. Returns true if they can, false if not
+  # Helper method to determine if a user can perform the view_team action, meaning they are the participant making this
+  # request
   def view_team_allowed?
     if user_student_privileges? # students can only see the heat map for their own team
       participant = AssignmentParticipant.find(params[:id])
@@ -142,12 +142,15 @@ class Api::V1::GradesController < ApplicationController
     user.role.all_privileges_of?(Role.find_by(name: 'Teaching Assistant'))
   end
 
+  # checks if the user has student privileges or higher, returns true if they do, false otherwise
   def user_student_privileges?
     user_id = session[:user_id]
     user = User.find(user_id)
     user.role.all_privileges_of?(Role.find_by(name: 'Student'))
   end
 
+  # Gets all of the review grades and formats the score appropriately based on those scores for use in the controller
+  # Primarily serves to gather information for the heat maps and editing.
   def review_grades(assignment, questions)
     scores = { participants: {}, teams: {} }
 
@@ -180,8 +183,7 @@ class Api::V1::GradesController < ApplicationController
     scores
   end
 
-
-    # from a given participant we find or create an AsssignmentParticipant to review the team of that participant, and set
+  # from a given participant we find or create an AsssignmentParticipant to review the team of that participant, and set
   # the handle if it is a new record.  Then using this information we locate or create a ReviewResponseMap in order to
   # facilitate the response
   def find_participant_review_mapping(participant)
@@ -217,7 +219,7 @@ class Api::V1::GradesController < ApplicationController
     @avg_of_avg = mean(@averages)
   end
 
-  # Loop to filter out reviewers
+  # Loop to hide reviewer information from the student view of the heat map that is implemented in view_team
   # ChatGPT Assisted
   def hide_reviewers_from_student
     @scores[:participants].each_with_index.map do |(_, value), index|
@@ -226,6 +228,7 @@ class Api::V1::GradesController < ApplicationController
   end
 end
 
+# Retrieves all of the relevant questions associated with each questionnaire and round of the assignment
 def retrieve_questions(questionnaires, assignment_id)
   questions = {}
   questionnaires.each do |questionnaire|
