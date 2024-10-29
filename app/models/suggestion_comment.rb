@@ -1,4 +1,6 @@
 class SuggestionComment < ApplicationRecord
-  validates :comments, presence: true
   belongs_to :suggestion
+  belongs_to :user
+
+  validates :comment, presence: true
 end
