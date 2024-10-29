@@ -109,4 +109,17 @@ RSpec.describe ResponseMap, type: :model do
       expect(ResponseMap.with_responses).not_to include(response_map)
     end
   end
+
+  describe '.assessments_for' do
+    # Test for sorting responses by reviewer name for a valid team
+    it 'returns responses sorted by reviewer name for a valid team' do
+      sorted_responses = ResponseMap.assessments_for(participant)
+      expect(sorted_responses.map(&:reviewer_fullname)).to eq(sorted_responses.map(&:reviewer_fullname).sort)
+    end
+
+    # Ensures assessments_for returns an empty array if team is nil
+    it 'returns an empty array if team is nil' do
+      expect(ResponseMap.assessments_for(nil)).to eq([])
+    end
+  end
 end
