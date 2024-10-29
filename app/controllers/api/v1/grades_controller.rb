@@ -34,7 +34,8 @@ class Api::V1::GradesController < ApplicationController
     @scores[:participants] = hide_reviewers_from_student
     questionnaires = @assignment.questionnaires
     questions = retrieve_questions(questionnaires, @assignment.id)
-    render json: {scores: @scores, assignment: @assignment, averages: @averages, avg_of_avg: @avg_of_avg, review_score_count: @review_score_count, questions: questions }, status: :ok
+    render json: {scores: @scores, assignment: @assignment, averages: @averages, avg_of_avg: @avg_of_avg,
+                  review_score_count: @review_score_count, questions: questions }, status: :ok
   end
 
   # Sets information required for editing the grade information, this includes the participant, questions, scores, and
@@ -63,7 +64,8 @@ class Api::V1::GradesController < ApplicationController
     participant = AssignmentParticipant.find(params[:id])
     review_mapping = find_participant_review_mapping(participant)
     if review_mapping.new_record?
-      render json: { controller: 'response', action: 'new', id: review_mapping.map_id, return: 'instructor'}, status: :ok
+      render json: { controller: 'response', action: 'new', id: review_mapping.map_id,
+                     return: 'instructor'}, status: :ok
     else
       review = Response.find_by(map_id: review_mapping.map_id)
       render json: { controller: 'response', action: 'edit', id: review.id, return: 'instructor'}, status: :ok
@@ -85,7 +87,8 @@ class Api::V1::GradesController < ApplicationController
       team.save
       flash[:success] = 'Grade and comment for submission successfully saved.'
     rescue StandardError
-      render json: {message: "Error occurred while updating grade for team #{team.id}", error:  $ERROR_INFO}, status: :bad_request
+      render json: {message: "Error occurred while updating grade for team #{team.id}",
+                    error: $ERROR_INFO }, status: :bad_request
       return
     end
     render json: { controller: 'grades', action: 'view_team', id: participant.id}, status: :ok
@@ -185,7 +188,8 @@ class Api::V1::GradesController < ApplicationController
     reviewer = AssignmentParticipant.find_or_create_by(user_id: session[:user].id, parent_id: participant.assignment.id)
     reviewer.set_handle if reviewer.new_record?
     reviewee = participant.team
-    ReviewResponseMap.find_or_create_by(reviewee_id: reviewee.id, reviewer_id: reviewer.id, reviewed_object_id: participant.assignment.id)
+    ReviewResponseMap.find_or_create_by(reviewee_id: reviewee.id, reviewer_id: reviewer.id,
+                                        reviewed_object_id: participant.assignment.id)
   end
 
 
@@ -225,7 +229,8 @@ end
 def retrieve_questions(questionnaires, assignment_id)
   questions = {}
   questionnaires.each do |questionnaire|
-    round = AssignmentQuestionnaire.where(assignment_id: assignment_id, questionnaire_id: questionnaire.id).first&.used_in_round
+    round = AssignmentQuestionnaire.where(assignment_id: assignment_id,
+                                          questionnaire_id: questionnaire.id).first&.used_in_round
     questionnaire_symbol = if round.nil?
                              questionnaire.id.to_s.to_sym
                            else
