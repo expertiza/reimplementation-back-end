@@ -132,8 +132,6 @@ class ResponseMap < ApplicationRecord
           .select(&:is_submitted)
     end
 
-      
-
     # Retrieves only submitted responses from a collection of maps.
     def fetch_submitted_responses(maps)
       maps.with_submitted_responses
@@ -142,8 +140,18 @@ class ResponseMap < ApplicationRecord
     end
   end
 
-  
-
   # Instance Methods:
   # - Instance-level methods for ResponseMap objects
+
+  # Retrieves the assignment associated with the reviewer's team.
+  # This method leverages the reviewer to find the associated assignment in cases where it is necessary to trace back to
+  # the original assignment for a particular response map.
+  def response_assignment
+    reviewer.assignment
+  end
+
+  # Method to return the count of responses associated with this response map
+  def response_count
+    response.count
+  end
 end
