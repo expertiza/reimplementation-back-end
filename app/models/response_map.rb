@@ -38,4 +38,23 @@ class ResponseMap < ApplicationRecord
     end
     responses
   end
+
+
+  #get responses by particular reviwer to specific team 
+  def self.response_of_reviwer_for_user()
+    
+  end  
+
+  #function returns array of reponses given by reviwer to evryone in the expertiza 
+  def self.assessments_by_reviewr(reviewer_id)
+    responses_by_reviwer = []
+    response_maps = where(reviewer_id: reviewer_id)
+    response_maps.each do |map|
+      next if map.response.empty?
+      all_resp_for_user = Response.where(map_id: map.map_id)
+      responses_by_reviwer << all_resp_for_user.select {|response| response.is_submitted}
+    end
+    responses_by_reviwer
+  end 
+
 end
