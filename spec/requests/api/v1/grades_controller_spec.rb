@@ -2,6 +2,7 @@ require 'swagger_helper'
 
 RSpec.describe 'Grades API', type: :request do
   before do
+
     # Create roles
     @instructor_role = Role.find_or_create_by(name: 'Instructor')
     @student_role = Role.find_or_create_by(name: 'Student')

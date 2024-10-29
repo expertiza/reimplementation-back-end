@@ -25,8 +25,8 @@ class Api::V1::GradesController < ApplicationController
     get_data_for_heat_map(params[:id])
     @scores[:participants] = hide_reviewers_from_student
     questionnaires = @assignment.questionnaires
-    @questions = retrieve_questions(questionnaires, @assignment.id)
-    render json: {scores: @scores, assignment: @assignment, averages: @averages, avg_of_avg: @avg_of_avg, review_score_count: @review_score_count, questions: @questions }, status: :ok
+    questions = retrieve_questions(questionnaires, @assignment.id)
+    render json: {scores: @scores, assignment: @assignment, averages: @averages, avg_of_avg: @avg_of_avg, review_score_count: @review_score_count, questions: questions }, status: :ok
   end
 
   # Sets information for editing the grade information, setting the scores
@@ -50,32 +50,29 @@ class Api::V1::GradesController < ApplicationController
     participant = AssignmentParticipant.find(params[:id])
     review_mapping = find_participant_review_mapping(participant)
     if review_mapping.new_record?
-      redirect_to controller: 'response', action: 'edit', id: review_mapping.map_id, return: 'instructor'
+      render json: { controller: 'response', action: 'new', id: review_mapping.map_id, return: 'instructor'}, status: :ok
     else
       review = Response.find_by(map_id: review_mapping.map_id)
-      redirect_to controller: 'response', action: 'new', id: review.id, return: 'instructor'
+      render json: { controller: 'response', action: 'edit', id: review.id, return: 'instructor'}, status: :ok
     end
   end
 
   # patch method to update the information regarding the total score for an
   # associated with this participant for the current assignment, as long as the total_score
   # is different from the grade
-  # TODO the bottom of this method where we call flash[:note] = message will work with the valid
-  # TODO path but not in the case of the unless statement evaluating to true, as we never initialize
-  # TODO message then, so error handling is bad here
-  # FIXME potentially obsolete, remove? No API endpoint for this in the base code
   def update
     participant = AssignmentParticipant.find_by(id: params[:participant_id])
-    @team = participant.team
-    @team.grade_for_submission = params[:grade_for_submission]
-    @team.comment_for_submission = params[:comment_for_submission]
+    team = participant.team
+    team.grade_for_submission = params[:grade_for_submission]
+    team.comment_for_submission = params[:comment_for_submission]
     begin
-      @team.save
+      team.save
       flash[:success] = 'Grade and comment for submission successfully saved.'
     rescue StandardError
-      flash[:error] = $ERROR_INFO
+      render json: {message: "Error occured while updating grade for team #{team.id}", error:  $ERROR_INFO}, status: :bad_request
+      return
     end
-    redirect_to controller: 'grades', action: 'view_team', id: participant.id
+    render json: { controller: 'grades', action: 'view_team', id: participant.id}, status: :ok
   end
 
   private
