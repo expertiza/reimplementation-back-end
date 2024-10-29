@@ -38,9 +38,6 @@ RSpec.describe 'Grades API', type: :request do
     # Link questionnaire to assignment
     create(:assignment_questionnaire, assignment: @assignment, questionnaire: @questionnaire)
 
-    puts "Participant ID: #{@participant.id}" # Should output a valid ID
-    puts "AssignmentParticipant ID: #{@participant.id}" # Should output a valid ID
-
     # Create participant score with all required associations
     @participant_score = create(
       :participant_score,
@@ -51,8 +48,6 @@ RSpec.describe 'Grades API', type: :request do
       total_score: 100,
       round: 1
     )
-
-    puts "Participant Score ID: #{@participant_score.id}" # Should output a valid ID
   end
 
   before(:each) do
@@ -92,6 +87,55 @@ RSpec.describe 'Grades API', type: :request do
           expect(data['averages']).to be_present
           expect(data['avg_of_avg']).to be_present
           expect(data['review_score_count']).to be_present
+        end
+      end
+    end
+  end
+
+  path '/api/v1/grades/{id}/view_team' do
+    parameter name: 'id', in: :path, type: :integer, description: 'Assignment ID', required: true
+
+    let(:id) { @assignment.id }
+
+    get('view_team') do
+      tags 'Grades'
+      let(:'Authorization') { "Bearer #{@token}" }
+      response(200, 'successful') do
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['assignment']['id']).to eq(@assignment.id)
+          expect(data['scores']).to be_present
+          expect(data['averages']).to be_present
+          expect(data['avg_of_avg']).to be_present
+          expect(data['review_score_count']).to be_present
+        end
+      end
+    end
+  end
+
+  path '/api/v1/grades/{id}/edit' do
+    parameter name: 'id', in: :path, type: :integer, description: 'Assignment Participant ID', required: true
+
+    let(:id) { @participant.id }
+
+    get('edit') do
+      tags 'Grades'
+      let(:'Authorization') { "Bearer #{@token}" }
+      response(200, 'successful') do
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['participant']['id']).to eq(@participant.id)
+          expect(data['assignment']['id']).to eq(@assignment.id)
+          expect(data['questions']).to be_present
+          expect(data['scores']).to be_present
+        end
+      end
+
+      response(404, 'not found') do
+        let(:id) { 9999 }
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['message']).to eq("Assignment participant 9999 not found")
         end
       end
     end

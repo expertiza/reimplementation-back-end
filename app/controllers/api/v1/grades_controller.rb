@@ -41,8 +41,9 @@ class Api::V1::GradesController < ApplicationController
   # assignment
   # GET /api/v1/grades/:id/edit
   def edit
-    participant = AssignmentParticipant.find(params[:id])
-    if participant.nil?
+    begin
+      participant = AssignmentParticipant.find(params[:id])
+    rescue ActiveRecord::RecordNotFound
       render json: {message: "Assignment participant #{params[:id]} not found"}, status: :not_found
       return
     end
@@ -212,7 +213,7 @@ class Api::V1::GradesController < ApplicationController
   # Loop to filter out reviewers
   # ChatGPT Assisted
   def hide_reviewers_from_student
-    @scores[:participant].each_with_index.map do |(_, value), index|
+    @scores[:participants].each_with_index.map do |(_, value), index|
       ["reviewer_#{index}".to_sym, value]
     end.to_h
   end
