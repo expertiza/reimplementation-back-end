@@ -62,6 +62,13 @@ class ResponseMap < ApplicationRecord
       fetch_and_sort_responses(for_team(team.id))
     end
 
+    def latest_responses_for_team_by_reviewer(team, reviewer)
+      return [] if team.nil? || reviewer.nil?
+
+
+      fetch_latest_responses(for_team(team.id).by_reviewer(reviewer.id))
+    end
+
     private
 
     # Collects and sorts valid responses for the specified maps by reviewer name.
@@ -95,6 +102,14 @@ class ResponseMap < ApplicationRecord
     # Sorts the responses alphabetically by the reviewer's fullname for consistent display.
     def sort_responses_by_reviewer_name(responses)
       responses.sort_by { |response| response.map.reviewer_fullname.to_s }
+    end
+
+    # Collects the latest submitted responses for each map in the specified maps.
+    def fetch_latest_responses(maps)
+      maps.includes(:response)
+          .map { |map| map.response.last }
+          .compact
+          .select(&:is_submitted)
     end
 
   end
