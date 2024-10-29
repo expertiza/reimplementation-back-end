@@ -15,7 +15,7 @@ class Api::V1::InvitationsController < ApplicationController
       @invitation.send_invite_email
       render json: @invitation, status: :created
     else
-      ExpertizaLogger.error LoggerMessage.new('', @invitation.to_user.name, 'Student was already invited')
+      ExpertizaLogger.error LoggerMessage.new('', @invitation.from_user.name, 'Student was already invited')
       render json: { error: @invitation.errors }, status: :unprocessable_entity
     end
   end
