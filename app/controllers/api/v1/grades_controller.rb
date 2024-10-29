@@ -22,7 +22,8 @@ class Api::V1::GradesController < ApplicationController
   # GET /api/v1/grades/:id/view
   def view
     get_data_for_heat_map(params[:id])
-    render json: {scores: @scores, assignment: @assignment, averages: @averages, avg_of_avg: @avg_of_avg, review_score_count: @review_score_count }, status: :ok
+    render json: { scores: @scores, assignment: @assignment, averages: @averages, avg_of_avg: @avg_of_avg,
+                   review_score_count: @review_score_count }, status: :ok
   end
 
   # Provides all relevant data for the student perspective for the heat map page as well as the
