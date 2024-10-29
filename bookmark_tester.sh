@@ -25,7 +25,7 @@ echo "$CONTAINER_NAME container is now running."
 
 # Step 4: Run RSpec tests targeting bookmark-related specs
 echo "Running RSpec tests for bookmarks in $CONTAINER_NAME container..."
-docker exec -it "$CONTAINER_NAME" rspec --pattern "./spec/**/*bookmark*.rb"
+docker exec -it "$CONTAINER_NAME" rspec --pattern "./spec/**/*bookmark*_spec.rb"
 
 # Step 5. Stop the current `expertiza-e2480` container
 echo "Stopping expertiza-e2480 container..."
