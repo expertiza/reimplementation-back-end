@@ -47,14 +47,11 @@ class ResponseMap < ApplicationRecord
     # Retrieves all responses associated with a specific team and sorts them by the reviewer’s fullname.
     def assessments_for(team)
       return [] if team.nil?
-
       fetch_and_sort_responses(for_team(team.id))
     end
 
     def latest_responses_for_team_by_reviewer(team, reviewer)
       return [] if team.nil? || reviewer.nil?
-
-
       fetch_latest_responses(for_team(team.id).by_reviewer(reviewer.id))
     end
 
@@ -74,7 +71,6 @@ class ResponseMap < ApplicationRecord
     # Returns all responses associated with assignment.
     def responses_for_assignment(assignment)
       return [] if assignment.nil?
-
       fetch_submitted_responses(for_assignment(assignment.id))
     end
     
