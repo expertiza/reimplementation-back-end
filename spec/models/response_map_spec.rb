@@ -122,4 +122,21 @@ RSpec.describe ResponseMap, type: :model do
       expect(ResponseMap.assessments_for(nil)).to eq([])
     end
   end
+
+  describe '.latest_responses_for_team_by_reviewer' do
+    # Test to confirm only the latest response for a team and reviewer is returned
+    it 'returns only the latest response when multiple responses exist' do
+      older_response = Response.create!(map_id: response_map.id, response_map: response_map, is_submitted: true, created_at: 1.day.ago)
+      latest_response = Response.create!(map_id: response_map.id, response_map: response_map, is_submitted: true)
+      expect(ResponseMap.latest_responses_for_team_by_reviewer(participant, participant)).to include(latest_response)
+      expect(ResponseMap.latest_responses_for_team_by_reviewer(participant, participant)).not_to include(older_response)
+    end
+
+
+    # Ensures an empty array is returned if team or reviewer is nil
+    it 'returns an empty array if team or reviewer is nil' do
+      expect(ResponseMap.latest_responses_for_team_by_reviewer(nil, participant)).to eq([])
+      expect(ResponseMap.latest_responses_for_team_by_reviewer(participant, nil)).to eq([])
+    end
+  end
 end
