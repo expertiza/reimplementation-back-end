@@ -69,6 +69,19 @@ class ResponseMap < ApplicationRecord
       fetch_latest_responses(for_team(team.id).by_reviewer(reviewer.id))
     end
 
+    # Fetches all responses submitted by a specific reviewer
+    def responses_by_reviewer(reviewer)
+      return [] if reviewer.nil?
+      fetch_submitted_responses(by_reviewer(reviewer.id))
+    end
+
+    # Retrieves only submitted responses from a collection of maps.
+    def fetch_submitted_responses(maps)
+      maps.with_submitted_responses
+          .includes(:response)
+          .flat_map { |map| map.response.select(&:is_submitted) }
+    end
+    
     private
 
     # Collects and sorts valid responses for the specified maps by reviewer name.
@@ -111,7 +124,6 @@ class ResponseMap < ApplicationRecord
           .compact
           .select(&:is_submitted)
     end
-
   end
 
   # Instance Methods:

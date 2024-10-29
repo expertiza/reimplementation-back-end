@@ -139,4 +139,19 @@ RSpec.describe ResponseMap, type: :model do
       expect(ResponseMap.latest_responses_for_team_by_reviewer(participant, nil)).to eq([])
     end
   end
+
+  describe '.responses_by_reviewer' do
+    # Test for retrieving submitted responses by reviewer
+    it 'returns submitted responses by reviewer' do
+      response = Response.create!(map_id:response_map.id
+      , response_map: response_map, is_submitted: true)
+      expect(ResponseMap.responses_by_reviewer(participant)).to include(response)
+    end
+
+    # Ensures responses_by_reviewer returns an empty array if reviewer is nil
+    it 'returns an empty array if reviewer is nil' do
+      expect(ResponseMap.responses_by_reviewer(nil)).to eq([])
+    end
+  end
+
 end
