@@ -1,7 +1,11 @@
 class Api::V1::GradesController < ApplicationController
 
-# Determines if an action is allowed for users to view my scores and
-#view team or if they are a TA
+  # Determines if the current user is able to perform :action as specified by the path parameter
+  # If the user has the role of TA or higher they are granted access to all operations beyond view_team
+  # Uses a switch statement for easy maintainability if added functionality is ever needed for students or
+  # additional roles, to add more functionality simply add additional switch cases in the same syntax with
+  # case 'action' and then some boolean check determining if that is allowed or forbidden.
+  # GET /api/v1/grades/:action/action_allowed
   def action_allowed
     permitted = case params[:action]
                 when 'view_team'
@@ -12,15 +16,19 @@ class Api::V1::GradesController < ApplicationController
     render json: { allowed: permitted }, status: permitted ? :ok : :forbidden
   end
 
-  # Provides the needed functionality of rendering values required to view and render the
-  # review heat map in the frontend from the TA perspective
+  # Provides the needed functionality of querying needed values from the backend db and returning them to build the
+  # heat map in the frontend from the TA/staff view.  These values are set in the get_data_for_heat_map method
+  # which takes the assignment id as a parameter.
+  # GET /api/v1/grades/:id/view
   def view
     get_data_for_heat_map(params[:id])
     render json: {scores: @scores, assignment: @assignment, averages: @averages, avg_of_avg: @avg_of_avg, review_score_count: @review_score_count }, status: :ok
   end
 
   # Provides all relevant data for the student perspective for the heat map page as well as the
-  # questionnaires.
+  # needed information to showcase the questionaires from the student view.  Additionally, handles the removal of user
+  # identification in the reviews within the hide_reviewers_rom_student method.
+  # GET /api/v1/grades/:id/view_team
   def view_team
     get_data_for_heat_map(params[:id])
     @scores[:participants] = hide_reviewers_from_student
@@ -29,8 +37,9 @@ class Api::V1::GradesController < ApplicationController
     render json: {scores: @scores, assignment: @assignment, averages: @averages, avg_of_avg: @avg_of_avg, review_score_count: @review_score_count, questions: questions }, status: :ok
   end
 
-  # Sets information for editing the grade information, setting the scores
-  # for every question after listing the questions out
+  # Sets information required for editing the grade information, this includes the participant, questions, scores, and
+  # assignment
+  # GET /api/v1/grades/:id/edit
   def edit
     participant = AssignmentParticipant.find(params[:id])
     if participant.nil?
@@ -43,9 +52,12 @@ class Api::V1::GradesController < ApplicationController
     render json: {participant: participant, questions: questions, scores: scores, assignment: assignment}, status: :ok
   end
 
-  #  Provides functionality for instructors to perform review on an assignment
-  #  appropriately redirects the instructor to the correct page based on whether
-  #  or not the review already exists within the system.
+  # Provides functionality that handles informing the frontend which controller and action to direct to for instructor
+  # review given the current state of the system.  The intended controller to handle the creation or editing of a review
+  # is the response controller, however this method just determines if a new review must be made based on figuring out
+  # whether or not an associated review_mapping exists from the participant already.  If one does they should go to
+  # Response#edit and if one does not they should go to Response#new.  Only ever returns a status of ok.
+  # GET /api/v1/grades/:id/instructor_review
   def instructor_review
     participant = AssignmentParticipant.find(params[:id])
     review_mapping = find_participant_review_mapping(participant)
