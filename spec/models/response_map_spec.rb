@@ -143,8 +143,7 @@ RSpec.describe ResponseMap, type: :model do
   describe '.responses_by_reviewer' do
     # Test for retrieving submitted responses by reviewer
     it 'returns submitted responses by reviewer' do
-      response = Response.create!(map_id:response_map.id
-      response_map: response_map, is_submitted: true)
+      response = Response.create!(map_id:response_map.id, response_map: response_map, is_submitted: true)
       expect(ResponseMap.responses_by_reviewer(participant)).to include(response)
     end
 
@@ -161,11 +160,25 @@ RSpec.describe ResponseMap, type: :model do
       expect(ResponseMap.responses_for_assignment(assignment)).to include(response)
     end
 
-
     # Ensures responses_for_assignment returns an empty array if assignment is nil
     it 'returns an empty array if assignment is nil' do
       expect(ResponseMap.responses_for_assignment(nil)).to eq([])
     end
   end
 
+  describe '#response_assignment' do
+    # Test to verify that response_assignment returns the correct assignment associated with the team
+    it 'returns the assignment associated with the reviewer’s team' do
+      expect(response_map.response_assignment).to eq(participant.assignment)
+    end
+  end
+
+  describe '#response_count' do
+    # Tests that response_count method correctly counts responses
+    it 'returns the correct count of associated responses' do
+      Response.create!(map_id: response_map.id, response_map: response_map, is_submitted: true)
+      Response.create!(map_id: response_map.id, response_map: response_map, is_submitted: true)
+      expect(response_map.response_count).to eq(2)
+    end
+  end
 end
