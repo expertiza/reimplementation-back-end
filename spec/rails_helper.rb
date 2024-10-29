@@ -18,6 +18,11 @@ rescue ActiveRecord::PendingMigrationError => e
   abort e.to_s.strip
 end
 RSpec.configure do |config|
+  # If there aren't any users, make sure the db is seeded
+  if User.count.zero?
+    Rails.application.load_seed
+  end
+
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   # config.fixture_path = Rails.root.join('spec/fixtures')
 

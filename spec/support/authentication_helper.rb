@@ -5,10 +5,24 @@ module AuthenticationHelper
     post '/login', params: { user_name: user.email, password: password }
     JSON.parse(response.body)['token']
   end
+
   def login_admin
-    post '/login', params: { user_name: 'admin', password: 'password123' }
-    JSON.parse(response.body)['token']
+    # Raise an exception if there are no users
+    users = User.all
+    users.each { |user| puts "ID: #{user.id}, Name: #{user.name}, Email: #{user.email}" }
+
+    if User.count.zero?
+      raise 'No users found'
+    end
+    
+    # Lookup admin
+    admin_user = User.find_by(role_id: 1)
+    if admin_user.nil?
+      raise 'Admin user not found'
+    end
+    login_user(admin_user, 'password123')
   end
+
   def authenticated_header(user = nil, password = 'password')
     token = user ? login_user(user, password) : login_admin
     { 'Authorization' => "Bearer #{token}" }
