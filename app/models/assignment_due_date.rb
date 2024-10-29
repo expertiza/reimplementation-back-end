@@ -1,7 +1,4 @@
 class AssignmentDueDate < DueDate
-  def self.next_due_date(assignment_id)
-    due_dates = AssignmentDueDate.where("parent_id = ? and due_at > ?", assignment_id, Time.zone.now)
-    sorted_dates = DueDate.sort_due_dates(due_dates)
-    sorted_dates.first
-  end
+  # we discussed removing this as it's technically unnecessary now, but was getting errors related to STI after deletion
+  # thinking maybe need to reset the db after deletion, will try more tomorrow
 end

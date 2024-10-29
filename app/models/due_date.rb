@@ -25,22 +25,20 @@ class DueDate < ApplicationRecord
     due_dates.sort_by(&:due_at)
   end
 
-  # I think this is unnecessary with a better implementation
-  # Class method to return the next due date out of the set
-  # def self.next_due_date(due_dates)
-  #   # need to sort first
-  #   sorted_due_dates = DueDate.sort_due_dates(due_dates)
-  #   sorted_due_dates.find { |due_date| due_date.due_at > Time.zone.now }
-  # end
+  # Fetches all due dates for the parent Assignment or Topic
+  def self.fetch_due_dates(parent_id)
+    due_dates = where('parent_id = ?', parent_id)
+    sort_due_dates(due_dates)
+  end
 
   # Class method to check if any due date is in the future
   def self.any_future_due_dates?(due_dates)
     due_dates.any? { |due_date| due_date.due_at > Time.zone.now }
   end
 
-  def set(deadline, assign_id, max_round)
+  def set(deadline, assignment_id, max_round)
     self.deadline_type_id = deadline
-    self.parent_id = assign_id
+    self.parent_id = assignment_id
     self.round = max_round
     save
   end
@@ -53,13 +51,8 @@ class DueDate < ApplicationRecord
     end
   end
 
-  # factory method for retrieving due dates based on type of the parent
-  def self.next_due_date(parent_id, type)
-    case type
-    when 'Assignment'
-      AssignmentDueDate.next_due_date(parent_id)
-    when 'SignUpTopic'
-      TopicDueDate.next_due_date(parent_id.assignment, parent_id)
-    end
+  def self.next_due_date(parent_id)
+    due_dates = fetch_due_dates(parent_id)
+    due_dates.find { |due_date| due_date.due_at > Time.zone.now }
   end
 end
