@@ -49,7 +49,7 @@ class Api::V1::GradesController < ApplicationController
     end
     assignment = participant.assignment
     questions = list_questions(assignment)
-    scores = participant_scores(participant, questions)
+    scores = review_grades(assignment, questions)
     render json: {participant: participant, questions: questions, scores: scores, assignment: assignment}, status: :ok
   end
 
