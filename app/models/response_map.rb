@@ -81,6 +81,13 @@ class ResponseMap < ApplicationRecord
           .includes(:response)
           .flat_map { |map| map.response.select(&:is_submitted) }
     end
+
+    # Retrieves all responses associated with a specific assignment.
+    def responses_for_assignment(assignment)
+      return [] if assignment.nil?
+
+      fetch_submitted_responses(for_assignment(assignment.id))
+    end
     
     private
 
@@ -124,7 +131,18 @@ class ResponseMap < ApplicationRecord
           .compact
           .select(&:is_submitted)
     end
+
+      
+
+    # Retrieves only submitted responses from a collection of maps.
+    def fetch_submitted_responses(maps)
+      maps.with_submitted_responses
+          .includes(:response)
+          .flat_map { |map| map.response.select(&:is_submitted) }
+    end
   end
+
+  
 
   # Instance Methods:
   # - Instance-level methods for ResponseMap objects
