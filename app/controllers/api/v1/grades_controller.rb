@@ -100,7 +100,7 @@ class Api::V1::GradesController < ApplicationController
     questions = {}
     questionnaires = assignment.questionnaires
     questionnaires.each do |questionnaire|
-      questionnaire[questionnaire.id.to_s.to_sym] = questionnaire.questions
+      questions[questionnaire.id.to_s.to_sym] = questionnaire.questions
     end
     questions
   end
