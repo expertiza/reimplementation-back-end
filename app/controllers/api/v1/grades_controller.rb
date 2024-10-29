@@ -61,7 +61,13 @@ class Api::V1::GradesController < ApplicationController
   # Response#edit and if one does not they should go to Response#new.  Only ever returns a status of ok.
   # GET /api/v1/grades/:id/instructor_review
   def instructor_review
-    participant = AssignmentParticipant.find(params[:id])
+    begin
+      participant = AssignmentParticipant.find(params[:id])
+    rescue ActiveRecord::RecordNotFound
+      render json: { message: "Assignment participant #{params[:id]} not found" }, status: :not_found
+      return
+    end
+    
     review_mapping = find_participant_review_mapping(participant)
     if review_mapping.new_record?
       render json: { controller: 'response', action: 'new', id: review_mapping.map_id,
@@ -80,6 +86,7 @@ class Api::V1::GradesController < ApplicationController
   # PATCH /api/v1/grades/:participant_id/update/:grade_for_submission
   def update
     participant = AssignmentParticipant.find_by(id: params[:participant_id])
+
     team = participant.team
     team.grade_for_submission = params[:grade_for_submission]
     team.comment_for_submission = params[:comment_for_submission]

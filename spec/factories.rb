@@ -1,5 +1,5 @@
 FactoryBot.define do
-  
+
   factory :participant_score do
     association :assignment_participant, factory: :assignment_participant
     assignment { assignment_participant.assignment }
@@ -37,6 +37,11 @@ FactoryBot.define do
     institution
     role { Role.find_by(name: 'student') || create(:role, name: 'student') }
 
+  end
+
+  factory :review_mapping do
+    assignment_participant
+    # add any other necessary attributes here
   end
 
   factory :instructor, class: 'Instructor' do

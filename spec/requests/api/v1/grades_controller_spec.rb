@@ -1,5 +1,8 @@
 require 'swagger_helper'
 
+# Given the fact that our knowledge of the other models are very limited, we used an extensive amount of ChatGPT to
+# help generate a lot of the information in this file. Granted, a lot of this was tweaked by hand to fix the issues
+# but ChatGPT did generate a lot of the backbone of information used in these test cases
 RSpec.describe 'Grades API', type: :request do
   before do
 
@@ -53,6 +56,7 @@ RSpec.describe 'Grades API', type: :request do
   before(:each) do
     post '/login', params: { user_name: @instructor.name, password: 'password' }
     @token = JSON.parse(response.body)['token']
+    #allow_any_instance_of(GradesController).to receive(:session).and_return({ user: @instructor })
   end
 
   path '/api/v1/grades/{action}/action_allowed' do
@@ -133,6 +137,51 @@ RSpec.describe 'Grades API', type: :request do
 
       response(404, 'not found') do
         let(:id) { 9999 }
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['message']).to eq("Assignment participant 9999 not found")
+        end
+      end
+    end
+  end
+
+  path '/api/v1/grades/{id}/instructor_review' do
+    parameter name: 'id', in: :path, type: :integer, description: 'Assignment Participant ID', required: true
+
+    let(:id) { @participant.id }
+
+    get('instructor_review') do
+      tags 'Grades'
+      let(:'Authorization') { "Bearer #{@token}" }
+
+      response(200, 'successful when creating a new review mapping') do
+        # Here we let the actual method be called to set up the new mapping
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['controller']).to eq('response')
+          expect(data['action']).to eq('new')
+          expect(data['id']).to be_present
+          expect(data['return']).to eq('instructor')
+        end
+      end
+
+      response(200, 'successful when editing an existing review') do
+        # Create a review mapping and response to test editing
+        let!(:review_mapping) { create(:review_mapping, assignment_participant: @participant) }
+        let!(:response_record) { create(:response, map_id: review_mapping.id) }
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['controller']).to eq('response')
+          expect(data['action']).to eq('edit')
+          expect(data['id']).to eq(response_record.id)
+          expect(data['return']).to eq('instructor')
+        end
+      end
+
+      response(404, 'not found') do
+        let(:id) { 9999 }
+
         run_test! do |response|
           data = JSON.parse(response.body)
           expect(data['message']).to eq("Assignment participant 9999 not found")
