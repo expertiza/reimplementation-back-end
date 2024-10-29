@@ -1,13 +1,10 @@
 class TopicDueDate < DueDate
+  # overwrite super method with additional logic to check for topic first
   def self.next_due_date(assignment_id, topic_id)
-    next_due_dates = where('parent_id = ? and due_at >= ?', topic_id, Time.zone.now)
+    next_due_date = super(topic_id)
 
-    # If there are no due dates for the topic, then check if there are any due dates for the assignment
-    if next_due_dates.any? == false
-      next_due_dates = where('parent_id = ? and due_at >= ?', assignment_id, Time.zone.now)
-    end
+    next_due_date ||= DueDate.next_due_date(assignment_id)
 
-    # Sort the due dates and return the next due date
-    sort_due_dates(next_due_dates).first
+    next_due_date
   end
 end
