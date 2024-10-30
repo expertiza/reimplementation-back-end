@@ -15,7 +15,6 @@ class Api::V1::UsersController < ApplicationController
 
   # POST /users
   def create
-    Rails.logger.info("test")
     # Add default password for a user if the password is not provided
     params[:user][:password] ||= 'password'
     user = User.new(user_params)
