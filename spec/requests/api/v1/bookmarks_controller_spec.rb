@@ -156,6 +156,61 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         expect(JSON.parse(response.body)['rating']).to eq(5)
       end
     end
+    # save_bookmark_rating_score
+    describe 'POST /api/v1/bookmarks/:id/bookmarkratings' do
+        it 'allows the student to create a bookmark rating' do
+            # Prepare the bookmark
+            bookmark = create_bookmark(@student)
+    
+            # Now add the bookmark rating to the database
+            post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: 5 }, headers: @student_headers
+            expect(response).to have_http_status(:ok)
+    
+            # Check that the bookmark rating was added to the database
+            expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @student.id, rating: 5)).to be_truthy
+        end
+        it 'allows the student to update a bookmark rating' do
+            # Prepare the bookmark
+            bookmark = create_bookmark(@student)
+    
+            # Now add the bookmark rating to the database
+            post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: 5 }, headers: @student_headers
+            expect(response).to have_http_status(:ok)
+
+            post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: 4 }, headers: @student_headers
+            expect(response).to have_http_status(:ok)
+    
+            # Check that the bookmark rating was added to the database
+            expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @student.id, rating: 4)).to be_truthy
+        end
+        it 'does not let the student create a bookmark rating with invalid parameters' do
+            # Prepare the bookmark
+            bookmark = create_bookmark(@student)
+    
+            # Now add the bookmark rating to the database
+            post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: "a" }, headers: @student_headers
+            expect(response).to have_http_status(:unprocessable_entity)
+    
+            # Check that the bookmark rating was not added to the database
+            expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @student.id, rating: "a")).to be_nil
+        end
+        it 'allows the student to create a bookmark rating on a bookmark that belongs to another student' do
+            # Create another student and their bookmark
+            another_student = create(:user, role_id: Role.find_by(name: 'Student').id)
+            bookmark = create_bookmark(@another_student)
+    
+            # Now add the bookmark rating to the database
+            post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: 5 }, headers: @student_headers
+            expect(response).to have_http_status(:ok)
+    
+            # Check that the bookmark rating was not added to the database
+            expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @student.id, rating: 5)).to be_truthy
+        end
+        it 'does not let the student create a bookmark rating that does not exist' do
+            post '/api/v1/bookmarks/1/bookmarkratings', params: { rating: 5 }, headers: @student_headers
+            expect(response).to have_http_status(:not_found)
+        end
+        end
   end
 
   describe Ta do

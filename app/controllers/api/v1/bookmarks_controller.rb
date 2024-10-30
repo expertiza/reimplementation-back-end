@@ -83,7 +83,8 @@ class Api::V1::BookmarksController < ApplicationController
     # Find the bookmark rating object
     @bookmark_rating = BookmarkRating.where(bookmark_id: @bookmark.id, user_id: @current_user.id).first
     if @bookmark_rating.blank?
-      @bookmark_rating = BookmarkRating.create(bookmark_id: @bookmark.id, user_id: @current_user.id, rating: params[:rating])
+      @bookmark_rating = BookmarkRating.new(bookmark_id: @bookmark.id, user_id: @current_user.id, rating: params[:rating])
+      @bookmark_rating.save!
     else
       @bookmark_rating.update({'rating': params[:rating].to_i})
     end
