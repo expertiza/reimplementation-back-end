@@ -107,6 +107,36 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         expect(response).to have_http_status(:not_found)
       end
     end
+    # DELETE
+    describe 'DELETE /api/v1/bookmarks/:id' do
+      it 'lets the student delete their own bookmark' do
+        # Prepare the bookmark
+        bookmark = create_bookmark(@student)
+
+        # Delete the bookmark
+        delete "/api/v1/bookmarks/#{bookmark.id}", headers: @student_headers
+        expect(response).to have_http_status(204) # No Content
+
+        # Check that the bookmark was deleted from the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+      end
+      it 'does not let the student delete a bookmark that belongs to another student' do
+        # Create another student and their bookmark
+        another_student = create(:user, role_id: Role.find_by(name: 'Student').id)
+        bookmark = create_bookmark(@another_student)
+
+        # Delete the bookmark
+        delete "/api/v1/bookmarks/#{bookmark.id}", headers: @student_headers
+        expect(response).to have_http_status(:forbidden)
+
+        # Check that the bookmark was not deleted from the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
+      end
+      it 'does not let the student delete a bookmark that does not exist' do
+        delete '/api/v1/bookmarks/1', headers: @student_headers
+        expect(response).to have_http_status(:not_found)
+      end
+    end
   end
 
   describe Ta do
@@ -168,7 +198,9 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
       end
     end
     # PUT
-    # Temporarily disabled while we figure out how to add TAs to classes
+    # Work in Progress :)
+    # DELETE
+    # Work in Progress :)
   end
 
   describe Instructor do
@@ -270,6 +302,38 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
 
         # Check that the bookmark was not updated in the database
         expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google', description: 'Search Engine')).to be_nil
+      end
+    end
+    # DELETE
+    describe 'DELETE /api/v1/bookmarks/:id' do
+      it 'lets the instructor delete a bookmark for their own assignment' do
+        # Prepare the bookmark
+        bookmark = create_bookmark
+
+        # Delete the bookmark
+        delete "/api/v1/bookmarks/#{bookmark.id}", headers: @instructor_headers
+        expect(response).to have_http_status(204) # No Content
+
+        # Check that the bookmark was deleted from the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+      end
+      it 'does not let the instructor delete a bookmark that does not exist' do
+        delete '/api/v1/bookmarks/1', headers: @instructor_headers
+        expect(response).to have_http_status(:not_found)
+      end
+      it 'does not let the instructor delete a bookmark for another instructors assignment' do
+        # Create another instructor and their bookmark
+        bookmark = create_bookmark
+        # Create another instructor
+        another_instructor = create(:user, role_id: Role.find_by(name: 'Instructor').id)
+        another_instructor_headers = authenticated_header(another_instructor)
+
+        # Delete the bookmark
+        delete "/api/v1/bookmarks/#{bookmark.id}", headers: another_instructor_headers
+        expect(response).to have_http_status(:forbidden)
+
+        # Check that the bookmark was not deleted from the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
       end
     end
   end
@@ -383,6 +447,41 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         expect(response).to have_http_status(:not_found)
       end
     end
+    # DELETE
+    describe 'DELETE /api/v1/bookmarks/:id' do
+      it 'lets the administrator delete a bookmark if they are the parent of the instructor who created the assignment' do
+        # Create the bookmark
+        bookmark = create_bookmark
+        # Find the instructor
+        instructor = User.find(bookmark.topic.assignment.course.instructor_id)
+        # Make the administrator the parent of the instructor
+        instructor.parent_id = @admin.id
+        instructor.save
+
+        # Delete the bookmark
+        delete "/api/v1/bookmarks/#{bookmark.id}", headers: @admin_headers
+        expect(response).to have_http_status(204) # No Content
+
+        # Check that the bookmark was deleted from the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+      end
+      it 'does not let the administrator delete a bookmark if they are not the parent of the instructor who created the assignment' do
+        # Create the bookmark
+        bookmark = create_bookmark
+        # The administrator is not the parent of the instructor at this point
+
+        # Delete the bookmark
+        delete "/api/v1/bookmarks/#{bookmark.id}", headers: @admin_headers
+        expect(response).to have_http_status(:forbidden)
+
+        # Check that the bookmark was not deleted from the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
+      end
+      it 'does not let the administrator delete a bookmark that does not exist' do
+        delete '/api/v1/bookmarks/1', headers: @admin_headers
+        expect(response).to have_http_status(:not_found)
+      end
+    end
   end
 
   describe SuperAdministrator do
@@ -472,6 +571,24 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         expect(response).to have_http_status(:not_found)
       end
     end
+    # DELETE
+    describe 'DELETE /api/v1/bookmarks/:id' do
+      it 'lets the super administrator delete a bookmark' do
+        # Prepare the bookmark
+        bookmark = create_bookmark
+
+        # Delete the bookmark
+        delete "/api/v1/bookmarks/#{bookmark.id}", headers: @super_admin_headers
+        expect(response).to have_http_status(204) # No Content
+
+        # Check that the bookmark was deleted from the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+      end
+      it 'does not let the super administrator delete a bookmark that does not exist' do
+        delete '/api/v1/bookmarks/1', headers: @super_admin_headers
+        expect(response).to have_http_status(:not_found)
+      end
+    end
   end
 
   describe 'user that has not signed in' do
@@ -527,6 +644,42 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
 
         # Check that the bookmark was not added to the database
         expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+      end
+    end
+    # PUT
+    describe 'PUT /api/v1/bookmarks/:id' do
+      it 'does not let users who are not signed in update a bookmark' do
+        # Prepare the bookmark
+        bookmark = create_bookmark
+
+        # Update the bookmark
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }
+        expect(response).to have_http_status(http_unauthorized)
+
+        # Check that the bookmark was updated in the database
+        expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google', description: 'Search Engine')).to be_nil
+      end
+      it 'does not let users who are not signed in update a bookmark that does not exist' do
+        put '/api/v1/bookmarks/1', params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }
+        expect(response).to have_http_status(http_unauthorized)
+      end
+    end
+    # DELETE
+    describe 'DELETE /api/v1/bookmarks/:id' do
+      it 'does not let users who are not signed in delete a bookmark' do
+        # Prepare the bookmark
+        bookmark = create_bookmark
+
+        # Delete the bookmark
+        delete "/api/v1/bookmarks/#{bookmark.id}"
+        expect(response).to have_http_status(http_unauthorized)
+
+        # Check that the bookmark was deleted from the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
+      end
+      it 'does not let users who are not signed in delete a bookmark that does not exist' do
+        delete '/api/v1/bookmarks/1'
+        expect(response).to have_http_status(http_unauthorized)
       end
     end
   end
