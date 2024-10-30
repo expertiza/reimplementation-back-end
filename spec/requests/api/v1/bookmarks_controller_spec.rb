@@ -220,6 +220,82 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
     # Work in Progress :)
     # DELETE
     # Work in Progress :)
+    # PUT
+    # PUT
+    describe 'PUT /api/v1/bookmarks/:id' do
+      it 'lets the ta update a bookmark for their own assignment' do
+        # Prepare the bookmark
+        bookmark = create_bookmark(@ta)
+  
+        # Update the bookmark
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @ta_headers
+        expect(response).to have_http_status(:ok)
+  
+        # Check that the bookmark was updated in the database
+        expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google', description: 'Search Engine')).to be_truthy
+      end
+      it 'does not let the ta update a bookmark with invalid parameters' do
+        # Prepare the bookmark
+        bookmark = create_bookmark(@ta)
+  
+        # Update the bookmark
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: nil, title: nil, description: nil } }, headers: @ta_headers
+        expect(response).to have_http_status(:unprocessable_entity)
+  
+        # Check that the bookmark was not updated in the database
+        expect(Bookmark.find_by(url: nil, title: nil, description: nil)).to be_nil
+      end
+      it 'does not let the ta update a bookmark that does not exist' do
+        put '/api/v1/bookmarks/1', params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @ta_headers
+        expect(response).to have_http_status(:not_found)
+      end
+      it 'does not let the ta update a bookmark for another tas assignment' do
+        # Create another instructor and their bookmark
+        bookmark = create_bookmark(@ta)
+        # Create another ta
+        another_ta = create(:user, role_id: Role.find_by(name: 'Teaching Assistant').id)
+        another_ta_headers = authenticated_header(another_ta)
+  
+        # Update the bookmark
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: another_ta_headers
+        expect(response).to have_http_status(:forbidden)
+  
+        # Check that the bookmark was not updated in the database
+        expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google', description: 'Search Engine')).to be_nil
+      end
+    end
+    # DELETE
+    describe 'DELETE /api/v1/bookmarks/:id' do
+      it 'lets the ta delete a bookmark for their own assignment' do
+        # Prepare the bookmark
+        bookmark = create_bookmark(@ta)
+  
+        # Delete the bookmark
+        delete "/api/v1/bookmarks/#{bookmark.id}", headers: @ta_headers
+        expect(response).to have_http_status(204) # No Content
+  
+        # Check that the bookmark was deleted from the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+      end
+      it 'does not let the ta delete a bookmark that does not exist' do
+        delete '/api/v1/bookmarks/1', headers: @ta_headers
+        expect(response).to have_http_status(:not_found)
+      end
+      it 'does not let the ta delete a bookmark for another tas assignment' do
+        # Create another instructor and their bookmark
+        bookmark = create_bookmark(@ta)
+        # Create another ta
+        another_ta = create(:user, role_id: Role.find_by(name: 'Teaching Assistant').id)
+        another_ta_headers = authenticated_header(another_ta)
+  
+        # Delete the bookmark
+        delete "/api/v1/bookmarks/#{bookmark.id}", headers: another_ta_headers
+        expect(response).to have_http_status(:forbidden)
+  
+        # Check that the bookmark was not deleted from the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
+      end
+    end
     # get_bookmark_rating_score
     describe 'GET /api/v1/bookmarks/:id/bookmarkratings' do
       it 'allows the ta to query a bookmark rating that does not exist' do
@@ -802,10 +878,21 @@ def prepare_bookmark(user = nil)
   # Create an instructor if it does not exist
   instructor = create(:user, role_id: Role.find_by(name: 'Instructor').id) if instructor.nil?
   
+  # Look for a TA
+  ta = User.find_by(role: Role.find_by(name: 'Teaching Assistant'))
+  # Create a TA if it does not exist
+  ta = create(:user, role_id: Role.find_by(name: 'Teaching Assistant').id) if ta.nil?
+
   # Look for a course
   course = Course.find_by(instructor_id: instructor.id)
   # Create a course if it does not exist
+#   course = create(:course, instructor_id: instructor.id, tas: [ta]) if course.nil?
   course = create(:course, instructor_id: instructor.id) if course.nil?
+  if user && user.role.name == 'Teaching Assistant'
+    course.add_ta(user)
+  else
+    course.add_ta(ta)
+  end
   
   # Look for an assignment
   assignment = Assignment.find_by(course_id: course.id)

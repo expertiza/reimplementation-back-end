@@ -135,7 +135,9 @@ private
             bookmark.user == user
         when 'Teaching Assistant'
             # edit, update, delete bookmarks can only be done by TA of the assignment
-            bookmark.topic.assignment.ta == user
+            # course has_many :tas, through: :ta_mappings
+            TaMapping.exists?(ta_id: user.id, course_id: bookmark.topic.assignment.course.id)
+            # bookmark.topic.assignment.course.tas.include?(user)
         when 'Instructor'
             # edit, update, delete bookmarks can only be done by instructor of the assignment
             bookmark.topic.assignment.instructor == user
