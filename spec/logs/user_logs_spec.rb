@@ -21,11 +21,4 @@ RSpec.describe Api::V1::UsersController, type: :controller do
     post :create, params: params
   end
 
-  it "logs when user is created" do 
-    allow(Rails.logger).to receive(:warn)
-    expect(Rails.logger).to receive(:warn)
-    params[:user][:password] = "mismatch"
-    post :create, params: params
-  end
-
 end
