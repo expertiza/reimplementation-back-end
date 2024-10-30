@@ -5,14 +5,14 @@ class Api::V1::SuggestionsController < ApplicationController
     render json: SuggestionComment.create!(
       comment: params[:comment],
       suggestion_id: params[:id],
-      user_id: session[:user].id
+      user_id: @current_user.id
     ), status: :ok
   rescue ActiveRecord::RecordInvalid => e
     render json: e.record.errors, status: :unprocessable_entity
   end
 
   def approve
-    if current_user_has_ta_privileges?
+    if PrivilegeHelper.current_user_has_ta_privileges?
       transaction do
         @suggestion = Suggestion.find(params[:id])
         @suggestion.update_attribute('status', 'Approved')
@@ -40,14 +40,14 @@ class Api::V1::SuggestionsController < ApplicationController
       status: 'Initialized',
       auto_signup: params[:auto_signup],
       assignment_id: params[:assignment_id],
-      user_id: params[:suggestion_anonymous] ? nil : session[:user].id
+      user_id: params[:suggestion_anonymous] ? nil : @current_user.id
     ), status: :ok
   rescue ActiveRecord::RecordInvalid => e
     render json: e.record.errors, status: :unprocessable_entity
   end
 
   def destroy
-    if current_user_has_ta_privileges?
+    if PrivilegeHelper.current_user_has_ta_privileges?
       Suggestion.find(params[:id]).destroy!
       render json: {}, status: :ok
     else
@@ -60,7 +60,7 @@ class Api::V1::SuggestionsController < ApplicationController
   end
 
   def index
-    if current_user_has_ta_privileges?
+    if PrivilegeHelper.current_user_has_ta_privileges?
       render json: Suggestion.where(assignment_id: params[:id]), status: :ok
     else
       render json: { error: 'Students do not have permission to view all suggestions.' }, status: :forbidden
@@ -68,7 +68,7 @@ class Api::V1::SuggestionsController < ApplicationController
   end
 
   def reject
-    if current_user_has_ta_privileges?
+    if PrivilegeHelper.current_user_has_ta_privileges?
       suggestion = Suggestion.find(params[:id])
       if suggestion.status == 'Initialized'
         suggestion.update_attribute('status', 'Rejected')
@@ -85,7 +85,9 @@ class Api::V1::SuggestionsController < ApplicationController
 
   def show
     @suggestion = Suggestion.find(params[:id])
-    if @suggestion.user_id == session[:user].id || current_user_has_ta_privileges?
+    puts @suggestion.user_id
+    puts @current_user.id
+    if @suggestion.user_id == @current_user.id || PrivilegeHelper.current_user_has_ta_privileges?
       render json: {
         suggestion: @suggestion,
         comments: SuggestionComment.where(suggestion_id: params[:id])
