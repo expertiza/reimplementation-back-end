@@ -1,5 +1,6 @@
 class Api::V1::BookmarksController < ApplicationController
   include AuthorizationHelper
+  # ensure that action_allowed? returns true before any action
   before_action :check_action_allowed
 
   # Index method returns the list of JSON objects of the bookmark
@@ -118,7 +119,6 @@ private
     # Get the role of the user
     user_role_name = decoded_token[:role]
     user_role = Role.find_by(name: user_role_name)
-
     case params[:action]
     when 'list', 'index', 'show', 'get_bookmark_rating_score'
       # Those with student privileges and above can view the list of bookmarks
