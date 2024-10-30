@@ -91,6 +91,32 @@ RSpec.describe DueDate, type: :model do
     end
   end
 
+  describe '.copy' do
+    let(:assignment) { Assignment.create(id: 1, name: 'Test Assignment', instructor:) }
+    let(:assignment2) { Assignment.create(id: 2, name: 'Test Assignment2', instructor:) }
+    it 'copies the due dates from one assignment to another' do
+      due_date1 = DueDate.create(parent: assignment, due_at: 2.days.from_now, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3)
+      due_date2 = DueDate.create(parent: assignment, due_at: 3.days.from_now, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3)
+      due_date3 = DueDate.create(parent: assignment, due_at: 3.days.ago, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3)
+
+      assign1_due_dates = DueDate.fetch_due_dates(assignment.id)
+      assign1_due_dates.each { |due_date| due_date.copy(assignment2.id) }
+      assign2_due_dates = DueDate.fetch_due_dates(assignment2.id)
+
+      excluded_attributes = %w[id created_at updated_at parent parent_id]
+
+      assign1_due_dates.zip(assign2_due_dates).each do |original, copy|
+        original_attributes = original.attributes.except(*excluded_attributes)
+        copied_attributes = copy.attributes.except(*excluded_attributes)
+
+        expect(copied_attributes).to eq(original_attributes)
+      end
+    end
+  end
+
   describe '.next_due_date' do
     context 'when parent_type is Assignment' do
       let(:assignment) { Assignment.create(id: 1, name: 'Test Assignment', instructor:) }
@@ -159,18 +185,22 @@ RSpec.describe DueDate, type: :model do
     end
   end
 
-  describe '#due_at validation' do
+  describe 'validation' do
     let(:assignment) { Assignment.create(id: 1, name: 'Test Assignment', instructor:) }
 
-    it 'is invalid without a parent, due_at, submission_allowed_id, review_allowed_id, or deadline_type_id' do
-      due_date1 = DueDate.create(parent: nil, due_at: 2.days.from_now)
-      expect(due_date1).to be_invalid
-
-      due_date2 = DueDate.create(parent: assignment, due_at: nil)
-      expect(due_date2).to be_invalid
+    it 'is invalid without a parent' do
+      due_date = DueDate.create(parent: nil, due_at: 2.days.from_now, submission_allowed_id: 3,
+                                review_allowed_id: 3, deadline_type_id: 3)
+      expect(due_date).to be_invalid
     end
 
-    it 'is valid with a due_at' do
+    it 'is invalid without a due_at' do
+      due_date = DueDate.create(parent: assignment, due_at: nil, submission_allowed_id: 3,
+                                review_allowed_id: 3, deadline_type_id: 3)
+      expect(due_date).to be_invalid
+    end
+
+    it 'is valid with required fields' do
       due_date = DueDate.create(parent: assignment, due_at: 2.days.from_now, submission_allowed_id: 3,
                                 review_allowed_id: 3, deadline_type_id: 3)
       expect(due_date).to be_valid
