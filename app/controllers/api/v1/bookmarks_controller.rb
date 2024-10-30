@@ -1,6 +1,7 @@
 class Api::V1::BookmarksController < ApplicationController
   include AuthorizationHelper
-  before_action :action_allowed?
+  # ensure that action_allowed? returns true before any action
+  before_action :check_action_allowed
 
   # Index method returns the list of JSON objects of the bookmark
   # GET on /bookmarks
@@ -91,18 +92,19 @@ class Api::V1::BookmarksController < ApplicationController
     params.require(:bookmark).permit(:url, :title, :description)
   end
 
+
   # Check if the user is allowed to perform the action
   def action_allowed?
-    user = session[:user]
+    user = @current_user
     case params[:action]
     when 'list', 'index', 'show', 'get_bookmark_rating_score'
       # Those with student privileges and above can view the list of bookmarks
       current_user_has_student_privileges?
     when 'new', 'create', 'bookmark_rating', 'save_bookmark_rating_score'
       # Those with strictly student privileges can create a new bookmark, rate a bookmark, or save a bookmark rating
-      # current_user_has_student_privileges? && !current_user_has_ta_privileges?
+      current_user_has_student_privileges? && !current_user_has_ta_privileges?
       # This should work in theory, and it is cleaner!
-      user.role.student?
+      # user.role.student?
     when 'edit', 'update', 'destroy'
       # Get the bookmark object
       bookmark = Bookmark.find(params[:id])
@@ -123,6 +125,12 @@ class Api::V1::BookmarksController < ApplicationController
             # edit, update, delete bookmarks can be done by super administrator
             true
         end
+    end
+  end
+
+  def check_action_allowed
+    unless action_allowed?
+      render json: { error: 'Unauthorized access' }, status: :unauthorized
     end
   end
 
