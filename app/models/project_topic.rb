@@ -20,7 +20,7 @@ class ProjectTopic < ApplicationRecord
   end
 
   def find_team_project_topics(assignment_id, team_id)
-    SignedUpTeam.joins('INNER JOIN project_topics ON signed_up_teams.topic_id = project_topics.id')
+    SignedUpTeam.joins('INNER JOIN project_topics ON signed_up_teams.sign_up_topic_id = project_topics.id')
                 .select('project_topics.id as topic_id, project_topics.topic_name as topic_name, signed_up_teams.is_waitlisted as is_waitlisted,
                   signed_up_teams.preference_priority_number as preference_priority_number')
                 .where('project_topics.assignment_id = ? and signed_up_teams.team_id = ?', assignment_id, team_id)
@@ -32,6 +32,7 @@ class ProjectTopic < ApplicationRecord
 
   def save_waitlist_entry(new_sign_up)
     new_sign_up.is_waitlisted = true
+    new_sign_up.sign_up_topic_id = self.id
     result = new_sign_up.save
     result
   end
