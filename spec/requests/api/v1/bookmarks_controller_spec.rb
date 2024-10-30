@@ -217,11 +217,6 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
       end
     end
     # PUT
-    # Work in Progress :)
-    # DELETE
-    # Work in Progress :)
-    # PUT
-    # PUT
     describe 'PUT /api/v1/bookmarks/:id' do
       it 'lets the ta update a bookmark for their own assignment' do
         # Prepare the bookmark
