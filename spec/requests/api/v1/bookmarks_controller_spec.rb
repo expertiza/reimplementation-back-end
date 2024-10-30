@@ -66,6 +66,31 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
       end
     end
+    # post
+    describe 'POST /api/v1/bookmarks' do
+      it 'lets the student create a bookmark' do
+        # Prepare the bookmark
+        bookmark = prepare_bookmark
+
+        # Now add the bookmark to the database
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @student_headers
+        expect(response).to have_http_status(:created)
+
+        # Check that the bookmark was added to the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
+      end
+      it 'does not let the student create a bookmark with invalid parameters' do
+        # Create a bookmark, but don't add it to the database
+        bookmark = build(:bookmark, user_id: nil, topic_id: nil)
+
+        # Now add the bookmark to the database
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @student_headers
+        expect(response).to have_http_status(:unprocessable_entity)
+
+        # Check that the bookmark was not added to the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+      end
+    end
   end
 
   describe Ta do
@@ -99,6 +124,31 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         get "/api/v1/bookmarks/#{bookmark.id}", headers: @ta_headers
         expect(response).to have_http_status(:ok)
         expect(JSON.parse(response.body)).to eq(JSON.parse(bookmark.to_json))
+      end
+    end
+    # post
+    describe 'POST /api/v1/bookmarks' do
+      it 'does not let the student create a bookmark' do
+        # Prepare the bookmark
+        bookmark = prepare_bookmark
+
+        # Now add the bookmark to the database
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @ta_headers
+        expect(response).to have_http_status(:forbidden)
+
+        # Check that the bookmark was added to the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+      end
+      it 'does not let the student create a bookmark with invalid parameters' do
+        # Create a bookmark, but don't add it to the database
+        bookmark = build(:bookmark, user_id: nil, topic_id: nil)
+
+        # Now add the bookmark to the database
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @ta_headers
+        expect(response).to have_http_status(:forbidden)
+
+        # Check that the bookmark was not added to the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
       end
     end
   end

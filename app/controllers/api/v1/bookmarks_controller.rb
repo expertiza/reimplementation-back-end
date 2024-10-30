@@ -1,6 +1,6 @@
 class Api::V1::BookmarksController < ApplicationController
   include AuthorizationHelper
-  before_action :action_allowed?
+  before_action :check_action_allowed
 
   # Index method returns the list of JSON objects of the bookmark
   # GET on /bookmarks
@@ -81,7 +81,7 @@ class Api::V1::BookmarksController < ApplicationController
     render json: {"bookmark": @bookmark, "rating": @bookmark_rating}, status: :ok
   end
 
-  private
+private
 
   def bookmark_params
     params.require(:bookmark).permit(:url, :title, :description, :topic_id, :rating, :id)
@@ -91,18 +91,35 @@ class Api::V1::BookmarksController < ApplicationController
     params.require(:bookmark).permit(:url, :title, :description)
   end
 
+  # This method is called before each action
+  def check_action_allowed
+    if not action_allowed?
+      render json: { error: 'Access denied' }, status: :forbidden and return
+    end
+  end
+
   # Check if the user is allowed to perform the action
   def action_allowed?
-    user = session[:user]
+    token = request.headers['Authorization'].split(' ').last
+
+    # Decode the token and print the output
+    decoded_token = JsonWebToken.decode(token)
+    # Get the user from the decoded token
+    user_id = decoded_token[:id]
+    user = User.find(user_id)
+    # Get the role of the user
+    user_role_name = decoded_token[:role]
+    user_role = Role.find_by(name: user_role_name)
+
     case params[:action]
     when 'list', 'index', 'show', 'get_bookmark_rating_score'
       # Those with student privileges and above can view the list of bookmarks
-      current_user_has_student_privileges?
+      user_role.id <= Role.find_by(name: 'Student').id
     when 'new', 'create', 'bookmark_rating', 'save_bookmark_rating_score'
       # Those with strictly student privileges can create a new bookmark, rate a bookmark, or save a bookmark rating
       current_user_has_student_privileges? && !current_user_has_ta_privileges?
       # This should work in theory, and it is cleaner!
-      # user.role.student?
+      user_role.id == Role.find_by(name: 'Student').id
     when 'edit', 'update', 'destroy'
       # Get the bookmark object
       bookmark = Bookmark.find(params[:id])
@@ -125,5 +142,4 @@ class Api::V1::BookmarksController < ApplicationController
         end
     end
   end
-
 end
