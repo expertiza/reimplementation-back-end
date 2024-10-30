@@ -1,5 +1,6 @@
 FactoryBot.define do
     factory :role do
-        sequence(:name) { |n| "Role #{n}" }
+        # Default to student (role_id: 5)
+        id { 5 }
     end
 end
