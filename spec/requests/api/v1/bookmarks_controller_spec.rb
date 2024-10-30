@@ -139,22 +139,22 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
     end
     # get_bookmark_rating_score
     describe 'GET /api/v1/bookmarks/:id/bookmarkratings' do
-        it 'allows the student to query a bookmark rating that does not exist' do
-            bookmark = create_bookmark(@student)
-            get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @student_headers
-            expect(response).to have_http_status(:ok)
-            # expect JSON.parse(response.body) to be nil
-            expect(JSON.parse(response.body) == nil)
-        end
-        it 'allows the student to query a bookmark rating that exists' do
-            bookmark = create_bookmark(@student)
-            bookmark_rating = make_bookmark_rating(bookmark, 5, @student)
-            get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @student_headers
-            expect(response).to have_http_status(:ok)
-            expect(JSON.parse(response.body)).to eq(JSON.parse(bookmark_rating.to_json))
-            # Expect the rating to be 5
-            expect(JSON.parse(response.body)['rating']).to eq(5)
-        end
+      it 'allows the student to query a bookmark rating that does not exist' do
+        bookmark = create_bookmark(@student)
+        get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @student_headers
+        expect(response).to have_http_status(:ok)
+        # expect JSON.parse(response.body) to be nil
+        expect(JSON.parse(response.body) == nil)
+      end
+      it 'allows the student to query a bookmark rating that exists' do
+        bookmark = create_bookmark(@student)
+        bookmark_rating = make_bookmark_rating(bookmark, 5, @student)
+        get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @student_headers
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body)).to eq(JSON.parse(bookmark_rating.to_json))
+        # Expect the rating to be 5
+        expect(JSON.parse(response.body)['rating']).to eq(5)
+      end
     end
   end
 
@@ -222,22 +222,22 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
     # Work in Progress :)
     # get_bookmark_rating_score
     describe 'GET /api/v1/bookmarks/:id/bookmarkratings' do
-        it 'allows the ta to query a bookmark rating that does not exist' do
-            bookmark = create_bookmark(@ta)
-            get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @ta_headers
-            # expect JSON.parse(response.body) to be nil
-            expect(response).to have_http_status(:ok)
-            expect(JSON.parse(response.body) == nil)
-        end
-        it 'allows the ta to query a bookmark rating that exists' do
-            bookmark = create_bookmark(@ta)
-            bookmark_rating = make_bookmark_rating(bookmark, 5, @ta)
-            get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @ta_headers
-            expect(response).to have_http_status(:ok)
-            expect(JSON.parse(response.body)).to eq(JSON.parse(bookmark_rating.to_json))
-            # Expect the rating to be 5
-            expect(JSON.parse(response.body)['rating']).to eq(5)
-        end
+      it 'allows the ta to query a bookmark rating that does not exist' do
+        bookmark = create_bookmark(@ta)
+        get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @ta_headers
+        # expect JSON.parse(response.body) to be nil
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body) == nil)
+      end
+      it 'allows the ta to query a bookmark rating that exists' do
+        bookmark = create_bookmark(@ta)
+        bookmark_rating = make_bookmark_rating(bookmark, 5, @ta)
+        get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @ta_headers
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body)).to eq(JSON.parse(bookmark_rating.to_json))
+        # Expect the rating to be 5
+        expect(JSON.parse(response.body)['rating']).to eq(5)
+      end
     end
   end
 
@@ -373,24 +373,25 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         # Check that the bookmark was not deleted from the database
         expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
       end
+    end
     # get_bookmark_rating_score
     describe 'GET /api/v1/bookmarks/:id/bookmarkratings' do
-        it 'allows the instructor to query a bookmark rating that does not exist' do
-            bookmark = create_bookmark(@instructor)
-            get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @instructor_headers
-            expect(response).to have_http_status(:ok)
-            # expect JSON.parse(response.body) to be nil
-            expect(JSON.parse(response.body) == nil)
-        end
-        it 'allows the instructor to query a bookmark rating that exists' do
-            bookmark = create_bookmark(@instructor)
-            bookmark_rating = make_bookmark_rating(bookmark, 5, @instructor)
-            get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @instructor_headers
-            expect(response).to have_http_status(:ok)
-            expect(JSON.parse(response.body)).to eq(JSON.parse(bookmark_rating.to_json))
-            # Expect the rating to be 5
-            expect(JSON.parse(response.body)['rating']).to eq(5)
-        end
+      it 'allows the instructor to query a bookmark rating that does not exist' do
+        bookmark = create_bookmark(@instructor)
+        get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @instructor_headers
+        expect(response).to have_http_status(:ok)
+        # expect JSON.parse(response.body) to be nil
+        expect(JSON.parse(response.body) == nil)
+      end
+      it 'allows the instructor to query a bookmark rating that exists' do
+        bookmark = create_bookmark(@instructor)
+        bookmark_rating = make_bookmark_rating(bookmark, 5, @instructor)
+        get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @instructor_headers
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body)).to eq(JSON.parse(bookmark_rating.to_json))
+        # Expect the rating to be 5
+        expect(JSON.parse(response.body)['rating']).to eq(5)
+      end
     end
   end
 
@@ -537,24 +538,25 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         delete '/api/v1/bookmarks/1', headers: @admin_headers
         expect(response).to have_http_status(:not_found)
       end
+    end
     # get_bookmark_rating_score
     describe 'GET /api/v1/bookmarks/:id/bookmarkratings' do
-        it 'allows the administrator to query a bookmark rating that does not exist' do
-            bookmark = create_bookmark(@admin)
-            get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @admin_headers
-            expect(response).to have_http_status(:ok)
-            # expect JSON.parse(response.body) to be nil
-            expect(JSON.parse(response.body) == nil)
-        end
-        it 'allows the administrator to query a bookmark rating that exists' do
-            bookmark = create_bookmark(@admin)
-            bookmark_rating = make_bookmark_rating(bookmark, 5, @admin)
-            get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @admin_headers
-            expect(response).to have_http_status(:ok)
-            expect(JSON.parse(response.body)).to eq(JSON.parse(bookmark_rating.to_json))
-            # Expect the rating to be 5
-            expect(JSON.parse(response.body)['rating']).to eq(5)
-        end
+      it 'allows the administrator to query a bookmark rating that does not exist' do
+        bookmark = create_bookmark(@admin)
+        get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @admin_headers
+        expect(response).to have_http_status(:ok)
+        # expect JSON.parse(response.body) to be nil
+        expect(JSON.parse(response.body) == nil)
+      end
+      it 'allows the administrator to query a bookmark rating that exists' do
+        bookmark = create_bookmark(@admin)
+        bookmark_rating = make_bookmark_rating(bookmark, 5, @admin)
+        get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @admin_headers
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body)).to eq(JSON.parse(bookmark_rating.to_json))
+        # Expect the rating to be 5
+        expect(JSON.parse(response.body)['rating']).to eq(5)
+      end
     end
   end
 
@@ -662,24 +664,25 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         delete '/api/v1/bookmarks/1', headers: @super_admin_headers
         expect(response).to have_http_status(:not_found)
       end
+    end
     # get_bookmark_rating_score
     describe 'GET /api/v1/bookmarks/:id/bookmarkratings' do
-        it 'allows the super administrator to query a bookmark rating that does not exist' do
-            bookmark = create_bookmark(@super_admin)
-            get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @super_admin_headers
-            expect(response).to have_http_status(:ok)
-            # expect JSON.parse(response.body) to be nil
-            expect(JSON.parse(response.body) == nil)
-        end
-        it 'allows the super administrator to query a bookmark rating that exists' do
-            bookmark = create_bookmark(@super_admin)
-            bookmark_rating = make_bookmark_rating(bookmark, 5, @super_admin)
-            get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @super_admin_headers
-            expect(response).to have_http_status(:ok)
-            expect(JSON.parse(response.body)).to eq(JSON.parse(bookmark_rating.to_json))
-            # Expect the rating to be 5
-            expect(JSON.parse(response.body)['rating']).to eq(5)
-        end
+      it 'allows the super administrator to query a bookmark rating that does not exist' do
+        bookmark = create_bookmark(@super_admin)
+        get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @super_admin_headers
+        expect(response).to have_http_status(:ok)
+        # expect JSON.parse(response.body) to be nil
+        expect(JSON.parse(response.body) == nil)
+      end
+      it 'allows the super administrator to query a bookmark rating that exists' do
+        bookmark = create_bookmark(@super_admin)
+        bookmark_rating = make_bookmark_rating(bookmark, 5, @super_admin)
+        get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @super_admin_headers
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body)).to eq(JSON.parse(bookmark_rating.to_json))
+        # Expect the rating to be 5
+        expect(JSON.parse(response.body)['rating']).to eq(5)
+      end
     end
   end
 
@@ -773,21 +776,22 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         delete '/api/v1/bookmarks/1'
         expect(response).to have_http_status(http_unauthorized)
       end
+    end
     # get_bookmark_rating_score
     describe 'GET /api/v1/bookmarks/:id/bookmarkratings' do
-        it 'does not allow users who are not signed in to query a bookmark rating that does not exist' do
-            bookmark = create_bookmark
-            get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings"
-            expect(response).to have_http_status(http_not_signed_in)
-            expect(JSON.parse(response.body)).to eq('error' => 'Not Authorized')
-        end
-        it 'does not allow users who are not signed in to query a bookmark rating that exists' do
-            bookmark = create_bookmark
-            bookmark_rating = make_bookmark_rating(bookmark, 5)
-            get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings"
-            expect(response).to have_http_status(http_not_signed_in)
-            expect(JSON.parse(response.body)).to eq('error' => 'Not Authorized')
-        end
+      it 'does not allow users who are not signed in to query a bookmark rating that does not exist' do
+        bookmark = create_bookmark
+        get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings"
+        expect(response).to have_http_status(http_unauthorized)
+        expect(JSON.parse(response.body)).to eq('error' => 'Not Authorized')
+      end
+      it 'does not allow users who are not signed in to query a bookmark rating that exists' do
+        bookmark = create_bookmark
+        bookmark_rating = make_bookmark_rating(bookmark, 5)
+        get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings"
+        expect(response).to have_http_status(http_unauthorized)
+        expect(JSON.parse(response.body)).to eq('error' => 'Not Authorized')
+      end
     end
   end
 end
