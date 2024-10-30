@@ -128,7 +128,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
     end
     # post
     describe 'POST /api/v1/bookmarks' do
-      it 'does not let the student create a bookmark' do
+      it 'does not let the teaching assistant create a bookmark' do
         # Prepare the bookmark
         bookmark = prepare_bookmark
 
@@ -139,7 +139,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         # Check that the bookmark was added to the database
         expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
       end
-      it 'does not let the student create a bookmark with invalid parameters' do
+      it 'does not let the teaching assistant create a bookmark with invalid parameters' do
         # Create a bookmark, but don't add it to the database
         bookmark = build(:bookmark, user_id: nil, topic_id: nil)
 
@@ -186,6 +186,31 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         expect(JSON.parse(response.body)).to eq(JSON.parse(bookmark.to_json))
       end
     end
+    # post
+    describe 'POST /api/v1/bookmarks' do
+      it 'does not let the instructor create a bookmark' do
+        # Prepare the bookmark
+        bookmark = prepare_bookmark
+
+        # Now add the bookmark to the database
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @instructor_headers
+        expect(response).to have_http_status(:forbidden)
+
+        # Check that the bookmark was added to the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+      end
+      it 'does not let the instructor create a bookmark with invalid parameters' do
+        # Create a bookmark, but don't add it to the database
+        bookmark = build(:bookmark, user_id: nil, topic_id: nil)
+
+        # Now add the bookmark to the database
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @instructor_headers
+        expect(response).to have_http_status(:forbidden)
+
+        # Check that the bookmark was not added to the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+      end
+    end
   end
 
   describe Administrator do
@@ -219,6 +244,31 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         get "/api/v1/bookmarks/#{bookmark.id}", headers: @admin_headers
         expect(response).to have_http_status(:ok)
         expect(JSON.parse(response.body)).to eq(JSON.parse(bookmark.to_json))
+      end
+    end
+    # post
+    describe 'POST /api/v1/bookmarks' do
+      it 'does not let the administrator create a bookmark' do
+        # Prepare the bookmark
+        bookmark = prepare_bookmark
+
+        # Now add the bookmark to the database
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @admin_headers
+        expect(response).to have_http_status(:forbidden)
+
+        # Check that the bookmark was added to the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+      end
+      it 'does not let the administrator create a bookmark with invalid parameters' do
+        # Create a bookmark, but don't add it to the database
+        bookmark = build(:bookmark, user_id: nil, topic_id: nil)
+
+        # Now add the bookmark to the database
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @admin_headers
+        expect(response).to have_http_status(:forbidden)
+
+        # Check that the bookmark was not added to the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
       end
     end
   end
@@ -256,21 +306,46 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         expect(JSON.parse(response.body)).to eq(JSON.parse(bookmark.to_json))
       end
     end
+    # post
+    describe 'POST /api/v1/bookmarks' do
+      it 'does not let the super administrator create a bookmark' do
+        # Prepare the bookmark
+        bookmark = prepare_bookmark
+
+        # Now add the bookmark to the database
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @super_admin_headers
+        expect(response).to have_http_status(:forbidden)
+
+        # Check that the bookmark was added to the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+      end
+      it 'does not let the super administrator create a bookmark with invalid parameters' do
+        # Create a bookmark, but don't add it to the database
+        bookmark = build(:bookmark, user_id: nil, topic_id: nil)
+
+        # Now add the bookmark to the database
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @super_admin_headers
+        expect(response).to have_http_status(:forbidden)
+
+        # Check that the bookmark was not added to the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+      end
+    end
   end
 
   describe 'user that has not signed in' do
-    http_not_signed_in = 401
+    http_unauthorized = 401
     # index
     describe 'GET /api/v1/bookmarks' do
       it 'does not let users who are not signed in access empty lists of bookmarks' do
         get '/api/v1/bookmarks'
-        expect(response).to have_http_status(http_not_signed_in)
+        expect(response).to have_http_status(http_unauthorized)
         expect(JSON.parse(response.body)).to eq('error' => 'Not Authorized')
       end
       it 'does not let users who are not signed in access lists of bookmarks' do
         bookmark = create_bookmark
         get '/api/v1/bookmarks'
-        expect(response).to have_http_status(http_not_signed_in)
+        expect(response).to have_http_status(http_unauthorized)
         expect(JSON.parse(response.body)).to eq('error' => 'Not Authorized')
       end
     end
@@ -278,14 +353,39 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
     describe 'GET /api/v1/bookmarks/:id' do
       it 'does not allow users who are not signed in to query a bookmark that does not exist' do
         get '/api/v1/bookmarks/1'
-        expect(response).to have_http_status(http_not_signed_in)
+        expect(response).to have_http_status(http_unauthorized)
         expect(JSON.parse(response.body)).to eq('error' => 'Not Authorized')
       end
       it 'does not allow users who are not signed in to query a bookmark that exists' do
         bookmark = create_bookmark
         get "/api/v1/bookmarks/#{bookmark.id}"
-        expect(response).to have_http_status(http_not_signed_in)
+        expect(response).to have_http_status(http_unauthorized)
         expect(JSON.parse(response.body)).to eq('error' => 'Not Authorized')
+      end
+    end
+    # post
+    describe 'POST /api/v1/bookmarks' do
+      it 'does not let users who are not signed in to create a bookmark' do
+        # Prepare the bookmark
+        bookmark = prepare_bookmark
+
+        # Now add the bookmark to the database
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }
+        expect(response).to have_http_status(http_unauthorized)
+
+        # Check that the bookmark was added to the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+      end
+      it 'does not let users who are not signed in to create a bookmark with invalid parameters' do
+        # Create a bookmark, but don't add it to the database
+        bookmark = build(:bookmark, user_id: nil, topic_id: nil)
+
+        # Now add the bookmark to the database
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }
+        expect(response).to have_http_status(http_unauthorized)
+
+        # Check that the bookmark was not added to the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
       end
     end
   end
