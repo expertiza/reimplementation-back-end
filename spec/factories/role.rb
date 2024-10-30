@@ -1,6 +1,7 @@
 FactoryBot.define do
     factory :role do
-        # Default to student (role_id: 5)
-        id { 5 }
+        id { Role.find_by(name: 'Student').id || 5 }
+        name { 'Student' } # Adjust this as needed
     end
-end
+  end
+  
