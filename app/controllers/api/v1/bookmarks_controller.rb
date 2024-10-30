@@ -116,26 +116,24 @@ private
       # Those with student privileges and above can view the list of bookmarks
       user_role.id <= Role.find_by(name: 'Student').id
     when 'new', 'create', 'bookmark_rating', 'save_bookmark_rating_score'
-      # Those with strictly student privileges can create a new bookmark, rate a bookmark, or save a bookmark rating
-      current_user_has_student_privileges? && !current_user_has_ta_privileges?
-      # This should work in theory, and it is cleaner!
+      # Only those with student privileges can create bookmarks
       user_role.id == Role.find_by(name: 'Student').id
     when 'edit', 'update', 'destroy'
       # Get the bookmark object
       bookmark = Bookmark.find(params[:id])
       case user.role.name
         when 'Student'
-            # edit, update, delete bookmarks can only be done by owner
-            current_user_created_bookmark_id?(params[:id])
+            # Students cannot edit, update, delete bookmarks belonging to other students
+            bookmark.user == user
         when 'Teaching Assistant'
             # edit, update, delete bookmarks can only be done by TA of the assignment
-            current_user_has_ta_mapping_for_assignment?(bookmark.topic.assignment)
+            bookmark.topic.assignment.ta == user
         when 'Instructor'
             # edit, update, delete bookmarks can only be done by instructor of the assignment
-            current_user_instructs_assignment?(bookmark.topic.assignment)
+            bookmark.topic.assignment.instructor == user
         when 'Administrator'
             # edit, update, delete bookmarks can only be done by administrator who is the parent of the instructor of the assignment
-            user == bookmark.topic.assignment.instructor.parent
+            bookmark.topic.assignment.instructor.parent == user
         when 'Super Administrator'
             # edit, update, delete bookmarks can be done by super administrator
             true
