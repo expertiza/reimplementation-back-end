@@ -1,5 +1,4 @@
 class Api::V1::UsersController < ApplicationController
-  skip_before_action :authenticate_request!, only: [:index, :show, :create, :update, :destroy, :institution_users, :managed_users, :role_users]
   rescue_from ActiveRecord::RecordNotFound, with: :user_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
@@ -16,6 +15,7 @@ class Api::V1::UsersController < ApplicationController
 
   # POST /users
   def create
+    Rails.logger.info("test")
     # Add default password for a user if the password is not provided
     params[:user][:password] ||= 'password'
     user = User.new(user_params)
