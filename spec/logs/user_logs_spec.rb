@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe User do
+RSpec.describe Api::V1::UsersController, type: :controller do
   let(:user) { build(:user, name: "Jane", email: "jdoe@ncsu.edu", full_name: "Jane Doe") }
   let(:params) do { user: {
         "name": "Jane Doe",
