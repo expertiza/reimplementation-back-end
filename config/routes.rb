@@ -110,7 +110,7 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :suggestion do
+      resources :suggestions do
         collection do
           post :add_comment
           post :approve

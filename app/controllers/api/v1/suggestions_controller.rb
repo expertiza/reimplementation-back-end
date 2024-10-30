@@ -1,4 +1,4 @@
-class SuggestionController < ApplicationController
+class Api::V1::SuggestionsController < ApplicationController
   include PrivilegeHelper
 
   def add_comment
