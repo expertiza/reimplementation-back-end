@@ -100,9 +100,9 @@ class Api::V1::BookmarksController < ApplicationController
       current_user_has_student_privileges?
     when 'new', 'create', 'bookmark_rating', 'save_bookmark_rating_score'
       # Those with strictly student privileges can create a new bookmark, rate a bookmark, or save a bookmark rating
-      # current_user_has_student_privileges? && !current_user_has_ta_privileges?
+      current_user_has_student_privileges? && !current_user_has_ta_privileges?
       # This should work in theory, and it is cleaner!
-      user.role.student?
+      # user.role.student?
     when 'edit', 'update', 'destroy'
       # Get the bookmark object
       bookmark = Bookmark.find(params[:id])

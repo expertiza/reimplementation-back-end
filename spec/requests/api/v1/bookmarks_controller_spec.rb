@@ -41,6 +41,31 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         expect(JSON.parse(response.body)).to eq(JSON.parse(bookmark.to_json))
       end
     end
+    # post
+    describe 'POST /api/v1/bookmarks' do
+      it 'lets the student create a bookmark' do
+        # Prepare the bookmark
+        bookmark = prepare_bookmark
+
+        # Now add the bookmark to the database
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @student_headers
+        expect(response).to have_http_status(:created)
+
+        # Check that the bookmark was added to the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
+      end
+      it 'does not let the student create a bookmark with invalid parameters' do
+        # Create a bookmark, but don't add it to the database
+        bookmark = build(:bookmark, user_id: nil, topic_id: nil)
+
+        # Now add the bookmark to the database
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @student_headers
+        expect(response).to have_http_status(:unprocessable_entity)
+
+        # Check that the bookmark was not added to the database
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+      end
+    end
   end
 
   describe Ta do
@@ -216,7 +241,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
   end
 end
 
-def create_bookmark(user = nil)
+def prepare_bookmark(user = nil)
   # Look for an instructor
   instructor = User.find_by(role: Role.find_by(name: 'Instructor'))
   # Create an instructor if it does not exist
@@ -240,8 +265,17 @@ def create_bookmark(user = nil)
   # If user is nil, make a new student
   user = create(:user, role_id: Role.find_by(name: 'Student').id) if user.nil?
 
-  # Create a bookmark if it does not exist
-  bookmark = create(:bookmark, user_id: user.id, topic_id: topic.id)
+  bookmark = build(:bookmark, user_id: user.id, topic_id: topic.id)
 
+  # Return the bookmark
+  bookmark
+end
+
+def create_bookmark(user = nil)
+  # Prepare the bookmark
+  bookmark = prepare_bookmark(user)
+  # Save the bookmark
+  bookmark.save!
+  # Return the bookmark
   bookmark
 end
