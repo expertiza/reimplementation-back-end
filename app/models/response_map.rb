@@ -42,6 +42,40 @@ class ResponseMap < ApplicationRecord
   # Scope to retrieve maps with at least one submitted response
   scope :with_submitted_responses, -> { joins(:response).where(responses: { is_submitted: true }).distinct }
 
+  # Basic accessor methods
+  # app/models/response_map.rb
+  def get_reviewer
+    reviewer || raise(ActiveRecord::RecordNotFound, 'Reviewer not found')
+  end
+
+  def get_reviewee
+    reviewee || raise(ActiveRecord::RecordNotFound, 'Reviewee not found')
+  end
+
+  def get_assignment
+    assignment || raise(ActiveRecord::RecordNotFound, 'Assignment not found')
+  end
+
+  def delete(_force = nil)
+    destroy
+  end
+
+  def safe_delete
+    if response.exists?
+      # Return special code if responses are associated
+      :cannot_delete
+    else
+      # Delete the response map if no responses are associated
+      destroy
+      :deleted
+    end
+  end
+
+  def survey?
+    false
+  end
+
+
   # Class Methods:
   class << self
     # Retrieves all responses associated with a specific team and sorts them by the reviewer’s fullname.
