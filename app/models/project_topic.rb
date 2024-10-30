@@ -10,13 +10,8 @@ class ProjectTopic < ApplicationRecord
     # Find the teams who have chosen the topic
     teams_who_chose_the_topic = SignedUpTeam.where(sign_up_topic_id: topic_id, is_waitlisted: false)
 
-    # Check if no teams have chosen the topic yet
-    if teams_who_chose_the_topic.nil?
-      return true
-    else
-      # Check if the number of teams who chose the topic is less than the max allowed and return
-      return teams_who_chose_the_topic.size < self.max_choosers
-    end
+    # Check if the number of teams who chose the topic is less than the max allowed choosers
+    return teams_who_chose_the_topic.size < self.max_choosers
   end
 
   def find_team_project_topics(assignment_id, team_id)
@@ -41,7 +36,7 @@ class ProjectTopic < ApplicationRecord
     topic_id = self.id
     team = Team.find(team_id)
 
-    existing_sign_up = SignedUpTeam.find_first_existing_sign_up(topic_id: topic_id, team_id: team_id)
+    existing_sign_up = SignedUpTeam.find_first_existing_sign_up(topic_id, team_id)
 
     if !existing_sign_up.nil? && !existing_sign_up.is_waitlisted
       return false
