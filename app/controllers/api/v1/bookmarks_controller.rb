@@ -12,12 +12,12 @@ class Api::V1::BookmarksController < ApplicationController
   # Show method returns the JSON object of bookmark with id = {:id}
   # GET on /bookmarks/:id
   def show
-    begin
-      @bookmark = Bookmark.find(params[:id])
-      render json: @bookmark, status: :ok and return
-    rescue ActiveRecord::RecordNotFound
-      render json: $ERROR_INFO.to_s, status: :not_found and return
-    end
+    # Find the bookmark object
+    @bookmark = Bookmark.find_by(id: params[:id])
+    # Return error if bookmark is not found
+    render json: { error: 'Bookmark not found' }, status: :not_found and return if @bookmark.nil?
+    # Return the bookmark object
+    render json: @bookmark, status: :ok
   end
 
   # Create method creates a bookmark and returns the JSON object of the created bookmark
@@ -37,7 +37,11 @@ class Api::V1::BookmarksController < ApplicationController
   # Update method updates the bookmark object with id - {:id} and returns the updated bookmark JSON object
   # PUT on /bookmarks/:id
   def update
-    @bookmark = Bookmark.find(params[:id])
+    # Find the bookmark object
+    @bookmark = Bookmark.find_by(id: params[:id])
+    # Return error if bookmark is not found
+    render json: { error: 'Bookmark not found' }, status: :not_found and return if @bookmark.nil?
+    # Update the bookmark object
     if @bookmark.update(update_bookmark_params)
       render json: @bookmark, status: :ok
     else
@@ -48,30 +52,34 @@ class Api::V1::BookmarksController < ApplicationController
   # Destroy method deletes the bookmark object with id- {:id}
   # DELETE on /bookmarks/:id
   def destroy
-    begin
-      @bookmark = Bookmark.find(params[:id])
-      @bookmark.delete
-    rescue ActiveRecord::RecordNotFound
-        render json: $ERROR_INFO.to_s, status: :not_found and return
-    end
+    # Find the bookmark object
+    @bookmark = Bookmark.find_by(id: params[:id])
+    # Return error if bookmark is not found
+    render json: { error: 'Bookmark not found' }, status: :not_found and return if @bookmark.nil?
+    # Delete the bookmark object
+    @bookmark.destroy
   end
 
   # get_bookmark_rating_score method gets the bookmark rating of the bookmark object with id- {:id}
   # GET on /bookmarks/:id/bookmarkratings
   def get_bookmark_rating_score
-    begin
-      @bookmark = Bookmark.find(params[:id])
-      @bookmark_rating = BookmarkRating.where(bookmark_id: @bookmark.id, user_id: @current_user.id).first
-      render json: @bookmark_rating, status: :ok and return
-    rescue ActiveRecord::RecordNotFound
-      render json: $ERROR_INFO.to_s, status: :not_found and return
-    end
+    # Find the bookmark object
+    @bookmark = Bookmark.find_by(id: params[:id])
+    # Return error if bookmark is not found
+    render json: { error: 'Bookmark not found' }, status: :not_found and return if @bookmark.nil?
+    # Find the bookmark rating object
+    @bookmark_rating = BookmarkRating.where(bookmark_id: @bookmark.id, user_id: @current_user.id).first
+    render json: @bookmark_rating, status: :ok
   end
 
   # save_bookmark_rating_score method creates or updates the bookmark rating of the bookmark object with id- {:id}
   # POST on /bookmarks/:id/bookmarkratings
   def save_bookmark_rating_score
-    @bookmark = Bookmark.find(params[:id])
+    # Find the bookmark object
+    @bookmark = Bookmark.find_by(id: params[:id])
+    # Return error if bookmark is not found
+    render json: { error: 'Bookmark not found' }, status: :not_found and return if @bookmark.nil?
+    # Find the bookmark rating object
     @bookmark_rating = BookmarkRating.where(bookmark_id: @bookmark.id, user_id: @current_user.id).first
     if @bookmark_rating.blank?
       @bookmark_rating = BookmarkRating.create(bookmark_id: @bookmark.id, user_id: @current_user.id, rating: params[:rating])
