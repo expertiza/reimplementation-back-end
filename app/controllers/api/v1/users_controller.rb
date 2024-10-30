@@ -1,5 +1,4 @@
 class Api::V1::UsersController < ApplicationController
-  skip_before_action :authenticate_request!, only: [:index, :show, :create, :update, :destroy, :institution_users, :managed_users, :role_users]
   rescue_from ActiveRecord::RecordNotFound, with: :user_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
