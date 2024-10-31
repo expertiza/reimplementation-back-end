@@ -83,7 +83,8 @@ class Api::V1::BookmarksController < ApplicationController
     # Find the bookmark rating object
     @bookmark_rating = BookmarkRating.where(bookmark_id: @bookmark.id, user_id: @current_user.id).first
     if @bookmark_rating.blank?
-      @bookmark_rating = BookmarkRating.create(bookmark_id: @bookmark.id, user_id: @current_user.id, rating: params[:rating])
+      @bookmark_rating = BookmarkRating.new(bookmark_id: @bookmark.id, user_id: @current_user.id, rating: params[:rating])
+      @bookmark_rating.save!
     else
       @bookmark_rating.update({'rating': params[:rating].to_i})
     end
@@ -120,10 +121,10 @@ private
     user_role_name = decoded_token[:role]
     user_role = Role.find_by(name: user_role_name)
     case params[:action]
-    when 'list', 'index', 'show', 'get_bookmark_rating_score'
+    when 'list', 'index', 'show', 'get_bookmark_rating_score', 'save_bookmark_rating_score'
       # Those with student privileges and above can view the list of bookmarks
       user_role.id <= Role.find_by(name: 'Student').id
-    when 'new', 'create', 'bookmark_rating', 'save_bookmark_rating_score'
+    when 'new', 'create', 'bookmark_rating'
       # Only those with student privileges can create bookmarks
       user_role.id == Role.find_by(name: 'Student').id
     when 'edit', 'update', 'destroy'
@@ -135,7 +136,9 @@ private
             bookmark.user == user
         when 'Teaching Assistant'
             # edit, update, delete bookmarks can only be done by TA of the assignment
-            bookmark.topic.assignment.ta == user
+            # course has_many :tas, through: :ta_mappings
+            TaMapping.exists?(ta_id: user.id, course_id: bookmark.topic.assignment.course.id)
+            # bookmark.topic.assignment.course.tas.include?(user)
         when 'Instructor'
             # edit, update, delete bookmarks can only be done by instructor of the assignment
             bookmark.topic.assignment.instructor == user
