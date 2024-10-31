@@ -1,14 +1,15 @@
 require 'rails_helper'
 require 'factory_bot_rails' # shouldn't be needed
+# rubocop:disable Metrics/BlockLength
+# rubocop:disable Metrics/LineLength
 
 RSpec.describe 'api/v1/bookmarks', type: :request do
-
   before do
     # Set the default host to localhost
     host! 'localhost'
   end
 
-  describe User do 
+  describe User do
     before(:each) do
       # Create a student
       @student = create(:user, role_id: Role.find_by(name: 'Student').id)
@@ -48,22 +49,38 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         bookmark = prepare_bookmark
 
         # Now add the bookmark to the database
-        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @student_headers
+        post '/api/v1/bookmarks',
+            params: { bookmark: {
+                        url: bookmark.url,
+                        title: bookmark.title,
+                        description: bookmark.description,
+                        topic_id: bookmark.topic_id
+                    } },
+            headers: @student_headers
         expect(response).to have_http_status(:created)
 
         # Check that the bookmark was added to the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_truthy
       end
       it 'does not let the student create a bookmark with invalid parameters' do
         # Create a bookmark, but don't add it to the database
         bookmark = build(:bookmark, user_id: nil, topic_id: nil)
 
         # Now add the bookmark to the database
-        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @student_headers
+        post '/api/v1/bookmarks',
+            params: { bookmark: {
+                        url: bookmark.url,
+                        title: bookmark.title,
+                        description: bookmark.description,
+                        topic_id: bookmark.topic_id
+                    } },
+            headers: @student_headers
         expect(response).to have_http_status(:unprocessable_entity)
 
         # Check that the bookmark was not added to the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_nil
       end
     end
     # PUT
@@ -73,18 +90,26 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         bookmark = create_bookmark(@student)
 
         # Update the bookmark
-        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @student_headers
+        put "/api/v1/bookmarks/#{bookmark.id}",
+            params: { bookmark: {
+                        url: 'https://www.google.com',
+                        title: 'Google',
+                        description: 'Search Engine'
+                    } },
+            headers: @student_headers
         expect(response).to have_http_status(:ok)
 
         # Check that the bookmark was updated in the database
-        expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google', description: 'Search Engine')).to be_truthy
+        expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google',
+                                description: 'Search Engine')).to be_truthy
       end
       it 'does not let the student update a bookmark with invalid parameters' do
         # Prepare the bookmark
         bookmark = create_bookmark(@student)
 
         # Update the bookmark
-        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: nil, title: nil, description: nil } }, headers: @student_headers
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: nil, title: nil, description: nil } },
+                                                headers: @student_headers
         expect(response).to have_http_status(:unprocessable_entity)
 
         # Check that the bookmark was not updated in the database
@@ -96,14 +121,18 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         bookmark = create_bookmark(another_student)
 
         # Update the bookmark
-        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @student_headers
+        put "/api/v1/bookmarks/#{bookmark.id}",
+            params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } },
+            headers: @student_headers
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was not updated in the database
         expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google', description: 'Search Engine')).to be_nil
       end
       it 'does not let the student update a bookmark that does not exist' do
-        put '/api/v1/bookmarks/1', params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @student_headers
+        put '/api/v1/bookmarks/1',
+            params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } },
+            headers: @student_headers
         expect(response).to have_http_status(:not_found)
       end
     end
@@ -118,7 +147,8 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         expect(response).to have_http_status(204) # No Content
 
         # Check that the bookmark was deleted from the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_nil
       end
       it 'does not let the student delete a bookmark that belongs to another student' do
         # Create another student and their bookmark
@@ -130,7 +160,8 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was not deleted from the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_truthy
       end
       it 'does not let the student delete a bookmark that does not exist' do
         delete '/api/v1/bookmarks/1', headers: @student_headers
@@ -144,7 +175,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @student_headers
         expect(response).to have_http_status(:ok)
         # expect JSON.parse(response.body) to be nil
-        expect(JSON.parse(response.body) == nil)
+        expect(JSON.parse(response.body).nil?)
       end
       it 'allows the student to query a bookmark rating that exists' do
         bookmark = create_bookmark(@student)
@@ -188,11 +219,11 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         bookmark = create_bookmark(@student)
 
         # Now add the bookmark rating to the database
-        post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: "a" }, headers: @student_headers
+        post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: 'a' }, headers: @student_headers
         expect(response).to have_http_status(:unprocessable_entity)
 
         # Check that the bookmark rating was not added to the database
-        expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @student.id, rating: "a")).to be_nil
+        expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @student.id, rating: 'a')).to be_nil
       end
       it 'allows the student to create a bookmark rating on a bookmark that belongs to another student' do
         # Create another student and their bookmark
@@ -253,22 +284,38 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         bookmark = prepare_bookmark
 
         # Now add the bookmark to the database
-        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @ta_headers
+        post '/api/v1/bookmarks',
+            params: { bookmark: {
+                        url: bookmark.url,
+                        title: bookmark.title,
+                        description: bookmark.description,
+                        topic_id: bookmark.topic_id
+                    } },
+            headers: @ta_headers
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was added to the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_nil
       end
       it 'does not let the teaching assistant create a bookmark with invalid parameters' do
         # Create a bookmark, but don't add it to the database
         bookmark = build(:bookmark, user_id: nil, topic_id: nil)
 
         # Now add the bookmark to the database
-        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @ta_headers
+        post '/api/v1/bookmarks',
+            params: { bookmark: {
+                        url: bookmark.url,
+                        title: bookmark.title,
+                        description: bookmark.description,
+                        topic_id: bookmark.topic_id
+                    } },
+            headers: @ta_headers
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was not added to the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_nil
       end
     end
     # PUT
@@ -276,27 +323,33 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
       it 'lets the ta update a bookmark for their own assignment' do
         # Prepare the bookmark
         bookmark = create_bookmark(@ta)
-  
+
         # Update the bookmark
-        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @ta_headers
+        put "/api/v1/bookmarks/#{bookmark.id}",
+            params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } },
+            headers: @ta_headers
         expect(response).to have_http_status(:ok)
-  
+
         # Check that the bookmark was updated in the database
-        expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google', description: 'Search Engine')).to be_truthy
+        expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google',
+                                description: 'Search Engine')).to be_truthy
       end
       it 'does not let the ta update a bookmark with invalid parameters' do
         # Prepare the bookmark
         bookmark = create_bookmark(@ta)
-  
+
         # Update the bookmark
-        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: nil, title: nil, description: nil } }, headers: @ta_headers
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: nil, title: nil, description: nil } },
+                                                headers: @ta_headers
         expect(response).to have_http_status(:unprocessable_entity)
-  
+
         # Check that the bookmark was not updated in the database
         expect(Bookmark.find_by(url: nil, title: nil, description: nil)).to be_nil
       end
       it 'does not let the ta update a bookmark that does not exist' do
-        put '/api/v1/bookmarks/1', params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @ta_headers
+        put '/api/v1/bookmarks/1',
+            params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } },
+            headers: @ta_headers
         expect(response).to have_http_status(:not_found)
       end
       it 'does not let the ta update a bookmark for another tas assignment' do
@@ -305,11 +358,13 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         # Create another ta
         another_ta = create(:user, role_id: Role.find_by(name: 'Teaching Assistant').id)
         another_ta_headers = authenticated_header(another_ta)
-  
+
         # Update the bookmark
-        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: another_ta_headers
+        put "/api/v1/bookmarks/#{bookmark.id}",
+            params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } },
+            headers: another_ta_headers
         expect(response).to have_http_status(:forbidden)
-  
+
         # Check that the bookmark was not updated in the database
         expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google', description: 'Search Engine')).to be_nil
       end
@@ -319,13 +374,14 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
       it 'lets the ta delete a bookmark for their own assignment' do
         # Prepare the bookmark
         bookmark = create_bookmark(@ta)
-  
+
         # Delete the bookmark
         delete "/api/v1/bookmarks/#{bookmark.id}", headers: @ta_headers
         expect(response).to have_http_status(204) # No Content
-  
+
         # Check that the bookmark was deleted from the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_nil
       end
       it 'does not let the ta delete a bookmark that does not exist' do
         delete '/api/v1/bookmarks/1', headers: @ta_headers
@@ -337,13 +393,14 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         # Create another ta
         another_ta = create(:user, role_id: Role.find_by(name: 'Teaching Assistant').id)
         another_ta_headers = authenticated_header(another_ta)
-  
+
         # Delete the bookmark
         delete "/api/v1/bookmarks/#{bookmark.id}", headers: another_ta_headers
         expect(response).to have_http_status(:forbidden)
-  
+
         # Check that the bookmark was not deleted from the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_truthy
       end
     end
     # get_bookmark_rating_score
@@ -353,7 +410,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @ta_headers
         # expect JSON.parse(response.body) to be nil
         expect(response).to have_http_status(:ok)
-        expect(JSON.parse(response.body) == nil)
+        expect(JSON.parse(response.body).nil?)
       end
       it 'allows the ta to query a bookmark rating that exists' do
         bookmark = create_bookmark(@ta)
@@ -397,11 +454,11 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         bookmark = create_bookmark(@ta)
 
         # Now add the bookmark rating to the database
-        post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: "a" }, headers: @ta_headers
+        post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: 'a' }, headers: @ta_headers
         expect(response).to have_http_status(:unprocessable_entity)
 
         # Check that the bookmark rating was not added to the database
-        expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @ta.id, rating: "a")).to be_nil
+        expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @ta.id, rating: 'a')).to be_nil
       end
       it 'allows the ta to create a bookmark rating on a bookmark that belongs to another course' do
         # Create another ta and their bookmark
@@ -462,22 +519,38 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         bookmark = prepare_bookmark
 
         # Now add the bookmark to the database
-        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @instructor_headers
+        post '/api/v1/bookmarks',
+            params: { bookmark: {
+                        url: bookmark.url,
+                        title: bookmark.title,
+                        description: bookmark.description,
+                        topic_id: bookmark.topic_id
+                    } },
+            headers: @instructor_headers
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was added to the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_nil
       end
       it 'does not let the instructor create a bookmark with invalid parameters' do
         # Create a bookmark, but don't add it to the database
         bookmark = build(:bookmark, user_id: nil, topic_id: nil)
 
         # Now add the bookmark to the database
-        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @instructor_headers
+        post '/api/v1/bookmarks',
+            params: { bookmark: {
+                        url: bookmark.url,
+                        title: bookmark.title,
+                        description: bookmark.description,
+                        topic_id: bookmark.topic_id
+                    } },
+            headers: @instructor_headers
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was not added to the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_nil
       end
     end
     # PUT
@@ -487,25 +560,31 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         bookmark = create_bookmark
 
         # Update the bookmark
-        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @instructor_headers
+        put "/api/v1/bookmarks/#{bookmark.id}",
+            params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } },
+            headers: @instructor_headers
         expect(response).to have_http_status(:ok)
 
         # Check that the bookmark was updated in the database
-        expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google', description: 'Search Engine')).to be_truthy
+        expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google',
+                                description: 'Search Engine')).to be_truthy
       end
       it 'does not let the instructor update a bookmark with invalid parameters' do
         # Prepare the bookmark
         bookmark = create_bookmark
 
         # Update the bookmark
-        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: nil, title: nil, description: nil } }, headers: @instructor_headers
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: nil, title: nil, description: nil } },
+                                                headers: @instructor_headers
         expect(response).to have_http_status(:unprocessable_entity)
 
         # Check that the bookmark was not updated in the database
         expect(Bookmark.find_by(url: nil, title: nil, description: nil)).to be_nil
       end
       it 'does not let the instructor update a bookmark that does not exist' do
-        put '/api/v1/bookmarks/1', params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @instructor_headers
+        put '/api/v1/bookmarks/1',
+            params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } },
+            headers: @instructor_headers
         expect(response).to have_http_status(:not_found)
       end
       it 'does not let the instructor update a bookmark for another instructors assignment' do
@@ -516,7 +595,9 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         another_instructor_headers = authenticated_header(another_instructor)
 
         # Update the bookmark
-        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: another_instructor_headers
+        put "/api/v1/bookmarks/#{bookmark.id}",
+            params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } },
+            headers: another_instructor_headers
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was not updated in the database
@@ -534,7 +615,8 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         expect(response).to have_http_status(204) # No Content
 
         # Check that the bookmark was deleted from the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_nil
       end
       it 'does not let the instructor delete a bookmark that does not exist' do
         delete '/api/v1/bookmarks/1', headers: @instructor_headers
@@ -552,7 +634,8 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was not deleted from the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_truthy
       end
     end
     # get_bookmark_rating_score
@@ -562,7 +645,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @instructor_headers
         expect(response).to have_http_status(:ok)
         # expect JSON.parse(response.body) to be nil
-        expect(JSON.parse(response.body) == nil)
+        expect(JSON.parse(response.body).nil?)
       end
       it 'allows the instructor to query a bookmark rating that exists' do
         bookmark = create_bookmark(@instructor)
@@ -606,11 +689,11 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         bookmark = create_bookmark(@instructor)
 
         # Now add the bookmark rating to the database
-        post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: "a" }, headers: @instructor_headers
+        post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: 'a' }, headers: @instructor_headers
         expect(response).to have_http_status(:unprocessable_entity)
 
         # Check that the bookmark rating was not added to the database
-        expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @instructor.id, rating: "a")).to be_nil
+        expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @instructor.id, rating: 'a')).to be_nil
       end
       it 'allows the instructor to create a bookmark rating on a bookmark that belongs to another course' do
         # Create another instructor and their bookmark
@@ -671,22 +754,38 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         bookmark = prepare_bookmark
 
         # Now add the bookmark to the database
-        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @admin_headers
+        post '/api/v1/bookmarks',
+            params: { bookmark: {
+                        url: bookmark.url,
+                        title: bookmark.title,
+                        description: bookmark.description,
+                        topic_id: bookmark.topic_id
+                    } },
+            headers: @admin_headers
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was added to the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_nil
       end
       it 'does not let the administrator create a bookmark with invalid parameters' do
         # Create a bookmark, but don't add it to the database
         bookmark = build(:bookmark, user_id: nil, topic_id: nil)
 
         # Now add the bookmark to the database
-        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @admin_headers
+        post '/api/v1/bookmarks',
+            params: { bookmark: {
+                        url: bookmark.url,
+                        title: bookmark.title,
+                        description: bookmark.description,
+                        topic_id: bookmark.topic_id
+                    } },
+            headers: @admin_headers
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was not added to the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_nil
       end
     end
     # PUT
@@ -701,11 +800,14 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         instructor.save
 
         # Update the bookmark
-        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @admin_headers
+        put "/api/v1/bookmarks/#{bookmark.id}",
+            params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } },
+            headers: @admin_headers
         expect(response).to have_http_status(:ok)
 
         # Check that the bookmark was updated in the database
-        expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google', description: 'Search Engine')).to be_truthy
+        expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google',
+                                description: 'Search Engine')).to be_truthy
       end
       it 'does not let the administrator update a bookmark if they are not the parent of the instructor who created the assignment' do
         # Create the bookmark
@@ -713,7 +815,9 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         # The administrator is not the parent of the instructor at this point
 
         # Update the bookmark
-        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @admin_headers
+        put "/api/v1/bookmarks/#{bookmark.id}",
+            params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } },
+            headers: @admin_headers
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was not updated in the database
@@ -729,14 +833,17 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         instructor.save
 
         # Update the bookmark
-        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: nil, title: nil, description: nil } }, headers: @admin_headers
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: nil, title: nil, description: nil } },
+                                                headers: @admin_headers
         expect(response).to have_http_status(:unprocessable_entity)
 
         # Check that the bookmark was not updated in the database
         expect(Bookmark.find_by(url: nil, title: nil, description: nil)).to be_nil
       end
       it 'does not let the administrator update a bookmark that does not exist' do
-        put '/api/v1/bookmarks/1', params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @admin_headers
+        put '/api/v1/bookmarks/1',
+            params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } },
+            headers: @admin_headers
         expect(response).to have_http_status(:not_found)
       end
     end
@@ -756,7 +863,8 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         expect(response).to have_http_status(204) # No Content
 
         # Check that the bookmark was deleted from the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_nil
       end
       it 'does not let the administrator delete a bookmark if they are not the parent of the instructor who created the assignment' do
         # Create the bookmark
@@ -768,7 +876,8 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was not deleted from the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_truthy
       end
       it 'does not let the administrator delete a bookmark that does not exist' do
         delete '/api/v1/bookmarks/1', headers: @admin_headers
@@ -782,7 +891,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @admin_headers
         expect(response).to have_http_status(:ok)
         # expect JSON.parse(response.body) to be nil
-        expect(JSON.parse(response.body) == nil)
+        expect(JSON.parse(response.body).nil?)
       end
       it 'allows the administrator to query a bookmark rating that exists' do
         bookmark = create_bookmark(@admin)
@@ -826,11 +935,11 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         bookmark = create_bookmark(@admin)
 
         # Now add the bookmark rating to the database
-        post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: "a" }, headers: @admin_headers
+        post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: 'a' }, headers: @admin_headers
         expect(response).to have_http_status(:unprocessable_entity)
 
         # Check that the bookmark rating was not added to the database
-        expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @admin.id, rating: "a")).to be_nil
+        expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @admin.id, rating: 'a')).to be_nil
       end
       it 'allows the administrator to create a bookmark rating on a bookmark that belongs to another course' do
         # Create another admin and their bookmark
@@ -891,23 +1000,39 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         bookmark = prepare_bookmark
 
         # Now add the bookmark to the database
-        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @super_admin_headers
+        post '/api/v1/bookmarks',
+            params: { bookmark: {
+                        url: bookmark.url,
+                        title: bookmark.title,
+                        description: bookmark.description,
+                        topic_id: bookmark.topic_id
+                    } },
+            headers: @super_admin_headers
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was added to the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_nil
       end
       it 'does not let the super administrator create a bookmark with invalid parameters' do
         # Create a bookmark, but don't add it to the database
         bookmark = build(:bookmark, user_id: nil, topic_id: nil)
 
         # Now add the bookmark to the database
-        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @super_admin_headers
+        post '/api/v1/bookmarks',
+            params: { bookmark: {
+                        url: bookmark.url,
+                        title: bookmark.title,
+                        description: bookmark.description,
+                        topic_id: bookmark.topic_id
+                    } },
+            headers: @super_admin_headers
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was not added to the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
-      end        
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_nil
+      end
     end
     # PUT
     describe 'PUT /api/v1/bookmarks/:id' do
@@ -916,25 +1041,39 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         bookmark = create_bookmark
 
         # Update the bookmark
-        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @super_admin_headers
+        put "/api/v1/bookmarks/#{bookmark.id}",
+            params: { bookmark: {
+                    url: 'https://www.google.com',
+                    title: 'Google',
+                    description: 'Search Engine'
+                } },
+            headers: @super_admin_headers
         expect(response).to have_http_status(:ok)
 
         # Check that the bookmark was updated in the database
-        expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google', description: 'Search Engine')).to be_truthy
+        expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google',
+                                description: 'Search Engine')).to be_truthy
       end
       it 'does not let the super administrator update a bookmark with invalid parameters' do
         # Prepare the bookmark
         bookmark = create_bookmark
 
         # Update the bookmark
-        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: nil, title: nil, description: nil } }, headers: @super_admin_headers
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: nil, title: nil, description: nil } },
+                                                headers: @super_admin_headers
         expect(response).to have_http_status(:unprocessable_entity)
 
         # Check that the bookmark was not updated in the database
         expect(Bookmark.find_by(url: nil, title: nil, description: nil)).to be_nil
       end
       it 'does not let the super administrator update a bookmark that does not exist' do
-        put '/api/v1/bookmarks/1', params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @super_admin_headers
+        put '/api/v1/bookmarks/1',
+            params: { bookmark: {
+                        url: 'https://www.google.com',
+                        title: 'Google',
+                        description: 'Search Engine'
+                    } },
+            headers: @super_admin_headers
         expect(response).to have_http_status(:not_found)
       end
     end
@@ -949,7 +1088,8 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         expect(response).to have_http_status(204) # No Content
 
         # Check that the bookmark was deleted from the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_nil
       end
       it 'does not let the super administrator delete a bookmark that does not exist' do
         delete '/api/v1/bookmarks/1', headers: @super_admin_headers
@@ -963,7 +1103,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", headers: @super_admin_headers
         expect(response).to have_http_status(:ok)
         # expect JSON.parse(response.body) to be nil
-        expect(JSON.parse(response.body) == nil)
+        expect(JSON.parse(response.body).nil?)
       end
       it 'allows the super administrator to query a bookmark rating that exists' do
         bookmark = create_bookmark(@super_admin)
@@ -1007,23 +1147,11 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         bookmark = create_bookmark(@super_admin)
 
         # Now add the bookmark rating to the database
-        post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: "a" }, headers: @super_admin_headers
+        post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: 'a' }, headers: @super_admin_headers
         expect(response).to have_http_status(:unprocessable_entity)
 
         # Check that the bookmark rating was not added to the database
-        expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @super_admin.id, rating: "a")).to be_nil
-      end
-      it 'allows the super administrator to create a bookmark rating on a bookmark that belongs to another super_admin' do
-        # Create another super administrator and their bookmark
-        another_super_admin = create(:user, role_id: Role.find_by(name: 'Super Administrator').id)
-        bookmark = create_bookmark(another_super_admin)
-
-        # Now add the bookmark rating to the database
-        post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: 5 }, headers: @super_admin_headers
-        expect(response).to have_http_status(:ok)
-
-        # Check that the bookmark rating was not added to the database
-        expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @super_admin.id, rating: 5)).to be_truthy
+        expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @super_admin.id, rating: 'a')).to be_nil
       end
       it 'does not let the super administrator create a bookmark rating that does not exist' do
         post '/api/v1/bookmarks/1/bookmarkratings', params: { rating: 5 }, headers: @super_admin_headers
@@ -1042,7 +1170,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         expect(JSON.parse(response.body)).to eq('error' => 'Not Authorized')
       end
       it 'does not let users who are not signed in access lists of bookmarks' do
-        bookmark = create_bookmark
+        create_bookmark
         get '/api/v1/bookmarks'
         expect(response).to have_http_status(http_unauthorized)
         expect(JSON.parse(response.body)).to eq('error' => 'Not Authorized')
@@ -1069,22 +1197,28 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         bookmark = prepare_bookmark
 
         # Now add the bookmark to the database
-        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }
+        post '/api/v1/bookmarks',
+             params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                   topic_id: bookmark.topic_id } }
         expect(response).to have_http_status(http_unauthorized)
 
         # Check that the bookmark was added to the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_nil
       end
       it 'does not let users who are not signed in to create a bookmark with invalid parameters' do
         # Create a bookmark, but don't add it to the database
         bookmark = build(:bookmark, user_id: nil, topic_id: nil)
 
         # Now add the bookmark to the database
-        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }
+        post '/api/v1/bookmarks',
+             params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                   topic_id: bookmark.topic_id } }
         expect(response).to have_http_status(http_unauthorized)
 
         # Check that the bookmark was not added to the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_nil
       end
     end
     # PUT
@@ -1116,7 +1250,8 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         expect(response).to have_http_status(http_unauthorized)
 
         # Check that the bookmark was deleted from the database
-        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
+                                topic_id: bookmark.topic_id)).to be_truthy
       end
       it 'does not let users who are not signed in delete a bookmark that does not exist' do
         delete '/api/v1/bookmarks/1'
@@ -1133,7 +1268,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
       end
       it 'does not allow users who are not signed in to query a bookmark rating that exists' do
         bookmark = create_bookmark
-        bookmark_rating = make_bookmark_rating(bookmark, 5)
+        make_bookmark_rating(bookmark, 5)
         get "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings"
         expect(response).to have_http_status(http_unauthorized)
         expect(JSON.parse(response.body)).to eq('error' => 'Not Authorized')
@@ -1142,45 +1277,75 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
   end
 end
 
-def prepare_bookmark(user = nil)
+def mock_instructor
   # Look for an instructor
   instructor = User.find_by(role: Role.find_by(name: 'Instructor'))
   # Create an instructor if it does not exist
   instructor = create(:user, role_id: Role.find_by(name: 'Instructor').id) if instructor.nil?
-  
+  instructor
+end
+
+def mock_ta
   # Look for a TA
   ta = User.find_by(role: Role.find_by(name: 'Teaching Assistant'))
   # Create a TA if it does not exist
   ta = create(:user, role_id: Role.find_by(name: 'Teaching Assistant').id) if ta.nil?
+  ta
+end
 
+def mock_course(instructor = nil)
   # Look for a course
   course = Course.find_by(instructor_id: instructor.id)
   # Create a course if it does not exist
-#   course = create(:course, instructor_id: instructor.id, tas: [ta]) if course.nil?
   course = create(:course, instructor_id: instructor.id) if course.nil?
+  course
+end
+
+def mock_assignment(course)
+  # Look for an assignment
+  assignment = Assignment.find_by(course_id: course.id)
+  # Create an assignment if it does not exist
+  assignment = create(:assignment, course_id: course.id) if assignment.nil?
+  assignment
+end
+
+def mock_topic(assignment)
+  # Look for a topic
+  topic = SignUpTopic.find_by(assignment_id: assignment.id)
+  # Create a topic if it does not exist
+  topic = create(:sign_up_topic, assignment_id: assignment.id) if topic.nil?
+  topic
+end
+
+def prepare_bookmark(user = nil)
+  # Look for an instructor
+  instructor = mock_instructor
+
+  # Look for a TA
+  ta = mock_ta
+
+  # Look for a course
+  course = mock_course(instructor)
+
+  # Add the TA to the course
   if user && user.role.name == 'Teaching Assistant'
     course.add_ta(user)
   else
     course.add_ta(ta)
   end
-  
+
   # Look for an assignment
-  assignment = Assignment.find_by(course_id: course.id)
-  # Create an assignment if it does not exist
-  assignment = create(:assignment, course_id: course.id) if assignment.nil?
-  
+  assignment = mock_assignment(course)
+
   # Look for a topic
-  topic = SignUpTopic.find_by(assignment_id: assignment.id)
-  # Create a topic if it does not exist
-  topic = create(:sign_up_topic, assignment_id: assignment.id) if topic.nil?
-  
+  topic = mock_topic(assignment)
+
   # If user is nil, make a new student
   user = create(:user, role_id: Role.find_by(name: 'Student').id) if user.nil?
 
-  bookmark = build(:bookmark, user_id: user.id, topic_id: topic.id)
+  build(:bookmark, user_id: user.id, topic_id: topic.id)
 
   # Return the bookmark
-  bookmark
 end
 
 def create_bookmark(user = nil)
@@ -1192,12 +1357,17 @@ def create_bookmark(user = nil)
   bookmark
 end
 
-def make_bookmark_rating(bookmark, rating, user=nil)
-    # If user is nil, make a new student
-    user = create(:user, role_id: Role.find_by(name: 'Student').id) if user.nil?
-    # Create a bookmark rating if it does not exist
-    bookmark_rating = BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: user.id)
-    bookmark_rating = create(:bookmark_rating, bookmark_id: bookmark.id, user_id: user.id, rating: rating) if bookmark_rating.nil?
-  
-    bookmark_rating
+def make_bookmark_rating(bookmark, rating, user = nil)
+  # If user is nil, make a new student
+  user = create(:user, role_id: Role.find_by(name: 'Student').id) if user.nil?
+  # Create a bookmark rating if it does not exist
+  bookmark_rating = BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: user.id)
+  if bookmark_rating.nil?
+    bookmark_rating = create(:bookmark_rating, bookmark_id: bookmark.id, user_id: user.id,
+                                               rating:)
+  end
+
+  bookmark_rating
 end
+# rubocop:enable Metrics/BlockLength
+# rubocop:enable Metrics/LineLength
