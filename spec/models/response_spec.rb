@@ -2,7 +2,7 @@ require 'rails_helper'
 
 describe Response do
 
-  let(:user) { User.new(id: 1, role_id: 1, name: 'no name', fullname: 'no one') }
+  let(:user) { User.new(id: 1, role_id: 1, name: 'no name', full_name: 'no one') }
   let(:team) {Team.new}
   let(:participant) { Participant.new(id: 1, user: user) }
   let(:assignment) { Assignment.new(id: 1, name: 'Test Assignment') }

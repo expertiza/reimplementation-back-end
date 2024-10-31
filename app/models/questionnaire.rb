@@ -1,5 +1,4 @@
 class Questionnaire < ApplicationRecord
-  belongs_to :assignment, foreign_key: 'assignment_id', inverse_of: false
   belongs_to :instructor
   has_many :questions, dependent: :destroy # the collection of questions associated with this Questionnaire
   before_destroy :check_for_question_associations
@@ -37,7 +36,7 @@ class Questionnaire < ApplicationRecord
   # Check_for_question_associations checks if questionnaire has associated questions or not
   def check_for_question_associations
     if questions.any?
-      raise ActiveRecord::DeleteRestrictionError.new(:base, "Cannot delete record because dependent questions exist")
+      raise ActiveRecord::DeleteRestrictionError.new( "Cannot delete record because dependent questions exist")
     end
   end
 
