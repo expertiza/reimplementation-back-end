@@ -50,13 +50,13 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
 
         # Now add the bookmark to the database
         post '/api/v1/bookmarks',
-            params: { bookmark: {
-                        url: bookmark.url,
-                        title: bookmark.title,
-                        description: bookmark.description,
-                        topic_id: bookmark.topic_id
-                    } },
-            headers: @student_headers
+             params: { bookmark: {
+               url: bookmark.url,
+               title: bookmark.title,
+               description: bookmark.description,
+               topic_id: bookmark.topic_id
+             } },
+             headers: @student_headers
         expect(response).to have_http_status(:created)
 
         # Check that the bookmark was added to the database
@@ -69,13 +69,13 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
 
         # Now add the bookmark to the database
         post '/api/v1/bookmarks',
-            params: { bookmark: {
-                        url: bookmark.url,
-                        title: bookmark.title,
-                        description: bookmark.description,
-                        topic_id: bookmark.topic_id
-                    } },
-            headers: @student_headers
+             params: { bookmark: {
+               url: bookmark.url,
+               title: bookmark.title,
+               description: bookmark.description,
+               topic_id: bookmark.topic_id
+             } },
+             headers: @student_headers
         expect(response).to have_http_status(:unprocessable_entity)
 
         # Check that the bookmark was not added to the database
@@ -92,10 +92,10 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         # Update the bookmark
         put "/api/v1/bookmarks/#{bookmark.id}",
             params: { bookmark: {
-                        url: 'https://www.google.com',
-                        title: 'Google',
-                        description: 'Search Engine'
-                    } },
+              url: 'https://www.google.com',
+              title: 'Google',
+              description: 'Search Engine'
+            } },
             headers: @student_headers
         expect(response).to have_http_status(:ok)
 
@@ -285,13 +285,13 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
 
         # Now add the bookmark to the database
         post '/api/v1/bookmarks',
-            params: { bookmark: {
-                        url: bookmark.url,
-                        title: bookmark.title,
-                        description: bookmark.description,
-                        topic_id: bookmark.topic_id
-                    } },
-            headers: @ta_headers
+             params: { bookmark: {
+               url: bookmark.url,
+               title: bookmark.title,
+               description: bookmark.description,
+               topic_id: bookmark.topic_id
+             } },
+             headers: @ta_headers
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was added to the database
@@ -304,13 +304,13 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
 
         # Now add the bookmark to the database
         post '/api/v1/bookmarks',
-            params: { bookmark: {
-                        url: bookmark.url,
-                        title: bookmark.title,
-                        description: bookmark.description,
-                        topic_id: bookmark.topic_id
-                    } },
-            headers: @ta_headers
+             params: { bookmark: {
+               url: bookmark.url,
+               title: bookmark.title,
+               description: bookmark.description,
+               topic_id: bookmark.topic_id
+             } },
+             headers: @ta_headers
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was not added to the database
@@ -520,13 +520,13 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
 
         # Now add the bookmark to the database
         post '/api/v1/bookmarks',
-            params: { bookmark: {
-                        url: bookmark.url,
-                        title: bookmark.title,
-                        description: bookmark.description,
-                        topic_id: bookmark.topic_id
-                    } },
-            headers: @instructor_headers
+             params: { bookmark: {
+               url: bookmark.url,
+               title: bookmark.title,
+               description: bookmark.description,
+               topic_id: bookmark.topic_id
+             } },
+             headers: @instructor_headers
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was added to the database
@@ -539,13 +539,13 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
 
         # Now add the bookmark to the database
         post '/api/v1/bookmarks',
-            params: { bookmark: {
-                        url: bookmark.url,
-                        title: bookmark.title,
-                        description: bookmark.description,
-                        topic_id: bookmark.topic_id
-                    } },
-            headers: @instructor_headers
+             params: { bookmark: {
+               url: bookmark.url,
+               title: bookmark.title,
+               description: bookmark.description,
+               topic_id: bookmark.topic_id
+             } },
+             headers: @instructor_headers
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was not added to the database
@@ -755,13 +755,13 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
 
         # Now add the bookmark to the database
         post '/api/v1/bookmarks',
-            params: { bookmark: {
-                        url: bookmark.url,
-                        title: bookmark.title,
-                        description: bookmark.description,
-                        topic_id: bookmark.topic_id
-                    } },
-            headers: @admin_headers
+             params: { bookmark: {
+               url: bookmark.url,
+               title: bookmark.title,
+               description: bookmark.description,
+               topic_id: bookmark.topic_id
+             } },
+             headers: @admin_headers
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was added to the database
@@ -774,13 +774,13 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
 
         # Now add the bookmark to the database
         post '/api/v1/bookmarks',
-            params: { bookmark: {
-                        url: bookmark.url,
-                        title: bookmark.title,
-                        description: bookmark.description,
-                        topic_id: bookmark.topic_id
-                    } },
-            headers: @admin_headers
+             params: { bookmark: {
+               url: bookmark.url,
+               title: bookmark.title,
+               description: bookmark.description,
+               topic_id: bookmark.topic_id
+             } },
+             headers: @admin_headers
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was not added to the database
@@ -1001,13 +1001,13 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
 
         # Now add the bookmark to the database
         post '/api/v1/bookmarks',
-            params: { bookmark: {
-                        url: bookmark.url,
-                        title: bookmark.title,
-                        description: bookmark.description,
-                        topic_id: bookmark.topic_id
-                    } },
-            headers: @super_admin_headers
+             params: { bookmark: {
+               url: bookmark.url,
+               title: bookmark.title,
+               description: bookmark.description,
+               topic_id: bookmark.topic_id
+             } },
+             headers: @super_admin_headers
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was added to the database
@@ -1020,13 +1020,13 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
 
         # Now add the bookmark to the database
         post '/api/v1/bookmarks',
-            params: { bookmark: {
-                        url: bookmark.url,
-                        title: bookmark.title,
-                        description: bookmark.description,
-                        topic_id: bookmark.topic_id
-                    } },
-            headers: @super_admin_headers
+             params: { bookmark: {
+               url: bookmark.url,
+               title: bookmark.title,
+               description: bookmark.description,
+               topic_id: bookmark.topic_id
+             } },
+             headers: @super_admin_headers
         expect(response).to have_http_status(:forbidden)
 
         # Check that the bookmark was not added to the database
@@ -1043,10 +1043,10 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         # Update the bookmark
         put "/api/v1/bookmarks/#{bookmark.id}",
             params: { bookmark: {
-                    url: 'https://www.google.com',
-                    title: 'Google',
-                    description: 'Search Engine'
-                } },
+              url: 'https://www.google.com',
+              title: 'Google',
+              description: 'Search Engine'
+            } },
             headers: @super_admin_headers
         expect(response).to have_http_status(:ok)
 
@@ -1069,10 +1069,10 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
       it 'does not let the super administrator update a bookmark that does not exist' do
         put '/api/v1/bookmarks/1',
             params: { bookmark: {
-                        url: 'https://www.google.com',
-                        title: 'Google',
-                        description: 'Search Engine'
-                    } },
+              url: 'https://www.google.com',
+              title: 'Google',
+              description: 'Search Engine'
+            } },
             headers: @super_admin_headers
         expect(response).to have_http_status(:not_found)
       end
