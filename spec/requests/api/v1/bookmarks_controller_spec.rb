@@ -1,7 +1,6 @@
 require 'rails_helper'
 require 'factory_bot_rails' # shouldn't be needed
 # rubocop:disable Metrics/BlockLength
-# rubocop:disable Metrics/LineLength
 
 RSpec.describe 'api/v1/bookmarks', type: :request do
   before do
@@ -790,7 +789,8 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
     end
     # PUT
     describe 'PUT /api/v1/bookmarks/:id' do
-      it 'lets the administrator update a bookmark if they are the parent of the instructor who created the assignment' do
+      it 'lets the administrator update a bookmark if they are
+          the parent of the instructor who created the assignment' do
         # Create the bookmark
         bookmark = create_bookmark
         # Find the instructor
@@ -809,7 +809,8 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google',
                                 description: 'Search Engine')).to be_truthy
       end
-      it 'does not let the administrator update a bookmark if they are not the parent of the instructor who created the assignment' do
+      it 'does not let the administrator update a bookmark if they are
+          not the parent of the instructor who created the assignment' do
         # Create the bookmark
         bookmark = create_bookmark
         # The administrator is not the parent of the instructor at this point
@@ -849,7 +850,8 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
     end
     # DELETE
     describe 'DELETE /api/v1/bookmarks/:id' do
-      it 'lets the administrator delete a bookmark if they are the parent of the instructor who created the assignment' do
+      it 'lets the administrator delete a bookmark if they are
+          the parent of the instructor who created the assignment' do
         # Create the bookmark
         bookmark = create_bookmark
         # Find the instructor
@@ -866,7 +868,8 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description,
                                 topic_id: bookmark.topic_id)).to be_nil
       end
-      it 'does not let the administrator delete a bookmark if they are not the parent of the instructor who created the assignment' do
+      it 'does not let the administrator delete a bookmark if they are
+          not the parent of the instructor who created the assignment' do
         # Create the bookmark
         bookmark = create_bookmark
         # The administrator is not the parent of the instructor at this point
@@ -1370,4 +1373,3 @@ def make_bookmark_rating(bookmark, rating, user = nil)
   bookmark_rating
 end
 # rubocop:enable Metrics/BlockLength
-# rubocop:enable Metrics/LineLength
