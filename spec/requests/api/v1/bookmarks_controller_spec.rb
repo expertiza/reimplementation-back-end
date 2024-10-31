@@ -93,7 +93,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
       it 'does not let the student update a bookmark that belongs to another student' do
         # Create another student and their bookmark
         another_student = create(:user, role_id: Role.find_by(name: 'Student').id)
-        bookmark = create_bookmark(@another_student)
+        bookmark = create_bookmark(another_student)
 
         # Update the bookmark
         put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @student_headers
@@ -123,7 +123,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
       it 'does not let the student delete a bookmark that belongs to another student' do
         # Create another student and their bookmark
         another_student = create(:user, role_id: Role.find_by(name: 'Student').id)
-        bookmark = create_bookmark(@another_student)
+        bookmark = create_bookmark(another_student)
 
         # Delete the bookmark
         delete "/api/v1/bookmarks/#{bookmark.id}", headers: @student_headers
@@ -197,7 +197,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
       it 'allows the student to create a bookmark rating on a bookmark that belongs to another student' do
         # Create another student and their bookmark
         another_student = create(:user, role_id: Role.find_by(name: 'Student').id)
-        bookmark = create_bookmark(@another_student)
+        bookmark = create_bookmark(another_student)
 
         # Now add the bookmark rating to the database
         post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: 5 }, headers: @student_headers
@@ -406,7 +406,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
       it 'allows the ta to create a bookmark rating on a bookmark that belongs to another course' do
         # Create another ta and their bookmark
         another_ta = create(:user, role_id: Role.find_by(name: 'Teaching Assistant').id)
-        bookmark = create_bookmark(@another_ta)
+        bookmark = create_bookmark(another_ta)
 
         # Now add the bookmark rating to the database
         post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: 5 }, headers: @ta_headers
@@ -615,7 +615,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
       it 'allows the instructor to create a bookmark rating on a bookmark that belongs to another course' do
         # Create another instructor and their bookmark
         another_instructor = create(:user, role_id: Role.find_by(name: 'Instructor').id)
-        bookmark = create_bookmark(@another_instructor)
+        bookmark = create_bookmark(another_instructor)
 
         # Now add the bookmark rating to the database
         post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: 5 }, headers: @instructor_headers
@@ -835,7 +835,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
       it 'allows the administrator to create a bookmark rating on a bookmark that belongs to another course' do
         # Create another admin and their bookmark
         another_admin = create(:user, role_id: Role.find_by(name: 'Administrator').id)
-        bookmark = create_bookmark(@another_admin)
+        bookmark = create_bookmark(another_admin)
 
         # Now add the bookmark rating to the database
         post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: 5 }, headers: @admin_headers
@@ -1016,7 +1016,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
       it 'allows the super administrator to create a bookmark rating on a bookmark that belongs to another super_admin' do
         # Create another super administrator and their bookmark
         another_super_admin = create(:user, role_id: Role.find_by(name: 'Super Administrator').id)
-        bookmark = create_bookmark(@another_super_admin)
+        bookmark = create_bookmark(another_super_admin)
 
         # Now add the bookmark rating to the database
         post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: 5 }, headers: @super_admin_headers

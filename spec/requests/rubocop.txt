@@ -1,0 +1,341 @@
+Inspecting 1 file
+W
+
+Offenses:
+
+spec/requests/api/v1/bookmarks_controller_spec.rb:4:1: C: Metrics/BlockLength: Block has too many lines. [772/120]
+RSpec.describe 'api/v1/bookmarks', type: :request do ...
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:5:1: C: [Correctable] Layout/EmptyLinesAroundBlockBody: Extra empty line detected at block body beginning.
+spec/requests/api/v1/bookmarks_controller_spec.rb:11:3: C: Metrics/BlockLength: Block has too many lines. [136/120]
+  describe User do  ...
+  ^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:11:19: C: [Correctable] Layout/TrailingWhitespace: Trailing whitespace detected.
+  describe User do 
+                  ^
+spec/requests/api/v1/bookmarks_controller_spec.rb:51:121: C: [Correctable] Layout/LineLength: Line is too long. [191/120]
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @student_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:55:121: C: [Correctable] Layout/LineLength: Line is too long. [151/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:62:121: C: [Correctable] Layout/LineLength: Line is too long. [191/120]
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @student_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:66:121: C: [Correctable] Layout/LineLength: Line is too long. [148/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:76:121: C: [Correctable] Layout/LineLength: Line is too long. [177/120]
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @student_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:80:121: C: [Correctable] Layout/LineLength: Line is too long. [123/120]
+        expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google', description: 'Search Engine')).to be_truthy
+                                                                                                                        ^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:87:121: C: [Correctable] Layout/LineLength: Line is too long. [139/120]
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: nil, title: nil, description: nil } }, headers: @student_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:95:9: W: [Correctable] Lint/UselessAssignment: Useless assignment to variable - another_student.
+        another_student = create(:user, role_id: Role.find_by(name: 'Student').id)
+        ^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:99:121: C: [Correctable] Layout/LineLength: Line is too long. [177/120]
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @student_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:106:121: C: [Correctable] Layout/LineLength: Line is too long. [164/120]
+        put '/api/v1/bookmarks/1', params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @student_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:121:121: C: [Correctable] Layout/LineLength: Line is too long. [148/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:125:9: W: [Correctable] Lint/UselessAssignment: Useless assignment to variable - another_student.
+        another_student = create(:user, role_id: Role.find_by(name: 'Student').id)
+        ^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:133:121: C: [Correctable] Layout/LineLength: Line is too long. [151/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:147:42: C: [Correctable] Style/NilComparison: Prefer the use of the nil? predicate.
+        expect(JSON.parse(response.body) == nil)
+                                         ^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:191:84: C: [Correctable] Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.
+        post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: "a" }, headers: @student_headers
+                                                                                   ^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:195:95: C: [Correctable] Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.
+        expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @student.id, rating: "a")).to be_nil
+                                                                                              ^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:199:9: W: [Correctable] Lint/UselessAssignment: Useless assignment to variable - another_student.
+        another_student = create(:user, role_id: Role.find_by(name: 'Student').id)
+        ^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:216:3: C: Metrics/BlockLength: Block has too many lines. [138/120]
+  describe Ta do ...
+  ^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:256:121: C: [Correctable] Layout/LineLength: Line is too long. [186/120]
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @ta_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:260:121: C: [Correctable] Layout/LineLength: Line is too long. [148/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:267:121: C: [Correctable] Layout/LineLength: Line is too long. [186/120]
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @ta_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:271:121: C: [Correctable] Layout/LineLength: Line is too long. [148/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:279:1: C: [Correctable] Layout/TrailingWhitespace: Trailing whitespace detected.
+spec/requests/api/v1/bookmarks_controller_spec.rb:281:121: C: [Correctable] Layout/LineLength: Line is too long. [172/120]
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @ta_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:283:1: C: [Correctable] Layout/TrailingWhitespace: Trailing whitespace detected.
+spec/requests/api/v1/bookmarks_controller_spec.rb:285:121: C: [Correctable] Layout/LineLength: Line is too long. [123/120]
+        expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google', description: 'Search Engine')).to be_truthy
+                                                                                                                        ^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:290:1: C: [Correctable] Layout/TrailingWhitespace: Trailing whitespace detected.
+spec/requests/api/v1/bookmarks_controller_spec.rb:292:121: C: [Correctable] Layout/LineLength: Line is too long. [134/120]
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: nil, title: nil, description: nil } }, headers: @ta_headers
+                                                                                                                        ^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:294:1: C: [Correctable] Layout/TrailingWhitespace: Trailing whitespace detected.
+spec/requests/api/v1/bookmarks_controller_spec.rb:299:121: C: [Correctable] Layout/LineLength: Line is too long. [159/120]
+        put '/api/v1/bookmarks/1', params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @ta_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:308:1: C: [Correctable] Layout/TrailingWhitespace: Trailing whitespace detected.
+spec/requests/api/v1/bookmarks_controller_spec.rb:310:121: C: [Correctable] Layout/LineLength: Line is too long. [179/120]
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: another_ta_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:312:1: C: [Correctable] Layout/TrailingWhitespace: Trailing whitespace detected.
+spec/requests/api/v1/bookmarks_controller_spec.rb:322:1: C: [Correctable] Layout/TrailingWhitespace: Trailing whitespace detected.
+spec/requests/api/v1/bookmarks_controller_spec.rb:326:1: C: [Correctable] Layout/TrailingWhitespace: Trailing whitespace detected.
+spec/requests/api/v1/bookmarks_controller_spec.rb:328:121: C: [Correctable] Layout/LineLength: Line is too long. [148/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:340:1: C: [Correctable] Layout/TrailingWhitespace: Trailing whitespace detected.
+spec/requests/api/v1/bookmarks_controller_spec.rb:344:1: C: [Correctable] Layout/TrailingWhitespace: Trailing whitespace detected.
+spec/requests/api/v1/bookmarks_controller_spec.rb:346:121: C: [Correctable] Layout/LineLength: Line is too long. [151/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:356:42: C: [Correctable] Style/NilComparison: Prefer the use of the nil? predicate.
+        expect(JSON.parse(response.body) == nil)
+                                         ^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:400:84: C: [Correctable] Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.
+        post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: "a" }, headers: @ta_headers
+                                                                                   ^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:404:90: C: [Correctable] Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.
+        expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @ta.id, rating: "a")).to be_nil
+                                                                                         ^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:408:9: W: [Correctable] Lint/UselessAssignment: Useless assignment to variable - another_ta.
+        another_ta = create(:user, role_id: Role.find_by(name: 'Teaching Assistant').id)
+        ^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:425:3: C: Metrics/BlockLength: Block has too many lines. [138/120]
+  describe Instructor do ...
+  ^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:465:121: C: [Correctable] Layout/LineLength: Line is too long. [194/120]
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @instructor_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:469:121: C: [Correctable] Layout/LineLength: Line is too long. [148/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:476:121: C: [Correctable] Layout/LineLength: Line is too long. [194/120]
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @instructor_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:480:121: C: [Correctable] Layout/LineLength: Line is too long. [148/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:490:121: C: [Correctable] Layout/LineLength: Line is too long. [180/120]
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @instructor_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:494:121: C: [Correctable] Layout/LineLength: Line is too long. [123/120]
+        expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google', description: 'Search Engine')).to be_truthy
+                                                                                                                        ^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:501:121: C: [Correctable] Layout/LineLength: Line is too long. [142/120]
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: nil, title: nil, description: nil } }, headers: @instructor_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:508:121: C: [Correctable] Layout/LineLength: Line is too long. [167/120]
+        put '/api/v1/bookmarks/1', params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @instructor_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:519:121: C: [Correctable] Layout/LineLength: Line is too long. [187/120]
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: another_instructor_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:537:121: C: [Correctable] Layout/LineLength: Line is too long. [148/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:555:121: C: [Correctable] Layout/LineLength: Line is too long. [151/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:565:42: C: [Correctable] Style/NilComparison: Prefer the use of the nil? predicate.
+        expect(JSON.parse(response.body) == nil)
+                                         ^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:609:84: C: [Correctable] Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.
+        post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: "a" }, headers: @instructor_headers
+                                                                                   ^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:613:98: C: [Correctable] Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.
+        expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @instructor.id, rating: "a")).to be_nil
+                                                                                                 ^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:617:9: W: [Correctable] Lint/UselessAssignment: Useless assignment to variable - another_instructor.
+        another_instructor = create(:user, role_id: Role.find_by(name: 'Instructor').id)
+        ^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:634:3: C: Metrics/BlockLength: Block has too many lines. [143/120]
+  describe Administrator do ...
+  ^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:674:121: C: [Correctable] Layout/LineLength: Line is too long. [189/120]
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @admin_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:678:121: C: [Correctable] Layout/LineLength: Line is too long. [148/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:685:121: C: [Correctable] Layout/LineLength: Line is too long. [189/120]
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @admin_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:689:121: C: [Correctable] Layout/LineLength: Line is too long. [148/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:694:121: C: Layout/LineLength: Line is too long. [122/120]
+      it 'lets the administrator update a bookmark if they are the parent of the instructor who created the assignment' do
+                                                                                                                        ^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:704:121: C: [Correctable] Layout/LineLength: Line is too long. [175/120]
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @admin_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:708:121: C: [Correctable] Layout/LineLength: Line is too long. [123/120]
+        expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google', description: 'Search Engine')).to be_truthy
+                                                                                                                        ^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:710:121: C: Layout/LineLength: Line is too long. [134/120]
+      it 'does not let the administrator update a bookmark if they are not the parent of the instructor who created the assignment' do
+                                                                                                                        ^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:716:121: C: [Correctable] Layout/LineLength: Line is too long. [175/120]
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @admin_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:732:121: C: [Correctable] Layout/LineLength: Line is too long. [137/120]
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: nil, title: nil, description: nil } }, headers: @admin_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:739:121: C: [Correctable] Layout/LineLength: Line is too long. [162/120]
+        put '/api/v1/bookmarks/1', params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @admin_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:745:121: C: Layout/LineLength: Line is too long. [122/120]
+      it 'lets the administrator delete a bookmark if they are the parent of the instructor who created the assignment' do
+                                                                                                                        ^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:759:121: C: [Correctable] Layout/LineLength: Line is too long. [148/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:761:121: C: Layout/LineLength: Line is too long. [134/120]
+      it 'does not let the administrator delete a bookmark if they are not the parent of the instructor who created the assignment' do
+                                                                                                                        ^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:771:121: C: [Correctable] Layout/LineLength: Line is too long. [151/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:785:42: C: [Correctable] Style/NilComparison: Prefer the use of the nil? predicate.
+        expect(JSON.parse(response.body) == nil)
+                                         ^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:829:84: C: [Correctable] Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.
+        post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: "a" }, headers: @admin_headers
+                                                                                   ^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:833:93: C: [Correctable] Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.
+        expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @admin.id, rating: "a")).to be_nil
+                                                                                            ^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:837:9: W: [Correctable] Lint/UselessAssignment: Useless assignment to variable - another_admin.
+        another_admin = create(:user, role_id: Role.find_by(name: 'Administrator').id)
+        ^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:854:3: C: Metrics/BlockLength: Block has too many lines. [122/120]
+  describe SuperAdministrator do ...
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:894:121: C: [Correctable] Layout/LineLength: Line is too long. [195/120]
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @super_admin_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:898:121: C: [Correctable] Layout/LineLength: Line is too long. [148/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:905:121: C: [Correctable] Layout/LineLength: Line is too long. [195/120]
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }, headers: @super_admin_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:909:121: C: [Correctable] Layout/LineLength: Line is too long. [148/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:910:10: C: [Correctable] Layout/TrailingWhitespace: Trailing whitespace detected.
+      end        
+         ^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:919:121: C: [Correctable] Layout/LineLength: Line is too long. [181/120]
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @super_admin_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:923:121: C: [Correctable] Layout/LineLength: Line is too long. [123/120]
+        expect(Bookmark.find_by(url: 'https://www.google.com', title: 'Google', description: 'Search Engine')).to be_truthy
+                                                                                                                        ^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:930:121: C: [Correctable] Layout/LineLength: Line is too long. [143/120]
+        put "/api/v1/bookmarks/#{bookmark.id}", params: { bookmark: { url: nil, title: nil, description: nil } }, headers: @super_admin_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:937:121: C: [Correctable] Layout/LineLength: Line is too long. [168/120]
+        put '/api/v1/bookmarks/1', params: { bookmark: { url: 'https://www.google.com', title: 'Google', description: 'Search Engine' } }, headers: @super_admin_headers
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:952:121: C: [Correctable] Layout/LineLength: Line is too long. [148/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:966:42: C: [Correctable] Style/NilComparison: Prefer the use of the nil? predicate.
+        expect(JSON.parse(response.body) == nil)
+                                         ^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1010:84: C: [Correctable] Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.
+        post "/api/v1/bookmarks/#{bookmark.id}/bookmarkratings", params: { rating: "a" }, headers: @super_admin_headers
+                                                                                   ^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1014:99: C: [Correctable] Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.
+        expect(BookmarkRating.find_by(bookmark_id: bookmark.id, user_id: @super_admin.id, rating: "a")).to be_nil
+                                                                                                  ^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1016:121: C: Layout/LineLength: Line is too long. [122/120]
+      it 'allows the super administrator to create a bookmark rating on a bookmark that belongs to another super_admin' do
+                                                                                                                        ^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1018:9: W: [Correctable] Lint/UselessAssignment: Useless assignment to variable - another_super_admin.
+        another_super_admin = create(:user, role_id: Role.find_by(name: 'Super Administrator').id)
+        ^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1045:9: W: [Correctable] Lint/UselessAssignment: Useless assignment to variable - bookmark.
+        bookmark = create_bookmark
+        ^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1072:121: C: [Correctable] Layout/LineLength: Line is too long. [164/120]
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1076:121: C: [Correctable] Layout/LineLength: Line is too long. [148/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1083:121: C: [Correctable] Layout/LineLength: Line is too long. [164/120]
+        post '/api/v1/bookmarks', params: { bookmark: { url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id } }
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1087:121: C: [Correctable] Layout/LineLength: Line is too long. [148/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_nil
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1119:121: C: [Correctable] Layout/LineLength: Line is too long. [151/120]
+        expect(Bookmark.find_by(url: bookmark.url, title: bookmark.title, description: bookmark.description, topic_id: bookmark.topic_id)).to be_truthy
+                                                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1136:9: W: [Correctable] Lint/UselessAssignment: Useless assignment to variable - bookmark_rating. Did you mean bookmark?
+        bookmark_rating = make_bookmark_rating(bookmark, 5)
+        ^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1145:1: C: Metrics/AbcSize: Assignment Branch Condition size for prepare_bookmark is too high. [<12, 38, 10> 41.09/20]
+def prepare_bookmark(user = nil) ...
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1145:1: C: Metrics/CyclomaticComplexity: Cyclomatic complexity for prepare_bookmark is too high. [9/7]
+def prepare_bookmark(user = nil) ...
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1145:1: C: Metrics/PerceivedComplexity: Perceived complexity for prepare_bookmark is too high. [10/8]
+def prepare_bookmark(user = nil) ...
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1150:1: C: [Correctable] Layout/TrailingWhitespace: Trailing whitespace detected.
+spec/requests/api/v1/bookmarks_controller_spec.rb:1158:3: C: [Correctable] Layout/CommentIndentation: Incorrect indentation detected (column 2 instead of 0).
+  # Create a course if it does not exist
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1159:1: C: [Correctable] Layout/CommentIndentation: Incorrect indentation detected (column 0 instead of 2).
+#   course = create(:course, instructor_id: instructor.id, tas: [ta]) if course.nil?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1166:1: C: [Correctable] Layout/TrailingWhitespace: Trailing whitespace detected.
+spec/requests/api/v1/bookmarks_controller_spec.rb:1171:1: C: [Correctable] Layout/TrailingWhitespace: Trailing whitespace detected.
+spec/requests/api/v1/bookmarks_controller_spec.rb:1176:1: C: [Correctable] Layout/TrailingWhitespace: Trailing whitespace detected.
+spec/requests/api/v1/bookmarks_controller_spec.rb:1180:3: C: [Correctable] Style/RedundantAssignment: Redundant assignment before returning detected.
+  bookmark = build(:bookmark, user_id: user.id, topic_id: topic.id)
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1195:48: C: [Correctable] Layout/SpaceAroundEqualsInParameterDefault: Surrounding space missing in default value assignment.
+def make_bookmark_rating(bookmark, rating, user=nil)
+                                               ^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1197:1: C: [Correctable] Layout/IndentationWidth: Use 2 (not 4) spaces for indentation.
+    user = create(:user, role_id: Role.find_by(name: 'Student').id) if user.nil?
+^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1200:100: C: [Correctable] Style/HashSyntax: Omit the hash value.
+    bookmark_rating = create(:bookmark_rating, bookmark_id: bookmark.id, user_id: user.id, rating: rating) if bookmark_rating.nil?
+                                                                                                   ^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1200:108: C: [Correctable] Style/IfUnlessModifier: Modifier form of if makes the line too long.
+    bookmark_rating = create(:bookmark_rating, bookmark_id: bookmark.id, user_id: user.id, rating: rating) if bookmark_rating.nil?
+                                                                                                           ^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1200:121: C: [Correctable] Layout/LineLength: Line is too long. [130/120]
+    bookmark_rating = create(:bookmark_rating, bookmark_id: bookmark.id, user_id: user.id, rating: rating) if bookmark_rating.nil?
+                                                                                                                        ^^^^^^^^^^
+spec/requests/api/v1/bookmarks_controller_spec.rb:1201:1: C: [Correctable] Layout/TrailingWhitespace: Trailing whitespace detected.
+
+1 file inspected, 122 offenses detected, 108 offenses autocorrectable
