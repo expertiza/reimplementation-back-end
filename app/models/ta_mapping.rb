@@ -1,6 +1,7 @@
 class TaMapping < ApplicationRecord
   belongs_to :course
-  belongs_to :ta
+#   belongs_to :ta
+  belongs_to :ta, class_name: 'User', foreign_key: 'ta_id'
 
   #Returns course ids of the TA
   def self.get_course_ids(user_id)

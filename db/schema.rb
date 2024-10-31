@@ -347,6 +347,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_10_30_195109) do
   add_foreign_key "signed_up_teams", "sign_up_topics"
   add_foreign_key "signed_up_teams", "teams"
   add_foreign_key "ta_mappings", "courses"
+  add_foreign_key "ta_mappings", "users", column: "ta_id"
   add_foreign_key "teams", "assignments"
   add_foreign_key "teams_users", "teams"
   add_foreign_key "teams_users", "users"
