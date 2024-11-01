@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
+ActiveRecord::Schema[7.0].define(version: 2024_10_30_195109) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -280,12 +280,12 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
 
   create_table "ta_mappings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "course_id", null: false
-    t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "ta_id", null: false
     t.index ["course_id"], name: "index_ta_mappings_on_course_id"
-    t.index ["user_id"], name: "fk_ta_mapping_users"
-    t.index ["user_id"], name: "index_ta_mappings_on_user_id"
+    t.index ["ta_id"], name: "fk_ta_mapping_users"
+    t.index ["ta_id"], name: "index_ta_mappings_on_user_id"
   end
 
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -347,7 +347,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
   add_foreign_key "signed_up_teams", "sign_up_topics"
   add_foreign_key "signed_up_teams", "teams"
   add_foreign_key "ta_mappings", "courses"
-  add_foreign_key "ta_mappings", "users"
+  add_foreign_key "ta_mappings", "users", column: "ta_id"
   add_foreign_key "teams", "assignments"
   add_foreign_key "teams_users", "teams"
   add_foreign_key "teams_users", "users"
