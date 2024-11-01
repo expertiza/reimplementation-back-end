@@ -14,6 +14,9 @@ class UpdateTaMappingsTableStructure < ActiveRecord::Migration[7.0]
       # Ensure ta_id column exists and add it if it doesn't
       t.bigint :ta_id, null: false unless column_exists?(:ta_mappings, :ta_id)
     end
+    
+    # Add the foreign key constraint to ta_id
+    add_foreign_key :ta_mappings, :users, column: :ta_id
 
     # Add necessary indexes outside of the change_table block to avoid conflicts
     add_index :ta_mappings, :course_id, name: "index_ta_mappings_on_course_id" unless index_exists?(:ta_mappings, :course_id, name: "index_ta_mappings_on_course_id")
