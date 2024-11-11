@@ -175,9 +175,14 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
 
   create_table "participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "user_id"
-    t.bigint "assignment_id"
+    t.bigint "parent_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.float "grade"
+    t.text "comments_to_student"
+    t.text "private_instructor_comments"
+    t.string "handle"
+    t.string "type"
     t.boolean "can_submit", default: true
     t.boolean "can_review", default: true
     t.string "handle"
@@ -187,7 +192,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
     t.string "topic"
     t.string "current_stage"
     t.datetime "stage_deadline"
-    t.index ["assignment_id"], name: "index_participants_on_assignment_id"
+    t.index ["parent_id"], name: "index_participants_on_parent_id"
     t.index ["join_team_request_id"], name: "index_participants_on_join_team_request_id"
     t.index ["team_id"], name: "index_participants_on_team_id"
     t.index ["user_id"], name: "fk_participant_users"
@@ -278,6 +283,13 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
     t.index ["team_id"], name: "index_signed_up_teams_on_team_id"
   end
 
+  create_table "signed_up_users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "topic_id", null: false
+    t.integer "creator_id", null: false
+    t.boolean "is_waitlisted", null: false
+    t.integer "preference_priority_number"
+  end
+
   create_table "ta_mappings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "course_id", null: false
     t.bigint "user_id", null: false
@@ -289,6 +301,32 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
   end
 
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "submitted_hyperlinks"
+    t.integer "directory_num"
+  end
+
+  create_table "teams_users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "team_id"
+    t.integer "user_id"
+  end
+
+  create_table "update_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "submitted_hyperlinks"
+    t.integer "directory_num"
+    t.bigint "assignment_id", null: false
+    t.index ["assignment_id"], name: "index_teams_on_assignment_id"
+  end
+
+  create_table "teams_users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "team_id"
+    t.integer "user_id"
+  end
+
+  create_table "update_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "assignment_id", null: false
@@ -325,9 +363,8 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
     t.datetime "updated_at", null: false
     t.bigint "institution_id"
     t.bigint "role_id", null: false
-    t.bigint "parent_id"
+    t.integer "parent_id"
     t.index ["institution_id"], name: "index_users_on_institution_id"
-    t.index ["parent_id"], name: "index_users_on_parent_id"
     t.index ["role_id"], name: "index_users_on_role_id"
   end
 
@@ -337,7 +374,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
   add_foreign_key "assignments", "users", column: "instructor_id"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
-  add_foreign_key "participants", "assignments"
+  add_foreign_key "participants", "assignments", column: "parent_id"
   add_foreign_key "participants", "join_team_requests"
   add_foreign_key "participants", "teams"
   add_foreign_key "participants", "users"
@@ -353,5 +390,4 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
   add_foreign_key "teams_users", "users"
   add_foreign_key "users", "institutions"
   add_foreign_key "users", "roles"
-  add_foreign_key "users", "users", column: "parent_id"
 end

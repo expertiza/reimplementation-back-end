@@ -27,6 +27,10 @@ class Role < ApplicationRecord
     name['Teaching Assistant']
   end
 
+  def self.student
+    @student_role ||= find_by name: 'Student'
+  end
+
   def student?
     name['Student']
   end

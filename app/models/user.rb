@@ -14,6 +14,8 @@ class User < ApplicationRecord
   belongs_to :parent, class_name: 'User', optional: true
   has_many :users, foreign_key: 'parent_id', dependent: :nullify
   has_many :invitations
+  has_many :participants
+  has_many :assignment_participants
   has_many :assignments
   has_many :teams_users, dependent: :destroy
   has_many :teams, through: :teams_users
@@ -84,6 +86,10 @@ class User < ApplicationRecord
     raise "User #{params[:user_id] || params[:user][:name]} not found" if user.nil?
 
     user
+  end
+
+  def self.anonymized_view?(ip_address = nil)
+
   end
 
   # This will override the default as_json method in the ApplicationRecord class and specify
