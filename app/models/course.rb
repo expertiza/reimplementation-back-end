@@ -7,7 +7,6 @@ class Course < ApplicationRecord
   has_many :tas, through: :ta_mappings
   has_many :participants, class_name: 'CourseParticipant', foreign_key: 'parent_id', dependent: :destroy
 
-
   # Returns the submission directory for the course
   def path
     raise 'Path can not be created as the course must be associated with an instructor.' if instructor_id.nil?
