@@ -1,4 +1,8 @@
 class Participant < ApplicationRecord
+  belongs_to :user
+  belongs_to :assignment, foreign_key: 'assignment_id', inverse_of: false
+  has_many   :join_team_requests, dependent: :destroy
+  belongs_to :team, optional: true
 
   # paper trail is used to keep track of the changes that are made to the code (does not affect the codebase in anyway)
   # has_paper_trail

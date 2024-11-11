@@ -1,3 +1,4 @@
 class SignedUpTeam < ApplicationRecord
-  #empty model added
+  belongs_to :sign_up_topic
+  belongs_to :team
 end

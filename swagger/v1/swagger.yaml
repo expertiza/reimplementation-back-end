@@ -3,6 +3,14 @@ openapi: 3.0.1
 info:
   title: EXPERTIZA API V1
   version: v1
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+- bearerAuth: []
 paths:
   "/api/v1/account_requests/pending":
     get:
@@ -119,6 +127,308 @@ paths:
       summary: Delete Account Request
       tags:
       - Account Requests
+      responses:
+        '204':
+          description: successful
+  "/api/v1/bookmarks":
+    get:
+      summary: list bookmarks
+      tags:
+      - Bookmarks
+      responses:
+        '200':
+          description: successful
+    post:
+      summary: create bookmark
+      tags:
+      - Bookmarks
+      parameters: []
+      responses:
+        '201':
+          description: created
+        '422':
+          description: unprocessable entity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                title:
+                  type: string
+                description:
+                  type: string
+                topic_id:
+                  type: integer
+                rating:
+                  type: integer
+              required:
+              - url
+              - title
+              - description
+              - topic_id
+              - rating
+  "/api/v1/bookmarks/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: show bookmark
+      tags:
+      - Bookmarks
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not_found
+    put:
+      summary: update bookmark
+      tags:
+      - Bookmarks
+      parameters: []
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+        '422':
+          description: unprocessable entity
+          content:
+            application/json:
+              schema:
+                type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+    delete:
+      summary: delete bookmark
+      tags:
+      - Bookmarks
+      responses:
+        '204':
+          description: successful
+        '404':
+          description: not found
+  "/api/v1/bookmarks/{id}/bookmarkratings":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    post:
+      summary: save bookmark rating score
+      tags:
+      - Bookmarks
+      parameters: []
+      responses:
+        '200':
+          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rating:
+                  type: integer
+              required:
+              - rating
+    get:
+      summary: get bookmark rating score
+      tags:
+      - Bookmarks
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+  "/api/v1/courses/{id}/add_ta/{ta_id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    - name: ta_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: add_ta course
+      tags:
+      - Courses
+      responses:
+        '201':
+          description: successful
+  "/api/v1/courses/{id}/tas":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: view_tas course
+      tags:
+      - Courses
+      responses:
+        '200':
+          description: successful
+  "/api/v1/courses/{id}/remove_ta/{ta_id}":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: string
+    - name: ta_id
+      in: path
+      description: ta_id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: remove_ta course
+      tags:
+      - Courses
+      responses:
+        '200':
+          description: successful
+  "/api/v1/courses/{id}/copy":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: copy course
+      tags:
+      - Courses
+      responses:
+        '200':
+          description: successful
+  "/api/v1/courses":
+    get:
+      summary: list courses
+      tags:
+      - Courses
+      responses:
+        '200':
+          description: successful
+    post:
+      summary: create course
+      tags:
+      - Courses
+      parameters: []
+      responses:
+        '201':
+          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                directory_path:
+                  type: string
+                instructor_id:
+                  type: integer
+                institution_id:
+                  type: integer
+                info:
+                  type: string
+              required:
+              - name
+              - directory_path
+              - institution_id
+              - instructor_id
+  "/api/v1/courses/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: show course
+      tags:
+      - Courses
+      responses:
+        '200':
+          description: successful
+    patch:
+      summary: update course
+      tags:
+      - Courses
+      parameters: []
+      responses:
+        '200':
+          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                directory_path:
+                  type: string
+                instructor_id:
+                  type: integer
+                institution_id:
+                  type: integer
+                info:
+                  type: string
+              required: []
+    put:
+      summary: update course
+      tags:
+      - Courses
+      parameters: []
+      responses:
+        '200':
+          description: successful
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                directory_path:
+                  type: string
+                instructor_id:
+                  type: integer
+                institution_id:
+                  type: integer
+                info:
+                  type: string
+              required: []
+    delete:
+      summary: delete course
+      tags:
+      - Courses
       responses:
         '204':
           description: successful
@@ -760,6 +1070,8 @@ paths:
           type: integer
       - name: topic_ids
         in: query
+        items:
+          type: string
         description: Topic Identifiers to delete
         required: false
         schema:
@@ -991,187 +1303,36 @@ paths:
               required:
               - user_name
               - password
-    "/api/v1/courses/{id}/add_ta/{ta_id}":
-    parameters:
-    - name: id
-      in: path
-      required: true
-      schema:
-        type: integer
-    - name: ta_id
-      in: path
-      required: true
-      schema:
-        type: integer
+  /api/v1/student_tasks/list:
+      get:
+        summary: List all Student Tasks
+        tags:
+          - Student Tasks
+        responses:
+          '200':
+            description: An array of student tasks
+  /api/v1/student_tasks/view:
     get:
-      summary: add_ta course
+      summary: View a student task
       tags:
-      - Courses
-      responses:
-        '201':
-          description: successful
-  "/api/v1/courses/{id}/tas":
-    parameters:
-    - name: id
-      in: path
-      description: id
-      required: true
-      schema:
-        type: string
-    get:
-      summary: view_tas course
-      tags:
-      - Courses
+        - Student Tasks
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The ID of the student task to retrieve
       responses:
         '200':
-          description: successful
-  "/api/v1/courses/{id}/remove_ta/{ta_id}":
-    parameters:
-    - name: id
-      in: path
-      description: id
-      required: true
-      schema:
-        type: string
-    - name: ta_id
-      in: path
-      description: ta_id
-      required: true
-      schema:
-        type: string
-    get:
-      summary: remove_ta course
-      tags:
-      - Courses
-      responses:
-        '200':
-          description: successful
-  "/api/v1/courses/{id}/copy":
-    parameters:
-    - name: id
-      in: path
-      description: id
-      required: true
-      schema:
-        type: string
-    get:
-      summary: copy course
-      tags:
-      - Courses
-      responses:
-        '200':
-          description: successful
-  "/api/v1/courses":
-    get:
-      summary: list courses
-      tags:
-      - Courses
-      responses:
-        '200':
-          description: successful
-    post:
-      summary: create course
-      tags:
-      - Courses
-      parameters: []
-      responses:
-        '201':
-          description: successful
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                directory_path:
-                  type: string
-                instructor_id:
-                  type: integer
-                institution_id:
-                  type: integer
-                info:
-                  type: string
-              required:
-              - name
-              - directory_path
-              - institution_id
-              - instructor_id
-  "/api/v1/courses/{id}":
-    parameters:
-    - name: id
-      in: path
-      description: id
-      required: true
-      schema:
-        type: string
-    get:
-      summary: show course
-      tags:
-      - Courses
-      responses:
-        '200':
-          description: successful
-    patch:
-      summary: update course
-      tags:
-      - Courses
-      parameters: []
-      responses:
-        '200':
-          description: successful
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                directory_path:
-                  type: string
-                instructor_id:
-                  type: integer
-                institution_id:
-                  type: integer
-                info:
-                  type: string
-              required: []
-    put:
-      summary: update course
-      tags:
-      - Courses
-      parameters: []
-      responses:
-        '200':
-          description: successful
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                directory_path:
-                  type: string
-                instructor_id:
-                  type: integer
-                institution_id:
-                  type: integer
-                info:
-                  type: string
-              required: []
-    delete:
-      summary: delete course
-      tags:
-      - Courses
-      responses:
-        '200':
-          description: successful 
+          description: A specific student task
+
+
+
+
+
 servers:
 - url: http://{defaultHost}
   variables:
     defaultHost:
-      default: 127.0.0.1:3000
+      default: localhost:3002

@@ -1,10 +1,22 @@
 FactoryBot.define do
-  factory :update_participant do
-    
+  factory :student_task do
+    assignment { nil }
+    current_stage { "MyString" }
+    participant { nil }
+    stage_deadline { "2024-04-15 15:55:54" }
+    topic { "MyString" }
   end
 
-  factory :sign_up_topic do
-    
+
+  factory :join_team_request do
+  end
+
+  factory :bookmark do
+    url { "MyText" }
+    title { "MyText" }
+    description { "MyText" }
+    user_id { 1 }
+    topic_id { 1 }
   end
 
   factory :user do

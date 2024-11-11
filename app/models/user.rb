@@ -3,8 +3,8 @@ class User < ApplicationRecord
   after_initialize :set_defaults
 
   # name must be lowercase and unique
-  validates :name, presence: true, uniqueness: true, allow_blank: false,
-                   format: { with: /\A[a-z]+\z/, message: 'must be in lowercase' }
+  validates :name, presence: true, uniqueness: true, allow_blank: false
+                   # format: { with: /\A[a-z]+\z/, message: 'must be in lowercase' }
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :password, length: { minimum: 6 }, presence: true, allow_nil: true
   validates :full_name, presence: true, length: { maximum: 50 }
@@ -16,6 +16,9 @@ class User < ApplicationRecord
   has_many :invitations
   has_many :participants
   has_many :assignment_participants
+  has_many :assignments
+  has_many :teams_users, dependent: :destroy
+  has_many :teams, through: :teams_users
 
   scope :students, -> { where role_id: Role::STUDENT }
   scope :tas, -> { where role_id: Role::TEACHING_ASSISTANT }
@@ -115,4 +118,5 @@ class User < ApplicationRecord
     self.email_on_review_of_review ||= false
     self.etc_icons_on_homepage ||= true
   end
+
 end
