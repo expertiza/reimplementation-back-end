@@ -18,11 +18,12 @@ class Api::V1::AccountRequestsController < ApplicationController
     if @account_request.save
       response = { account_request: @account_request }
       if User.find_by(email: @account_request.email)
+        ExpertizaLogger.warn LoggerMessage.new(controller_name, session[:user].name, "Account requested with duplicate email: #{@account_request.email}", request)
         response[:warnings] = 'WARNING: User with this email already exists!'
       end
       render json: response, status: :created
     else
-      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, $ERROR_INFO, request)
+      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, $ERROR_INFO, request)
       render json: @account_request.errors, status: :unprocessable_entity
     end
   rescue ActiveRecord::RecordNotFound => e
