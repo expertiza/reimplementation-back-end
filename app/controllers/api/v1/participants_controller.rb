@@ -4,7 +4,7 @@ class Api::V1::ParticipantsController < ApplicationController
   def index; end
 
   # Return a specified participant
-  # GET /participant/:id
+  # GET /participants/:id
   def show; end
 
   # Copy all participants from a course to an assignment
@@ -16,18 +16,18 @@ class Api::V1::ParticipantsController < ApplicationController
   def bequeath; end
 
   # Create a participant
-  # POST /participant
+  # POST /participants
   def create; end
 
   # Update the permissions of a participant
-  # PATCH /participant/:id/authorization
+  # PATCH /participants/:id/authorization
   def update_authorization; end
 
   # Update the handle of a participant
-  # PATCH /participant/:id/handle
+  # PATCH /participants/:id/handle
   def update_handle; end
 
   # Delete a specified participant
-  # DELETE /participant/:id
+  # DELETE /participants/:id
   def destroy; end
 end

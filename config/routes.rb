@@ -109,6 +109,19 @@ Rails.application.routes.draw do
           get :processed, action: :processed_requests
         end
       end
+
+      resources :participants do
+        collection do
+          get '/', to: 'participants#index'
+          get '/:id', to: 'participants#show'
+          get '/inherit', to: 'participants#inherit'
+          get '/bequeath', to: 'participants#bequeath'
+          post '/', to: 'participants#create'
+          patch '/:id/authorization', to: 'participants#update_authorization'
+          patch '/:id/handle', to: 'participants#update_handle'
+          delete '/:id', to: 'participants#destroy'
+        end
+      end
     end
   end
 end
