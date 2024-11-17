@@ -1,4 +1,5 @@
 require 'rails_helper'
+require 'support/factory_bot'
 RSpec.describe FeedbackResponseMap, type: :model do
     # let(:questionnaire1) { build(:questionnaire, id: 1, type: 'AuthorFeedbackQuestionnaire') }
     # let(:questionnaire2) { build(:questionnaire, id: 2, type: 'MetareviewQuestionnaire') }
