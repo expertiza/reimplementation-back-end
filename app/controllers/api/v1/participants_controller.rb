@@ -20,8 +20,8 @@ class Api::V1::ParticipantsController < ApplicationController
   def create; end
 
   # Update the permissions of a participant
-  # PATCH /participants/:id/authorization
-  def update_authorization; end
+  # PATCH /participants/:id/permissions
+  def update_permissions; end
 
   # Update the handle of a participant
   # PATCH /participants/:id/handle
@@ -30,4 +30,7 @@ class Api::V1::ParticipantsController < ApplicationController
   # Delete a specified participant
   # DELETE /participants/:id
   def destroy; end
+
+  # Permitted parameters for creating or updating a Participant object
+  def participant_params; end
 end
