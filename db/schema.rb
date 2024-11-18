@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_11_11_201613) do
+ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -187,9 +187,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_11_11_201613) do
     t.string "topic"
     t.string "current_stage"
     t.datetime "stage_deadline"
-    t.bigint "course_id", null: false
     t.index ["assignment_id"], name: "index_participants_on_assignment_id"
-    t.index ["course_id"], name: "index_participants_on_course_id"
     t.index ["join_team_request_id"], name: "index_participants_on_join_team_request_id"
     t.index ["team_id"], name: "index_participants_on_team_id"
     t.index ["user_id"], name: "fk_participant_users"
@@ -340,7 +338,6 @@ ActiveRecord::Schema[7.0].define(version: 2024_11_11_201613) do
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
   add_foreign_key "participants", "assignments"
-  add_foreign_key "participants", "courses"
   add_foreign_key "participants", "join_team_requests"
   add_foreign_key "participants", "teams"
   add_foreign_key "participants", "users"
