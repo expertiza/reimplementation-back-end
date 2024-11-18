@@ -8,8 +8,4 @@ class Participant < ApplicationRecord
   def fullname
     user.fullname
   end
-
-  def authorization
-    # To be implemented
-  end
 end
