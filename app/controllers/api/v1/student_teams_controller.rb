@@ -1,23 +1,8 @@
 class Api::V1::StudentTeamsController < ApplicationController
     include AuthorizationHelper
-  
-    autocomplete :user, :name
-  
-    def team
-      @team ||= AssignmentTeam.find params[:team_id]
-    end
-  
-    attr_writer :team
-  
-    def student
-      @student ||= AssignmentParticipant.find(params[:student_id])
-    end
-  
-    attr_writer :student
-  
-    before_action :team, only: %i[edit update]
-    before_action :student, only: %i[view update edit create remove_participant]
-  
+    before_action :set_team, only: %i[edit update remove_participant]
+    before_action :set_student, only: %i[view update create remove_participant]
+    
     def action_allowed?
       # note, this code replaces the following line that cannot be called before action allowed?
       # E2476. modified the code to use smaller methods checking allowed actions
@@ -182,5 +167,24 @@ class Api::V1::StudentTeamsController < ApplicationController
     def edit_update_action_allowed?
       current_user_has_id? team.user_id
     end
+
+    private
+
+    def set_team
+      @team = AssignmentTeam.find(params[:team_id])
+    end
+
+    def set_student
+      @student = AssignmentParticipant.find(params[:student_id])
+    end
+
+    def team_params
+      params.require(:team).permit(:name)
+    end
+
+    def student_params
+      params.require(:student).permit(:user_id, :assignment_id)
+    end
+    
   end
   
