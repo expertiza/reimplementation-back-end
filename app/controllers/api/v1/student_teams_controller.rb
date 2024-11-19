@@ -1,5 +1,7 @@
 class Api::V1::StudentTeamsController < ApplicationController
     include AuthorizationHelper
+    autocomplete :user, :name
+
     before_action :set_team, only: %i[show edit update remove_participant]
     before_action :set_student, only: %i[view update create remove_participant]
     
@@ -98,24 +100,25 @@ class Api::V1::StudentTeamsController < ApplicationController
     end
   
     def edit; end
-  
+
+    # PATCH/PUT /student_teams/:id
+    # Updates team name or other attributes
     def update
-      # Update the team name only if the given team name is not used already
-      # E2476. also modified the team_created_successfully method to notify_team_creation_success
-      matching_teams = AssignmentTeam.where name: params[:team][:name], parent_id: team.parent_id
+      matching_teams = AssignmentTeam.where(name: params[:team][:name], parent_id: @team.parent_id)
       if matching_teams.length.zero?
-        if team.update_attribute('name', params[:team][:name])
-          notify_team_creation_success(team)
-          redirect_to view_student_teams_path student_id: params[:student_id]
+        if @team.update(name: params[:team][:name])
+          notify_team_creation_success(@team)
+          render json: { message: "The team: \"#{@team.name}\" has been updated successfully." }, status: :ok
+        else
+          render json: { message: @team.errors.full_messages }, status: :unprocessable_entity
         end
       elsif matching_teams.length == 1 && matching_teams.name == team.name
         notify_team_creation_success(team)
-        redirect_to view_student_teams_path student_id: params[:student_id]
+        render json: { message: "The team: \"#{@team.name}\" has been updated successfully." }, status: :ok
       else
         flash[:notice] = 'That team name is already in use.'
         ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, 'Team name being updated to was already in use', request)
-        redirect_to view_student_teams_path student_id: params[:student_id]
-  
+        render json: { message: 'That team name is already in use.' }, status: :unprocessable_entity
       end
     end
   
