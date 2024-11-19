@@ -1,6 +1,6 @@
 class Api::V1::StudentTeamsController < ApplicationController
     include AuthorizationHelper
-    before_action :set_team, only: %i[edit update remove_participant]
+    before_action :set_team, only: %i[show edit update remove_participant]
     before_action :set_student, only: %i[view update create remove_participant]
     
     def action_allowed?
@@ -22,6 +22,20 @@ class Api::V1::StudentTeamsController < ApplicationController
   
     def controller_locale
       locale_for_student
+    end
+
+    # GET /api/v1/student_teams?student_id=&team_id=
+    # Retrieve StudentTeams by query parameters
+    def index
+      if params[:student_id].nil?
+        render json: { message: 'Student ID is required!' }, status: :unprocessable_entity
+      elsif params[:team_id].nil?
+        @student_teams = AssignmentTeam.where(student_id: params[:student_id])
+        render json: @student_teams, status: :ok
+      else
+        @student_teams = AssignmentTeam.where(student_id: params[:student_id], team_id: params[:team_id])
+        render json: @student_teams, status: :ok
+      end
     end
 
     # GET /student_teams/:id
