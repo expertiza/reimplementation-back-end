@@ -12,11 +12,11 @@ class AuthenticationController < ApplicationController
                   institution_id: user.institution.id }
       token = JsonWebToken.encode(payload, 24.hours.from_now)
 
-      ExpertizaLogger.info LoggerMessage.new('', user.name, 'Login successful')
+      ExpertizaLogger.info LoggerMessage.new(controller_name, user.name, 'Login successful')
 
       render json: { token: }, status: :ok
     else
-      ExpertizaLogger.error LoggerMessage.new(controller_name, '', 'Failed login attempt. Invalid username/password', request)
+      ExpertizaLogger.error LoggerMessage.new(controller_name, user&.name || '', 'Failed login attempt. Invalid username/password', request)
       render json: { error: 'Invalid username / password' }, status: :unauthorized
     end
   end

@@ -16,7 +16,7 @@ class Api::V1::AssignmentsController < ApplicationController
   def create
     assignment = Assignment.new(assignment_params)
     if assignment.save
-      ExpertizaLogger.info "Assignment created: #{assignment.as_json}"
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Assignment created: #{assignment.as_json}", request)
       render json: assignment, status: :created
     else
       render json: assignment.errors, status: :unprocessable_entity
@@ -41,7 +41,7 @@ class Api::V1::AssignmentsController < ApplicationController
         ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Assignment #{assignment.id} was deleted.", request)
         render json: { message: "Assignment deleted successfully!" }, status: :ok
       else
-        ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Failed to delete assignment #{$ERROR_INFO}", request)
+        ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Failed to delete assignment #{$ERROR_INFO}", request)
         render json: { error: "Failed to delete assignment", details: assignment.errors.full_messages }, status: :unprocessable_entity
       end
     else

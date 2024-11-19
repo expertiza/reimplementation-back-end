@@ -29,7 +29,7 @@ class Api::V1::BookmarksController < ApplicationController
       ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, 'Your bookmark has been successfully created!', request)
       render json: @bookmark, status: :created and return
     rescue ActiveRecord::RecordInvalid
-      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, $ERROR_INFO, request)
+      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, $ERROR_INFO, request)
       render json: $ERROR_INFO.to_s, status: :unprocessable_entity
     end
   end
