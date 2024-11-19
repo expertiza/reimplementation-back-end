@@ -23,6 +23,12 @@ class Api::V1::StudentTeamsController < ApplicationController
     def controller_locale
       locale_for_student
     end
+
+    # GET /student_teams/:id
+    # Show details of a specific team
+    def show
+      render json: @team, status: :ok
+    end
   
     def view
       # View will check if send_invs and received_invs are set before showing
