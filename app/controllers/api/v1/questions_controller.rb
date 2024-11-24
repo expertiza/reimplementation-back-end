@@ -26,6 +26,7 @@ class Api::V1::QuestionsController < ApplicationController
   question = questionnaire.questions.build(
     txt: params[:txt],
     question_type: params[:question_type],
+    seq: params[:seq],
     break_before: true
   )
 
