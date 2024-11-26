@@ -3,12 +3,14 @@ class Api::V1::AccountRequestsController < ApplicationController
   # GET /account_requests/pending
   def pending_requests
     @account_requests = AccountRequest.where(status: 'Under Review').order('created_at DESC')
+    ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Fetched #{@account_requests.count} pending account requests.", request)
     render json: @account_requests, status: :ok
   end
 
   # GET /account_requests/processed
   def processed_requests
     @account_requests = AccountRequest.where.not(status: 'Under Review').order('updated_at DESC')
+    ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Fetched #{@account_requests.count} processed account requests.", request)
     render json: @account_requests, status: :ok
   end
 
@@ -18,25 +20,33 @@ class Api::V1::AccountRequestsController < ApplicationController
     if @account_request.save
       response = { account_request: @account_request }
       if User.find_by(email: @account_request.email)
+        # Logging a warning if a user with the same email already exists
         ExpertizaLogger.warn LoggerMessage.new(controller_name, session[:user].name, "Account requested with duplicate email: #{@account_request.email}", request)
         response[:warnings] = 'WARNING: User with this email already exists!'
       end
+
+      # Logging the successful creation of the account request
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Successfully created account request with ID: #{@account_request.id}.", request)
       render json: response, status: :created
     else
       ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, $ERROR_INFO, request)
       render json: @account_request.errors, status: :unprocessable_entity
     end
   rescue ActiveRecord::RecordNotFound => e
+    ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Record not found: #{e.message}", request)
     render json: { error: e.message }, status: :not_found
   rescue ActionController::ParameterMissing => e
+    ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Parameter missing: #{e.message}", request)
     render json: { error: e.message }, status: :parameter_missing
   rescue StandardError => e
+    ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "An error occurred: #{e.message}", request)
     render json: { error: e.message }, status: :unprocessable_entity
   end
 
   # GET /account_requests/:id
   def show
     @account_request = AccountRequest.find(params[:id])
+    ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Fetched account request with ID: #{@account_request.id}.", request)
     render json: @account_request, status: :ok
   rescue ActiveRecord::RecordNotFound => e
     render json: { error: e.message }, status: :not_found
