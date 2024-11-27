@@ -88,8 +88,6 @@ class Api::V1::StudentTeamsController < ApplicationController
         TeamNode.create parent_id: parent.id, node_object_id: team.id
         user = User.find(student.user_id)
         team.add_member(user, team.parent_id)
-        # E2476. also modified the team_created_successfully method to notify_team_creation_success
-        notify_team_creation_success(team)
         redirect_to view_student_teams_path student_id: student.id
   
       else
@@ -107,13 +105,11 @@ class Api::V1::StudentTeamsController < ApplicationController
       matching_teams = AssignmentTeam.where(name: params[:team][:name], parent_id: @team.parent_id)
       if matching_teams.length.zero?
         if @team.update(name: params[:team][:name])
-          notify_team_creation_success(@team)
           render json: { message: "The team: \"#{@team.name}\" has been updated successfully." }, status: :ok
         else
           render json: { message: @team.errors.full_messages }, status: :unprocessable_entity
         end
       elsif matching_teams.length == 1 && matching_teams.name == team.name
-        notify_team_creation_success(team)
         render json: { message: "The team: \"#{@team.name}\" has been updated successfully." }, status: :ok
       else
         flash[:notice] = 'That team name is already in use.'
@@ -141,15 +137,6 @@ class Api::V1::StudentTeamsController < ApplicationController
       old_invites.each(&:destroy)
       student.save
       redirect_to view_student_teams_path student_id: student.id
-    end
-   # E2476. renamed the method from "team_created_successfully" to "notify_team_creation_success" for better readibility
-    def notify_team_creation_success(current_team = nil)
-      if current_team
-        undo_link "The team \"#{current_team.name}\" has been successfully updated."
-      else
-        undo_link "The team \"#{team.name}\" has been successfully updated."
-      end
-      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, 'The team has been successfully created.', request)
     end
   
     # This method is used to show the Author Feedback Questionnaire of current assignment
