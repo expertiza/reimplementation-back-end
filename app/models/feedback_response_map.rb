@@ -69,7 +69,7 @@ class FeedbackResponseMap < ResponseMap
     #       @all_review_response_ids << response.id
     #     end
     #   end
-      @all_review_response_ids = static_rurics_report(@temp_review_responses, @temp_response_map_ids)
+      @all_review_response_ids = static_rubrics_report(@temp_review_responses, @temp_response_map_ids)
       return authors, @all_review_response_ids
     end
     # @feedback_response_map_ids = ResponseMap.where(["reviewed_object_id IN (?) and type = ?", @all_review_response_ids, type]).pluck("id")
@@ -131,7 +131,7 @@ class FeedbackResponseMap < ResponseMap
       return all_review_response_ids_rounds
     end
     # Used in the conditional of self.feedback_response_report to get the rubric reports if the rounds do not vary
-    self.static_rurics_report(review_responses, response_map_ids):
+    self.static_rubrics_report(review_responses, response_map_ids):
       all_review_response_ids = []
       review_responses.each do |response|
         unless response_map_ids.include? response.map_id
