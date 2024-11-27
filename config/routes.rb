@@ -3,17 +3,14 @@ Rails.application.routes.draw do
 
   mount Rswag::Api::Engine => 'api-docs'
   mount Rswag::Ui::Engine => 'api-docs'
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
-  # Defines the root path route ("/")
-  # root "articles#index"
   post '/login', to: 'authentication#login'
+
   namespace :api do
     namespace :v1 do
       resources :institutions
       resources :roles do
         collection do
-          # Get all roles that are subordinate to a role of a logged in user
           get 'subordinate_roles', action: :subordinate_roles
         end
       end
@@ -26,18 +23,18 @@ Rails.application.routes.draw do
       end
       resources :assignments do
         collection do
-          post '/:assignment_id/add_participant/:user_id',action: :add_participant
-          delete '/:assignment_id/remove_participant/:user_id',action: :remove_participant
-          patch '/:assignment_id/remove_assignment_from_course',action: :remove_assignment_from_course
-          patch '/:assignment_id/assign_course/:course_id',action: :assign_course
+          post '/:assignment_id/add_participant/:user_id', action: :add_participant
+          delete '/:assignment_id/remove_participant/:user_id', action: :remove_participant
+          patch '/:assignment_id/remove_assignment_from_course', action: :remove_assignment_from_course
+          patch '/:assignment_id/assign_course/:course_id', action: :assign_course
           post '/:assignment_id/copy_assignment', action: :copy_assignment
-          get '/:assignment_id/has_topics',action: :has_topics
-          get '/:assignment_id/show_assignment_details',action: :show_assignment_details
+          get '/:assignment_id/has_topics', action: :has_topics
+          get '/:assignment_id/show_assignment_details', action: :show_assignment_details
           get '/:assignment_id/team_assignment', action: :team_assignment
           get '/:assignment_id/has_teams', action: :has_teams
           get '/:assignment_id/valid_num_review/:review_type', action: :valid_num_review
           get '/:assignment_id/varying_rubrics_by_round', action: :varying_rubrics_by_round?
-          post '/:assignment_id/create_node',action: :create_node
+          post '/:assignment_id/create_node', action: :create_node
         end
       end
 
@@ -47,6 +44,7 @@ Rails.application.routes.draw do
           post 'bookmarkratings', to: 'bookmarks#save_bookmark_rating_score'
         end
       end
+
       resources :student_tasks do
         collection do
           get :list, action: :list
@@ -73,8 +71,8 @@ Rails.application.routes.draw do
       resources :questions do
         collection do
           get :types
-          get 'show_all/questionnaire/:id', to:'questions#show_all#questionnaire', as: 'show_all'
-          delete 'delete_all/questionnaire/:id', to:'questions#delete_all#questionnaire', as: 'delete_all'
+          get 'show_all/questionnaire/:id', to: 'questions#show_all', as: 'show_all'
+          delete 'delete_all/questionnaire/:id', to: 'questions#delete_all', as: 'delete_all'
         end
       end
 
@@ -87,11 +85,9 @@ Rails.application.routes.draw do
 
       resources :join_team_requests do
         collection do
-          post 'decline/:id', to:'join_team_requests#decline'
+          post 'decline/:id', to: 'join_team_requests#decline'
         end
       end
-
-
 
       resources :sign_up_topics do
         collection do
