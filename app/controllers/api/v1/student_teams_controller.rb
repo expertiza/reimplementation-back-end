@@ -119,19 +119,9 @@ class Api::V1::StudentTeamsController < ApplicationController
     end
   
     def remove_participant
-      # remove the record from teams_users table
-      team_user = TeamsUser.where(team_id: params[:team_id], user_id: student.user_id)
-      Team.remove_team_user(team_user)
-      # if your old team does not have any members, delete the entry for the team
-      if TeamsUser.where(team_id: params[:team_id]).empty?
-        old_team = AssignmentTeam.find params[:team_id]
-        if (old_team && Team.size(params[:team_id]) == 0 && !old_team.received_any_peer_review?)
-          old_team.destroy
-          # if assignment has signup sheet then the topic selected by the team has to go back to the pool
-          # or to the first team in the waitlist
-          Waitlist.remove_from_waitlists(params[:team_id])
-        end
-      end
+      # remove the record from teams_users table & delete team if there are no members
+      Team.remove_team_user(team_id: params[:team_id], user_id: student.user_id)
+
       # remove all the sent invitations
       old_invites = Invitation.where from_id: student.user_id, assignment_id: student.parent_id
       old_invites.each(&:destroy)

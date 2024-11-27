@@ -17,4 +17,25 @@ class Team < ApplicationRecord
       false
     end
   end
+
+  # TODO :: Remove the team from waitlist, once Waitlist is implemented
+  def remove_team_user(team_id:, user_id:)
+    if TeamsUser.exists?(team_id: team_id, user_id: user_id)
+      TeamsUser.where(team_id: team_id, user_id: user_id).destroy_all
+    end
+
+    # if this user is the last member of the team then the team does not
+    # have any members, delete the entry for the team
+    if TeamsUser.where(team_id: team_id).empty?
+      old_team = AssignmentTeam.find team_id
+      if (old_team && Team.size(team_id) == 0 && !old_team.received_any_peer_review?)
+        old_team.destroy
+
+        # if assignment has signup sheet then the topic selected by the team has to go back to the pool
+        # or to the first team in the waitlist
+        # Waitlist.remove_from_waitlists(team_id)
+      end
+    end
+  end
+
 end
