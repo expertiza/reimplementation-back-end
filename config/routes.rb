@@ -55,7 +55,7 @@ Rails.application.routes.draw do
 
       resources :courses do
         collection do
-          post ':id/add_ta', action: :add_ta 
+          get ':id/add_ta/:ta_id', action: :add_ta
           get ':id/tas', action: :view_tas
           get ':id/remove_ta/:ta_id', action: :remove_ta
           get ':id/copy', action: :copy
