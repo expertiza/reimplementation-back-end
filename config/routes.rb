@@ -106,6 +106,13 @@ Rails.application.routes.draw do
           get :processed, action: :processed_requests
         end
       end
+
+      # Notifications routes
+      resources :notifications do
+        member do
+          patch :toggle_active
+        end
+      end
     end
   end
 end
