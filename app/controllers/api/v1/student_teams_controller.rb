@@ -1,9 +1,11 @@
 class Api::V1::StudentTeamsController < ApplicationController
-    include AuthorizationHelper
-    autocomplete :user, :name
+    # include AuthorizationHelper
+    # autocomplete :user, :name
+    rescue_from ActionController::ParameterMissing, with: :parameter_missing
+
 
     before_action :set_team, only: %i[show edit update remove_participant]
-    before_action :set_student, only: %i[view update create remove_participant]
+    before_action :set_student, only: %i[view update create remove_participant, mentor]
     
     def action_allowed?
       # note, this code replaces the following line that cannot be called before action allowed?
@@ -184,6 +186,10 @@ class Api::V1::StudentTeamsController < ApplicationController
 
     def student_params
       params.require(:student).permit(:user_id, :assignment_id)
+    end
+
+    def parameter_missing(exception)
+      render json: { error: "Parameter missing: #{exception.param}" }, status: :unprocessable_entity
     end
     
   end
