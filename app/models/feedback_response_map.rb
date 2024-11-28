@@ -4,10 +4,12 @@ class FeedbackResponseMap < ResponseMap
   belongs_to :review, class_name: 'Response', foreign_key: 'reviewed_object_id'
   belongs_to :reviewer, class_name: 'AssignmentParticipant', dependent: :destroy
 
+  # Shortcut for getting the assignment of the review (through the review map)
   def assignment
     review.map.assignment
   end
 
+  # Returns reivew display if it exists, or a default message otherwise
   def show_review
     if review
       review.display_as_html
@@ -16,14 +18,17 @@ class FeedbackResponseMap < ResponseMap
     end
   end
 
+  # Returns the string 'Feedback', as this is a feedback response map
   def get_title
     'Feedback'
   end
 
+  # Returns the questionnaire associated with the feedback
   def questionnaire
     assignment.questionnaires.find_by(type: 'AuthorFeedbackQuestionnaire')
   end
 
+  # Shortcut for getting the reviewee of the feedback (through the review map)
   def contributor
     review.map.reviewee
   end
@@ -109,8 +114,11 @@ class FeedbackResponseMap < ResponseMap
     # PRIVATE METHODS FOR USE IN SIMPLIFYING self.feedback_response_report
     # Used in the first section of self.feedback_response_report to get the authors of the feedback
     self.get_feedback_authors(id):
+      # Get the teams for the assignment
       teams = AssignmentTeam.includes([:users]).where(parent_id: id)
+      # Initialize the authors array
       @authors = []
+      # For each team, get the users and add them to the authors array
       teams.each do |team|
         team.users.each do |user|
           participant = AssignmentParticipant.where(parent_id: id, user_id: user.id).first
@@ -121,10 +129,13 @@ class FeedbackResponseMap < ResponseMap
     end
     # Used in the conditional of self.feedback_response_report to get the rubric reports if the rounds vary
     self.varying_rubrics_report(review_responses, response_map_ids):
+      # Initialize the array of response map ids
       all_review_response_ids_rounds = [1=>[], 2=>[], 3=>[]]
+      # For each response, add the response id to the appropriate round array
       review_responses.each do |response|
+        # Skip if the response is already in the array
         next if response_map_ids.include? response.map_id.to_s + response.round.to_s
-  
+        # Otherwise, add the response to the array and the appropriate round array
         response_map_ids << response.map_id.to_s + response.round.to_s
         all_review_response_ids_rounds[response.round] << response.id
       end
@@ -132,8 +143,11 @@ class FeedbackResponseMap < ResponseMap
     end
     # Used in the conditional of self.feedback_response_report to get the rubric reports if the rounds do not vary
     self.static_rubrics_report(review_responses, response_map_ids):
+      # Initialize the array of response map ids
       all_review_response_ids = []
+      # For each response, add the response id to the array
       review_responses.each do |response|
+        # Skip if the response is already in the array
         unless response_map_ids.include? response.map_id
           response_map_ids << response.map_id
           all_review_response_ids << response.id
