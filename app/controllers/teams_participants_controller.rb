@@ -1,112 +1,94 @@
 class TeamsUsersController < ApplicationController
   include AuthorizationHelper
 
+  # Check permissions for actions
   def action_allowed?
-    # Allow duty updation for a team if current user is student, else require TA or above Privileges.
-    if %w[update_duties].include? params[:action]
+    if %w[update_duties].include?(params[:action])
       current_user_has_student_privileges?
     else
       current_user_has_ta_privileges?
     end
   end
 
+  # Autocomplete user names for adding members to a team
   def auto_complete_for_user_name
-    team = Team.find(session[:team_id])
-    @users = team.get_possible_team_members(params[:user][:name])
-    render inline: "<%= auto_complete_result @users, 'name' %>", layout: false
+    team = Team.find_by(id: session[:team_id])
+    if team
+      @users = team.get_members.where("name LIKE ?", "%#{params[:user][:name]}%")
+      render inline: "<%= auto_complete_result @users, 'name' %>", layout: false
+    else
+      render plain: "Team not found", status: :not_found
+    end
   end
 
-  # Example of duties: manager, designer, programmer, tester. Finds TeamsUser and save preferred Duty
-  def update_duties
-    team_user = TeamsUser.find(params[:teams_user_id])
-    team_user.update_attribute(:duty_id, params[:teams_user]['duty_id'])
-    redirect_to controller: 'student_teams', action: 'view', student_id: params[:participant_id]
-  end
-
-  def list
-    @team = Team.find(params[:id])
-    @assignment = Assignment.find(@team.parent_id)
-    @teams_users = TeamsUser.page(params[:page]).per_page(10).where(['team_id = ?', params[:id]])
-  end
-
-  def new
-    @team = Team.find(params[:id])
-  end
-
+  # Add a user to a team
   def create
     user = User.find_by(name: params[:user][:name].strip)
-    unless user
-      urlCreate = url_for controller: 'users', action: 'new'
-      flash[:error] = "\"#{params[:user][:name].strip}\" is not defined. Please <a href=\"#{urlCreate}\">create</a> this user before continuing."
+    return redirect_with_error("User not found. Please create the user.") unless user
+
+    team = Team.find(params[:team_id])
+    begin
+      team.add_member(user)
+      flash[:success] = "User #{user.name} successfully added to the team."
+    rescue StandardError => e
+      flash[:error] = e.message
     end
 
-    team = Team.find(params[:id])
-    unless user.nil?
-      if team.is_a?(AssignmentTeam)
-        assignment = Assignment.find(team.parent_id)
-        if assignment.user_on_team?(user)
-          flash[:error] = "This user is already assigned to a team for this assignment"
-          redirect_back fallback_location: root_path
-          return
-        end
-        if AssignmentParticipant.find_by(user_id: user.id, parent_id: assignment.id).nil?
-          urlAssignmentParticipantList = url_for controller: 'participants', action: 'list', id: assignment.id, model: 'Assignment', authorization: 'participant'
-          flash[:error] = "\"#{user.name}\" is not a participant of the current assignment. Please <a href=\"#{urlAssignmentParticipantList}\">add</a> this user before continuing."
-        else
-          begin
-            add_member_return = team.add_member(user, team.parent_id)
-          rescue
-            flash[:error] = "The user #{user.name} is already a member of the team #{team.name}"
-            redirect_back fallback_location: root_path
-            return
-          end
-          flash[:error] = 'This team already has the maximum number of members.' if add_member_return == false
-        end
-      else # CourseTeam
-        course = Course.find(team.parent_id)
-        if course.user_on_team?(user)
-          flash[:error] = "This user is already assigned to a team for this course"
-          redirect_back fallback_location: root_path
-          return
-        end
-        if CourseParticipant.find_by(user_id: user.id, parent_id: course.id).nil?
-          urlCourseParticipantList = url_for controller: 'participants', action: 'list', id: course.id, model: 'Course', authorization: 'participant'
-          flash[:error] = "\"#{user.name}\" is not a participant of the current course. Please <a href=\"#{urlCourseParticipantList}\">add</a> this user before continuing."
-        else
-          begin
-            add_member_return = team.add_member(user, team.parent_id)
-          rescue
-            flash[:error] = "The user #{user.name} is already a member of the team #{team.name}"
-            redirect_back fallback_location: root_path
-            return
-          end
-          flash[:error] = 'This team already has the maximum number of members.' if add_member_return == false
-          if add_member_return
-            @teams_user = TeamsUser.last
-            undo_link("The team user \"#{user.name}\" has been successfully added to \"#{team.name}\".")
-          end
-        end
-      end
-    end
-
-    redirect_to controller: 'teams', action: 'list', id: team.parent_id
+    redirect_to action: 'list', id: team.assignment_id
   end
 
+  # Remove a user from a team
   def delete
-    @teams_user = TeamsUser.find(params[:id])
-    parent_id = Team.find(@teams_user.team_id).parent_id
-    @user = User.find(@teams_user.user_id)
-    @teams_user.destroy
-    undo_link("The team user \"#{@user.name}\" has been successfully removed. ")
-    redirect_to controller: 'teams', action: 'list', id: parent_id
-  end
+    team = Team.find(params[:team_id])
+    user = User.find(params[:user_id])
 
-  def delete_selected
-    params[:item].each do |item_id|
-      team_user = TeamsUser.find(item_id).first
-      team_user.destroy
+    begin
+      team.remove_member(user)
+      flash[:success] = "User #{user.name} successfully removed from the team."
+    rescue StandardError => e
+      flash[:error] = e.message
     end
 
-    redirect_to action: 'list', id: params[:id]
+    redirect_to action: 'list', id: team.assignment_id
+  end
+
+  # List all members of a team
+  def list
+    @team = Team.find(params[:id])
+    @assignment = @team.assignment
+    @teams_users = @team.teams_users.page(params[:page]).per_page(10)
+  end
+
+  # Update a team user's duties
+  def update_duties
+    team_user = TeamsUser.find(params[:teams_user_id])
+    if team_user
+      team_user.update!(duty_id: params[:teams_user][:duty_id])
+      redirect_to controller: 'student_teams', action: 'view', student_id: params[:participant_id]
+    else
+      flash[:error] = "Team member not found."
+      redirect_back fallback_location: root_path
+    end
+  rescue StandardError => e
+    flash[:error] = e.message
+    redirect_back fallback_location: root_path
+  end
+
+  # Delete selected users from a team
+  def delete_selected
+    team = Team.find(params[:id])
+    user_ids = params[:item]
+
+    begin
+      user_ids.each do |user_id|
+        user = User.find(user_id)
+        team.remove_member(user)
+      end
+      flash[:success] = "Selected users successfully removed from the team."
+    rescue StandardError => e
+      flash[:error] = e.message
+    end
+
+    redirect_to action: 'list', id: team.assignment_id
   end
 end
