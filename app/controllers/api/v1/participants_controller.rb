@@ -1,5 +1,8 @@
 class Api::V1::ParticipantsController < ApplicationController
-  # Return a list of participants
+  # Return a list of participants for a user or assignment
+  # params - id
+  #          user_id
+  #          assignment_id
   # GET /participants
   def index
     participants = if params[:user_id].present?
@@ -12,6 +15,7 @@ class Api::V1::ParticipantsController < ApplicationController
   end
 
   # Return a specified participant
+  # params - id
   # GET /participants/:id
   def show
     participant = Participant.find_by(id: params[:id], user_id: params[:user_id])
@@ -42,6 +46,7 @@ class Api::V1::ParticipantsController < ApplicationController
   end
 
   # Delete a specified participant
+  # params - id
   # DELETE /participants/:id
   def destroy
     participant = Participant.find(params[:id])
