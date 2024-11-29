@@ -26,7 +26,11 @@ class Api::V1::ParticipantsController < ApplicationController
 
   # Delete a specified participant
   # DELETE /participants/:id
-  def destroy; end
+  def destroy
+    participant = Participant.find(params[:id])
+    participant.destroy
+    render json: { message: "Participant #{params[:id]} deleted successfully!" }, status: :no_content
+  end
 
   # Permitted parameters for creating or updating a Participant object
   def participant_params
