@@ -18,13 +18,9 @@ class Api::V1::ParticipantsController < ApplicationController
   # params - id
   # GET /participants/:id
   def show
-    participant = Participant.find_by(id: params[:id], user_id: params[:user_id])
+    participant = Participant.find(params[:id])
 
-    if participant
-      render json: participant, status: :ok
-    else
-      render json: { error: 'Participant not found or does not belong to the specified user' }, status: :not_found
-    end
+    render json: participant, status: :ok
   end
 
   # Create a participant
