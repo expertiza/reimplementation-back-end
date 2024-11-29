@@ -33,7 +33,7 @@ class Api::V1::ParticipantsController < ApplicationController
     return unless assignment
 
     participant = build_participant(user, assignment)
-    
+
     if participant.save
       render json: participant, status: :created
     else
