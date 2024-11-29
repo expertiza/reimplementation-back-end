@@ -5,7 +5,10 @@ class Api::V1::ParticipantsController < ApplicationController
 
   # Return a specified participant
   # GET /participants/:id
-  def show; end
+  def show
+    participant = Participant.find(params[:id])
+    render json: participant, status: :ok
+  end
 
   # Create a participant
   # POST /participants
