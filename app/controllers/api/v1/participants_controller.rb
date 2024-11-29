@@ -16,7 +16,13 @@ class Api::V1::ParticipantsController < ApplicationController
   # Create a participant
   # POST /participants
   def create
-    participant = Participant.new(participant_params)
+    user = find_user
+    return unless user
+
+    assignment = find_assignment
+    return unless assignment
+
+    participant = build_participant(user, assignment)
     if participant.save
       render json: participant, status: :created
     else
@@ -48,6 +54,25 @@ class Api::V1::ParticipantsController < ApplicationController
       "Participant #{params[:id]} in Assignment #{params[:assignment_id]} has been deleted successfully!"
     else
       "Participant #{params[:id]} in Team #{params[:team_id]} of Assignment #{params[:assignment_id]} has been deleted successfully!"
+    end
+  end
+
+  def find_user
+    user = User.find_by(id: participant_params[:user_id])
+    render json: { error: 'User not found' }, status: :not_found unless user
+    user
+  end
+
+  def find_assignment
+    assignment = Assignment.find_by(id: participant_params[:assignment_id])
+    render json: { error: 'Assignment not found' }, status: :not_found unless assignment
+    assignment
+  end
+
+  def build_participant(user, assignment)
+    Participant.new(participant_params).tap do |participant|
+      participant.user_id = user.id
+      participant.assignment_id = assignment.id
     end
   end
 end
