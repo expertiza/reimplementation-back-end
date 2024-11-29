@@ -28,13 +28,28 @@ class Api::V1::ParticipantsController < ApplicationController
   # DELETE /participants/:id
   def destroy
     participant = Participant.find(params[:id])
-    participant.destroy
-    render json: { message: "Participant #{params[:id]} deleted successfully!" }, status: :no_content
+    if participant.destroy
+      render json: { message: deletion_message(params) }, status: :ok
+    else
+      render json: participant.errors, status: :unprocessable_entity
+    end
   end
 
   # Permitted parameters for creating a Participant object
   def participant_params
     params.require(:participant).permit(:user_id, :assignment_id, :permission_granted, :join_team_request_id,
                                         :team_id, :topic, :current_stage, :stage_deadline)
+  end
+
+  private
+
+  def deletion_message(params)
+    if params[:assignment_id].nil? && params[:team_id].nil?
+      "Participant #{params[:id]} has been deleted successfully!"
+    elsif params[:team_id].nil?
+      "Participant #{params[:id]} in Assignment #{params[:assignment_id]} has been deleted successfully!"
+    else
+      "Participant #{params[:id]} in Team #{params[:team_id]} of Assignment #{params[:assignment_id]} has been deleted successfully!"
+    end
   end
 end
