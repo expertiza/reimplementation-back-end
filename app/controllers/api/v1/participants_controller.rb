@@ -15,7 +15,14 @@ class Api::V1::ParticipantsController < ApplicationController
 
   # Create a participant
   # POST /participants
-  def create; end
+  def create
+    participant = Participant.new(participant_params)
+    if participant.save
+      render json: participant, status: :created
+    else
+      render json: participant.errors, status: :unprocessable_entity
+    end
+  end
 
   # Delete a specified participant
   # DELETE /participants/:id
