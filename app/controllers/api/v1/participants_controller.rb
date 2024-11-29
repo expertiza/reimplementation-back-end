@@ -5,11 +5,15 @@ class Api::V1::ParticipantsController < ApplicationController
   #          assignment_id
   # GET /participants
   def index
-    participants = if params[:user_id].present?
-                     Participant.where(user_id: params[:user_id]).order(:id)
-                   else
-                     Participant.order(:id)
-                   end
+    # Validate and find user if user_id is provided
+    user = find_user if params[:user_id].present?
+    return if params[:user_id].present? && user.nil?
+
+    # Validate and find assignment if assignment_id is provided
+    assignment = find_assignment if params[:assignment_id].present?
+    return if params[:assignment_id].present? && assignment.nil?
+
+    filter_participants(user, assignment)
 
     render json: participants, status: :ok
   end
@@ -62,12 +66,11 @@ class Api::V1::ParticipantsController < ApplicationController
 
   private
 
-  def deletion_message(params)
-    if params[:team_id].nil?
-      "Participant #{params[:id]} in Assignment #{params[:assignment_id]} has been deleted successfully!"
-    else
-      "Participant #{params[:id]} in Team #{params[:team_id]} of Assignment #{params[:assignment_id]} has been deleted successfully!"
-    end
+  def filter_participants(user, assignment)
+    participants = Participant.all
+    participants = participants.where(user_id: user.id) if user
+    participants = participants.where(assignment_id: assignment.id) if assignment
+    participants.order(:id)
   end
 
   def find_user
@@ -80,6 +83,14 @@ class Api::V1::ParticipantsController < ApplicationController
     assignment = Assignment.find_by(id: participant_params[:assignment_id])
     render json: { error: 'Assignment not found' }, status: :not_found unless assignment
     assignment
+  end
+
+  def deletion_message(params)
+    if params[:team_id].nil?
+      "Participant #{params[:id]} in Assignment #{params[:assignment_id]} has been deleted successfully!"
+    else
+      "Participant #{params[:id]} in Team #{params[:team_id]} of Assignment #{params[:assignment_id]} has been deleted successfully!"
+    end
   end
 
   def build_participant(user, assignment)
