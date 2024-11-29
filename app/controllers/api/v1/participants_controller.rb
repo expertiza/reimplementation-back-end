@@ -1,9 +1,9 @@
 class Api::V1::ParticipantsController < ApplicationController
   # Return a list of participants for a user or assignment
-  # params - id
-  #          user_id
+  # params - user_id
   #          assignment_id
-  # GET /participants
+  # GET /participants/:user_id
+  # GET /participants/:assignment_id
   def index
     # Validate and find user if user_id is provided
     user = find_user if params[:user_id].present?
