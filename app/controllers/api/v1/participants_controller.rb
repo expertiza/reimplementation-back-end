@@ -1,7 +1,10 @@
 class Api::V1::ParticipantsController < ApplicationController
   # Return a list of participants
   # GET /participants
-  def index; end
+  def index
+    participants = Participant.order(:id)
+    render json: participants, status: :ok
+  end
 
   # Return a specified participant
   # GET /participants/:id
