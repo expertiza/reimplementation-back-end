@@ -43,23 +43,6 @@ class Team < ApplicationRecord
     users
   end
 
-  # Assign a leader to the team
-  def assign_leader(user)
-    team_user = teams_users.find_by(user_id: user.id)
-    if team_user
-      team_user.update!(role: 'leader')
-    else
-      raise "The user #{user.name} is not a member of the team."
-    end
-  rescue StandardError => e
-    raise "Failed to assign team leader: #{e.message}"
-  end
-
-  # Get the team leader
-  def team_leader
-    teams_users.find_by(role: 'leader')&.user
-  end
-
   # Check if the team is empty
   def empty?
     users.empty?
