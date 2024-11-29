@@ -7,14 +7,6 @@ class Api::V1::ParticipantsController < ApplicationController
   # GET /participants/:id
   def show; end
 
-  # Copy all participants from a course to an assignment
-  # GET /participants/inherit
-  def inherit; end
-
-  # Copy all participants from an assignment to a course
-  # GET /participants/bequeath
-  def bequeath; end
-
   # Create a participant
   # POST /participants
   def create; end
@@ -32,5 +24,9 @@ class Api::V1::ParticipantsController < ApplicationController
   def destroy; end
 
   # Permitted parameters for creating or updating a Participant object
-  def participant_params; end
+  def participant_params
+    params.require(:participant).permit(:user_id, :assignment_id, :can_submit, :can_review, :handle,
+                                        :permission_granted, :join_team_request_id, :team_id, :topic,
+                                        :current_stage, :stage_deadline)
+  end
 end
