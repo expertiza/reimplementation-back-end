@@ -33,6 +33,7 @@ class Api::V1::ParticipantsController < ApplicationController
     return unless assignment
 
     participant = build_participant(user, assignment)
+    
     if participant.save
       render json: participant, status: :created
     else
@@ -44,6 +45,7 @@ class Api::V1::ParticipantsController < ApplicationController
   # DELETE /participants/:id
   def destroy
     participant = Participant.find(params[:id])
+
     if participant.destroy
       render json: { message: deletion_message(params) }, status: :ok
     else
