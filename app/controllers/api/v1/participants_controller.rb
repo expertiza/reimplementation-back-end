@@ -2,7 +2,12 @@ class Api::V1::ParticipantsController < ApplicationController
   # Return a list of participants
   # GET /participants
   def index
-    participants = Participant.order(:id)
+    participants = if params[:user_id].present?
+                     Participant.where(user_id: params[:user_id]).order(:id)
+                   else
+                     Participant.order(:id)
+                   end
+
     render json: participants, status: :ok
   end
 
