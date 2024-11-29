@@ -44,9 +44,7 @@ class Api::V1::ParticipantsController < ApplicationController
   private
 
   def deletion_message(params)
-    if params[:assignment_id].nil? && params[:team_id].nil?
-      "Participant #{params[:id]} has been deleted successfully!"
-    elsif params[:team_id].nil?
+    if params[:team_id].nil?
       "Participant #{params[:id]} in Assignment #{params[:assignment_id]} has been deleted successfully!"
     else
       "Participant #{params[:id]} in Team #{params[:team_id]} of Assignment #{params[:assignment_id]} has been deleted successfully!"
