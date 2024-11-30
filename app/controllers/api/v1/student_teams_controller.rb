@@ -1,33 +1,12 @@
 class Api::V1::StudentTeamsController < ApplicationController
     # include AuthorizationHelper
     # autocomplete :user, :name
+    rescue_from ActiveRecord::RecordNotFound, with: :user_not_found
     rescue_from ActionController::ParameterMissing, with: :parameter_missing
-
 
     before_action :set_team, only: %i[show edit update remove_participant]
     before_action :set_student, only: %i[view update create remove_participant, mentor]
     
-    def action_allowed?
-      # note, this code replaces the following line that cannot be called before action allowed?
-      # E2476. modified the code to use smaller methods checking allowed actions
-      return false unless current_user_has_student_privileges?
-  
-      case action_name
-      when 'view'
-        view_action_allowed?
-      when 'create'
-        create_action_allowed?
-      when 'edit', 'update'
-        edit_update_action_allowed?
-      else
-        false
-      end
-    end
-  
-    def controller_locale
-      locale_for_student
-    end
-
     # GET /api/v1/student_teams?student_id=&team_id=
     # Retrieve StudentTeams by query parameters
     def index
@@ -46,28 +25,6 @@ class Api::V1::StudentTeamsController < ApplicationController
     # Show details of a specific team
     def show
       render json: @team, status: :ok
-    end
-  
-    def view
-      # View will check if send_invs and received_invs are set before showing
-      # only the owner should be able to see those.
-  
-      return unless current_user_id? student.user_id
-  
-      @send_invs = Invitation.where from_id: student.user.id, assignment_id: student.assignment.id
-      @received_invs = Invitation.where to_id: student.user.id, assignment_id: student.assignment.id, reply_status: 'W'
-  
-      @current_due_date = DueDate.current_due_date(@student.assignment.due_dates)
-  
-      # this line generates a list of users on the waiting list for the topic of a student's team,
-      # E2476. modified if statement from checking a single method student_team_requirements_met to multiple smaller methods for SRP
-      @users_on_waiting_list = (SignUpTopic.find(@student.team.topic).users_on_waiting_list if (student_has_team && student_team_has_topic? && student_has_selected_topic?)) 
-      @teammate_review_allowed = DueDate.teammate_review_allowed(@student)
-    end
-  
-    def mentor
-       return unless current_user_id? student.user_id
-       # Default return to views/student_team/mentor utilized
     end
   
     def create
@@ -98,8 +55,6 @@ class Api::V1::StudentTeamsController < ApplicationController
         redirect_to view_student_teams_path student_id: student.id
       end
     end
-  
-    def edit; end
 
     # PATCH/PUT /student_teams/:id
     # Updates team name or other attributes
@@ -129,6 +84,51 @@ class Api::V1::StudentTeamsController < ApplicationController
       old_invites.each(&:destroy)
       student.save
       redirect_to view_student_teams_path student_id: student.id
+    end
+
+    def view
+      # View will check if send_invs and received_invs are set before showing
+      # only the owner should be able to see those.
+  
+      return unless current_user_id? student.user_id
+  
+      @send_invs = Invitation.where from_id: student.user.id, assignment_id: student.assignment.id
+      @received_invs = Invitation.where to_id: student.user.id, assignment_id: student.assignment.id, reply_status: 'W'
+  
+      @current_due_date = DueDate.current_due_date(@student.assignment.due_dates)
+  
+      # this line generates a list of users on the waiting list for the topic of a student's team,
+      # E2476. modified if statement from checking a single method student_team_requirements_met to multiple smaller methods for SRP
+      @users_on_waiting_list = (SignUpTopic.find(@student.team.topic).users_on_waiting_list if (student_has_team && student_team_has_topic? && student_has_selected_topic?)) 
+      @teammate_review_allowed = DueDate.teammate_review_allowed(@student)
+    end
+
+    def edit; end
+  
+    def mentor
+       return unless current_user_id? student.user_id
+       # Default return to views/student_team/mentor utilized
+    end
+  
+    def action_allowed?
+      # note, this code replaces the following line that cannot be called before action allowed?
+      # E2476. modified the code to use smaller methods checking allowed actions
+      return false unless current_user_has_student_privileges?
+  
+      case action_name
+      when 'view'
+        view_action_allowed?
+      when 'create'
+        create_action_allowed?
+      when 'edit', 'update'
+        edit_update_action_allowed?
+      else
+        false
+      end
+    end
+  
+    def controller_locale
+      locale_for_student
     end
   
     # This method is used to show the Author Feedback Questionnaire of current assignment
