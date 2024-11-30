@@ -24,4 +24,13 @@ class SignedUpTeam < ApplicationRecord
   def self.delete_signed_up_team(team_id)
     SignedUpTeam.where(team_id: team_id).destroy_all
   end
+
+  def reassign_topic(topic_id)
+    assigned_team = SignedUpTeam.where(team_id: self.team_id, is_waitlisted: false)
+    unless assigned_team.nil?
+      project_topic = ProjectTopic.find(topic_id)
+      project_topic.drop_team_from_topic(team_id: self.team_id)
+    end
+    self.update(is_waitlisted: false)
+  end
 end
