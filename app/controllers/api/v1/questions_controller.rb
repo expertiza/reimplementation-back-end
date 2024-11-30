@@ -14,6 +14,7 @@ class Api::V1::QuestionsController < ApplicationController
       @question = Question.find(params[:id])
       render json: @question, status: :ok
     rescue ActiveRecord::RecordNotFound
+      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Unable to find Question with ID: #{params[:id]}", request)
       render json: $ERROR_INFO.to_s, status: :not_found
     end
   end
@@ -50,9 +51,11 @@ class Api::V1::QuestionsController < ApplicationController
   if question.save
     render json: question, status: :created
   else
+    ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Question not able to be saved: #{question.as_json}", request)
     render json: question.errors.full_messages.to_sentence, status: :unprocessable_entity
   end
 rescue ActiveRecord::RecordNotFound
+  ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Questionnaire not able to found with ID: #{params[:questionnaire_id]}", request)
   render json: $ERROR_INFO.to_s, status: :not_found and return  
 end
   
@@ -63,7 +66,9 @@ end
     begin
       @question = Question.find(params[:id])
       @question.destroy
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Destroyed Question: #{@question.as_json}", request)
     rescue ActiveRecord::RecordNotFound
+      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Question unable to be found with ID: #{params[:id]}", request)
       render json: $ERROR_INFO.to_s, status: :not_found and return
     end
   end
@@ -74,8 +79,10 @@ end
     begin
       @questionnaire = Questionnaire.find(params[:id])
       @questions = @questionnaire.questions
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Fetched #{@questions.count} Questions for Questionnaire with ID: #{params[:id]}", request)
       render json: @questions, status: :ok
     rescue ActiveRecord::RecordNotFound
+      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Questionnaire unable to be found with ID: #{params[:id]}", request)
       render json: $ERROR_INFO.to_s, status: :not_found
     end
   end
@@ -88,12 +95,15 @@ end
     begin
       questionnaire = Questionnaire.find(params[:id])
       if questionnaire.questions.empty?
+        ExpertizaLogger.warn LoggerMessage.new(controller_name, session[:user].name, "Questions attempted to be destroyed for Questionnaire with ID #{params[:id]}, but found to already not have any questions", request)
         render json: "No questions associated with questionnaire ID #{params[:id]}.", status: :unprocessable_entity and return
       end
   
       questionnaire.questions.destroy_all
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Questionnaire with ID #{params[:id]} had all questions deleted", request)
       render json: "All questions for questionnaire ID #{params[:id]} have been deleted.", status: :ok
     rescue ActiveRecord::RecordNotFound
+      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Questionnaire unable to be found with ID: #{params[:id]}", request)
       render json: "Questionnaire ID #{params[:id]} not found.", status: :not_found and return
     end
   end
@@ -106,9 +116,11 @@ end
       if @question.update(question_params)
         render json: @question, status: :ok and return
       else
+        ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Question unable to be updated with: #{question_params}", request)
         render json: "Failed to update the question.", status: :unprocessable_entity and return
       end
     rescue ActiveRecord::RecordNotFound
+      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Question unable to be found with ID: #{params[:id]}", request)
       render json: $ERROR_INFO.to_s, status: :not_found and return
     end
   end
