@@ -1,52 +1,101 @@
 class Course < ApplicationRecord
-  belongs_to :instructor, class_name: 'User', foreign_key: 'instructor_id'
-  belongs_to :institution, foreign_key: 'institution_id'
-  validates :name, presence: true
-  validates :directory_path, presence: true
+  enum locale: Locale.code_name_to_db_encoding
+
+  # Associations
   has_many :ta_mappings, dependent: :destroy
   has_many :tas, through: :ta_mappings
+  has_many :assignments, dependent: :destroy
+  belongs_to :instructor, class_name: 'User', foreign_key: 'instructor_id'
+  belongs_to :institution, foreign_key: 'institutions_id'
+  has_many :participants, class_name: 'CourseParticipant', foreign_key: 'parent_id', dependent: :destroy
+  has_many :course_teams, foreign_key: 'parent_id', dependent: :destroy
+  has_one :course_node, foreign_key: 'node_object_id', dependent: :destroy
+  has_many :notifications, dependent: :destroy
+  has_paper_trail
 
-  # Returns the submission directory for the course
-  def path
-    raise 'Path can not be created as the course must be associated with an instructor.' if instructor_id.nil?
-    Rails.root + '/' + Institution.find(institution_id).name.gsub(" ", "") + '/' + User.find(instructor_id).name.gsub(" ", "") + '/' + directory_path + '/'
+  # Validations
+  validates :name, presence: true
+  validates :directory_path, presence: true
+
+  # Return teams associated with this course
+  def get_teams
+    course_teams
   end
 
-  # Add a Teaching Assistant to the course
-  def add_ta(user)
-    if user.nil?
-      return { success: false, message: "The user with id #{user.id} does not exist" }
-    elsif TaMapping.exists?(ta_id: user.id, course_id: id)
-      return { success: false, message: "The user with id #{user.id} is already a TA for this course." }
+  # Get all participants in this course
+  def get_participants
+    participants
+  end
+
+  # Get a specific participant by user ID
+  def get_participant(user_id)
+    participants.find_by(user_id: user_id)
+  end
+
+  # Check if a user is on any team in the course
+  def user_on_team?(user)
+    course_teams.joins(:users).exists?(users: { id: user.id })
+  end
+
+  # Add a user as a participant to this course
+  def add_participant(user_name)
+    user = User.find_by(name: user_name)
+    raise "No user account exists with the name #{user_name}. Please create the user first." unless user
+
+    participant = participants.find_by(user_id: user.id)
+    if participant
+      raise "The user #{user.name} is already a participant."
     else
-      ta_mapping = TaMapping.create(ta_id: user.id, course_id: id)
-      user.update(role: Role::TEACHING_ASSISTANT)
-      if ta_mapping.save
-        return { success: true, data: ta_mapping.slice(:course_id, :ta_id) }
-      else
-        return { success: false, message: ta_mapping.errors }
+      participants.create(user_id: user.id, permission_granted: user.master_permission_granted)
+    end
+  end
+
+  def remove_participants(user_ids)
+    user_ids.each do |user_id|
+      participant = participants.find_by(user_id: user_id)
+      raise "User with ID #{user_id} is not a participant." if participant.nil?
+
+      participant.destroy
+    end
+  end
+
+  # Add a user to a team
+  def add_user_to_team(user, team_id)
+    team = course_teams.find_by(id: team_id)
+    raise "Team not found in this course." unless team
+
+    if user_on_team?(user)
+      raise "The user #{user.name} is already assigned to a team for this course."
+    end
+
+    team.add_member(user, id)
+  end
+
+  # Copy participants from an assignment to this course
+  def copy_participants_from_assignment(assignment_id)
+    participants = AssignmentParticipant.where(parent_id: assignment_id)
+    errors = []
+
+    participants.each do |participant|
+      user = User.find(participant.user_id)
+      begin
+        add_participant(user.name)
+      rescue StandardError => e
+        errors << e.message
       end
     end
+
+    raise errors.join('<br/>') unless errors.empty?
   end
 
-  # Removes Teaching Assistant from the course
-  def remove_ta(ta_id)
-    ta_mapping = ta_mappings.find_by(ta_id: ta_id, course_id: :id)
-    return { success: false, message: "No TA mapping found for the specified course and TA" } if ta_mapping.nil?
-    ta = User.find(ta_mapping.ta_id)
-    ta_count = TaMapping.where(ta_id: ta_id).size - 1
-    if ta_count.zero?
-      ta.update(role: Role::STUDENT)
-    end
-    ta_mapping.destroy
-    { success: true, ta_name: ta.name }
+  # Returns the path for this course
+  def path
+    raise 'Path cannot be created. The course must be associated with an instructor.' if instructor_id.nil?
+
+    Rails.root.join('pg_data', FileHelper.clean_path(instructor.name), FileHelper.clean_path(directory_path))
   end
 
-  # Creates a copy of the course
-  def copy_course
-    new_course = dup
-    new_course.directory_path += '_copy'
-    new_course.name += '_copy'
-    new_course.save
-  end
+  # Analytics
+  require 'analytic/course_analytic'
+  include CourseAnalytic
 end

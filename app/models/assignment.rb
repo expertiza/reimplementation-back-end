@@ -26,6 +26,33 @@ class Assignment < ApplicationRecord
     rounds_of_reviews
   end
 
+    # Check if a user is on a team in this assignment
+    def user_on_team?(user)
+      teams.joins(:users).exists?(users: { id: user.id })
+    end
+  
+    # Add a user to a team for this assignment
+    def add_user_to_team(user, team_id)
+      team = teams.find_by(id: team_id)
+      raise "Team not found in this assignment." unless team
+  
+      if user_on_team?(user)
+        raise "The user #{user.name} is already assigned to a team for this assignment."
+      end
+  
+      team.add_member(user, id)
+    rescue StandardError => e
+      raise "Failed to add user to team: #{e.message}"
+    end
+  
+    # Validate if a user is a participant of this assignment
+    def validate_participant(user)
+      participant = participants.find_by(user_id: user.id)
+      raise "User #{user.name} is not a participant of this assignment." unless participant
+  
+      participant
+    end
+  
   # Add a participant to the assignment based on the provided user_id.
   # This method first finds the User with the given user_id. If the user does not exist, it raises an error.
   # It then checks if the user is already a participant in the assignment. If so, it raises an error.
