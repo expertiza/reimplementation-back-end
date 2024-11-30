@@ -1,63 +1,76 @@
 class TeamsUser < ApplicationRecord
   belongs_to :user
   belongs_to :team
+  has_one :team_user_node, foreign_key: 'node_object_id', dependent: :destroy
+  has_paper_trail
+  # attr_accessible :user_id, :team_id # unnecessary protected attributes
 
-  # Returns the user's name. If an IP address is provided, it may influence the name retrieval logic.
   def name(ip_address = nil)
-    user.name(ip_address)
+    name = user.name(ip_address)
+
+    # E2115 Mentor Management
+    # Indicate that someone is a Mentor in the UI. The view code is
+    # often hard to follow, and this is the best place we could find
+    # for this to go.
+    name += ' (Mentor)' if MentorManagement.user_a_mentor?(user)
+    name
   end
 
-  # Retrieves all team members for a given team ID as a collection of User objects.
-  # Allows optional exclusion of certain roles.
-  def self.get_team_members(team_id, excluded_roles: [])
-    users = where(team_id: team_id).includes(:user).map(&:user)
-    return users if excluded_roles.empty?
-
-    # Exclude users with specific roles, if any
-    users.reject { |user| excluded_roles.include?(user.role) }
+  def delete
+    TeamUserNode.find_by(node_object_id: id).destroy
+    team = self.team
+    destroy
+    team.delete if team.teams_users.empty?
   end
 
-  # Adds a user to a team. Raises an error if the user is already on the team.
-  # Returns the created TeamsUser object if successful.
-  def self.add_to_team(user_id, team_id)
-    # Check if the user is already a team member
-    if where(user_id: user_id, team_id: team_id).exists?
-      raise "The user is already a member of the team."
+  def get_team_members(team_id); end
+
+  # Removes entry in the TeamUsers table for the given user and given team id
+  def self.remove_team(user_id, team_id)
+    team_user = TeamsUser.where('user_id = ? and team_id = ?', user_id, team_id).first
+    team_user&.destroy
+  end
+
+  # Returns the first entry in the TeamUsers table for a given team id
+  def self.first_by_team_id(team_id)
+    TeamsUser.where('team_id = ?', team_id).first
+  end
+
+  # Determines whether a team is empty of not
+  def self.team_empty?(team_id)
+    team_members = TeamsUser.where('team_id = ?', team_id)
+    team_members.blank?
+  end
+
+  # Add member to the team they were invited to and accepted the invite for
+  def self.add_member_to_invited_team(invitee_user_id, invited_user_id, assignment_id)
+    can_add_member = false
+    users_teams = TeamsUser.where(['user_id = ?', invitee_user_id])
+    users_teams.each do |team|
+      new_team = AssignmentTeam.where(['id = ? and parent_id = ?', team.team_id, assignment_id]).first
+      unless new_team.nil?
+        can_add_member = new_team.add_member(User.find(invited_user_id), assignment_id)
+      end
     end
-
-    # Create the association
-    create!(user_id: user_id, team_id: team_id)
-  rescue ActiveRecord::RecordInvalid => e
-    raise "Failed to add user to team: #{e.message}"
+    can_add_member
   end
 
-  # Removes a user's association with a team. Raises an error if the association does not exist.
-  def self.remove_from_team(user_id, team_id)
-    team_user = find_by(user_id: user_id, team_id: team_id)
-    raise "The user is not a member of this team." if team_user.nil?
-
-    team_user.destroy
-  rescue StandardError => e
-    raise "Failed to remove user from team: #{e.message}"
-  end
-
-  # Transfers a user from one team to another within the same context.
-  # Ensures that the user is removed from the previous team before adding to the new one.
-  def self.transfer_user_to_team(user_id, old_team_id, new_team_id)
-    remove_from_team(user_id, old_team_id)
-    add_to_team(user_id, new_team_id)
-  rescue StandardError => e
-    raise "Failed to transfer user between teams: #{e.message}"
-  end
-
-  # Checks if a user is already on a team.
-  def self.user_on_team?(user_id, team_id)
-    where(user_id: user_id, team_id: team_id).exists?
-  end
-
-  # Retrieves all teams for a given user as a collection of Team objects.
-  def self.get_teams_for_user(user_id)
-    team_ids = where(user_id: user_id).pluck(:team_id)
-    Team.where(id: team_ids)
+  # 2015-5-27 [zhewei]:
+  # We just remove the topic_id field from the participants table.
+  def self.team_id(assignment_id, user_id)
+    # team_id variable represents the team_id for this user in this assignment
+    team_id = nil
+    teams_users = TeamsUser.where(user_id: user_id)
+    teams_users.each do |teams_user|
+      if teams_user.team_id == nil
+        next
+      end
+      team = Team.find(teams_user.team_id)
+      if team.parent_id == assignment_id
+        team_id = teams_user.team_id
+        break
+      end
+    end
+    team_id
   end
 end
