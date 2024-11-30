@@ -21,10 +21,10 @@ class Api::V1::CoursesController < ApplicationController
   def create
     course = Course.new(course_params)
     if course.save
-      ExpertizaLogger.info LoggerMessage.new( controller_name, session[:user].name, "Course created: #{course.as_json}.", request )
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Course created: #{course.as_json}.", request)
       render json: course, status: :created
     else
-      ExpertizaLogger.warn LoggerMessage.new( controller_name, session[:user].name, "Error creating new Course: #{$ERROR_INFO}", request )
+      ExpertizaLogger.warn LoggerMessage.new(controller_name, session[:user].name, "Error creating new Course: #{$ERROR_INFO}", request)
       render json: course.errors, status: :unprocessable_entity
     end
   end
@@ -33,10 +33,10 @@ class Api::V1::CoursesController < ApplicationController
   # Update a course
   def update
     if @course.update(course_params)
-      ExpertizaLogger.info LoggerMessage.new( controller_name, session[:user].name, "Course Information Modified: #{course.as_json}.", request )
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Course Information Modified: #{course.as_json}.", request)
       render json: @course, status: :ok
     else
-      ExpertizaLogger.warn LoggerMessage.new( controller_name, session[:user].name, "Course Failed to Update: #{$ERROR_INFO}.", request )
+      ExpertizaLogger.warn LoggerMessage.new(controller_name, session[:user].name, "Course Failed to Update: #{$ERROR_INFO}.", request)
       render json: @course.errors, status: :unprocessable_entity
     end
   end
