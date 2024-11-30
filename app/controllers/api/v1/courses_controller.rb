@@ -1,11 +1,19 @@
 class Api::V1::CoursesController < ApplicationController
+  require_dependency 'permissions'
+
   before_action :set_course, only: %i[ show update destroy add_ta view_tas remove_ta copy ]
+  
+  # added today
+  before_action :authorize_manage_courses, only: %i[create destroy]
+
   rescue_from ActiveRecord::RecordNotFound, with: :course_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
   # GET /courses
   # List all the courses
   def index
+    puts "IN INDEX"
+    puts current_user.full_name
     courses = Course.all
     render json: courses, status: :ok
   end
@@ -13,12 +21,15 @@ class Api::V1::CoursesController < ApplicationController
   # GET /courses/1
   # Get a course
   def show
+    puts "In Show"
     render json: @course, status: :ok
   end
 
   # POST /courses
   # Create a course
   def create
+    puts "============================================================================================================"
+    puts current_user.name
     course = Course.new(course_params)
     if course.save
       render json: course, status: :created
@@ -79,6 +90,14 @@ class Api::V1::CoursesController < ApplicationController
       render json: { message: "The course #{@course.name} has been successfully copied" }, status: :ok
     else
       render json: { message: "The course was not able to be copied" }, status: :unprocessable_entity
+    end
+  end
+
+  # added today
+  # Restricts actions like adding or deleting courses to Admins and Instructors
+  def authorize_manage_courses
+    unless Permissions.can_manage_courses?(current_user)
+      render json: { error: 'Unauthorized action' }, status: :forbidden
     end
   end
 
