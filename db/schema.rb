@@ -178,9 +178,6 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
     t.bigint "assignment_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "can_submit", default: true
-    t.boolean "can_review", default: true
-    t.string "handle"
     t.boolean "permission_granted", default: false
     t.bigint "join_team_request_id"
     t.bigint "team_id"
