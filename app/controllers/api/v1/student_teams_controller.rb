@@ -75,15 +75,11 @@ class Api::V1::StudentTeamsController < ApplicationController
       end
     end
   
+    # DELETE /student_teams/:id/remove_participant
     def remove_participant
-      # remove the record from teams_users table & delete team if there are no members
-      Team.remove_team_user(team_id: params[:team_id], user_id: student.user_id)
-
-      # remove all the sent invitations
-      old_invites = Invitation.where from_id: student.user_id, assignment_id: student.parent_id
-      old_invites.each(&:destroy)
-      student.save
-      redirect_to view_student_teams_path student_id: student.id
+      Team.remove_team_user(team_id: params[:team_id], user_id: @student.user_id)
+      Invitation.where(from_id: @student.user_id, assignment_id: @student.parent_id).destroy_all
+      render json: { message: 'Participant removed successfully.' }, status: :ok
     end
 
     def view
