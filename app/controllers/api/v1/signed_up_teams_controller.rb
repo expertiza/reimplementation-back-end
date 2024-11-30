@@ -68,6 +68,8 @@ class Api::V1::SignedUpTeamsController < ApplicationController
 
   private
 
+  # Strong parameters method for permitting attributes related to signed-up teams.
+  # Ensures only the allowed parameters are passed for creating or updating a signed-up team.
   def signed_up_teams_params
     params.require(:signed_up_team).permit(:topic_id, :team_id, :is_waitlisted, :preference_priority_number)
   end
