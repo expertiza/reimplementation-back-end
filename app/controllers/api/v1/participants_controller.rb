@@ -15,7 +15,11 @@ class Api::V1::ParticipantsController < ApplicationController
 
     filter_participants(user, assignment)
 
-    render json: participants, status: :ok
+    if participants.nil?
+      render json: participants.errors, status: :unprocessable_entity
+    else
+      render json: participants, status: :ok
+    end
   end
 
   # Return a specified participant
