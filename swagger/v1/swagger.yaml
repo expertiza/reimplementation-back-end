@@ -130,6 +130,351 @@ paths:
       responses:
         '204':
           description: successful
+  "/api/v1/assignments":
+    get:
+      summary: Get assignments
+      tags:
+      - Get All Assignments
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: assignment successfully
+  "/api/v1/assignments/{assignment_id}/add_participant/{user_id}":
+    parameters:
+    - name: assignment_id
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: user_id
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Adds a participant to an assignment
+      tags:
+      - Assignments
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: participant added successfully
+        '404':
+          description: assignment not found
+  "/api/v1/assignments/{assignment_id}/remove_participant/{user_id}":
+    parameters:
+    - name: assignment_id
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: user_id
+      in: path
+      required: true
+      schema:
+        type: string
+    delete:
+      summary: Removes a participant from an assignment
+      tags:
+      - Assignments
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: participant removed successfully
+        '404':
+          description: assignment or user not found
+  "/api/v1/assignments/{assignment_id}/assign_course/{course_id}":
+    parameters:
+    - name: assignment_id
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: course_id
+      in: path
+      required: true
+      schema:
+        type: string
+    patch:
+      summary: Make course_id of assignment null
+      tags:
+      - Assignments
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: course_id assigned successfully
+        '404':
+          description: assignment not found
+  "/api/v1/assignments/{assignment_id}/remove_assignment_from_course":
+    patch:
+      summary: Removes assignment from course
+      tags:
+      - Assignments
+      parameters:
+      - name: assignment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: assignment removed from course
+        '404':
+          description: assignment not found
+  "/api/v1/assignments/{assignment_id}/copy_assignment":
+    parameters:
+    - name: assignment_id
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Copy an existing assignment
+      tags:
+      - Assignments
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: assignment copied successfully
+        '404':
+          description: assignment not found
+  "/api/v1/assignments/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    delete:
+      summary: Delete an assignment
+      tags:
+      - Assignments
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/api/v1/assignments/{assignment_id}/has_topics":
+    parameters:
+    - name: assignment_id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Check if an assignment has topics
+      tags:
+      - Assignments
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/api/v1/assignments/{assignment_id}/team_assignment":
+    parameters:
+    - name: assignment_id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Check if an assignment is a team assignment
+      tags:
+      - Assignments
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/api/v1/assignments/{assignment_id}/valid_num_review/{review_type}":
+    parameters:
+    - name: assignment_id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    - name: review_type
+      in: path
+      description: Review Type
+      required: true
+      schema:
+        type: string
+    get:
+      summary: Check if an assignment has a valid number of reviews for a specific
+        type
+      tags:
+      - Assignments
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/api/v1/assignments/{assignment_id}/has_teams":
+    parameters:
+    - name: assignment_id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Check if an assignment has teams
+      tags:
+      - Assignments
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/api/v1/assignments/{id}/show_assignment_details":
+    parameters:
+    - name: id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Retrieve assignment details
+      tags:
+      - Assignments
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/api/v1/assignments/{assignment_id}/varying_rubrics_by_round":
+    parameters:
+    - name: assignment_id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Check if an assignment has varying rubrics by round
+      tags:
+      - Assignments
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
   "/api/v1/bookmarks":
     get:
       summary: list bookmarks
@@ -432,6 +777,119 @@ paths:
       responses:
         '204':
           description: successful
+  "/api/v1/grades/{action}/action_allowed":
+    parameters:
+    - name: action
+      in: path
+      description: the action the user wishes to perform
+      required: true
+      schema:
+        type: string
+    - name: id
+      in: query
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: action_allowed
+      tags:
+      - Grades
+      responses:
+        '200':
+          description: successful
+  "/api/v1/grades/{id}/view":
+    parameters:
+    - name: id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: view
+      tags:
+      - Grades
+      responses:
+        '200':
+          description: successful
+  "/api/v1/grades/{id}/view_team":
+    parameters:
+    - name: id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: view_team
+      tags:
+      - Grades
+      responses:
+        '200':
+          description: successful
+  "/api/v1/grades/{id}/edit":
+    parameters:
+    - name: id
+      in: path
+      description: Assignment Participant ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: edit
+      tags:
+      - Grades
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: not found
+  "/api/v1/grades/{id}/instructor_review":
+    parameters:
+    - name: id
+      in: path
+      description: Assignment Participant ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: instructor_review
+      tags:
+      - Grades
+      responses:
+        '200':
+          description: successful when editing an existing review
+        '404':
+          description: not found
+  "/api/v1/grades/{participant_id}/update":
+    parameters:
+    - name: participant_id
+      in: path
+      description: Assignment Participant ID
+      required: true
+      schema:
+        type: integer
+    - name: body
+      in: body
+      schema:
+        type: object
+        properties:
+          grade_for_submission:
+            type: integer
+          comment_for_submission:
+            type: string
+        required:
+        - grade_for_submission
+    patch:
+      summary: update
+      tags:
+      - Grades
+      responses:
+        '200':
+          description: successful
+        '400':
+          description: bad request
   "/api/v1/institutions":
     get:
       summary: list institutions
@@ -628,6 +1086,120 @@ paths:
           description: Show all invitations for the user for an assignment
         '404':
           description: Not found
+  "/api/v1/join_team_requests/decline/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: string
+    post:
+      summary: decline join_team_request
+      tags:
+      - Join Team Requests
+      responses:
+        '200':
+          description: successful
+  "/api/v1/join_team_requests":
+    get:
+      summary: list join_team_requests
+      tags:
+      - Join Team Requests
+      responses:
+        '200':
+          description: successful
+    post:
+      summary: create join_team_request
+      parameters:
+      - name: comments
+        in: query
+        description: comments
+        schema:
+          type: string
+      - name: team_id
+        in: query
+        description: team_id
+        schema:
+          type: integer
+      - name: assignment_id
+        in: query
+        description: assignment_id
+        schema:
+          type: integer
+      tags:
+      - Join Team Requests
+      responses:
+        '200':
+          description: success
+        '201':
+          description: created
+        '422':
+          description: unprocessable entity
+  "/api/v1/join_team_requests/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: id
+      required: true
+      schema:
+        type: string
+    get:
+      summary: show join_team_request
+      tags:
+      - Join Team Requests
+      responses:
+        '404':
+          description: not_found
+        '200':
+          description: successful
+    patch:
+      summary: update join_team_request
+      parameters:
+      - name: join_team_request[comments]
+        in: query
+        description: comments
+        schema:
+          type: string
+      - name: join_team_request[status]
+        in: query
+        description: status
+        schema:
+          type: string
+      tags:
+      - Join Team Requests
+      responses:
+        '200':
+          description: successful
+    put:
+      summary: update join_team_request
+      parameters:
+      - name: join_team_request[comments]
+        in: query
+        description: comments
+        schema:
+          type: string
+      - name: join_team_request[status]
+        in: query
+        description: status
+        schema:
+          type: string
+      tags:
+      - Join Team Requests
+      responses:
+        '200':
+          description: successful
+        '422':
+          description: unprocessable entity
+    delete:
+      summary: delete join_team_request
+      tags:
+      - Join Team Requests
+      responses:
+        '204':
+          description: successful
+        '404':
+          description: not found
   "/api/v1/questionnaires":
     get:
       summary: list questionnaires
@@ -1279,6 +1851,43 @@ paths:
           description: signed up team deleted
         '422':
           description: invalid request
+  "/api/v1/student_tasks/list":
+    get:
+      summary: student tasks list
+      tags:
+      - StudentTasks
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: authorized request has proper JSON schema
+        '401':
+          description: unauthorized request has error response
+  "/api/v1/student_tasks/view":
+    get:
+      summary: Retrieve a specific student task by ID
+      tags:
+      - StudentTasks
+      parameters:
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: Integer
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful retrieval of a student task
+        '500':
+          description: participant not found
+        '401':
+          description: unauthorized request has error response
   "/login":
     post:
       summary: Logs in a user
@@ -1303,34 +1912,6 @@ paths:
               required:
               - user_name
               - password
-  /api/v1/student_tasks/list:
-      get:
-        summary: List all Student Tasks
-        tags:
-          - Student Tasks
-        responses:
-          '200':
-            description: An array of student tasks
-  /api/v1/student_tasks/view:
-    get:
-      summary: View a student task
-      tags:
-        - Student Tasks
-      parameters:
-        - in: query
-          name: id
-          schema:
-            type: string
-          required: true
-          description: The ID of the student task to retrieve
-      responses:
-        '200':
-          description: A specific student task
-
-
-
-
-
 servers:
 - url: http://{defaultHost}
   variables:

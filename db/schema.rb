@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
+ActiveRecord::Schema[7.0].define(version: 2024_10_28_235110) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -102,6 +102,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
     t.boolean "enable_pair_programming", default: false
     t.boolean "has_teams", default: false
     t.boolean "has_topics", default: false
+    t.boolean "vary_by_topic?", default: false
     t.index ["course_id"], name: "index_assignments_on_course_id"
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
@@ -173,6 +174,20 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "participant_scores", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "assignment_id", null: false
+    t.bigint "question_id", null: false
+    t.integer "score"
+    t.integer "total_score"
+    t.integer "round"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "comment"
+    t.bigint "assignment_participant_id"
+    t.index ["assignment_id"], name: "index_participant_scores_on_assignment_id"
+    t.index ["question_id"], name: "index_participant_scores_on_question_id"
+  end
+
   create_table "participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "user_id"
     t.bigint "assignment_id"
@@ -187,6 +202,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
     t.string "topic"
     t.string "current_stage"
     t.datetime "stage_deadline"
+    t.float "grade"
     t.index ["assignment_id"], name: "index_participants_on_assignment_id"
     t.index ["join_team_request_id"], name: "index_participants_on_join_team_request_id"
     t.index ["team_id"], name: "index_participants_on_team_id"
@@ -292,6 +308,8 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "assignment_id", null: false
+    t.integer "grade_for_submission"
+    t.text "comment_for_submission"
     t.index ["assignment_id"], name: "index_teams_on_assignment_id"
   end
 
@@ -337,6 +355,8 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
   add_foreign_key "assignments", "users", column: "instructor_id"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
+  add_foreign_key "participant_scores", "assignments"
+  add_foreign_key "participant_scores", "questions"
   add_foreign_key "participants", "assignments"
   add_foreign_key "participants", "join_team_requests"
   add_foreign_key "participants", "teams"

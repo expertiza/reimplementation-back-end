@@ -109,6 +109,16 @@ Rails.application.routes.draw do
           get :processed, action: :processed_requests
         end
       end
+      
+      resources :grades, only: %i[edit update] do
+        collection do
+          get ':id/view', action: :view
+          get ':id/view_team', action: :view_team
+          get ':id/instructor_review', action: :instructor_review
+          get ':action/action_allowed', action: :action_allowed
+          patch ':participant_id/update', action: :update
+        end
+      end
     end
   end
 end
