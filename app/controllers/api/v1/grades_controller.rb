@@ -170,11 +170,11 @@ class Api::V1::GradesController < ApplicationController
       next unless team
 
       team_id = team.id.to_s.to_sym
-      scores[:teams][team_id] ||= { scores: { avg: 0 } }
+      scores[:teams][team_id] ||= 0
 
       # Calculate average score for the team
       team_scores = participant_scores.map { |s| s[:score].to_f / s[:total_score] * 100 }
-      scores[:teams][team_id][:scores][:avg] = team_scores.sum / team_scores.size
+      scores[:teams][team_id] = team_scores.sum / team_scores.size
     end
 
     scores
@@ -194,8 +194,9 @@ class Api::V1::GradesController < ApplicationController
   # Filters out the nil scores contained within the hash and returns a map with them converted to integers for
   # operations
   def filter_scores(team_scores)
-    team_scores.reject! { |_k, v| v[:scores][:avg].nil? }
-    team_scores.map { |_k, v| v[:scores][:avg].to_i }
+    team_scores
+      .compact
+      .map { |team| team.is_a?(Array) ? team[1].to_i : team.to_i }
   end
 
   # Provides a float representing the average of the array with error handling
@@ -211,7 +212,7 @@ class Api::V1::GradesController < ApplicationController
     # Extracts the questionnaires
     @questions = filter_questionnaires(@assignment)
     @scores = review_grades(@assignment, @questions)
-    @review_score_count = @scores[:teams].length # After rejecting nil scores need original length to iterate over hash
+    @review_score_count = @scores[:participants].length # After rejecting nil scores need original length to iterate over hash
     @averages = filter_scores(@scores[:teams])
     @avg_of_avg = mean(@averages)
   end
