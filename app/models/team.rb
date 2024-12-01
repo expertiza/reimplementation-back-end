@@ -18,6 +18,22 @@ class Team < ApplicationRecord
     end
   end
 
+  # Add member to the team, changed to hash by E1776
+  def add_member(user, _assignment_id = nil)
+    raise "The user #{user.name} is already a member of the team #{name}" if user?(user)
+
+    can_add_member = false
+    unless full?
+      can_add_member = true
+      t_user = TeamsUser.create(user_id: user.id, team_id: id)
+      parent = TeamNode.find_by(node_object_id: id)
+      TeamUserNode.create(parent_id: parent.id, node_object_id: t_user.id)
+      add_participant(parent_id, user)
+    end
+    can_add_member
+  end
+
+    
   # TODO :: Remove the team from waitlist, once Waitlist is implemented
   def remove_team_user(team_id:, user_id:)
     if TeamsUser.exists?(team_id: team_id, user_id: user_id)

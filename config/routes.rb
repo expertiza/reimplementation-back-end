@@ -53,6 +53,20 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :student_teams, only: %i[create edit update] do
+        collection do
+          get :view
+          get :mentor
+          get :remove_participant
+          get :auto_complete_for_user_name
+          get :edit
+          get :index
+          post :create
+          post :update
+          get :hellothere
+        end
+      end
+    
       resources :courses do
         collection do
           get ':id/add_ta/:ta_id', action: :add_ta
