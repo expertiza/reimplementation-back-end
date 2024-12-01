@@ -5,6 +5,8 @@ class Participant < ApplicationRecord
   has_many   :join_team_requests, dependent: :destroy
   belongs_to :team, optional: true
 
+  delegate :course, to: :assignment
+
   # Validations
   validates :user_id, presence: true
   validates :assignment_id, presence: true
