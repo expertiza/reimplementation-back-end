@@ -1,5 +1,5 @@
 class Api::V1::ParticipantsController < ApplicationController
-  # Return a list of participants for a user or assignment
+  # Return a list of participants for a given user or assignment
   # params - user_id
   #          assignment_id
   # GET /participants/:user_id
@@ -15,7 +15,11 @@ class Api::V1::ParticipantsController < ApplicationController
 
     filter_participants(user, assignment)
 
-    render json: participants, status: :ok
+    if participants.nil?
+      render json: participants.errors, status: :unprocessable_entity
+    else
+      render json: participants, status: :ok
+    end
   end
 
   # Return a specified participant
@@ -24,7 +28,11 @@ class Api::V1::ParticipantsController < ApplicationController
   def show
     participant = Participant.find(params[:id])
 
-    render json: participant, status: :ok
+    if participant.nil?
+      render json: participant.errors, status: :unprocessable_entity
+    else
+      render json: participant, status: :created
+    end
   end
 
   # Create a participant
