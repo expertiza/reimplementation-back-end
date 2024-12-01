@@ -1,5 +1,5 @@
 class Api::V1::GradesController < ApplicationController
-
+  include AuthorizationHelper
   # Determines if the current user is able to perform :action as specified by the path parameter
   # If the user has the role of TA or higher they are granted access to all operations beyond view_team
   # Uses a switch statement for easy maintainability if added functionality is ever needed for students or
@@ -11,7 +11,7 @@ class Api::V1::GradesController < ApplicationController
                 when 'view_team'
                   view_team_allowed?
                 else
-                  user_ta_privileges?
+                  current_user_has_ta_privileges?
                 end
     render json: { allowed: permitted }, status: permitted ? :ok : :forbidden
   end
@@ -22,8 +22,8 @@ class Api::V1::GradesController < ApplicationController
   # GET /api/v1/grades/:id/view
   def view
     get_data_for_heat_map(params[:id])
-    render json: { scores: @scores, assignment: @assignment, averages: @averages, avg_of_avg: @avg_of_avg,
-                   review_score_count: @review_score_count }, status: :ok
+    render json: { scores: @scores[:participants], assignment: @assignment, averages: @averages,
+                   avg_of_avg: @avg_of_avg, review_score_count: @review_score_count }, status: :ok
   end
 
   # Provides all relevant data for the student perspective for the heat map page as well as the
@@ -35,12 +35,15 @@ class Api::V1::GradesController < ApplicationController
     @scores[:participants] = hide_reviewers_from_student
     questionnaires = @assignment.questionnaires
     questions = retrieve_questions(questionnaires, @assignment.id)
-    render json: {scores: @scores, assignment: @assignment, averages: @averages, avg_of_avg: @avg_of_avg,
+    render json: {scores: @scores[:participants], assignment: @assignment, averages: @averages, avg_of_avg: @avg_of_avg,
                   review_score_count: @review_score_count, questions: questions }, status: :ok
   end
 
   # Sets information required for editing the grade information, this includes the participant, questions, scores, and
-  # assignment
+  # assignment. The participant is the student who's grade is being modified.  The assignment is the assignment where
+  # the grade for that participant is currently being examined.  The questions are the list of questions or rubric items
+  # associated with this assignment.  Then the scores is the aggregation of the participant scoring information and team
+  # scoring information which is needed for view in the frontend.
   # GET /api/v1/grades/:id/edit
   def edit
     begin
@@ -56,10 +59,14 @@ class Api::V1::GradesController < ApplicationController
   end
 
   # Provides functionality that handles informing the frontend which controller and action to direct to for instructor
-  # review given the current state of the system.  The intended controller to handle the creation or editing of a review
+  # review given the current state of the system. The intended controller to handle the creation or editing of a review
   # is the response controller, however this method just determines if a new review must be made based on figuring out
   # whether or not an associated review_mapping exists from the participant already.  If one does they should go to
-  # Response#edit and if one does not they should go to Response#new.  Only ever returns a status of ok.
+  # Response#edit and if one does not they should go to Response#new. This goal is achieved by locating the review_
+  # mapping associated with this participant and then utilizing the new record functionality in order to determine
+  # which action is appropriate.  If the review_mapping is new then a new response needs to be created and if it is not
+  # then the previous response can be edited instead.  All of this will be handled within the Response Controller's
+  # response#new and response#edit functionality. Only ever returns a status of ok.
   # GET /api/v1/grades/:id/instructor_review
   def instructor_review
     begin
@@ -68,7 +75,6 @@ class Api::V1::GradesController < ApplicationController
       render json: { message: "Assignment participant #{params[:id]} not found" }, status: :not_found
       return
     end
-    
     review_mapping = find_participant_review_mapping(participant)
     if review_mapping.new_record?
       render json: { controller: 'response', action: 'new', id: review_mapping.map_id,
@@ -117,7 +123,7 @@ class Api::V1::GradesController < ApplicationController
   # Helper method to determine if a user can perform the view_team action, meaning they are the participant making this
   # request
   def view_team_allowed?
-    if user_student_privileges? # students can only see the heat map for their own team
+    if current_user_has_student_privileges? # students can only see the heat map for their own team
       participant = AssignmentParticipant.find(params[:id])
       participant.user_id == session[:user_id]
     else
@@ -138,22 +144,6 @@ class Api::V1::GradesController < ApplicationController
       end
       questions
     end
-  end
-
-  # Helper method that finds the current user from the session and then determines
-  # if that user has the privileges afforded to someone with the role of TA
-  # or higher
-  def user_ta_privileges?
-    user_id = session[:user_id]
-    user = User.find(user_id)
-    user.role.all_privileges_of?(Role.find_by(name: 'Teaching Assistant'))
-  end
-
-  # checks if the user has student privileges or higher, returns true if they do, false otherwise
-  def user_student_privileges?
-    user_id = session[:user_id]
-    user = User.find(user_id)
-    user.role.all_privileges_of?(Role.find_by(name: 'Student'))
   end
 
   # Gets all of the review grades and formats the score appropriately based on those scores for use in the controller
@@ -201,11 +191,11 @@ class Api::V1::GradesController < ApplicationController
                                         reviewed_object_id: participant.assignment.id)
   end
 
-
-  # Provides a vector of averaged scores after removing all nonexistant values
-  def vector(scores)
-    scores[:teams].reject! { |_k, v| v[:scores][:avg].nil? }
-    scores[:teams].map { |_k, v| v[:scores][:avg].to_i }
+  # Filters out the nil scores contained within the hash and returns a map with them converted to integers for
+  # operations
+  def filter_scores(team_scores)
+    team_scores.reject! { |_k, v| v[:scores][:avg].nil? }
+    team_scores.map { |_k, v| v[:scores][:avg].to_i }
   end
 
   # Provides a float representing the average of the array with error handling
@@ -222,7 +212,7 @@ class Api::V1::GradesController < ApplicationController
     @questions = filter_questionnaires(@assignment)
     @scores = review_grades(@assignment, @questions)
     @review_score_count = @scores[:teams].length # After rejecting nil scores need original length to iterate over hash
-    @averages = vector(@scores)
+    @averages = filter_scores(@scores[:teams])
     @avg_of_avg = mean(@averages)
   end
 

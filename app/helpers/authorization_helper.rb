@@ -95,25 +95,6 @@ module AuthorizationHelper
     given_user_can_take_quiz?(user_id)
   end
 
-  def response_edit_allowed?(map, user_id)
-    assignment = map.reviewer.assignment
-    # if it is a review response map, all the members of reviewee team should be able to view the response (can be done from heat map)
-    if map.is_a? ReviewResponseMap
-      reviewee_team = AssignmentTeam.find(map.reviewee_id)
-      return user_logged_in? &&
-             (
-               current_user_has_id?(user_id) ||
-               reviewee_team.user?(session[:user]) ||
-               current_user_has_admin_privileges? ||
-               (current_user_is_a?('Instructor') && current_user_instructs_assignment?(assignment)) ||
-               (current_user_is_a?('Teaching Assistant') && current_user_has_ta_mapping_for_assignment?(assignment))
-             )
-    end
-    current_user_has_id?(user_id) ||
-      (current_user_is_a?('Instructor') && current_user_instructs_assignment?(assignment)) ||
-      (assignment.course && current_user_is_a?('Teaching Assistant') && current_user_has_ta_mapping_for_assignment?(assignment))
-  end
-
   # Determine if there is a current user
   # The application controller method session[:user]
   # will return a user even if session[:user] has been explicitly cleared out
@@ -172,7 +153,7 @@ module AuthorizationHelper
   # Let the Role model define this logic for the sake of DRY
   # If there is no currently logged-in user simply return false
   def current_user_has_privileges_of?(role_name)
-    current_user_and_role_exist? && session[:user].role.has_all_privileges_of?(Role.find_by(name: role_name))
+    current_user_and_role_exist? && session[:user].role.all_privileges_of?(Role.find_by(name: role_name))
   end
 
   # Determine if the given user is a participant of some kind
