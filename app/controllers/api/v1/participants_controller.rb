@@ -28,7 +28,11 @@ class Api::V1::ParticipantsController < ApplicationController
   def show
     participant = Participant.find(params[:id])
 
-    render json: participant, status: :ok
+    if participant.nil?
+      render json: participant.errors, status: :unprocessable_entity
+    else
+      render json: participant, status: :created
+    end
   end
 
   # Create a participant
