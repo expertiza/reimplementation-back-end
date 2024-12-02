@@ -63,7 +63,12 @@ class Api::V1::ParticipantsController < ApplicationController
     participant = Participant.find(params[:id])
 
     if participant.destroy
-      render json: { message: deletion_message(params) }, status: :ok
+      successful_deletion_message = if params[:team_id].nil?
+                                      "Participant #{params[:id]} in Assignment #{params[:assignment_id]} has been deleted successfully!"
+                                    else
+                                      "Participant #{params[:id]} in Team #{params[:team_id]} of Assignment #{params[:assignment_id]} has been deleted successfully!"
+                                    end
+      render json: { message: successful_deletion_message }, status: :ok
     else
       render json: participant.errors, status: :unprocessable_entity
     end
@@ -94,13 +99,5 @@ class Api::V1::ParticipantsController < ApplicationController
     assignment = Assignment.find_by(id: participant_params[:assignment_id])
     render json: { error: 'Assignment not found' }, status: :not_found unless assignment
     assignment
-  end
-
-  def deletion_message(params)
-    if params[:team_id].nil?
-      "Participant #{params[:id]} in Assignment #{params[:assignment_id]} has been deleted successfully!"
-    else
-      "Participant #{params[:id]} in Team #{params[:team_id]} of Assignment #{params[:assignment_id]} has been deleted successfully!"
-    end
   end
 end
