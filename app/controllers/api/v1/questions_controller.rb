@@ -4,6 +4,7 @@ class Api::V1::QuestionsController < ApplicationController
   # GET on /questions
   def index
     @questions = Question.order(:id)
+    ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Fetched all questions.", request)
     render json: @questions, status: :ok
   end
 
@@ -12,6 +13,7 @@ class Api::V1::QuestionsController < ApplicationController
   def show
     begin
       @question = Question.find(params[:id])
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Fetched question with ID: #{@question.id}.", request)
       render json: @question, status: :ok
     rescue ActiveRecord::RecordNotFound
       ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Unable to find Question with ID: #{params[:id]}", request)
@@ -49,6 +51,7 @@ class Api::V1::QuestionsController < ApplicationController
   end
 
   if question.save
+    ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Created question with ID: #{question.id} under questionnaire ID: #{questionnaire.id}.", request)
     render json: question, status: :created
   else
     ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Question not able to be saved: #{question.as_json}", request)
@@ -114,6 +117,7 @@ end
     begin
       @question = Question.find(params[:id])
       if @question.update(question_params)
+        ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Updated question with ID: #{@question.id}.", request)
         render json: @question, status: :ok and return
       else
         ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Question unable to be updated with: #{question_params}", request)

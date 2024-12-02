@@ -4,6 +4,7 @@ class Api::V1::QuestionnairesController < ApplicationController
   # GET on /questionnaires
   def index
     @questionnaires = Questionnaire.order(:id)
+    ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Fetched all questionnaires.", request)
     render json: @questionnaires, status: :ok and return
   end
   
@@ -12,8 +13,10 @@ class Api::V1::QuestionnairesController < ApplicationController
   def show
     begin
       @questionnaire = Questionnaire.find(params[:id])
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Fetched questionnaire with ID: #{@questionnaire.id}.", request)
       render json: @questionnaire, status: :ok and return
-    rescue ActiveRecord::RecordNotFound
+    rescue ActiveRecord::RecordNotFound => e
+      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Questionnaire not found with ID: #{params[:id]}. Error: #{e.message}", request)
       render json: $ERROR_INFO.to_s, status: :not_found and return
     end
   end
@@ -26,8 +29,10 @@ class Api::V1::QuestionnairesController < ApplicationController
       @questionnaire = Questionnaire.new(questionnaire_params)
       @questionnaire.display_type = sanitize_display_type(@questionnaire.questionnaire_type)
       @questionnaire.save!
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Created questionnaire with ID: #{@questionnaire.id}.", request)
       render json: @questionnaire, status: :created and return
-    rescue ActiveRecord::RecordInvalid
+    rescue ActiveRecord::RecordInvalid => e
+      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Failed to create questionnaire. Error: #{e.message}", request)
       render json: $ERROR_INFO.to_s, status: :unprocessable_entity
     end
   end
@@ -38,7 +43,9 @@ class Api::V1::QuestionnairesController < ApplicationController
     begin
       @questionnaire = Questionnaire.find(params[:id])
       @questionnaire.delete
-    rescue ActiveRecord::RecordNotFound
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Deleted questionnaire with ID: #{@questionnaire.id}.", request)
+    rescue ActiveRecord::RecordNotFound => e
+      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Questionnaire not found with ID: #{params[:id]}. Error: #{e.message}", request)
       render json: $ERROR_INFO.to_s, status: :not_found and return
     end
   end
@@ -49,8 +56,10 @@ class Api::V1::QuestionnairesController < ApplicationController
   def update
     @questionnaire = Questionnaire.find(params[:id])
     if @questionnaire.update(questionnaire_params)
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Updated questionnaire with ID: #{@questionnaire.id}.", request)
       render json: @questionnaire, status: :ok
     else
+      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Failed to update questionnaire with ID: #{@questionnaire.id}. Errors: #{@questionnaire.errors.full_messages.join(', ')}", request)
       render json: @questionnaire.errors.full_messages, status: :unprocessable_entity
     end
   end
@@ -59,10 +68,13 @@ class Api::V1::QuestionnairesController < ApplicationController
   def copy
     begin
       @questionnaire = Questionnaire.copy_questionnaire_details(params)
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Copied questionnaire with ID: #{params[:id]} to new questionnaire with ID: #{@questionnaire.id}.", request)
       render json: @questionnaire, status: :ok and return
-    rescue ActiveRecord::RecordNotFound
+    rescue ActiveRecord::RecordNotFound => e
+      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Questionnaire not found with ID: #{params[:id]}. Error: #{e.message}", request)
       render json: $ERROR_INFO.to_s, status: :not_found and return
-    rescue ActiveRecord::RecordInvalid
+    rescue ActiveRecord::RecordInvalid => e
+      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Failed to copy questionnaire with ID: #{params[:id]}. Error: #{e.message}", request)
       render json: $ERROR_INFO.to_s, status: :unprocessable_entity
     end
   end
@@ -75,11 +87,14 @@ class Api::V1::QuestionnairesController < ApplicationController
       @questionnaire = Questionnaire.find(params[:id])
       @questionnaire.toggle!(:private)
       @access = @questionnaire.private ? 'private' : 'public'
+      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Toggled access for questionnaire with ID: #{@questionnaire.id}. Now it is #{@access}.", request)
       render json: "The questionnaire \"#{@questionnaire.name}\" has been successfully made #{@access}. ",
         status: :ok
-    rescue ActiveRecord::RecordNotFound
+    rescue ActiveRecord::RecordNotFound => e
+      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Questionnaire not found with ID: #{params[:id]}. Error: #{e.message}", request)
       render json: $ERROR_INFO.to_s, status: :not_found
-    rescue ActiveRecord::RecordInvalid
+    rescue ActiveRecord::RecordInvalid => e
+      ExpertizaLogger.error LoggerMessage.new(controller_name, session[:user].name, "Failed to toggle access for questionnaire with ID: #{params[:id]}. Error: #{e.message}", request)
       render json: $ERROR_INFO.to_s, status: :unprocessable_entity
     end
   end
