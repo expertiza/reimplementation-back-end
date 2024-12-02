@@ -51,17 +51,12 @@ class Api::V1::ParticipantsController < ApplicationController
 
     permissions = retrieve_participant_permissions(role)
 
-    AssignmentParticipant.new(participant_params).tap do |participant|
-      participant.user_id = user.id
-      participant.assignment_id = assignment.id
-      participant.role = permissions[:role]
-      participant.can_submit = permissions[:can_submit]
-      participant.can_review = permissions[:can_review]
-      participant.can_take_quiz = permissions[:can_take_quiz]
-      participant.can_mentor = permissions[:can_mentor]
-    end
-
-    assignment.add_participant(user)
+    participant = assignment.add_participant(user)
+    participant.role = permissions[:role]
+    participant.can_submit = permissions[:can_submit]
+    participant.can_review = permissions[:can_review]
+    participant.can_take_quiz = permissions[:can_take_quiz]
+    participant.can_mentor = permissions[:can_mentor]
 
     if participant.save
       render json: participant, status: :created
