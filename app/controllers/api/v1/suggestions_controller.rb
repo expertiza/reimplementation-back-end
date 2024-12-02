@@ -111,14 +111,11 @@ class Api::V1::SuggestionsController < ApplicationController
   end
 
   def send_notice_of_approval!
-    Mailer.send_topic_approved_message(
-      to: @suggester.email,
+    Mailer.send_topic_approved_email(
       cc: User.joins(:teams_users).where(teams_users: { team_id: @team.id }).where.not(id: @suggester.id).map(&:email),
       subject: "Suggested topic '#{@suggestion.title}' has been approved",
-      body: {
-        approved_topic_name: @suggestion.title,
-        suggester: @suggester.name
-      }
+      suggester: @suggester,
+      topic_name: @suggestion.title
     )
   end
 
@@ -131,8 +128,8 @@ class Api::V1::SuggestionsController < ApplicationController
       @team = Team.create!(assignment_id: @signuptopic.assignment_id)
       TeamsUser.create!(team_id: @team.id, user_id: @suggester.id)
     end
-    if SignedUpTeam.exists?(sign_up_topic_id: @signuptopic.id, team_id: @team.id, is_waitlisted: false)
-      SignedUpTeam.where(team_id: @team.id, is_waitlisted: 1).destroy_all
+    unless SignedUpTeam.exists?(team_id: @team.id, is_waitlisted: false)
+      SignedUpTeam.where(team_id: @team.id, is_waitlisted: true).destroy_all
       SignedUpTeam.create!(sign_up_topic_id: @signuptopic.id, team_id: @team.id, is_waitlisted: false)
     end
     @signuptopic.update_attribute(:private_to, @suggester.id)
