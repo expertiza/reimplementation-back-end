@@ -1,21 +1,30 @@
 class Api::V1::ParticipantsController < ApplicationController
   include ParticipantsHelper
 
-  # Return a list of participants for a given user or assignment
+  # Return a list of participants for a given user
   # params - user_id
-  #          assignment_id
-  # GET /participants/:user_id
-  # GET /participants/:assignment_id
-  def index
-    # Validate and find user if user_id is provided
+  # GET /participants/user/:user_id
+  def user_index
     user = find_user if params[:user_id].present?
     return if params[:user_id].present? && user.nil?
 
-    # Validate and find assignment if assignment_id is provided
+    participants = filter_user_participants(user)
+
+    if participants.nil?
+      render json: participants.errors, status: :unprocessable_entity
+    else
+      render json: participants, status: :ok
+    end
+  end
+
+  # Return a list of participants for a given assignment
+  # params - assignment_id
+  # GET /participants/assignment/:assignment_id
+  def assignment_index
     assignment = find_assignment if params[:assignment_id].present?
     return if params[:assignment_id].present? && assignment.nil?
 
-    participants = filter_participants(user, assignment)
+    participants = filter_assignment_participants(assignment)
 
     if participants.nil?
       render json: participants.errors, status: :unprocessable_entity
@@ -117,13 +126,18 @@ class Api::V1::ParticipantsController < ApplicationController
 
   private
 
-  # Filters participants based on the provided user and/or assignment
-  # If a user is provided, participants are filtered by user_id
-  # If an assignment is provided, participants are filtered by assignment_id
+  # Filters participants based on the provided user
   # Returns participants ordered by their IDs
-  def filter_participants(user, assignment)
+  def filter_user_participants(user)
     participants = Participant.all
     participants = participants.where(user_id: user.id) if user
+    participants.order(:id)
+  end
+
+  # Filters participants based on the provided assignment
+  # Returns participants ordered by their IDs
+  def filter_assignment_participants(assignment)
+    participants = Participant.all
     participants = participants.where(assignment_id: assignment.id) if assignment
     participants.order(:id)
   end
