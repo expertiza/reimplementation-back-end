@@ -6,6 +6,7 @@ class Participant < ApplicationRecord
   belongs_to :team, optional: true
 
   delegate :course, to: :assignment
+  has_one   :role, foreign_key: 'role_id'
 
   # Validations
   validates :user_id, presence: true

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_12_01_224137) do
+ActiveRecord::Schema[7.0].define(version: 2024_12_02_024710) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -188,8 +188,10 @@ ActiveRecord::Schema[7.0].define(version: 2024_12_01_224137) do
     t.datetime "stage_deadline"
     t.boolean "can_take_quiz"
     t.boolean "can_mentor"
+    t.bigint "role_id", null: false
     t.index ["assignment_id"], name: "index_participants_on_assignment_id"
     t.index ["join_team_request_id"], name: "index_participants_on_join_team_request_id"
+    t.index ["role_id"], name: "index_participants_on_role_id"
     t.index ["team_id"], name: "index_participants_on_team_id"
     t.index ["user_id"], name: "fk_participant_users"
     t.index ["user_id"], name: "index_participants_on_user_id"
@@ -340,6 +342,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_12_01_224137) do
   add_foreign_key "courses", "users", column: "instructor_id"
   add_foreign_key "participants", "assignments"
   add_foreign_key "participants", "join_team_requests"
+  add_foreign_key "participants", "roles"
   add_foreign_key "participants", "teams"
   add_foreign_key "participants", "users"
   add_foreign_key "questions", "questionnaires"
