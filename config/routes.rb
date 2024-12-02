@@ -115,7 +115,7 @@ Rails.application.routes.draw do
           get '/user/:user_id', to: 'participants#index'
           get '/assignment/:assignment_id', to: 'participants#index'
           get '/:id', to: 'participants#show'
-          post '/', to: 'participants#add'
+          post '/:role', to: 'participants#add'
           delete '/:id', to: 'participants#destroy'
         end
       end
