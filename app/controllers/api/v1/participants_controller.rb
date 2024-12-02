@@ -37,7 +37,7 @@ class Api::V1::ParticipantsController < ApplicationController
 
   # Create a participant
   # POST /participants
-  def create
+  def add
     user = find_user
     return unless user
 
