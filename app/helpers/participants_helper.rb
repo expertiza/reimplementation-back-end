@@ -1,14 +1,14 @@
 module ParticipantsHelper
-  # =======================================================
-  # A participant can be one of the following designations:
+  # ===========================================================
+  # A participant can be one of the following authorizations:
   # Reader
   # Reviewer
   # Submitter
   # Mentor
-  # =======================================================
+  # ===========================================================
   # Grant a participant permissions to submit, review,
-  # take quizzes, and mentor based on their designation
-  def retrieve_participant_permissions(designation)
+  # take quizzes, and mentor based on their authorization
+  def retrieve_participant_permissions(authorization)
     default_permissions = {
       can_submit: true,
       can_review: true,
@@ -23,6 +23,6 @@ module ParticipantsHelper
       'mentor' => { can_mentor: true }
     }
 
-    default_permissions.merge(permissions_map[designation])
+    default_permissions.merge(permissions_map[authorization])
   end
 end
