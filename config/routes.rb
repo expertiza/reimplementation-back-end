@@ -54,16 +54,16 @@ Rails.application.routes.draw do
       end
 
       resources :student_teams, only: %i[create edit update] do
-        collection do
-          get :view
-          get :mentor
+        member do
+          get :show
+          delete :destroy
           get :remove_participant
-          get :auto_complete_for_user_name
-          get :edit
+        end
+
+        collection do
           get :index
           post :create
           patch :update
-          get :hellothere
         end
       end
     
