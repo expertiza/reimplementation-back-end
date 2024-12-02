@@ -13,7 +13,7 @@ class Api::V1::ParticipantsController < ApplicationController
     assignment = find_assignment if params[:assignment_id].present?
     return if params[:assignment_id].present? && assignment.nil?
 
-    filter_participants(user, assignment)
+    participants = filter_participants(user, assignment)
 
     if participants.nil?
       render json: participants.errors, status: :unprocessable_entity
@@ -91,13 +91,15 @@ class Api::V1::ParticipantsController < ApplicationController
   end
 
   def find_user
-    user = User.find_by(id: participant_params[:user_id])
+    user_id = params[:user_id]
+    user = User.find_by(id: user_id)
     render json: { error: 'User not found' }, status: :not_found unless user
     user
   end
 
   def find_assignment
-    assignment = Assignment.find_by(id: participant_params[:assignment_id])
+    assignment_id = params[:assignment_id]
+    assignment = Assignment.find_by(id: assignment_id)
     render json: { error: 'Assignment not found' }, status: :not_found unless assignment
     assignment
   end
