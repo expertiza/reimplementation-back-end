@@ -52,7 +52,7 @@ class Api::V1::ParticipantsController < ApplicationController
     permissions = retrieve_participant_permissions(designation)
 
     participant = assignment.add_participant(user)
-    participant.designation = permissions[:designation]
+    participant.designation = designation
     participant.can_submit = permissions[:can_submit]
     participant.can_review = permissions[:can_review]
     participant.can_take_quiz = permissions[:can_take_quiz]
@@ -76,7 +76,7 @@ class Api::V1::ParticipantsController < ApplicationController
 
     permissions = retrieve_participant_permissions(designation)
 
-    participant.designation = permissions[:designation]
+    participant.designation = designation
     participant.can_submit = permissions[:can_submit]
     participant.can_review = permissions[:can_review]
     participant.can_take_quiz = permissions[:can_take_quiz]
