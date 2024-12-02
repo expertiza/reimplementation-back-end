@@ -46,7 +46,7 @@ class Api::V1::ParticipantsController < ApplicationController
     assignment = find_assignment
     return unless assignment
 
-    Participant.new(participant_params).tap do |participant|
+    AssignmentParticipant.new(participant_params).tap do |participant|
       participant.user_id = user.id
       participant.assignment_id = assignment.id
     end
