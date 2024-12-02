@@ -31,7 +31,7 @@ module Authorization
   #   has_required_role?(Role::INSTRUCTOR) # checks if user is an instructor or higher
   def has_required_role?(required_role)
     required_role = Role.find_by_name(required_role) if required_role.is_a?(String)
-    current_user&.role&.all_privileges_of?(required_role)
+    current_user&.role&.all_privileges_of?(required_role) || false
   end
 
   # Unlike has_required_role? which checks for role hierarchy and privilege levels,
