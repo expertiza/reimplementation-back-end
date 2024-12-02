@@ -1,4 +1,6 @@
 class Api::V1::ParticipantsController < ApplicationController
+  include ParticipantsHelper
+
   # Return a list of participants for a given user or assignment
   # params - user_id
   #          assignment_id
