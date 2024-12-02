@@ -1,35 +1,26 @@
 class Api::V1::CoursesController < ApplicationController
   require_dependency 'permissions'
 
-  before_action :set_course, only: %i[ show update destroy add_ta view_tas remove_ta copy ]
-  
-  # added today
-  before_action :authorize_manage_courses, only: %i[create destroy]
+  before_action :set_course, only: %i[show update destroy add_ta view_tas remove_ta copy]
+  before_action :authorize_manage_courses, only: %i[create update destroy add_ta remove_ta copy]
+
 
   rescue_from ActiveRecord::RecordNotFound, with: :course_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
   # GET /courses
-  # List all the courses
   def index
-    puts "IN INDEX"
-    puts current_user.full_name
     courses = Course.all
     render json: courses, status: :ok
   end
 
   # GET /courses/1
-  # Get a course
   def show
-    puts "In Show"
     render json: @course, status: :ok
   end
 
   # POST /courses
-  # Create a course
   def create
-    puts "============================================================================================================"
-    puts current_user.name
     course = Course.new(course_params)
     if course.save
       render json: course, status: :created
@@ -39,7 +30,6 @@ class Api::V1::CoursesController < ApplicationController
   end
 
   # PATCH/PUT /courses/1
-  # Update a course
   def update
     if @course.update(course_params)
       render json: @course, status: :ok
@@ -49,10 +39,9 @@ class Api::V1::CoursesController < ApplicationController
   end
 
   # DELETE /courses/1
-  # Delete a course
   def destroy
     @course.destroy
-    render json: { message: "Course with id #{params[:id]}, deleted" }, status: :no_content
+    render json: { message: "Course #{@course.name} has been successfully deleted." }, status: :no_content
   end
 
   # Adds a Teaching Assistant to the course
@@ -84,7 +73,6 @@ class Api::V1::CoursesController < ApplicationController
 
   # Creates a copy of the course
   def copy
-    # existing_course = Course.find(params[:id])
     success = @course.copy_course
     if success
       render json: { message: "The course #{@course.name} has been successfully copied" }, status: :ok
@@ -93,22 +81,19 @@ class Api::V1::CoursesController < ApplicationController
     end
   end
 
-  # added today
-  # Restricts actions like adding or deleting courses to Admins and Instructors
+  # Restricts modification actions (update, copy, delete) for users who are not admins or super_admins.
   def authorize_manage_courses
     unless Permissions.can_manage_courses?(current_user)
-      render json: { error: 'Unauthorized action' }, status: :forbidden
+      render json: { error: 'You do not have sufficient privileges for this action. Please contact the course instructor or admin.' }, status: :forbidden
     end
   end
 
   private
 
-  # Use callbacks to share common setup or constraints between actions.
   def set_course
     @course = Course.find(params[:id])
   end
 
-  # Only allow a list of trusted parameters through.
   def course_params
     params.require(:course).permit(:name, :directory_path, :info, :private, :instructor_id, :institution_id)
   end
