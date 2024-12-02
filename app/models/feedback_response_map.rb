@@ -51,7 +51,7 @@ class FeedbackResponseMap < ResponseMap
 
     @temp_review_responses = Response.where(['map_id IN (?)', @review_response_map_ids]).order('created_at DESC')
     # we need to pick the latest version of review for each round
-    @temp_response_map_ids = []
+    # @temp_response_map_ids = [] # moving this to helper methods!
     if Assignment.find(id).varying_rubrics_by_round?
     #   @all_review_response_ids_round_one = []
     #   @all_review_response_ids_round_two = []
@@ -64,7 +64,7 @@ class FeedbackResponseMap < ResponseMap
     #     @all_review_response_ids_round_two << response.id if response.round == 2
     #     @all_review_response_ids_round_three << response.id if response.round == 3
     #   end
-      @all_review_response_ids_rounds = varying_rubrics_report(@temp_review_responses, @temp_response_map_ids)
+      @all_review_response_ids_rounds = varying_rubrics_report(@temp_review_responses)
       return authors, @all_review_response_ids_rounds[1], @all_review_response_ids_rounds[2], @all_review_response_ids_rounds[3]
     else
     #   @all_review_response_ids = []
@@ -74,7 +74,7 @@ class FeedbackResponseMap < ResponseMap
     #       @all_review_response_ids << response.id
     #     end
     #   end
-      @all_review_response_ids = static_rubrics_report(@temp_review_responses, @temp_response_map_ids)
+      @all_review_response_ids = static_rubrics_report(@temp_review_responses)
       return authors, @all_review_response_ids
     end
     # @feedback_response_map_ids = ResponseMap.where(["reviewed_object_id IN (?) and type = ?", @all_review_response_ids, type]).pluck("id")
@@ -129,7 +129,9 @@ class FeedbackResponseMap < ResponseMap
     end
     
     # Used in the conditional of self.feedback_response_report to get the rubric reports if the rounds vary
-    self.varying_rubrics_report(review_responses, response_map_ids)
+    self.varying_rubrics_report(review_responses)
+      # Create an array of response map ids
+      response_map_ids = []  
       # Initialize the array of response map ids
       # This will be a dictionary, where the key is the round number and the value is an array of response ids
       # If the dictionary does not have a key for a round, that key will be initialized with an empty array
@@ -138,7 +140,6 @@ class FeedbackResponseMap < ResponseMap
       review_responses.each do |response|
         # Skip if the response is already in the array
         # NOTE, I don't know if the line below is correct, since it makes it so that the response is skipped if it is already in the array???
-        # NOTE the "if" should probably be "unless" according to proper syntax
         next if response_map_ids.include? response.map_id.to_s + response.round.to_s 
         # Otherwise, add the response to the array and the appropriate round array
         response_map_ids << response.map_id.to_s + response.round.to_s
@@ -166,7 +167,9 @@ class FeedbackResponseMap < ResponseMap
     # end
 
     # Used in the conditional of self.feedback_response_report to get the rubric reports if the rounds do not vary
-    self.static_rubrics_report(review_responses, response_map_ids):
+    self.static_rubrics_report(review_responses)
+      # create an array of response_map_ids
+      response_map_ids = []
       # Initialize the array of response map ids
       all_review_response_ids = []
       # For each response, add the response id to the array
