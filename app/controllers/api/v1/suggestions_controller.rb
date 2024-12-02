@@ -81,16 +81,19 @@ class Api::V1::SuggestionsController < ApplicationController
   # Reject a suggestion unless it was already approved.
   def reject
     deny_student('Students cannot reject a suggestion.')
-    suggestion = Suggestion.find(params[:id])
+    @suggestion = Suggestion.find(params[:id])
     # Since the approval process makes changes to many records,
     #   rejecting a previously approved suggestion is not possible.
-    if suggestion.status == 'Approved'
+    if @suggestion.status == 'Approved'
       render json: { error: 'Suggestion has already been approved.' }, status: :unprocessable_entity
-    else
-      # The only action in the rejection process is to mark the suggestion as rejected.
-      suggestion.update_attribute('status', 'Rejected') if suggestion.status == 'Initialized'
-      render json: suggestion, status: :ok
+    elsif @suggestion.status == 'Initialized'
+      # The rejection process is:
+      # 1. Mark the suggestion as rejected
+      # 2. Send the topic rejected message
+      @suggestion.update_attribute('status', 'Rejected')
+      send_notice_of_rejection! if @suggestion.user_id
     end
+    render json: @suggestion, status: :ok
   rescue ActiveRecord::RecordNotFound => e
     render json: e, status: :not_found
   end
@@ -144,6 +147,15 @@ class Api::V1::SuggestionsController < ApplicationController
       cc: User.joins(:teams_users).where(teams_users: { team_id: @team.id }).where.not(id: @suggester.id).map(&:email),
       subject: "Suggested topic '#{@suggestion.title}' has been approved",
       suggester: @suggester,
+      topic_name: @suggestion.title
+    )
+  end
+
+  def send_notice_of_rejection!
+    # Email the suggester that the suggestion was rejected
+    Mailer.send_topic_rejected_email(
+      subject: "Suggested topic '#{@suggestion.title}' has been rejected",
+      suggester: User.find(@suggestion.user_id),
       topic_name: @suggestion.title
     )
   end
