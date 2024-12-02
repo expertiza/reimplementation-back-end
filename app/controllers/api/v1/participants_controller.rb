@@ -37,8 +37,8 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
-  # Assign the specified designation to the participant and add them to an assignment
-  # POST /participants/:designation
+  # Assign the specified authorization to the participant and add them to an assignment
+  # POST /participants/:authorization
   def add
     user = find_user
     return unless user
@@ -46,13 +46,13 @@ class Api::V1::ParticipantsController < ApplicationController
     assignment = find_assignment
     return unless assignment
 
-    designation = validate_designation
-    return unless designation
+    authorization = validate_authorization
+    return unless authorization
 
-    permissions = retrieve_participant_permissions(designation)
+    permissions = retrieve_participant_permissions(authorization)
 
     participant = assignment.add_participant(user)
-    participant.designation = designation
+    participant.authorization = authorization
     participant.can_submit = permissions[:can_submit]
     participant.can_review = permissions[:can_review]
     participant.can_take_quiz = permissions[:can_take_quiz]
@@ -65,18 +65,18 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
-  # Update the specified participant to the specified designation
-  # PATCH /participants/:id/:designation
-  def update_designation
+  # Update the specified participant to the specified authorization
+  # PATCH /participants/:id/:authorization
+  def update_authorization
     participant = find_participant
     return unless participant
 
-    designation = validate_designation
-    return unless designation
+    authorization = validate_authorization
+    return unless authorization
 
-    permissions = retrieve_participant_permissions(designation)
+    permissions = retrieve_participant_permissions(authorization)
 
-    participant.designation = designation
+    participant.authorization = authorization
     participant.can_submit = permissions[:can_submit]
     participant.can_review = permissions[:can_review]
     participant.can_take_quiz = permissions[:can_take_quiz]
@@ -109,7 +109,7 @@ class Api::V1::ParticipantsController < ApplicationController
 
   # Permitted parameters for creating a Participant object
   def participant_params
-    params.require(:participant).permit(:user_id, :assignment_id, :designation, :can_submit,
+    params.require(:participant).permit(:user_id, :assignment_id, :authorization, :can_submit,
                                         :can_review, :can_take_quiz, :can_mentor, :handle,
                                         :team_id, :join_team_request_id, :permission_granted,
                                         :topic, :current_stage, :stage_deadline)
@@ -155,24 +155,24 @@ class Api::V1::ParticipantsController < ApplicationController
     participant
   end
 
-  # Validates that the designation parameter is present and is one of the following valid designations: reader, reviewer, submitter, mentor
-  # Returns the designation if valid
-  def validate_designation
-    valid_designations = %w[reader reviewer submitter mentor]
-    designation = params[:designation]
-    designation = designation.downcase if designation.present?
+  # Validates that the authorization parameter is present and is one of the following valid authorizations: reader, reviewer, submitter, mentor
+  # Returns the authorization if valid
+  def validate_authorization
+    valid_authorizations = %w[reader reviewer submitter mentor]
+    authorization = params[:authorization]
+    authorization = authorization.downcase if authorization.present?
 
-    unless designation
-      render json: { error: 'Designation is required' }, status: :unprocessable_entity
+    unless authorization
+      render json: { error: 'authorization is required' }, status: :unprocessable_entity
       return
     end
 
-    unless valid_designations.include?(designation)
-      render json: { error: 'Designation not valid. Valid designations are: Reader, Reviewer, Submitter, Mentor' },
+    unless valid_authorizations.include?(authorization)
+      render json: { error: 'authorization not valid. Valid authorizations are: Reader, Reviewer, Submitter, Mentor' },
              status: :unprocessable_entity
       return
     end
 
-    designation
+    authorization
   end
 end
