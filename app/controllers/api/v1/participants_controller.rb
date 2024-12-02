@@ -70,6 +70,27 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
+  # Update the specified participant to the specified role
+  # PATCH /participants/:id/:role
+  def update_role
+    role = validate_role
+    return unless role
+
+    permissions = retrieve_participant_permissions(role)
+
+    participant.role = permissions[:role]
+    participant.can_submit = permissions[:can_submit]
+    participant.can_review = permissions[:can_review]
+    participant.can_take_quiz = permissions[:can_take_quiz]
+    participant.can_mentor = permissions[:can_mentor]
+
+    if participant.save
+      render json: participant, status: :created
+    else
+      render json: participant.errors, status: :unprocessable_entity
+    end
+  end
+
   # Delete a participant
   # params - id
   # DELETE /participants/:id
