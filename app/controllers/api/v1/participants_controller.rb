@@ -37,8 +37,8 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
-  # Create a participant
-  # POST /participants
+  # Assign the specified role to the participant and add them to an assignment
+  # POST /participants/:role
   def add
     user = find_user
     return unless user
@@ -46,9 +46,16 @@ class Api::V1::ParticipantsController < ApplicationController
     assignment = find_assignment
     return unless assignment
 
+    permissions = retrieve_participant_permissions(params[:role])
+
     AssignmentParticipant.new(participant_params).tap do |participant|
       participant.user_id = user.id
       participant.assignment_id = assignment.id
+      participant.role = permissions[:role]
+      participant.can_submit = permissions[:can_submit]
+      participant.can_review = permissions[:can_review]
+      participant.can_take_quiz = permissions[:can_take_quiz]
+      participant.can_mentor = permissions[:can_mentor]
     end
 
     if participant.save
