@@ -8,17 +8,9 @@ class Api::V1::StudentTeamsController < ApplicationController
     before_action :set_student, only: %i[view create remove_participant]
     
     # GET /api/v1/student_teams?student_id=&team_id=
-    # Retrieve StudentTeams by query parameters
+    # Retrieve all student teams information
     def index
-      # if params[:student_id].nil?
-      #   render json: { error: 'Student ID is required!' }, status: :unprocessable_entity
-      # elsif params[:team_id].nil?
-        @student_teams = AssignmentTeam.all # check for mentored teams as well
         render json: @student_teams, status: :ok
-      # else
-      #   @student_teams = AssignmentTeam.where(student_id: params[:student_id], team_id: params[:team_id])
-      #   render json: @student_teams, status: :ok
-      # end
     end
 
     # GET /student_teams/:id
@@ -29,19 +21,15 @@ class Api::V1::StudentTeamsController < ApplicationController
     rescue ActiveRecord::RecordNotFound => e
       render json: { error: e.message }, status: :not_found
     end
-  
-    def team_name1 # Fix this later
-      "Team_name:" + Time.now.to_s
-    end
 
     def create
       existing_teams = AssignmentTeam.where name: params[:team][:name], assignment_id: @student.assignment_id
       # check if the team name is in use
-      team_name = params[:team][:name] || team_name1
+      team_name = params[:team][:name] || generate_team_name
       if existing_teams.empty?
         parent = Assignment.find_by id: @student.assignment_id
         if parent != nil && parent.auto_assign_mentor
-          team = AssignmentTeam.new(name: team_name, assignment_id: @student.assignment_id) # Create mentored team for this
+          team = MentoredTeam.new(name: team_name, assignment_id: @student.assignment_id) # Create mentored team for this
         else
           team = AssignmentTeam.new(name: team_name, assignment_id: @student.assignment_id)
         end
@@ -80,7 +68,7 @@ class Api::V1::StudentTeamsController < ApplicationController
         assignment_team = AssignmentTeam.find(params[:id])
         assignment_team.delete
       rescue ActiveRecord::RecordNotFound
-          render json: $ERROR_INFO.to_s, status: :not_found and return
+        render json: { error: "AssignmentTeam with id #{params[:id]} not found" }, status: :not_found
       end
     end
 
@@ -101,13 +89,13 @@ class Api::V1::StudentTeamsController < ApplicationController
       @student = AssignmentParticipant.find(params[:student_id])
     end
 
-    # def team_params
-    #   params.require(:team).permit(:name)
-    # end
+    def generate_team_name
+      "Team_name:" + Time.now.to_s
+    end
 
-    # def student_params
-    #   params.require(:student).permit(:user_id, :assignment_id)
-    # end
+    def team_name_available?(name, assignment_id)
+      AssignmentTeam.where(name: name, assignment_id: assignment_id).empty?
+    end
 
     def user_not_found
       render json: { error: "User with id #{params[:id]} not found" }, status: :not_found
