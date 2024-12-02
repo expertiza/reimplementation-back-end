@@ -4,7 +4,7 @@ class Api::V1::StudentTeamsController < ApplicationController
     rescue_from ActiveRecord::RecordNotFound, with: :user_not_found
     rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
-    before_action :set_team, only: %i[show edit update remove_participant]
+    before_action :set_team, only: %i[edit update remove_participant]
     before_action :set_student, only: %i[view create remove_participant]
     
     # GET /api/v1/student_teams?student_id=&team_id=
