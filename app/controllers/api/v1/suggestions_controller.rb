@@ -10,6 +10,8 @@ class Api::V1::SuggestionsController < ApplicationController
       suggestion_id: params[:id],
       user_id: @current_user.id
     ), status: :ok
+  rescue ActiveRecord::RecordNotFound => e
+    render json: e, status: :not_found
   rescue ActiveRecord::RecordInvalid => e
     render json: e.record.errors, status: :unprocessable_entity
   end
