@@ -44,7 +44,10 @@ class Api::V1::ParticipantsController < ApplicationController
     assignment = find_assignment
     return unless assignment
 
-    participant = build_participant(user, assignment)
+    Participant.new(participant_params).tap do |participant|
+      participant.user_id = user.id
+      participant.assignment_id = assignment.id
+    end
 
     if participant.save
       render json: participant, status: :created
@@ -98,13 +101,6 @@ class Api::V1::ParticipantsController < ApplicationController
       "Participant #{params[:id]} in Assignment #{params[:assignment_id]} has been deleted successfully!"
     else
       "Participant #{params[:id]} in Team #{params[:team_id]} of Assignment #{params[:assignment_id]} has been deleted successfully!"
-    end
-  end
-
-  def build_participant(user, assignment)
-    Participant.new(participant_params).tap do |participant|
-      participant.user_id = user.id
-      participant.assignment_id = assignment.id
     end
   end
 end
