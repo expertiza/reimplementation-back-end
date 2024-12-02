@@ -90,8 +90,8 @@ class Api::V1::ParticipantsController < ApplicationController
 
   # Permitted parameters for creating a Participant object
   def participant_params
-    params.require(:participant).permit(:user_id, :assignment_id, :can_submit, :can_review, :can_take_quiz, :can_mentor,
-                                        :team_id, :join_team_request_id,
+    params.require(:participant).permit(:user_id, :assignment_id, :role, :can_submit, :can_review,
+                                        :can_take_quiz, :can_mentor, :team_id, :join_team_request_id,
                                         :permission_granted, :topic, :current_stage, :stage_deadline)
   end
 
