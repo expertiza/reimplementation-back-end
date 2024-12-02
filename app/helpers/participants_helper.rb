@@ -1,14 +1,14 @@
 module ParticipantsHelper
-  # ====================================================
-  # A participant can be one of the following roles:
+  # =======================================================
+  # A participant can be one of the following designations:
   # Reader
   # Reviewer
   # Submitter
   # Mentor
-  # ====================================================
+  # =======================================================
   # Grant a participant permissions to submit, review,
-  # take quizzes, and mentor based on their designated role
-  def retrieve_participant_permissions(participant_role)
+  # take quizzes, and mentor based on their designation
+  def retrieve_participant_permissions(designation)
     default_permissions = {
       can_submit: true,
       can_review: true,
@@ -23,6 +23,6 @@ module ParticipantsHelper
       'mentor' => { can_mentor: true }
     }
 
-    default_permissions.merge(permissions_map[participant_role])
+    default_permissions.merge(permissions_map[designation])
   end
 end
