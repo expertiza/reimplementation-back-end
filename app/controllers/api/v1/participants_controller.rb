@@ -56,7 +56,7 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
-  # Delete a specified participant
+  # Delete a participant
   # params - id
   # DELETE /participants/:id
   def destroy
