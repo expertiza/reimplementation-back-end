@@ -73,6 +73,9 @@ class Api::V1::ParticipantsController < ApplicationController
   # Update the specified participant to the specified role
   # PATCH /participants/:id/:role
   def update_role
+    participant = find_participant
+    return unless participant
+
     role = validate_role
     return unless role
 
@@ -137,6 +140,13 @@ class Api::V1::ParticipantsController < ApplicationController
     assignment = Assignment.find_by(id: assignment_id)
     render json: { error: 'Assignment not found' }, status: :not_found unless assignment
     assignment
+  end
+
+  def find_participant
+    participant_id = params[:id]
+    participant = Participant.find_by(id: participant_id)
+    render json: { error: 'Participant not found' }, status: :not_found unless participant
+    participant
   end
 
   def validate_role
