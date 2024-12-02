@@ -46,7 +46,10 @@ class Api::V1::ParticipantsController < ApplicationController
     assignment = find_assignment
     return unless assignment
 
-    permissions = retrieve_participant_permissions(params[:role])
+    role = validate_role
+    return unless role
+
+    permissions = retrieve_participant_permissions(role)
 
     AssignmentParticipant.new(participant_params).tap do |participant|
       participant.user_id = user.id
@@ -57,6 +60,8 @@ class Api::V1::ParticipantsController < ApplicationController
       participant.can_take_quiz = permissions[:can_take_quiz]
       participant.can_mentor = permissions[:can_mentor]
     end
+
+    assignment.add_participant(user)
 
     if participant.save
       render json: participant, status: :created
@@ -111,5 +116,24 @@ class Api::V1::ParticipantsController < ApplicationController
     assignment = Assignment.find_by(id: assignment_id)
     render json: { error: 'Assignment not found' }, status: :not_found unless assignment
     assignment
+  end
+
+  def validate_role
+    valid_roles = %w[reader reviewer submitter mentor]
+    role = params[:role]
+    role = role.downcase if role.present?
+
+    unless role
+      render json: { error: 'Role is required' }, status: :unprocessable_entity
+      return
+    end
+
+    unless valid_roles.include?(role)
+      render json: { error: 'Role not valid. Valid roles are: Reader, Reviewer, Submitter, Mentor' },
+             status: :unprocessable_entity
+      return
+    end
+
+    role
   end
 end
