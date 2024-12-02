@@ -34,8 +34,8 @@ class Api::V1::SuggestionsController < ApplicationController
         #  unknown and thus steps 3 and 4 can't be taken.
         unless @suggestion.user_id.nil?
           @suggester = User.find(@suggestion.user_id)
-          sign_team_up
-          send_notice_of_approval!
+          sign_team_up!
+          send_notice_of_approval
         end
       end
     end
@@ -138,7 +138,7 @@ class Api::V1::SuggestionsController < ApplicationController
     )
   end
 
-  def send_notice_of_approval!
+  def send_notice_of_approval
     # Email the suggester and CC the suggester's teammates that the suggestion was approved
     Mailer.send_topic_approved_email(
       cc: User.joins(:teams_users).where(teams_users: { team_id: @team.id }).where.not(id: @suggester.id).map(&:email),
