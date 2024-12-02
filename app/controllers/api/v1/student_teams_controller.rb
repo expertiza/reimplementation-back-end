@@ -5,7 +5,7 @@ class Api::V1::StudentTeamsController < ApplicationController
     rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
     before_action :set_team, only: %i[show edit update remove_participant]
-    before_action :set_student, only: %i[view update create remove_participant]
+    before_action :set_student, only: %i[view create remove_participant]
     
     # GET /api/v1/student_teams?student_id=&team_id=
     # Retrieve StudentTeams by query parameters
@@ -60,7 +60,7 @@ class Api::V1::StudentTeamsController < ApplicationController
     # PATCH/PUT /student_teams/:id
     # Updates team name or other attributes
     def update
-      matching_teams = AssignmentTeam.where(name: params[:team][:name], parent_id: @team.assignment.id)
+      matching_teams = AssignmentTeam.where(name: params[:team][:name], assignment_id: @team.assignment.id)
       if matching_teams.length.zero?
         if @team.update(name: params[:team][:name])
           render json: { message: "The team: \"#{@team.name}\" has been updated successfully." }, status: :ok
@@ -77,8 +77,8 @@ class Api::V1::StudentTeamsController < ApplicationController
     # DELETE /student_teams/:id
     def destroy
       begin
-        @bookmark = Bookmark.find(params[:id])
-        @bookmark.delete
+        assignment_team = AssignmentTeam.find(params[:id])
+        assignment_team.delete
       rescue ActiveRecord::RecordNotFound
           render json: $ERROR_INFO.to_s, status: :not_found and return
       end
@@ -89,15 +89,6 @@ class Api::V1::StudentTeamsController < ApplicationController
       Team.remove_team_user(team_id: params[:team_id], user_id: @student.user_id)
       Invitation.where(from_id: @student.user_id, assignment_id: @student.parent_id).destroy_all
       render json: { message: 'Participant removed successfully.' }, status: :ok
-    end
-
-    def hellothere
-      assignment_team = AssignmentTeam.find_by(name: 'example_team')
-      if assignment_team
-        render json: { team_name: assignment_team.name, status: 'found' }, status: :ok
-      else
-        render json: { error: 'Team not found' }, status: :not_found
-      end
     end
 
     private
@@ -117,6 +108,10 @@ class Api::V1::StudentTeamsController < ApplicationController
     # def student_params
     #   params.require(:student).permit(:user_id, :assignment_id)
     # end
+
+    def user_not_found
+      render json: { error: "User with id #{params[:id]} not found" }, status: :not_found
+    end
 
     def parameter_missing(exception)
       render json: { error: "Parameter missing: #{exception.param}" }, status: :unprocessable_entity

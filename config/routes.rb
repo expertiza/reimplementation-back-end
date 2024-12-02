@@ -62,7 +62,7 @@ Rails.application.routes.draw do
           get :edit
           get :index
           post :create
-          post :update
+          patch :update
           get :hellothere
         end
       end
