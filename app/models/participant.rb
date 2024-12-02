@@ -11,11 +11,6 @@ class Participant < ApplicationRecord
   # Validations
   validates :user_id, presence: true
   validates :assignment_id, presence: true
-  validates :role, presence: true
-  validates :can_submit, presence: true
-  validates :can_review, presence: true
-  validates :can_take_quiz, presence: true
-  validates :can_mentor, presence: true
 
   # Methods
   def fullname
