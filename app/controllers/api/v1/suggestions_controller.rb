@@ -1,6 +1,5 @@
 class Api::V1::SuggestionsController < ApplicationController
   include AuthorizationHelper
-  before_action :check_ta_privileges, only: %i[index approve destroy reject]
 
   def add_comment
     render json: SuggestionComment.create!(
@@ -13,6 +12,7 @@ class Api::V1::SuggestionsController < ApplicationController
   end
 
   def approve
+    deny_student('Students cannot approve a suggestion.')
     transaction do
       @suggestion = Suggestion.find(params[:id])
       @suggestion.update_attribute('status', 'Approved')
@@ -44,6 +44,7 @@ class Api::V1::SuggestionsController < ApplicationController
   end
 
   def destroy
+    deny_student('Students cannot delete suggestions.')
     Suggestion.find(params[:id]).destroy!
     render json: {}, status: :ok
   rescue ActiveRecord::RecordNotFound => e
@@ -53,10 +54,12 @@ class Api::V1::SuggestionsController < ApplicationController
   end
 
   def index
+    deny_student('Students cannot view all suggestions.')
     render json: Suggestion.where(assignment_id: params[:id]), status: :ok
   end
 
   def reject
+    deny_student('Students cannot reject a suggestion.')
     suggestion = Suggestion.find(params[:id])
     if suggestion.status == 'Initialized'
       suggestion.update_attribute('status', 'Rejected')
@@ -86,8 +89,8 @@ class Api::V1::SuggestionsController < ApplicationController
 
   private
 
-  def check_ta_privileges
-    render json: { error: 'Permission Denied' }, status: :forbidden unless current_user_has_ta_privileges?
+  def deny_student(err_msg)
+    render json: { error: err_msg }, status: :forbidden unless AuthorizationHelper.current_user_has_ta_privileges?
   end
 
   def create_topic_from_suggestion!
