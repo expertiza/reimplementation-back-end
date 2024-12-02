@@ -91,7 +91,7 @@ class Api::V1::SuggestionsController < ApplicationController
       # 1. Mark the suggestion as rejected
       # 2. Send the topic rejected message
       @suggestion.update_attribute('status', 'Rejected')
-      send_notice_of_rejection! if @suggestion.user_id
+      send_notice_of_rejection if @suggestion.user_id
     end
     render json: @suggestion, status: :ok
   rescue ActiveRecord::RecordNotFound => e
@@ -112,6 +112,16 @@ class Api::V1::SuggestionsController < ApplicationController
 
   private
 
+  def create_topic_from_suggestion!
+    # Convert a suggestion into a fully fledged topic.
+    @signuptopic = SignUpTopic.create!(
+      topic_identifier: "S#{Suggestion.where(assignment_id: @suggestion.assignment_id).count}",
+      topic_name: @suggestion.title,
+      assignment_id: @suggestion.assignment_id,
+      max_choosers: 1
+    )
+  end
+
   def deny_student(err_msg)
     # TAs and above are allowed to perform every action on every Suggestion and SuggestionComment.
     return if AuthorizationHelper.current_user_has_ta_privileges?
@@ -131,16 +141,6 @@ class Api::V1::SuggestionsController < ApplicationController
     render json: { error: err_msg }, status: :forbidden
   end
 
-  def create_topic_from_suggestion!
-    # Convert a suggestion into a fully fledged topic.
-    @signuptopic = SignUpTopic.create!(
-      topic_identifier: "S#{Suggestion.where(assignment_id: @suggestion.assignment_id).count}",
-      topic_name: @suggestion.title,
-      assignment_id: @suggestion.assignment_id,
-      max_choosers: 1
-    )
-  end
-
   def send_notice_of_approval
     # Email the suggester and CC the suggester's teammates that the suggestion was approved
     Mailer.send_topic_approved_email(
@@ -151,7 +151,7 @@ class Api::V1::SuggestionsController < ApplicationController
     )
   end
 
-  def send_notice_of_rejection!
+  def send_notice_of_rejection
     # Email the suggester that the suggestion was rejected
     Mailer.send_topic_rejected_email(
       subject: "Suggested topic '#{@suggestion.title}' has been rejected",
