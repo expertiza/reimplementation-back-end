@@ -7,9 +7,8 @@ module ParticipantsHelper
   # Mentor
   # ====================================================
   # Grant a participant permissions to submit, review,
-  # take quizzes, and mentor based on their designated
-  # role
-  def participant_permissions(participant_role)
+  # take quizzes, and mentor based on their designated role
+  def retrieve_participant_permissions(participant_role)
     default_permissions = {
       can_submit: true,
       can_review: true,
