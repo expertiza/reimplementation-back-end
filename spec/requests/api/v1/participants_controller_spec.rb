@@ -61,11 +61,11 @@ RSpec.describe 'Participants API', type: :request do
   end
         
 
-  path '/api/v1/participants/{designation}' do
+  path '/api/v1/participants/{authorization}' do
     post('add participant') do
       tags 'Participants'
       consumes 'application/json'
-      parameter name: :designation, in: :path, type: :string, description: 'designation of the participant'
+      parameter name: :authorization, in: :path, type: :string, description: 'authorization of the participant'
       parameter name: :participant, in: :body, schema: {
         type: :object,
         properties: {
@@ -73,46 +73,46 @@ RSpec.describe 'Participants API', type: :request do
           assignment_id: { type: :integer },
           team_id: { type: :integer, nullable: true },
         },
-        required: ['user_id', 'assignment_id'] # Add designation to required fields
+        required: ['user_id', 'assignment_id'] # Add authorization to required fields
       }
   
       response(201, 'participant created') do
         let(:user) { User.create(email: 'test@example.com', password: 'password') }
         let(:assignment) { Assignment.create(title: 'Test Assignment') }
-        let(:designation) { 'student' }
+        let(:authorization) { 'student' }
         let(:participant) { { user_id: user.id, assignment_id: assignment.id } }
   
         run_test!
       end
   
       response(422, 'invalid request') do
-        let(:designation) { 'invalid_designation' }
+        let(:authorization) { 'invalid_authorization' }
         let(:participant) { { user_id: nil, assignment_id: nil } }
         run_test!
       end
     end
   end
 
-  path '/api/v1/participants/{id}/{designation}' do
-    patch('update participant designation') do
+  path '/api/v1/participants/{id}/{authorization}' do
+    patch('update participant authorization') do
       tags 'Participants'
       consumes 'application/json'
       parameter name: :id, in: :path, type: :integer, description: 'Participant ID'
-      parameter name: :designation, in: :path, type: :string, description: 'New designation for the participant'
+      parameter name: :authorization, in: :path, type: :string, description: 'New authorization for the participant'
   
-      response(201, 'participant designation updated') do
+      response(201, 'participant authorization updated') do
         let(:user) { User.create(email: 'test@example.com', password: 'password') }
         let(:assignment) { Assignment.create(title: 'Test Assignment') }
-        let(:participant) { AssignmentParticipant.create(user_id: user.id, assignment_id: assignment.id, designation: 'student') }
+        let(:participant) { AssignmentParticipant.create(user_id: user.id, assignment_id: assignment.id, authorization: 'student') }
         let(:id) { participant.id }
-        let(:designation) { 'mentor' }
+        let(:authorization) { 'mentor' }
   
         run_test!
       end
   
       response(422, 'invalid request') do
         let(:id) { 0 }
-        let(:designation) { 'invalid_designation' }
+        let(:authorization) { 'invalid_authorization' }
         run_test!
       end
     end
