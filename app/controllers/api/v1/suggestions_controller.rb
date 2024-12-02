@@ -1,5 +1,6 @@
 class Api::V1::SuggestionsController < ApplicationController
-  include PrivilegeHelper
+  include AuthorizationHelper
+  before_action :check_ta_privileges, only: %i[index approve destroy reject]
 
   def add_comment
     render json: SuggestionComment.create!(
@@ -12,20 +13,16 @@ class Api::V1::SuggestionsController < ApplicationController
   end
 
   def approve
-    if PrivilegeHelper.current_user_has_ta_privileges?
-      transaction do
-        @suggestion = Suggestion.find(params[:id])
-        @suggestion.update_attribute('status', 'Approved')
-        create_topic_from_suggestion!
-        unless @suggestion.user_id.nil?
-          @suggester = User.find(@suggestion.user_id)
-          sign_team_up_to_assignment_and_topic!
-          send_notice_of_approval!
-        end
-        render json: @suggestion, status: :ok
+    transaction do
+      @suggestion = Suggestion.find(params[:id])
+      @suggestion.update_attribute('status', 'Approved')
+      create_topic_from_suggestion!
+      unless @suggestion.user_id.nil?
+        @suggester = User.find(@suggestion.user_id)
+        sign_team_up
+        send_notice_of_approval!
       end
-    else
-      render json: { error: 'Students cannot approve a suggestion.' }, status: :forbidden
+      render json: @suggestion, status: :ok
     end
   rescue ActiveRecord::RecordNotFound => e
     render json: e, status: :not_found
@@ -47,12 +44,8 @@ class Api::V1::SuggestionsController < ApplicationController
   end
 
   def destroy
-    if PrivilegeHelper.current_user_has_ta_privileges?
-      Suggestion.find(params[:id]).destroy!
-      render json: {}, status: :ok
-    else
-      render json: { error: 'Students do not have permission to delete suggestions.' }, status: :forbidden
-    end
+    Suggestion.find(params[:id]).destroy!
+    render json: {}, status: :ok
   rescue ActiveRecord::RecordNotFound => e
     render json: e, status: :not_found
   rescue ActiveRecord::RecordNotDestroyed => e
@@ -60,24 +53,16 @@ class Api::V1::SuggestionsController < ApplicationController
   end
 
   def index
-    if PrivilegeHelper.current_user_has_ta_privileges?
-      render json: Suggestion.where(assignment_id: params[:id]), status: :ok
-    else
-      render json: { error: 'Students do not have permission to view all suggestions.' }, status: :forbidden
-    end
+    render json: Suggestion.where(assignment_id: params[:id]), status: :ok
   end
 
   def reject
-    if PrivilegeHelper.current_user_has_ta_privileges?
-      suggestion = Suggestion.find(params[:id])
-      if suggestion.status == 'Initialized'
-        suggestion.update_attribute('status', 'Rejected')
-        render json: suggestion, status: :ok
-      else
-        render json: { error: 'Suggestion has already been approved or rejected.' }, status: :unprocessable_entity
-      end
+    suggestion = Suggestion.find(params[:id])
+    if suggestion.status == 'Initialized'
+      suggestion.update_attribute('status', 'Rejected')
+      render json: suggestion, status: :ok
     else
-      render json: { error: 'Students cannot reject a suggestion.' }, status: :forbidden
+      render json: { error: 'Suggestion has already been approved or rejected.' }, status: :unprocessable_entity
     end
   rescue ActiveRecord::RecordNotFound => e
     render json: e, status: :not_found
@@ -87,7 +72,7 @@ class Api::V1::SuggestionsController < ApplicationController
     @suggestion = Suggestion.find(params[:id])
     puts @suggestion.user_id
     puts @current_user.id
-    if @suggestion.user_id == @current_user.id || PrivilegeHelper.current_user_has_ta_privileges?
+    if @suggestion.user_id == @current_user.id || AuthorizationHelper.current_user_has_ta_privileges?
       render json: {
         suggestion: @suggestion,
         comments: SuggestionComment.where(suggestion_id: params[:id])
@@ -100,6 +85,10 @@ class Api::V1::SuggestionsController < ApplicationController
   end
 
   private
+
+  def check_ta_privileges
+    render json: { error: 'Permission Denied' }, status: :forbidden unless current_user_has_ta_privileges?
+  end
 
   def create_topic_from_suggestion!
     @signuptopic = SignUpTopic.create!(
@@ -122,7 +111,7 @@ class Api::V1::SuggestionsController < ApplicationController
     )
   end
 
-  def sign_team_up_to_assignment_and_topic!
+  def sign_team_up!
     return unless @suggestion.auto_signup == true
 
     @team = Team.where(assignment_id: @signuptopic.assignment_id).joins(:teams_user)

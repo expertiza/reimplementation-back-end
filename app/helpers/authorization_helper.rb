@@ -1,4 +1,4 @@
-module PrivilegeHelper
+module AuthorizationHelper
   # Determine if the currently logged-in user has the privileges of a Super-Admin
   def self.current_user_has_super_admin_privileges?
     current_user_has_privileges_of?('Super-Administrator')
