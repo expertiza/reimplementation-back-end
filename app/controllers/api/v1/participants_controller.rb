@@ -37,8 +37,8 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
-  # Assign the specified role to the participant and add them to an assignment
-  # POST /participants/:role
+  # Assign the specified designation to the participant and add them to an assignment
+  # POST /participants/:designation
   def add
     user = find_user
     return unless user
@@ -46,13 +46,13 @@ class Api::V1::ParticipantsController < ApplicationController
     assignment = find_assignment
     return unless assignment
 
-    role = validate_role
-    return unless role
+    designation = validate_designation
+    return unless designation
 
-    permissions = retrieve_participant_permissions(role)
+    permissions = retrieve_participant_permissions(designation)
 
     participant = assignment.add_participant(user)
-    participant.role = permissions[:role]
+    participant.designation = permissions[:designation]
     participant.can_submit = permissions[:can_submit]
     participant.can_review = permissions[:can_review]
     participant.can_take_quiz = permissions[:can_take_quiz]
@@ -65,18 +65,18 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
-  # Update the specified participant to the specified role
-  # PATCH /participants/:id/:role
-  def update_role
+  # Update the specified participant to the specified designation
+  # PATCH /participants/:id/:designation
+  def update_designation
     participant = find_participant
     return unless participant
 
-    role = validate_role
-    return unless role
+    designation = validate_designation
+    return unless designation
 
-    permissions = retrieve_participant_permissions(role)
+    permissions = retrieve_participant_permissions(designation)
 
-    participant.role = permissions[:role]
+    participant.designation = permissions[:designation]
     participant.can_submit = permissions[:can_submit]
     participant.can_review = permissions[:can_review]
     participant.can_take_quiz = permissions[:can_take_quiz]
@@ -109,10 +109,10 @@ class Api::V1::ParticipantsController < ApplicationController
 
   # Permitted parameters for creating a Participant object
   def participant_params
-    params.require(:participant).permit(:user_id, :assignment_id, :role, :can_submit, :can_review,
-                                        :can_take_quiz, :can_mentor, :handle, :team_id,
-                                        :join_team_request_id, :permission_granted, :topic,
-                                        :current_stage, :stage_deadline)
+    params.require(:participant).permit(:user_id, :assignment_id, :designation, :can_submit,
+                                        :can_review, :can_take_quiz, :can_mentor, :handle,
+                                        :team_id, :join_team_request_id, :permission_granted,
+                                        :topic, :current_stage, :stage_deadline)
   end
 
   private
@@ -155,24 +155,24 @@ class Api::V1::ParticipantsController < ApplicationController
     participant
   end
 
-  # Validates that the role parameter is present and is one of the following valid roles: reader, reviewer, submitter, mentor
-  # Returns the role if valid
-  def validate_role
-    valid_roles = %w[reader reviewer submitter mentor]
-    role = params[:role]
-    role = role.downcase if role.present?
+  # Validates that the designation parameter is present and is one of the following valid designations: reader, reviewer, submitter, mentor
+  # Returns the designation if valid
+  def validate_designation
+    valid_designations = %w[reader reviewer submitter mentor]
+    designation = params[:designation]
+    designation = designation.downcase if designation.present?
 
-    unless role
-      render json: { error: 'Role is required' }, status: :unprocessable_entity
+    unless designation
+      render json: { error: 'Designation is required' }, status: :unprocessable_entity
       return
     end
 
-    unless valid_roles.include?(role)
-      render json: { error: 'Role not valid. Valid roles are: Reader, Reviewer, Submitter, Mentor' },
+    unless valid_designations.include?(designation)
+      render json: { error: 'Designation not valid. Valid designations are: Reader, Reviewer, Submitter, Mentor' },
              status: :unprocessable_entity
       return
     end
 
-    role
+    designation
   end
 end
