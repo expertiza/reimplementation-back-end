@@ -1,4 +1,6 @@
 class Api::V1::ParticipantsController < ApplicationController
+  include ParticipantsHelper
+
   # Return a list of participants for a given user or assignment
   # params - user_id
   #          assignment_id
@@ -13,7 +15,7 @@ class Api::V1::ParticipantsController < ApplicationController
     assignment = find_assignment if params[:assignment_id].present?
     return if params[:assignment_id].present? && assignment.nil?
 
-    filter_participants(user, assignment)
+    participants = filter_participants(user, assignment)
 
     if participants.nil?
       render json: participants.errors, status: :unprocessable_entity
@@ -37,14 +39,17 @@ class Api::V1::ParticipantsController < ApplicationController
 
   # Create a participant
   # POST /participants
-  def create
+  def add
     user = find_user
     return unless user
 
     assignment = find_assignment
     return unless assignment
 
-    participant = build_participant(user, assignment)
+    AssignmentParticipant.new(participant_params).tap do |participant|
+      participant.user_id = user.id
+      participant.assignment_id = assignment.id
+    end
 
     if participant.save
       render json: participant, status: :created
@@ -53,14 +58,19 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
-  # Delete a specified participant
+  # Delete a participant
   # params - id
   # DELETE /participants/:id
   def destroy
     participant = Participant.find(params[:id])
 
     if participant.destroy
-      render json: { message: deletion_message(params) }, status: :ok
+      successful_deletion_message = if params[:team_id].nil?
+                                      "Participant #{params[:id]} in Assignment #{params[:assignment_id]} has been deleted successfully!"
+                                    else
+                                      "Participant #{params[:id]} in Team #{params[:team_id]} of Assignment #{params[:assignment_id]} has been deleted successfully!"
+                                    end
+      render json: { message: successful_deletion_message }, status: :ok
     else
       render json: participant.errors, status: :unprocessable_entity
     end
@@ -68,7 +78,8 @@ class Api::V1::ParticipantsController < ApplicationController
 
   # Permitted parameters for creating a Participant object
   def participant_params
-    params.require(:participant).permit(:user_id, :assignment_id, :team_id, :join_team_request_id,
+    params.require(:participant).permit(:user_id, :assignment_id, :can_submit, :can_review, :can_take_quiz, :can_mentor,
+                                        :team_id, :join_team_request_id,
                                         :permission_granted, :topic, :current_stage, :stage_deadline)
   end
 
@@ -82,29 +93,16 @@ class Api::V1::ParticipantsController < ApplicationController
   end
 
   def find_user
-    user = User.find_by(id: participant_params[:user_id])
+    user_id = params[:user_id]
+    user = User.find_by(id: user_id)
     render json: { error: 'User not found' }, status: :not_found unless user
     user
   end
 
   def find_assignment
-    assignment = Assignment.find_by(id: participant_params[:assignment_id])
+    assignment_id = params[:assignment_id]
+    assignment = Assignment.find_by(id: assignment_id)
     render json: { error: 'Assignment not found' }, status: :not_found unless assignment
     assignment
-  end
-
-  def deletion_message(params)
-    if params[:team_id].nil?
-      "Participant #{params[:id]} in Assignment #{params[:assignment_id]} has been deleted successfully!"
-    else
-      "Participant #{params[:id]} in Team #{params[:team_id]} of Assignment #{params[:assignment_id]} has been deleted successfully!"
-    end
-  end
-
-  def build_participant(user, assignment)
-    Participant.new(participant_params).tap do |participant|
-      participant.user_id = user.id
-      participant.assignment_id = assignment.id
-    end
   end
 end

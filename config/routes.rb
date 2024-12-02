@@ -112,10 +112,10 @@ Rails.application.routes.draw do
 
       resources :participants do
         collection do
-          get '/:user_id', to: 'participants#index'
-          get '/:assignment_id', to: 'participants#index'
+          get '/user/:user_id', to: 'participants#index'
+          get '/assignment/:assignment_id', to: 'participants#index'
           get '/:id', to: 'participants#show'
-          post '/', to: 'participants#create'
+          post '/', to: 'participants#add'
           delete '/:id', to: 'participants#destroy'
         end
       end
