@@ -96,7 +96,7 @@ RSpec.describe ProjectTopic, type: :model do
     let!(:waitlisted_team) { SignedUpTeam.create!(sign_up_topic_id: project_topic.id, is_waitlisted: true, created_at: 1.day.ago, team: Team.create!(assignment_id: assignment.id)) }
 
     it 'returns the team that has been waitlisted the longest' do
-      expect(ProjectTopic.longest_waiting_team(project_topic.id)).to eq(waitlisted_team)
+      expect(project_topic.longest_waiting_team).to eq(waitlisted_team)
     end
   end
 
