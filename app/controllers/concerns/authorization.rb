@@ -41,8 +41,8 @@ module Authorization
   # @example
   #   is_role?('Student') # true only if user is exactly a student
   #   is_role?(Role::INSTRUCTOR) # true only if user is exactly an instructor
-  def is_role?(role_name)
-    role_name = role_name.name if role_name.is_a?(Role)
-    current_user&.role&.name == role_name
+  def is_role?(required_role)
+    required_role = required_role.name if required_role.is_a?(Role)
+    current_user&.role&.name == required_role
   end
 end
