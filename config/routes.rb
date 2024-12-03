@@ -53,14 +53,13 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :student_teams, only: %i[create edit update] do
+      resources :student_teams do
         member do
           get :show
           delete :destroy
-          get :remove_participant
         end
-
         collection do
+          delete ':id/remove_participant',action: :remove_participant
           get :index
           post :create
           patch :update

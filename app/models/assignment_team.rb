@@ -6,4 +6,8 @@ class AssignmentTeam < Team
 
     AssignmentParticipant.create(assignment_id: assignment_id, user_id: user.id)
   end
+
+  def received_any_peer_review?
+    ResponseMap.where(reviewee_id: id, reviewed_object_id: assignment_id).any?
+  end
 end

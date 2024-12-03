@@ -5,7 +5,7 @@ class Api::V1::StudentTeamsController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :user_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
-  before_action :set_team, only: %i[edit update remove_participant]
+  before_action :set_team, only: %i[edit update]
   before_action :set_student, only: %i[view create remove_participant]
   before_action :set_all_teams, only: %i[index]
   
@@ -72,15 +72,20 @@ class Api::V1::StudentTeamsController < ApplicationController
     current_team.destroy
     head :no_content
     rescue ActiveRecord::RecordNotFound
-      render json: { error: "AssignmentTeam with id #{params[:id]} not found" }, status: :not_found
+      render json: { error: "AssignmentTeam with id #{params[:id]} not found." }, status: :not_found
     end
   end
 
   # DELETE /student_teams/:id/remove_participant
   def remove_participant
-    Team.remove_team_user(team_id: params[:team_id], user_id: @student.user_id)
-    Invitation.where(from_id: @student.user_id, assignment_id: @student.assignment_id).destroy_all
-    render json: { message: 'Participant removed successfully.' }, status: :ok
+    begin
+      team = AssignmentTeam.find(params[:id])
+      destroyed, message = team.remove_team_user(user_id: @student.user_id)
+      Invitation.where(from_user: @student, assignment: @student.assignment_id).destroy_all
+      render json: { message: message }, status: destroyed ? :no_content : :not_found
+        
+    rescue ActiveRecord::RecordNotFound => e
+      render json: { message: 'Team not found.' }, status: :not_found
+    end
   end
-  
 end
