@@ -1,63 +1,72 @@
-class TeamsUser < ApplicationRecord
+class TeamsParticipant < ApplicationRecord
   belongs_to :user
   belongs_to :team
+  has_one :team_user_node, foreign_key: 'node_object_id', dependent: :destroy
+  has_paper_trail
 
-  # Returns the user's name. If an IP address is provided, it may influence the name retrieval logic.
-  def name(ip_address = nil)
-    user.name(ip_address)
+  def get_team_members(team_id)
+    team_members = TeamsUser.where('team_id = ?', team_id)
+    user_ids = team_members.pluck(:user_id)
+    users = User.where(id: user_ids)
+
+    return users
   end
 
-  # Retrieves all team members for a given team ID as a collection of User objects.
-  # Allows optional exclusion of certain roles.
-  def self.get_team_members(team_id, excluded_roles: [])
-    users = where(team_id: team_id).includes(:user).map(&:user)
-    return users if excluded_roles.empty?
-
-    # Exclude users with specific roles, if any
-    users.reject { |user| excluded_roles.include?(user.role) }
+  # Removes entry in the TeamUsers table for the given user and given team id
+  def self.remove_team(user_id, team_id)
+    team_user = TeamsUser.where('user_id = ? and team_id = ?', user_id, team_id).first
+    team_user&.destroy
   end
 
-  # Adds a user to a team. Raises an error if the user is already on the team.
-  # Returns the created TeamsUser object if successful.
-  def self.add_to_team(user_id, team_id)
-    # Check if the user is already a team member
-    if where(user_id: user_id, team_id: team_id).exists?
-      raise "The user is already a member of the team."
-    end
+#E2479
+# Retrieves the name of the user associated with the team member.
+# Optionally appends ' (Mentor)' if the user is a mentor.
+# Params:
+# - ip_address (optional): The IP address of the user (used for logging or contextual name resolution).
+# Returns:
+# - The name of the user, with '(Mentor)' appended if the user is a mentor.
+def display_name(ip_address = nil)
+  participant_name = user.name(ip_address)
+  participant_name += ' (Mentor)' if MentorManagement.user_a_mentor?(user)
+  participant_name
+end
 
-    # Create the association
-    create!(user_id: user_id, team_id: team_id)
-  rescue ActiveRecord::RecordInvalid => e
-    raise "Failed to add user to team: #{e.message}"
-  end
+# Deletes multiple team members (identified by their IDs) in bulk.
+# This method is used for efficient removal of multiple TeamsUser records.
+# Params:
+# - team_user_ids: An array of IDs of the TeamsUser records to be deleted.
+# Returns:
+# - The number of records deleted (implicit return from destroy_all).
+def self.bulk_delete(team_user_ids)
+  # Delete all TeamsUser records matching the provided IDs.
+  where(id: team_user_ids).destroy_all
+end
 
-  # Removes a user's association with a team. Raises an error if the association does not exist.
-  def self.remove_from_team(user_id, team_id)
-    team_user = find_by(user_id: user_id, team_id: team_id)
-    raise "The user is not a member of this team." if team_user.nil?
+# Checks whether a specific user is a member of a given team.
+# Params:
+# - user_id: The ID of the user to check.
+# - team_id: The ID of the team to check for membership.
+# Returns:
+# - true if the user is a member of the team.
+# - false otherwise.
+def self.participant_part_of_team?(user_id, team_id)
+  # Check if a TeamsUser record exists with the specified user and team IDs.
+  exists?(user_id: user_id, team_id: team_id)
+end
 
-    team_user.destroy
-  rescue StandardError => e
-    raise "Failed to remove user from team: #{e.message}"
-  end
+# Checks whether a team is empty (i.e., has no members).
+# Params:
+# - team_id: The ID of the team to check.
+# Returns:
+# - true if the team has no members.
+# - false otherwise.
+def self.is_team_empty?(team_id)
+  # Retrieve all members of the team.
+  team_members = TeamsUser.where('team_id = ?', team_id)
 
-  # Transfers a user from one team to another within the same context.
-  # Ensures that the user is removed from the previous team before adding to the new one.
-  def self.transfer_user_to_team(user_id, old_team_id, new_team_id)
-    remove_from_team(user_id, old_team_id)
-    add_to_team(user_id, new_team_id)
-  rescue StandardError => e
-    raise "Failed to transfer user between teams: #{e.message}"
-  end
+  # Return true if the team has no members; false otherwise.
+  team_members.blank?
+end
 
-  # Checks if a user is already on a team.
-  def self.user_on_team?(user_id, team_id)
-    where(user_id: user_id, team_id: team_id).exists?
-  end
 
-  # Retrieves all teams for a given user as a collection of Team objects.
-  def self.get_teams_for_user(user_id)
-    team_ids = where(user_id: user_id).pluck(:team_id)
-    Team.where(id: team_ids)
-  end
 end
