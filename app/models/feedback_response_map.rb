@@ -138,33 +138,17 @@ class FeedbackResponseMap < ResponseMap
       all_review_response_ids_rounds = []
       # For each response, add the response id to the appropriate round array
       review_responses.each do |response|
-        # Skip if the response is already in the array
-        # NOTE, I don't know if the line below is correct, since it makes it so that the response is skipped if it is already in the array???
+        # Skip (next) if the response is already in the array
         next if response_map_ids.include? response.map_id.to_s + response.round.to_s 
-        # Otherwise, add the response to the array and the appropriate round array
+        # Otherwise, add the response map to the tracker array and the response id to the appropriate round array
         response_map_ids << response.map_id.to_s + response.round.to_s
         # If the round is not already in the dictionary, initialize it with an empty array
-        all_review_response_ids_rounds[response.round] ||= []
+        all_review_response_ids_rounds[response.round] ||= [] # This line creates a new entry only if it does not already exist
         all_review_response_ids_rounds[response.round] << response.id
 
       end
       all_review_response_ids_rounds
     end
-
-    # # Used in the conditional of self.feedback_response_report to get the rubric reports if the rounds vary
-    # def self.varying_rubrics_report_old(review_responses, response_map_ids):
-    #   # Initialize the array of response map ids
-    #   all_review_response_ids_rounds = [1=>[], 2=>[], 3=>[]]
-    #   # For each response, add the response id to the appropriate round array
-    #   review_responses.each do |response|
-    #     # Skip if the response is already in the array
-    #     next if response_map_ids.include? response.map_id.to_s + response.round.to_s
-    #     # Otherwise, add the response to the array and the appropriate round array
-    #     response_map_ids << response.map_id.to_s + response.round.to_s
-    #     all_review_response_ids_rounds[response.round] << response.id
-    #   end
-    #   return all_review_response_ids_rounds
-    # end
 
     # Used in the conditional of self.feedback_response_report to get the rubric reports if the rounds do not vary
     def self.static_rubrics_report(review_responses)
@@ -176,6 +160,7 @@ class FeedbackResponseMap < ResponseMap
       review_responses.each do |response|
         # Skip if the response is already in the array
         unless response_map_ids.include? response.map_id
+          # Otherwise, add the response map to the tracker array and the response id to the return array
           response_map_ids << response.map_id
           all_review_response_ids << response.id
         end
