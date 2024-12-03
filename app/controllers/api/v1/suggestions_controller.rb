@@ -2,19 +2,25 @@
 class Api::V1::SuggestionsController < ApplicationController
   include AuthorizationHelper
 
+  # Strong params inlined as global before_action
+  before_action except: [:index] do
+    params.require(:id)
+  end
+
   # Comment on a suggestion.
   # A new SuggestionComment record is made.
   def add_comment
+    params.require(:comment)
     Suggestion.find(params[:id])
     render json: SuggestionComment.create!(
       comment: params[:comment],
       suggestion_id: params[:id],
       user_id: @current_user.id
-    ), status: :ok
+    ), status: :created # 201
   rescue ActiveRecord::RecordNotFound => e
-    render json: e, status: :not_found
+    render json: e, status: :not_found # 404
   rescue ActiveRecord::RecordInvalid => e
-    render json: e.record.errors, status: :unprocessable_entity
+    render json: e.record.errors, status: :unprocessable_entity # 422
   end
 
   # Approve a suggestion, even if it was previously rejected.
@@ -42,43 +48,44 @@ class Api::V1::SuggestionsController < ApplicationController
         end
       end
     end
-    render json: @suggestion, status: :ok
+    render json: @suggestion, status: :ok # 200
   rescue ActiveRecord::RecordNotFound => e
-    render json: e, status: :not_found
+    render json: e, status: :not_found # 404
   rescue ActiveRecord::RecordInvalid => e
-    render json: e.record.errors, status: :unprocessable_entity
+    render json: e.record.errors, status: :unprocessable_entity # 422
   end
 
   # A new Suggestion record is made.
-  # Anonymous suggestions are allowed by nulling user_id.
   def create
+    params.require(%i[anonymous assignment_id auto_signup comment description title])
     render json: Suggestion.create!(
-      title: params[:title],
+      assignment_id: params[:assignment_id],
+      auto_signup: params[:auto_signup],
       description: params[:description],
       status: 'Initialized',
-      auto_signup: params[:auto_signup],
-      assignment_id: params[:assignment_id],
-      user_id: params[:suggestion_anonymous] ? nil : @current_user.id
-    ), status: :ok
+      title: params[:title],
+      # Anonymous suggestions are allowed by nulling user_id.
+      user_id: params[:anonymous] ? nil : @current_user.id
+    ), status: :created # 201
   rescue ActiveRecord::RecordInvalid => e
-    render json: e.record.errors, status: :unprocessable_entity
+    render json: e.record.errors, status: :unprocessable_entity # 422
   end
 
   # Delete a suggestion from the records.
   def destroy
     deny_student('Students cannot delete suggestions.')
     Suggestion.find(params[:id]).destroy!
-    render json: {}, status: :ok
+    render json: {}, status: :no_content # 204
   rescue ActiveRecord::RecordNotFound => e
-    render json: e, status: :not_found
+    render json: e, status: :not_found # 404
   rescue ActiveRecord::RecordNotDestroyed => e
-    render json: e, status: :unprocessable_entity
+    render json: e, status: :unprocessable_entity # 422
   end
 
   # Get a list of all Suggestion records associated with a particular assignment.
   def index
     deny_student('Students cannot view all suggestions of an assignment.')
-    render json: Suggestion.where(assignment_id: params[:id]), status: :ok
+    render json: Suggestion.where(assignment_id: params[:id]), status: :ok # 200
   end
 
   # Reject a suggestion unless it was already approved.
@@ -88,7 +95,7 @@ class Api::V1::SuggestionsController < ApplicationController
     # Since the approval process makes changes to many records,
     #   rejecting a previously approved suggestion is not possible.
     if @suggestion.status == 'Approved'
-      render json: { error: 'Suggestion has already been approved.' }, status: :unprocessable_entity
+      render json: { error: 'Suggestion has already been approved.' }, status: :unprocessable_entity # 422
     elsif @suggestion.status == 'Initialized'
       # The rejection process is:
       # 1. Mark the suggestion as rejected
@@ -96,9 +103,9 @@ class Api::V1::SuggestionsController < ApplicationController
       @suggestion.update_attribute('status', 'Rejected')
       send_notice_of_rejection if @suggestion.user_id
     end
-    render json: @suggestion, status: :ok
+    render json: @suggestion, status: :ok # 200
   rescue ActiveRecord::RecordNotFound => e
-    render json: e, status: :not_found
+    render json: e, status: :not_found # 404
   end
 
   # Get a single Suggestion record.
@@ -106,11 +113,24 @@ class Api::V1::SuggestionsController < ApplicationController
     @suggestion = Suggestion.find(params[:id])
     deny_non_owner_student('Students can only view their own suggestions.')
     render json: {
-      suggestion: @suggestion,
-      comments: SuggestionComment.where(suggestion_id: params[:id])
-    }, status: :ok
+      comments: SuggestionComment.where(suggestion_id: params[:id]),
+      suggestion: @suggestion
+    }, status: :ok # 200
   rescue ActiveRecord::RecordNotFound => e
-    render json: e, status: :not_found
+    render json: e, status: :not_found # 404
+  end
+
+  # Change the details of a Suggestion.
+  def update
+    @suggestion = Suggestion.find(params[:id])
+    deny_non_owner_student('Students can only edit their own suggestions.')
+    # Only title, description, and signup preference can be changed.
+    @suggestion.update!(params.permit(:title, :description, :auto_signup))
+    render json: @suggestion, status: :ok # 200
+  rescue ActiveRecord::RecordNotFound => e
+    render json: e, status: :not_found # 404
+  rescue ActiveRecord::RecordInvalid => e
+    render json: e.record.errors, status: :unprocessable_entity # 422
   end
 
   private
@@ -118,10 +138,10 @@ class Api::V1::SuggestionsController < ApplicationController
   def create_topic_from_suggestion!
     # Convert a suggestion into a fully fledged topic.
     @signuptopic = SignUpTopic.create!(
-      topic_identifier: "S#{Suggestion.where(assignment_id: @suggestion.assignment_id).count}",
-      topic_name: @suggestion.title,
       assignment_id: @suggestion.assignment_id,
-      max_choosers: 1
+      max_choosers: 1,
+      topic_identifier: "S#{Suggestion.where(assignment_id: @suggestion.assignment_id).count}",
+      topic_name: @suggestion.title
     )
   end
 
@@ -130,7 +150,7 @@ class Api::V1::SuggestionsController < ApplicationController
     return if AuthorizationHelper.current_user_has_ta_privileges?
 
     # A student account is forbidden access and instead sent an error message.
-    render json: { error: err_msg }, status: :forbidden
+    render json: { error: err_msg }, status: :forbidden # 403
   end
 
   def deny_non_owner_student(err_msg)
@@ -141,7 +161,7 @@ class Api::V1::SuggestionsController < ApplicationController
     return if AuthorizationHelper.current_user_has_ta_privileges?
 
     # A student account is forbidden access and instead sent an error message.
-    render json: { error: err_msg }, status: :forbidden
+    render json: { error: err_msg }, status: :forbidden # 403
   end
 
   def send_notice_of_approval
