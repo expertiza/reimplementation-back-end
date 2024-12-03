@@ -49,7 +49,7 @@ class FeedbackResponseMap < ResponseMap
     # end
     @authors = get_feedback_authors(id)
 
-    @temp_review_responses = Response.where(['map_id IN (?)', @review_response_map_ids]).order('created_at DESC')
+    @temp_review_responses = Response.where(['map_id IN (?)', @review_response_map_ids])
     # we need to pick the latest version of review for each round
     # @temp_response_map_ids = [] # moving this to helper methods!
     if Assignment.find(id).varying_rubrics_by_round?
@@ -65,7 +65,7 @@ class FeedbackResponseMap < ResponseMap
     #     @all_review_response_ids_round_three << response.id if response.round == 3
     #   end
       @all_review_response_ids_rounds = varying_rubrics_report(@temp_review_responses)
-      return authors, @all_review_response_ids_rounds[1], @all_review_response_ids_rounds[2], @all_review_response_ids_rounds[3]
+      return @authors, @all_review_response_ids_rounds[1], @all_review_response_ids_rounds[2], @all_review_response_ids_rounds[3]
     else
     #   @all_review_response_ids = []
     #   @temp_review_responses.each do |response|
@@ -75,7 +75,7 @@ class FeedbackResponseMap < ResponseMap
     #     end
     #   end
       @all_review_response_ids = static_rubrics_report(@temp_review_responses)
-      return authors, @all_review_response_ids
+      return @authors, @all_review_response_ids
     end
     # @feedback_response_map_ids = ResponseMap.where(["reviewed_object_id IN (?) and type = ?", @all_review_response_ids, type]).pluck("id")
     # @feedback_responses = Response.where(["map_id IN (?)", @feedback_response_map_ids]).pluck("id")
