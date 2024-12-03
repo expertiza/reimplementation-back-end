@@ -102,9 +102,11 @@ class Api::V1::ParticipantsController < ApplicationController
   # params - id
   # DELETE /participants/:id
   def destroy
-    participant = Participant.find(params[:id])
-
-    if participant.destroy
+    participant = Participant.find_by(id: params[:id])
+  
+    if participant.nil?
+      render json: { error: 'Not Found' }, status: :not_found
+    elsif participant.destroy
       successful_deletion_message = if params[:team_id].nil?
                                       "Participant #{params[:id]} in Assignment #{params[:assignment_id]} has been deleted successfully!"
                                     else
