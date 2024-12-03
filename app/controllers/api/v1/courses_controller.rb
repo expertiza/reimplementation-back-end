@@ -21,10 +21,10 @@ class Api::V1::CoursesController < ApplicationController
   def create
     course = Course.new(course_params)
     if course.save
-      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Course created: #{course.as_json}.", request)
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Course created: #{course.as_json}.", request)
       render json: course, status: :created
     else
-      ExpertizaLogger.warn LoggerMessage.new(controller_name, session[:user].name, "Error creating new Course: #{$ERROR_INFO}", request)
+      ExpertizaLogger.warn LoggerMessage.new(controller_name, @current_user.name, "Error creating new Course: #{$ERROR_INFO}", request)
       render json: course.errors, status: :unprocessable_entity
     end
   end
@@ -33,10 +33,10 @@ class Api::V1::CoursesController < ApplicationController
   # Update a course
   def update
     if @course.update(course_params)
-      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Course Information Modified: #{course.as_json}.", request)
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Course Information Modified: #{course.as_json}.", request)
       render json: @course, status: :ok
     else
-      ExpertizaLogger.warn LoggerMessage.new(controller_name, session[:user].name, "Course Failed to Update: #{$ERROR_INFO}.", request)
+      ExpertizaLogger.warn LoggerMessage.new(controller_name, @current_user.name, "Course Failed to Update: #{$ERROR_INFO}.", request)
       render json: @course.errors, status: :unprocessable_entity
     end
   end
@@ -45,7 +45,7 @@ class Api::V1::CoursesController < ApplicationController
   # Delete a course
   def destroy
     @course.destroy
-    ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Course with id #{params[:id]}, deleted", request)
+    ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Course with id #{params[:id]}, deleted", request)
     render json: { message: "Course with id #{params[:id]}, deleted" }, status: :no_content
   end
 
@@ -54,10 +54,10 @@ class Api::V1::CoursesController < ApplicationController
     user = User.find_by(id: params[:ta_id])
     result = @course.add_ta(user)
     if result[:success]
-      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Course with id #{params[:id]}, added new TA #{params[:ta_id]}.", request)
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Course with id #{params[:id]}, added new TA #{params[:ta_id]}.", request)
       render json: result[:data], status: :created
     else
-      ExpertizaLogger.warn LoggerMessage.new(controller_name, session[:user].name, "Error added TA #{params[:ta_id]} to Course #{params[:id]}.", request)
+      ExpertizaLogger.warn LoggerMessage.new(controller_name, @current_user.name, "Error added TA #{params[:ta_id]} to Course #{params[:id]}.", request)
       render json: { status: "error", message: result[:message] }, status: :bad_request
     end
   end
@@ -72,7 +72,7 @@ class Api::V1::CoursesController < ApplicationController
   def remove_ta
     result = @course.remove_ta(params[:ta_id])
     if result[:success]
-      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "TA #{params[:ta_id]} removed from Course #{params[:id]}.", request)
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "TA #{params[:ta_id]} removed from Course #{params[:id]}.", request)
       render json: { message: "The TA #{result[:ta_name]} has been removed." }, status: :ok
     else
       render json: { status: "error", message: result[:message] }, status: :not_found
@@ -84,7 +84,7 @@ class Api::V1::CoursesController < ApplicationController
     # existing_course = Course.find(params[:id])
     success = @course.copy_course
     if success
-      ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Course #{params[:id]} copied successfully.", request)
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Course #{params[:id]} copied successfully.", request)
       render json: { message: "The course #{@course.name} has been successfully copied" }, status: :ok
     else
       render json: { message: "The course was not able to be copied" }, status: :unprocessable_entity

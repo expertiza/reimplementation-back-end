@@ -4,7 +4,7 @@ class Api::V1::StudentTasksController < ApplicationController
   def list
     # Retrieves all tasks that belong to the current user.
     @student_tasks = StudentTask.from_user(current_user)
-    ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Fetched student tasks for user ID: #{current_user.id}.", request)
+    ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Fetched student tasks for user ID: #{current_user.id}.", request)
     # Render the list of student tasks as JSON.
     render json: @student_tasks, status: :ok
   end
@@ -19,7 +19,7 @@ class Api::V1::StudentTasksController < ApplicationController
     # Retrieves the student task where the participant's ID matches the provided parameter.
     # This function will be used for clicking on a specific student task to "view" its details.
     @student_task = StudentTask.from_participant_id(params[:id])
-    ExpertizaLogger.info LoggerMessage.new(controller_name, session[:user].name, "Fetched student task for participant ID: #{params[:id]}.", request)
+    ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Fetched student task for participant ID: #{params[:id]}.", request)
     # Render the found student task as JSON.
     render json: @student_task, status: :ok
   end
