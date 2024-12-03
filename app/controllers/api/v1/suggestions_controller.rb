@@ -64,11 +64,11 @@ class Api::V1::SuggestionsController < ApplicationController
   # A new Suggestion record is made.
   def create
     render json: Suggestion.create!(
-      title: params[:title],
+      assignment_id: params[:assignment_id],
+      auto_signup: params[:auto_signup],
       description: params[:description],
       status: 'Initialized',
-      auto_signup: params[:auto_signup],
-      assignment_id: params[:assignment_id],
+      title: params[:title],
       # Anonymous suggestions are allowed by nulling user_id.
       user_id: params[:anonymous] ? nil : @current_user.id
     ), status: :ok
@@ -118,8 +118,8 @@ class Api::V1::SuggestionsController < ApplicationController
     @suggestion = Suggestion.find(params[:id])
     deny_non_owner_student('Students can only view their own suggestions.')
     render json: {
-      suggestion: @suggestion,
-      comments: SuggestionComment.where(suggestion_id: params[:id])
+      comments: SuggestionComment.where(suggestion_id: params[:id]),
+      suggestion: @suggestion
     }, status: :ok
   rescue ActiveRecord::RecordNotFound => e
     render json: e, status: :not_found
@@ -143,10 +143,10 @@ class Api::V1::SuggestionsController < ApplicationController
   def create_topic_from_suggestion!
     # Convert a suggestion into a fully fledged topic.
     @signuptopic = SignUpTopic.create!(
-      topic_identifier: "S#{Suggestion.where(assignment_id: @suggestion.assignment_id).count}",
-      topic_name: @suggestion.title,
       assignment_id: @suggestion.assignment_id,
-      max_choosers: 1
+      max_choosers: 1,
+      topic_identifier: "S#{Suggestion.where(assignment_id: @suggestion.assignment_id).count}",
+      topic_name: @suggestion.title
     )
   end
 
