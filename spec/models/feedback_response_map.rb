@@ -53,9 +53,9 @@ RSpec.describe FeedbackResponseMap, type: :model do
       end
     end
   end
-  describe '#get_title' do
+  describe '#title' do
     it 'returns "Feedback"' do
-      expect(feedback_response_map.get_title).to eq('Feedback')
+      expect(feedback_response_map.title).to eq('Feedback')
     end
   end
   # TODO: implement this functionality in the reimplementation branch

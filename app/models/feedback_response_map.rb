@@ -1,4 +1,3 @@
-# OLD VERSION BELOW:
 class FeedbackResponseMap < ResponseMap
   belongs_to :reviewee, class_name: 'Participant', foreign_key: 'reviewee_id'
   belongs_to :review, class_name: 'Response', foreign_key: 'reviewed_object_id'
@@ -19,7 +18,7 @@ class FeedbackResponseMap < ResponseMap
   end
 
   # Returns the string 'Feedback', as this is a feedback response map
-  def get_title
+  def title
     'Feedback'
   end
 
@@ -39,57 +38,30 @@ class FeedbackResponseMap < ResponseMap
     # reviewed_object_id in (select id from responses where
     # map_id in (select id from response_maps where reviewed_object_id = 722 and type = 'ReviewResponseMap'))
     @review_response_map_ids = ReviewResponseMap.where(['reviewed_object_id = ?', id]).pluck('id')
-    
-    # INDENTING THIS OUT B/C ITS NOT USED IN THIS METHOD 12/3/24
-    # teams = AssignmentTeam.includes([:users]).where(parent_id: id)
-    
-    # @authors = []
-    # teams.each do |team|
-    #   team.users.each do |user|
-    #     participant = AssignmentParticipant.where(parent_id: id, user_id: user.id).first
-    #     @authors << participant
-    # end
-    # end
+
+    # Call the helper method to get the authors of the feedback
     @authors = get_feedback_authors(id)
 
     @temp_review_responses = Response.where(['map_id IN (?)', @review_response_map_ids])
     # we need to pick the latest version of review for each round
     # @temp_response_map_ids = [] # moving this to helper methods!
     if Assignment.find(id).varying_rubrics_by_round?
-    #   @all_review_response_ids_round_one = []
-    #   @all_review_response_ids_round_two = []
-    #   @all_review_response_ids_round_three = []
-    #   @temp_review_responses.each do |response|
-    #     next if @temp_response_map_ids.include? response.map_id.to_s + response.round.to_s
-
-    #     @temp_response_map_ids << response.map_id.to_s + response.round.to_s
-    #     @all_review_response_ids_round_one << response.id if response.round == 1
-    #     @all_review_response_ids_round_two << response.id if response.round == 2
-    #     @all_review_response_ids_round_three << response.id if response.round == 3
-    #   end
+      # Call the helper method to get the response ids for the varying rubrics
       @all_review_response_ids_rounds = varying_rubrics_report(@temp_review_responses)
-      return @authors, @all_review_response_ids_rounds[1], @all_review_response_ids_rounds[2], @all_review_response_ids_rounds[3]
+      [
+        @authors,
+        @all_review_response_ids_rounds[1],
+        @all_review_response_ids_rounds[2],
+        @all_review_response_ids_rounds[3]
+      ]
     else
-    #   @all_review_response_ids = []
-    #   @temp_review_responses.each do |response|
-    #     unless @temp_response_map_ids.include? response.map_id
-    #       @temp_response_map_ids << response.map_id
-    #       @all_review_response_ids << response.id
-    #   end
-    #   end
+      # Call the helper method to get the response ids for the static rubrics
       @all_review_response_ids = static_rubrics_report(@temp_review_responses)
-      return @authors, @all_review_response_ids
+      [@authors, @all_review_response_ids]
     end
-    # @feedback_response_map_ids = ResponseMap.where(["reviewed_object_id IN (?) and type = ?", @all_review_response_ids, type]).pluck("id")
-    # @feedback_responses = Response.where(["map_id IN (?)", @feedback_response_map_ids]).pluck("id")
-    # NOTE: ELIMINATING UNNECESSARY CONDITIONAL
-    # if Assignment.find(id).varying_rubrics_by_round?
-    #   return @authors, @all_review_response_ids_round_one, @all_review_response_ids_round_two, @all_review_response_ids_round_three
-    # else
-    #   return @authors, @all_review_response_ids
-    # end
   end
 
+  # rubocop:disable Metrics/AbcSize
   # Send emails for author feedback
   # Refactored from email method in response.rb
   def email(defn, _participant, assignment)
@@ -111,12 +83,11 @@ class FeedbackResponseMap < ResponseMap
     defn[:body][:first_name] = user.fullname
     Mailer.sync_message(defn).deliver
   end
-
-  private
+  # rubocop:enable Metrics/AbcSize
 
   ### PRIVATE METHODS FOR USE IN SIMPLIFYING self.feedback_response_report
   # Used in the first section of self.feedback_response_report to get the authors of the feedback
-  def self.get_feedback_authors(id)
+  private_class_method def self.get_feedback_authors(id)
     # Get the teams for the assignment
     teams = AssignmentTeam.includes([:users]).where(parent_id: id)
     # Initialize the authors array
@@ -132,7 +103,7 @@ class FeedbackResponseMap < ResponseMap
   end
 
   # Used in the conditional of self.feedback_response_report to get the rubric reports if the rounds vary
-  def self.varying_rubrics_report(review_responses)
+  private_class_method def self.varying_rubrics_report(review_responses)
     # Create an array of response map ids
     response_map_ids = []
     # Initialize the array of response map ids
@@ -147,15 +118,14 @@ class FeedbackResponseMap < ResponseMap
       # Otherwise, add the response map to the tracker array and the response id to the appropriate round array
       response_map_ids << response.map_id.to_s + response.round.to_s
       # If the round is not already in the dictionary, initialize it with an empty array
-      all_review_response_ids_rounds[response.round] ||= [] # This line creates a new entry only if it does not already exist
+      all_review_response_ids_rounds[response.round] ||= [] # Creates a new entry only if it does not already exist
       all_review_response_ids_rounds[response.round] << response.id
-
     end
     all_review_response_ids_rounds
   end
 
   # Used in the conditional of self.feedback_response_report to get the rubric reports if the rounds do not vary
-  def self.static_rubrics_report(review_responses)
+  private_class_method def self.static_rubrics_report(review_responses)
     # create an array of response_map_ids
     response_map_ids = []
     # Initialize the array of response map ids
@@ -164,15 +134,10 @@ class FeedbackResponseMap < ResponseMap
     review_responses.each do |response|
       # Skip if the response is already in the array
       next if response_map_ids.include? response.map_id
+
       # Otherwise, add the response map to the tracker array and the response id to the return array
       response_map_ids << response.map_id
       all_review_response_ids << response.id
-      
-    #   unless response_map_ids.include? response.map_id
-    #     # Otherwise, add the response map to the tracker array and the response id to the return array
-    #     response_map_ids << response.map_id
-    #     all_review_response_ids << response.id
-    #   end
     end
     all_review_response_ids
   end
