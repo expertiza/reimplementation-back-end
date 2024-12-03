@@ -18,15 +18,6 @@ RSpec.describe 'ProjectTopicController API', type: :request do
               }
             }
           end
-          # context 'when assignment_id parameter is missing' do
-          #   let(:assignment) { create(:project_topic, assignment_id: create(:assignment)) }
-          #
-          #   before { get '/api/v1/project_topics', params: { assignment_id: assignment_id } }
-          #   it 'returns an error message with status 422' do
-          #     expect(response).to have_http_status(422)
-          #     expect(response_body).to eq({ message: 'Assignment ID is required!' })
-          #   end
-          # end
 
           context 'when assignment_id parameter is present' do
             let!(:project_topics) { create_list(:project_topic, 3, assignment_id: 1) }

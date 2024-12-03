@@ -13,13 +13,6 @@ class ProjectTopic < ApplicationRecord
     current_available_slots > 0
   end
 
-  def find_team_project_topics(assignment_id, team_id)
-    SignedUpTeam.joins('INNER JOIN project_topics ON signed_up_teams.sign_up_topic_id = project_topics.id')
-                .select('project_topics.id as topic_id, project_topics.topic_name as topic_name, signed_up_teams.is_waitlisted as is_waitlisted,
-                  signed_up_teams.preference_priority_number as preference_priority_number')
-                .where('project_topics.assignment_id = ? and signed_up_teams.team_id = ?', assignment_id, team_id)
-  end
-
   # Assigns the current topic to a team by updating the provided sign-up record.
   # Marks the sign-up as not waitlisted and associates it with the current topic.
   def assign_topic_to_team(new_sign_up)
@@ -39,7 +32,7 @@ class ProjectTopic < ApplicationRecord
     topic_id = self.id
 
     # Check if the team has already signed up for this topic
-    existing_sign_up = SignedUpTeam.find_first_existing_sign_up(topic_id: topic_id, team_id: team_id)
+    existing_sign_up = SignedUpTeam.find_by(sign_up_topic_id: topic_id, team_id: team_id)
 
     # If the team is already signed up and not waitlisted, return false
     if !existing_sign_up.nil? && !existing_sign_up.is_waitlisted
@@ -63,8 +56,8 @@ class ProjectTopic < ApplicationRecord
 
   # Retrieves the team that has been waitlisted the longest for a given topic.
   # The team is selected based on the earliest created waitlist entry.
-  def self.longest_waiting_team(topic_id)
-    SignedUpTeam.where(sign_up_topic_id: topic_id, is_waitlisted: true).order(:created_at).first
+  def longest_waiting_team
+    SignedUpTeam.where(sign_up_topic_id: self.id, is_waitlisted: true).order(:created_at).first
   end
 
   # Removes a team from the current topic.
@@ -77,7 +70,7 @@ class ProjectTopic < ApplicationRecord
 
     # If the team is not waitlisted, reassign the topic to the next waitlisted team
     unless signed_up_team.is_waitlisted
-      next_waitlisted_team = ProjectTopic.longest_waiting_team(self.id)
+      next_waitlisted_team = longest_waiting_team(self.id)
       next_waitlisted_team&.reassign_topic(self.id)
     end
     
@@ -86,8 +79,8 @@ class ProjectTopic < ApplicationRecord
   end
 
   # Retrieves all teams that are signed up for a given topic.
-  def self.signed_up_teams_for_topic(topic_id)
-    SignedUpTeam.where(sign_up_topic_id: topic_id)
+  def signed_up_teams_for_topic
+    SignedUpTeam.where(sign_up_topic_id: self.id)
   end
 
   # Calculates the number of available slots for a topic.

@@ -3,7 +3,6 @@ class Api::V1::SignedUpTeamsController < ApplicationController
   # Returns signed up topics using project_topic assignment id
   # Retrieves project_topic using topic_id as a parameter
   def index
-    # puts params[:topic_id]
     @project_topic = ProjectTopic.find(params[:topic_id])
     @signed_up_team = SignedUpTeam.find_team_participants(@project_topic.assignment_id)
     render json: @signed_up_team
@@ -45,10 +44,7 @@ class Api::V1::SignedUpTeamsController < ApplicationController
     topic_id = params[:topic_id]
     assignment_id = params[:assignment_id]
     team_id = SignedUpTeam.get_team_id(user_id, assignment_id)
-    # @teams_user = TeamsUser.where(user_id: user_id).first
-    # team_id = @teams_user.team_id
     @signed_up_team = SignedUpTeam.create_signed_up_team(topic_id, team_id)
-    # create(topic_id, team_id)
     if @signed_up_team
       render json: { message: "Signed up team successful!" }, status: :created
     else

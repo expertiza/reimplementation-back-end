@@ -8,12 +8,6 @@ class SignedUpTeam < ApplicationRecord
     SignedUpTeam.where(team_id: team_id, is_waitlisted: true).destroy_all
   end
 
-  # Finds the first existing sign-up record for a given topic and team.
-  # This retrieves the sign-up record for the team and topic, if one exists.
-  def self.find_first_existing_sign_up(topic_id, team_id)
-    SignedUpTeam.find_by(sign_up_topic_id: topic_id, team_id: team_id)
-  end
-
   # Creates a sign-up record for a team by associating the team with the given topic.
   # This finds the project topic by its ID and then calls the `sign_up_team` method to sign the team up.
   def self.create_signed_up_team(topic_id, team_id)
@@ -37,7 +31,7 @@ class SignedUpTeam < ApplicationRecord
 
   # Deletes all sign-up records for a given team.
   # This removes all sign-up entries associated with the specified team.
-  def self.delete_signed_up_team(team_id)
+  def self.drop_off_team_signup_records(team_id)
     SignedUpTeam.where(team_id: team_id).destroy_all
   end
 

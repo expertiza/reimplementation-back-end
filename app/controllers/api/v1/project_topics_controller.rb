@@ -13,7 +13,6 @@ class Api::V1::ProjectTopicsController < ApplicationController
       @project_topics = ProjectTopic.where(assignment_id: params[:assignment_id], topic_identifier: params[:topic_ids])
       render json: @project_topics, status: :ok
     end
-    # render json: {message: 'All selected topics have been loaded successfully.', project_topics: @stopics}, status: 200
   end
 
   # POST /project_topics
@@ -25,7 +24,6 @@ class Api::V1::ProjectTopicsController < ApplicationController
     @assignment = Assignment.find(params[:project_topic][:assignment_id])
     @project_topic.micropayment = params[:micropayment] if @assignment.microtask?
     if @project_topic.save
-      # undo_link "The topic: \"#{@project_topic.topic_name}\" has been created successfully. "
       render json: { message: "The topic: \"#{@project_topic.topic_name}\" has been created successfully. " }, status: :created
     else
       render json: { message: @project_topic.errors }, status: :unprocessable_entity
@@ -42,27 +40,30 @@ class Api::V1::ProjectTopicsController < ApplicationController
     end
   end
 
+  # GET /project_topics/:id
   # Show a ProjectTopic by ID
   def show
     render json: @project_topic, status: :ok
   end
 
-  # Similar to index method, this method destroys ProjectTopics by two query parameters
-  # assignment_id is compulsory.
-  # topic_ids[] is optional
+# DELETE /project_topics
+# Deletes one or more project topics associated with an assignment.
+# If `assignment_id` or `topic_ids` are missing, appropriate validations are handled.
+# Deletes the topics and returns a success message if successful or error messages otherwise.
   def destroy
-    # render json: {message: @project_topic}
-    # filters topics based on assignment id (required) and topic identifiers (optional)
+    # Check if the assignment ID is provided
     if params[:assignment_id].nil?
       render json: { message: 'Assignment ID is required!' }, status: :unprocessable_entity
+    # Determine which topics to delete based on the provided parameters
     elsif params[:topic_ids].nil?
+      # If no specific topic IDs are provided, fetch all topics for the assignment
       @project_topics = ProjectTopic.where(assignment_id: params[:assignment_id])
-      # render json: @project_topics, status: :ok
     else
+      # Fetch the specified topics for the assignment
       @project_topics = ProjectTopic.where(assignment_id: params[:assignment_id], topic_identifier: params[:topic_ids])
-      # render json: @project_topics, status: :ok
     end
 
+    # Attempt to delete the topics and return the appropriate response
     if @project_topics.each(&:delete)
       render json: { message: "The topic has been deleted successfully. " }, status: :no_content
     else
@@ -72,7 +73,9 @@ class Api::V1::ProjectTopicsController < ApplicationController
 
   private
 
-  # Use callbacks to share common setup or constraints between actions.
+  # Callback to set the @project_topic instance variable.
+  # This method is executed before certain actions (via `before_action`) to load the project topic.
+  # If the topic is not found, it raises an ActiveRecord::RecordNotFound exception.
   def set_project_topic
     @project_topic = ProjectTopic.find(params[:id])
   end
