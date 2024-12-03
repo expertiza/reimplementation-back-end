@@ -6,4 +6,10 @@ class Mailer < ActionMailer::Base
     @topic_name = defn[:topic_name]
     mail(to: @suggester.email, cc: defn[:cc], subject: defn[:subject]).deliver_now!
   end
+
+  def send_topic_rejected_email(defn)
+    @suggester = defn[:suggester]
+    @topic_name = defn[:topic_name]
+    mail(to: @suggester.email, subject: defn[:subject]).deliver_now!
+  end
 end
