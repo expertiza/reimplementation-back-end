@@ -109,6 +109,17 @@ Rails.application.routes.draw do
           get :processed, action: :processed_requests
         end
       end
+
+      resources :participants do
+        collection do
+          get '/user/:user_id', to: 'participants#user_index'
+          get '/assignment/:assignment_id', to: 'participants#assignment_index'
+          get '/:id', to: 'participants#show'
+          post '/:authorization', to: 'participants#add'
+          patch '/:id/:authorization', to: 'participants#update_authorization'
+          delete '/:id', to: 'participants#destroy'
+        end
+      end
     end
   end
 end

@@ -17,6 +17,7 @@ class User < ApplicationRecord
   has_many :assignments
   has_many :teams_users, dependent: :destroy
   has_many :teams, through: :teams_users
+  has_many :participants
 
   scope :students, -> { where role_id: Role::STUDENT }
   scope :tas, -> { where role_id: Role::TEACHING_ASSISTANT }
