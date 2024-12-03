@@ -18,7 +18,11 @@ module StudentTeamsHelper
     end
   
     def generate_team_name
-      "Team_name:" + Time.now.to_s
+      loop do
+        suffix = rand(1..999)
+        team_name = "Team_#{suffix}"
+        break team_name unless AssignmentTeam.exists?(name: team_name)
+      end
     end
   
     def user_not_found
