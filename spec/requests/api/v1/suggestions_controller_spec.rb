@@ -274,4 +274,173 @@ RSpec.describe 'Suggestions API', type: :request do
       end
     end
   end
+
+  path '/api/v1/suggestions/' do
+    get 'list all suggestions' do
+      tags 'Suggestions'
+      consumes 'application/json'
+      parameter name: 'Authorization', in: :header, type: :string, required: true
+
+      context '| when user is instructor | ' do
+        before(:each) do
+          allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(true)
+        end
+        response '200', 'suggestions listed' do
+          let(:Authorization) { "Bearer #{@token}" }
+
+          run_test! do |response|
+            expect(response.status).to eq(200)
+          end
+        end
+      end
+      context ' | when user is student | ' do
+        before(:each) do
+          allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(false)
+        end
+        response '403', 'students cannot index suggestions' do
+          let(:Authorization) { "Bearer #{@token}" }
+
+          run_test! do |response|
+            expect(response.status).to eq(403)
+            expect(JSON.parse(response.body)['error']).to eq('Students cannot view all suggestions of an assignment.')
+          end
+        end
+      end
+    end
+  end
+
+  path '/api/v1/suggestions/{id}/reject' do
+    post 'Reject suggestion' do
+      tags 'Suggestions'
+      consumes 'application/json'
+      parameter name: 'Authorization', in: :header, type: :string, required: true
+      parameter name: :id, in: :path, type: :integer, required: true, description: 'ID of the suggestion'
+      context '| when user is instructor | ' do
+        before(:each) do
+          allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(true)
+        end
+        response '200', 'suggestion rejected' do
+          let(:Authorization) { "Bearer #{@token}" }
+          let(:id) { suggestion.id }
+
+          run_test! do |response|
+            data = JSON.parse(response.body)
+            expect(data['status']).to eq('Rejected')
+          end
+        end
+
+        response '422', 'suggestion already approved' do
+          let(:Authorization) { "Bearer #{@token}" }
+          let(:id) { suggestion.id }
+
+          before do
+            # Simulate suggestion status as 'Approved'
+            suggestion.update!(status: 'Approved')
+          end
+
+          run_test! do |response|
+            expect(response.status).to eq(422)
+            parsed_response = JSON.parse(response.body)
+            expect(parsed_response['error']).to eq('Suggestion has already been approved.')
+          end
+        end
+
+        response '404', 'suggestion not found' do
+          let(:Authorization) { "Bearer #{@token}" }
+          let(:id) { -1 }
+
+          run_test! do |response|
+            expect(response.status).to eq(404)
+          end
+        end
+      end
+      context ' | when user is student | ' do
+        before(:each) do
+          allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(false)
+        end
+        response '403', 'students cannot reject suggestions' do
+          let(:Authorization) { "Bearer #{@token}" }
+          let(:id) { suggestion.id }
+
+          run_test! do |response|
+            expect(response.status).to eq(403)
+            expect(JSON.parse(response.body)['error']).to eq('Students cannot reject a suggestion.')
+          end
+        end
+      end
+    end
+  end
+
+  path '/api/v1/suggestions/{id}' do
+    get 'show suggestion' do
+      tags 'Suggestions'
+      consumes 'application/json'
+      parameter name: 'Authorization', in: :header, type: :string, required: true
+      parameter name: :id, in: :path, type: :integer, required: true, description: 'ID of the suggestion'
+
+      context '| when user is instructor | ' do
+        before(:each) do
+          allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(true)
+        end
+        response '200', 'suggestion details and comments returned' do
+          let(:Authorization) { "Bearer #{@token}" }
+          let(:id) { suggestion.id }
+
+          run_test! do |response|
+            data = JSON.parse(response.body)
+            expect(data['suggestion']['id']).to eq(suggestion.id)
+            expect(data['comments']).to be_an(Array)
+            expect(response.status).to eq(200)
+          end
+        end
+      end
+      context ' | when user is student | ' do
+        before(:each) do
+          allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(false)
+          allow(controller).to receive(:current_user).and_return(@current_user)
+        end
+
+        context ' | when user is student owner to suggestion | ' do
+          before(:each) do
+            # Simulate the student owning the suggestion
+            suggestion.update!(user_id: @user.id)
+          end
+          response '200', 'student can view their own suggestion' do
+            let(:Authorization) { "Bearer #{@token}" }
+            let(:id) { suggestion.id }
+
+            run_test! do |response|
+              data = JSON.parse(response.body)
+              expect(data['suggestion']['id']).to eq(suggestion.id)
+              expect(data['comments']).to be_an(Array)
+              expect(response.status).to eq(200)
+            end
+          end
+        end
+
+        context ' | when user is not student owner to suggestion | ' do
+          response '200', 'student can\'t view other suggestions' do
+            let(:Authorization) { "Bearer #{@token}" }
+            let(:id) { suggestion.id }
+
+            run_test! do |response|
+              data = JSON.parse(response.body)
+              expect(data['suggestion']['id']).to eq(suggestion.id)
+              expect(data['comments']).to be_an(Array)
+              expect(response.status).to eq(200)
+            end
+          end
+        end
+      end
+
+      response '404', 'suggestion not found' do
+        let(:Authorization) { "Bearer #{@token}" }
+        let(:id) { -1 }
+
+        run_test! do |response|
+          expect(response.status).to eq(404)
+        end
+      end
+    end
+  end
 end

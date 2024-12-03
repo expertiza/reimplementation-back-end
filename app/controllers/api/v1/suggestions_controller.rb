@@ -109,6 +109,7 @@ class Api::V1::SuggestionsController < ApplicationController
     #   rejecting a previously approved suggestion is not possible.
     if @suggestion.status == 'Approved'
       render json: { error: 'Suggestion has already been approved.' }, status: :unprocessable_entity # 422
+      return
     elsif @suggestion.status == 'Initialized'
       # The rejection process is:
       # 1. Mark the suggestion as rejected

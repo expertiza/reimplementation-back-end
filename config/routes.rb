@@ -115,6 +115,7 @@ Rails.application.routes.draw do
           post :add_comment
           post :approve
           post :reject
+          get :show
         end
       end
     end
