@@ -2,6 +2,18 @@
 class Api::V1::SuggestionsController < ApplicationController
   include AuthorizationHelper
 
+  # Strong params inlined as global before_action
+  before_action do
+    params.require(:id).permit(
+      :anonymous,
+      :assignment_id,
+      :auto_signup,
+      :comment,
+      :description,
+      :title
+    )
+  end
+
   # Comment on a suggestion.
   # A new SuggestionComment record is made.
   def add_comment
@@ -58,7 +70,7 @@ class Api::V1::SuggestionsController < ApplicationController
       auto_signup: params[:auto_signup],
       assignment_id: params[:assignment_id],
       # Anonymous suggestions are allowed by nulling user_id.
-      user_id: params[:suggestion_anonymous] ? nil : @current_user.id
+      user_id: params[:anonymous] ? nil : @current_user.id
     ), status: :ok
   rescue ActiveRecord::RecordInvalid => e
     render json: e.record.errors, status: :unprocessable_entity
