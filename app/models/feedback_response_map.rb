@@ -113,7 +113,7 @@ class FeedbackResponseMap < ResponseMap
   private
     ### PRIVATE METHODS FOR USE IN SIMPLIFYING self.feedback_response_report
     # Used in the first section of self.feedback_response_report to get the authors of the feedback
-    self.get_feedback_authors(id)
+    def self.get_feedback_authors(id)
       # Get the teams for the assignment
       teams = AssignmentTeam.includes([:users]).where(parent_id: id)
       # Initialize the authors array
@@ -129,7 +129,7 @@ class FeedbackResponseMap < ResponseMap
     end
     
     # Used in the conditional of self.feedback_response_report to get the rubric reports if the rounds vary
-    self.varying_rubrics_report(review_responses)
+    def self.varying_rubrics_report(review_responses)
       # Create an array of response map ids
       response_map_ids = []  
       # Initialize the array of response map ids
@@ -152,7 +152,7 @@ class FeedbackResponseMap < ResponseMap
     end
 
     # # Used in the conditional of self.feedback_response_report to get the rubric reports if the rounds vary
-    # self.varying_rubrics_report_old(review_responses, response_map_ids):
+    # def self.varying_rubrics_report_old(review_responses, response_map_ids):
     #   # Initialize the array of response map ids
     #   all_review_response_ids_rounds = [1=>[], 2=>[], 3=>[]]
     #   # For each response, add the response id to the appropriate round array
@@ -167,7 +167,7 @@ class FeedbackResponseMap < ResponseMap
     # end
 
     # Used in the conditional of self.feedback_response_report to get the rubric reports if the rounds do not vary
-    self.static_rubrics_report(review_responses)
+    def self.static_rubrics_report(review_responses)
       # create an array of response_map_ids
       response_map_ids = []
       # Initialize the array of response map ids
