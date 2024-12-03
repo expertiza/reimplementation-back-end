@@ -163,7 +163,7 @@ class FeedbackResponseMap < ResponseMap
     # For each response, add the response id to the array
     review_responses.each do |response|
       # Skip if the response is already in the array
-      next unless response_map_ids.include? response.map_id
+      unless response_map_ids.include? response.map_id
         # Otherwise, add the response map to the tracker array and the response id to the return array
         response_map_ids << response.map_id
         all_review_response_ids << response.id
