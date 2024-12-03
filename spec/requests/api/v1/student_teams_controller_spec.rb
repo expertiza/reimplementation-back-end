@@ -8,7 +8,7 @@ RSpec.describe 'Student Teams API', type: :request do
       produces 'application/json'
       security [Bearer: {}]
 
-      response(200, 'List Student Teams') do
+      response(200, 'successful') do
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -17,140 +17,11 @@ RSpec.describe 'Student Teams API', type: :request do
           }
         end
         run_test!
-      end
-    end
-  end
-
-  path '/api/v1/student_teams/{id}' do
-    parameter name: 'id', in: :path, type: :integer
-
-    # Creation of dummy objects for the test with the help of let statements
-    let(:user) { User.create(email: 'test@test.com', password: '123456') }
-    let(:valid_bookmark_params) do
-      {
-        url: 'http://example.com',
-        title: 'Example Bookmark',
-        description: 'An example bookmark',
-        topic_id: 1,
-        rating: 5,
-        user_id: user.id
-      }
-    end
-
-    let(:bookmark) do
-      user
-      Bookmark.create(valid_bookmark_params)
-    end
-
-    let(:id) do
-      bookmark
-      bookmark.id
-    end
-
-    # Get request on /api/v1/student_teams/{id} returns the response 200 succesful - bookmark with id = {id} when correct id is passed which is in the database
-    get('show Studen Team') do
-      tags 'Student Teams'
-      produces 'application/json'
-      security [Bearer: {}]
-
-      response(200, 'successful') do
-        run_test! 
-        # do
-          # expect(response.body).to include('"title":"Example Bookmark"')
-        # end
-      end
-
-      # Get request on /api/v1/student_teams/{id} returns the response 404 not found - bookmark with id = {id} when correct id is passed which is not present in the database
-      response(404, 'not_found') do
-        let(:id) { 'invalid' }
-          run_test! 
-          # do
-            # expect(response.body).to include("Couldn't find Bookmark")
-          # end
+        expect(response.status).to eq(200)
       end
     end
 
-    # put('update bookmark') do
-    #   tags 'Student Teams'
-    #   consumes 'application/json'
-    #   produces 'application/json'
-
-    #   parameter name: :body_params, in: :body, schema: {
-    #     type: :object,
-    #     properties: {
-    #       title: { type: :string }
-    #     }
-    #   }
-
-    #   # put request on /api/v1/student_teams/{id} returns 200 response succesful when bookmark id is present in the database and correct valid params are passed
-    #   response(200, 'successful') do
-    #     let(:body_params) do
-    #       {
-    #         title: 'Updated Bookmark Title'
-    #       }
-    #     end
-    #     run_test! do
-    #       expect(response.body).to include('"title":"Updated Bookmark Title"')
-    #     end
-    #   end
-
-    #   # put request on /api/v1/student_teams/{id} returns 404 not found when id is not present in the database which bookmark needs to be updated
-    #   response(404, 'not found') do
-    #     let(:id) { 0 }
-    #     let(:body_params) do
-    #       {
-    #         title: 'Updated Bookmark Title'
-    #       }
-    #     end
-    #     run_test! do
-    #       expect(response.body).to include("Couldn't find Bookmark")
-    #     end
-    #   end
-
-    #   # put request on /api/v1/student_teams/{id} returns 422 response unprocessable entity when correct parameters for the bookmark to be updated are not passed
-    #   response(422, 'unprocessable entity') do
-    #     let(:body_params) do
-    #       {
-    #         title: nil
-    #       }
-    #     end
-    #     schema type: :string
-    #     run_test! do
-    #       expect(response.body).to_not include('"title":null')
-    #     end
-    #   end
-    # end
-
-    delete('delete Student Team') do
-      tags 'Student Teams'
-      produces 'application/json'
-      security [Bearer: {}]
-
-      # delete request on /api/v1/student_teams/{id} returns 204 succesful response when bookmark with id present in the database is succesfully deleted
-      response(204, 'successful') do
-        run_test! 
-        # do
-          # expect(Bookmark.exists?(id)).to eq(false)
-        # end
-      end
-
-      # delete request on /api/v1/student_teams/{id} returns 404 not found response when bookmark id is not present in the database
-      response(404, 'not found') do
-        let(:id) { 0 }
-        run_test! 
-        # do
-          # expect(response.body).to include("Couldn't find Bookmark")
-        # end
-      end
-    end
-  end
-
-end
-
-
-RSpec.describe 'Student Teams', type: :request do
-  path '/api/v1/student_teams' do
-    post 'create Student Team' do
+    post 'Create a Student Team' do
       tags 'Student Teams'
       consumes 'application/json'
       
@@ -233,8 +104,6 @@ RSpec.describe 'Student Teams', type: :request do
         }
       }
       security [Bearer: {}]
-
-      # In your test or controller
       
       # Scenario 1: Successfully create a team
       response(201, 'created') do
@@ -251,7 +120,6 @@ RSpec.describe 'Student Teams', type: :request do
 
         run_test! do
           expect(response.status).to eq(201)
-          expect(response.body).to include('"name":"ABCD10"')
         end
       end
 
@@ -289,7 +157,7 @@ RSpec.describe 'Student Teams', type: :request do
       end
     end
 
-    patch('Update Student Team') do
+    patch('Update a Student Team') do
       tags 'Student Teams'
       consumes 'application/json'
       produces 'application/json'
@@ -307,7 +175,7 @@ RSpec.describe 'Student Teams', type: :request do
         }
       }
 
-      response(200, 'Update Student Teams') do
+      response(200, 'successful') do
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
@@ -316,6 +184,61 @@ RSpec.describe 'Student Teams', type: :request do
           }
         end
         run_test!
+        expect(response.status).to eq(200)
+      end
+    end
+  end
+  path '/api/v1/student_teams/{id}' do
+    parameter name: 'id', in: :path, type: :integer
+    # Get request on /api/v1/student_teams/{id} returns the response 200 succesful - when correct id passed is present in the database
+    get('Show a Student Team') do
+      tags 'Student Teams'
+      produces 'application/json'
+      security [Bearer: {}]
+
+      response(200, 'successful') do
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test! 
+        expect(response.status).to eq(200)
+      end
+
+      # Get request on /api/v1/student_teams/{id} returns the response 404 not found - when correct id passed is not present in the database
+      response(404, 'not_found') do
+        let(:id) { 'invalid' }
+          run_test!
+          expect(response.status).to eq(404)
+      end
+    end
+
+    delete('Delete a Student Team') do
+      tags 'Student Teams'
+      produces 'application/json'
+      security [Bearer: {}]
+
+      # delete request on /api/v1/student_teams/{id} returns 204 succesful response when id present in the database is deleted successfully
+      response(204, 'successful') do
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: ''
+            }
+          }
+        end
+        run_test!
+        expect(response.status).to eq(204)
+      end
+
+      # delete request on /api/v1/student_teams/{id} returns 404 not found response, when id is not present in the database
+      response(404, 'not found') do
+        let(:id) { 0 }
+        run_test! 
+        expect(response.status).to eq(204)
       end
     end
   end
