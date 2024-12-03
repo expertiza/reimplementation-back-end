@@ -1,15 +1,15 @@
 class Team < ApplicationRecord
   has_many :signed_up_teams, dependent: :destroy
-  has_many :teams_users, dependent: :destroy
+  has_many :teams_participants, dependent: :destroy
   has_many :join_team_requests, dependent: :destroy
   has_one :team_node, foreign_key: :node_object_id, dependent: :destroy
-  has_many :users, through: :teams_users
+  has_many :users, through: :teams_participants
   has_many :bids, dependent: :destroy
   has_many :participants
   belongs_to :assignment
   attr_accessor :max_participants
   scope :find_team_for_assignment_and_user, lambda { |assignment_id, user_id|
-    joins(:teams_users).where('teams.parent_id = ? AND teams_users.user_id = ?', assignment_id, user_id)
+    joins(:teams_participants).where('teams.parent_id = ? AND teams_participants.user_id = ?', assignment_id, user_id)
   }
   # TODO Team implementing Teams controller and model should implement this method better.
   # TODO partial implementation here just for the functionality needed for join_team_tequests controller
@@ -30,7 +30,7 @@ class Team < ApplicationRecord
 # Returns:
 # - true if the user was successfully added.
 # - A hash with an error message if the addition fails.
-def add_member_with_handling(user, parent_id)
+def add_participants_with_handling(user, parent_id)
   begin
     # Attempt to add the user to the team.
     addition_result = add_member(user, parent_id)
@@ -49,14 +49,14 @@ end
 # Returns:
 # - true if the user was successfully added to the team.
 # - false if the team is full or if the user cannot be added.
-def add_member(user, _assignment_id = nil)
+def add_participant(user, _assignment_id = nil)
   # Raise an error if the user is already a member of the team.
   raise "The user #{user.name} is already a member of the team #{name}" if member?(user)
 
   # Check if the team is not full before adding the user.
   if !full?
     # Create a relationship between the user and the team.
-    team_user_relationship = TeamsUser.create(user_id: user.id, team_id: id)
+    team_user_relationship = TeamsParticipant.create(user_id: user.id, team_id: id)
 
     # Create the corresponding team user node in the hierarchy.
     team_node = TeamNode.find_by(node_object_id: id)
@@ -107,7 +107,7 @@ alias author_names participant_full_names
 # - The number of non-mentor members in the team.
 def self.size(team_id)
   count = 0
-  team_participants = TeamsUser.where(team_id: team_id)
+  team_participants = TeamsParticipant.where(team_id: team_id)
 
   # Exclude mentors from the count.
   team_participants.each do |team_participants|
@@ -139,9 +139,9 @@ end
 # Returns:
 # - A list of team IDs for the user within the specified assignment.
 def self.find_team_participants(assignment_id, user_id)
-  TeamsUser.joins('INNER JOIN teams ON teams_users.team_id = teams.id')
+  TeamsParticipant.joins('INNER JOIN teams ON teams_participants.team_id = teams.id')
            .select('teams.id as team_id')
-           .where('teams.parent_id = ? AND teams_users.user_id = ?', assignment_id, user_id)
+           .where('teams.parent_id = ? AND teams_participants.user_id = ?', assignment_id, user_id)
 end
 
 end

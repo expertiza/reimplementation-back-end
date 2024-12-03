@@ -11,7 +11,7 @@ class TeamsParticipantsController < ApplicationController
   end
 
   # Fetches and renders an auto-complete list of possible team members based on a partial name input.
-  def auto_complete_for_user_name
+  def auto_complete_for_participtant_name
     # Fetch the current team using the session-stored `team_id`.
     current_team = Team.find(session[:team_id])
 
@@ -25,7 +25,7 @@ class TeamsParticipantsController < ApplicationController
   # Updates the duty (role) assigned to a participant in a team.
   def update_duties
     # Find the team member relationship using the provided ID.
-    team_member_relationship = TeamsUser.find(params[:teams_user_id])
+    team_member_relationship = TeamsParticipant.find(params[:teams_user_id])
 
     # Update the duty of the team member.
     team_member_relationship.update_attribute(:duty_id, params[:teams_user]['duty_id'])
@@ -43,7 +43,7 @@ class TeamsParticipantsController < ApplicationController
     associated_assignment_or_course = Assignment.find(current_team.parent_id)
 
     # Query and paginate participants of the current team.
-    @team_participants = TeamsUser.page(params[:page]).per_page(10).where(team_id: current_team.id)
+    @team_participants = TeamsParticipant.page(params[:page]).per_page(10).where(team_id: current_team.id)
 
     @team = current_team
     @assignment = associated_assignment_or_course

@@ -190,8 +190,9 @@ class Assignment < ApplicationRecord
     # Check if any rubric has a specified round
     rubric_with_round.present?
   end
-  #E2479
-  # Checks if a specific user is already part of any team for this assignment.
+  
+#E2479
+# Checks if a specific user is already part of any team for this assignment.
 # This method queries the teams associated with this assignment and checks if the user is a member.
 # Params:
 # - user: The user to check for team membership.
