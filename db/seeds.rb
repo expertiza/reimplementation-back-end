@@ -31,6 +31,24 @@ begin
     institution_id: 1, # Replace with appropriate institution ID
     role_id: 4 # Role ID for Teaching Assistant
   )
+
+  User.create!(
+    name: 'student_user_1',
+    email: 'student_user1@example.com',
+    password: 'password123',
+    full_name: 'Student 1',
+    institution_id: 1, # Replace with appropriate institution ID
+    role_id: 5 # Role ID for Teaching Assistant
+  )
+
+  User.create!(
+    name: 'student_user_2',
+    email: 'student_user2@example.com',
+    password: 'password123',
+    full_name: 'Student 2',
+    institution_id: 1, # Replace with appropriate institution ID
+    role_id: 5 # Role ID for Teaching Assistant
+  )
   
   instructor = User.create!(
     name: 'instructor1',
