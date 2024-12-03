@@ -6,6 +6,7 @@ class Api::V1::SignedUpTeamsController < ApplicationController
     # puts params[:topic_id]
     @sign_up_topic = SignUpTopic.find(params[:topic_id])
     @signed_up_team = SignedUpTeam.find_team_participants(@sign_up_topic.assignment_id)
+    ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Fetched signed-up team for topic ID: #{@sign_up_topic.id}.", request)
     render json: @signed_up_team
   end
 
@@ -16,8 +17,10 @@ class Api::V1::SignedUpTeamsController < ApplicationController
   def update
     @signed_up_team = SignedUpTeam.find(params[:id])
     if @signed_up_team.update(signed_up_teams_params)
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Updated signed-up team with team ID: #{@signed_up_team.team_id}.", request)
       render json: { message: "The team has been updated successfully. " }, status: 200
     else
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Failed to update signed-up team with team ID: #{@signed_up_team.team_id}. Errors: #{@signed_up_team.errors.full_messages.join(', ')}", request)
       render json: @signed_up_team.errors, status: :unprocessable_entity
     end
   end
@@ -29,8 +32,10 @@ class Api::V1::SignedUpTeamsController < ApplicationController
     topic_id = params[:topic_id]
     @signed_up_team = SignedUpTeam.create_signed_up_team(topic_id, team_id)
     if @signed_up_team
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Team ID: #{team_id} signed up for topic ID: #{topic_id}.", request)
       render json: { message: "Signed up team successful!" }, status: :created
     else
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Failed to sign up team ID: #{team_id} for topic ID: #{topic_id}. Errors: #{@signed_up_team.errors.full_messages.join(', ')}", request)
       render json: { message: @signed_up_team.errors }, status: :unprocessable_entity
     end
   end
@@ -48,8 +53,10 @@ class Api::V1::SignedUpTeamsController < ApplicationController
     @signed_up_team = SignedUpTeam.create_signed_up_team(topic_id, team_id)
     # create(topic_id, team_id)
     if @signed_up_team
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "User ID: #{user_id} (Team ID: #{team_id}) signed up for topic ID: #{topic_id}.", request)
       render json: { message: "Signed up team successful!" }, status: :created
     else
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Failed to sign up user ID: #{user_id} (Team ID: #{team_id}) for topic ID: #{topic_id}. Errors: #{@signed_up_team.errors.full_messages.join(', ')}", request)
       render json: { message: @signed_up_team.errors }, status: :unprocessable_entity
     end
   end
@@ -58,8 +65,10 @@ class Api::V1::SignedUpTeamsController < ApplicationController
   def destroy
     @signed_up_team = SignedUpTeam.find(params[:id])
     if SignedUpTeam.delete_signed_up_team(@signed_up_team.team_id)
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Deleted signed-up team with team ID: #{@signed_up_team.team_id}.", request)
       render json: { message: 'Signed up teams was deleted successfully!' }, status: :ok
     else
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Failed to delete signed-up team with team ID: #{@signed_up_team.team_id}. Errors: #{@signed_up_team.errors.full_messages.join(', ')}", request)
       render json: @signed_up_team.errors, status: :unprocessable_entity
     end
   end

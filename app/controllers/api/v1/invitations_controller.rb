@@ -4,6 +4,7 @@ class Api::V1::InvitationsController < ApplicationController
   # GET /api/v1/invitations
   def index
     @invitations = Invitation.all
+    ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Fetched all invitations.", request)
     render json: @invitations, status: :ok
   end
 
@@ -13,8 +14,10 @@ class Api::V1::InvitationsController < ApplicationController
     @invitation = Invitation.invitation_factory(invite_params)
     if @invitation.save
       @invitation.send_invite_email
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Created invitation with ID: #{@invitation.id}.", request)
       render json: @invitation, status: :created
     else
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Failed to create invitation. Errors: #{@invitation.errors.full_messages.join(', ')}", request)
       render json: { error: @invitation.errors }, status: :unprocessable_entity
     end
   end
@@ -22,6 +25,7 @@ class Api::V1::InvitationsController < ApplicationController
   # GET /api/v1/invitations/:id
   def show
     @invitation = Invitation.find(params[:id])
+    ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Fetched invitation with ID: #{@invitation.id}.", request)
     render json: @invitation, status: :ok
   end
 
@@ -31,11 +35,14 @@ class Api::V1::InvitationsController < ApplicationController
     case params[:reply_status]
     when InvitationValidator::ACCEPT_STATUS
       @invitation.accept_invitation(nil)
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Accepted invitation with ID: #{@invitation.id}.", request)
       render json: @invitation, status: :ok
     when InvitationValidator::REJECT_STATUS
       @invitation.decline_invitation(nil)
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Rejected invitation with ID: #{@invitation.id}.", request)
       render json: @invitation, status: :ok
     else
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Invalid reply status for invitation with ID: #{@invitation.id}.", request)
       render json: @invitation.errors, status: :unprocessable_entity
     end
 
@@ -45,6 +52,7 @@ class Api::V1::InvitationsController < ApplicationController
   def destroy
     @invitation = Invitation.find(params[:id])
     @invitation.retract_invitation(nil)
+    ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Deleted invitation with ID: #{@invitation.id}.", request)
     render nothing: true, status: :no_content
   end
 
@@ -53,6 +61,7 @@ class Api::V1::InvitationsController < ApplicationController
     begin
       @user = User.find(params[:user_id])
     rescue ActiveRecord::RecordNotFound => e
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "User not found with ID: #{params[:user_id]}. Error: #{e.message}", request)
       render json: { error: e.message }, status: :not_found
       return
     end
@@ -60,11 +69,13 @@ class Api::V1::InvitationsController < ApplicationController
     begin
       @assignment = Assignment.find(params[:assignment_id])
     rescue ActiveRecord::RecordNotFound => e
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Assignment not found with ID: #{params[:assignment_id]}. Error: #{e.message}", request)
       render json: { error: e.message }, status: :not_found
       return
     end
 
     @invitations = Invitation.where(to_id: @user.id).where(assignment_id: @assignment.id)
+    ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Fetched invitations for user ID: #{@user.id} and assignment ID: #{@assignment.id}.", request)
     render json: @invitations, status: :ok
   end
 
@@ -81,6 +92,7 @@ class Api::V1::InvitationsController < ApplicationController
 
   # helper method used when invite is not found
   def invite_not_found
+    ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Invitation not found with ID: #{params[:id]}.", request)
     render json: { error: "Invitation with id #{params[:id]} not found" }, status: :not_found
   end
 

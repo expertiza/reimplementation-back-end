@@ -19,9 +19,11 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   # gets a list of all the join team requests
   def index
     unless @current_user.administrator?
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Unauthorized access to join team requests.", request)
       return render json: { errors: 'Unauthorized' }, status: :unauthorized
     end
     join_team_requests = JoinTeamRequest.all
+    ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Fetched all join team requests.", request)
     render json: join_team_requests, status: :ok
   end
 
@@ -42,15 +44,19 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
     team = Team.find(params[:team_id])
 
     if team.participants.include?(participant)
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "User already belongs to team ID: #{team.id}.", request)
       render json: { error: 'You already belong to the team' }, status: :unprocessable_entity
     elsif participant
       join_team_request.participant_id = participant.id
       if join_team_request.save
+        ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Created join team request with ID: #{join_team_request.id}.", request)
         render json: join_team_request, status: :created
       else
+        ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Failed to create join team request. Errors: #{join_team_request.errors.full_messages.join(', ')}", request)
         render json: { errors: join_team_request.errors.full_messages }, status: :unprocessable_entity
       end
     else
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Participant not found for user ID: #{@current_user.id}.", request)
       render json: { errors: 'Participant not found' }, status: :unprocessable_entity
     end
   end
@@ -59,8 +65,10 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   # Updates a join team request
   def update
     if @join_team_request.update(join_team_request_params)
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Updated join team request with ID: #{@join_team_request.id}.", request)
       render json: { message: 'JoinTeamRequest was successfully updated' }, status: :ok
     else
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Failed to update join team request with ID: #{@join_team_request.id}. Errors: #{@join_team_request.errors.full_messages.join(', ')}", request)
       render json: { errors: @join_team_request.errors.full_messages }, status: :unprocessable_entity
     end
   end
@@ -69,8 +77,10 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   # delete a join team request
   def destroy
     if @join_team_request.destroy
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Deleted join team request with ID: #{@join_team_request.id}.", request)
       render json: { message: 'JoinTeamRequest was successfully deleted' }, status: :ok
     else
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Failed to delete join team request with ID: #{@join_team_request.id}.", request)
       render json: { errors: 'Failed to delete JoinTeamRequest' }, status: :unprocessable_entity
     end
   end
@@ -79,8 +89,10 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   def decline
     @join_team_request.status = DECLINED
     if @join_team_request.save
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Declined join team request with ID: #{@join_team_request.id}.", request)
       render json: { message: 'JoinTeamRequest declined successfully' }, status: :ok
     else
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Failed to decline join team request with ID: #{@join_team_request.id}. Errors: #{@join_team_request.errors.full_messages.join(', ')}", request)
       render json: { errors: @join_team_request.errors.full_messages }, status: :unprocessable_entity
     end
   end
@@ -90,6 +102,7 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   def check_team_status
     team = Team.find(params[:team_id])
     if team.full?
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Attempted to join a full team with ID: #{team.id}.", request)
       render json: { message: 'This team is full.' }, status: :unprocessable_entity
     end
   end
@@ -97,6 +110,7 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   # Finds the join team request by ID
   def find_request
     @join_team_request = JoinTeamRequest.find(params[:id])
+    ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Found join team request with ID: #{@join_team_request.id}.", request)
   end
 
   # Permits specified parameters for join team requests
