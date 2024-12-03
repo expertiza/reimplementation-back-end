@@ -125,7 +125,7 @@ class FeedbackResponseMap < ResponseMap
           @authors << participant
         end
       end
-      authors
+      @authors
     end
     
     # Used in the conditional of self.feedback_response_report to get the rubric reports if the rounds vary
