@@ -1,20 +1,19 @@
 FactoryBot.define do
   factory :student_task do
     assignment { nil }
-    current_stage { "MyString" }
+    current_stage { 'MyString' }
     participant { nil }
-    stage_deadline { "2024-04-15 15:55:54" }
-    topic { "MyString" }
+    stage_deadline { '2024-04-15 15:55:54' }
+    topic { 'MyString' }
   end
-
 
   factory :join_team_request do
   end
 
   factory :bookmark do
-    url { "MyText" }
-    title { "MyText" }
-    description { "MyText" }
+    url { 'MyText' }
+    title { 'MyText' }
+    description { 'MyText' }
     user_id { 1 }
     topic_id { 1 }
   end
@@ -25,7 +24,9 @@ FactoryBot.define do
     password { 'password' }
     sequence(:full_name) { |_n| "#{Faker::Name.name}#{Faker::Name.name}".downcase }
     role { Role.find_by(name: 'Student') || association(:role, name: 'Student') }
-    institution { Institution.find_by(name: 'North Carolina State University') || association(:institution, name: 'North Carolina State University') }
+    institution do
+      Institution.find_by(name: 'North Carolina State University') ||
+        association(:institution, name: 'North Carolina State University')
+    end
   end
-
 end
