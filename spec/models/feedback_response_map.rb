@@ -1,8 +1,6 @@
 require 'rails_helper'
 require 'support/factory_bot'
 RSpec.describe FeedbackResponseMap, type: :model do
-    # let(:questionnaire1) { build(:questionnaire, id: 1, type: 'AuthorFeedbackQuestionnaire') }
-    # let(:questionnaire2) { build(:questionnaire, id: 2, type: 'MetareviewQuestionnaire') }
     let(:participant) { build(:participant, id: 1) }
     let(:assignment) { build(:assignment, id: 1) }
     let(:team) { build(:assignment_team, id: 1) }
@@ -12,8 +10,10 @@ RSpec.describe FeedbackResponseMap, type: :model do
     let(:answer) { Answer.new(answer: 1, comments: 'Answer text', question_id: 1) }
     let(:response) { build(:response, id: 1, map_id: 1, response_map: review_response_map, scores: [answer]) }
     let(:user1) { User.new name: 'abc', full_name: 'abc bbc', email: 'abcbbc@gmail.com', password: '123456789', password_confirmation: '123456789' }
+    # TODO: implement this functionality in the reimplementation branch
+    # let(:questionnaire1) { build(:questionnaire, id: 1, type: 'AuthorFeedbackQuestionnaire') }
+    # let(:questionnaire2) { build(:questionnaire, id: 2, type: 'MetareviewQuestionnaire') }
     before(:each) do
-    #   questionnaires = [questionnaire1, questionnaire2]
       allow(feedback_response_map).to receive(:reviewee).and_return(participant)
       allow(feedback_response_map).to receive(:review).and_return(response)
       allow(feedback_response_map).to receive(:reviewer).and_return(assignment_participant)
@@ -21,8 +21,10 @@ RSpec.describe FeedbackResponseMap, type: :model do
       allow(response).to receive(:reviewee).and_return(assignment_participant)
       allow(review_response_map).to receive(:assignment).and_return(assignment)
       allow(feedback_response_map).to receive(:assignment).and_return(assignment)
-    #   allow(assignment).to receive(:questionnaires).and_return(questionnaires)
-    #   allow(questionnaires).to receive(:find_by).with(type: 'AuthorFeedbackQuestionnaire').and_return([questionnaire1])
+      # TODO: implement this functionality in the reimplementation branch
+      # questionnaires = [questionnaire1, questionnaire2]
+      # allow(assignment).to receive(:questionnaires).and_return(questionnaires)
+      # allow(questionnaires).to receive(:find_by).with(type: 'AuthorFeedbackQuestionnaire').and_return([questionnaire1])
     end
     describe '#assignment' do
       it 'returns the assignment associated with this FeedbackResponseMap' do
@@ -30,7 +32,7 @@ RSpec.describe FeedbackResponseMap, type: :model do
       end
     end
     describe '#show_review' do
-      # TODO: check if this is implemented in this branch
+      # TODO: implement this functionality in the reimplementation branch
       # context 'when there is a review' do
       #   it 'displays the html' do
       #     allow(response).to receive(:display_as_html).and_return('HTML')
@@ -49,6 +51,7 @@ RSpec.describe FeedbackResponseMap, type: :model do
         expect(feedback_response_map.get_title).to eq('Feedback')
       end
     end
+    # TODO: implement this functionality in the reimplementation branch
     # describe '#questionnaire' do
     #   it 'returns an AuthorFeedbackQuestionnaire' do
     #     expect(feedback_response_map.questionnaire.first.type).to eq('AuthorFeedbackQuestionnaire')
@@ -75,8 +78,10 @@ RSpec.describe FeedbackResponseMap, type: :model do
           response3 = double('Response', round: 3, additional_comment: 'Bad')
           rounds = [response1, response2, response3]
           allow(Response).to receive(:where).with(['map_id IN (?)', 2]).and_return(rounds)
+          # TODO: implement this functionality in the reimplementation branch
           # allow(rounds).to receive(:order).with('created_at DESC').and_return(rounds)
           allow(Assignment).to receive(:find).with(1).and_return(assignment)
+          # TODO: implement this functionality in the reimplementation branch
           # allow(assignment).to receive(:vary_with_round).and_return(true)
           allow(response1).to receive(:map_id).and_return(1)
           allow(response2).to receive(:map_id).and_return(2)
@@ -106,8 +111,10 @@ RSpec.describe FeedbackResponseMap, type: :model do
           response3 = double('Response', round: 1, additional_comment: 'Bad')
           reviews = [response1, response2, response3]
           allow(Response).to receive(:where).with(['map_id IN (?)', 2]).and_return(reviews)
+          # TODO: implement this functionality in the reimplementation branch
           # allow(reviews).to receive(:order).with('created_at DESC').and_return(reviews)
           allow(Assignment).to receive(:find).with(1).and_return(assignment)
+          # TODO: implement this functionality in the reimplementation branch
           # allow(assignment).to receive(:vary_with_round).and_return(false)
           allow(response1).to receive(:map_id).and_return(1)
           allow(response2).to receive(:map_id).and_return(2)
