@@ -6,4 +6,8 @@ class ResponseMap < ApplicationRecord
   has_many :responses
   validates :reviewee_id, uniqueness: { scope: :reviewed_object_id,
                                         message: "is already assigned to this questionnaire" }
+
+  def calculate_score
+    render_success({ score: self.score })
+  end
 end
