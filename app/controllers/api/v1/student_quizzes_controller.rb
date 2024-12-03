@@ -1,5 +1,5 @@
 class Api::V1::StudentQuizzesController < ApplicationController
-  before_action :check_instructor_role, except: [:submit_answers]
+  before_action :check_instructor_role, except: [:grade_submitted_answers]
   before_action :set_student_quiz, only: [:show, :update, :destroy]
 
   include ResourceFinder
@@ -42,6 +42,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
   end
 
   #POST /student_quizzes/assign
+  # Assigns a specific quiz to a student
   def assign_quiz_to_student
     participant = find_resource_by_id(Participant, params[:participant_id])
     questionnaire = find_resource_by_id(Questionnaire, params[:questionnaire_id])
@@ -61,7 +62,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
   end
 
   #POST /student_quizzes/submit_answers
-  def submit_answers
+  def grade_submitted_answers
     ActiveRecord::Base.transaction do
       response_map = find_response_map_for_current_user
       unless response_map
@@ -183,10 +184,10 @@ class Api::V1::StudentQuizzesController < ApplicationController
 
   # Find a specific resource by ID, handling the case where it's not found
   module ResourceFinder
-    def find_resource_by_id(model, id)
-      model.find(id)
+    def find_resource_by_id(resource, id)
+      resource.find(id)
     rescue ActiveRecord::RecordNotFound
-      render_error("#{model.name} not found", :not_found)
+      render_error("#{resource.name} not found", :not_found)
       nil
     end
   end
