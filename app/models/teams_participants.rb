@@ -3,27 +3,14 @@ class TeamsUser < ApplicationRecord
   belongs_to :team
   has_one :team_user_node, foreign_key: 'node_object_id', dependent: :destroy
   has_paper_trail
-  # attr_accessible :user_id, :team_id # unnecessary protected attributes
 
-  def name(ip_address = nil)
-    name = user.name(ip_address)
+  def get_team_members(team_id)
+    team_members = TeamsUser.where('team_id = ?', team_id)
+    user_ids = team_members.pluck(:user_id)
+    users = User.where(id: user_ids)
 
-    # E2115 Mentor Management
-    # Indicate that someone is a Mentor in the UI. The view code is
-    # often hard to follow, and this is the best place we could find
-    # for this to go.
-    name += ' (Mentor)' if MentorManagement.user_a_mentor?(user)
-    name
+    return users
   end
-
-  def delete
-    TeamUserNode.find_by(node_object_id: id).destroy
-    team = self.team
-    destroy
-    team.delete if team.teams_users.empty?
-  end
-
-  def get_team_members(team_id); end
 
   # Removes entry in the TeamUsers table for the given user and given team id
   def self.remove_team(user_id, team_id)
@@ -31,46 +18,55 @@ class TeamsUser < ApplicationRecord
     team_user&.destroy
   end
 
-  # Returns the first entry in the TeamUsers table for a given team id
-  def self.first_by_team_id(team_id)
-    TeamsUser.where('team_id = ?', team_id).first
-  end
+#E2479
+# Retrieves the name of the user associated with the team member.
+# Optionally appends ' (Mentor)' if the user is a mentor.
+# Params:
+# - ip_address (optional): The IP address of the user (used for logging or contextual name resolution).
+# Returns:
+# - The name of the user, with '(Mentor)' appended if the user is a mentor.
+def display_name(ip_address = nil)
+  participant_name = user.name(ip_address)
+  participant_name += ' (Mentor)' if MentorManagement.user_a_mentor?(user)
+  participant_name
+end
 
-  # Determines whether a team is empty of not
-  def self.team_empty?(team_id)
-    team_members = TeamsUser.where('team_id = ?', team_id)
-    team_members.blank?
-  end
+# Deletes multiple team members (identified by their IDs) in bulk.
+# This method is used for efficient removal of multiple `TeamsUser` records.
+# Params:
+# - team_user_ids: An array of IDs of the `TeamsUser` records to be deleted.
+# Returns:
+# - The number of records deleted (implicit return from `destroy_all`).
+def self.bulk_delete(team_user_ids)
+  # Delete all `TeamsUser` records matching the provided IDs.
+  where(id: team_user_ids).destroy_all
+end
 
-  # Add member to the team they were invited to and accepted the invite for
-  def self.add_member_to_invited_team(invitee_user_id, invited_user_id, assignment_id)
-    can_add_member = false
-    users_teams = TeamsUser.where(['user_id = ?', invitee_user_id])
-    users_teams.each do |team|
-      new_team = AssignmentTeam.where(['id = ? and parent_id = ?', team.team_id, assignment_id]).first
-      unless new_team.nil?
-        can_add_member = new_team.add_member(User.find(invited_user_id), assignment_id)
-      end
-    end
-    can_add_member
-  end
+# Checks whether a specific user is a member of a given team.
+# Params:
+# - user_id: The ID of the user to check.
+# - team_id: The ID of the team to check for membership.
+# Returns:
+# - true if the user is a member of the team.
+# - false otherwise.
+def self.participant_part_of_team?(user_id, team_id)
+  # Check if a `TeamsUser` record exists with the specified user and team IDs.
+  exists?(user_id: user_id, team_id: team_id)
+end
 
-  # 2015-5-27 [zhewei]:
-  # We just remove the topic_id field from the participants table.
-  def self.team_id(assignment_id, user_id)
-    # team_id variable represents the team_id for this user in this assignment
-    team_id = nil
-    teams_users = TeamsUser.where(user_id: user_id)
-    teams_users.each do |teams_user|
-      if teams_user.team_id == nil
-        next
-      end
-      team = Team.find(teams_user.team_id)
-      if team.parent_id == assignment_id
-        team_id = teams_user.team_id
-        break
-      end
-    end
-    team_id
-  end
+# Checks whether a team is empty (i.e., has no members).
+# Params:
+# - team_id: The ID of the team to check.
+# Returns:
+# - true if the team has no members.
+# - false otherwise.
+def self.is_team_empty?(team_id)
+  # Retrieve all members of the team.
+  team_members = TeamsUser.where('team_id = ?', team_id)
+
+  # Return true if the team has no members; false otherwise.
+  team_members.blank?
+end
+
+
 end
