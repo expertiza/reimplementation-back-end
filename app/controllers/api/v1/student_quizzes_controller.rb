@@ -109,16 +109,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
 
   # Process and calculate the total score for submitted answers
   def process_answers(answers, response_map)
-    answers.sum do |answer|
-      question = Question.find(answer[:question_id])
-      submitted_answer = answer[:answer_value]
-
-      response = find_or_initialize_response(response_map.id, question.id)
-      response.submitted_answer = submitted_answer
-      response.save!
-
-      question.correct_answer == submitted_answer ? question.score_value : 0
-    end
+    response_map.process_answers(answers)
   end
 
   # Find or initialize a response for a specific question within an attempt
