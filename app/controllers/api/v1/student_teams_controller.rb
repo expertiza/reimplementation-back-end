@@ -25,7 +25,8 @@ class Api::V1::StudentTeamsController < ApplicationController
   end
 
   def create
-    team_name = params[:team][:name] || generate_team_name
+    team_name = params[:team][:name]
+    team_name = if team_name.empty? then generate_team_name else team_name end
     existing_teams = AssignmentTeam.where(name: team_name, assignment_id: @student.assignment_id)
     # check if the team name is in use
     if existing_teams.empty?
