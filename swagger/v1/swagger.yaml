@@ -1279,6 +1279,266 @@ paths:
           description: signed up team deleted
         '422':
           description: invalid request
+  # Create - Create a new questionnaire with questions and answers
+  "/api/v1/student_quizzes":
+    post:
+      summary: Create a new questionnaire with questions and answers
+      tags:
+        - Student Quizzes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                questionnaire:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    instructor_id:
+                      type: integer
+                    min_question_score:
+                      type: integer
+                    max_question_score:
+                      type: integer
+                    assignment_id:
+                      type: integer
+                    questions_attributes:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          txt:
+                            type: string
+                          question_type:
+                            type: string
+                          break_before:
+                            type: boolean
+                          correct_answer:
+                            type: string
+                          score_value:
+                            type: integer
+                          answers_attributes:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                answer_text:
+                                  type: string
+                                correct:
+                                  type: boolean
+                        required:
+                          - txt
+                          - question_type
+                          - break_before
+                          - correct_answer
+                          - score_value
+                          - answers_attributes
+                  required:
+                    - name
+                    - instructor_id
+                    - min_question_score
+                    - max_question_score
+                    - assignment_id
+                    - questions_attributes
+      responses:
+        '201':
+          description: Questionnaire created successfully
+        '400':
+          description: Bad request
+    get:
+      summary: Lists all questionnaires (quizzes)
+      tags:
+        - Student Quizzes
+      responses:
+        '200':
+          description: A list of all quizzes
+  "/api/v1/student_quizzes/{quiz_id}/calculate_score":
+    get:
+      summary: Calculate and retrieve the score for a specific student quiz
+      tags:
+        - Student Quizzes
+      parameters:
+        - name: quiz_id
+          in: path
+          description: ID of the student quiz to calculate the score for
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: The calculated score for the specified student quiz
+        '404':
+          description: Student quiz not found or permission denied to view the score
+  "/api/v1/student_quizzes/assign":
+    post:
+      summary: Assign a quiz to a student
+      tags:
+        - Student Quizzes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                participant_id:
+                  type: string
+                  description: The ID of the participant to whom the quiz is assigned
+                questionnaire_id:
+                  type: string
+                  description: The ID of the questionnaire (quiz) to be assigned
+              required:
+                - participant_id
+                - questionnaire_id
+      responses:
+        '201':
+          description: Quiz successfully assigned to the student
+        '422':
+          description: Unable to assign the quiz (e.g., quiz already assigned or validation errors)
+  "/api/v1/student_quizzes/submit_answers":
+    post:
+      summary: Submit answers for a quiz and calculate the total score
+      tags:
+        - Student Quizzes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                questionnaire_id:
+                  type: integer
+                  description: The ID of the questionnaire for which answers are being submitted
+                answers:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      question_id:
+                        type: integer
+                        description: The ID of the question to which the answer corresponds
+                      answer_value:
+                        type: string
+                        description: The value of the submitted answer
+                    required:
+                      - question_id
+                      - answer_value
+              required:
+                - questionnaire_id
+                - answers
+      responses:
+        '200':
+          description: Answers submitted successfully and total score calculated
+        '403':
+          description: Forbidden action, such as trying to submit answers for a quiz not assigned to the user
+        '422':
+          description: Unprocessable entity, such as validation errors in the submitted answers
+  "/api/v1/student_quizzes/{id}":
+    put:
+      summary: Update an existing student quiz
+      tags:
+        - Student Quizzes
+      parameters:
+        - name: id
+          in: path
+          description: The ID of the student quiz to update
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                questionnaire:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    instructor_id:
+                      type: integer
+                    min_question_score:
+                      type: integer
+                    max_question_score:
+                      type: integer
+                    assignment_id:
+                      type: integer
+                    questions_attributes:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          txt:
+                            type: string
+                          question_type:
+                            type: string
+                          break_before:
+                            type: boolean
+                          correct_answer:
+                            type: string
+                          score_value:
+                            type: integer
+                          answers_attributes:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                answer_text:
+                                  type: string
+                                correct:
+                                  type: boolean
+                  required:
+                    - name
+                    - instructor_id
+                    - min_question_score
+                    - max_question_score
+                    - assignment_id
+                    - questions_attributes
+      responses:
+        '200':
+          description: Student quiz successfully updated
+        '422':
+          description: Validation error with provided data
+    delete:
+      summary: Delete a specific student quiz
+      tags:
+        - Student Quizzes
+      parameters:
+        - name: id
+          in: path
+          description: The ID of the student quiz to delete
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Student quiz successfully deleted, no content returned
+        '404':
+          description: Student quiz not found
+    get:
+      summary: Retrieve a specific student quiz
+      tags:
+        - Student Quizzes
+      parameters:
+        - name: id
+          in: path
+          description: ID of the student quiz to retrieve
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Details of the specified student quiz
   "/login":
     post:
       summary: Logs in a user

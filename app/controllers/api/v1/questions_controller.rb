@@ -120,10 +120,9 @@ end
   end
 
   private
-  
   # Only allow a list of trusted parameters through.
   def question_params
     params.permit(:txt, :weight, :seq, :questionnaire_id, :question_type, :size,
-                                     :alternatives, :break_before, :max_label, :min_label)
+                  :alternatives, :break_before, :max_label, :min_label, :assignment_id, :correct_answer, :score_value)
   end
 end

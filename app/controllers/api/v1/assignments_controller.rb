@@ -45,7 +45,7 @@ class Api::V1::AssignmentsController < ApplicationController
       render json: { error: "Assignment not found" }, status: :not_found
     end
   end
-  
+
   #add participant to assignment
   def add_participant
     assignment = Assignment.find_by(id: params[:assignment_id])
@@ -92,7 +92,7 @@ class Api::V1::AssignmentsController < ApplicationController
         render json: assignment.errors, status: :unprocessable_entity
       end
     end
-    
+
   end
 
   #update course id of an assignment/ assign the assign to some together course
@@ -146,7 +146,7 @@ class Api::V1::AssignmentsController < ApplicationController
   end
 
   # check if assignment has topics
-  # has_topics is set to true if there is SignUpTopic corresponding to the input assignment id 
+  # has_topics is set to true if there is SignUpTopic corresponding to the input assignment id
   def has_topics
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
@@ -156,7 +156,7 @@ class Api::V1::AssignmentsController < ApplicationController
     end
   end
 
-  # check if assignment is a team assignment 
+  # check if assignment is a team assignment
   # true if assignment's max team size is greater than 1
   def team_assignment
     assignment = Assignment.find_by(id: params[:assignment_id])
@@ -204,11 +204,12 @@ class Api::V1::AssignmentsController < ApplicationController
       end
     end
   end
-  
+
   private
   # Only allow a list of trusted parameters through.
   def assignment_params
-    params.require(:assignment).permit(:title, :description)
+    params.require(:assignment).permit(:name, :directory_path, :course_id, :instructor_id,
+                                       :require_quiz, :num_quiz_questions, :description)
   end
 
   # Helper method to determine staggered_and_no_topic for the assignment
