@@ -76,7 +76,7 @@ class Api::V1::QuestionnairesController < ApplicationController
       @questionnaire.toggle!(:private)
       @access = @questionnaire.private ? 'private' : 'public'
       render json: "The questionnaire \"#{@questionnaire.name}\" has been successfully made #{@access}. ",
-        status: :ok
+             status: :ok
     rescue ActiveRecord::RecordNotFound
       render json: $ERROR_INFO.to_s, status: :not_found
     rescue ActiveRecord::RecordInvalid
@@ -87,15 +87,19 @@ class Api::V1::QuestionnairesController < ApplicationController
   private
 
   def questionnaire_params
-    params.require(:questionnaire).permit(:name, :questionnaire_type, :private, :min_question_score, :max_question_score, :instructor_id)
+    params.require(:questionnaire).permit(:name, :questionnaire_type, :private, :min_question_score, 
+                                          :max_question_score, :instructor_id, :assignment_id)
   end
 
   def sanitize_display_type(type)
+    return nil if type.nil? # Return immediately if type is nil
+
     display_type = type.split('Questionnaire')[0]
     if %w[AuthorFeedback CourseSurvey TeammateReview GlobalSurvey AssignmentSurvey BookmarkRating].include?(display_type)
       display_type = (display_type.split(/(?=[A-Z])/)).join('%')
     end
     display_type
   end
+
 
 end
