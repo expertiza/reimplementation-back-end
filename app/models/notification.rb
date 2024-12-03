@@ -1,6 +1,6 @@
 class Notification < ApplicationRecord
   # Associations
-  belongs_to :course
+  belongs_to :course, foreign_key: :course_name, primary_key: :name
   belongs_to :user
 
   # Validations
@@ -10,10 +10,10 @@ class Notification < ApplicationRecord
   validate :expiration_date_cannot_be_in_the_past
 
   # Scopes
-  scope :active, -> { where(is_active: true) }
+  scope :active, -> { where(active_flag: true) }
   scope :expired, -> { where('expiration_date < ?', Date.today) }
   scope :unread_by, ->(user) {
-    joins(:course).where(courses: { id: user.courses.pluck(:id) }).where(is_active: true)
+    joins(:course).where(courses: { id: user.assignments.pluck(:course_id) }).where(active_flag: true)
   }
 
   # Custom Validation for Expiration Date
@@ -23,4 +23,3 @@ class Notification < ApplicationRecord
     end
   end
 end
-

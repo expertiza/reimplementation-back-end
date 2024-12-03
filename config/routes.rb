@@ -1,5 +1,4 @@
 Rails.application.routes.draw do
-  resources :notifications
 
   mount Rswag::Api::Engine => 'api-docs'
   mount Rswag::Ui::Engine => 'api-docs'
@@ -10,6 +9,11 @@ Rails.application.routes.draw do
   post '/login', to: 'authentication#login'
   namespace :api do
     namespace :v1 do
+      resources :notifications do
+        member do
+          patch :toggle_active, action: :toggle_notification_visibility
+        end
+      end
       resources :institutions
       resources :roles do
         collection do
