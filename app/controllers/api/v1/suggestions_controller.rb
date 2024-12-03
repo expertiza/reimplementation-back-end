@@ -5,6 +5,7 @@ class Api::V1::SuggestionsController < ApplicationController
   # Comment on a suggestion.
   # A new SuggestionComment record is made.
   def add_comment
+    Suggestion.find(params[:id])
     render json: SuggestionComment.create!(
       comment: params[:comment],
       suggestion_id: params[:id],
