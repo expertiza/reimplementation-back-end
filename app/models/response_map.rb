@@ -10,4 +10,17 @@ class ResponseMap < ApplicationRecord
   def calculate_score
     render_success({ score: self.score })
   end
+
+  def process_answers(answers)
+    answers.sum do |answer|
+      question = Question.find(answer[:question_id])
+      submitted_answer = answer[:answer_value]
+
+      response = find_or_initialize_response(self.id, question.id)
+      response.submitted_answer = submitted_answer
+      response.save!
+
+      question.correct_answer == submitted_answer ? question.score_value : 0
+    end
+  end
 end
