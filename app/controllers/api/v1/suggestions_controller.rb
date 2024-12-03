@@ -50,7 +50,6 @@ class Api::V1::SuggestionsController < ApplicationController
   end
 
   # A new Suggestion record is made.
-  # Anonymous suggestions are allowed by nulling user_id.
   def create
     render json: Suggestion.create!(
       title: params[:title],
@@ -58,6 +57,7 @@ class Api::V1::SuggestionsController < ApplicationController
       status: 'Initialized',
       auto_signup: params[:auto_signup],
       assignment_id: params[:assignment_id],
+      # Anonymous suggestions are allowed by nulling user_id.
       user_id: params[:suggestion_anonymous] ? nil : @current_user.id
     ), status: :ok
   rescue ActiveRecord::RecordInvalid => e
@@ -111,6 +111,19 @@ class Api::V1::SuggestionsController < ApplicationController
     }, status: :ok
   rescue ActiveRecord::RecordNotFound => e
     render json: e, status: :not_found
+  end
+
+  # Change the details of a Suggestion.
+  def update
+    @suggestion = Suggestion.find(params[:id])
+    deny_non_owner_student('Students can only edit their own suggestions.')
+    # Only title, description, and signup preference can be changed.
+    @suggestion.update!(params.permit(:title, :description, :auto_signup))
+    render json: @suggestion, status: :ok
+  rescue ActiveRecord::RecordNotFound => e
+    render json: e, status: :not_found
+  rescue ActiveRecord::RecordInvalid => e
+    render json: e.record.errors, status: :unprocessable_entity
   end
 
   private
