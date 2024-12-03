@@ -62,6 +62,16 @@ class Api::V1::NotificationsController < ApplicationController
     end
   end
 
+  # PATCH /notifications/:id/toggle_active
+  def toggle_notification_visibility
+    if notification_accessible?(@notification)
+      @notification.update(active_flag: !@notification.active_flag)
+      render json: { message: 'Notification visibility toggled successfully.', notification: @notification }, status: :ok
+    else
+      render json: { error: 'You are not authorized to toggle this notification.' }, status: :forbidden
+    end
+  end
+
   private
 
   # Set notification by ID
