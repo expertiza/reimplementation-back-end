@@ -12,7 +12,7 @@ RSpec.describe Checkbox do
         seq: { type: 'seq', input_size: 6, value: 1.0, name: "question[10][seq]", id: "question_10_seq" },
         question: { type: 'textarea', cols: 50, rows: 1, name: "question[10][txt]", id: "question_10_txt", placeholder: 'Edit question content here', content: 'test txt' },
         type: { type: 'text', input_size: 10, disabled: true, value: 'Checkbox', name: "question[10][type]", id: "question_10_type" },
-        weight: { type: 'weight', placeholder: 'UnscoredQuestion does not need weight' }
+        weight: { type: 'weight', placeholder: 'UnscoredItem does not need weight' }
       }
       expect(json).to eq(expected_json)
     end

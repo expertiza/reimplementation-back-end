@@ -1,4 +1,4 @@
-class TextResponse < Question
+class TextResponse < Item
     validates :size, presence: true
   
     def edit(_count)

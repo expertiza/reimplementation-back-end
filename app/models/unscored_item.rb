@@ -1,4 +1,4 @@
-class UnscoredQuestion < ChoiceQuestion
+class UnscoredItem < ChoiceItem
     def edit; end
   
     def view_question_text; end

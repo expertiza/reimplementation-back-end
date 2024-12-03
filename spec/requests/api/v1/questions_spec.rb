@@ -26,7 +26,7 @@ RSpec.describe 'api/v1/questions', type: :request do
 
     let(:question1) do
       questionnaire
-      Question.create(
+      Item.create(
         seq: 1, 
         txt: "test question 1", 
         question_type: "multiple_choice", 
@@ -38,7 +38,7 @@ RSpec.describe 'api/v1/questions', type: :request do
 
     let(:question2) do
       questionnaire
-      Question.create(
+      Item.create(
         seq: 2, 
         txt: "test question 2", 
         question_type: "multiple_choice", 
@@ -110,7 +110,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       response(201, 'created') do
         let(:question) do
           questionnaire
-          Question.create(valid_question_params)
+          Item.create(valid_question_params)
         end
         run_test! do
           expect(response.body).to include('"seq":1')
@@ -121,7 +121,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       response(404, 'questionnaire id not found') do
         let(:question) do
           instructor
-          Question.create(invalid_question_params1)
+          Item.create(invalid_question_params1)
         end
         run_test!
       end
@@ -130,7 +130,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       response(422, 'unprocessable entity') do
         let(:question) do
           instructor
-          Question.create(invalid_question_params2)
+          Item.create(invalid_question_params2)
         end
         run_test!
       end
@@ -164,7 +164,7 @@ RSpec.describe 'api/v1/questions', type: :request do
 
     let(:question1) do
       questionnaire
-      Question.create(
+      Item.create(
         seq: 1, 
         txt: "test question 1", 
         question_type: "multiple_choice", 
@@ -176,7 +176,7 @@ RSpec.describe 'api/v1/questions', type: :request do
 
     let(:question2) do
       questionnaire
-      Question.create(
+      Item.create(
         seq: 2, 
         txt: "test question 2", 
         question_type: "multiple_choice", 
@@ -210,7 +210,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       response(404, 'not_found') do
         let(:id) { 'invalid' }
           run_test! do
-            expect(response.body).to include("Couldn't find Question")
+            expect(response.body).to include("Couldn't find Item")
           end
       end
     end
@@ -249,7 +249,7 @@ RSpec.describe 'api/v1/questions', type: :request do
           }
         end
         run_test! do
-          expect(response.body).to include("Couldn't find Question")
+          expect(response.body).to include("Couldn't find Item")
         end
       end
 
@@ -303,7 +303,7 @@ RSpec.describe 'api/v1/questions', type: :request do
           }
         end
         run_test! do
-          expect(response.body).to include("Couldn't find Question")
+          expect(response.body).to include("Couldn't find Item")
         end
       end
 
@@ -332,7 +332,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       # delete request on /api/v1/questions/{id} returns 204 succesful response when it deletes question with given question id present in the database
       response(204, 'successful') do
         run_test! do
-          expect(Question.exists?(id)).to eq(false)
+          expect(Item.exists?(id)).to eq(false)
         end
       end
 
@@ -340,7 +340,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       response(404, 'not found') do
         let(:id) { 0 }
         run_test! do
-          expect(response.body).to include("Couldn't find Question")
+          expect(response.body).to include("Couldn't find Item")
         end
       end
     end
@@ -372,7 +372,7 @@ RSpec.describe 'api/v1/questions', type: :request do
 
     let(:question1) do
       questionnaire
-      Question.create(
+      Item.create(
         seq: 1, 
         txt: "test question 1", 
         question_type: "multiple_choice", 
@@ -384,7 +384,7 @@ RSpec.describe 'api/v1/questions', type: :request do
 
     let(:question2) do
       questionnaire
-      Question.create(
+      Item.create(
         seq: 2, 
         txt: "test question 2", 
         question_type: "multiple_choice", 
@@ -409,7 +409,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       # delete method on /api/v1/questions/delete_all/questionnaire/{id} returns 200 succesful response when all questions with given questionnaire id are deleted
       response(200, 'successful') do
         run_test! do
-          expect(Question.where(questionnaire_id: id).count).to eq(0)
+          expect(Item.where(questionnaire_id: id).count).to eq(0)
         end
       end
 
@@ -448,7 +448,7 @@ RSpec.describe 'api/v1/questions', type: :request do
 
     let(:question1) do
       questionnaire
-      Question.create(
+      Item.create(
         seq: 1, 
         txt: "test question 1", 
         question_type: "multiple_choice", 
@@ -472,7 +472,7 @@ RSpec.describe 'api/v1/questions', type: :request do
 
     let(:question2) do
       questionnaire2
-      Question.create(
+      Item.create(
         seq: 2, 
         txt: "test question 2", 
         question_type: "multiple_choice", 
@@ -484,7 +484,7 @@ RSpec.describe 'api/v1/questions', type: :request do
 
     let(:question3) do
       questionnaire2
-      Question.create(
+      Item.create(
         seq: 3, 
         txt: "test question 3", 
         question_type: "multiple_choice", 
@@ -511,7 +511,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       # get method on /api/v1/questions/show_all/questionnaire/{id} returns 200 succesful response when all questions with given questionnaire id are shown
       response(200, 'successful') do
         run_test! do
-          expect(Question.where(questionnaire_id: id).count).to eq(1)
+          expect(Item.where(questionnaire_id: id).count).to eq(1)
           expect(response.body).to_not include('"questionnaire_id: "' + questionnaire2.id.to_s)
         end
       end
@@ -550,7 +550,7 @@ RSpec.describe 'api/v1/questions', type: :request do
 
     let(:question1) do
       questionnaire
-      Question.create(
+      Item.create(
         seq: 1, 
         txt: "test question 1", 
         question_type: "multiple_choice", 
@@ -562,7 +562,7 @@ RSpec.describe 'api/v1/questions', type: :request do
 
     let(:question2) do
       questionnaire
-      Question.create(
+      Item.create(
         seq: 2, 
         txt: "test question 2", 
         question_type: "multiple_choice", 

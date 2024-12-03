@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe TextField, type: :model do
-  let(:question) { TextField.create(txt: 'Sample Text Question', question_type: 'TextField', size: 'medium', break_before: true) }
+  let(:question) { TextField.create(txt: 'Sample Text Item', question_type: 'TextField', size: 'medium', break_before: true) }
   let(:answer) { Answer.new(comments: 'This is a sample answer.') }
 
   describe '#complete' do

@@ -1,9 +1,9 @@
-class Dropdown < UnscoredQuestion
+class Dropdown < UnscoredItem
     include QuestionHelper
   
     attr_accessor :txt, :type, :count, :weight
     def edit(count)
-      edit_common("Question #{count}:", txt , weight, type).to_json
+      edit_common("Item #{count}:", txt , weight, type).to_json
     end
   
     def view_question_text
@@ -21,6 +21,6 @@ class Dropdown < UnscoredQuestion
     end
   
     def view_completed_question
-      { selected_option: (count && answer) ? "#{answer} (out of #{count})" : 'Question not answered.' }.to_json
+      { selected_option: (count && answer) ? "#{answer} (out of #{count})" : 'Item not answered.' }.to_json
     end
   end

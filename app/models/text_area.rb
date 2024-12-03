@@ -1,4 +1,4 @@
-class TextArea < Question
+class TextArea < Item
     def complete(count,answer = nil)
       {
         action: 'complete',

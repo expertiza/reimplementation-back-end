@@ -1,11 +1,11 @@
-class TextField < Question
+class TextField < Item
     validates :size, presence: true
   
     def complete(count, answer = nil)
       {
         action: 'complete',
         data: {
-          label: "Question ##{count}",
+          label: "Item ##{count}",
           type: 'text',
           name: "response[answers][#{id}]",
           id: "responses_#{id}",
@@ -20,7 +20,7 @@ class TextField < Question
           action: 'view_completed_question',
           data: {
             type: 'text',
-            label: "Completed Question ##{count}",
+            label: "Completed Item ##{count}",
             value: txt,
             break_before: break_before
           }
@@ -30,7 +30,7 @@ class TextField < Question
           action: 'view_completed_question',
           data: {
             type: 'text',
-            label: "Completed Question ##{count}",
+            label: "Completed Item ##{count}",
             value: txt,
             break_before: break_before
           }

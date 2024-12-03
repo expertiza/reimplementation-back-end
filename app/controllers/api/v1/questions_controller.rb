@@ -3,7 +3,7 @@ class Api::V1::QuestionsController < ApplicationController
   # Index method returns the list of questions JSON object
   # GET on /questions
   def index
-    @questions = Question.order(:id)
+    @questions = Item.order(:id)
     render json: @questions, status: :ok
   end
 
@@ -11,7 +11,7 @@ class Api::V1::QuestionsController < ApplicationController
   # GET on /questions/:id
   def show
     begin
-      @question = Question.find(params[:id])
+      @question = Item.find(params[:id])
       render json: @question, status: :ok
     rescue ActiveRecord::RecordNotFound
       render json: $ERROR_INFO.to_s, status: :not_found
@@ -62,7 +62,7 @@ end
   # DELETE on /questions/:id
   def destroy
     begin
-      @question = Question.find(params[:id])
+      @question = Item.find(params[:id])
       @question.destroy
     rescue ActiveRecord::RecordNotFound
       render json: $ERROR_INFO.to_s, status: :not_found and return
@@ -103,7 +103,7 @@ end
   # PUT on /questions/:id
   def update
     begin
-      @question = Question.find(params[:id])
+      @question = Item.find(params[:id])
       if @question.update(question_params)
         render json: @question, status: :ok and return
       else
@@ -116,7 +116,7 @@ end
 
   # GET on /questions/types
   def types
-    types = Question.distinct.pluck(:question_type)
+    types = Item.distinct.pluck(:question_type)
     render json: types.to_a, status: :ok
   end
 
