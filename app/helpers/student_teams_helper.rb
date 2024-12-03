@@ -26,7 +26,7 @@ module StudentTeamsHelper
     end
   
     def user_not_found
-      render json: { error: "User with id #{params[:id]} not found" }, status: :not_found
+      render json: { error: "User id #{params[:id]} not found" }, status: :not_found
     end
   
     def parameter_missing(exception)

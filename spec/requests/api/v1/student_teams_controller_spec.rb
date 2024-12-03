@@ -17,7 +17,6 @@ RSpec.describe 'Student Teams API', type: :request do
           }
         end
         run_test!
-        expect(response.status).to eq(200)
       end
     end
 
@@ -155,6 +154,17 @@ RSpec.describe 'Student Teams API', type: :request do
           expect(response.body).to include('error')
         end
       end
+
+      response(404, 'not_found') do
+        let(:team) do
+          post '/api/v1/student_teams', params: { team: { name: 'ABCD10' }, student_id: 0 }, as: :json
+        end
+          run_test! do
+            expect(response.status).to eq(404)
+            expect(response.body).to include('not found')
+          end
+      end
+
     end
 
     patch('Update a Student Team') do
@@ -175,6 +185,7 @@ RSpec.describe 'Student Teams API', type: :request do
         }
       }
 
+      # Scenario 1: Team name updated successfully
       response(200, 'successful') do
         after do |example|
           example.metadata[:response][:content] = {
@@ -183,9 +194,52 @@ RSpec.describe 'Student Teams API', type: :request do
             }
           }
         end
-        run_test!
-        expect(response.status).to eq(200)
+        run_test! do
+          expect(response.status).to eq(200)
+        end
       end
+
+      # Scenario 2: Invalid team updation (empty name)
+      response(422, 'unprocessable entity') do
+        let(:student_team_request) do
+          { team: {name: ""}, team_id: 2}
+        end
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test! do
+          expect(response.status).to eq(422)
+          expect(response.body).to include('Team name should not be empty')
+        end
+      end
+      # Scenario 3: Team Name already present
+      response(422, 'unprocessable entity') do
+        let(:existing_team) { create(:team, name: 'ABCD10', team_id: 3) }
+
+        let(:team) do
+          post '/api/v1/student_teams', params: { team: { name: 'ABCD10' }, team_id: 2 }, as: :json
+        end
+
+        run_test! do
+          expect(response.status).to eq(422)
+          expect(response.body).to include('"error":"That team name is already in use."')
+        end
+      end
+      #Scenario 4 : Invalid Team ID
+      response(404, 'not_found') do
+        let(:team) do
+          post '/api/v1/student_teams', params: { team: { name: 'ABCD10' }, team_id: 0 }, as: :json
+        end
+          run_test! do
+            expect(response.status).to eq(404)
+            expect(response.body).to include('not found')
+          end
+      end
+
     end
   end
   path '/api/v1/student_teams/{id}' do
@@ -204,15 +258,17 @@ RSpec.describe 'Student Teams API', type: :request do
             }
           }
         end
-        run_test! 
-        expect(response.status).to eq(200)
+        run_test! do
+          expect(response.status).to eq(200)
+        end
       end
 
       # Get request on /api/v1/student_teams/{id} returns the response 404 not found - when correct id passed is not present in the database
       response(404, 'not_found') do
         let(:id) { 'invalid' }
-          run_test!
-          expect(response.status).to eq(404)
+          run_test! do
+            expect(response.status).to eq(404)
+          end
       end
     end
 
@@ -230,15 +286,17 @@ RSpec.describe 'Student Teams API', type: :request do
             }
           }
         end
-        run_test!
-        expect(response.status).to eq(204)
+        run_test! do
+          expect(response.status).to eq(204)
+        end
       end
 
       # delete request on /api/v1/student_teams/{id} returns 404 not found response, when id is not present in the database
       response(404, 'not found') do
         let(:id) { 0 }
-        run_test! 
-        expect(response.status).to eq(204)
+        run_test! do
+          expect(response.status).to eq(404)
+        end
       end
     end
   end
