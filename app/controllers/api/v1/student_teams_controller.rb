@@ -52,15 +52,19 @@ class Api::V1::StudentTeamsController < ApplicationController
   # Updates team name or other attributes
   def update
     team_name = params[:team][:name]
+    if team_name.empty? 
+      return render json: { error: 'Team name should not be empty.' }, status: :unprocessable_entity
+    end
+    
     matching_teams = AssignmentTeam.where(name: team_name, assignment_id: @team.assignment.id)
     if matching_teams.empty?
       if @team.update(name: team_name)
-        render json: { message: "The team: \"#{@team.name}\" has been updated successfully." }, status: :ok
+        render json: { message: "The team: '#{@team.name}' has been updated successfully." }, status: :ok
       else
         render json: { error: @team.errors.full_messages }, status: :unprocessable_entity
       end
     elsif matching_teams.length == 1 && matching_teams.first.name == @team.name
-      render json: { message: "The team: \"#{@team.name}\" has been updated successfully." }, status: :ok
+      render json: { message: "The team: '#{@team.name}' has been updated successfully." }, status: :ok
     else
       render json: { error: 'That team name is already in use.' }, status: :unprocessable_entity
     end
