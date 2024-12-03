@@ -11,7 +11,7 @@ class Course < ApplicationRecord
     raise 'Path can not be created as the course must be associated with an instructor.' if instructor_id.nil?
     Rails.root + '/' + Institution.find(institution_id).name.gsub(" ", "") + '/' + User.find(instructor_id).name.gsub(" ", "") + '/' + directory_path + '/'
   end
-
+  
   # Add a Teaching Assistant to the course
   def add_ta(user)
     if user.nil?
@@ -49,4 +49,30 @@ class Course < ApplicationRecord
     new_course.name += '_copy'
     new_course.save
   end
+  #E2479
+  # Checks if a user is eligible to join a specific team for a course.
+# This method ensures that:
+# - The user is not already a member of another team for the course.
+# - The user is a valid participant in the course.
+# Params:
+# - user: The user to be validated for team membership.
+# Returns:
+# - A hash indicating success or failure:
+#   - { success: true } if the user can be added to the team.
+#   - { success: false, error: "Reason for failure" } if the user cannot be added.
+def valid_team_participant?(user)
+  # Check if the user is already a member of another team for the same course.
+  if already_on_team?(user)
+    { success: false, error: "This user is already assigned to a team for this course" }
+  
+  # Check if the user is a participant in the course associated with this team.
+  elsif CourseParticipant.find_by(user_id: user.id, parent_id: course_id).nil?
+    { success: false, error: "#{user.name} is not a participant in this course" }
+  
+  # If both checks pass, the user is eligible to join the team.
+  else
+    { success: true }
+  end
+end
+
 end
