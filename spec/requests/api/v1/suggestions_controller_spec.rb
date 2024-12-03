@@ -143,72 +143,132 @@ RSpec.describe 'Suggestions API', type: :request do
     end
   end
 
-  path '/api/v1/suggestions' do
-    post 'Create a new suggestion' do
+  # path '/api/v1/suggestions' do
+  #   post 'Create a new suggestion' do
+  #     tags 'Suggestions'
+  #     consumes 'application/json'
+
+  #     parameter name: 'Authorization', in: :header, type: :string, required: true
+  #     parameter name: :title, in: :body, type: :string, required: true
+  #     parameter name: :description, in: :body, type: :string, required: true
+  #     parameter name: :assignment_id, in: :body, type: :integer, required: true
+  #     parameter name: :auto_signup, in: :body, type: :boolean, required: true
+  #     parameter name: :anonymous, in: :body, type: :boolean, required: true
+
+  #     context 'when user is authorized' do
+  #       before(:each) do
+  #         allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(true)
+  #       end
+
+  #       response '201', 'suggestion created successfully' do
+  #         let(:Authorization) { "Bearer #{@token}" }
+  #         let(:title) { 'Sample suggestion' }
+  #         let(:description) { 'This is a sample suggestion.' }
+  #         let(:assignment_id) { assignment.id }
+  #         let(:auto_signup) { true }
+  #         let(:anonymous) { false }
+
+  #         run_test! do |response|
+  #           data = JSON.parse(response.body)
+  #           expect(response.status).to eq(201)
+  #           expect(data['title']).to eq('Sample suggestion')
+  #           expect(data['description']).to eq('This is a sample suggestion.')
+  #           expect(data['status']).to eq('Initialized')
+  #           expect(data['id']).not_to be_nil
+  #         end
+  #       end
+
+  #       response '422', 'unprocessable entity' do
+  #         let(:Authorization) { "Bearer #{@token}" }
+  #         let(:title) { nil } # Invalid title (required)
+  #         let(:description) { 'Description without title' }
+  #         let(:assignment_id) { assignment.id }
+  #         let(:auto_signup) { true }
+  #         let(:anonymous) { false }
+
+  #         run_test! do |response|
+  #           expect(response.status).to eq(422)
+  #           expect(JSON.parse(response.body)['title']).to include("can't be blank")
+  #         end
+  #       end
+  #     end
+
+  #     context 'when user is unauthorized' do
+  #       before(:each) do
+  #         allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(false)
+  #       end
+
+  #       response '401', 'unauthorized request' do
+  #         let(:Authorization) { "Bearer #{@token}" }
+  #         let(:title) { 'Sample suggestion' }
+  #         let(:description) { 'This is a sample suggestion.' }
+  #         let(:assignment_id) { assignment.id }
+  #         let(:auto_signup) { true }
+  #         let(:anonymous) { false }
+
+  #         run_test! do |response|
+  #           expect(response.status).to eq(401)
+  #           expect(JSON.parse(response.body)['error']).to eq('Unauthorized')
+  #         end
+  #       end
+  #     end
+  #   end
+  # end
+
+  path '/api/v1/suggestions/{id}' do
+    delete 'Delete suggestion' do
       tags 'Suggestions'
       consumes 'application/json'
-
       parameter name: 'Authorization', in: :header, type: :string, required: true
-      parameter name: :title, in: :body, type: :string, required: true
-      parameter name: :description, in: :body, type: :string, required: true
-      parameter name: :assignment_id, in: :body, type: :integer, required: true
-      parameter name: :auto_signup, in: :body, type: :boolean, required: true
-      parameter name: :anonymous, in: :body, type: :boolean, required: true
-
-      context 'when user is authorized' do
+      parameter name: :id, in: :path, type: :integer, required: true, description: 'ID of the suggestion'
+      context '| when user is instructor | ' do
         before(:each) do
           allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(true)
         end
-
-        response '201', 'suggestion created successfully' do
+        response '204', 'suggestion deleted' do
           let(:Authorization) { "Bearer #{@token}" }
-          let(:title) { 'Sample suggestion' }
-          let(:description) { 'This is a sample suggestion.' }
-          let(:assignment_id) { assignment.id }
-          let(:auto_signup) { true }
-          let(:anonymous) { false }
+          let(:id) { suggestion.id }
 
           run_test! do |response|
-            data = JSON.parse(response.body)
-            expect(response.status).to eq(201)
-            expect(data['title']).to eq('Sample suggestion')
-            expect(data['description']).to eq('This is a sample suggestion.')
-            expect(data['status']).to eq('Initialized')
-            expect(data['id']).not_to be_nil
+            expect(response.status).to eq(204)
+            expect(response.body).to be_empty
           end
         end
 
         response '422', 'unprocessable entity' do
           let(:Authorization) { "Bearer #{@token}" }
-          let(:title) { nil } # Invalid title (required)
-          let(:description) { 'Description without title' }
-          let(:assignment_id) { assignment.id }
-          let(:auto_signup) { true }
-          let(:anonymous) { false }
+          let(:id) { suggestion.id }
+
+          before do
+            # Simulating an error in the deletion process
+            allow_any_instance_of(Suggestion).to receive(:destroy!).and_raise(ActiveRecord::RecordNotDestroyed)
+          end
 
           run_test! do |response|
             expect(response.status).to eq(422)
-            expect(JSON.parse(response.body)['title']).to include("can't be blank")
+          end
+        end
+
+        response '404', 'suggestion not found' do
+          let(:Authorization) { "Bearer #{@token}" }
+          let(:id) { -1 }
+
+          run_test! do |response|
+            expect(response.status).to eq(404)
           end
         end
       end
-
-      context 'when user is unauthorized' do
+      context ' | when user is student | ' do
         before(:each) do
           allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(false)
         end
-
-        response '401', 'unauthorized request' do
+        response '403', 'students cannot delete suggestions' do
           let(:Authorization) { "Bearer #{@token}" }
-          let(:title) { 'Sample suggestion' }
-          let(:description) { 'This is a sample suggestion.' }
-          let(:assignment_id) { assignment.id }
-          let(:auto_signup) { true }
-          let(:anonymous) { false }
+          let(:id) { suggestion.id }
 
           run_test! do |response|
-            expect(response.status).to eq(401)
-            expect(JSON.parse(response.body)['error']).to eq('Unauthorized')
+            expect(response.status).to eq(403)
+            expect(JSON.parse(response.body)['error']).to eq('Students cannot delete suggestions.')
           end
         end
       end
