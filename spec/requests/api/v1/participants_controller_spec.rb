@@ -216,7 +216,7 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '422', 'Role not found' do
+      response '422', 'Authorization not found' do
         let(:id) { 1 }
         let(:authorization) { 'teacher' }
         let(:'Authorization') { "Bearer #{@token}" }
@@ -298,7 +298,7 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '422', 'Role not found' do
+      response '422', 'Authorization not found' do
         let(:authorization) { 'teacher' }
         let(:'Authorization') { "Bearer #{@token}" }
         let(:participant) { { user_id: 3, assignment_id: 1 } }
