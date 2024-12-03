@@ -30,7 +30,18 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '404', 'Participant Not Found' do
+      response '200', 'Participant not found with user_id' do
+        let(:user_id) { 1 }
+        let(:'Authorization') { "Bearer #{@token}" }
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data).to be_an(Array)  
+          expect(data).to be_empty 
+        end
+      end
+
+      response '404', 'User Not Found' do
         let(:user_id) { 99 }
         let(:'Authorization') { "Bearer #{@token}" }
 
@@ -72,7 +83,7 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '404', 'Participant Not Found' do
+      response '404', 'Assignment Not Found' do
         let(:assignment_id) { 99 }
         let(:'Authorization') { "Bearer #{@token}" }
 
