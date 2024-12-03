@@ -182,7 +182,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
 
   # Ensure only instructors can perform certain actions
   def check_instructor_role
-    unless current_user.role_id == 2
+    unless current_user.role.instructor?
       render_error('Only instructors are allowed to perform this action', :forbidden)
     end
   end
