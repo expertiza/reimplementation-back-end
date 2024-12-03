@@ -3,20 +3,14 @@ class Api::V1::SuggestionsController < ApplicationController
   include AuthorizationHelper
 
   # Strong params inlined as global before_action
-  before_action do
-    params.require(:id).permit(
-      :anonymous,
-      :assignment_id,
-      :auto_signup,
-      :comment,
-      :description,
-      :title
-    )
+  before_action except: [:index] do
+    params.require(:id)
   end
 
   # Comment on a suggestion.
   # A new SuggestionComment record is made.
   def add_comment
+    params.require(:comment)
     Suggestion.find(params[:id])
     render json: SuggestionComment.create!(
       comment: params[:comment],
@@ -63,6 +57,7 @@ class Api::V1::SuggestionsController < ApplicationController
 
   # A new Suggestion record is made.
   def create
+    params.require(%i[anonymous assignment_id auto_signup comment description title])
     render json: Suggestion.create!(
       assignment_id: params[:assignment_id],
       auto_signup: params[:auto_signup],
