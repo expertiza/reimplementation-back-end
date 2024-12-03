@@ -5,7 +5,7 @@ RSpec.describe FeedbackResponseMap, type: :model do
     # let(:questionnaire2) { build(:questionnaire, id: 2, type: 'MetareviewQuestionnaire') }
     let(:participant) { build(:participant, id: 1) }
     let(:assignment) { build(:assignment, id: 1) }
-    # let(:team) { build(:assignment_team) }
+    let(:team) { build(:assignment_team, id: 1) }
     let(:assignment_participant) { build(:participant, id: 2, assignment: assignment) }
     let(:feedback_response_map) { build(:feedback_response_map) }
     let(:review_response_map) { build(:review_response_map, id: 2, assignment: assignment, reviewer: participant, reviewee: team) }

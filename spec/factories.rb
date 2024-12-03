@@ -24,8 +24,8 @@ FactoryBot.define do
     sequence(:email) { |_n| Faker::Internet.email.to_s }
     password { 'password' }
     sequence(:full_name) { |_n| "#{Faker::Name.name}#{Faker::Name.name}".downcase }
-    role factory: :role
-    institution factory: :institution
+    role { Role.find_by(name: 'Student') || association(:role, name: 'Student') }
+    institution { Institution.find_by(name: 'North Carolina State University') || association(:institution, name: 'North Carolina State University') }
   end
 
 end
