@@ -1,5 +1,7 @@
 require 'rails_helper'
 require 'support/factory_bot'
+
+# rubocop:disable Metrics/BlockLength
 RSpec.describe FeedbackResponseMap, type: :model do
   let(:participant) { build(:participant, id: 1) }
   let(:assignment) { build(:assignment, id: 1) }
@@ -156,3 +158,4 @@ RSpec.describe FeedbackResponseMap, type: :model do
     end
   end
 end
+# rubocop:enable Metrics/BlockLength
