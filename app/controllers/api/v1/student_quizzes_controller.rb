@@ -21,7 +21,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
   def calculate_score
     response_map = ResponseMap.find_by(id: params[:id])
     if response_map
-      render_success({ score: response_map.score })
+      response_map.calculate_score
     else
       render_error('Attempt not found or you do not have permission to view this score.', :not_found)
     end
