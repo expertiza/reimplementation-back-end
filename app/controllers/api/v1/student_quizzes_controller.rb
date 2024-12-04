@@ -1,6 +1,8 @@
 class Api::V1::StudentQuizzesController < ApplicationController
-  before_action :check_instructor_role, except: [:submit_answers]
+  before_action :check_instructor_role, except: [:grade_submitted_answers]
   before_action :set_student_quiz, only: [:show, :update, :destroy]
+
+  include ResourceFinder
 
   rescue_from ActiveRecord::RecordInvalid do |exception|
     render_error(exception.message)
@@ -21,7 +23,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
   def calculate_score
     response_map = ResponseMap.find_by(id: params[:id])
     if response_map
-      render_success({ score: response_map.score })
+      response_map.calculate_score
     else
       render_error('Attempt not found or you do not have permission to view this score.', :not_found)
     end
@@ -40,6 +42,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
   end
 
   #POST /student_quizzes/assign
+  # Assigns a specific quiz to a student
   def assign_quiz_to_student
     # Retrieve the participant and questionnaire using their respective IDs
     participant = find_resource_by_id(Participant, params[:participant_id])
@@ -67,7 +70,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
   
 
   #POST /student_quizzes/submit_answers
-  def submit_answers
+  def grade_submitted_answers
     ActiveRecord::Base.transaction do
       response_map = find_response_map_for_current_user
       unless response_map
@@ -117,16 +120,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
 
   # Process and calculate the total score for submitted answers
   def process_answers(answers, response_map)
-    answers.sum do |answer|
-      question = Question.find(answer[:question_id])
-      submitted_answer = answer[:answer_value]
-
-      response = find_or_initialize_response(response_map.id, question.id)
-      response.submitted_answer = submitted_answer
-      response.save!
-
-      question.correct_answer == submitted_answer ? question.score_value : 0
-    end
+    response_map.process_answers(answers)
   end
 
   # Find or initialize a response for a specific question within an attempt
@@ -135,14 +129,6 @@ class Api::V1::StudentQuizzesController < ApplicationController
       response_map_id: response_map_id,
       question_id: question_id
     )
-  end
-
-  # Find a specific resource by ID, handling the case where it's not found
-  def find_resource_by_id(model, id)
-    model.find(id)
-  rescue ActiveRecord::RecordNotFound
-    render_error("#{model.name} not found", :not_found)
-    nil
   end
 
   # Check if a quiz has already been assigned to a participant
@@ -199,8 +185,18 @@ class Api::V1::StudentQuizzesController < ApplicationController
 
   # Ensure only instructors can perform certain actions
   def check_instructor_role
-    unless current_user.role_id == 2
+    unless current_user.role.instructor?
       render_error('Only instructors are allowed to perform this action', :forbidden)
+    end
+  end
+
+  # Find a specific resource by ID, handling the case where it's not found
+  module ResourceFinder
+    def find_resource_by_id(resource, id)
+      resource.find(id)
+    rescue ActiveRecord::RecordNotFound
+      render_error("#{resource.name} not found", :not_found)
+      nil
     end
   end
 end
