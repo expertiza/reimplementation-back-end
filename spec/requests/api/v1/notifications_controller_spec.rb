@@ -1,98 +1,200 @@
-# require 'rails_helper'
-
-# RSpec.describe Api::V1::NotificationsController, type: :controller do
-#   let(:admin) { create(:user, role: 'Admin') }
-#   let(:student) { create(:user, role: 'Student') }
-#   let(:notification) { create(:notification) }
-
-#   describe 'GET #index' do
-#     before { sign_in admin }
-
-#     it 'returns notifications for the current user' do
-#       get :index
-#       expect(response).to have_http_status(:ok)
-#       expect(json_response).to include(notification)
-#     end
-
-#     it 'denies access to unauthorized users' do
-#       sign_out admin
-#       sign_in student
-#       get :index
-#       expect(response).to have_http_status(:forbidden)
-#     end
-#   end
-
-#   describe 'POST #create' do
-#     context 'with valid attributes' do
-#       it 'creates a new notification' do
-#         expect {
-#           post :create, params: { notification: attributes_for(:notification) }
-#         }.to change(Notification, :count).by(1)
-#       end
-#     end
-
-#     context 'with invalid attributes' do
-#       it 'returns validation errors' do
-#         post :create, params: { notification: { subject: '' } }
-#         expect(response).to have_http_status(:unprocessable_entity)
-#       end
-#     end
-#   end
-# end
-
-
 require 'swagger_helper'
 
 RSpec.describe 'Notifications API', type: :request do
-  path '/notifications' do
-    get 'Retrieve all notifications' do
+  let(:user) { create(:user, name: 'test_user') }
+  let(:course) { create(:course, name: 'Ruby 101', instructor_id: user.id, institution_id: 1) }
+  let(:notification) { create(:notification, course: course, user: user, subject: 'Test Notification') }
+
+  path '/api/v1/notifications' do
+    get('list notifications') do
       tags 'Notifications'
       produces 'application/json'
 
-      response '200', 'notifications retrieved' do
-        schema type: :array,
-               items: {
-                 type: :object,
-                 properties: {
-                   id: { type: :integer },
-                   subject: { type: :string },
-                   description: { type: :string },
-                   expiration_date: { type: :string, format: 'date' },
-                   active_flag: { type: :boolean },
-                   course_id: { type: :integer },
-                   user_id: { type: :integer }
-                 },
-                 required: ['id', 'subject', 'expiration_date', 'active_flag', 'course_id', 'user_id']
-               }
+      response(200, 'Success') do
+        let!(:notifications) { create_list(:notification, 5, user: user, course: course) }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test! do |response|
+          expect(JSON.parse(response.body).size).to eq(5)
+        end
+      end
+    end
+
+    post('create notification') do
+      tags 'Notifications'
+      consumes 'application/json'
+      parameter name: :notification, in: :body, schema: {
+        type: :object,
+        properties: {
+          subject: { type: :string },
+          description: { type: :string },
+          expiration_date: { type: :string, format: :date },
+          active_flag: { type: :boolean },
+          course_id: { type: :integer }
+        },
+        required: %w[subject course_id]
+      }
+
+      response(201, 'Created') do
+        let(:notification) { { subject: 'New Notification', description: 'Details', expiration_date: Date.today + 7, course_id: course.id } }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+
+      response(422, 'Unprocessable Entity') do
+        let(:notification) { { description: 'Details', expiration_date: Date.today + 7, course_id: course.id } }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
         run_test!
       end
     end
   end
 
-  path '/notifications/{id}' do
-    get 'Retrieve a specific notification' do
-      tags 'Notifications'
-      produces 'application/json'
-      parameter name: :id, in: :path, type: :integer, description: 'Notification ID'
+  path '/api/v1/notifications/{id}' do
+    parameter name: :id, in: :path, type: :integer, description: 'ID of the notification'
 
-      response '200', 'notification found' do
-        schema type: :object,
-               properties: {
-                 id: { type: :integer },
-                 subject: { type: :string },
-                 description: { type: :string },
-                 expiration_date: { type: :string, format: 'date' },
-                 active_flag: { type: :boolean },
-                 course_id: { type: :integer },
-                 user_id: { type: :integer }
-               },
-               required: ['id', 'subject', 'expiration_date', 'active_flag', 'course_id', 'user_id']
-        let(:id) { Notification.create(subject: 'Test', description: 'Sample', expiration_date: '2024-12-31', active_flag: true, course_id: 1, user_id: 1).id }
+    get('show notification') do
+      tags 'Notifications'
+      response(200, 'Success') do
+        let(:id) { notification.id }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
         run_test!
       end
 
-      response '404', 'notification not found' do
-        let(:id) { 0 }
+      response(404, 'Not Found') do
+        let(:id) { 'INVALID' }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+    end
+
+    patch('update notification') do
+      tags 'Notifications'
+      consumes 'application/json'
+      parameter name: :notification, in: :body, schema: {
+        type: :object,
+        properties: {
+          subject: { type: :string },
+          description: { type: :string },
+          expiration_date: { type: :string, format: :date },
+          active_flag: { type: :boolean }
+        }
+      }
+
+      response(200, 'Updated') do
+        let(:id) { notification.id }
+        let(:notification) { { subject: 'Updated Notification', active_flag: true } }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+
+      response(404, 'Not Found') do
+        let(:id) { 'INVALID' }
+        let(:notification) { { subject: 'Updated Notification', active_flag: true } }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+    end
+
+    delete('delete notification') do
+      tags 'Notifications'
+
+      response(204, 'Deleted') do
+        let(:id) { notification.id }
+        run_test!
+      end
+
+      response(404, 'Not Found') do
+        let(:id) { 'INVALID' }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+    end
+  end
+
+  path '/api/v1/notifications/{id}/toggle_active' do
+    parameter name: :id, in: :path, type: :integer, description: 'ID of the notification'
+
+    patch('toggle notification visibility') do
+      tags 'Notifications'
+
+      response(200, 'Visibility toggled') do
+        let(:id) { notification.id }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+
+      response(404, 'Not Found') do
+        let(:id) { 'INVALID' }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
         run_test!
       end
     end
