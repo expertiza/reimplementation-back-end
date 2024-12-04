@@ -192,17 +192,6 @@ class Assignment < ApplicationRecord
   end
   
 #E2479
-# Checks if a specific user is already part of any team for this assignment.
-# This method queries the teams associated with this assignment and checks if the user is a member.
-# Params:
-# - user: The user to check for team membership.
-# Returns:
-# - true if the user is part of any team for this assignment.
-# - false otherwise.
-def is_participant_on_team?(user)
-  # Join the teams and team users tables to check if a record exists for the user.
-  teams.joins(:teams_users).exists?(teams_users: { user_id: user.id })
-end
 
 # Validates if a user is eligible to join a team for the current assignment.
 # This method ensures that:
@@ -214,7 +203,7 @@ end
 # - A hash indicating the validation result:
 #   - { success: true } if the user can join the team.
 #   - { success: false, error: "Reason for failure" } if the user cannot join the team.
-def validate_team_participant_for_assignment?(user)
+def valid_team_participant_for_assignment?(user)
   # Check if the user is already part of a team for this assignment.
   if is_user_on_team?(user)
     { success: false, error: "This user is already assigned to a team for this assignment" }
@@ -228,18 +217,5 @@ def validate_team_participant_for_assignment?(user)
     { success: true }
   end
 end
-
-# Retrieves all courses assigned to a specific instructor.
-# This method fetches courses for which the given user is listed as the instructor.
-# The courses are ordered alphabetically by their names for consistent display.
-# Params:
-# - user: The instructor user whose courses are to be fetched.
-# Returns:
-# - An ActiveRecord relation containing the courses assigned to the instructor.
-def self.fetch_courses_for_instructor(user)
-  # Query for courses where the instructor ID matches the user's ID, ordered by course name.
-  Course.where(instructor_id: user.id).order(:name)
-end
-
 
 end

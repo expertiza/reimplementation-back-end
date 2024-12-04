@@ -1,15 +1,16 @@
 class Team < ApplicationRecord
   has_many :signed_up_teams, dependent: :destroy
-  has_many :teams_participants, dependent: :destroy
+  has_many :teams_users, dependent: :destroy
   has_many :join_team_requests, dependent: :destroy
   has_one :team_node, foreign_key: :node_object_id, dependent: :destroy
-  has_many :users, through: :teams_participants
+  has_many :users, through: :teams_users
   has_many :bids, dependent: :destroy
   has_many :participants
-  belongs_to :assignment
+  belongs_to :assignment, optional: true, foreign_key: 'parent_id'
+  validates :name, presence: true
   attr_accessor :max_participants
   scope :find_team_for_assignment_and_user, lambda { |assignment_id, user_id|
-    joins(:teams_participants).where('teams.parent_id = ? AND teams_participants.user_id = ?', assignment_id, user_id)
+    joins(:teams_users).where('teams.parent_id = ? AND teams_users.user_id = ?', assignment_id, user_id)
   }
   # TODO Team implementing Teams controller and model should implement this method better.
   # TODO partial implementation here just for the functionality needed for join_team_tequests controller
@@ -21,7 +22,29 @@ class Team < ApplicationRecord
       false
     end
   end
+  def add_member(user, _assignment_id = nil)
+    raise "The user #{user.name} is already a member of the team #{name}" if user?(user)
 
+    can_add_member = false
+    unless full?
+      can_add_member = true
+      t_user = TeamsUser.create(user_id: user.id, team_id: id)
+      parent = TeamNode.find_by(node_object_id: id)
+      TeamUserNode.create(parent_id: parent.id, node_object_id: t_user.id)
+      add_participant(parent_id, user)
+      ExpertizaLogger.info LoggerMessage.new('Model:Team', user.name, "Added member to the team #{id}")
+    end
+    can_add_member
+  end
+# Generate the team name
+def self.generate_team_name(_team_name_prefix = '')
+  last_team = Team.where('name LIKE ?', "#{_team_name_prefix} Team_%")
+                .order("CAST(SUBSTRING(name, LENGTH('#{_team_name_prefix} Team_') + 1) AS UNSIGNED) DESC")
+                .first
+  counter = last_team ? last_team.name.scan(/\d+/).first.to_i + 1 : 1
+  team_name = "#{_team_name_prefix} Team_#{counter}"
+  team_name
+end
   # Adds a user to the team while handling potential errors such as duplicate membership.
 # This is a wrapper around the `add_member` method with error handling.
 # Params:
@@ -87,10 +110,10 @@ end
 # Participants are derived from the users belonging to the team.
 # Returns:
 # - An array of participant objects.
-def participants
+def participants_in_team
   users.where(parent_id: parent_id || current_user_id).flat_map(&:participants)
 end
-alias get_participants participants
+alias get_participants participants_in_team
 
 # Retrieves the full names of all users in the team.
 # Returns:
@@ -107,7 +130,7 @@ alias author_names participant_full_names
 # - The number of non-mentor members in the team.
 def self.size(team_id)
   count = 0
-  team_participants = TeamsParticipant.where(team_id: team_id)
+  team_participants = TeamsUser.where(team_id: team_id)
 
   # Exclude mentors from the count.
   team_participants.each do |team_participants|
@@ -123,7 +146,7 @@ end
 # - parent: The parent entity (assignment or course) associated with the team.
 # - name: The name of the team to check for uniqueness.
 # - team_type: The type of team (e.g., 'Assignment', 'Course').
-def self.check_for_existing(parent, name, team_type)
+def self.check_for_existing_team(parent, name, team_type)
   existing_teams = Object.const_get("#{team_type}Team").where(parent_id: parent.id, name: name)
 
   # Raise an error if any team with the same name is found.
@@ -139,9 +162,9 @@ end
 # Returns:
 # - A list of team IDs for the user within the specified assignment.
 def self.find_team_participants(assignment_id, user_id)
-  TeamsParticipant.joins('INNER JOIN teams ON teams_participants.team_id = teams.id')
+  TeamsUser.joins('INNER JOIN teams ON teams_users.team_id = teams.id')
            .select('teams.id as team_id')
-           .where('teams.parent_id = ? AND teams_participants.user_id = ?', assignment_id, user_id)
+           .where('teams.parent_id = ? AND teams_users.user_id = ?', assignment_id, user_id)
 end
 
 end
