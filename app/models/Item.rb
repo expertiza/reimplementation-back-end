@@ -3,11 +3,11 @@ class Item < ApplicationRecord
   belongs_to :questionnaire # each question belongs to a specific questionnaire
   has_many :answers, dependent: :destroy
   has_many :choices, dependent: :destroy
-  attr_accessor :choice_rendering_strategy
+  attr_accessor :choice_strategy
   
   validates :seq, presence: true, numericality: true # sequence must be numeric
-  validates :txt, length: { minimum: 0, allow_nil: false, message: "can't be nil" } # user must define text content for a question
-  validates :question_type, presence: true # user must define type for a question
+  validates :txt, length: { minimum: 0, allow_nil: false, message: "can't be nil" } # text content must be provided
+  validates :question_type, presence: true # user must define the question type
   validates :break_before, presence: true
 
   def scorable?
@@ -28,22 +28,26 @@ class Item < ApplicationRecord
       end
   end
 
-  def set_rendering_strategy
-    case self.class.name
-    when "DropdownItem"
-      self.choice_rendering_strategy = DropdownRenderingStrategy.new
-    when "MultipleChoiceItem"
-      self.choice_rendering_strategy = MultipleChoiceRenderingStrategy.new
-    when "ScaleItem"
-      self.choice_rendering_strategy = ScaleRenderingStrategy.new
+  def strategy
+    case item_type
+    when 'dropdown'
+      Strategies::DropdownStrategy.new
+    when 'multiple_choice'
+      Strategies::MultipleChoiceStrategy.new
+    when 'scale'
+      Strategies::ScaleStrategy.new
     else
-      # Default strategy
-      self.choice_rendering_strategy = ChoiceRenderingStrategy.new
+      raise "Unknown item type: #{item_type}"
     end
   end
 
-  # Render the item choices using the selected strategy
+  # Use strategy to render the item
   def render
-    choice_rendering_strategy.render_choices(self)
+    strategy.render(self)
+  end
+
+  # Use strategy to validate the item
+  def validate_item
+    strategy.validate(self)
   end
 end
