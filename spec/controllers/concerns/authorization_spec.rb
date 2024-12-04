@@ -126,7 +126,7 @@ RSpec.describe Authorization, type: :controller do
   # Tests for all_actions_allowed? method
   ##########################################
   describe '#all_actions_allowed?' do
-    context 'when the user has the Administrator role' do
+    context 'when the user has the Super Administrator role' do
       before do
         allow(controller).to receive(:has_required_role?).with('Super Administrator').and_return(true)
       end
@@ -136,7 +136,7 @@ RSpec.describe Authorization, type: :controller do
       end
     end
 
-    context 'when the user does not have the Administrator role' do
+    context 'when the user does not have the Super Administrator role' do
       before do
         allow(controller).to receive(:has_required_role?).with('Super Administrator').and_return(false)
         allow(controller).to receive(:action_allowed?).and_return(false)
