@@ -71,4 +71,41 @@ RSpec.describe Item, type: :model do
       expect { question.delete }.to change { Item.count }.by(-1)
     end
   end
+
+  describe '#set_choice_strategy' do
+    context 'when the question type is Dropdown' do
+      let(:item) { create(:item, questionnaire: questionnaire, question_type: 'Dropdown') }
+
+      it 'assigns the correct strategy' do
+        item.set_choice_strategy
+        expect(item.choice_strategy).to be_an_instance_of(Strategies::DropdownStrategy)
+      end
+    end
+
+    context 'when the question type is MultipleChoice' do
+      let(:item) { create(:item, questionnaire: questionnaire, question_type: 'MultipleChoice') }
+
+      it 'assigns the correct strategy' do
+        item.set_choice_strategy
+        expect(item.choice_strategy).to be_an_instance_of(Strategies::MultipleChoiceStrategy)
+      end
+    end
+
+    context 'when the question type is Scale' do
+      let(:item) { create(:item, questionnaire: questionnaire, question_type: 'Scale') }
+
+      it 'assigns the correct strategy' do
+        item.set_choice_strategy
+        expect(item.choice_strategy).to be_an_instance_of(Strategies::ScaleStrategy)
+      end
+    end
+
+    context 'when the question type is unknown' do
+      let(:item) { create(:item, questionnaire: questionnaire, question_type: 'Unknown') }
+
+      it 'raises an error' do
+        expect { item.set_choice_strategy }.to raise_error("Unknown question type: Unknown")
+      end
+    end
+  end
 end
