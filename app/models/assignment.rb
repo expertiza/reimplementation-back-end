@@ -203,7 +203,7 @@ class Assignment < ApplicationRecord
 # - A hash indicating the validation result:
 #   - { success: true } if the user can join the team.
 #   - { success: false, error: "Reason for failure" } if the user cannot join the team.
-def valid_team_participant_for_assignment?(user)
+def valid_team_participant?(user)
   # Check if the user is already part of a team for this assignment.
   if is_user_on_team?(user)
     { success: false, error: "This user is already assigned to a team for this assignment" }
