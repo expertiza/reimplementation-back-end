@@ -3,7 +3,7 @@ class Api::V1::StudentTeamsController < ApplicationController
   # include AuthorizationHelper
   # autocomplete :user, :name
   
-  rescue_from ActiveRecord::RecordNotFound, with: :user_not_found
+  rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
   before_action :set_team, only: %i[update destroy]
@@ -34,7 +34,7 @@ class Api::V1::StudentTeamsController < ApplicationController
     if existing_teams.empty?
       parent = Assignment.find_by(id: @student.assignment_id)
       team = if parent&.auto_assign_mentor
-               MentoredTeam.new(name: team_name, assignment_id: @student.assignment_id)
+               MentoredTeam.new(name: team_name, assignment_id: @student.assignment_id).clone
              else
                AssignmentTeam.new(name: team_name, assignment_id: @student.assignment_id)
              end

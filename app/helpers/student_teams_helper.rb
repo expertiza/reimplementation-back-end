@@ -24,9 +24,15 @@ module StudentTeamsHelper
         break team_name unless AssignmentTeam.exists?(name: team_name)
       end
     end
-  
-    def user_not_found
-      render json: { error: "User id #{params[:id]} not found" }, status: :not_found
+
+    def record_not_found(exception)
+      if exception.model == 'AssignmentTeam'
+        render json: { error: 'Team id not found.' }, status: :not_found
+      elsif exception.model == 'AssignmentParticipant'
+        render json: { error: 'User id not found.' }, status: :not_found
+      else
+        render json: { error: 'Record not found.' }, status: :not_found
+      end
     end
   
     def parameter_missing(exception)

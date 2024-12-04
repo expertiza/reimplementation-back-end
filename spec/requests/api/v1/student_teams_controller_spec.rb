@@ -300,4 +300,54 @@ RSpec.describe 'Student Teams API', type: :request do
       end
     end
   end
+
+  path '/api/v1/student_teams/{id}/remove_participant' do
+    parameter name: 'id', in: :path, type: :integer, description: 'ID of Team'
+    parameter name: 'student_id', in: :query, type: :integer, description: 'ID of the Student'
+
+    let(:student) { create(:user, :student) }
+    let(:assignment) { create(:assignment) }
+    let(:student_participant) { create(:assignment_participant, user: student, assignment: assignment) }
+    let(:team) { create(:assignment_team, assignment: assignment) }
+    let(:id) { team.id }
+    let(:student_id) { student.id }
+
+    before do
+      team.add_member(student, assignment.id)
+    end
+
+    delete('remove participant') do
+      tags 'Student Teams'
+      produces 'application/json'
+      security [Bearer: {}]
+
+      response(204, 'successful') do
+        let(:Authorization) { "Bearer #{@token}" }
+
+        run_test! do
+          expect(response.status).to eq(204)
+          expect(team.members).not_to include(student)
+        end
+      end
+
+      response(404, 'team not found') do
+        let(:id) { -1 } # Invalid ID
+
+        run_test! do
+          expect(response.status).to eq(404)
+          expect(JSON.parse(response.body)['error']).to eq('Team not found.')
+        end
+      end
+
+      response(404, 'user not found') do
+        let(:student_id) { -1 } # Invalid student ID
+
+        run_test! do
+          expect(response.status).to eq(404)
+          expect(JSON.parse(response.body)['error']).to eq('User not found.')
+        end
+      end
+    end
+  end
+
 end
