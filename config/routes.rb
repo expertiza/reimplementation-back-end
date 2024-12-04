@@ -116,6 +116,7 @@ Rails.application.routes.draw do
           post :approve
           post :reject
           get :show
+          patch :update
         end
       end
     end

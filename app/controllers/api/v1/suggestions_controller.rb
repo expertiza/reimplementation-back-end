@@ -63,8 +63,7 @@ class Api::V1::SuggestionsController < ApplicationController
 
   # A new Suggestion record is made.
   def create
-    puts("PARAMS: #{params.inspect}")
-    params.require(%i[anonymous assignment_id auto_signup comment description title])
+    params.require(%i[anonymous assignment_id auto_signup description title])
     render json: Suggestion.create!(
       assignment_id: params[:assignment_id],
       auto_signup: params[:auto_signup],
@@ -74,6 +73,8 @@ class Api::V1::SuggestionsController < ApplicationController
       # Anonymous suggestions are allowed by nulling user_id.
       user_id: params[:anonymous] ? nil : @current_user.id
     ), status: :created # 201
+  rescue ActionController::ParameterMissing => e
+    render json: { error: "#{e.param} is missing" }, status: :unprocessable_entity # 422
   rescue ActiveRecord::RecordInvalid => e
     render json: e.record.errors, status: :unprocessable_entity # 422
   end
