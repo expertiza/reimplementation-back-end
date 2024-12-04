@@ -44,7 +44,6 @@ class FeedbackResponseMap < ResponseMap
 
     @temp_review_responses = Response.where(['map_id IN (?)', @review_response_map_ids])
     # we need to pick the latest version of review for each round
-    # @temp_response_map_ids = [] # moving this to helper methods!
     if Assignment.find(id).varying_rubrics_by_round?
       # Call the helper method to get the response ids for the varying rubrics
       @all_review_response_ids_rounds = varying_rubrics_report(@temp_review_responses)
