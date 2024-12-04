@@ -5,8 +5,8 @@ module StudentTeamsHelper
       @team = AssignmentTeam.find(params[:team_id])
     end
   
-    def set_all_teams
-      @all_teams = AssignmentTeam.all
+    def all_teams
+      AssignmentTeam.all
     end 
   
     def current_team
@@ -37,5 +37,23 @@ module StudentTeamsHelper
   
     def parameter_missing(exception)
       render json: { error: "Parameter missing: #{exception.param}" }, status: :unprocessable_entity
+    end
+
+    def fetch_team_and_participants(team, status = :ok)
+      participants = team.assignment_participants
+      team_json = team.as_json
+      team_json[:participants] = participants.map { |participant| { student_id: participant.id } }
+      render json: team_json, status: status
+    end
+
+    def fetch_all_teams_and_participants(teams, status = :ok)
+      teams = teams.map do |team|
+        # Convert the team object to a JSON hash
+        team_json = team.as_json
+        # Append the participants to the team JSON hash
+        team_json[:participants] = team.assignment_participants.map { |participant| { student_id: participant.id } }
+        team_json
+      end
+      render json: { teams: teams }, status: status
     end
   end

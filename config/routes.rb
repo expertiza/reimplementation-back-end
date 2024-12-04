@@ -59,10 +59,11 @@ Rails.application.routes.draw do
           delete :destroy
         end
         collection do
-          delete ':id/remove_participant',action: :remove_participant
           get :index
           post :create
           patch :update
+          delete ':id/remove_participant',action: :remove_participant
+          patch ':id/add_participant', action: :add_participant
         end
       end
     
