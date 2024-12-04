@@ -1,31 +1,27 @@
 class Api::V1::NotificationsController < ApplicationController
-  before_action :set_notification, only: %i[show update destroy]
-
   include AuthorizationHelper
 
-  # Authorization to manage notifications
-  def action_allowed?
-    current_user_has_ta_privileges?
-  end
+  before_action :set_notification, only: %i[show update destroy]
 
   # GET /notifications
   def index
-    if current_user_has_ta_privileges? || current_user_has_instructor_privileges?
-      @notifications = Notification.where(user_id: session[:user].id)
+    if current_user_has_instructor_privileges? || current_user_has_ta_privileges?
+      @notifications = Notification.where(user_id: current_user.id)
     elsif current_user_has_student_privileges?
-      course_ids = session[:user].courses.pluck(:id)
-      @notifications = Notification.where(course_id: course_ids, active_flag: true)
+      course_names = current_user.courses.pluck(:name)
+      @notifications = Notification.where(course_name: course_names, active_flag: true)
     else
-      @notifications = []
+      render json: { error: 'Access denied' }, status: :forbidden
+      return
     end
 
-    render json: @notifications, status: :ok
+    render json: @notifications
   end
 
   # GET /notifications/:id
   def show
     if notification_accessible?(@notification)
-      render json: @notification, status: :ok
+      render json: @notification
     else
       render json: { error: 'You do not have access to this notification.' }, status: :forbidden
     end
@@ -33,57 +29,77 @@ class Api::V1::NotificationsController < ApplicationController
 
   # POST /notifications
   def create
+    # Check if the current user has sufficient privileges
+    unless current_user_has_instructor_privileges? || current_user_has_ta_privileges?
+      render json: { error: 'You are not authorized to create notifications.' }, status: :forbidden
+      return
+    end
+  
     @notification = Notification.new(notification_params)
-    @notification.user_id = session[:user].id
-
+    @notification.user_id = current_user.id
+  
     if @notification.save
       render json: @notification, status: :created
     else
-      render json: { errors: @notification.errors.full_messages }, status: :unprocessable_entity
+      render json: @notification.errors, status: :unprocessable_entity
     end
   end
+  
 
   # PATCH/PUT /notifications/:id
   def update
-    if notification_accessible?(@notification) && @notification.update(notification_params)
+    # Check if the current user has sufficient privileges
+    unless current_user_has_instructor_privileges? || current_user_has_ta_privileges?
+      render json: { error: 'You are not authorized to update notifications.' }, status: :forbidden
+      return
+    end
+  
+    if @notification.update(notification_params)
       render json: @notification, status: :ok
     else
-      render json: { error: 'You are not authorized to update this notification or invalid data provided.' }, status: :forbidden
+      render json: @notification.errors, status: :unprocessable_entity
     end
   end
+  
 
   # DELETE /notifications/:id
   def destroy
-    if notification_accessible?(@notification)
-      @notification.destroy
-      render json: { message: 'Notification was successfully deleted.' }, status: :ok
+    # Check if the current user has sufficient privileges
+    unless current_user_has_instructor_privileges? || current_user_has_ta_privileges?
+      render json: { error: 'You are not authorized to delete notifications.' }, status: :forbidden
+      return
+    end
+  
+    if @notification.destroy
+      render json: { message: 'Notification deleted successfully.' }, status: :ok
     else
-      render json: { error: 'You are not authorized to delete this notification.' }, status: :forbidden
+      render json: { error: 'Failed to delete the notification.' }, status: :unprocessable_entity
     end
   end
+  
 
   private
 
-  # Set notification by ID
+  # Use callbacks to share common setup or constraints between actions.
   def set_notification
     @notification = Notification.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     render json: { error: 'Notification not found.' }, status: :not_found
   end
 
-  # Strong parameters for notification
+  # Define strong parameters for notification creation/update
   def notification_params
-    params.require(:notification).permit(:course_id, :subject, :description, :expiration_date, :active_flag)
+    params.require(:notification).permit(:course_name, :subject, :description, :expiration_date, :active_flag)
   end
 
-  # Check if a notification is accessible by the current user
+  # Helper method to check if a notification is accessible to the current user
   def notification_accessible?(notification)
     # Instructors and TAs can access their own notifications
-    return true if notification.user_id == session[:user].id
+    return true if notification.user_id == current_user.id
 
-    # Students can access notifications for their enrolled courses
+    # Students can access notifications for their courses
     return true if current_user_has_student_privileges? &&
-                   session[:user].courses.exists?(id: notification.course_id)
+                   current_user.courses.exists?(name: notification.course_name)
 
     false
   end
