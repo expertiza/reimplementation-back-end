@@ -2,13 +2,13 @@ class Mailer < ActionMailer::Base
   default from: 'expertiza.mailer@gmail.com'
 
   def send_topic_approved_email(defn)
-    @suggester = defn[:suggester]
+    @suggester = defn[:suggester].handle
     @topic_name = defn[:topic_name]
     mail(to: @suggester.email, cc: defn[:cc], subject: defn[:subject]).deliver_now!
   end
 
   def send_topic_rejected_email(defn)
-    @suggester = defn[:suggester]
+    @suggester = defn[:suggester].handle
     @topic_name = defn[:topic_name]
     mail(to: @suggester.email, subject: defn[:subject]).deliver_now!
   end
