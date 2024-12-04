@@ -350,4 +350,36 @@ RSpec.describe 'Student Teams API', type: :request do
     end
   end
 
+  path '/api/v1/student_teams/{id}/add_participant' do
+    parameter name: 'id', in: :path, type: :integer, description: 'ID of Team'
+    parameter name: 'student_id', in: :query, type: :integer, description: 'ID of the Student'
+
+    let(:student) { create(:user, :student) }
+    let(:assignment) { create(:assignment) }
+    let(:student_participant) { create(:assignment_participant, user: student, assignment: assignment) }
+    let(:team) { create(:assignment_team, assignment: assignment) }
+    let(:id) { team.id }
+    let(:student_id) { student.id }
+    
+    patch('Add a participant to Student Team') do
+      tags 'Student Teams'
+      consumes 'application/json'
+      produces 'application/json'
+      security [Bearer: {}]
+      before do
+        team.add_member(student, assignment.id)
+      end
+
+      response(200, 'successful') do
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test! 
+      end
+    end
+  end
 end
