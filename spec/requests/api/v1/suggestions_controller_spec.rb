@@ -16,6 +16,7 @@ def login_user
 end
 
 RSpec.describe 'Suggestions API', type: :request do
+  # Login user, grab token, set user and current user
   before(:each) do
     auth_data = login_user
     @token = auth_data[:token]
@@ -23,9 +24,11 @@ RSpec.describe 'Suggestions API', type: :request do
     @current_user = @user
   end
 
+  # create default assignment and suggestion
   let(:assignment) { create(:assignment) }
   let(:suggestion) { create(:suggestion, assignment_id: assignment.id, user_id: @user.id) }
 
+  # Testing for add_comment method
   path '/api/v1/suggestions/{id}/add_comment' do
     post 'Add a comment to a suggestion' do
       tags 'Suggestions'
@@ -40,6 +43,7 @@ RSpec.describe 'Suggestions API', type: :request do
         required: ['comment']
       }
 
+      # successful comment addition test
       response '201', 'comment_added' do
         let(:Authorization) { "Bearer #{@token}" }
         let(:id) { suggestion.id }
@@ -52,6 +56,7 @@ RSpec.describe 'Suggestions API', type: :request do
         end
       end
 
+      # test for missing or empty comment
       response '422', 'unprocessable entity for missing or empty comment' do
         let(:Authorization) { "Bearer #{@token}" }
         let(:id) { suggestion.id }
@@ -71,6 +76,7 @@ RSpec.describe 'Suggestions API', type: :request do
         end
       end
 
+      # test for suggestion not found
       response '404', 'suggestion not found' do
         let(:Authorization) { "Bearer #{@token}" }
         let(:id) { -1 }
@@ -83,16 +89,22 @@ RSpec.describe 'Suggestions API', type: :request do
     end
   end
 
+  # Tests for approving suggestions
   path '/api/v1/suggestions/{id}/approve' do
     post 'Approve suggestion' do
       tags 'Suggestions'
       consumes 'application/json'
       parameter name: 'Authorization', in: :header, type: :string, required: true
       parameter name: :id, in: :path, type: :integer, required: true, description: 'ID of the suggestion'
+
+      # tests for when the user is an instructor/has ta privileges
       context '| when user is instructor | ' do
+        # set user to have ta privileges
         before(:each) do
           allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(true)
         end
+
+        # successful suggestion approval
         response '200', 'suggestion approved' do
           let(:Authorization) { "Bearer #{@token}" }
           let(:id) { suggestion.id }
@@ -103,6 +115,7 @@ RSpec.describe 'Suggestions API', type: :request do
           end
         end
 
+        # test for unprocessable with a record
         response '422', 'unprocessable entity' do
           let(:Authorization) { "Bearer #{@token}" }
           let(:id) { suggestion.id }
@@ -117,6 +130,7 @@ RSpec.describe 'Suggestions API', type: :request do
           end
         end
 
+        # test for unprocessable without a record
         response '422', 'unprocessable entity' do
           let(:Authorization) { "Bearer #{@token}" }
           let(:id) { suggestion.id }
@@ -131,6 +145,7 @@ RSpec.describe 'Suggestions API', type: :request do
           end
         end
 
+        # test for when a suggestion is not found
         response '404', 'suggestion not found' do
           let(:Authorization) { "Bearer #{@token}" }
           let(:id) { -1 }
@@ -140,10 +155,15 @@ RSpec.describe 'Suggestions API', type: :request do
           end
         end
       end
+
+      # test cases for when user is a student/doesn't have ta_privileges
       context ' | when user is student | ' do
+        # set user as not having ta_privileges
         before(:each) do
           allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(false)
         end
+
+        # test for students not being able to approve suggestions
         response '403', 'students cannot approve suggestions' do
           let(:Authorization) { "Bearer #{@token}" }
           let(:id) { suggestion.id }
@@ -157,6 +177,7 @@ RSpec.describe 'Suggestions API', type: :request do
     end
   end
 
+  # test cases for creating a suggestion
   path '/api/v1/suggestions' do
     post 'Create suggestion' do
       tags 'Suggestions'
@@ -164,6 +185,8 @@ RSpec.describe 'Suggestions API', type: :request do
       parameter name: 'Authorization', in: :header, type: :string, required: true
       parameter name: :suggestion, in: :body, type: :object, required: true,
                 description: 'Suggestion object with attributes'
+
+      # test for successful suggestion creation
       response '201', 'suggestion created successfully' do
         let(:Authorization) { "Bearer #{@token}" }
         let(:suggestion) do
@@ -177,6 +200,7 @@ RSpec.describe 'Suggestions API', type: :request do
           }
         end
 
+        # set up current user to return properly for test
         before do
           allow(controller).to receive(:current_user).and_return(@current_user)
         end
@@ -191,6 +215,7 @@ RSpec.describe 'Suggestions API', type: :request do
         end
       end
 
+      # test for a missing parameter
       response '422', 'missing title' do
         let(:Authorization) { "Bearer #{@token}" }
         let(:suggestion) do
@@ -204,6 +229,7 @@ RSpec.describe 'Suggestions API', type: :request do
           }
         end
 
+        # set up current user to return current user properly
         before do
           allow(controller).to receive(:current_user).and_return(@current_user)
         end
@@ -215,6 +241,7 @@ RSpec.describe 'Suggestions API', type: :request do
         end
       end
 
+      # test for invalid suggestion given
       response '422', 'unprocessable entity' do
         let(:Authorization) { "Bearer #{@token}" }
         let(:suggestion) do
@@ -241,16 +268,22 @@ RSpec.describe 'Suggestions API', type: :request do
     end
   end
 
+  # test cases for deleting suggestions
   path '/api/v1/suggestions/{id}' do
     delete 'Delete suggestion' do
       tags 'Suggestions'
       consumes 'application/json'
       parameter name: 'Authorization', in: :header, type: :string, required: true
       parameter name: :id, in: :path, type: :integer, required: true, description: 'ID of the suggestion'
+
+      # test cases for when the user is an instructor
       context '| when user is instructor | ' do
+        # set user to have ta privileges
         before(:each) do
           allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(true)
         end
+
+        # test for successful suggestion deletion
         response '204', 'suggestion deleted' do
           let(:Authorization) { "Bearer #{@token}" }
           let(:id) { suggestion.id }
@@ -261,6 +294,7 @@ RSpec.describe 'Suggestions API', type: :request do
           end
         end
 
+        # test for record not being destroyed
         response '422', 'unprocessable entity' do
           let(:Authorization) { "Bearer #{@token}" }
           let(:id) { suggestion.id }
@@ -275,6 +309,7 @@ RSpec.describe 'Suggestions API', type: :request do
           end
         end
 
+        # test for when suggestion is not found/doesn't exist
         response '404', 'suggestion not found' do
           let(:Authorization) { "Bearer #{@token}" }
           let(:id) { -1 }
@@ -284,10 +319,15 @@ RSpec.describe 'Suggestions API', type: :request do
           end
         end
       end
+
+      # test cases for when the user is a student
       context ' | when user is student | ' do
+        # set user to not have ta privileges
         before(:each) do
           allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(false)
         end
+
+        # test to make sure students cannot delete suggestions
         response '403', 'students cannot delete suggestions' do
           let(:Authorization) { "Bearer #{@token}" }
           let(:id) { suggestion.id }
@@ -301,16 +341,21 @@ RSpec.describe 'Suggestions API', type: :request do
     end
   end
 
+  # test cases for indexing/listing all suggestions
   path '/api/v1/suggestions/' do
     get 'list all suggestions' do
       tags 'Suggestions'
       consumes 'application/json'
       parameter name: 'Authorization', in: :header, type: :string, required: true
 
+      # test cases for when the user is an instructor/has ta privileges
       context '| when user is instructor | ' do
+        # set user to have ta privileges
         before(:each) do
           allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(true)
         end
+
+        # test for successful indexing
         response '200', 'suggestions listed' do
           let(:Authorization) { "Bearer #{@token}" }
 
@@ -319,10 +364,15 @@ RSpec.describe 'Suggestions API', type: :request do
           end
         end
       end
+
+      # test case for when user is a student
       context ' | when user is student | ' do
+        # set user to not have ta privileges
         before(:each) do
           allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(false)
         end
+
+        # test for student to be forbidden from indexing suggestions
         response '403', 'students cannot index suggestions' do
           let(:Authorization) { "Bearer #{@token}" }
 
@@ -335,16 +385,22 @@ RSpec.describe 'Suggestions API', type: :request do
     end
   end
 
+  # test cases for rejecting suggestions
   path '/api/v1/suggestions/{id}/reject' do
     post 'Reject suggestion' do
       tags 'Suggestions'
       consumes 'application/json'
       parameter name: 'Authorization', in: :header, type: :string, required: true
       parameter name: :id, in: :path, type: :integer, required: true, description: 'ID of the suggestion'
+
+      # test cases for when user is instructor/ta privileges
       context '| when user is instructor | ' do
+        # set user to have ta privileges
         before(:each) do
           allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(true)
         end
+
+        # test for successful suggestion rejection
         response '200', 'suggestion rejected' do
           let(:Authorization) { "Bearer #{@token}" }
           let(:id) { suggestion.id }
@@ -355,6 +411,7 @@ RSpec.describe 'Suggestions API', type: :request do
           end
         end
 
+        # test for suggestion already being approved
         response '422', 'suggestion already approved' do
           let(:Authorization) { "Bearer #{@token}" }
           let(:id) { suggestion.id }
@@ -371,6 +428,7 @@ RSpec.describe 'Suggestions API', type: :request do
           end
         end
 
+        # test for when the suggestion not being found
         response '404', 'suggestion not found' do
           let(:Authorization) { "Bearer #{@token}" }
           let(:id) { -1 }
@@ -380,6 +438,8 @@ RSpec.describe 'Suggestions API', type: :request do
           end
         end
       end
+
+      # test cases for when user is a student/doesn't have ta privileges
       context ' | when user is student | ' do
         before(:each) do
           allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(false)
@@ -397,6 +457,7 @@ RSpec.describe 'Suggestions API', type: :request do
     end
   end
 
+  # test cases for showing suggestions
   path '/api/v1/suggestions/{id}' do
     get 'show suggestion' do
       tags 'Suggestions'
@@ -404,9 +465,9 @@ RSpec.describe 'Suggestions API', type: :request do
       parameter name: 'Authorization', in: :header, type: :string, required: true
       parameter name: :id, in: :path, type: :integer, required: true, description: 'ID of the suggestion'
 
-      before(:each) do
-      end
+      # tests for when user is a instructor/has ta privileges
       context '| when user is instructor | ' do
+        # set user to have ta privileges
         before(:each) do
           allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(true)
         end
@@ -422,17 +483,23 @@ RSpec.describe 'Suggestions API', type: :request do
           end
         end
       end
+
+      # test cases for when user is a student/doesn't have ta privilges
       context ' | when user is student | ' do
+        # set user to not have ta privileges and make sure current user is set properly
         before(:each) do
           allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(false)
           allow(controller).to receive(:current_user).and_return(@current_user)
         end
 
+        # test cases for when user is owner of suggestion
         context ' | when user is student owner to suggestion | ' do
+          # make sure user is set as owner of suggestion
           before(:each) do
             # Simulate the student owning the suggestion
             suggestion.update!(user_id: @user.id)
           end
+          # test for student being able to view their own suggestion
           response '200', 'student can view their own suggestion' do
             let(:Authorization) { "Bearer #{@token}" }
             let(:id) { suggestion.id }
@@ -446,12 +513,15 @@ RSpec.describe 'Suggestions API', type: :request do
           end
         end
 
+        # test case for when user is not owner of suggestion
         context ' | when user is not student owner to suggestion | ' do
           before(:each) do
             # Simulate the student not owning the suggestion
             suggestion_double = double('Suggestion', id: suggestion.id, user_id: 9999)
             allow(Suggestion).to receive(:find).with(suggestion.id.to_s).and_return(suggestion_double)
           end
+
+          # make sure student can't view suggestions they don't own/are a part of
           response '403', 'student can\'t view other suggestions' do
             let(:Authorization) { "Bearer #{@token}" }
             let(:id) { suggestion.id }
@@ -463,6 +533,7 @@ RSpec.describe 'Suggestions API', type: :request do
         end
       end
 
+      # test for when suggestion doesn't exist
       response '404', 'suggestion not found' do
         let(:Authorization) { "Bearer #{@token}" }
         let(:id) { -1 }
@@ -474,6 +545,7 @@ RSpec.describe 'Suggestions API', type: :request do
     end
   end
 
+  # test cases for updating a suggestion
   path '/api/v1/suggestions/{id}' do
     patch 'update suggestion' do
       tags 'Suggestions'
@@ -481,12 +553,14 @@ RSpec.describe 'Suggestions API', type: :request do
       parameter name: 'Authorization', in: :header, type: :string, required: true
       parameter name: :id, in: :path, type: :integer, required: true, description: 'ID of the suggestion'
 
-      before(:each) do
-      end
+      # test cases for when user is an instructor/has ta privileges
       context '| when user is instructor | ' do
+        # set user to have ta privileges
         before(:each) do
           allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(true)
         end
+
+        # test for successful suggestion update
         response '200', 'suggestion updated' do
           let(:Authorization) { "Bearer #{@token}" }
           let(:id) { suggestion.id }
@@ -496,17 +570,23 @@ RSpec.describe 'Suggestions API', type: :request do
           end
         end
       end
+
+      # test cases for when user is a student
       context ' | when user is student | ' do
+        # set user to be a student and setup current user
         before(:each) do
           allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(false)
           allow(controller).to receive(:current_user).and_return(@current_user)
         end
 
+        # test cases for when student is owner/a part of suggestion
         context ' | when user is student owner to suggestion | ' do
           before(:each) do
             # Simulate the student owning the suggestion
             suggestion.update!(user_id: @user.id)
           end
+
+          # test to make sure students can update their own suggestion(s)
           response '200', 'student can update their own suggestion' do
             let(:Authorization) { "Bearer #{@token}" }
             let(:id) { suggestion.id }
@@ -517,12 +597,15 @@ RSpec.describe 'Suggestions API', type: :request do
           end
         end
 
+        # test cases for when student is not owner to suggestion
         context ' | when user is not student owner to suggestion | ' do
           before(:each) do
             # Simulate the student not owning the suggestion
             suggestion_double = double('Suggestion', id: suggestion.id, user_id: 9999)
             allow(Suggestion).to receive(:find).with(suggestion.id.to_s).and_return(suggestion_double)
           end
+
+          # test for forbidding student(s) from updating suggestions other then their own
           response '403', 'student can\'t updates other suggestions' do
             let(:Authorization) { "Bearer #{@token}" }
             let(:id) { suggestion.id }
@@ -534,6 +617,7 @@ RSpec.describe 'Suggestions API', type: :request do
         end
       end
 
+      # test for suggestion not being found
       response '404', 'suggestion not found' do
         let(:Authorization) { "Bearer #{@token}" }
         let(:id) { -1 }
@@ -542,6 +626,8 @@ RSpec.describe 'Suggestions API', type: :request do
           expect(response.status).to eq(404)
         end
       end
+
+      # test for suggestion being invalid in some form/missing
       response '422', 'unprocessable entity' do
         let(:Authorization) { "Bearer #{@token}" }
         let(:id) { suggestion.id }
