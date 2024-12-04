@@ -161,4 +161,27 @@ RSpec.describe Authorization, type: :controller do
     end
   end
 
+  ##########################################
+  # Tests for action_allowed? method
+  ##########################################
+  describe '#action_allowed?' do
+    it 'returns true by default' do
+      expect(controller.action_allowed?).to be true
+    end
+
+    it 'can be overridden in subclasses for custom logic' do
+      class CustomController < ApplicationController
+        include Authorization
+
+        def action_allowed?
+          false
+        end
+      end
+
+      custom_controller = CustomController.new
+      expect(custom_controller.action_allowed?).to be false
+    end
+  end
+
+
 end
