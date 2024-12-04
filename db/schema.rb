@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
+ActiveRecord::Schema[7.0].define(version: 2024_12_01_221122) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -45,6 +45,11 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
     t.integer "used_in_round"
     t.index ["assignment_id"], name: "fk_aq_assignments_id"
     t.index ["questionnaire_id"], name: "fk_aq_questionnaire_id"
+  end
+
+  create_table "assignment_teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -102,6 +107,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
     t.boolean "enable_pair_programming", default: false
     t.boolean "has_teams", default: false
     t.boolean "has_topics", default: false
+    t.boolean "auto_assign_mentor"
     t.index ["course_id"], name: "index_assignments_on_course_id"
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
@@ -292,6 +298,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "assignment_id", null: false
+    t.string "type"
     t.index ["assignment_id"], name: "index_teams_on_assignment_id"
   end
 

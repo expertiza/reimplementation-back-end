@@ -23,10 +23,11 @@ RSpec.configure do |config|
       },
       components: {
         securitySchemes: {
-          bearerAuth: {
-            type: "http",
-            scheme: "bearer",
-            bearerFormat: "JWT"
+          Bearer: {
+            description: 'JWT key necessary to use API calls',
+            type: :apiKey,
+            name: 'authorization',
+            in: :header
           }
         }
       },
