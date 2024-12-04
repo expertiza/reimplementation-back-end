@@ -44,22 +44,30 @@ class Api::V1::StudentQuizzesController < ApplicationController
   #POST /student_quizzes/assign
   # Assigns a specific quiz to a student
   def assign_quiz_to_student
+    # Retrieve the participant and questionnaire using their respective IDs
     participant = find_resource_by_id(Participant, params[:participant_id])
     questionnaire = find_resource_by_id(Questionnaire, params[:questionnaire_id])
+    
+    # Stop execution if either the participant or questionnaire does not exist
     return unless participant && questionnaire
-
+  
+    # Check if the quiz has already been assigned to this student
     if quiz_already_assigned?(participant, questionnaire)
       render_error("This student is already assigned to the quiz.", :unprocessable_entity)
       return
     end
-
+  
+    # Create a new response map to link the student and the quiz
     response_map = build_response_map(participant.user_id, questionnaire)
+    
+    # Attempt to save the response map and render appropriate success or error messages
     if response_map.save
       render_success(response_map, :created)
     else
       render_error(response_map.errors.full_messages.to_sentence, :unprocessable_entity)
     end
   end
+  
 
   #POST /student_quizzes/submit_answers
   def grade_submitted_answers
