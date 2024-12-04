@@ -48,12 +48,15 @@ class FeedbackResponseMap < ResponseMap
     if Assignment.find(id).varying_rubrics_by_round?
       # Call the helper method to get the response ids for the varying rubrics
       @all_review_response_ids_rounds = varying_rubrics_report(@temp_review_responses)
-      [
-        @authors,
-        @all_review_response_ids_rounds[1],
-        @all_review_response_ids_rounds[2],
-        @all_review_response_ids_rounds[3]
-      ]
+      # Return the authors and the varying rubric response ids
+      to_return = [@authors]
+      # Get the keys and sort them (we can safely assume that the keys are integers)
+      review_response_keys = @all_review_response_ids_rounds.keys.sort
+      # Add the response ids to the return array in order
+      review_response_keys.each do |key|
+        to_return << @all_review_response_ids_rounds[key]
+      end
+      to_return
     else
       # Call the helper method to get the response ids for the static rubrics
       @all_review_response_ids = static_rubrics_report(@temp_review_responses)
