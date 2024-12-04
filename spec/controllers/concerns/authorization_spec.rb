@@ -121,9 +121,7 @@ RSpec.describe Authorization, type: :controller do
       end
     end
   end
-
-  # More authorization methods will be tested below...
-
+  
   ##########################################
   # Tests for all_actions_allowed? method
   ##########################################
@@ -183,5 +181,35 @@ RSpec.describe Authorization, type: :controller do
     end
   end
 
+  ##########################################
+  # Tests for authorize method
+  ##########################################
+  describe '#authorize' do
+    context 'when all actions are allowed' do
+      before do
+        allow(controller).to receive(:all_actions_allowed?).and_return(true)
+      end
 
+      it 'does not render an error response' do
+        expect(controller).not_to receive(:render)
+        controller.authorize
+      end
+    end
+
+    context 'when actions are not allowed' do
+      before do
+        allow(controller).to receive(:all_actions_allowed?).and_return(false)
+        allow(controller.params).to receive(:[]).with(:action).and_return('edit')
+        allow(controller.params).to receive(:[]).with(:controller).and_return('users')
+      end
+
+      it 'renders an error response with forbidden status' do
+        expect(controller).to receive(:render).with(
+          json: { error: "You are not authorized to edit this users" },
+          status: :forbidden
+        )
+        controller.authorize
+      end
+    end
+  end
 end
