@@ -123,4 +123,42 @@ RSpec.describe Authorization, type: :controller do
   end
 
   # More authorization methods will be tested below...
+
+  ##########################################
+  # Tests for all_actions_allowed? method
+  ##########################################
+  describe '#all_actions_allowed?' do
+    context 'when the user has the Administrator role' do
+      before do
+        allow(controller).to receive(:has_required_role?).with('Administrator').and_return(true)
+      end
+
+      it 'returns true' do
+        expect(controller.all_actions_allowed?).to be true
+      end
+    end
+
+    context 'when the user does not have the Administrator role' do
+      before do
+        allow(controller).to receive(:has_required_role?).with('Administrator').and_return(false)
+        allow(controller).to receive(:action_allowed?).and_return(false)
+      end
+
+      it 'checks action_allowed? and returns false' do
+        expect(controller.all_actions_allowed?).to be false
+      end
+    end
+
+    context 'when action_allowed? returns true' do
+      before do
+        allow(controller).to receive(:has_required_role?).with('Administrator').and_return(false)
+        allow(controller).to receive(:action_allowed?).and_return(true)
+      end
+
+      it 'returns true' do
+        expect(controller.all_actions_allowed?).to be true
+      end
+    end
+  end
+
 end
