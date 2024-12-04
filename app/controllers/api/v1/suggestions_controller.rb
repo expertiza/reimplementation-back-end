@@ -184,12 +184,8 @@ class Api::V1::SuggestionsController < ApplicationController
 
   def send_notice_of_approval
     # Email the suggester and CC the suggester's teammates that the suggestion was approved
-    # # Check if the suggester has a team
-
-    # Prepare the cc list based on whether a team exists
     Mailer.send_topic_approved_email(
-      cc: User.joins(:teams_users).where(teams_users: { team_id: @team.id })
-      .where.not(id: @suggester.id).map(&:email),
+      cc: User.joins(:teams_users).where(teams_users: { team_id: @team.id }).where.not(id: @suggester.id).map(&:email),
       subject: "Suggested topic '#{@suggestion.title}' has been approved",
       suggester: @suggester,
       topic_name: @suggestion.title
