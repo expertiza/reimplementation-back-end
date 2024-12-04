@@ -54,27 +54,6 @@ class Api::V1::TeamsParticipantsController < ApplicationController
     # Fetch the team for which a participant is to be added.
     @team = Team.find(params[:id])
   end
-
-  # Adds a new participant to a team after validation.
-  def create_participant
-    # Find the user by their name from the input.
-    find_participant = find_participant_by_name
-
-    # Fetch the team using the provided ID.
-    current_team = find_team_by_id
-
-    if validate_participant_and_team(participant, team)
-      if team.add_participants_with_handling(participant, team.parent_id)
-        undo_link("The participant \"#{participant.name}\" has been successfully added to \"#{team.name}\".")
-      else
-        flash[:error] = 'This team already has the maximum number of members.'
-      end
-    end
-
-    # Redirect to the list of teams for the parent assignment or course.
-    redirect_to controller: 'teams', action: 'list', id: current_team.parent_id
-  end
-
   #Deletes the selected participant
   def delete_selected_participant
     @teams_user = TeamsUser.find(params[:id])
@@ -84,7 +63,24 @@ class Api::V1::TeamsParticipantsController < ApplicationController
     undo_link("The team user \"#{@user.name}\" has been successfully removed. ")
     redirect_to controller: 'teams', action: 'list', id: parent_id
   end
-  
+
+  # Adds a new participant to a team after validation.
+  def create_participant
+    # Find the user by their name from the input.
+    find_participant = find_participant_by_name
+    # Fetch the team using the provided ID.
+    current_team = find_team_by_id
+    if validate_participant_and_team(participant, team)
+      if team.add_participants_with_validation(participant, team.parent_id)
+        undo_link("The participant \"#{participant.name}\" has been successfully added to \"#{team.name}\".")
+      else
+        flash[:error] = 'This team already has the maximum number of members.'
+      end
+    end
+    # Redirect to the list of teams for the parent assignment or course.
+    redirect_to controller: 'teams', action: 'list', id: current_team.parent_id
+  end
+ 
   private
 
   # Helper method to find a user by their name.
@@ -128,11 +124,11 @@ class Api::V1::TeamsParticipantsController < ApplicationController
   def add_participant_to_team(find_participant, team)
     # Add the participant to the team and handle the outcome.
     addition_result = find_team_by_id.add_participant(find_participant, team.parent_id)
-    handle_addition_result(find_participant, team, addition_result)
+    process_participant_addition_result(find_participant, team, addition_result)
   end
 
   # Handles the result of adding a participant to the team.
-  def handle_addition_result(find_participant, team, addition_result)
+  def process_participant_addition_result(find_participant, team, addition_result)
     if addition_result == false
       flash[:error] = 'This team already has the maximum number of members.'
     else

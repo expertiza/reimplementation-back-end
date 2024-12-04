@@ -50,6 +50,15 @@ class Course < ApplicationRecord
     new_course.save
   end
   #E2479
+  #checks if the user is in the team
+  def user_on_team?(user)
+    teams = self.teams
+    users = []
+    teams.each do |team|
+      users << team.users
+    end
+    users.flatten.include? user
+  end
   # Checks if a user is eligible to join a specific team for a course.
 # This method ensures that:
 # - The user is not already a member of another team for the course.
@@ -62,7 +71,7 @@ class Course < ApplicationRecord
 #   - { success: false, error: "Reason for failure" } if the user cannot be added.
 def valid_team_participant?(user)
   # Check if the user is already a member of another team for the same course.
-  if already_on_team?(user)
+  if user_on_team?(user)
     { success: false, error: "This user is already assigned to a team for this course" }
   
   # Check if the user is a participant in the course associated with this team.

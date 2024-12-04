@@ -18,7 +18,7 @@ class TeamsUser < ApplicationRecord
 
 #E2479
   # Deletes multiple team members in bulk.
-  def self.bulk_delete_participants(team_user_ids)
+  def self.delete_multiple_participants(team_user_ids)
     where(id: team_user_ids).destroy_all
   end
 
