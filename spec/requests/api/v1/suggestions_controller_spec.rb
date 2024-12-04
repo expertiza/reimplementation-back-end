@@ -342,25 +342,29 @@ RSpec.describe 'Suggestions API', type: :request do
   end
 
   # test cases for indexing/listing all suggestions
-  path '/api/v1/suggestions/' do
+  path '/api/v1/suggestions' do
     get 'list all suggestions' do
       tags 'Suggestions'
       consumes 'application/json'
       parameter name: 'Authorization', in: :header, type: :string, required: true
+      parameter name: :id, in: :query, type: :integer, required: true, description: 'ID of the assignment'
 
       # test cases for when the user is an instructor/has ta privileges
       context '| when user is instructor | ' do
         # set user to have ta privileges
         before(:each) do
           allow(AuthorizationHelper).to receive(:current_user_has_ta_privileges?).and_return(true)
+          suggestion.update(assignment_id: assignment.id)
         end
 
         # test for successful indexing
         response '200', 'suggestions listed' do
           let(:Authorization) { "Bearer #{@token}" }
+          let(:id) { assignment.id }
 
           run_test! do |response|
             expect(response.status).to eq(200)
+            expect(JSON.parse(response.body).size).to eq(1)
           end
         end
       end
@@ -375,6 +379,7 @@ RSpec.describe 'Suggestions API', type: :request do
         # test for student to be forbidden from indexing suggestions
         response '403', 'students cannot index suggestions' do
           let(:Authorization) { "Bearer #{@token}" }
+          let(:id) { assignment.id }
 
           run_test! do |response|
             expect(response.status).to eq(403)

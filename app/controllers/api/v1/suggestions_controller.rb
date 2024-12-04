@@ -3,7 +3,7 @@ class Api::V1::SuggestionsController < ApplicationController
   include AuthorizationHelper
 
   # Strong params inlined as global before_action
-  before_action except: %i[index create] do
+  before_action except: %i[create] do
     params.require(:id)
   end
 
