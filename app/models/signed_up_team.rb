@@ -1,5 +1,5 @@
 class SignedUpTeam < ApplicationRecord
-  belongs_to :project_topic
+  belongs_to :project_topic, foreign_key: :sign_up_topic_id
   belongs_to :team
 
   # Removes all waitlist entries for a given team.
@@ -23,8 +23,12 @@ class SignedUpTeam < ApplicationRecord
   def self.get_team_id(user_id, assignment_id)
     # Get the team IDs associated with the given user
     team_ids = TeamsUser.select('team_id').where(user_id: user_id)
+
+    if team_ids.empty?
+      return nil
+    end
     # Find the team that matches the assignment ID and retrieve its team_id
-    team_id = Team.where(team_id: team_ids, assignment_id: assignment_id).first.team_id
+    team_id = Team.where(id: team_ids, assignment_id: assignment_id).first.id
     # Return the team ID
     team_id
   end

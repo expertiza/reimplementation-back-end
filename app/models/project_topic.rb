@@ -1,5 +1,5 @@
 class ProjectTopic < ApplicationRecord
-  has_many :signed_up_teams, foreign_key: 'topic_id', dependent: :destroy
+  has_many :signed_up_teams, foreign_key: :sign_up_topic_id, dependent: :destroy
   has_many :teams, through: :signed_up_teams # list all teams choose this topic, no matter in waitlist or not
   has_many :assignment_questionnaires, class_name: 'AssignmentQuestionnaire', foreign_key: 'topic_id', dependent: :destroy
   belongs_to :assignment
@@ -70,7 +70,7 @@ class ProjectTopic < ApplicationRecord
 
     # If the team is not waitlisted, reassign the topic to the next waitlisted team
     unless signed_up_team.is_waitlisted
-      next_waitlisted_team = longest_waiting_team(self.id)
+      next_waitlisted_team = longest_waiting_team
       next_waitlisted_team&.reassign_topic(self.id)
     end
     
