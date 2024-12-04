@@ -1,5 +1,5 @@
 # app/models/upload_file.rb
-class UploadFile < Question
+class UploadFile < Item
     def edit(_count)
       {
         action: 'edit',

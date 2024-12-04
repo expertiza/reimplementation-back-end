@@ -1,4 +1,4 @@
-class Checkbox < UnscoredQuestion
+class Checkbox < UnscoredItem
     def edit(count)
       {
         remove_button: edit_remove_button(count),
@@ -54,7 +54,7 @@ class Checkbox < UnscoredQuestion
     def edit_weight(count)
       {
         type: 'weight',
-        placeholder: 'UnscoredQuestion does not need weight'
+        placeholder: 'UnscoredItem does not need weight'
       }
     end
   
@@ -85,7 +85,7 @@ class Checkbox < UnscoredQuestion
     end
   
     def check_previous_question
-      prev_question = Question.where('seq < ?', seq).order(:seq).last
+      prev_question = Item.where('seq < ?', seq).order(:seq).last
       {
         type: prev_question&.type == 'ColumnHeader' ? 'ColumnHeader' : 'other'
       }
@@ -122,7 +122,7 @@ class Checkbox < UnscoredQuestion
     end
   
     def complete_if_column_header
-      next_question = Question.where('seq > ?', seq).order(:seq).first
+      next_question = Item.where('seq > ?', seq).order(:seq).first
       if next_question
         case next_question.question_type
         when 'ColumnHeader'
@@ -155,7 +155,7 @@ class Checkbox < UnscoredQuestion
     end
   
     def view_completed_question_if_column_header
-      next_question = Question.where('seq > ?', seq).order(:seq).first
+      next_question = Item.where('seq > ?', seq).order(:seq).first
       if next_question
         case next_question.question_type
         when 'ColumnHeader'

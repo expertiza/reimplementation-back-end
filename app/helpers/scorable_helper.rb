@@ -11,7 +11,7 @@ module ScorableHelper
     question_ids = scores.map(&:question_id)
 
     # We use find with order here to ensure that the list of questions we get is in the same order as that of question_ids
-    questions = Question.find_with_order(question_ids)
+    questions = Item.find_with_order(question_ids)
 
     scores.each_with_index do |score, idx|
       question = questions[idx]
@@ -38,7 +38,7 @@ module ScorableHelper
     question_ids = scores.map(&:question_id)
 
     # We use find with order here to ensure that the list of questions we get is in the same order as that of question_ids
-    questions = Question.find_with_order(question_ids)
+    questions = Item.find_with_order(question_ids)
 
     scores.each_with_index do |score, idx|
       total_weight += questions[idx].weight unless score.answer.nil? || !questions[idx].scorable?
@@ -60,7 +60,7 @@ module ScorableHelper
       assignment = map.response_assignment
       questionnaire = Questionnaire.find(assignment.review_questionnaire_id)
     else
-      questionnaire = Question.find(answer.question_id).questionnaire
+      questionnaire = Item.find(answer.question_id).questionnaire
     end
     questionnaire
   end

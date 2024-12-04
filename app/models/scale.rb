@@ -1,10 +1,10 @@
-class Scale < ScoredQuestion
+class Scale < ScoredItem
     include QuestionHelper
   
     attr_accessor :txt, :type, :weight, :min_label, :max_label, :answer, :min_question_score, :max_question_score
   
     def edit
-      edit_common('Question:', min_question_score, max_question_score , txt, weight, type).to_json
+      edit_common('Item:', min_question_score, max_question_score , txt, weight, type).to_json
     end
   
     def view_question_text
@@ -22,7 +22,7 @@ class Scale < ScoredQuestion
       if options[:count] && options[:answer] && options[:questionnaire_max]
         { count: options[:count], answer: options[:answer], questionnaire_max: options[:questionnaire_max] }.to_json
       else
-        { message: 'Question not answered.' }.to_json
+        { message: 'Item not answered.' }.to_json
       end
     end
   

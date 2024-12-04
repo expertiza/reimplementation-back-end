@@ -1,4 +1,4 @@
-class Criterion < ScoredQuestion
+class Criterion < ScoredItem
     validates :size, presence: true
   
     def edit

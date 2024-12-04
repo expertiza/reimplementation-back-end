@@ -1,6 +1,6 @@
 require 'json'
 
-class MultipleChoiceCheckbox < QuizQuestion
+class MultipleChoiceCheckbox < QuizItem
   def edit
     quiz_question_choices = QuizQuestionChoice.where(question_id: id)
 

@@ -111,7 +111,7 @@ describe Questionnaire, type: :model do
     # Test ensures calls from the method copy_questionnaire_details
     it 'allowing calls from copy_questionnaire_details' do
       allow(Questionnaire).to receive(:find).with('1').and_return(questionnaire)
-      allow(Question).to receive(:where).with(questionnaire_id: '1').and_return([Question])
+      allow(Item).to receive(:where).with(questionnaire_id: '1').and_return([Item])
     end
     
     # Test ensures creation of a copy of given questionnaire

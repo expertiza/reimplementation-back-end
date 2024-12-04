@@ -1,6 +1,6 @@
 require 'json'
 
-class MultipleChoiceRadio < QuizQuestion
+class MultipleChoiceRadio < QuizItem
   def edit
     quiz_question_choices = QuizQuestionChoice.where(question_id: id)
 
