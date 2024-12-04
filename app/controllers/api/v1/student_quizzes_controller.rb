@@ -1,4 +1,5 @@
 class Api::V1::StudentQuizzesController < ApplicationController
+  include ResourceFinder
   before_action :check_instructor_role, except: [:grade_submitted_answers]
   before_action :set_student_quiz, only: [:show, :update, :destroy]
 
@@ -43,8 +44,8 @@ class Api::V1::StudentQuizzesController < ApplicationController
   # Assigns a specific quiz to a student
   def assign_quiz_to_student
     # Retrieve the participant and questionnaire using their respective IDs
-    participant = ResourceFinder.find_resource_by_id(Participant, params[:participant_id])
-    questionnaire = ResourceFinder.find_resource_by_id(Questionnaire, params[:questionnaire_id])
+    participant = find_resource_by_id(Participant, params[:participant_id])
+    questionnaire = find_resource_by_id(Questionnaire, params[:questionnaire_id])
     
     # Stop execution if either the participant or questionnaire does not exist
     return unless participant && questionnaire
@@ -105,7 +106,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
 
   #To get quiz from db
   def set_student_quiz
-    @student_quiz = ResourceFinder.find_resource_by_id(Questionnaire, params[:id])
+    @student_quiz = find_resource_by_id(Questionnaire, params[:id])
   end
 
   # Find the response map for the current user's attempt to submit quiz answers
@@ -165,16 +166,6 @@ class Api::V1::StudentQuizzesController < ApplicationController
   def check_instructor_role
     unless current_user.role.instructor?
       render_error('Only instructors are allowed to perform this action', :forbidden)
-    end
-  end
-
-  # Find a specific resource by ID, handling the case where it's not found
-  module ResourceFinder
-    def find_resource_by_id(resource, id)
-      resource.find(id)
-    rescue ActiveRecord::RecordNotFound
-      render_error("#{resource.name} not found", :not_found)
-      nil
     end
   end
 end
