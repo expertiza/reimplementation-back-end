@@ -128,7 +128,7 @@ RSpec.describe Authorization, type: :controller do
   describe '#all_actions_allowed?' do
     context 'when the user has the Administrator role' do
       before do
-        allow(controller).to receive(:has_required_role?).with('Administrator').and_return(true)
+        allow(controller).to receive(:has_required_role?).with('Super Administrator').and_return(true)
       end
 
       it 'returns true' do
@@ -138,7 +138,7 @@ RSpec.describe Authorization, type: :controller do
 
     context 'when the user does not have the Administrator role' do
       before do
-        allow(controller).to receive(:has_required_role?).with('Administrator').and_return(false)
+        allow(controller).to receive(:has_required_role?).with('Super Administrator').and_return(false)
         allow(controller).to receive(:action_allowed?).and_return(false)
       end
 
@@ -149,7 +149,7 @@ RSpec.describe Authorization, type: :controller do
 
     context 'when action_allowed? returns true' do
       before do
-        allow(controller).to receive(:has_required_role?).with('Administrator').and_return(false)
+        allow(controller).to receive(:has_required_role?).with('Super Administrator').and_return(false)
         allow(controller).to receive(:action_allowed?).and_return(true)
       end
 

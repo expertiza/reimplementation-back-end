@@ -13,7 +13,7 @@ module Authorization
 
   # Check if all actions are allowed
   def all_actions_allowed?
-    return true if has_required_role?('Administrator')
+    return true if has_required_role?('Super Administrator')
     action_allowed?
   end
 
