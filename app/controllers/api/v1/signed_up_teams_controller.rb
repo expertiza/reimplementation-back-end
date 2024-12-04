@@ -1,11 +1,10 @@
 class Api::V1::SignedUpTeamsController < ApplicationController
 
-  # Returns signed up topics using sign_up_topic assignment id
-  # Retrieves sign_up_topic using topic_id as a parameter
+  # Returns signed up topics using project_topic assignment id
+  # Retrieves project_topic using topic_id as a parameter
   def index
-    # puts params[:topic_id]
-    @sign_up_topic = SignUpTopic.find(params[:topic_id])
-    @signed_up_team = SignedUpTeam.find_team_participants(@sign_up_topic.assignment_id)
+    @project_topic = ProjectTopic.find(params[:topic_id])
+    @signed_up_team = SignedUpTeam.find_team_participants(@project_topic.assignment_id)
     render json: @signed_up_team
   end
 
@@ -28,6 +27,7 @@ class Api::V1::SignedUpTeamsController < ApplicationController
     team_id = params[:team_id]
     topic_id = params[:topic_id]
     @signed_up_team = SignedUpTeam.create_signed_up_team(topic_id, team_id)
+    @signed_up_team.save
     if @signed_up_team
       render json: { message: "Signed up team successful!" }, status: :created
     else
@@ -37,16 +37,14 @@ class Api::V1::SignedUpTeamsController < ApplicationController
 
   # Method for signing up as student
   # Params : topic_id
-  # Get team_id using model method get_team_participants
+  # Get team_id using model method get_team_id
   # Call create_signed_up_team Model method
   def sign_up_student
     user_id = params[:user_id]
     topic_id = params[:topic_id]
-    team_id = SignedUpTeam.get_team_participants(user_id)
-    # @teams_user = TeamsUser.where(user_id: user_id).first
-    # team_id = @teams_user.team_id
+    assignment_id = params[:assignment_id]
+    team_id = SignedUpTeam.get_team_id(user_id, assignment_id)
     @signed_up_team = SignedUpTeam.create_signed_up_team(topic_id, team_id)
-    # create(topic_id, team_id)
     if @signed_up_team
       render json: { message: "Signed up team successful!" }, status: :created
     else
@@ -66,6 +64,8 @@ class Api::V1::SignedUpTeamsController < ApplicationController
 
   private
 
+  # Strong parameters method for permitting attributes related to signed-up teams.
+  # Ensures only the allowed parameters are passed for creating or updating a signed-up team.
   def signed_up_teams_params
     params.require(:signed_up_team).permit(:topic_id, :team_id, :is_waitlisted, :preference_priority_number)
   end

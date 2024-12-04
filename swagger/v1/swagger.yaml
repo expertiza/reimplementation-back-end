@@ -1038,9 +1038,9 @@ paths:
       responses:
         '204':
           description: successful
-  "/api/v1/sign_up_topics":
+  "/api/v1/project_topics":
     get:
-      summary: Get sign-up topics
+      summary: Get project topics
       parameters:
       - name: assignment_id
         in: query
@@ -1055,12 +1055,12 @@ paths:
         schema:
           type: string
       tags:
-      - SignUpTopic
+      - ProjectTopic
       responses:
         '200':
           description: successful
     delete:
-      summary: Delete sign-up topics
+      summary: Delete project topics
       parameters:
       - name: assignment_id
         in: query
@@ -1077,14 +1077,14 @@ paths:
         schema:
           type: array
       tags:
-      - SignUpTopic
+      - ProjectTopic
       responses:
         '200':
           description: successful
     post:
       summary: create a new topic in the sheet
       tags:
-      - SignUpTopic
+      - ProjectTopic
       parameters: []
       responses:
         '201':
@@ -1114,7 +1114,7 @@ paths:
               - category
               - assignment_id
               - micropayment
-  "/api/v1/sign_up_topics/{id}":
+  "/api/v1/project_topics/{id}":
     parameters:
     - name: id
       in: path
@@ -1125,7 +1125,7 @@ paths:
     put:
       summary: update a new topic in the sheet
       tags:
-      - SignUpTopic
+      - ProjectTopic
       parameters: []
       responses:
         '200':

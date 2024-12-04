@@ -145,8 +145,9 @@ class Api::V1::AssignmentsController < ApplicationController
     end
   end
 
-  # check if assignment has topics
-  # has_topics is set to true if there is SignUpTopic corresponding to the input assignment id 
+  # Checks if an assignment has associated topics.
+  # If the assignment is found, it returns a boolean indicating whether topics exist for it.
+  # If the assignment is not found, it returns an error message.
   def has_topics
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
