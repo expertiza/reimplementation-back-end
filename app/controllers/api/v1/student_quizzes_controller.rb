@@ -2,8 +2,6 @@ class Api::V1::StudentQuizzesController < ApplicationController
   before_action :check_instructor_role, except: [:grade_submitted_answers]
   before_action :set_student_quiz, only: [:show, :update, :destroy]
 
-  include ResourceFinder
-
   rescue_from ActiveRecord::RecordInvalid do |exception|
     render_error(exception.message)
   end
@@ -32,7 +30,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
   #POST /student_quizzes
   def create
     questionnaire = ActiveRecord::Base.transaction do
-      questionnaire = create_questionnaire(questionnaire_params.except(:questions_attributes))
+      questionnaire = Questionnaire.create!(questionnaire_params.except(:questions_attributes))
       create_questions_and_answers(questionnaire, questionnaire_params[:questions_attributes])
       questionnaire
     end
@@ -45,8 +43,8 @@ class Api::V1::StudentQuizzesController < ApplicationController
   # Assigns a specific quiz to a student
   def assign_quiz_to_student
     # Retrieve the participant and questionnaire using their respective IDs
-    participant = find_resource_by_id(Participant, params[:participant_id])
-    questionnaire = find_resource_by_id(Questionnaire, params[:questionnaire_id])
+    participant = ResourceFinder.find_resource_by_id(Participant, params[:participant_id])
+    questionnaire = ResourceFinder.find_resource_by_id(Questionnaire, params[:questionnaire_id])
     
     # Stop execution if either the participant or questionnaire does not exist
     return unless participant && questionnaire
@@ -58,7 +56,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
     end
   
     # Create a new response map to link the student and the quiz
-    response_map = build_response_map(participant.user_id, questionnaire)
+    response_map = ResponseMap.build_response_map(participant.user_id, questionnaire)
     
     # Attempt to save the response map and render appropriate success or error messages
     if response_map.save
@@ -107,7 +105,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
 
   #To get quiz from db
   def set_student_quiz
-    @student_quiz = find_resource_by_id(Questionnaire, params[:id])
+    @student_quiz = ResourceFinder.find_resource_by_id(Questionnaire, params[:id])
   end
 
   # Find the response map for the current user's attempt to submit quiz answers
@@ -116,11 +114,6 @@ class Api::V1::StudentQuizzesController < ApplicationController
       reviewee_id: current_user.id,
       reviewed_object_id: params[:questionnaire_id]
     )
-  end
-
-  # Process and calculate the total score for submitted answers
-  def process_answers(answers, response_map)
-    response_map.process_answers(answers)
   end
 
   # Find or initialize a response for a specific question within an attempt
@@ -137,21 +130,6 @@ class Api::V1::StudentQuizzesController < ApplicationController
       reviewee_id: participant.user_id,
       reviewed_object_id: questionnaire.id
     )
-  end
-
-  # Build a new ResponseMap instance for assigning a quiz to a student
-  def build_response_map(student_id, questionnaire)
-    instructor_id = questionnaire.assignment.instructor_id
-    ResponseMap.new(
-      reviewee_id: student_id,
-      reviewer_id: instructor_id,
-      reviewed_object_id: questionnaire.id
-    )
-  end
-
-  # Create a new questionnaire along with its questions and answers
-  def create_questionnaire(params)
-    Questionnaire.create!(params)
   end
 
   # Create questions and their respective answers for a questionnaire
