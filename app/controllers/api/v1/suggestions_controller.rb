@@ -17,6 +17,8 @@ class Api::V1::SuggestionsController < ApplicationController
       suggestion_id: params[:id],
       user_id: @current_user.id
     ), status: :created # 201
+  rescue ActionController::ParameterMissing => e
+    render json: { error: "#{e.param} is missing" }, status: :unprocessable_entity # 422
   rescue ActiveRecord::RecordNotFound => e
     render json: e, status: :not_found # 404
   rescue ActiveRecord::RecordInvalid => e
@@ -51,6 +53,8 @@ class Api::V1::SuggestionsController < ApplicationController
       end
     end
     render json: @suggestion, status: :ok # 200
+  rescue ActionController::ParameterMissing => e
+    render json: { error: "#{e.param} is missing" }, status: :unprocessable_entity # 422
   rescue ActiveRecord::RecordNotFound => e
     render json: e, status: :not_found # 404
   rescue ActiveRecord::RecordInvalid => e
@@ -86,6 +90,8 @@ class Api::V1::SuggestionsController < ApplicationController
 
     Suggestion.find(params[:id]).destroy!
     render json: {}, status: :no_content # 204
+  rescue ActionController::ParameterMissing => e
+    render json: { error: "#{e.param} is missing" }, status: :unprocessable_entity # 422
   rescue ActiveRecord::RecordNotFound => e
     render json: e, status: :not_found # 404
   rescue ActiveRecord::RecordNotDestroyed => e
@@ -98,6 +104,8 @@ class Api::V1::SuggestionsController < ApplicationController
     return if response.body.present?
 
     render json: Suggestion.where(assignment_id: params[:id]), status: :ok # 200
+  rescue ActionController::ParameterMissing => e
+    render json: { error: "#{e.param} is missing" }, status: :unprocessable_entity # 422
   end
 
   # Reject a suggestion unless it was already approved.
@@ -119,6 +127,8 @@ class Api::V1::SuggestionsController < ApplicationController
       send_notice_of_rejection if @suggestion.user_id
     end
     render json: @suggestion, status: :ok # 200
+  rescue ActionController::ParameterMissing => e
+    render json: { error: "#{e.param} is missing" }, status: :unprocessable_entity # 422
   rescue ActiveRecord::RecordNotFound => e
     render json: e, status: :not_found # 404
   end
@@ -133,6 +143,8 @@ class Api::V1::SuggestionsController < ApplicationController
       comments: SuggestionComment.where(suggestion_id: params[:id]),
       suggestion: @suggestion
     }, status: :ok # 200
+  rescue ActionController::ParameterMissing => e
+    render json: { error: "#{e.param} is missing" }, status: :unprocessable_entity # 422
   rescue ActiveRecord::RecordNotFound => e
     render json: e, status: :not_found # 404
   end
@@ -146,6 +158,8 @@ class Api::V1::SuggestionsController < ApplicationController
     # Only title, description, and signup preference can be changed.
     @suggestion.update!(params.permit(:title, :description, :auto_signup))
     render json: @suggestion, status: :ok # 200
+  rescue ActionController::ParameterMissing => e
+    render json: { error: "#{e.param} is missing" }, status: :unprocessable_entity # 422
   rescue ActiveRecord::RecordNotFound => e
     render json: e, status: :not_found # 404
   rescue ActiveRecord::RecordInvalid => e
