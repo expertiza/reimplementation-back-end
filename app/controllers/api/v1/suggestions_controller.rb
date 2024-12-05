@@ -10,6 +10,9 @@ class Api::V1::SuggestionsController < ApplicationController
   # Comment on a suggestion.
   # A new SuggestionComment record is made.
   def add_comment
+    deny_student('Students cannot comment on a suggestion.')
+    return if response.body.present?
+
     params.require(:comment)
     Suggestion.find(params[:id])
     render json: SuggestionComment.create!(
