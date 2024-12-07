@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe MultipleChoiceRadio, type: :model do
-  let(:multiple_choice_radio) { MultipleChoiceRadio.new(id: 1, txt: 'Test question', weight: 1) }
+  let(:multiple_choice_radio) { MultipleChoiceRadio.new(id: 1, txt: 'Test item', weight: 1) }
   let(:quiz_question_choices) do
     [
       instance_double('QuizQuestionChoice', id: 1, txt: 'Choice 1', iscorrect: true),
@@ -14,11 +14,11 @@ RSpec.describe MultipleChoiceRadio, type: :model do
   end
 
   describe '#edit' do
-    context 'when editing a quiz question' do
-      it 'returns JSON for the question edit form' do
+    context 'when editing a quiz item' do
+      it 'returns JSON for the item edit form' do
         expected_json = {
           id: 1,
-          question_text: 'Test question',
+          question_text: 'Test item',
           question_weight: 1,
           choices: [
             {id: 1, text: 'Choice 1', is_correct: true, position: 1},
@@ -32,11 +32,11 @@ RSpec.describe MultipleChoiceRadio, type: :model do
   end
 
   describe '#complete' do
-    context 'when given a valid question id' do
-      it 'returns JSON for a quiz question with choices' do
+    context 'when given a valid item id' do
+      it 'returns JSON for a quiz item with choices' do
         expected_json = {
           question_id: 1,
-          question_text: 'Test question',
+          question_text: 'Test item',
           choices: [
             {id: 1, text: 'Choice 1', position: 1},
             {id: 2, text: 'Choice 2', position: 2}
@@ -54,7 +54,7 @@ RSpec.describe MultipleChoiceRadio, type: :model do
     context "when user answer is correct" do
       it "includes correctness in the response" do
         expected_json = {
-          question_text: 'Test question',
+          question_text: 'Test item',
           choices: [
             {text: 'Choice 1', is_correct: true},
             {text: 'Choice 2', is_correct: false}
@@ -83,7 +83,7 @@ RSpec.describe MultipleChoiceRadio, type: :model do
     context 'when choice_info has empty text for an option' do
       it 'returns an error message' do
         choice_info = {'0' => {txt: '', iscorrect: '1'}, '1' => {txt: 'Choice 2', iscorrect: '0'}}
-        expected_response = {valid: false, error: 'Please make sure every question has text for all options'}.to_json
+        expected_response = {valid: false, error: 'Please make sure every item has text for all options'}.to_json
 
         expect(multiple_choice_radio.isvalid(choice_info)).to eq(expected_response)
       end

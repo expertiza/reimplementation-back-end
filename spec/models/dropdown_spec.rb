@@ -3,7 +3,7 @@ require 'rails_helper'
 RSpec.describe Dropdown, type: :model do
   describe '#edit' do
     context 'when given a count' do
-      it 'returns a JSON object with the edit form for a question' do
+      it 'returns a JSON object with the edit form for a item' do
         dropdown = Dropdown.new(txt: "Some Text", type: "dropdown", weight: 1)
         json_result = dropdown.edit(5)
 
@@ -11,7 +11,7 @@ RSpec.describe Dropdown, type: :model do
           form: true,
           label: "Item 5:",
           input_type: "text",
-          input_name: "question",
+          input_name: "item",
           input_value: "Some Text",
           min_question_score: nil,
           max_question_score: nil,
@@ -26,7 +26,7 @@ RSpec.describe Dropdown, type: :model do
   describe '#view_question_text' do
     let(:dropdown) { Dropdown.new }
     context 'when given valid inputs' do
-      it 'returns the JSON for displaying the question text, type, weight, and score range' do
+      it 'returns the JSON for displaying the item text, type, weight, and score range' do
         allow(dropdown).to receive(:txt).and_return("Item 1")
         allow(dropdown).to receive(:type).and_return("Multiple Choice")
         allow(dropdown).to receive(:weight).and_return(1)

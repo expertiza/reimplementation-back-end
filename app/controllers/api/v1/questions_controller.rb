@@ -10,15 +10,15 @@ class Api::V1::QuestionsController < ApplicationController
   # GET /questions/:id
   def show
     begin
-      @question = Item.find(params[:id])
+      @item = Item.find(params[:id])
 
-      # Choose the correct strategy based on question type
-      strategy = get_strategy_for_item(@question)
+      # Choose the correct strategy based on item type
+      strategy = get_strategy_for_item(@item)
 
-      # Render the question using the strategy
-      @rendered_item = strategy.render(@question)
+      # Render the item using the strategy
+      @rendered_item = strategy.render(@item)
 
-      render json: { item: @question, rendered_item: @rendered_item }, status: :ok
+      render json: { item: @item, rendered_item: @rendered_item }, status: :ok
     rescue ActiveRecord::RecordNotFound
       render json: { error: "Question not found" }, status: :not_found
     end
@@ -29,40 +29,40 @@ class Api::V1::QuestionsController < ApplicationController
     questionnaire_id = params[:questionnaire_id]
     questionnaire = Questionnaire.find(questionnaire_id)
 
-    # Create the new Item (question)
-    question = questionnaire.items.build(
+    # Create the new Item (item)
+    item = questionnaire.items.build(
       txt: params[:txt],
       item_type: params[:question_type],
       seq: params[:seq],
       break_before: true
     )
 
-    # Add attributes based on the question type
-    case question.item_type
+    # Add attributes based on the item type
+    case item.item_type
     when 'Scale'
-      question.weight = params[:weight]
-      question.max_label = 'Strongly agree'
-      question.min_label = 'Strongly disagree'
-      question.max_value = params[:max_value] || 5
+      item.weight = params[:weight]
+      item.max_label = 'Strongly agree'
+      item.min_label = 'Strongly disagree'
+      item.max_value = params[:max_value] || 5
     when 'Dropdown'
-      question.alternatives = '0|1|2|3|4|5'
+      item.alternatives = '0|1|2|3|4|5'
     when 'TextArea'
-      question.size = '60, 5'
+      item.size = '60, 5'
     when 'TextField'
-      question.size = '30'
+      item.size = '30'
     end
 
-    if question.save
-      render json: question, status: :created
+    if item.save
+      render json: item, status: :created
     else
-      render json: { error: question.errors.full_messages.to_sentence }, status: :unprocessable_entity
+      render json: { error: item.errors.full_messages.to_sentence }, status: :unprocessable_entity
     end
   end
 
   private
 
   def set_question
-    @question = Item.find(params[:id])
+    @item = Item.find(params[:id])
   end
 
   def get_strategy_for_item(item)

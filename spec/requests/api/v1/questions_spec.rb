@@ -28,7 +28,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire
       Item.create(
         seq: 1, 
-        txt: "test question 1", 
+        txt: "test item 1", 
         question_type: "multiple_choice", 
         break_before: true, 
         weight: 5,
@@ -40,7 +40,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire
       Item.create(
         seq: 2, 
-        txt: "test question 2", 
+        txt: "test item 2", 
         question_type: "multiple_choice", 
         break_before: false, 
         weight: 10,
@@ -59,7 +59,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       end
     end
 
-    post('create question') do
+    post('create item') do
       tags 'Questions'
       consumes 'application/json'
       produces 'application/json'
@@ -67,7 +67,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       let(:valid_question_params) do
         {
           questionnaire_id: questionnaire.id,
-          txt: "test question", 
+          txt: "test item", 
           question_type: "multiple_choice", 
           break_before: false,
           weight: 10
@@ -77,7 +77,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       let(:invalid_question_params1) do
         {
           questionnaire_id: nil ,
-          txt: "test question", 
+          txt: "test item", 
           question_type: "multiple_choice", 
           break_before: false,
           weight: 10
@@ -87,14 +87,14 @@ RSpec.describe 'api/v1/questions', type: :request do
       let(:invalid_question_params2) do
         {
           questionnaire_id: questionnaire.id ,
-          txt: "test question", 
+          txt: "test item", 
           question_type: nil, 
           break_before: false,
           weight: 10
         }
       end
 
-      parameter name: :question, in: :body, schema: {
+      parameter name: :item, in: :body, schema: {
         type: :object,
         properties: {
           weight: { type: :integer },
@@ -106,9 +106,9 @@ RSpec.describe 'api/v1/questions', type: :request do
         required: %w[weight questionnaire_id break_before txt question_type]      
       }
 
-      # post request on /api/v1/questions returns 201 created response and creates a question with given valid parameters
+      # post request on /api/v1/questions returns 201 created response and creates a item with given valid parameters
       response(201, 'created') do
-        let(:question) do
+        let(:item) do
           questionnaire
           Item.create(valid_question_params)
         end
@@ -117,18 +117,18 @@ RSpec.describe 'api/v1/questions', type: :request do
         end
       end
 
-      # post request on /api/v1/questions returns 404 not foound when questionnaire id for the given question is not present in the database
+      # post request on /api/v1/questions returns 404 not foound when questionnaire id for the given item is not present in the database
       response(404, 'questionnaire id not found') do
-        let(:question) do
+        let(:item) do
           instructor
           Item.create(invalid_question_params1)
         end
         run_test!
       end
 
-      # post request on /api/v1/questions returns 422 unprocessable entity when incorrect parameters are passed to create a question
+      # post request on /api/v1/questions returns 422 unprocessable entity when incorrect parameters are passed to create a item
       response(422, 'unprocessable entity') do
-        let(:question) do
+        let(:item) do
           instructor
           Item.create(invalid_question_params2)
         end
@@ -166,7 +166,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire
       Item.create(
         seq: 1, 
-        txt: "test question 1", 
+        txt: "test item 1", 
         question_type: "multiple_choice", 
         break_before: true, 
         weight: 5,
@@ -178,7 +178,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire
       Item.create(
         seq: 2, 
-        txt: "test question 2", 
+        txt: "test item 2", 
         question_type: "multiple_choice", 
         break_before: false, 
         weight: 10,
@@ -195,18 +195,18 @@ RSpec.describe 'api/v1/questions', type: :request do
 
 
 
-    get('show question') do
+    get('show item') do
       tags 'Questions'
       produces 'application/json'
 
-      # get request on /api/v1/questions/{id} returns 200 succesful response and returns question with given question id
+      # get request on /api/v1/questions/{id} returns 200 succesful response and returns item with given item id
       response(200, 'successful') do
         run_test! do
-          expect(response.body).to include('"txt":"test question 1"') 
+          expect(response.body).to include('"txt":"test item 1"') 
         end
       end
 
-      # get request on /api/v1/questions/{id} returns 404 not found response when question id is not present in the database
+      # get request on /api/v1/questions/{id} returns 404 not found response when item id is not present in the database
       response(404, 'not_found') do
         let(:id) { 'invalid' }
           run_test! do
@@ -215,7 +215,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       end
     end
 
-    put('update question') do
+    put('update item') do
       tags 'Questions'
       consumes 'application/json'
       produces 'application/json'
@@ -228,7 +228,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         }
       }
       
-      # put request on /api/v1/questions/{id} returns 200 succesful response and updates parameters of question with given question id
+      # put request on /api/v1/questions/{id} returns 200 succesful response and updates parameters of item with given item id
       response(200, 'successful') do
         let(:body_params) do
           {
@@ -240,7 +240,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         end
       end
 
-      # put request on /api/v1/questions/{id} returns 404 not found response when question with given id is not present in the database
+      # put request on /api/v1/questions/{id} returns 404 not found response when item with given id is not present in the database
       response(404, 'not found') do
         let(:id) { 0 }
         let(:body_params) do
@@ -253,7 +253,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         end
       end
 
-      # put request on /api/v1/questions/{id} returns 422 unprocessable entity when incorrect parameters are passed for question with given question id 
+      # put request on /api/v1/questions/{id} returns 422 unprocessable entity when incorrect parameters are passed for item with given item id 
       response(422, 'unprocessable entity') do
         let(:body_params) do
           {
@@ -269,7 +269,7 @@ RSpec.describe 'api/v1/questions', type: :request do
 
     end
 
-    patch('update question') do
+    patch('update item') do
       tags 'Questions'
       consumes 'application/json'
       produces 'application/json'
@@ -282,7 +282,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         }
       }
       
-      # patch request on /api/v1/questions/{id} returns 200 succesful response and updates parameters of question with given question id
+      # patch request on /api/v1/questions/{id} returns 200 succesful response and updates parameters of item with given item id
       response(200, 'successful') do
         let(:body_params) do
           {
@@ -294,7 +294,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         end
       end
 
-      # patch request on /api/v1/questions/{id} returns 404 not found response when question with given id is not present in the database
+      # patch request on /api/v1/questions/{id} returns 404 not found response when item with given id is not present in the database
       response(404, 'not found') do
         let(:id) { 0 }
         let(:body_params) do
@@ -307,7 +307,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         end
       end
 
-      # patch request on /api/v1/questions/{id} returns 422 unprocessable entity when incorrect parameters are passed for question with given question id 
+      # patch request on /api/v1/questions/{id} returns 422 unprocessable entity when incorrect parameters are passed for item with given item id 
       response(422, 'unprocessable entity') do
         let(:body_params) do
           {
@@ -324,19 +324,19 @@ RSpec.describe 'api/v1/questions', type: :request do
     end
 
 
-    delete('delete question') do
+    delete('delete item') do
 
       tags 'Questions'
       produces 'application/json'
 
-      # delete request on /api/v1/questions/{id} returns 204 succesful response when it deletes question with given question id present in the database
+      # delete request on /api/v1/questions/{id} returns 204 succesful response when it deletes item with given item id present in the database
       response(204, 'successful') do
         run_test! do
           expect(Item.exists?(id)).to eq(false)
         end
       end
 
-      # delete request on /api/v1/questions/{id} returns 404 not found response when question with given question id is not present in the database
+      # delete request on /api/v1/questions/{id} returns 404 not found response when item with given item id is not present in the database
       response(404, 'not found') do
         let(:id) { 0 }
         run_test! do
@@ -374,7 +374,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire
       Item.create(
         seq: 1, 
-        txt: "test question 1", 
+        txt: "test item 1", 
         question_type: "multiple_choice", 
         break_before: true, 
         weight: 5,
@@ -386,7 +386,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire
       Item.create(
         seq: 2, 
-        txt: "test question 2", 
+        txt: "test item 2", 
         question_type: "multiple_choice", 
         break_before: false, 
         weight: 10,
@@ -450,7 +450,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire
       Item.create(
         seq: 1, 
-        txt: "test question 1", 
+        txt: "test item 1", 
         question_type: "multiple_choice", 
         break_before: true, 
         weight: 5,
@@ -474,7 +474,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire2
       Item.create(
         seq: 2, 
-        txt: "test question 2", 
+        txt: "test item 2", 
         question_type: "multiple_choice", 
         break_before: true, 
         weight: 5,
@@ -486,7 +486,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire2
       Item.create(
         seq: 3, 
-        txt: "test question 3", 
+        txt: "test item 3", 
         question_type: "multiple_choice", 
         break_before: false, 
         weight: 10,
@@ -552,7 +552,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire
       Item.create(
         seq: 1, 
-        txt: "test question 1", 
+        txt: "test item 1", 
         question_type: "multiple_choice", 
         break_before: true, 
         weight: 5,
@@ -564,7 +564,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire
       Item.create(
         seq: 2, 
-        txt: "test question 2", 
+        txt: "test item 2", 
         question_type: "multiple_choice", 
         break_before: false, 
         weight: 10,
@@ -572,7 +572,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       )
     end
 
-    get('question types') do
+    get('item types') do
       tags 'Questions'
       produces 'application/json'
       # get request on /api/v1/questions/types returns types of questions present in the database

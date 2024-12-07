@@ -70,14 +70,14 @@ class MultipleChoiceRadio < QuizItem
       error_message = 'Please make sure all questions have text'
     elsif choice_info.values.any? { |choice| choice[:txt].blank? }
       valid = false
-      error_message = 'Please make sure every question has text for all options'
+      error_message = 'Please make sure every item has text for all options'
     end
 
     correct_count = choice_info.count { |_idx, choice| choice[:iscorrect] == '1' }
 
     if correct_count != 1
       valid = false
-      error_message = 'Please select exactly one correct answer for the question'
+      error_message = 'Please select exactly one correct answer for the item'
     end
 
     {

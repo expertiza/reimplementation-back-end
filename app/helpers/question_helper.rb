@@ -4,7 +4,7 @@ module QuestionHelper
         form: true,
         label: label,
         input_type: 'text',
-        input_name: 'question',
+        input_name: 'item',
         input_value: txt,
         min_question_score: min_question_score,
         max_question_score: max_question_score,

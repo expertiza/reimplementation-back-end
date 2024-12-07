@@ -65,7 +65,7 @@ class MultipleChoiceCheckbox < QuizItem
     if correct_count.zero?
       error_message = 'Please select a correct answer for all questions'
     elsif correct_count == 1
-      error_message = 'A multiple-choice checkbox question should have more than one correct answer.'
+      error_message = 'A multiple-choice checkbox item should have more than one correct answer.'
     end
 
     { valid: error_message.nil?, error: error_message }.to_json

@@ -13,67 +13,67 @@ RSpec.describe Item, type: :model do
   end
 
   describe 'validations' do
-    # Test validates that question has valid attributes
+    # Test validates that item has valid attributes
     it 'is valid with valid attributes' do
-      question = Item.new(seq: 1, txt: 'Sample question', question_type: 'multiple_choice', break_before: true,
+      item = Item.new(seq: 1, txt: 'Sample item', question_type: 'multiple_choice', break_before: true,
                               questionnaire:)
-      expect(question).to be_valid
+      expect(item).to be_valid
     end
 
-    # Test ensures that a question is not valid without seq field
+    # Test ensures that a item is not valid without seq field
     it 'is not valid without a seq' do
-      question = Item.new(txt: 'Sample question', question_type: 'multiple_choice', break_before: true,
+      item = Item.new(txt: 'Sample item', question_type: 'multiple_choice', break_before: true,
                               questionnaire:)
-      expect(question).to_not be_valid
+      expect(item).to_not be_valid
     end
 
     # Test ensures that seq field is numeric
     it 'is not valid with a non-numeric seq' do
-      question = Item.new(seq: 'one', txt: 'Sample question', question_type: 'multiple_choice',
+      item = Item.new(seq: 'one', txt: 'Sample item', question_type: 'multiple_choice',
                               break_before: true, questionnaire:)
-      expect(question).to_not be_valid
+      expect(item).to_not be_valid
     end
 
-    # Test ensures that a question is not valid without txt field
+    # Test ensures that a item is not valid without txt field
     it 'is not valid without a txt' do
-      question = Item.new(seq: 1, question_type: 'multiple_choice', break_before: true,
+      item = Item.new(seq: 1, question_type: 'multiple_choice', break_before: true,
                               questionnaire:)
-      expect(question).to_not be_valid
+      expect(item).to_not be_valid
     end
 
-    # Test ensures that a question is not valid without question_type field
+    # Test ensures that a item is not valid without question_type field
     it 'is not valid without a question_type' do
-      question = Item.new(seq: 1, txt: 'Sample question', break_before: true, questionnaire:)
-      expect(question).to_not be_valid
+      item = Item.new(seq: 1, txt: 'Sample item', break_before: true, questionnaire:)
+      expect(item).to_not be_valid
     end
 
-    # Test ensures that a question is not valid without break_before field
+    # Test ensures that a item is not valid without break_before field
     it 'is not valid without a break_before value' do
-      question = Item.new(seq: 1, txt: 'Sample question', question_type: 'multiple_choice',
+      item = Item.new(seq: 1, txt: 'Sample item', question_type: 'multiple_choice',
                               questionnaire:)
-      expect(question).to_not be_valid
+      expect(item).to_not be_valid
     end
 
-    # Test ensures that a question does not exist without a questionnaire
+    # Test ensures that a item does not exist without a questionnaire
     it 'is not valid without a questionnaire' do
-      question = Item.new(seq: 1, txt: 'Sample question', question_type: 'multiple_choice', break_before: true)
-      expect(question).to_not be_valid
+      item = Item.new(seq: 1, txt: 'Sample item', question_type: 'multiple_choice', break_before: true)
+      expect(item).to_not be_valid
     end
   end
 
   describe '#delete' do
-    # Test ensures that a question object is deleted properly taking all its association into consideration
-    it 'destroys the question object' do
+    # Test ensures that a item object is deleted properly taking all its association into consideration
+    it 'destroys the item object' do
       instructor.save!
       questionnaire.save!
-      question = Item.create(seq: 1, txt: 'Sample question', question_type: 'multiple_choice',
+      item = Item.create(seq: 1, txt: 'Sample item', question_type: 'multiple_choice',
                                  break_before: true, questionnaire:)
-      expect { question.delete }.to change { Item.count }.by(-1)
+      expect { item.delete }.to change { Item.count }.by(-1)
     end
   end
 
   describe '#set_choice_strategy' do
-    context 'when the question type is Dropdown' do
+    context 'when the item type is Dropdown' do
       let(:item) { create(:item, questionnaire: questionnaire, question_type: 'Dropdown') }
 
       it 'assigns the correct strategy' do
@@ -82,7 +82,7 @@ RSpec.describe Item, type: :model do
       end
     end
 
-    context 'when the question type is MultipleChoice' do
+    context 'when the item type is MultipleChoice' do
       let(:item) { create(:item, questionnaire: questionnaire, question_type: 'MultipleChoice') }
 
       it 'assigns the correct strategy' do
@@ -91,7 +91,7 @@ RSpec.describe Item, type: :model do
       end
     end
 
-    context 'when the question type is Scale' do
+    context 'when the item type is Scale' do
       let(:item) { create(:item, questionnaire: questionnaire, question_type: 'Scale') }
 
       it 'assigns the correct strategy' do
@@ -100,11 +100,11 @@ RSpec.describe Item, type: :model do
       end
     end
 
-    context 'when the question type is unknown' do
+    context 'when the item type is unknown' do
       let(:item) { create(:item, questionnaire: questionnaire, question_type: 'Unknown') }
 
       it 'raises an error' do
-        expect { item.set_choice_strategy }.to raise_error("Unknown question type: Unknown")
+        expect { item.set_choice_strategy }.to raise_error("Unknown item type: Unknown")
       end
     end
   end

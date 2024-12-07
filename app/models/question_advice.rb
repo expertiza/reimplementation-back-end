@@ -1,13 +1,13 @@
 class QuestionAdvice < ApplicationRecord
-    belongs_to :question
+    belongs_to :item
     def self.export_fields(_options)
       QuestionAdvice.columns.map(&:name)
     end
   
     def self.export(csv, parent_id, _options)
       questionnaire = Questionnaire.find(parent_id)
-      questionnaire.questions.each do |question|
-        QuestionAdvice.where(question_id: question.id).each do |advice|
+      questionnaire.questions.each do |item|
+        QuestionAdvice.where(question_id: item.id).each do |advice|
           csv << advice.attributes.values
         end
       end

@@ -15,7 +15,7 @@ class TextResponse < Item
             type: 'input',
             input_type: 'text',
             size: 6,
-            name: "question[#{id}][seq]",
+            name: "item[#{id}][seq]",
             id: "question_#{id}_seq",
             value: seq.to_s
           },
@@ -23,16 +23,16 @@ class TextResponse < Item
             type: 'textarea',
             cols: 50,
             rows: 1,
-            name: "question[#{id}][txt]",
+            name: "item[#{id}][txt]",
             id: "question_#{id}_txt",
-            placeholder: 'Edit question content here',
+            placeholder: 'Edit item content here',
             value: txt
           },
           {
             type: 'input',
             input_type: 'text',
             size: 10,
-            name: "question[#{id}][question_type]",
+            name: "item[#{id}][question_type]",
             id: "question_#{id}_question_type",
             value: question_type,
             disabled: true
@@ -41,7 +41,7 @@ class TextResponse < Item
             type: 'input',
             input_type: 'text',
             size: 6,
-            name: "question[#{id}][size]",
+            name: "item[#{id}][size]",
             id: "question_#{id}_size",
             value: size,
             label: 'Text area size'

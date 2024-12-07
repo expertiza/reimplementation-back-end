@@ -1,13 +1,13 @@
 class Item < ApplicationRecord
   before_create :set_seq
-  belongs_to :questionnaire # each question belongs to a specific questionnaire
+  belongs_to :questionnaire # each item belongs to a specific questionnaire
   has_many :answers, dependent: :destroy
   has_many :choices, dependent: :destroy
   attr_accessor :choice_strategy
   
   validates :seq, presence: true, numericality: true # sequence must be numeric
   validates :txt, length: { minimum: 0, allow_nil: false, message: "can't be nil" } # text content must be provided
-  validates :question_type, presence: true # user must define the question type
+  validates :question_type, presence: true # user must define the item type
   validates :break_before, presence: true
 
   def scorable?

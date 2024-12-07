@@ -59,7 +59,7 @@ RSpec.describe Criterion, type: :model do
   end
 
   describe '#scale_criterion_question' do
-    it 'returns JSON for a scale question without an answer selected' do
+    it 'returns JSON for a scale item without an answer selected' do
       json = criterion.scale_criterion_question(0, nil, 0, 5)
       expected_json = {
         type: 'scale',

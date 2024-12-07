@@ -30,7 +30,7 @@ RSpec.describe TextArea do
 
   describe 'view_completed_question' do
     context 'when given a count and an answer' do
-      it 'returns the formatted JSON for the completed question' do
+      it 'returns the formatted JSON for the completed item' do
         result = JSON.parse(text_area.view_completed_question(1, answer))
         expect(result['action']).to eq('view_completed_question')
         expect(result['data']['comment']).to eq('test comment')

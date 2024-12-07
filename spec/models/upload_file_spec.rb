@@ -7,7 +7,7 @@ RSpec.describe UploadFile do
 
   # Adjust the let statement to not include 'type' and 'weight' if they are not recognized attributes.
 
-  let(:upload_file) { UploadFile.new(id: 1, seq: '1', txt: 'Sample question content', question_type: 'UploadFile') }
+  let(:upload_file) { UploadFile.new(id: 1, seq: '1', txt: 'Sample item content', question_type: 'UploadFile') }
 
 
 
@@ -71,20 +71,20 @@ RSpec.describe UploadFile do
 
 
 
-      it 'includes a textarea for editing the question content' do
+      it 'includes a textarea for editing the item content' do
 
         textarea_element = json_response["elements"].find { |el| el["name"]&.include?("txt") }
 
         expect(textarea_element).not_to be_nil
 
-        expect(textarea_element["value"]).to eq('Sample question content')
+        expect(textarea_element["value"]).to eq('Sample item content')
 
       end
 
 
 
 
-      it 'includes an input field for the question type, disabled' do
+      it 'includes an input field for the item type, disabled' do
 
         type_element = json_response["elements"].find { |el| el["name"]&.include?("question_type") }
 
@@ -121,11 +121,11 @@ RSpec.describe UploadFile do
 
 
 
-      it 'returns JSON for displaying a question' do
+      it 'returns JSON for displaying a item' do
 
         expect(json_response["action"]).to eq('view_question_text')
 
-        expect(json_response["elements"].map { |el| el["value"] }).to include('Sample question content', 'UploadFile', "", '1','—')
+        expect(json_response["elements"].map { |el| el["value"] }).to include('Sample item content', 'UploadFile', "", '1','—')
 
       end
 
@@ -138,7 +138,7 @@ RSpec.describe UploadFile do
 
   describe '#complete' do
 
-    it 'implements the logic for completing a question' do
+    it 'implements the logic for completing a item' do
 
       # Write your test for the complete method logic here.
 
@@ -151,7 +151,7 @@ RSpec.describe UploadFile do
 
   describe '#view_completed_question' do
 
-    it 'implements the logic for viewing a completed question by a student' do
+    it 'implements the logic for viewing a completed item by a student' do
 
       # Write your test for the view_completed_question method logic here.
 

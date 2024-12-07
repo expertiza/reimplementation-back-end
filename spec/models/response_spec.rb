@@ -7,8 +7,8 @@ describe Response do
   let(:participant) { Participant.new(id: 1, user: user) }
   let(:assignment) { Assignment.new(id: 1, name: 'Test Assignment') }
   let(:answer) { Answer.new(answer: 1, comments: 'Answer text', question_id: 1) }
-  let(:question) { ScoredItem.new(id: 1, weight: 2) }
-  let(:questionnaire) { Questionnaire.new(id: 1, questions: [question], max_question_score: 5) }
+  let(:item) { ScoredItem.new(id: 1, weight: 2) }
+  let(:questionnaire) { Questionnaire.new(id: 1, questions: [item], max_question_score: 5) }
   let(:review_response_map) { ReviewResponseMap.new(assignment: assignment, reviewee: team) }
   let(:response_map) { ResponseMap.new(assignment: assignment, reviewee: participant, reviewer: participant) }
   let(:response) { Response.new(map_id: 1, response_map: review_response_map, scores: [answer]) }

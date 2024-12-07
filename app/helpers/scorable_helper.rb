@@ -14,8 +14,8 @@ module ScorableHelper
     questions = Item.find_with_order(question_ids)
 
     scores.each_with_index do |score, idx|
-      question = questions[idx]
-      sum += score.answer * questions[idx].weight if !score.answer.nil? && question.scorable?
+      item = questions[idx]
+      sum += score.answer * questions[idx].weight if !score.answer.nil? && item.scorable?
     end
 
     sum
@@ -54,7 +54,7 @@ module ScorableHelper
 
   def questionnaire_by_answer(answer)
     if answer.nil?
-      # Answers can be nil in cases such as "Upload File" being the only question.
+      # Answers can be nil in cases such as "Upload File" being the only item.
       map = ResponseMap.find(map_id)
       # E-1973 either get the assignment from the participant or the map itself
       assignment = map.response_assignment

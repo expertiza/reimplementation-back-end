@@ -3,7 +3,7 @@ class Checkbox < UnscoredItem
       {
         remove_button: edit_remove_button(count),
         seq: edit_seq(count),
-        question: edit_question(count),
+        item: edit_question(count),
         type: edit_type(count),
         weight: edit_weight(count)
       }
@@ -23,7 +23,7 @@ class Checkbox < UnscoredItem
         type: 'seq',
         input_size: 6,
         value: seq,
-        name: "question[#{id}][seq]",
+        name: "item[#{id}][seq]",
         id: "question_#{id}_seq"
       }
     end
@@ -33,9 +33,9 @@ class Checkbox < UnscoredItem
         type: 'textarea',
         cols: 50,
         rows: 1,
-        name: "question[#{id}][txt]",
+        name: "item[#{id}][txt]",
         id: "question_#{id}_txt",
-        placeholder: 'Edit question content here',
+        placeholder: 'Edit item content here',
         content: txt
       }
     end
@@ -46,7 +46,7 @@ class Checkbox < UnscoredItem
         input_size: 10,
         disabled: true,
         value: question_type,
-        name: "question[#{id}][type]",
+        name: "item[#{id}][type]",
         id: "question_#{id}_type"
       }
     end

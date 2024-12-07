@@ -13,14 +13,14 @@ class UploadFile < Item
           {
             type: 'input',
             input_type: 'text',
-            name: "question[#{id}][seq]",
+            name: "item[#{id}][seq]",
             id: "question_#{id}_seq",
             value: seq.to_s
           },
           {
             type: 'input',
             input_type: 'text',
-            name: "question[#{id}][id]",
+            name: "item[#{id}][id]",
             id: "question_#{id}",
             value: id.to_s
           },
@@ -28,16 +28,16 @@ class UploadFile < Item
             type: 'textarea',
             cols: 50,
             rows: 1,
-            name: "question[#{id}][txt]",
+            name: "item[#{id}][txt]",
             id: "question_#{id}_txt",
-            placeholder: 'Edit question content here',
+            placeholder: 'Edit item content here',
             value: txt
           },
           {
             type: 'input',
             input_type: 'text',
             size: 10,
-            name: "question[#{id}][question_type]",
+            name: "item[#{id}][question_type]",
             id: "question_#{id}_question_type",
             value: question_type,
             disabled: true
@@ -60,13 +60,13 @@ class UploadFile < Item
     end
   
   
-    # Implement this method for completing a question
+    # Implement this method for completing a item
     def complete(count, answer = nil)
-      # Implement the logic for completing a question
+      # Implement the logic for completing a item
     end
   
-    # Implement this method for viewing a completed question by a student
+    # Implement this method for viewing a completed item by a student
     def view_completed_question(count, files)
-      # Implement the logic for viewing a completed question by a student
+      # Implement the logic for viewing a completed item by a student
     end
   end
