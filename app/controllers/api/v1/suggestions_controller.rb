@@ -2,18 +2,26 @@
 class Api::V1::SuggestionsController < ApplicationController
   include AuthorizationHelper
 
-  # Strong params inlined as global before_action
-  before_action except: %i[create] do
-    params.require(:id)
+  # Determine whether the current request is allowed
+  def action_allowed?
+    case params[:action]
+    when 'create'
+      # Create has no special permissions
+      return true
+    when 'show', 'update'
+      # When showing or updating a suggestion, a student that owns the suggestions passes
+      suggestion = Suggestion.find(params[:id])
+      return true if suggestion.user_id == @current_user.id
+    end
+    # A TA or above always passes
+    # TODO: Check if user is TA or above in the same course that the suggestion is
+    AuthorizationHelper.current_user_has_ta_privileges?
   end
 
   # Comment on a suggestion.
   # A new SuggestionComment record is made.
   def add_comment
-    deny_student('Students cannot comment on a suggestion.')
-    return if response.body.present?
-
-    params.require(:comment)
+    params.require(%i[comment id])
     Suggestion.find(params[:id])
     render json: SuggestionComment.create!(
       comment: params[:comment],
@@ -30,9 +38,7 @@ class Api::V1::SuggestionsController < ApplicationController
 
   # Approve a suggestion, even if it was previously rejected.
   def approve
-    deny_student('Students cannot approve a suggestion.')
-    return if response.body.present?
-
+    params.require(:id)
     @suggestion = Suggestion.find(params[:id])
     # Only go through the approval process if the suggestion isn't already approved.
     unless @suggestion.status == 'Approved'
@@ -88,9 +94,7 @@ class Api::V1::SuggestionsController < ApplicationController
 
   # Delete a suggestion from the records.
   def destroy
-    deny_student('Students cannot delete suggestions.')
-    return if response.body.present?
-
+    params.require(:id)
     Suggestion.find(params[:id]).destroy!
     render json: {}, status: :no_content # 204
   rescue ActionController::ParameterMissing => e
@@ -103,9 +107,7 @@ class Api::V1::SuggestionsController < ApplicationController
 
   # Get a list of all Suggestion records associated with a particular assignment.
   def index
-    deny_student('Students cannot view all suggestions of an assignment.')
-    return if response.body.present?
-
+    params.require(:id)
     render json: Suggestion.where(assignment_id: params[:id]), status: :ok # 200
   rescue ActionController::ParameterMissing => e
     render json: { error: "#{e.param} is missing" }, status: :unprocessable_entity # 422
@@ -113,9 +115,7 @@ class Api::V1::SuggestionsController < ApplicationController
 
   # Reject a suggestion unless it was already approved.
   def reject
-    deny_student('Students cannot reject a suggestion.')
-    return if response.body.present?
-
+    params.require(:id)
     @suggestion = Suggestion.find(params[:id])
     # Since the approval process makes changes to many records,
     #   rejecting a previously approved suggestion is not possible.
@@ -138,10 +138,8 @@ class Api::V1::SuggestionsController < ApplicationController
 
   # Get a single Suggestion record.
   def show
+    params.require(:id)
     @suggestion = Suggestion.find(params[:id])
-    deny_non_owner_student('Students can only view their own suggestions.')
-    return if response.body.present?
-
     render json: {
       comments: SuggestionComment.where(suggestion_id: params[:id]),
       suggestion: @suggestion
@@ -154,10 +152,8 @@ class Api::V1::SuggestionsController < ApplicationController
 
   # Change the details of a Suggestion.
   def update
+    params.require(:id)
     @suggestion = Suggestion.find(params[:id])
-    deny_non_owner_student('Students can only edit their own suggestions.')
-    return if response.body.present?
-
     # Only title, description, and signup preference can be changed.
     @suggestion.update!(params.permit(:title, :description, :auto_signup))
     render json: @suggestion, status: :ok # 200
@@ -179,24 +175,6 @@ class Api::V1::SuggestionsController < ApplicationController
       topic_identifier: "S#{Suggestion.where(assignment_id: @suggestion.assignment_id).count}",
       topic_name: @suggestion.title
     )
-  end
-
-  def deny_student(err_msg)
-    return if AuthorizationHelper.current_user_has_ta_privileges?
-
-    # Render error if the user is a student
-    render json: { error: err_msg }, status: :forbidden # 403
-  end
-
-  def deny_non_owner_student(err_msg)
-    # If the student owns the resource, they are allowed to perform
-    #   every action related to Suggestions and SuggestionComments.
-    return if @suggestion.user_id == @current_user.id
-    # TAs and above are allowed to perform every action on every Suggestion and SuggestionComment.
-    return if AuthorizationHelper.current_user_has_ta_privileges?
-
-    # A student account is forbidden access and instead sent an error message.
-    render json: { error: err_msg }, status: :forbidden # 403
   end
 
   def send_notice_of_approval
