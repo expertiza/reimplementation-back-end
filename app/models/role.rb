@@ -19,7 +19,6 @@ class Role < ApplicationRecord
     name['Administrator'] || super_administrator?
   end
 
-
   def instructor?
     name['Instructor']
   end
