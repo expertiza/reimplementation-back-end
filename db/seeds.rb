@@ -14,5 +14,5 @@ begin
       role_id: 1
     )
 rescue ActiveRecord::RecordInvalid => e
-    puts 'The db has already been seeded'
+    puts 'The db has already been seeded'
 end
