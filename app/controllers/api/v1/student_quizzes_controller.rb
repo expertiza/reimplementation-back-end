@@ -1,8 +1,7 @@
 class Api::V1::StudentQuizzesController < ApplicationController
+  include ResourceFinder
   before_action :check_instructor_role, except: [:grade_submitted_answers]
   before_action :set_student_quiz, only: [:show, :update, :destroy]
-
-  include ResourceFinder
 
   rescue_from ActiveRecord::RecordInvalid do |exception|
     render_error(exception.message)
@@ -32,7 +31,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
   #POST /student_quizzes
   def create
     questionnaire = ActiveRecord::Base.transaction do
-      questionnaire = create_questionnaire(questionnaire_params.except(:questions_attributes))
+      questionnaire = Questionnaire.create!(questionnaire_params.except(:questions_attributes))
       create_questions_and_answers(questionnaire, questionnaire_params[:questions_attributes])
       questionnaire
     end
@@ -58,7 +57,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
     end
   
     # Create a new response map to link the student and the quiz
-    response_map = build_response_map(participant.user_id, questionnaire)
+    response_map = ResponseMap.build_response_map(participant.user_id, questionnaire)
     
     # Attempt to save the response map and render appropriate success or error messages
     if response_map.save
@@ -118,11 +117,6 @@ class Api::V1::StudentQuizzesController < ApplicationController
     )
   end
 
-  # Process and calculate the total score for submitted answers
-  def process_answers(answers, response_map)
-    response_map.process_answers(answers)
-  end
-
   # Find or initialize a response for a specific question within an attempt
   def find_or_initialize_response(response_map_id, question_id)
     Response.find_or_initialize_by(
@@ -137,21 +131,6 @@ class Api::V1::StudentQuizzesController < ApplicationController
       reviewee_id: participant.user_id,
       reviewed_object_id: questionnaire.id
     )
-  end
-
-  # Build a new ResponseMap instance for assigning a quiz to a student
-  def build_response_map(student_id, questionnaire)
-    instructor_id = questionnaire.assignment.instructor_id
-    ResponseMap.new(
-      reviewee_id: student_id,
-      reviewer_id: instructor_id,
-      reviewed_object_id: questionnaire.id
-    )
-  end
-
-  # Create a new questionnaire along with its questions and answers
-  def create_questionnaire(params)
-    Questionnaire.create!(params)
   end
 
   # Create questions and their respective answers for a questionnaire
@@ -187,16 +166,6 @@ class Api::V1::StudentQuizzesController < ApplicationController
   def check_instructor_role
     unless current_user.role.instructor?
       render_error('Only instructors are allowed to perform this action', :forbidden)
-    end
-  end
-
-  # Find a specific resource by ID, handling the case where it's not found
-  module ResourceFinder
-    def find_resource_by_id(resource, id)
-      resource.find(id)
-    rescue ActiveRecord::RecordNotFound
-      render_error("#{resource.name} not found", :not_found)
-      nil
     end
   end
 end
