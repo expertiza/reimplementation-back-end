@@ -1,5 +1,5 @@
 begin
-    #Create an instritution
+    #Create an institution
     Institution.create!(
       name: 'North Carolina State University',
     )
@@ -30,6 +30,33 @@ begin
       full_name: 'student student',
       institution_id: 5,
       role_id: 5
+    )
+
+    Questionnaire.create!(
+      name: 'Questionnaire',
+      instructor_id: 2,
+      min_question_score: 0,
+      max_question_score: 10,
+      private: false,
+      questionnaire_type: 'AuthorFeedbackReview'
+    )
+
+    Question.create!(
+      seq: 1,
+      txt: "test question 1",
+      question_type: "multiple_choice",
+      break_before: true,
+      weight: 5,
+      questionnaire_id: 1
+    )
+
+    Question.create!(
+      seq: 2,
+      txt: "test question 2",
+      question_type: "multiple_choice",
+      break_before: false,
+      weight: 5,
+      questionnaire_id: 1
     )
 
 
