@@ -2,6 +2,8 @@
 class Api::V1::SuggestionsController < ApplicationController
   include AuthorizationHelper
 
+  before_action :action_allowed?
+
   # Determine whether the current request is allowed
   def action_allowed?
     case params[:action]
@@ -15,7 +17,11 @@ class Api::V1::SuggestionsController < ApplicationController
     end
     # A TA or above always passes
     # TODO: Check if user is TA or above in the same course that the suggestion is
-    AuthorizationHelper.current_user_has_ta_privileges?
+    unless AuthorizationHelper.current_user_has_ta_privileges?
+      render json: { error: 'Authorization failed' }, status: :forbidden
+    end
+  rescue ActiveRecord::RecordNotFound => e
+    render json: e, status: :not_found # 404
   end
 
   # Comment on a suggestion.
