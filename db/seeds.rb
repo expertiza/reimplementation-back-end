@@ -59,6 +59,33 @@ begin
       questionnaire_id: 1
     )
 
+    Questionnaire.create!(
+      name: 'Questionnaire 2',
+      instructor_id: 2,
+      min_question_score: 0,
+      max_question_score: 10,
+      private: false,
+      questionnaire_type: 'AuthorFeedbackReview'
+    )
+
+    Question.create!(
+      seq: 1,
+      txt: "test question 1 for 2",
+      question_type: "multiple_choice",
+      break_before: true,
+      weight: 5,
+      questionnaire_id: 2
+    )
+
+    Question.create!(
+      seq: 2,
+      txt: "test question 2 for 2",
+      question_type: "multiple_choice",
+      break_before: false,
+      weight: 5,
+      questionnaire_id: 2
+    )
+
 
 rescue ActiveRecord::RecordInvalid => e
     puts 'The db has already been seeded'
