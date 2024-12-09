@@ -4,12 +4,12 @@ class Question < ApplicationRecord
   has_many :answers, dependent: :destroy
   accepts_nested_attributes_for :answers # Allows nested attributes for answers
 
-
   validates :txt, length: { minimum: 0, allow_nil: false, message: "can't be nil" } # user must define text content for a question
   validates :question_type, presence: true # user must define type for a question
   validates :break_before, inclusion: { in: [true, false] }
   validates :correct_answer, presence: true
   validates :score_value, presence: true
+  validates :skippable, inclusion: { in: [true, false] 
 
 
   def scorable?

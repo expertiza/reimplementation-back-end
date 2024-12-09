@@ -112,6 +112,7 @@ Rails.application.routes.draw do
       resources :student_quizzes do
         member do
           get :calculate_score
+          get :index
         end
         collection do
           post 'assign', to: 'student_quizzes#assign_quiz_to_student'
