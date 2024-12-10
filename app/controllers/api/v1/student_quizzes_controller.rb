@@ -2,6 +2,8 @@ class Api::V1::StudentQuizzesController < ApplicationController
   before_action :check_instructor_role, except: [:submit_quiz]
   before_action :set_student_quiz, only: [:show, :update, :destroy]
 
+  include ResourceFinder
+
   # Rescue from ActiveRecord::RecordInvalid exceptions and render an error response
   rescue_from ActiveRecord::RecordInvalid do |exception|
     render_error(exception.message)
@@ -126,17 +128,6 @@ class Api::V1::StudentQuizzesController < ApplicationController
   # @return [ResponseMap, nil] the response map if found, otherwise nil
   def find_response_map_for_current_user
     ResponseMap.find_by(reviewee_id: current_user.id, reviewed_object_id: params[:questionnaire_id])
-  end
-
-  # Find a resource by its ID and handle the case where it is not found
-  # @param model [Class] the model class to search
-  # @param id [Integer] the ID of the resource
-  # @return [Object, nil] the found resource or nil if not found
-  def find_resource_by_id(model, id)
-    model.find(id)
-  rescue ActiveRecord::RecordNotFound
-    render_error("#{model.name} not found", :not_found)
-    nil
   end
 
   # Check if the quiz has already been assigned to the student

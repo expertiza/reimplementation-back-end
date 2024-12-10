@@ -3,7 +3,10 @@ module ResourceFinder
 
   included do
 
-    # Find a specific resource by ID, handling the case where it's not found
+    # Find a resource by its ID and handle the case where it is not found
+    # @param resource [Class] the resource class to search
+    # @param id [Integer] the ID of the resource
+    # @return [Object, nil] the found resource or nil if not found
     def find_resource_by_id(resource, id)
       resource.find(id)
     rescue ActiveRecord::RecordNotFound
