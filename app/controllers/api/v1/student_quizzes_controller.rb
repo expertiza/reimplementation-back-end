@@ -22,12 +22,12 @@ class Api::V1::StudentQuizzesController < ApplicationController
     render_success(@student_quiz)
   end
 
-  # GET /student_quizzes/:id/calculate_score
+  # GET /student_quizzes/:id/get_score
   # Calculate and render the score for a specific quiz attempt
-  def calculate_score
+  def get_score
     response_map = ResponseMap.find_by(id: params[:id])
     if response_map
-      render_success({ score: response_map.calculate_score })
+      render_success({ score: response_map.get_score })
     else
       render_error('Attempt not found or you do not have permission to view this score.', :not_found)
     end
@@ -91,6 +91,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
 
       total_score = response_map.process_answers(params[:answers])
       response_map.update!(score: total_score)
+      response_map.update!(score: total_score)
       render_success({ total_score: total_score })
     end
   rescue ActiveRecord::RecordInvalid => e
@@ -111,7 +112,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
   # Delete a specific quiz by ID
   def destroy
     @student_quiz.destroy
-    head :no_content
+    render json: { message: "Quiz with id #{params[:id]}, deleted" }, status: :ok
   rescue ActiveRecord::RecordNotFound
     render_error('Record does not exist', :not_found)
   end

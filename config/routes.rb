@@ -111,15 +111,15 @@ Rails.application.routes.draw do
       end
       resources :student_quizzes do
         member do
-          get :calculate_score
+          get :get_score
           get :index
         end
         collection do
-          post 'assign', to: 'student_quizzes#assign_quiz_to_student'
+          post 'assign', to: 'student_quizzes#assign_quiz'
           post :create
         end
       end
-      post 'student_quizzes/submit_answers', to: 'student_quizzes#submit_answers'
+      post 'student_quizzes/submit_quiz', to: 'student_quizzes#submit_quiz'
       resources :participants, only: [:create]
     end
   end

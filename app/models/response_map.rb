@@ -8,7 +8,14 @@ class ResponseMap < ApplicationRecord
 
   # Gets the score from this response map
   def calculate_score
-    responses.sum(&:score_value)
+    responses.sum do |response|
+      question = response.question
+      response.skipped ? 0 : (question.correct_answer == response.submitted_answer ? question.score_value : 0)
+    end
+  end
+
+  def get_score
+    self.score
   end
 
   # Save the submitted answers and check if that answer is correct
@@ -18,8 +25,15 @@ class ResponseMap < ApplicationRecord
       submitted_answer = answer[:answer_value]
       skipped = answer[:skipped] || false
 
+      puts "#{skipped}"
+      puts "#{question.skippable}"
+      if skipped && !question.skippable
+        raise ActiveRecord::RecordInvalid.new("Question #{question.id} cannot be skipped.")
+      end
+
       response = find_or_initialize_response(self.id, question.id)
       response.submitted_answer = submitted_answer
+      response.is_submitted = true
       response.skipped = skipped
       response.save!
 
@@ -28,7 +42,7 @@ class ResponseMap < ApplicationRecord
   end
 
   # Build a new ResponseMap instance for assigning a quiz to a student
-  def build_response_map(student_id, questionnaire)
+  def self.build_response_map(student_id, questionnaire)
     instructor_id = questionnaire.assignment.instructor_id
     ResponseMap.new(
       reviewee_id: student_id,

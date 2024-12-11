@@ -9,7 +9,7 @@ class Question < ApplicationRecord
   validates :break_before, inclusion: { in: [true, false] }
   validates :correct_answer, presence: true
   validates :score_value, presence: true
-  validates :skippable, inclusion: { in: [true, false] 
+  validates :skippable, inclusion: { in: [true, false] }
 
 
   def scorable?

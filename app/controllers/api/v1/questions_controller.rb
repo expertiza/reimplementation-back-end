@@ -26,7 +26,8 @@ class Api::V1::QuestionsController < ApplicationController
   question = questionnaire.questions.build(
     txt: params[:txt],
     question_type: params[:question_type],
-    break_before: true
+    break_before: true,
+    skippable: params[:skippable]
   )
 
   case question.question_type

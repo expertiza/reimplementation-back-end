@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
+ActiveRecord::Schema[7.0].define(version: 2024_12_04_052911) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -226,6 +226,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
     t.bigint "questionnaire_id", null: false
     t.string "correct_answer"
     t.integer "score_value"
+    t.boolean "skippable", default: true
     t.index ["questionnaire_id"], name: "fk_question_questionnaires"
     t.index ["questionnaire_id"], name: "index_questions_on_questionnaire_id"
   end
@@ -249,6 +250,7 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
     t.bigint "response_map_id"
     t.bigint "question_id"
     t.string "submitted_answer"
+    t.boolean "skipped", default: false
     t.index ["map_id"], name: "fk_response_response_map"
     t.index ["question_id"], name: "index_responses_on_question_id"
     t.index ["response_map_id"], name: "index_responses_on_response_map_id"
