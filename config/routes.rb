@@ -109,6 +109,18 @@ Rails.application.routes.draw do
           get :processed, action: :processed_requests
         end
       end
+      resources :student_quizzes do
+        member do
+          get :get_score
+          get :index
+        end
+        collection do
+          post 'assign', to: 'student_quizzes#assign_quiz'
+          post :create
+        end
+      end
+      post 'student_quizzes/submit_quiz', to: 'student_quizzes#submit_quiz'
+      resources :participants, only: [:create]
     end
   end
 end
