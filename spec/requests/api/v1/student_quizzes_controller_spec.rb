@@ -56,9 +56,9 @@ RSpec.describe 'StudentQuizzes API', type: :request do
     end
   end
 
-  describe 'GET /api/v1/student_quizzes/{quiz_id}/calculate_score' do
-    it 'calculates score for a given quiz' do
-      get "/api/v1/student_quizzes/#{questionnaire_id}/calculate_score"
+  describe 'GET /api/v1/student_quizzes/{quiz_id}/get_score' do
+    it 'gets score for a given quiz' do
+      get "/api/v1/student_quizzes/#{questionnaire_id}/get_score"
       expect(response).to have_http_status(:ok)
     end
   end
