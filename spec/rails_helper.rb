@@ -5,6 +5,19 @@ require_relative '../config/environment'
 # Prevent database truncation if the environment is production
 abort("The Rails environment is running in production mode!") if Rails.env.production?
 require 'rspec/rails'
+
+require 'factory_bot_rails'
+require 'database_cleaner/active_record'
+RSpec.configure do |config|
+  config.include FactoryBot::Syntax::Methods
+  config.before(:suite) do
+    FactoryBot.factories.clear
+    FactoryBot.find_definitions
+    DatabaseCleaner.allow_remote_database_url = true
+    DatabaseCleaner.strategy = :transaction
+    DatabaseCleaner.clean_with(:truncation)
+  end
+end
 # Add additional requires below this line. Rails is not loaded until this point!
 
 # Requires supporting ruby files with custom matchers and macros, etc, in

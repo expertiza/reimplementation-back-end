@@ -1,10 +1,20 @@
 require 'rails_helper'
 
 RSpec.describe Invitation, type: :model do
+  include ActiveJob::TestHelper
   let(:user1) { create :user, name: 'rohitgeddam' }
   let(:user2) { create :user, name: 'superman' }
   let(:invalid_user) { build :user, name: 'INVALID' }
-  let(:assignment) { create(:assignment) }
+  let(:role) {Role.create(name: 'Instructor', parent_id: nil, id: 3, default_page_id: nil)}
+  let(:instructor) { Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role: role) }
+  let(:assignment) { create(:assignment, instructor: instructor) }
+  before(:each) do
+    ActiveJob::Base.queue_adapter = :test
+  end
+
+  after(:each) do
+    clear_enqueued_jobs
+  end
 
 
   it 'is invitation_factory returning new Invitation' do
