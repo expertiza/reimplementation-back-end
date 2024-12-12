@@ -36,35 +36,15 @@ RSpec.describe ProjectTopic, type: :model do
     end
   end
 
-  describe '#assign_topic_to_team' do
-    let(:new_sign_up) { SignedUpTeam.new(sign_up_topic_id: nil, team_id: team.id) }
-
-    it 'assigns the topic to the team and updates waitlist status' do
-      project_topic.assign_topic_to_team(new_sign_up)
-      expect(new_sign_up.is_waitlisted).to be false
-      expect(new_sign_up.sign_up_topic_id).to eq(project_topic.id)
-    end
-  end
-
-  describe '#save_waitlist_entry' do
-    let(:new_sign_up) { SignedUpTeam.new(sign_up_topic_id: nil, team_id: team.id) }
-
-    it 'adds a new sign-up to the waitlist' do
-      project_topic.save_waitlist_entry(new_sign_up)
-      expect(new_sign_up.is_waitlisted).to be true
-      expect(new_sign_up.sign_up_topic_id).to eq(project_topic.id)
-    end
-  end
-
   describe '#sign_up_team' do
     let(:new_team) { Team.create!(assignment_id: assignment.id) }
 
     context 'when slot is available' do
       it 'assigns the topic to the team and drops team waitlists' do
-        allow(SignedUpTeam).to receive(:drop_off_team_waitlists).with(new_team.id).and_return(true)
+        allow(SignedUpTeam).to receive(:drop_off_topic_waitlists).with(new_team.id).and_return(true)
 
         expect(project_topic.sign_up_team(new_team.id)).to be true
-        expect(SignedUpTeam).to have_received(:drop_off_team_waitlists).with(new_team.id)
+        expect(SignedUpTeam).to have_received(:drop_off_topic_waitlists).with(new_team.id)
       end
     end
 

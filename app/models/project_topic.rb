@@ -13,49 +13,35 @@ class ProjectTopic < ApplicationRecord
     current_available_slots > 0
   end
 
-  # Assigns the current topic to a team by updating the provided sign-up record.
-  # Marks the sign-up as not waitlisted and associates it with the current topic.
-  def assign_topic_to_team(new_sign_up)
-    new_sign_up.update(is_waitlisted: false, sign_up_topic_id: self.id)
-  end
-
-  # Adds a new sign-up to the waitlist by updating the sign-up record.
-  # Marks the sign-up as waitlisted and associates it with the current topic.
-  def save_waitlist_entry(new_sign_up)
-    new_sign_up.update(is_waitlisted: true, sign_up_topic_id: self.id)
-  end
-
   # Signs up a team for the current topic.
   # Checks if the team is already signed up, and if so, ensures they are not waitlisted.
   # If a slot is available, assigns the topic to the team; otherwise, adds the team to the waitlist.
   def sign_up_team(team_id)
-    topic_id = self.id
-
     # Check if the team has already signed up for this topic
-    existing_sign_up = SignedUpTeam.find_by(sign_up_topic_id: topic_id, team_id: team_id)
+    team_signup_record = SignedUpTeam.find_by(sign_up_topic_id: self.id, team_id: team_id, is_waitlisted: false)
 
-    # If the team is already signed up and not waitlisted, return false
-    if !existing_sign_up.nil? && !existing_sign_up.is_waitlisted
+    # If the team is already signed up, return false
+    if !team_signup_record.nil?
       return false
     end
 
     # Create a new sign-up entry for the team
-    new_sign_up = SignedUpTeam.new(sign_up_topic_id: topic_id, team_id: team_id)
+    new_signup_record = SignedUpTeam.new(sign_up_topic_id: self.id, team_id: team_id)
 
      # If there are available slots, assign the topic to the team and remove the team from the waitlist
     if slot_available?
-      assign_topic_to_team(new_sign_up)
-      result = SignedUpTeam.drop_off_team_waitlists(team_id)
+      new_signup_record.update(is_waitlisted: false, sign_up_topic_id: self.id)
+      result = SignedUpTeam.drop_off_topic_waitlists(team_id)
     else
       # If no slots are available, add the team to the waitlist
-      result = save_waitlist_entry(new_sign_up)
+      new_signup_record.update(is_waitlisted: true, sign_up_topic_id: self.id)
     end
 
     result
   end
 
-  # Retrieves the team that has been waitlisted the longest for a given topic.
-  # The team is selected based on the earliest created waitlist entry.
+  # Retrieves the team with the earliest waitlisted record for a given topic.
+  # The team is determined based on the creation time of the waitlisted record.
   def longest_waiting_team
     SignedUpTeam.where(sign_up_topic_id: self.id, is_waitlisted: true).order(:created_at).first
   end
@@ -86,10 +72,11 @@ class ProjectTopic < ApplicationRecord
   # Calculates the number of available slots for a topic.
   # It checks how many teams have already chosen the topic and subtracts that from the maximum allowed choosers.
   def current_available_slots
-    # Find the teams who have already chosen the topic and are not waitlisted
-    teams_who_chose_the_topic = SignedUpTeam.where(sign_up_topic_id: self.id, is_waitlisted: false)
+    # Find the number of teams who have already chosen the topic and are not waitlisted
+    # This would give us the number of teams who have been assigned the topic
+    num_teams_registered = SignedUpTeam.where(sign_up_topic_id: self.id, is_waitlisted: false).size
 
     # Compute the number of available slots and return
-    self.max_choosers.to_i - teams_who_chose_the_topic.size
+    self.max_choosers.to_i - num_teams_registered
   end
 end
