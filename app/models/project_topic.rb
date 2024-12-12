@@ -57,7 +57,7 @@ class ProjectTopic < ApplicationRecord
     # If the team is not waitlisted, reassign the topic to the next waitlisted team
     unless signed_up_team.is_waitlisted
       next_waitlisted_team = longest_waiting_team
-      next_waitlisted_team&.reassign_team_to_new_topic(self.id)
+      next_waitlisted_team&.assign_topic_to_waitlisted_team(self.id)
     end
     
     # Destroy the sign-up record for the team

@@ -43,13 +43,13 @@ class SignedUpTeam < ApplicationRecord
   # Reassigns the team to a new topic by removing them from their current topic
   # and marking them as no longer waitlisted for the new topic.
   # NOTE: This method gets called only on a waitlisted team (See project_topic.rb -> drop_team_from_topic)
-  def reassign_team_to_new_topic(topic_id)
+  def assign_topic_to_waitlisted_team(topic_id)
     # Find the team's current sign-up record where they are not waitlisted
     # As this method gets called only on a waitlisted team, we need to check if the team has been assigned another topic
-    assigned_team = SignedUpTeam.where(team_id: self.team_id, is_waitlisted: false).first
+    assigned_team = SignedUpTeam.find_by(team_id: self.team_id, is_waitlisted: false)
 
     # If the team is already assigned to a topic, remove them from that topic
-    unless assigned_team.nil?
+    if assigned_team
       project_topic = ProjectTopic.find(assigned_team.sign_up_topic_id)
       project_topic.drop_team_from_topic(team_id: self.team_id)
     end
