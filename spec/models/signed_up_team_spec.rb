@@ -32,7 +32,7 @@ RSpec.describe SignedUpTeam, type: :model do
         end
     end
 
-    describe '#reassign_topic' do
+    describe '#reassign_team_to_new_topic' do
         let!(:project_topic_2) { ProjectTopic.create!(topic_name: "Dummy Topic 2", assignment_id: assignment.id, max_choosers: 3) }
         let!(:signed_up_team) { SignedUpTeam.create!(sign_up_topic_id: project_topic.id, is_waitlisted: true, team_id: team.id) }
         let!(:signed_up_team_2) { SignedUpTeam.create!(sign_up_topic_id: project_topic_2.id, is_waitlisted: false, team_id: team.id) }
@@ -43,7 +43,7 @@ RSpec.describe SignedUpTeam, type: :model do
         end
 
         it 'reassigns the team to a new topic and marks them as not waitlisted' do
-            signed_up_team.reassign_topic(project_topic.id)
+            signed_up_team.reassign_team_to_new_topic(project_topic.id)
             expect(signed_up_team.is_waitlisted).to be_falsey
             expect(project_topic_2).to have_received(:drop_team_from_topic).with(team_id: team.id)
         end

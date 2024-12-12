@@ -16,7 +16,7 @@ class ProjectTopic < ApplicationRecord
   # Signs up a team for the current topic.
   # Checks if the team is already signed up, and if so, ensures they are not waitlisted.
   # If a slot is available, assigns the topic to the team; otherwise, adds the team to the waitlist.
-  def sign_up_team(team_id)
+  def signup_team(team_id)
     # Check if the team has already signed up for this topic
     team_signup_record = SignedUpTeam.find_by(sign_up_topic_id: self.id, team_id: team_id, is_waitlisted: false)
 
@@ -57,7 +57,7 @@ class ProjectTopic < ApplicationRecord
     # If the team is not waitlisted, reassign the topic to the next waitlisted team
     unless signed_up_team.is_waitlisted
       next_waitlisted_team = longest_waiting_team
-      next_waitlisted_team&.reassign_topic(self.id)
+      next_waitlisted_team&.reassign_team_to_new_topic(self.id)
     end
     
     # Destroy the sign-up record for the team

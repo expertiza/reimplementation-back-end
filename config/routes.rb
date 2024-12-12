@@ -79,8 +79,8 @@ Rails.application.routes.draw do
 
       resources :signed_up_teams do
         collection do
-          post '/sign_up', to: 'signed_up_teams#sign_up'
-          post '/sign_up_student', to: 'signed_up_teams#sign_up_student'
+          post '/signup', to: 'signed_up_teams#signup'
+          post '/signup_user', to: 'signed_up_teams#signup_user'
         end
       end
 

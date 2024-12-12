@@ -36,7 +36,7 @@ describe 'SignedUpTeams API' do
     end
   end
 
-  path '/api/v1/signed_up_teams/sign_up_student' do
+  path '/api/v1/signed_up_teams/signup_user' do
     parameter name: 'user_id', in: :query, type: :integer, description: 'User ID', required: true
     post 'Creates a signed up team by student' do
       tags 'SignedUpTeams'

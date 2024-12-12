@@ -9,13 +9,13 @@ class SignedUpTeam < ApplicationRecord
   end
 
   # Signs up a team for a specific project topic.
-  # Finds the project topic by its ID and associates the given team with the topic by calling `sign_up_team`.
-  def self.sign_up_team_for_topic(topic_id, team_id)
+  # Finds the project topic by its ID and associates the given team with the topic by calling `signup_team`.
+  def self.signup_team_for_topic(topic_id, team_id)
     # Find the project topic by its ID
     project_topic = ProjectTopic.find(topic_id)
 
     # Sign up the team for the topic
-    project_topic.sign_up_team(team_id)
+    project_topic.signup_team(team_id)
   end
 
   # Retrieves the team ID for a given user and assignment.
@@ -42,8 +42,8 @@ class SignedUpTeam < ApplicationRecord
 
   # Reassigns the team to a new topic by removing them from their current topic
   # and marking them as no longer waitlisted for the new topic.
-  # NOTE: This method gets called only on a waitlisted team
-  def reassign_topic(topic_id)
+  # NOTE: This method gets called only on a waitlisted team (See project_topic.rb -> drop_team_from_topic)
+  def reassign_team_to_new_topic(topic_id)
     # Find the team's current sign-up record where they are not waitlisted
     # As this method gets called only on a waitlisted team, we need to check if the team has been assigned another topic
     assigned_team = SignedUpTeam.where(team_id: self.team_id, is_waitlisted: false).first

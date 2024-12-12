@@ -36,14 +36,14 @@ RSpec.describe ProjectTopic, type: :model do
     end
   end
 
-  describe '#sign_up_team' do
+  describe '#signup_team' do
     let(:new_team) { Team.create!(assignment_id: assignment.id) }
 
     context 'when slot is available' do
       it 'assigns the topic to the team and drops team waitlists' do
         allow(SignedUpTeam).to receive(:drop_off_topic_waitlists).with(new_team.id).and_return(true)
 
-        expect(project_topic.sign_up_team(new_team.id)).to be true
+        expect(project_topic.signup_team(new_team.id)).to be true
         expect(SignedUpTeam).to have_received(:drop_off_topic_waitlists).with(new_team.id)
       end
     end
@@ -56,7 +56,7 @@ RSpec.describe ProjectTopic, type: :model do
       end
 
       it 'adds the team to the waitlist' do
-        expect { project_topic.sign_up_team(new_team.id) }.to change { SignedUpTeam.count }.by(1)
+        expect { project_topic.signup_team(new_team.id) }.to change { SignedUpTeam.count }.by(1)
         expect(SignedUpTeam.last.is_waitlisted).to be true
       end
     end
@@ -67,7 +67,7 @@ RSpec.describe ProjectTopic, type: :model do
       end
 
       it 'returns false' do
-        expect(project_topic.sign_up_team(team.id)).to be false
+        expect(project_topic.signup_team(team.id)).to be false
       end
     end
   end
