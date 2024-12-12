@@ -34,7 +34,7 @@ class ProjectTopic < ApplicationRecord
       result = SignedUpTeam.drop_off_topic_waitlists(team_id)
     else
       # If no slots are available, add the team to the waitlist
-      new_signup_record.update(is_waitlisted: true, sign_up_topic_id: self.id)
+      result = new_signup_record.update(is_waitlisted: true, sign_up_topic_id: self.id)
     end
 
     result
