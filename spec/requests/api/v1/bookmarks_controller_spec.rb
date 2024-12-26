@@ -128,7 +128,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
       bookmark.id
     end
 
-    # Get request on /api/v1/bookmarks/{id} returns the response 200 succesful - bookmark with id = {id} when correct id is passed which is in the database
+    # Get request on /api/v1/bookmarks/{id} returns the response 200 successful - bookmark with id = {id} when correct id is passed which is in the database
     get('show bookmark') do
       tags 'Bookmarks'
       produces 'application/json'
@@ -159,7 +159,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         }
       }
 
-      # put request on /api/v1/bookmarks/{id} returns 200 response succesful when bookmark id is present in the database and correct valid params are passed
+      # put request on /api/v1/bookmarks/{id} returns 200 response successful when bookmark id is present in the database and correct valid params are passed
       response(200, 'successful') do
         let(:body_params) do
           {
@@ -201,7 +201,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
     delete('delete bookmark') do
       tags 'Bookmarks'
       produces 'application/json'
-      # delete request on /api/v1/bookmarks/{id} returns 204 succesful response when bookmark with id present in the database is succesfully deleted
+      # delete request on /api/v1/bookmarks/{id} returns 204 successful response when bookmark with id present in the database is successfully deleted
       response(204, 'successful') do
         run_test! do
           expect(Bookmark.exists?(id)).to eq(false)
