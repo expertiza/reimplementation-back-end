@@ -48,7 +48,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       )
     end
 
-    # get request on /api/v1/questions returns 200 succesful response when it returns list of questions present in the database
+    # get request on /api/v1/questions returns 200 successful response when it returns list of questions present in the database
     get('list questions') do
       tags 'Questions'
       produces 'application/json'
@@ -117,7 +117,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         end
       end
 
-      # post request on /api/v1/questions returns 404 not foound when questionnaire id for the given question is not present in the database
+      # post request on /api/v1/questions returns 404 not found when questionnaire id for the given question is not present in the database
       response(404, 'questionnaire id not found') do
         let(:question) do
           instructor
@@ -199,7 +199,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       tags 'Questions'
       produces 'application/json'
 
-      # get request on /api/v1/questions/{id} returns 200 succesful response and returns question with given question id
+      # get request on /api/v1/questions/{id} returns 200 successful response and returns question with given question id
       response(200, 'successful') do
         run_test! do
           expect(response.body).to include('"txt":"test question 1"') 
@@ -228,7 +228,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         }
       }
       
-      # put request on /api/v1/questions/{id} returns 200 succesful response and updates parameters of question with given question id
+      # put request on /api/v1/questions/{id} returns 200 successful response and updates parameters of question with given question id
       response(200, 'successful') do
         let(:body_params) do
           {
@@ -282,7 +282,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         }
       }
       
-      # patch request on /api/v1/questions/{id} returns 200 succesful response and updates parameters of question with given question id
+      # patch request on /api/v1/questions/{id} returns 200 successful response and updates parameters of question with given question id
       response(200, 'successful') do
         let(:body_params) do
           {
@@ -329,7 +329,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       tags 'Questions'
       produces 'application/json'
 
-      # delete request on /api/v1/questions/{id} returns 204 succesful response when it deletes question with given question id present in the database
+      # delete request on /api/v1/questions/{id} returns 204 successful response when it deletes question with given question id present in the database
       response(204, 'successful') do
         run_test! do
           expect(Question.exists?(id)).to eq(false)
@@ -406,7 +406,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       tags 'Questions'
       produces 'application/json'
 
-      # delete method on /api/v1/questions/delete_all/questionnaire/{id} returns 200 succesful response when all questions with given questionnaire id are deleted
+      # delete method on /api/v1/questions/delete_all/questionnaire/{id} returns 200 successful response when all questions with given questionnaire id are deleted
       response(200, 'successful') do
         run_test! do
           expect(Question.where(questionnaire_id: id).count).to eq(0)
@@ -508,7 +508,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       tags 'Questions'
       produces 'application/json'
 
-      # get method on /api/v1/questions/show_all/questionnaire/{id} returns 200 succesful response when all questions with given questionnaire id are shown
+      # get method on /api/v1/questions/show_all/questionnaire/{id} returns 200 successful response when all questions with given questionnaire id are shown
       response(200, 'successful') do
         run_test! do
           expect(Question.where(questionnaire_id: id).count).to eq(1)
