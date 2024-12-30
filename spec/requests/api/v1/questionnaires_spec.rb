@@ -104,7 +104,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
         end
       end
 
-      # post request on /api/v1/questionnaires returns 422 response - unprocessable entity when wrong params is passed toc reate questionnaire
+      # post request on /api/v1/questionnaires returns 422 response - unprocessable entity when wrong params is passed to create questionnaire
       response(422, 'unprocessable entity') do
         let(:questionnaire) do
           instructor
@@ -147,7 +147,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
         questionnaire.id 
       end
 
-    # Get request on /api/v1/questionnaires/{id} returns the response 200 succesful - questionnaire with id = {id} when correct id is passed which is in the database
+    # Get request on /api/v1/questionnaires/{id} returns the response 200 successful - questionnaire with id = {id} when correct id is passed which is in the database
     get('show questionnaire') do
       tags 'Questionnaires'
       produces 'application/json'
@@ -178,7 +178,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
         }
       }
       
-      # put request on /api/v1/questionnaires/{id} returns 200 response succesful when questionnaire id is present in the database and correct valid params are passed
+      # put request on /api/v1/questionnaires/{id} returns 200 response successful when questionnaire id is present in the database and correct valid params are passed
       response(200, 'successful') do
         let(:body_params) do
           {
@@ -229,7 +229,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
         }
       }
       
-      # patch request on /api/v1/questionnaires/{id} returns 200 response succesful when questionnaire id is present in the database and correct valid params are passed
+      # patch request on /api/v1/questionnaires/{id} returns 200 response successful when questionnaire id is present in the database and correct valid params are passed
       response(200, 'successful') do
         let(:body_params) do
           {
@@ -271,7 +271,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
     delete('delete questionnaire') do
       tags 'Questionnaires'
       produces 'application/json'
-      # delete request on /api/v1/questionnaires/{id} returns 204 succesful response when questionnaire with id present in the database is succesfully deleted
+      # delete request on /api/v1/questionnaires/{id} returns 204 successful response when questionnaire with id present in the database is successfully deleted
       response(204, 'successful') do
         run_test! do
           expect(Questionnaire.exists?(id)).to eq(false)
@@ -323,7 +323,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
         tags 'Questionnaires'
         produces 'application/json'
         
-        # get request on /api/v1/questionnaires/toggle_access/{id} returns 200 succesful response when correct id is passed and toggles the private variable
+        # get request on /api/v1/questionnaires/toggle_access/{id} returns 200 successful response when correct id is passed and toggles the private variable
         response(200, 'successful') do
           run_test! do 
             expect(response.body).to include(" has been successfully made private. ")
@@ -375,7 +375,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
         consumes 'application/json'
         produces 'application/json'
 
-        # post request on /api/v1/questionnaires/copy/{id} returns 200 succesful response when request returns copied questionnaire with questionnaire id is present in the database
+        # post request on /api/v1/questionnaires/copy/{id} returns 200 successful response when request returns copied questionnaire with questionnaire id is present in the database
         response(200, 'successful') do
           run_test! do 
             expect(response.body).to eq("Copy of the questionnaire has been created successfully.")
