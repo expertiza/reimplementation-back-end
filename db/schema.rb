@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
+ActiveRecord::Schema[7.0].define(version: 2024_10_15_223136) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -136,6 +136,30 @@ ActiveRecord::Schema[7.0].define(version: 2024_04_15_192048) do
     t.index ["institution_id"], name: "index_courses_on_institution_id"
     t.index ["instructor_id"], name: "fk_course_users"
     t.index ["instructor_id"], name: "index_courses_on_instructor_id"
+  end
+
+  create_table "due_dates", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "due_at", null: false
+    t.integer "deadline_type_id", null: false
+    t.string "parent_type", null: false
+    t.bigint "parent_id", null: false
+    t.integer "submission_allowed_id", null: false
+    t.integer "review_allowed_id", null: false
+    t.integer "round"
+    t.boolean "flag", default: false
+    t.integer "threshold", default: 1
+    t.string "delayed_job_id"
+    t.string "deadline_name"
+    t.string "description_url"
+    t.integer "quiz_allowed_id", default: 1
+    t.integer "teammate_review_allowed_id", default: 3
+    t.string "type", default: "AssignmentDueDate"
+    t.integer "resubmission_allowed_id"
+    t.integer "rereview_allowed_id"
+    t.integer "review_of_review_allowed_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_type", "parent_id"], name: "index_due_dates_on_parent"
   end
 
   create_table "institutions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
