@@ -4,7 +4,7 @@ class Api::V1::CoursesController < ApplicationController
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
   def action_allowed?
-    has_required_role?('Instructor')
+    has_privileges_of?('Instructor')
   end
 
   # GET /courses
