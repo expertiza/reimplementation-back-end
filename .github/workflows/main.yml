@@ -78,6 +78,11 @@ jobs:
           name: code-coverage-artifacts
           path: coverage/
 
+      - name: Publish code coverage
+        run: |
+          ./cc-test-reporter sum-coverage coverage/codeclimate.*.json 
+          ./cc-test-reporter after-build -t simplecov -r ${{ secrets.CC_TEST_REPORTER_ID }}
+
 
   docker:
     needs: test
