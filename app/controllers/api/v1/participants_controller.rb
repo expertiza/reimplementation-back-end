@@ -1,10 +1,15 @@
 class Api::V1::ParticipantsController < ApplicationController
   include ParticipantsHelper
 
+  # Returns true if the user has TA privileges; otherwise, denies access by returning false.
+  def action_allowed?
+    current_user_has_ta_privileges?
+  end
+
   # Return a list of participants for a given user
   # params - user_id
   # GET /participants/user/:user_id
-  def user_index
+  def list_user_participants
     user = find_user if params[:user_id].present?
     return if params[:user_id].present? && user.nil?
 
@@ -20,7 +25,7 @@ class Api::V1::ParticipantsController < ApplicationController
   # Return a list of participants for a given assignment
   # params - assignment_id
   # GET /participants/assignment/:assignment_id
-  def assignment_index
+  def list_assignment_participants
     assignment = find_assignment if params[:assignment_id].present?
     return if params[:assignment_id].present? && assignment.nil?
 
