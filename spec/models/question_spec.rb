@@ -4,7 +4,7 @@ RSpec.describe Question, type: :model do
   # Creating dummy objects for the test with the help of let statement
   let(:role) { Role.create(name: 'Instructor', parent_id: nil, id: 2, default_page_id: nil) }
   let(:instructor) do
-    Instructor.create(id: 1234, name: 'testinstructor', email: 'test@test.com', fullname: 'Test Instructor',
+    Instructor.create(id: 1234, name: 'testinstructor', email: 'test@test.com', full_name: 'test instructor',
                       password: '123456', role:)
   end
   let(:questionnaire) do
@@ -67,7 +67,7 @@ RSpec.describe Question, type: :model do
       instructor.save!
       questionnaire.save!
       question = Question.create(seq: 1, txt: 'Sample question', question_type: 'multiple_choice',
-                                 break_before: true, questionnaire:)
+                                 break_before: true, questionnaire:questionnaire)
       expect { question.delete }.to change { Question.count }.by(-1)
     end
   end

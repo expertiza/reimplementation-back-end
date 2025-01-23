@@ -18,10 +18,9 @@ RSpec.describe AuthenticationController, type: :request do
         schema type: :object,
                properties: { token: { type: :string } },
                required: ['token']
-        let(:user) { create(:user, name: 'testuser', full_name: 'Test User') }
+        let(:user) { create(:user, name: 'testuser', full_name: 'Test User', password: 'password') }
         let(:credentials) { { user_name: user.name, password: 'password' } }
         run_test!
-
         it 'returns a JWT token' do
           token = JSON.parse(response.body)['token']
           decoded_token = JsonWebToken.decode(token)
