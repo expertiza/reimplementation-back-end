@@ -11,6 +11,7 @@ class Assignment < ApplicationRecord
   has_many :sign_up_topics , class_name: 'SignUpTopic', foreign_key: 'assignment_id', dependent: :destroy
   belongs_to :course, optional: true
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments
+  validates :max_team_size, numericality: { only_integer: true, greater_than_or_equal_to: 1 }, allow_nil: true  
 
   #This method return the value of the has_badge field for the given assignment object.
   attr_accessor :title, :description, :has_badge, :enable_pair_programming, :is_calibrated, :staggered_deadline
@@ -22,10 +23,11 @@ class Assignment < ApplicationRecord
   def teams?
     @has_teams ||= teams.any?
   end
+
   def num_review_rounds
     rounds_of_reviews
   end
-
+  
   # Add a participant to the assignment based on the provided user_id.
   # This method first finds the User with the given user_id. If the user does not exist, it raises an error.
   # It then checks if the user is already a participant in the assignment. If so, it raises an error.
@@ -79,8 +81,6 @@ class Assignment < ApplicationRecord
     self
   end
 
-
-
  # Assign a course to the assignment based on the provided course_id.
   # If the assignment already belongs to the specified course, an error is raised.
   # Returns the modified assignment object with the updated course assignment.
@@ -97,7 +97,6 @@ class Assignment < ApplicationRecord
     # Return the modified assignment
     assignment
   end
-
 
   # Create a copy of the assignment, including its name, instructor, and course assignment.
   # The new assignment is named "Copy of [original assignment name]".
@@ -117,6 +116,7 @@ class Assignment < ApplicationRecord
     copied_assignment
 
   end
+
   def is_calibrated?
     is_calibrated
   end
@@ -132,7 +132,6 @@ class Assignment < ApplicationRecord
   def staggered_and_no_topic?(topic_id)
     staggered_deadline? && topic_id.nil?
   end
-
 
   #This method return the value of the has_topics field for the given assignment object.
   # has_topics is of boolean type and is set true if there is any topic associated with the assignment.
@@ -183,7 +182,6 @@ class Assignment < ApplicationRecord
     end
   end
 
-
   #This method check if for the given assignment,different type of rubrics are used in different round.
   # Checks if for the given assignment any questionnaire is present with used_in_round field not nil.
   # Returns a boolean value whether such questionnaire is present.
@@ -192,7 +190,40 @@ class Assignment < ApplicationRecord
     # Check if any rubric has a specified round
     rubric_with_round.present?
   end
+  
+#E2479
+#check if the user is on the team
+def user_on_team?(user)
+  teams = self.teams
+  users = []
+  teams.each do |team|
+    users << team.users
+  end
+  users.flatten.include? user
+end
+# Validates if a user is eligible to join a team for the current assignment.
+# This method ensures that:
+# - The user is not already part of another team for this assignment.
+# - The user is a valid participant in the assignment.
+# Params:
+# - user: The user to validate for team membership.
+# Returns:
+# - A hash indicating the validation result:
+#   - { success: true } if the user can join the team.
+#   - { success: false, error: "Reason for failure" } if the user cannot join the team.
+def valid_team_participant?(user)
+  # Check if the user is already part of a team for this assignment.
+  if user_on_team?(user)
+    { success: false, error: "This user is already assigned to a team for this assignment" }
 
+  # Check if the user is a registered participant in the assignment.
+  elsif AssignmentParticipant.find_by(user_id: user.id, parent_id: assignment_id).nil?
+    { success: false, error: "#{user.name} is not a participant in this assignment" }
 
+  # If both checks pass, the user is eligible to join the team.
+  else
+    { success: true }
+  end
+end
 
 end
