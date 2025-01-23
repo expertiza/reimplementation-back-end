@@ -1,5 +1,7 @@
 class Api::V1::QuestionsController < ApplicationController
-  
+  def action_allowed?
+    has_role?('Instructor')
+  end
   # Index method returns the list of questions JSON object
   # GET on /questions
   def index
