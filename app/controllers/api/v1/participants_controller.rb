@@ -3,7 +3,7 @@ class Api::V1::ParticipantsController < ApplicationController
 
   # Returns true if the user has TA privileges; otherwise, denies access by returning false.
   def action_allowed?
-    current_user_has_ta_privileges?
+    has_required_role?('Teaching Assistant')
   end
 
   # Return a list of participants for a given user
