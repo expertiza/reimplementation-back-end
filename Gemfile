@@ -47,6 +47,8 @@ group :development, :test do
   gem 'coveralls'
   gem 'simplecov_json_formatter'
   gem 'database_cleaner-active_record'
+  gem 'danger'
+
 end
 
 group :development do
