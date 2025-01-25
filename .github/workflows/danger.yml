@@ -18,6 +18,6 @@ jobs:
         run: bundle install
 
       - name: Run Danger
-        uses: danger/danger@v10
+        uses: danger/danger
         env:
             GITHUB_TOKEN: ${{ secrets.DANGER_GITHUB_API_TOKEN }}
