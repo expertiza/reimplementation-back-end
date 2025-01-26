@@ -81,7 +81,11 @@ class Api::V1::AccountRequestsController < ApplicationController
 
   # Create a new user if account request is approved
   def create_approved_user
-    @new_user = User.new(name: @account_request.username, role_id: @account_request.role_id, institution_id: @account_request.institution_id, fullname: @account_request.full_name, email: @account_request.email, password: 'password')
+    if User.exists?(email: @account_request.email)
+      render json: { error: 'A user with this email already exists. Cannot approve the account request.' }, status: :unprocessable_entity
+      return
+    end
+    @new_user = User.new(name: @account_request.username, role_id: @account_request.role_id, institution_id: @account_request.institution_id, full_name: @account_request.full_name, email: @account_request.email, password: 'password')
     if @new_user.save
       render json: { success: 'Account Request Approved and User successfully created.', user: @new_user}, status: :ok
     else

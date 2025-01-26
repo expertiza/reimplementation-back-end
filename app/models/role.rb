@@ -11,6 +11,7 @@ class Role < ApplicationRecord
     SUPER_ADMINISTRATOR = find_by_name('Super Administrator')
   end
 
+
   def super_administrator?
     name['Super Administrator']
   end

@@ -1,26 +1,30 @@
 require 'swagger_helper'
+require 'json_web_token'
 
-def login_user()
-  # Give the login details of a DB-seeded user. (see seeds.rb)
-  login_details = {
-    user_name: "john",
-    password: "password123"
+RSpec.describe 'StudentTasks API', type: :request do
+
+  before(:all) do
+    # Create roles in hierarchy
+    @super_admin = Role.find_or_create_by(name: 'Super Administrator')
+    @admin = Role.find_or_create_by(name: 'Administrator', parent_id: @super_admin.id)
+    @instructor = Role.find_or_create_by(name: 'Instructor', parent_id: @admin.id)
+    @ta = Role.find_or_create_by(name: 'Teaching Assistant', parent_id: @instructor.id)
+    @student = Role.find_or_create_by(name: 'Student', parent_id: @ta.id)
+  end
+
+  let(:studenta) {
+    User.create(
+      name: "studenta",
+      password_digest: "password",
+      role_id: @student.id,
+      full_name: "Student A",
+      email: "testuser@example.com",
+      mru_directory_path: "/home/testuser",
+      )
   }
 
-  # Make the request to the login function.
-  post '/login', params: login_details
-
-  # return the token from the response
-  json_response = JSON.parse(response.body)
-  json_response['token']
-end
-
-describe 'StudentTasks API', type: :request do
-
-  # Re-login and get the token after each request.
-  before(:each) do
-    @token = login_user
-  end
+  let(:token) { JsonWebToken.encode({id: studenta.id}) }
+  let(:Authorization) { "Bearer #{token}" }
 
   path '/api/v1/student_tasks/list' do
     get 'student tasks list' do
@@ -33,17 +37,11 @@ describe 'StudentTasks API', type: :request do
 
       # Ensure an authorized request gets a 200 response.
       response '200', 'authorized request has success response' do
-        # Attach parameter to request.
-        let(:'Authorization') {"Bearer #{@token}"}
-
         run_test!
       end
 
       # Ensure an authorized test gets the right data for the logged-in user.
       response '200', 'authorized request has proper JSON schema' do
-        # Attach parameter to request.
-        let(:'Authorization') {"Bearer #{@token}"}
-
         # Run test and give expectations about result.
         run_test! do |response|
           data = JSON.parse(response.body)
@@ -89,7 +87,6 @@ describe 'StudentTasks API', type: :request do
       parameter name: 'Authorization', in: :header, type: :string
 
       response '200', 'successful retrieval of a student task' do
-        let(:'Authorization') { "Bearer #{@token}" }
         let(:id) { 1 }
 
         run_test! do |response|
@@ -103,7 +100,6 @@ describe 'StudentTasks API', type: :request do
       end
 
       response '500', 'participant not found' do
-        let(:'Authorization') { "Bearer #{@token}" }
         let(:id) { -1 }
 
         run_test! do |response|

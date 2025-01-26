@@ -4,6 +4,8 @@ module Authorization
 
   # Authorize all actions
   def authorize
+    Rails.logger.info "Authorization Header: #{request.headers['Authorization']}"
+    Rails.logger.info "Current User: #{current_user&.inspect}"
     unless all_actions_allowed?
       render json: { 
         error: "You are not authorized to #{params[:action]} this #{params[:controller]}"
@@ -13,7 +15,7 @@ module Authorization
 
   # Check if all actions are allowed
   def all_actions_allowed?
-    return true if has_required_role?('Super Administrator')
+    return true if has_privileges_of?('Super Administrator')
     action_allowed?
   end
 

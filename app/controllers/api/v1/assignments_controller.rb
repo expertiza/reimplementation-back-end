@@ -1,4 +1,5 @@
 class Api::V1::AssignmentsController < ApplicationController
+  rescue_from ActiveRecord::RecordNotFound, with: :not_found
 
   # GET /api/v1/assignments
   def index
@@ -30,6 +31,10 @@ class Api::V1::AssignmentsController < ApplicationController
     else
       render json: assignment.errors, status: :unprocessable_entity
     end
+  end
+
+  def not_found
+    render json: { error: "Assignment not found" }, status: :not_found
   end
 
   # DELETE /api/v1/assignments/:id

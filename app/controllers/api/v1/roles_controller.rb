@@ -2,6 +2,10 @@ class Api::V1::RolesController < ApplicationController
   # rescue_from ActiveRecord::RecordNotFound, with: :role_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
+  def action_allowed?
+    has_privileges_of?('Administrator')
+  end
+  
   # GET /roles
   def index
     roles = Role.order(:id)
