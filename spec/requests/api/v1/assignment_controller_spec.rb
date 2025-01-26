@@ -2,13 +2,20 @@
 
 require 'swagger_helper'
 require 'rails_helper'
+require 'json_web_token'
 
 RSpec.describe 'Assignments API', type: :request do
   before do
     Role.create(id: 1, name: 'Teaching Assistant', parent_id: nil, default_page_id: nil)
     Role.create(id: 2, name: 'Administrator', parent_id: nil, default_page_id: nil)
 
-    Assignment.create(id: 1, name: 'a1')
+    @super_admin = Role.find_or_create_by(name: 'Super Administrator')
+    @admin = Role.find_or_create_by(name: 'Administrator', parent_id: @super_admin.id)
+    @instructor = Role.find_or_create_by(name: 'Instructor', parent_id: @admin.id)
+    @ta = Role.find_or_create_by(name: 'Teaching Assistant', parent_id: @instructor.id)
+    @student = Role.find_or_create_by(name: 'Student', parent_id: @ta.id)
+
+    @assignment1 = Assignment.create(id: 1, name: 'a1')
     Assignment.create(id: 2, name: 'a2')
 
   end
@@ -20,16 +27,28 @@ RSpec.describe 'Assignments API', type: :request do
     User.create(id: 1, name: "admin", full_name: "admin", email: "admin@gmail.com", password_digest: "admin", role_id: 2, institution_id: institution.id)
   end
 
+  let(:prof) {
+    User.create(
+      name: "profa",
+      password_digest: "password",
+      role_id: @instructor.id,
+      full_name: "Prof A",
+      email: "testuser@example.com",
+      mru_directory_path: "/home/testuser",
+      )
+  }
 
-  let(:auth_token) { generate_auth_token(user) }
+  let(:assignment) { Assignment.create!(id: 1, name: 'Test Assignment', instructor_id: prof.id) }
+  let(:course) { create(:course, id: 1, name: 'ECE517', instructor: prof, institution: institution) }
+  let(:token) { JsonWebToken.encode({ id: prof.id }) }
+  let(:Authorization) { "Bearer #{token}" }
+
 
   path '/api/v1/assignments' do
     get 'Get assignments' do
       tags "Get All Assignments"
       produces 'application/json'
-      parameter name: 'Authorization', in: :header, type: :string
       parameter name: 'Content-Type', in: :header, type: :string
-      let('Authorization') { "Bearer #{auth_token}" }
       let('Content-Type') { 'application/json' }
 
       response '200', 'assignment successfully' do
@@ -50,15 +69,12 @@ RSpec.describe 'Assignments API', type: :request do
       tags 'Assignments'
       consumes 'application/json'
       produces 'application/json'
-      parameter name: 'Authorization', in: :header, type: :string
       parameter name: 'Content-Type', in: :header, type: :string
-      let('Authorization') { "Bearer #{auth_token}" }
       let('Content-Type') { 'application/json' }
 
       response '200', 'participant added successfully' do
-        let(:assignment) { create(:assignment) }
-        let(:assignment_id) { assignment.id }
         let(:user_id) { user.id }
+        let(:assignment_id) { assignment.id }
 
         run_test! do
           response_json = JSON.parse(response.body) # Parse the response body as JSON
@@ -85,14 +101,11 @@ end
       tags 'Assignments'
       consumes 'application/json'
       produces 'application/json'
-      parameter name: 'Authorization', in: :header, type: :string
       parameter name: 'Content-Type', in: :header, type: :string
-      let('Authorization') { "Bearer #{auth_token}" }
       let('Content-Type') { 'application/json' }
 
       response '200', 'participant removed successfully' do
         let(:user_id) { user.id }
-        let(:assignment) {create(:assignment)}
         let(:assignment_id) {assignment.id}
 
         before do
@@ -124,15 +137,11 @@ end
       tags 'Assignments'
       consumes 'application/json'
       produces 'application/json'
-      parameter name: 'Authorization', in: :header, type: :string
       parameter name: 'Content-Type', in: :header, type: :string
-      let('Authorization') { "Bearer #{auth_token}" }
       let('Content-Type') { 'application/json' }
 
       response '200', 'course_id assigned successfully' do
-        let(:course) { create(:course)}
         let(:course_id) { course.id }
-        let(:assignment) { create(:assignment) }
         let(:assignment_id) { assignment.id }
 
         run_test! do
@@ -144,7 +153,6 @@ end
 
       response '404', 'assignment not found' do
         let(:assignment_id) { 3 }
-        let(:course) { create(:course)}
         let(:course_id) {course.id}
 
         run_test! do
@@ -159,15 +167,11 @@ end
       tags 'Assignments'
       produces 'application/json'
       parameter name: :assignment_id, in: :path, type: :integer, required: true
-      parameter name: 'Authorization', in: :header, type: :string
       parameter name: 'Content-Type', in: :header, type: :string
-      let('Authorization') { "Bearer #{auth_token}" }
       let('Content-Type') { 'application/json' }
 
 
       response '200', 'assignment removed from course' do
-        let(:course) { create(:course) }
-        let(:assignment) { create(:assignment, course: course)}
         let(:assignment_id) { assignment.id }
         let(:course_id) { course.id }
         run_test! do
@@ -197,13 +201,10 @@ end
       tags 'Assignments'
       consumes 'application/json'
       produces 'application/json'
-      parameter name: 'Authorization', in: :header, type: :string
       parameter name: 'Content-Type', in: :header, type: :string
-      let('Authorization') { "Bearer #{auth_token}" }
       let('Content-Type') { 'application/json' }
 
       response '200', 'assignment copied successfully' do
-        let(:assignment) { create(:assignment) } # Assuming you have a Factory for Assignment
         let(:assignment_id) { assignment.id }
 
         run_test! do
@@ -230,13 +231,10 @@ end
       tags 'Assignments'
       produces 'application/json'
       consumes 'application/json'
-      parameter name: 'Authorization', in: :header, type: :string
       parameter name: 'Content-Type', in: :header, type: :string
-      let('Authorization') { "Bearer #{auth_token}" }
       let('Content-Type') { 'application/json' }
 
       response(200, 'successful') do
-        let(:assignment) { create(:assignment) }
         let(:id) { assignment.id }
 
         run_test! do |response|
@@ -264,11 +262,9 @@ end
       produces 'application/json'
       parameter name: 'Authorization', in: :header, type: :string
       parameter name: 'Content-Type', in: :header, type: :string
-      let('Authorization') { "Bearer #{auth_token}" }
       let('Content-Type') { 'application/json' }
 
       response(200, 'successful') do
-        let(:assignment) { create(:assignment) }
         let(:assignment_id) { assignment.id }
 
         run_test! do |response|
@@ -295,11 +291,9 @@ end
       produces 'application/json'
       parameter name: 'Authorization', in: :header, type: :string
       parameter name: 'Content-Type', in: :header, type: :string
-      let('Authorization') { "Bearer #{auth_token}" }
       let('Content-Type') { 'application/json' }
 
       response(200, 'successful') do
-        let(:assignment) { create(:assignment) }
         let(:assignment_id) { assignment.id }
 
         run_test! do |response|
@@ -327,11 +321,9 @@ end
       produces 'application/json'
       parameter name: 'Authorization', in: :header, type: :string
       parameter name: 'Content-Type', in: :header, type: :string
-      let('Authorization') { "Bearer #{auth_token}" }
       let('Content-Type') { 'application/json' }
 
       response(200, 'successful') do
-        let(:assignment) { create(:assignment) }
         let(:assignment_id) { assignment.id }
         let(:review_type) { 'review' }
 
@@ -360,11 +352,9 @@ end
       produces 'application/json'
       parameter name: 'Authorization', in: :header, type: :string
       parameter name: 'Content-Type', in: :header, type: :string
-      let('Authorization') { "Bearer #{auth_token}" }
       let('Content-Type') { 'application/json' }
 
       response(200, 'successful') do
-        let(:assignment) { create(:assignment) }
         let(:assignment_id) { assignment.id }
 
         run_test! do |response|
@@ -391,12 +381,11 @@ end
       produces 'application/json'
       parameter name: 'Authorization', in: :header, type: :string
       parameter name: 'Content-Type', in: :header, type: :string
-      let('Authorization') { "Bearer #{auth_token}" }
       let('Content-Type') { 'application/json' }
 
       response(200, 'successful') do
-        let(:assignment) { create(:assignment) }
         let(:id) { assignment.id }
+        let(:topic_id) { 1 }
 
         run_test! do |response|
           data = JSON.parse(response.body)
@@ -406,7 +395,7 @@ end
           expect(data['has_badge']).to eq(assignment.has_badge?)
           expect(data['pair_programming_enabled']).to eq(assignment.pair_programming_enabled?)
           expect(data['is_calibrated']).to eq(assignment.is_calibrated?)
-          expect(data['staggered_and_no_topic']).to eq(assignment.staggered_and_no_topic?)
+          expect(data['staggered_and_no_topic']).to eq(assignment.staggered_and_no_topic?(topic_id))
         end
       end
 
@@ -421,39 +410,4 @@ end
       end
     end
   end
-
-  path '/api/v1/assignments/{assignment_id}/varying_rubrics_by_round' do
-    parameter name: 'assignment_id', in: :path, type: :integer, description: 'Assignment ID'
-
-    get('Check if an assignment has varying rubrics by round') do
-      tags 'Assignments'
-      produces 'application/json'
-      parameter name: 'Authorization', in: :header, type: :string
-      parameter name: 'Content-Type', in: :header, type: :string
-      let('Authorization') { "Bearer #{auth_token}" }
-      let('Content-Type') { 'application/json' }
-
-      response(200, 'successful') do
-        let(:questionnaire) { create(:questionnaire) }
-        let(:assignment) { create(:assignment) }
-        let(:assignment_id) {assignment.id}
-        let(:assignment_questionnaire) { create(:assignment_questionnaire, assignment: assignment, questionnaire: questionnaire, used_in_round: 1) }
-
-
-        run_test! do |response|
-          expect(response).to have_http_status(:ok)
-        end
-      end
-
-      response(404, 'Assignment not found') do
-        let(:assignment_id) { 999 } # Non-existent ID
-
-        run_test! do |response|
-          data = JSON.parse(response.body)
-          expect(data['error']).to eq('Assignment not found')
-        end
-      end
-    end
-  end
-
 end
