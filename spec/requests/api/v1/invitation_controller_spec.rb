@@ -1,12 +1,45 @@
 require 'swagger_helper'
 require 'rails_helper'
+require 'json_web_token'
 
 RSpec.describe 'Invitations API', type: :request do
+  before(:all) do
+    @super_admin = FactoryBot.create(:role, :super_administrator)
+    @admin = FactoryBot.create(:role, :administrator, :with_parent, parent: @super_admin)
+    @instructor = FactoryBot.create(:role, :instructor, :with_parent, parent: @admin)
+    @ta = FactoryBot.create(:role, :ta, :with_parent, parent: @instructor)
+    @student = FactoryBot.create(:role, :student, :with_parent, parent: @ta)
+  end
+
+  let(:student) {
+    User.create(
+      name: "studenta",
+      password_digest: "password",
+      role_id: @student.id,
+      full_name: "student A",
+      email: "testuser@example.com",
+      mru_directory_path: "/home/testuser",
+      )
+  }
+
+  let(:prof) {
+    User.create(
+      name: "profa",
+      password_digest: "password",
+      role_id: @instructor.id,
+      full_name: "Prof A",
+      email: "testuser@example.com",
+      mru_directory_path: "/home/testuser",
+      )
+  }
+
+  let(:token) { JsonWebToken.encode({id: student.id}) }
+  let(:Authorization) { "Bearer #{token}" }
   let(:user1) { create :user, name: 'rohitgeddam' }
   let(:user2) { create :user, name: 'superman' }
   let(:invalid_user) { build :user, name: 'INVALID' }
-  let(:assignment) { create(:assignment) }
-  let(:invitation) { create :invitation, from_user: user1, to_user: user2, assignment: assignment }
+  let(:assignment) { Assignment.create!(id: 1, name: 'Test Assignment', instructor_id: prof.id) }
+  let(:invitation) { Invitation.create!(from_user: user1, to_user: user2, assignment: assignment) }
 
   path '/api/v1/invitations' do
 

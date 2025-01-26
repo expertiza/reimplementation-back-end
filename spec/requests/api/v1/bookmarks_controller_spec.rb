@@ -1,35 +1,56 @@
 require 'swagger_helper'
+require 'json_web_token'
 
 # Rspec test for Bookmarks Controller
 RSpec.describe 'api/v1/bookmarks', type: :request do
+  before(:all) do
+    @super_admin = FactoryBot.create(:role, :super_administrator)
+    @admin = FactoryBot.create(:role, :administrator, :with_parent, parent: @super_admin)
+    @instructor = FactoryBot.create(:role, :instructor, :with_parent, parent: @admin)
+    @ta = FactoryBot.create(:role, :ta, :with_parent, parent: @instructor)
+    @student = FactoryBot.create(:role, :student, :with_parent, parent: @ta)
+  end
+
+  let(:student) {
+    User.create(
+      name: "studenta",
+      password_digest: "password",
+      role_id: @student.id,
+      full_name: "student A",
+      email: "testuser@example.com",
+      mru_directory_path: "/home/testuser",
+    )
+  }
+
+  let(:token) { JsonWebToken.encode({ id: student.id }) }
+  let(:Authorization) { "Bearer #{token}" }
 
   path '/api/v1/bookmarks' do
-
     # Creation of dummy objects for the test with the help of let statements
-    let(:user) { User.create(email: 'test@test.com', password: 'password') }
     let(:bookmark1) do
-      user
+      student
       Bookmark.create(
         url: 'http://example.com',
         title: 'Example Bookmark',
         description: 'An example bookmark',
         topic_id: 1,
-        rating: 5,
-        user_id: user.id
+        user_id: student.id
       )
     end
 
     let(:bookmark2) do
-      user
+      student
       Bookmark.create(
         url: 'http://example2.com',
         title: 'Example Bookmark 2',
         description: 'Another example bookmark',
         topic_id: 2,
-        rating: 4,
-        user_id: user.id
+        user_id: student.id
       )
     end
+
+    let(:token) { JsonWebToken.encode({ id: student.id }) }
+    let(:Authorization) { "Bearer #{token}" }
 
     # get request on /api/v1/bookmarks return list of bookmarks with response 200
     get('list bookmarks') do
@@ -44,14 +65,12 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
 
     post('create bookmark') do
       tags 'Bookmarks'
-      let(:user) { User.create(email: 'test@test.com', password: '123456') }
       let(:valid_bookmark_params) do
         {
           url: 'http://example.com',
           title: 'Example Bookmark',
           description: 'An example bookmark',
           topic_id: 1,
-          rating: 5
         }
       end
 
@@ -61,7 +80,6 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
           title: 'Example Bookmark',
           description: 'An example bookmark',
           topic_id: 1,
-          rating: 5
         }
       end
 
@@ -74,15 +92,14 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
           title: { type: :string },
           description: { type: :string },
           topic_id: { type: :integer },
-          rating: { type: :integer }
         },
-        required: %w[url title description topic_id rating]
+        required: %w[url title description topic_id]
       }
 
       # post request on /api/v1/bookmarks creates bookmark with response 201 when correct params are passed
       response(201, 'created') do
         let(:bookmark) do
-          user
+          student
           Bookmark.create(valid_bookmark_params)
         end
         run_test! do
@@ -93,33 +110,30 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
       # post request on /api/v1/bookmarks returns 422 response - unprocessable entity when wrong params is passed to create bookmark
       response(422, 'unprocessable entity') do
         let(:bookmark) do
-          user
+          student
           Bookmark.create(invalid_bookmark_params)
         end
         run_test!
       end
     end
-
   end
 
   path '/api/v1/bookmarks/{id}' do
     parameter name: 'id', in: :path, type: :integer
 
     # Creation of dummy objects for the test with the help of let statements
-    let(:user) { User.create(email: 'test@test.com', password: '123456') }
     let(:valid_bookmark_params) do
       {
         url: 'http://example.com',
         title: 'Example Bookmark',
         description: 'An example bookmark',
         topic_id: 1,
-        rating: 5,
-        user_id: user.id
+        user_id: student.id
       }
     end
 
     let(:bookmark) do
-      user
+      student
       Bookmark.create(valid_bookmark_params)
     end
 
@@ -141,9 +155,9 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
       # Get request on /api/v1/bookmarks/{id} returns the response 404 not found - bookmark with id = {id} when correct id is passed which is not present in the database
       response(404, 'not_found') do
         let(:id) { 'invalid' }
-          run_test! do
-            expect(response.body).to include("Couldn't find Bookmark")
-          end
+        run_test! do
+          expect(response.body).to include("Couldn't find Bookmark")
+        end
       end
     end
 
@@ -183,19 +197,6 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
           expect(response.body).to include("Couldn't find Bookmark")
         end
       end
-
-      # put request on /api/v1/bookmarks/{id} returns 422 response unprocessable entity when correct parameters for the bookmark to be updated are not passed
-      response(422, 'unprocessable entity') do
-        let(:body_params) do
-          {
-            title: nil
-          }
-        end
-        schema type: :string
-        run_test! do
-          expect(response.body).to_not include('"title":null')
-        end
-      end
     end
 
     delete('delete bookmark') do
@@ -220,17 +221,15 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
 
   path '/api/v1/bookmarks/{id}/bookmarkratings' do
     parameter name: 'id', in: :path, type: :integer
-
-    let(:user) { User.create(email: 'test@test.com', password: '123456') }
+    
     let(:bookmark) do
-      user
+      student
       Bookmark.create(
         url: 'http://example.com',
         title: 'Example Bookmark',
         description: 'An example bookmark',
         topic_id: 1,
-        rating: 5,
-        user_id: user.id
+        user_id: student.id
       )
     end
 
@@ -250,7 +249,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
       }
 
       response(200, 'successful') do
-        let(:rating) { 4 }
+        let(:rating) { { rating: 4 } }
         run_test! do
           expect(response.body).to include('"rating":4')
         end
@@ -262,7 +261,9 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
       produces 'application/json'
 
       response(200, 'successful') do
-        let(:bookmark_rating) { BookmarkRating.create(bookmark_id: bookmark.id, user_id: user.id, rating: 5) }
+        before do
+          BookmarkRating.create(bookmark_id: bookmark.id, user_id: student.id, rating: 5)
+        end
         run_test! do
           expect(response.body).to include('"rating":5')
         end

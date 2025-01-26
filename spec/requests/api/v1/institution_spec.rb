@@ -2,12 +2,11 @@ require 'swagger_helper'
 require 'json_web_token'
 RSpec.describe 'Institutions API', type: :request do
     before(:all) do
-      # Create roles in hierarchy
-      @super_admin = Role.find_or_create_by(name: 'Super Administrator')
-      @admin = Role.find_or_create_by(name: 'Administrator', parent_id: @super_admin.id)
-      @instructor = Role.find_or_create_by(name: 'Instructor', parent_id: @admin.id)
-      @ta = Role.find_or_create_by(name: 'Teaching Assistant', parent_id: @instructor.id)
-      @student = Role.find_or_create_by(name: 'Student', parent_id: @ta.id)
+      @super_admin = FactoryBot.create(:role, :super_administrator)
+      @admin = FactoryBot.create(:role, :administrator, :with_parent, parent: @super_admin)
+      @instructor = FactoryBot.create(:role, :instructor, :with_parent, parent: @admin)
+      @ta = FactoryBot.create(:role, :ta, :with_parent, parent: @instructor)
+      @student = FactoryBot.create(:role, :student, :with_parent, parent: @ta)
     end
 
     let(:prof) { User.create(

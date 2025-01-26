@@ -3,6 +3,8 @@ FactoryBot.define do
   factory :role do
     sequence(:name) { |n| "Role #{n}" }
 
+    initialize_with { Role.find_or_create_by(id: id) }
+
     trait :student do
       id { Role::STUDENT }
       name { 'Student' }
@@ -26,6 +28,17 @@ FactoryBot.define do
     trait :super_administrator do
       id { Role::SUPER_ADMINISTRATOR }
       name { 'Super Administrator' }
+    end
+
+    # Add a trait to create roles with a parent
+    trait :with_parent do
+      transient do
+        parent { nil }
+      end
+
+      after(:create) do |role, evaluator|
+        role.update(parent_id: evaluator.parent.id) if evaluator.parent
+      end
     end
   end
 end
