@@ -15,9 +15,9 @@ RSpec.describe Authorization, type: :controller do
   end
 
   ##########################################
-  # Tests for has_required_role? method
+  # Tests for has_privileges_of? method
   ##########################################
-  describe '#has_required_role?' do
+  describe '#has_privileges_of?' do
     describe 'role validation' do
       context 'when required_role is a string' do
         let(:admin_role) { instance_double('Role') }
@@ -28,7 +28,7 @@ RSpec.describe Authorization, type: :controller do
 
         it 'finds the role and checks privileges' do
           expect(role).to receive(:all_privileges_of?).with(admin_role).and_return(true)
-          expect(controller.has_required_role?('Administrator')).to be true
+          expect(controller.has_privileges_of?('Administrator')).to be true
         end
       end
 
@@ -37,7 +37,7 @@ RSpec.describe Authorization, type: :controller do
 
         it 'directly checks privileges' do
           expect(role).to receive(:all_privileges_of?).with(instructor_role).and_return(false)
-          expect(controller.has_required_role?(instructor_role)).to be false
+          expect(controller.has_privileges_of?(instructor_role)).to be false
         end
       end
     end
@@ -49,7 +49,7 @@ RSpec.describe Authorization, type: :controller do
         end
 
         it 'returns false' do
-          expect(controller.has_required_role?('Administrator')).to be false
+          expect(controller.has_privileges_of?('Administrator')).to be false
         end
       end
 
@@ -59,16 +59,16 @@ RSpec.describe Authorization, type: :controller do
         end
 
         it 'returns false' do
-          expect(controller.has_required_role?('Administrator')).to be false
+          expect(controller.has_privileges_of?('Administrator')).to be false
         end
       end
     end
   end
 
   ##########################################
-  # Tests for is_role? method
+  # Tests for has_role? method
   ##########################################
-  describe '#is_role?' do
+  describe '#has_role?' do
     describe 'role matching' do
       context 'when role_name is a string' do
         before do
@@ -76,11 +76,11 @@ RSpec.describe Authorization, type: :controller do
         end
 
         it 'returns true when roles match' do
-          expect(controller.is_role?('Student')).to be true
+          expect(controller.has_role?('Student')).to be true
         end
 
         it 'returns false when roles do not match' do
-          expect(controller.is_role?('Instructor')).to be false
+          expect(controller.has_role?('Instructor')).to be false
         end
       end
 
@@ -94,7 +94,7 @@ RSpec.describe Authorization, type: :controller do
         end
 
         it 'compares using the role name' do
-          expect(controller.is_role?(role_object)).to be true
+          expect(controller.has_role?(role_object)).to be true
         end
       end
     end
@@ -106,7 +106,7 @@ RSpec.describe Authorization, type: :controller do
         end
 
         it 'returns false' do
-          expect(controller.is_role?('Student')).to be false
+          expect(controller.has_role?('Student')).to be false
         end
       end
 
@@ -116,7 +116,7 @@ RSpec.describe Authorization, type: :controller do
         end
 
         it 'returns false' do
-          expect(controller.is_role?('Student')).to be false
+          expect(controller.has_role?('Student')).to be false
         end
       end
     end
@@ -128,7 +128,7 @@ RSpec.describe Authorization, type: :controller do
   describe '#all_actions_allowed?' do
     context 'when the user has the Super Administrator role' do
       before do
-        allow(controller).to receive(:has_required_role?).with('Super Administrator').and_return(true)
+        allow(controller).to receive(:has_privileges_of?).with('Super Administrator').and_return(true)
       end
 
       it 'returns true' do
@@ -138,7 +138,7 @@ RSpec.describe Authorization, type: :controller do
 
     context 'when the user does not have the Super Administrator role' do
       before do
-        allow(controller).to receive(:has_required_role?).with('Super Administrator').and_return(false)
+        allow(controller).to receive(:has_privileges_of?).with('Super Administrator').and_return(false)
         allow(controller).to receive(:action_allowed?).and_return(false)
       end
 
@@ -149,7 +149,7 @@ RSpec.describe Authorization, type: :controller do
 
     context 'when action_allowed? returns true' do
       before do
-        allow(controller).to receive(:has_required_role?).with('Super Administrator').and_return(false)
+        allow(controller).to receive(:has_privileges_of?).with('Super Administrator').and_return(false)
         allow(controller).to receive(:action_allowed?).and_return(true)
       end
 

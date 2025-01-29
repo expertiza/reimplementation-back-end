@@ -5,7 +5,7 @@ describe Course, type: :model do
   let(:instructor) { Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role: role) }
   let(:institution) { create(:institution, id: 1) }
   let(:course) { create(:course, id: 1, name: 'ECE517', instructor: instructor, institution: institution) }
-  let(:user1) { create(:user, name: 'abcdef', full_name:'abc bbc', email: 'abcbbc@gmail.com', password: '123456789', password_confirmation: '123456789') }
+  let(:user1) { create(:user, name: 'abcdef', full_name:'abc bbc', email: 'abcbbc@gmail.com', password: '123456789', password_confirmation: '123456789', role: role) }
 
   describe 'validations' do
     it 'validates presence of name' do

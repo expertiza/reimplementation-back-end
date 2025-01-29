@@ -1,5 +1,9 @@
 class Api::V1::BookmarksController < ApplicationController
-
+  rescue_from ActiveRecord::RecordNotFound, with: :not_found
+  
+  def action_allowed?
+    has_privileges_of?('Student')
+  end
   # Index method returns the list of JSON objects of the bookmark
   # GET on /bookmarks
   def index
@@ -41,6 +45,11 @@ class Api::V1::BookmarksController < ApplicationController
     else
       render json: @bookmark.errors.full_messages, status: :unprocessable_entity
     end
+  end
+
+  # Handle the case when an invalid bookmark id is being passed
+  def not_found
+    render json: { error: "Couldn't find Bookmark" }, status: :not_found
   end
 
   # Destroy method deletes the bookmark object with id- {:id}
