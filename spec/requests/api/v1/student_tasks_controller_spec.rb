@@ -4,18 +4,14 @@ require 'json_web_token'
 RSpec.describe 'StudentTasks API', type: :request do
 
   before(:all) do
-    @super_admin = FactoryBot.create(:role, :super_administrator)
-    @admin = FactoryBot.create(:role, :administrator, :with_parent, parent: @super_admin)
-    @instructor = FactoryBot.create(:role, :instructor, :with_parent, parent: @admin)
-    @ta = FactoryBot.create(:role, :ta, :with_parent, parent: @instructor)
-    @student = FactoryBot.create(:role, :student, :with_parent, parent: @ta)
+    @roles = create_roles_hierarchy
   end
 
   let(:studenta) {
     User.create(
       name: "studenta",
       password_digest: "password",
-      role_id: @student.id,
+      role_id: @roles[:student].id,
       full_name: "Student A",
       email: "testuser@example.com",
       mru_directory_path: "/home/testuser",

@@ -4,18 +4,14 @@ require 'json_web_token'
 
 RSpec.describe 'Invitations API', type: :request do
   before(:all) do
-    @super_admin = FactoryBot.create(:role, :super_administrator)
-    @admin = FactoryBot.create(:role, :administrator, :with_parent, parent: @super_admin)
-    @instructor = FactoryBot.create(:role, :instructor, :with_parent, parent: @admin)
-    @ta = FactoryBot.create(:role, :ta, :with_parent, parent: @instructor)
-    @student = FactoryBot.create(:role, :student, :with_parent, parent: @ta)
+    @roles = create_roles_hierarchy
   end
 
   let(:student) {
     User.create(
       name: "studenta",
       password_digest: "password",
-      role_id: @student.id,
+      role_id: @roles[:student].id,
       full_name: "student A",
       email: "testuser@example.com",
       mru_directory_path: "/home/testuser",
@@ -26,7 +22,7 @@ RSpec.describe 'Invitations API', type: :request do
     User.create(
       name: "profa",
       password_digest: "password",
-      role_id: @instructor.id,
+      role_id: @roles[:instructor].id,
       full_name: "Prof A",
       email: "testuser@example.com",
       mru_directory_path: "/home/testuser",
@@ -35,9 +31,9 @@ RSpec.describe 'Invitations API', type: :request do
 
   let(:token) { JsonWebToken.encode({id: student.id}) }
   let(:Authorization) { "Bearer #{token}" }
-  let(:user1) { create :user, name: 'rohitgeddam' }
-  let(:user2) { create :user, name: 'superman' }
-  let(:invalid_user) { build :user, name: 'INVALID' }
+  let(:user1) { create :user, name: 'rohitgeddam', role_id: @roles[:student].id }
+  let(:user2) { create :user, name: 'superman', role_id: @roles[:student].id }
+  let(:invalid_user) { build :user, name: 'INVALID', role_id: nil }
   let(:assignment) { Assignment.create!(id: 1, name: 'Test Assignment', instructor_id: prof.id) }
   let(:invitation) { Invitation.create!(from_user: user1, to_user: user2, assignment: assignment) }
 

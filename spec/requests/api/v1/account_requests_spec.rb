@@ -3,19 +3,14 @@ require 'json_web_token'
 
 RSpec.describe 'Account Requests API', type: :request do
   before(:all) do
-    # Create roles in hierarchy using the factory
-    @super_admin = FactoryBot.create(:role, :super_administrator)
-    @admin = FactoryBot.create(:role, :administrator, :with_parent, parent: @super_admin)
-    @instructor = FactoryBot.create(:role, :instructor, :with_parent, parent: @admin)
-    @ta = FactoryBot.create(:role, :ta, :with_parent, parent: @instructor)
-    @student = FactoryBot.create(:role, :student, :with_parent, parent: @ta)
+    @roles = create_roles_hierarchy
   end
 
   let(:prof) {
     User.create(
       name: "profa",
       password_digest: "password",
-      role_id: @instructor.id,
+      role_id: @roles[:instructor].id,
       full_name: "Prof A",
       email: "testuser@example.com",
       mru_directory_path: "/home/testuser",
@@ -85,7 +80,7 @@ RSpec.describe 'Account Requests API', type: :request do
       response(201, 'Attempt to Create an Account Request with valid parameters') do
         let(:account_request) do
           { username: 'useracc', full_name: 'User Account 1', email: 'useracc1@gmail.com', introduction: 'User 1 Intro',
-            role_id: @student.id, institution_id: institution.id }
+            role_id: @roles[:student].id, institution_id: institution.id }
         end
 
         after do |example|
@@ -100,7 +95,7 @@ RSpec.describe 'Account Requests API', type: :request do
 
       # Attempt to Create an Account Request with missing parameters
       response(422, 'Attempt to Create an Account Request with missing parameters') do
-        let(:account_request) { { introduction: 'User 1 Intro', role_id: @student.id, institution_id: institution.id } }
+        let(:account_request) { { introduction: 'User 1 Intro', role_id: @roles[:student].id, institution_id: institution.id } }
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -132,12 +127,12 @@ RSpec.describe 'Account Requests API', type: :request do
       # Attempt to Create an Account Request whose username already exists in Users table
       response(422, 'Attempt to Create an Account Request whose username already exists in Users table') do
         let(:user) do
-          User.create(name: 'useracc', full_name: 'User One', email: 'userone@gmail.com', role_id: @student.id,
+          User.create(name: 'useracc', full_name: 'User One', email: 'userone@gmail.com', role_id: @roles[:student].id,
                       password: 'password')
         end
         let(:account_request) do
           { username: user.name, full_name: 'User Account 1', email: 'useracc1@gmail.com', introduction: 'User 1 Intro',
-            role_id: @student.id, institution_id: institution.id }
+            role_id: @roles[:student].id, institution_id: institution.id }
         end
 
         after do |example|
@@ -153,11 +148,11 @@ RSpec.describe 'Account Requests API', type: :request do
       # Create an Account Request whose email already exists in Users table
       response(201, 'Create an Account Request whose email already exists in Users table') do
         let(:user) do
-          User.create(name: 'userone', full_name: 'User One', email: 'userone@gmail.com', role_id: @student.id,
+          User.create(name: 'userone', full_name: 'User One', email: 'userone@gmail.com', role_id: @roles[:student].id,
                       password: 'password')
         end
         let(:account_request) do
-          { username: 'useracc', full_name: 'User Account 1', email: user.email, introduction: 'User 1 Intro', role_id: @student.id,
+          { username: 'useracc', full_name: 'User Account 1', email: user.email, introduction: 'User 1 Intro', role_id: @roles[:student].id,
             institution_id: institution.id }
         end
 
@@ -177,7 +172,7 @@ RSpec.describe 'Account Requests API', type: :request do
       
       let(:account_request) do
         AccountRequest.create(username: 'useracc', full_name: 'User Account 1', email: 'useracc1@gmail.com',
-                              introduction: 'User 1 Intro', role_id: @student.id, institution_id: institution.id)
+                              introduction: 'User 1 Intro', role_id: @roles[:student].id, institution_id: institution.id)
       end
       let(:id) { account_request.id }
 
@@ -227,7 +222,7 @@ RSpec.describe 'Account Requests API', type: :request do
         # Attempt to Approve account request but user with same name already exists
         response(422, 'Attempt to Approve account request but user with same name already exists') do
           let(:user) do
-            User.create(name: 'user', full_name: 'User One', email: 'userone@gmail.com', role_id: @student.id,
+            User.create(name: 'user', full_name: 'User One', email: 'userone@gmail.com', role_id: @roles[:student].id,
                         password: 'password')
           end
 
@@ -309,7 +304,7 @@ RSpec.describe 'Account Requests API', type: :request do
         # Attempt to Approve account request but user with same username already exists
         response(422, 'Attempt to Approve account request but user with same username already exists') do
           let(:user) do
-            User.create(name: 'user', full_name: 'User One', email: 'userone@gmail.com', role_id: @student.id,
+            User.create(name: 'user', full_name: 'User One', email: 'userone@gmail.com', role_id: @roles[:student].id,
                         password: 'password')
           end
 
@@ -331,7 +326,7 @@ RSpec.describe 'Account Requests API', type: :request do
         # Reject account request if user with same email already exists
         response(422, 'Attempt to Approve account request but user with same email already exists') do
           let(:user) do
-            User.create(name: 'user', full_name: 'User One', email: 'userone@gmail.com', role_id: @student.id,
+            User.create(name: 'user', full_name: 'User One', email: 'userone@gmail.com', role_id: @roles[:student].id,
                         password: 'password')
           end
 
