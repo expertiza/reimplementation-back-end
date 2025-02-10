@@ -73,7 +73,7 @@ jobs:
         run: ./cc-test-reporter format-coverage -t simplecov -o "coverage/codeclimate.models.json" --debug
 
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: code-coverage-artifacts
           path: coverage/
