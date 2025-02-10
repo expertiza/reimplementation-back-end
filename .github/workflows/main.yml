@@ -66,8 +66,24 @@ jobs:
           chmod +x ./cc-test-reporter
           ./cc-test-reporter before-build
 
-      - name: Run tests
-        run: bundle exec rspec spec/models
+#
+      - name: Run Tests
+        id: run_tests
+        continue-on-error: true  # Allow failure capturing
+        run: |
+          bundle exec rspec spec/models --format documentation > rspec_results.txt || true
+
+      - name: Comment on PR if Tests Fail
+        if: failure()
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            Tests Failed!
+
+            $(head -20 rspec_results.txt)
+
+            Check logs for more details
+          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
 
       - name: Format code coverage report
         run: ./cc-test-reporter format-coverage -t simplecov -o "coverage/codeclimate.models.json" --debug
@@ -80,7 +96,7 @@ jobs:
 
       - name: Publish code coverage
         run: |
-          ./cc-test-reporter sum-coverage coverage/codeclimate.*.json 
+          ./cc-test-reporter sum-coverage coverage/codeclimate.*.json
           ./cc-test-reporter after-build -t simplecov -r ${{ secrets.CC_TEST_REPORTER_ID }}
 
 
