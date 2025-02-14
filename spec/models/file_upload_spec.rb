@@ -3,11 +3,11 @@ require 'rails_helper'
 
 
 
-RSpec.describe UploadFile do
+RSpec.describe FileUpload do
 
   # Adjust the let statement to not include 'type' and 'weight' if they are not recognized attributes.
 
-  let(:upload_file) { UploadFile.new(id: 1, seq: '1', txt: 'Sample item content', question_type: 'UploadFile') }
+  let(:upload_file) { FileUpload.new(id: 1, seq: '1', txt: 'Sample item content', question_type: 'FileUpload') }
 
 
 
@@ -112,20 +112,20 @@ RSpec.describe UploadFile do
 
 
 
-  describe '#view_question_text' do
+  describe '#view_item_text' do
 
     context 'when given valid input' do
 
-      let(:json_response) { JSON.parse(upload_file.view_question_text) }
+      let(:json_response) { JSON.parse(upload_file.view_item_text) }
 
 
 
 
       it 'returns JSON for displaying a item' do
 
-        expect(json_response["action"]).to eq('view_question_text')
+        expect(json_response["action"]).to eq('view_item_text')
 
-        expect(json_response["elements"].map { |el| el["value"] }).to include('Sample item content', 'UploadFile', "", '1','—')
+        expect(json_response["elements"].map { |el| el["value"] }).to include('Sample item content', 'FileUpload', "", '1','—')
 
       end
 
@@ -149,11 +149,11 @@ RSpec.describe UploadFile do
 
 
 
-  describe '#view_completed_question' do
+  describe '#view_completed_item' do
 
     it 'implements the logic for viewing a completed item by a student' do
 
-      # Write your test for the view_completed_question method logic here.
+      # Write your test for the view_completed_item method logic here.
 
     end
 

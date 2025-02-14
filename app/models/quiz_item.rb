@@ -6,7 +6,7 @@ class QuizItem < Item
   def edit
   end
 
-  def view_question_text
+  def view_item_text
     choices = quiz_question_choices.map do |choice|
       {
         text: choice.txt,
@@ -25,6 +25,6 @@ class QuizItem < Item
   def complete
   end
 
-  def view_completed_question(user_answer = nil)
+  def view_completed_item(user_answer = nil)
   end
 end

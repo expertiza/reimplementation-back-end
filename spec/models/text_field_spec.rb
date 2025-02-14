@@ -22,10 +22,10 @@ RSpec.describe TextField, type: :model do
     end
   end
 
-  describe '#view_completed_question' do
+  describe '#view_completed_item' do
     context "when the item type is 'TextField' and break_before is true" do
       it 'returns the formatted JSON for the completed item' do
-        result = JSON.parse(item.view_completed_question(1, []))
+        result = JSON.parse(item.view_completed_item(1, []))
         expect(result['data']['type']).to eq('text')
         expect(result['data']['break_before']).to be true
       end
@@ -35,7 +35,7 @@ RSpec.describe TextField, type: :model do
       let(:non_text_field_question) { TextField.create(txt: 'Non-text item', question_type: 'NotTextField', size: 'small', break_before: false) }
 
       it 'returns the formatted JSON for the completed item' do
-        result = JSON.parse(non_text_field_question.view_completed_question(1, []))
+        result = JSON.parse(non_text_field_question.view_completed_item(1, []))
         expect(result['data']['break_before']).to be false
       end
     end

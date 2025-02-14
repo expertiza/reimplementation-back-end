@@ -14,7 +14,7 @@ class Criterion < ScoredItem
       }
     end
   
-    def view_question_text
+    def view_item_text
       question_data = {
         text: txt,
         question_type: question_type,

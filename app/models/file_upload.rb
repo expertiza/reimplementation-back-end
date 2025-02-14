@@ -1,5 +1,5 @@
-# app/models/upload_file.rb
-class UploadFile < Item
+# app/models/file_upload.rb
+class FileUpload < Item
     def edit(_count)
       {
         action: 'edit',
@@ -46,9 +46,9 @@ class UploadFile < Item
       }.to_json
     end
   
-    def view_question_text
+    def view_item_text
       {
-        action: 'view_question_text',
+        action: 'view_item_text',
         elements: [
           { type: 'text', value: txt },
           { type: 'text', value: question_type },
@@ -66,7 +66,7 @@ class UploadFile < Item
     end
   
     # Implement this method for viewing a completed item by a student
-    def view_completed_question(count, files)
+    def view_completed_item(count, files)
       # Implement the logic for viewing a completed item by a student
     end
   end

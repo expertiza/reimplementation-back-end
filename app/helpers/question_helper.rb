@@ -13,7 +13,7 @@ module QuestionHelper
       }
     end
   
-    def view_question_text_common(text, type, weight, score_range)
+    def view_item_text_common(text, type, weight, score_range)
       { text: text, type: type, weight: weight, score_range: score_range }
     end
   end

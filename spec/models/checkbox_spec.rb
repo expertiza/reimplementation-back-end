@@ -45,9 +45,9 @@ RSpec.describe Checkbox do
     end
   end
 
-  describe '#view_question_text' do
+  describe '#view_item_text' do
     it 'returns the JSON' do
-      json = checkbox.view_question_text
+      json = checkbox.view_item_text
       expected_json = {
         content: 'test txt',
         type: 'Checkbox',
@@ -58,9 +58,9 @@ RSpec.describe Checkbox do
     end
   end
 
-  describe '#view_completed_question' do
+  describe '#view_completed_item' do
     it 'returns the JSON' do
-      json = checkbox.view_completed_question(0, answer)
+      json = checkbox.view_completed_item(0, answer)
       expected_json = {
         previous_question: { type: 'other' },
         answer: {

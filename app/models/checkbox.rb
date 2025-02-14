@@ -59,7 +59,7 @@ class Checkbox < UnscoredItem
     end
   
   
-    def view_question_text
+    def view_item_text
       {
         content: txt,
         type: question_type,
@@ -137,15 +137,15 @@ class Checkbox < UnscoredItem
       end
     end
   
-    def view_completed_question(count, answer)
+    def view_completed_item(count, answer)
       {
         previous_question: check_previous_question,
-        answer: view_completed_question_answer(count, answer),
-        if_column_header: view_completed_question_if_column_header
+        answer: view_completed_item_answer(count, answer),
+        if_column_header: view_completed_item_if_column_header
       }
     end
   
-    def view_completed_question_answer(count, answer)
+    def view_completed_item_answer(count, answer)
       {
         number: count,
         image: answer.answer == 1 ? 'Check-icon.png' : 'delete_icon.png',
@@ -154,7 +154,7 @@ class Checkbox < UnscoredItem
       }
     end
   
-    def view_completed_question_if_column_header
+    def view_completed_item_if_column_header
       next_question = Item.where('seq > ?', seq).order(:seq).first
       if next_question
         case next_question.question_type

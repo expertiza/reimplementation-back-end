@@ -37,7 +37,7 @@ RSpec.describe Scale, type: :model do
     end
   end
 
-  describe "#view_question_text" do
+  describe "#view_item_text" do
     it "returns JSON containing the item text" do
       expected_json = {
         text: "Rate your experience",
@@ -45,7 +45,7 @@ RSpec.describe Scale, type: :model do
         weight: 1,
         score_range: "Poor 1 to 5 Excellent"
       }.to_json
-      expect(subject.view_question_text).to eq(expected_json)
+      expect(subject.view_item_text).to eq(expected_json)
     end
   end
 
@@ -62,19 +62,19 @@ RSpec.describe Scale, type: :model do
     end
   end
 
-  describe "#view_completed_question" do
+  describe "#view_completed_item" do
     context "when the item has been answered" do
       it "returns JSON with the count, answer, and questionnaire_max" do
         options = { count: 10, answer: 3, questionnaire_max: 50 }
         expected_json = options.to_json
-        expect(subject.view_completed_question(options)).to eq(expected_json)
+        expect(subject.view_completed_item(options)).to eq(expected_json)
       end
     end
 
     context "when the item has not been answered" do
       it "returns a message indicating the item was not answered" do
         expected_json = { message: "Item not answered." }.to_json
-        expect(subject.view_completed_question).to eq(expected_json)
+        expect(subject.view_completed_item).to eq(expected_json)
       end
     end
   end

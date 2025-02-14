@@ -14,10 +14,10 @@ class TextField < Item
       }.to_json
     end
   
-    def view_completed_question(count, files)
+    def view_completed_item(count, files)
       if question_type == 'TextField' && break_before
         {
-          action: 'view_completed_question',
+          action: 'view_completed_item',
           data: {
             type: 'text',
             label: "Completed Item ##{count}",
@@ -27,7 +27,7 @@ class TextField < Item
         }.to_json
       else
         {
-          action: 'view_completed_question',
+          action: 'view_completed_item',
           data: {
             type: 'text',
             label: "Completed Item ##{count}",

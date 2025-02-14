@@ -3,6 +3,10 @@ class Api::V1::CoursesController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :course_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
+  def action_allowed?
+    has_privileges_of?('Instructor')
+  end
+
   # GET /courses
   # List all the courses
   def index

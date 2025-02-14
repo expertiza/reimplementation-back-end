@@ -2,6 +2,11 @@ class Api::V1::QuestionsController < ApplicationController
   before_action :set_question, only: [:show, :update]
 
   # GET /questions
+  def action_allowed?
+    has_role?('Instructor')
+  end
+  # Index method returns the list of questions JSON object
+  # GET on /questions
   def index
     @questions = Item.order(:id)
     render json: @questions, status: :ok

@@ -6,9 +6,9 @@ RSpec.describe Criterion, type: :model do
   let(:answer_no_comments) { Answer.new(answer: 8) }
   let(:answer_comments) { Answer.new(answer: 3, comments: 'text comments') }
 
-  describe '#view_question_text' do
+  describe '#view_item_text' do
     it 'returns the JSON' do
-      json = criterion.view_question_text
+      json = criterion.view_item_text
       expected_json = {
         text: 'test txt',
         question_type: 'Criterion',

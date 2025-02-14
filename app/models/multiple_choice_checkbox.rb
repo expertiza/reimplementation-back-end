@@ -35,7 +35,7 @@ class MultipleChoiceCheckbox < QuizItem
     data.to_json
   end
 
-  def view_completed_question(user_answer)
+  def view_completed_item(user_answer)
     quiz_question_choices = QuizQuestionChoice.where(question_id: id)
 
     data = {

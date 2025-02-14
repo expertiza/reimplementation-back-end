@@ -146,7 +146,7 @@ class Assignment < ApplicationRecord
     !max_team_size.nil? && max_team_size > 1
   end
 
-  #Auxillary method for checking the validity of the field reviews_allowed for the given assignment object
+  #Auxiliary method for checking the validity of the field reviews_allowed for the given assignment object
   # Checks if review_allowed is not null and not negative.
   def valid_reviews_allowed?(reviews_allowed)
     reviews_allowed && reviews_allowed != -1
@@ -186,7 +186,7 @@ class Assignment < ApplicationRecord
 
   #This method check if for the given assignment,different type of rubrics are used in different round.
   # Checks if for the given assignment any questionnaire is present with used_in_round field not nil.
-  # Returns a bolean value whether such questionnaire is present.
+  # Returns a boolean value whether such questionnaire is present.
   def varying_rubrics_by_round?
     rubric_with_round = AssignmentQuestionnaire.where(assignment_id: id).where.not(used_in_round: nil).first
     # Check if any rubric has a specified round

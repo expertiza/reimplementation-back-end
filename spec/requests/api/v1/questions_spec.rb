@@ -1,16 +1,38 @@
 require 'swagger_helper'
-
+require 'json_web_token'
 # Rspec tests for questions controller
 RSpec.describe 'api/v1/questions', type: :request do
+  before(:all) do
+    # Create roles in hierarchy
 
+    @super_admin = Role.find_or_create_by(name: 'Super Administrator')
+    @admin = Role.find_or_create_by(name: 'Administrator', parent_id: @super_admin.id)
+    @instructor = Role.find_or_create_by(name: 'Instructor', parent_id: @admin.id)
+    @ta = Role.find_or_create_by(name: 'Teaching Assistant', parent_id: @instructor.id)
+    @student = Role.find_or_create_by(name: 'Student', parent_id: @ta.id)
+  end
+
+  let(:instructor) { setup_instructor }
+
+  let(:prof) { User.create(
+    name: "profa",
+    password_digest: "password",
+    role_id: @instructor.id,
+    full_name: "Prof A",
+    email: "testuser@example.com",
+    mru_directory_path: "/home/testuser",
+    ) }
+
+  let(:token) { JsonWebToken.encode({id: prof.id}) }
+  let(:Authorization) { "Bearer #{token}" }
   path '/api/v1/questions' do
     # Creation of dummy objects for the test with the help of let statements
-    let(:role) { Role.create(name: 'Instructor', parent_id: nil, default_page_id: nil) }
-    
-    let(:instructor) do 
-      role
-      Instructor.create(name: 'testinstructor', email: 'test@test.com', fullname: 'Test Instructor', password: '123456', role: role) 
-    end
+    #let(:role) { Role.create(name: 'Instructor', parent_id: nil, default_page_id: nil) }
+
+    #let(:instructor) do
+    # role
+    # Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role: role)
+    #end
 
     let(:questionnaire) do
       instructor
@@ -28,7 +50,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire
       Item.create(
         seq: 1, 
-        txt: "test item 1", 
+        txt: "test item 1",
         question_type: "multiple_choice", 
         break_before: true, 
         weight: 5,
@@ -40,7 +62,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire
       Item.create(
         seq: 2, 
-        txt: "test item 2", 
+        txt: "test item 2",
         question_type: "multiple_choice", 
         break_before: false, 
         weight: 10,
@@ -48,7 +70,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       )
     end
 
-    # get request on /api/v1/questions returns 200 succesful response when it returns list of questions present in the database
+    # get request on /api/v1/questions returns 200 successful response when it returns list of questions present in the database
     get('list questions') do
       tags 'Questions'
       produces 'application/json'
@@ -67,7 +89,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       let(:valid_question_params) do
         {
           questionnaire_id: questionnaire.id,
-          txt: "test item", 
+          txt: "test item",
           question_type: "multiple_choice", 
           break_before: false,
           weight: 10
@@ -77,7 +99,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       let(:invalid_question_params1) do
         {
           questionnaire_id: nil ,
-          txt: "test item", 
+          txt: "test item",
           question_type: "multiple_choice", 
           break_before: false,
           weight: 10
@@ -87,7 +109,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       let(:invalid_question_params2) do
         {
           questionnaire_id: questionnaire.id ,
-          txt: "test item", 
+          txt: "test item",
           question_type: nil, 
           break_before: false,
           weight: 10
@@ -117,7 +139,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         end
       end
 
-      # post request on /api/v1/questions returns 404 not foound when questionnaire id for the given item is not present in the database
+      # post request on /api/v1/questions returns 404 not found when questionnaire id for the given item is not present in the database
       response(404, 'questionnaire id not found') do
         let(:item) do
           instructor
@@ -147,7 +169,7 @@ RSpec.describe 'api/v1/questions', type: :request do
     
     let(:instructor) do 
       role
-      Instructor.create(name: 'testinstructor', email: 'test@test.com', fullname: 'Test Instructor', password: '123456', role: role) 
+      Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role: role)
     end
 
     let(:questionnaire) do
@@ -166,7 +188,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire
       Item.create(
         seq: 1, 
-        txt: "test item 1", 
+        txt: "test item 1",
         question_type: "multiple_choice", 
         break_before: true, 
         weight: 5,
@@ -178,7 +200,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire
       Item.create(
         seq: 2, 
-        txt: "test item 2", 
+        txt: "test item 2",
         question_type: "multiple_choice", 
         break_before: false, 
         weight: 10,
@@ -199,10 +221,10 @@ RSpec.describe 'api/v1/questions', type: :request do
       tags 'Questions'
       produces 'application/json'
 
-      # get request on /api/v1/questions/{id} returns 200 succesful response and returns item with given item id
+      # get request on /api/v1/questions/{id} returns 200 successful response and returns item with given item id
       response(200, 'successful') do
         run_test! do
-          expect(response.body).to include('"txt":"test item 1"') 
+          expect(response.body).to include('"txt":"test item 1"')
         end
       end
 
@@ -228,7 +250,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         }
       }
       
-      # put request on /api/v1/questions/{id} returns 200 succesful response and updates parameters of item with given item id
+      # put request on /api/v1/questions/{id} returns 200 successful response and updates parameters of item with given item id
       response(200, 'successful') do
         let(:body_params) do
           {
@@ -253,7 +275,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         end
       end
 
-      # put request on /api/v1/questions/{id} returns 422 unprocessable entity when incorrect parameters are passed for item with given item id 
+      # put request on /api/v1/questions/{id} returns 422 unprocessable entity when incorrect parameters are passed for item with given item id
       response(422, 'unprocessable entity') do
         let(:body_params) do
           {
@@ -282,7 +304,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         }
       }
       
-      # patch request on /api/v1/questions/{id} returns 200 succesful response and updates parameters of item with given item id
+      # patch request on /api/v1/questions/{id} returns 200 successful response and updates parameters of item with given item id
       response(200, 'successful') do
         let(:body_params) do
           {
@@ -307,7 +329,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         end
       end
 
-      # patch request on /api/v1/questions/{id} returns 422 unprocessable entity when incorrect parameters are passed for item with given item id 
+      # patch request on /api/v1/questions/{id} returns 422 unprocessable entity when incorrect parameters are passed for item with given item id
       response(422, 'unprocessable entity') do
         let(:body_params) do
           {
@@ -329,7 +351,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       tags 'Questions'
       produces 'application/json'
 
-      # delete request on /api/v1/questions/{id} returns 204 succesful response when it deletes item with given item id present in the database
+      # delete request on /api/v1/questions/{id} returns 204 successful response when it deletes item with given item id present in the database
       response(204, 'successful') do
         run_test! do
           expect(Item.exists?(id)).to eq(false)
@@ -355,7 +377,7 @@ RSpec.describe 'api/v1/questions', type: :request do
     
     let(:instructor) do 
       role
-      Instructor.create(name: 'testinstructor', email: 'test@test.com', fullname: 'Test Instructor', password: '123456', role: role) 
+      Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role: role)
     end
 
     let(:questionnaire) do
@@ -374,7 +396,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire
       Item.create(
         seq: 1, 
-        txt: "test item 1", 
+        txt: "test item 1",
         question_type: "multiple_choice", 
         break_before: true, 
         weight: 5,
@@ -386,7 +408,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire
       Item.create(
         seq: 2, 
-        txt: "test item 2", 
+        txt: "test item 2",
         question_type: "multiple_choice", 
         break_before: false, 
         weight: 10,
@@ -406,7 +428,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       tags 'Questions'
       produces 'application/json'
 
-      # delete method on /api/v1/questions/delete_all/questionnaire/{id} returns 200 succesful response when all questions with given questionnaire id are deleted
+      # delete method on /api/v1/questions/delete_all/questionnaire/{id} returns 200 successful response when all questions with given questionnaire id are deleted
       response(200, 'successful') do
         run_test! do
           expect(Item.where(questionnaire_id: id).count).to eq(0)
@@ -431,7 +453,7 @@ RSpec.describe 'api/v1/questions', type: :request do
     
     let(:instructor) do 
       role
-      Instructor.create(name: 'testinstructor', email: 'test@test.com', fullname: 'Test Instructor', password: '123456', role: role) 
+      Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role: role)
     end
 
     let(:questionnaire) do
@@ -450,7 +472,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire
       Item.create(
         seq: 1, 
-        txt: "test item 1", 
+        txt: "test item 1",
         question_type: "multiple_choice", 
         break_before: true, 
         weight: 5,
@@ -474,7 +496,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire2
       Item.create(
         seq: 2, 
-        txt: "test item 2", 
+        txt: "test item 2",
         question_type: "multiple_choice", 
         break_before: true, 
         weight: 5,
@@ -486,7 +508,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire2
       Item.create(
         seq: 3, 
-        txt: "test item 3", 
+        txt: "test item 3",
         question_type: "multiple_choice", 
         break_before: false, 
         weight: 10,
@@ -508,7 +530,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       tags 'Questions'
       produces 'application/json'
 
-      # get method on /api/v1/questions/show_all/questionnaire/{id} returns 200 succesful response when all questions with given questionnaire id are shown
+      # get method on /api/v1/questions/show_all/questionnaire/{id} returns 200 successful response when all questions with given questionnaire id are shown
       response(200, 'successful') do
         run_test! do
           expect(Item.where(questionnaire_id: id).count).to eq(1)
@@ -533,7 +555,7 @@ RSpec.describe 'api/v1/questions', type: :request do
     
     let(:instructor) do 
       role
-      Instructor.create(name: 'testinstructor', email: 'test@test.com', fullname: 'Test Instructor', password: '123456', role: role) 
+      Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role: role)
     end
 
     let(:questionnaire) do
@@ -552,7 +574,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire
       Item.create(
         seq: 1, 
-        txt: "test item 1", 
+        txt: "test item 1",
         question_type: "multiple_choice", 
         break_before: true, 
         weight: 5,
@@ -564,7 +586,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       questionnaire
       Item.create(
         seq: 2, 
-        txt: "test item 2", 
+        txt: "test item 2",
         question_type: "multiple_choice", 
         break_before: false, 
         weight: 10,

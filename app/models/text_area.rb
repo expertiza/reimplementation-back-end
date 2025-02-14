@@ -10,9 +10,9 @@ class TextArea < Item
       }.to_json
     end
   
-    def view_completed_question(count, answer)
+    def view_completed_item(count, answer)
       {
-        action: 'view_completed_question',
+        action: 'view_completed_item',
         data: {
           count: count,
           comment: answer.comments

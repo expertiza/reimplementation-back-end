@@ -48,7 +48,7 @@ RSpec.describe MultipleChoiceRadio, type: :model do
     end
   end
 
-  describe "#view_completed_question" do
+  describe "#view_completed_item" do
     let(:user_answer) { [instance_double('UserAnswer', answer: 1, comments: 'Choice 1')] }
 
     context "when user answer is correct" do
@@ -62,7 +62,7 @@ RSpec.describe MultipleChoiceRadio, type: :model do
           user_response: {answer: 'Choice 1', is_correct: true}
         }.to_json
 
-        expect(multiple_choice_radio.view_completed_question(user_answer)).to eq(expected_json)
+        expect(multiple_choice_radio.view_completed_item(user_answer)).to eq(expected_json)
       end
     end
   end

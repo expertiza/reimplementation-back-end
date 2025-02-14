@@ -50,9 +50,9 @@ class TextResponse < Item
       }.to_json
     end
   
-    def view_question_text
+    def view_item_text
       {
-        action: 'view_question_text',
+        action: 'view_item_text',
         elements: [
           { type: 'text', value: txt },
           { type: 'text', value: question_type },

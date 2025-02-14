@@ -1,9 +1,12 @@
 require 'rails_helper'
 
-RSpec.describe Course, type: :model do
-  let(:course) { build(:course, id: 1, name: 'ECE517') }
-  let(:user1) { User.new name: 'abc', fullname: 'abc bbc', email: 'abcbbc@gmail.com', password: '123456789', password_confirmation: '123456789' }
-  let(:institution) { build(:institution, id: 1) }
+describe Course, type: :model do
+  let(:role) {Role.create(name: 'Instructor', parent_id: nil, id: 2, default_page_id: nil)}
+  let(:instructor) { Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role: role) }
+  let(:institution) { create(:institution, id: 1) }
+  let(:course) { create(:course, id: 1, name: 'ECE517', instructor: instructor, institution: institution) }
+  let(:user1) { create(:user, name: 'abcdef', full_name:'abc bbc', email: 'abcbbc@gmail.com', password: '123456789', password_confirmation: '123456789', role: role) }
+
   describe 'validations' do
     it 'validates presence of name' do
       course.name = ''

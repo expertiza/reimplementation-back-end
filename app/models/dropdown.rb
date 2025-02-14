@@ -6,8 +6,8 @@ class Dropdown < UnscoredItem
       edit_common("Item #{count}:", txt , weight, type).to_json
     end
   
-    def view_question_text
-      view_question_text_common(txt, type, weight, 'N/A').to_json
+    def view_item_text
+      view_item_text_common(txt, type, weight, 'N/A').to_json
     end
   
     def complete(count, answer = nil)
@@ -20,7 +20,7 @@ class Dropdown < UnscoredItem
       { dropdown_options: options }.to_json
     end
   
-    def view_completed_question
+    def view_completed_item
       { selected_option: (count && answer) ? "#{answer} (out of #{count})" : 'Item not answered.' }.to_json
     end
   end

@@ -23,7 +23,7 @@ RSpec.describe Dropdown, type: :model do
     end
   end
 
-  describe '#view_question_text' do
+  describe '#view_item_text' do
     let(:dropdown) { Dropdown.new }
     context 'when given valid inputs' do
       it 'returns the JSON for displaying the item text, type, weight, and score range' do
@@ -36,7 +36,7 @@ RSpec.describe Dropdown, type: :model do
           weight: 1,
           score_range: "N/A"
         }.to_json
-        expect(dropdown.view_question_text).to eq(expected_json)
+        expect(dropdown.view_item_text).to eq(expected_json)
       end
     end
   end

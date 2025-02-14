@@ -15,11 +15,11 @@ RSpec.describe TextResponse, type: :model do
     end
   end
 
-  describe '#view_question_text' do
-    let(:result) { JSON.parse(text_response.view_question_text) }
+  describe '#view_item_text' do
+    let(:result) { JSON.parse(text_response.view_item_text) }
 
     it 'returns JSON for viewing item text with correct action' do
-      expect(result["action"]).to eq('view_question_text')
+      expect(result["action"]).to eq('view_item_text')
     end
 
     it 'includes the item text, question_type, and weight in elements' do

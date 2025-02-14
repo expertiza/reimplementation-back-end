@@ -7,8 +7,8 @@ class Scale < ScoredItem
       edit_common('Item:', min_question_score, max_question_score , txt, weight, type).to_json
     end
   
-    def view_question_text
-      view_question_text_common(txt, type, weight, score_range).to_json
+    def view_item_text
+      view_item_text_common(txt, type, weight, score_range).to_json
     end
   
     def complete
@@ -18,7 +18,7 @@ class Scale < ScoredItem
       { scale_options: options }.to_json
     end
   
-    def view_completed_question(options = {})
+    def view_completed_item(options = {})
       if options[:count] && options[:answer] && options[:questionnaire_max]
         { count: options[:count], answer: options[:answer], questionnaire_max: options[:questionnaire_max] }.to_json
       else
@@ -29,7 +29,6 @@ class Scale < ScoredItem
     private
   
     def score_range
-      min_label.nil? && max_label.nil? ? "#{@min_question_score} to #{@max_question_score}" :
-        "#{min_label} #{@min_question_score} to #{@max_question_score} #{max_label}"
+      @min_question_score..@max_question_score
     end
   end
