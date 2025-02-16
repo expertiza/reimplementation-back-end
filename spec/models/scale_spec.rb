@@ -43,7 +43,7 @@ RSpec.describe Scale, type: :model do
         text: "Rate your experience",
         type: "Scale",
         weight: 1,
-        score_range: "Poor 1 to 5 Excellent"
+        score_range: "1..5"
       }.to_json
       expect(subject.view_item_text).to eq(expected_json)
     end

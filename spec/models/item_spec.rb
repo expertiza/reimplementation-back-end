@@ -4,7 +4,7 @@ RSpec.describe Item, type: :model do
   # Creating dummy objects for the test with the help of let statement
   let(:role) { Role.create(name: 'Instructor', parent_id: nil, id: 2, default_page_id: nil) }
   let(:instructor) do
-    Instructor.create(id: 1234, name: 'testinstructor', email: 'test@test.com', fullname: 'Test Instructor',
+    Instructor.create(id: 1234, name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor',
                       password: '123456', role:)
   end
   let(:questionnaire) do
@@ -74,28 +74,28 @@ RSpec.describe Item, type: :model do
 
   describe '#set_choice_strategy' do
     context 'when the item type is Dropdown' do
-      let(:item) { create(:item, questionnaire: questionnaire, question_type: 'Dropdown') }
+      let(:item) { create(:item, questionnaire: questionnaire, question_type: 'dropdown') }
 
       it 'assigns the correct strategy' do
-        item.set_choice_strategy
+        item.strategy
         expect(item.choice_strategy).to be_an_instance_of(Strategies::DropdownStrategy)
       end
     end
 
     context 'when the item type is MultipleChoice' do
-      let(:item) { create(:item, questionnaire: questionnaire, question_type: 'MultipleChoice') }
+      let(:item) { create(:item, questionnaire: questionnaire, question_type: 'multiple_choice') }
 
       it 'assigns the correct strategy' do
-        item.set_choice_strategy
+        item.strategy
         expect(item.choice_strategy).to be_an_instance_of(Strategies::MultipleChoiceStrategy)
       end
     end
 
     context 'when the item type is Scale' do
-      let(:item) { create(:item, questionnaire: questionnaire, question_type: 'Scale') }
+      let(:item) { create(:item, questionnaire: questionnaire, question_type: 'scale') }
 
       it 'assigns the correct strategy' do
-        item.set_choice_strategy
+        item.strategy
         expect(item.choice_strategy).to be_an_instance_of(Strategies::ScaleStrategy)
       end
     end
@@ -104,7 +104,7 @@ RSpec.describe Item, type: :model do
       let(:item) { create(:item, questionnaire: questionnaire, question_type: 'Unknown') }
 
       it 'raises an error' do
-        expect { item.set_choice_strategy }.to raise_error("Unknown item type: Unknown")
+        expect { item.strategy }.to raise_error("Unknown item type: Unknown")
       end
     end
   end

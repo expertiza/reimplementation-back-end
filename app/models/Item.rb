@@ -15,7 +15,7 @@ class Item < ApplicationRecord
   end
     
   def set_seq
-    self.seq = questionnaire.questions.size + 1
+    self.seq = questionnaire.items.size + 1
   end
 
   def as_json(options = {})
@@ -29,15 +29,15 @@ class Item < ApplicationRecord
   end
 
   def strategy
-    case item_type
+    case question_type
     when 'dropdown'
-      Strategies::DropdownStrategy.new
+      self.choice_strategy = Strategies::DropdownStrategy.new
     when 'multiple_choice'
-      Strategies::MultipleChoiceStrategy.new
+      self.choice_strategy = Strategies::MultipleChoiceStrategy.new
     when 'scale'
-      Strategies::ScaleStrategy.new
+      self.choice_strategy = Strategies::ScaleStrategy.new
     else
-      raise "Unknown item type: #{item_type}"
+      raise "Unknown item type: #{question_type}"
     end
   end
 

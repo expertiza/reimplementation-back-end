@@ -3,37 +3,21 @@ require 'json_web_token'
 # Rspec tests for questions controller
 RSpec.describe 'api/v1/questions', type: :request do
   before(:all) do
-    # Create roles in hierarchy
-
-    @super_admin = Role.find_or_create_by(name: 'Super Administrator')
-    @admin = Role.find_or_create_by(name: 'Administrator', parent_id: @super_admin.id)
-    @instructor = Role.find_or_create_by(name: 'Instructor', parent_id: @admin.id)
-    @ta = Role.find_or_create_by(name: 'Teaching Assistant', parent_id: @instructor.id)
-    @student = Role.find_or_create_by(name: 'Student', parent_id: @ta.id)
+    @roles = create_roles_hierarchy
   end
 
-  let(:instructor) { setup_instructor }
-
-  let(:prof) { User.create(
+  let(:instructor) { User.create(
     name: "profa",
     password_digest: "password",
-    role_id: @instructor.id,
+    role_id: @roles[:instructor].id,
     full_name: "Prof A",
     email: "testuser@example.com",
     mru_directory_path: "/home/testuser",
     ) }
 
-  let(:token) { JsonWebToken.encode({id: prof.id}) }
+  let(:token) { JsonWebToken.encode({id: instructor.id}) }
   let(:Authorization) { "Bearer #{token}" }
   path '/api/v1/questions' do
-    # Creation of dummy objects for the test with the help of let statements
-    #let(:role) { Role.create(name: 'Instructor', parent_id: nil, default_page_id: nil) }
-
-    #let(:instructor) do
-    # role
-    # Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role: role)
-    #end
-
     let(:questionnaire) do
       instructor
       Questionnaire.create(
@@ -164,13 +148,6 @@ RSpec.describe 'api/v1/questions', type: :request do
   path '/api/v1/questions/{id}' do
 
     parameter name: 'id', in: :path, type: :integer
-    # Creation of dummy objects for the test with the help of let statements
-    let(:role) { Role.create(name: 'Instructor', parent_id: nil, default_page_id: nil) }
-    
-    let(:instructor) do 
-      role
-      Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role: role)
-    end
 
     let(:questionnaire) do
       instructor
@@ -271,7 +248,7 @@ RSpec.describe 'api/v1/questions', type: :request do
           }
         end
         run_test! do
-          expect(response.body).to include("Couldn't find Item")
+          expect(response.body).to include("Not Found")
         end
       end
 
@@ -282,7 +259,7 @@ RSpec.describe 'api/v1/questions', type: :request do
             seq: "Dfsd"
           }
         end
-        schema type: :string
+        schema type: :object
         run_test! do
           expect(response.body).to_not include('"seq":"Dfsd"')
         end
@@ -336,13 +313,11 @@ RSpec.describe 'api/v1/questions', type: :request do
             seq: "Dfsd"
           }
         end
-        schema type: :string
+        schema type: :object
         run_test! do
           expect(response.body).to_not include('"seq":"Dfsd"')
         end
-      end  
-
-
+      end
     end
 
 

@@ -6,7 +6,7 @@ class QuestionAdvice < ApplicationRecord
   
     def self.export(csv, parent_id, _options)
       questionnaire = Questionnaire.find(parent_id)
-      questionnaire.questions.each do |item|
+      questionnaire.items.each do |item|
         QuestionAdvice.where(question_id: item.id).each do |advice|
           csv << advice.attributes.values
         end

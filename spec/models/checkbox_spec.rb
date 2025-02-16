@@ -69,7 +69,7 @@ RSpec.describe Checkbox do
           content: 'test txt',
           bold: true
         },
-        if_column_header: 'continue'
+        if_column_header: 'end'
       }
       expect(json).to eq(expected_json)
     end

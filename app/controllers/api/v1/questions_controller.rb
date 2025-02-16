@@ -37,13 +37,13 @@ class Api::V1::QuestionsController < ApplicationController
     # Create the new Item (item)
     item = questionnaire.items.build(
       txt: params[:txt],
-      item_type: params[:question_type],
+      question_type: params[:question_type],
       seq: params[:seq],
       break_before: true
     )
 
     # Add attributes based on the item type
-    case item.item_type
+    case item.question_type
     when 'Scale'
       item.weight = params[:weight]
       item.max_label = 'Strongly agree'
@@ -64,14 +64,27 @@ class Api::V1::QuestionsController < ApplicationController
     end
   end
 
+  # PUT /questions/:id
+  def update
+    if @item.update(question_params)
+      render json: @item, status: :ok
+    else
+      render json: { error: @item.errors.full_messages.to_sentence }, status: :unprocessable_entity
+    end
+  end
+  
   private
 
   def set_question
     @item = Item.find(params[:id])
   end
 
+  def question_params
+    params.require(:question).permit(:txt, :question_type, :seq, :weight, :max_value, :size, :alternatives)
+  end
+
   def get_strategy_for_item(item)
-    case item.item_type
+    case item.question_type
     when 'Dropdown'
       Strategies::DropdownStrategy.new
     when 'Scale'
