@@ -4,12 +4,16 @@ class Api::V1::AssignmentsController < ApplicationController
   # GET /api/v1/assignments
   def index
     assignments = Assignment.all
+    ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Fetched all assignments.", request)
     render json: assignments
   end
 
   # GET /api/v1/assignments/:id
   def show
     assignment = Assignment.find(params[:id])
+    # For now, just logging success - if error checking is added in the future, please add a log message for that with
+    # ExpertizaLogger.error
+    ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Fetched assignment with ID: #{assignment.id}.", request)
     render json: assignment
   end
 
@@ -17,8 +21,10 @@ class Api::V1::AssignmentsController < ApplicationController
   def create
     assignment = Assignment.new(assignment_params)
     if assignment.save
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Assignment created: #{assignment.as_json}", request)
       render json: assignment, status: :created
     else
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Failed to create assignment: #{assignment.errors.full_messages.join(', ')}", request)
       render json: assignment.errors, status: :unprocessable_entity
     end
   end
@@ -27,8 +33,10 @@ class Api::V1::AssignmentsController < ApplicationController
   def update
     assignment = Assignment.find(params[:id])
     if assignment.update(assignment_params)
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Updated assignment with ID: #{assignment.id}.", request)
       render json: assignment, status: :ok
     else
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Failed to update assignment ID: #{assignment.id}. Errors: #{assignment.errors.full_messages.join(', ')}", request)
       render json: assignment.errors, status: :unprocessable_entity
     end
   end
@@ -42,11 +50,14 @@ class Api::V1::AssignmentsController < ApplicationController
     assignment = Assignment.find_by(id: params[:id])
     if assignment
       if assignment.destroy
+        ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Assignment #{assignment.id} was deleted.", request)
         render json: { message: "Assignment deleted successfully!" }, status: :ok
       else
+        ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Failed to delete assignment #{$ERROR_INFO}", request)
         render json: { error: "Failed to delete assignment", details: assignment.errors.full_messages }, status: :unprocessable_entity
       end
     else
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Assignment not found for deletion with ID: #{params[:id]}", request)
       render json: { error: "Assignment not found" }, status: :not_found
     end
   end
@@ -55,12 +66,15 @@ class Api::V1::AssignmentsController < ApplicationController
   def add_participant
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Assignment not found for adding participant. ID: #{params[:assignment_id]}", request)
       render json: { error: "Assignment not found" }, status: :not_found
     else
       new_participant = assignment.add_participant(params[:user_id])
       if new_participant.save
+        ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Added participant with User ID: #{params[:user_id]} to assignment ID: #{assignment.id}.", request)
         render json: new_participant, status: :ok
       else
+        ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Failed to add participant to assignment ID: #{assignment.id}. Errors: #{new_participant.errors.full_messages.join(', ')}", request)
         render json: new_participant.errors, status: :unprocessable_entity
       end
     end
@@ -73,12 +87,15 @@ class Api::V1::AssignmentsController < ApplicationController
     if user && assignment
       assignment.remove_participant(user.id)
       if assignment.save
+        ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Removed participant with User ID: #{user.id} from assignment ID: #{assignment.id}.", request)
         render json: { message: "Participant removed successfully!" }, status: :ok
       else
+        ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Failed to remove participant from assignment ID: #{assignment.id}. Errors: #{assignment.errors.full_messages.join(', ')}", request)
         render json: assignment.errors, status: :unprocessable_entity
       end
     else
       not_found_message = user ? "Assignment not found" : "User not found"
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "#{not_found_message} while removing participant.", request)
       render json: { error: not_found_message }, status: :not_found
     end
   end
@@ -88,12 +105,15 @@ class Api::V1::AssignmentsController < ApplicationController
   def remove_assignment_from_course
     assignment = Assignment.find(params[:assignment_id])
     if assignment.nil?
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Assignment not found for removing from course. ID: #{params[:assignment_id]}", request)
       render json: { error: "Assignment not found" }, status: :not_found
     else
       assignment = assignment.remove_assignment_from_course
       if assignment.save
+        ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Removed assignment ID: #{assignment.id} from its course.", request)
         render json: assignment , status: :ok
       else
+        ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Failed to remove assignment ID: #{assignment.id} from course. Errors: #{assignment.errors.full_messages.join(', ')}", request)
         render json: assignment.errors, status: :unprocessable_entity
       end
     end
@@ -107,12 +127,15 @@ class Api::V1::AssignmentsController < ApplicationController
     if assignment && course
       assignment = assignment.assign_course(course.id)
       if assignment.save
+        ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Assigned course ID: #{course.id} to assignment ID: #{assignment.id}.", request)
         render json: assignment, status: :ok
       else
+        ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Failed to assign course to assignment ID: #{assignment.id}. Errors: #{assignment.errors.full_messages.join(', ')}", request)
         render json: assignment.errors, status: :unprocessable_entity
       end
     else
       not_found_message = course ? "Assignment not found" : "Course not found"
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "#{not_found_message} while assigning course.", request)
       render json: { error: not_found_message }, status: :not_found
     end
   end
@@ -121,12 +144,15 @@ class Api::V1::AssignmentsController < ApplicationController
   def copy_assignment
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Assignment not found for copying. ID: #{params[:assignment_id]}", request)
       render json: { error: "Assignment not found" }, status: :not_found
     else
       new_assignment = assignment.copy
       if new_assignment.save
+        ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Copied assignment ID: #{assignment.id} to new assignment ID: #{new_assignment.id}.", request)
         render json: new_assignment, status: :ok
       else
+        ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Failed to copy assignment ID: #{assignment.id}. Errors: #{new_assignment.errors.full_messages.join(', ')}", request)
         render json :new_assignment.errors, status: :unprocessable_entity
       end
     end
@@ -137,8 +163,10 @@ class Api::V1::AssignmentsController < ApplicationController
   def show_assignment_details
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Assignment not found for showing details. ID: #{params[:assignment_id]}", request)
       render json: { error: "Assignment not found" }, status: :not_found
     else
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Fetched details for assignment ID: #{assignment.id}.", request)
       render json: {
         id: assignment.id,
         name: assignment.name,
@@ -155,9 +183,12 @@ class Api::V1::AssignmentsController < ApplicationController
   def has_topics
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Assignment not found for checking topics. ID: #{params[:assignment_id]}", request)
       render json: { error: "Assignment not found" }, status: :not_found
     else
-      render json: assignment.topics?, status: :ok
+      result = assignment.topics?
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Checked topics for assignment ID: #{assignment.id}. Has topics: #{result}", request)
+      render json: result, status: :ok
     end
   end
 
@@ -166,9 +197,12 @@ class Api::V1::AssignmentsController < ApplicationController
   def team_assignment
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Assignment not found for checking team assignment. ID: #{params[:assignment_id]}", request)
       render json: { error: "Assignment not found" }, status: :not_found
     else
-      render json: assignment.team_assignment?, status: :ok
+      result = assignment.team_assignment?
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Checked if assignment ID: #{assignment.id} is a team assignment. Result: #{result}", request)
+      render json: result, status: :ok
     end
   end
 
@@ -178,9 +212,12 @@ class Api::V1::AssignmentsController < ApplicationController
     assignment = Assignment.find_by(id: params[:assignment_id])
     review_type = params[:review_type]
     if assignment.nil?
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Assignment not found for checking valid number of reviews. ID: #{params[:assignment_id]}", request)
       render json: { error: "Assignment not found" }, status: :not_found
     else
-      render json: assignment.valid_num_review(review_type), status: :ok
+      result = assignment.valid_num_review(review_type)
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Checked valid number of reviews for assignment ID: #{assignment.id}, Review type: #{review_type}. Result: #{result}", request)
+      render json: result, status: :ok
     end
   end
 
@@ -189,9 +226,12 @@ class Api::V1::AssignmentsController < ApplicationController
   def has_teams
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Assignment not found for checking teams. ID: #{params[:assignment_id]}", request)
       render json: { error: "Assignment not found" }, status: :not_found
     else
-      render json: assignment.teams?, status: :ok
+      result = assignment.teams?
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Checked teams for assignment ID: #{assignment.id}. Has teams: #{result}", request)
+      render json: result, status: :ok
     end
   end
 
@@ -200,11 +240,15 @@ class Api::V1::AssignmentsController < ApplicationController
   def varying_rubrics_by_round?
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "Assignment not found for checking varying rubrics. ID: #{params[:assignment_id]}", request)
       render json: { error: "Assignment not found" }, status: :not_found
     else
       if AssignmentQuestionnaire.exists?(assignment_id: assignment.id)
-        render json: assignment.varying_rubrics_by_round?, status: :ok
+        result = assignment.varying_rubrics_by_round?
+        ExpertizaLogger.info LoggerMessage.new(controller_name, @current_user.name, "Checked varying rubrics by round for assignment ID: #{assignment.id}. Result: #{result}", request)
+        render json: result, status: :ok
       else
+        ExpertizaLogger.error LoggerMessage.new(controller_name, @current_user.name, "No questionnaire exists for assignment ID: #{assignment.id}.", request)
         render json: { error: "No questionnaire/rubric exists for this assignment." }, status: :not_found
       end
     end
