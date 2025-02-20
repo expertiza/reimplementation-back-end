@@ -3,7 +3,7 @@ name: CI/CD
 on:
   push:
     branches: [ main ]
-  pull_request_target: #pull_request_target ensures that the workflows always run in the context of the base repo when pull_request are made from a forked repository
+  pull_request:
     branches: [ main ]
 
 jobs:
