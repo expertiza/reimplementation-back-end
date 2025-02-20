@@ -1,11 +1,11 @@
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby '3.2.1'
+ruby '3.2.7'
 
 gem 'mysql2', '~> 0.5.5'
 gem 'puma', '~> 5.0'
-gem 'rails', '~> 7.0.4', '>= 7.0.4.2'
+gem 'rails', '~> 8.0', '>= 8.0.1'
 gem 'rswag-api'
 gem 'rswag-ui'
 
@@ -26,7 +26,7 @@ gem 'bcrypt', '~> 3.1.7'
 gem 'tzinfo-data', platforms: %i[mingw mswin x64_mingw jruby]
 
 # Reduces boot times through caching; required in config/boot.rb
-gem 'bootsnap', require: false
+gem 'bootsnap', '>= 1.18.4', require: false
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 gem 'rack-cors'
