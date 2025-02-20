@@ -3,7 +3,9 @@ name: CI/CD
 on:
   push:
     branches: [ main ]
-  pull_request:
+  pull_request: #triggered in case of PRs from branches within the base repo
+    branches: [ main ]
+  pull_request_target: #triggered in case of PRs from branches from forked repos, allowing workflows to run in base repo's context.
     branches: [ main ]
 
 jobs:
