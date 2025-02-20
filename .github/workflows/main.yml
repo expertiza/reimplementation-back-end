@@ -78,10 +78,11 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # Only run when there's a push to main branch
 
     steps:
-      - name: Download coverage artifacts
-        uses: actions/download-artifact@v2
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v4
         with:
           name: code-coverage-artifacts
+          path: coverage
 
       - name: Upload code-coverage report to code-climate
         run: |
