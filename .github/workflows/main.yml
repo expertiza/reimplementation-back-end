@@ -83,10 +83,13 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: code-coverage-artifacts
-          path: coverage
+          path: coverage/
 
       - name: Upload code-coverage report to code-climate
         run: |
+          export GIT_BRANCH="${GITHUB_REF/refs\/heads\//}"
+          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+          chmod +x ./cc-test-reporter
           ./cc-test-reporter sum-coverage coverage/codeclimate.*.json 
           ./cc-test-reporter after-build -t simplecov -r ${{ secrets.CC_TEST_REPORTER_ID }}
 
