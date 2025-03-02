@@ -1,5 +1,5 @@
 class ResponseController < ApplicationController
-
+    include ResponseHelper
     
     def json   # GET /response/json?response_id=xx
         response_id = params[:response_id] if params.key?(:response_id)
@@ -34,8 +34,5 @@ class ResponseController < ApplicationController
     def edit
 
     end
-
-
-
 
 end
