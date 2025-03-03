@@ -91,10 +91,14 @@ GEM
       term-ansicolor
       thor
     crass (1.0.6)
+    database_cleaner-active_record (2.2.0)
+      activerecord (>= 5.a)
+      database_cleaner-core (~> 2.0.0)
+    database_cleaner-core (2.0.1)
     date (3.4.1)
-    debug (1.8.0)
-      irb (>= 1.5.0)
-      reline (>= 0.3.1)
+    debug (1.10.0)
+      irb (~> 1.10)
+      reline (>= 0.3.8)
     diff-lcs (1.5.0)
     docile (1.4.0)
     domain_name (0.6.20240107)
@@ -116,7 +120,7 @@ GEM
       domain_name (~> 0.5)
     i18n (1.14.1)
       concurrent-ruby (~> 1.0)
-    io-console (0.6.0)
+    io-console (0.8.0)
     irb (1.15.1)
       pp (>= 0.6.0)
       rdoc (>= 4.0.0)
@@ -281,7 +285,7 @@ GEM
     simplecov-html (0.12.3)
     simplecov_json_formatter (0.1.4)
     spring (4.1.1)
-    stringio (3.1.4)
+    stringio (3.1.5)
     sync (0.5.0)
     term-ansicolor (1.11.2)
       tins (~> 1.0)
@@ -315,6 +319,7 @@ DEPENDENCIES
   bcrypt (~> 3.1.7)
   bootsnap (>= 1.18.4)
   coveralls
+  database_cleaner-active_record
   debug
   factory_bot_rails
   faker

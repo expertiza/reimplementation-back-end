@@ -63,6 +63,9 @@ jobs:
       - name: Run tests
         run: bundle exec rspec spec/models
 
+      - name: Run controller tests
+        run: bundle exec rspec spec/requests/api/v1/questionnaires_spec.rb
+
       - name: Format code coverage report
         run: ./cc-test-reporter format-coverage -t simplecov -o "coverage/codeclimate.models.json" --debug
 
