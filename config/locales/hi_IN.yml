@@ -1,0 +1,10 @@
+
+hi:
+  assignment:
+    not_found: "असाइनमेंट नहीं मिला"
+    deleted_successfully: "असाइनमेंट सफलतापूर्वक हटा दिया गया!"
+    failed_to_delete: "असाइनमेंट को हटाने में विफल"
+    participant_removed: "प्रतिभागी को सफलतापूर्वक हटा दिया गया!"
+    user_not_found: "उपयोगकर्ता नहीं मिला"
+    course_not_found: "कोर्स नहीं मिला"
+    no_questionnaire: "इस असाइनमेंट के लिए कोई प्रश्नावली/रूब्रिक मौजूद नहीं है।"
