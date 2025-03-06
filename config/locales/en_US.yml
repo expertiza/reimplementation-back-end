@@ -61,3 +61,10 @@ en_US:
         assignment_not_found: "Assignment not found"
         authorization_required: "Authorization is required"
         authorization_invalid: "Authorization not valid. Valid authorizations are: Reader, Reviewer, Submitter, Mentor"
+      users:
+        destroy:
+          success: "User %{name} with id %{id} deleted successfully!"
+        not_found: "User with id %{id} not found"
+        parameter_missing: "Parameter missing"
+        managed_users:
+          student_error: "Students do not manage any users"
