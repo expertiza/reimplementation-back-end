@@ -38,3 +38,10 @@ en_US:
             user_not_found: User not found
             course_not_found: Course not found
             no_questionnaire: No questionnaire/rubric exists for this assignment.
+      course:
+            not_found: "Course with id %{id} not found"
+            deleted: "Course with id %{id}, deleted"
+            ta_removed: "The TA %{ta_name} has been removed."
+            copy_success: "The course %{name} has been successfully copied"
+            copy_failure: "The course was not able to be copied"
+            parameter_missing: "Parameter missing"
