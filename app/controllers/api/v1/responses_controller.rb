@@ -7,32 +7,4 @@ class ResponseController < ApplicationController
         render json: response
     end
 
-    def create
-
-    end
-
-    def new
-
-    end
-
-    def save
-
-    end
-
-    def index
-
-    end
-
-    def show
-        
-    end
-
-    def update
-
-    end
-
-    def edit
-
-    end
-
 end
