@@ -41,3 +41,10 @@ en_US:
       institution:
             not_found: "Institution not found"
             deleted: "Institution deleted"
+      course:
+            not_found: "Course with id %{id} not found"
+            deleted: "Course with id %{id}, deleted"
+            ta_removed: "The TA %{ta_name} has been removed."
+            copy_success: "The course %{name} has been successfully copied"
+            copy_failure: "The course was not able to be copied"
+            parameter_missing: "Parameter missing"

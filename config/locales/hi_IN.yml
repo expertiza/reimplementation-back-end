@@ -7,3 +7,13 @@ hi_IN:
     user_not_found: उपयोगकर्ता नहीं मिला
     course_not_found: कोर्स नहीं मिला
     no_questionnaire: इस असाइनमेंट के लिए कोई प्रश्नावली/रूब्रिक मौजूद नहीं है।
+  course:
+    not_found: "कोर्स आईडी %{id} के साथ नहीं मिला"
+    deleted: "कोर्स आईडी %{id} के साथ हटा दिया गया"
+    ta_removed: "टीए %{ta_name} को हटा दिया गया है।"
+    copy_success: "कोर्स %{name} को सफलतापूर्वक कॉपी किया गया है"
+    copy_failure: "कोर्स को कॉपी नहीं किया जा सका"
+    parameter_missing: "पैरामीटर गायब है"
+  institution:
+    not_found: "संस्थान नहीं मिला"
+    deleted: "संस्थान हटा दिया गया"
