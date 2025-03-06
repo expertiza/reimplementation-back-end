@@ -21,3 +21,12 @@ hi_IN:
     destroy:
       success: "भूमिका %{role_name} आईडी %{id} के साथ सफलतापूर्वक हटा दी गई!"
     parameter_missing: "पैरामीटर गायब है"
+  participants:
+    destroy:
+      success_assignment: "असाइनमेंट %{assignment_id} में प्रतिभागी %{id} को सफलतापूर्वक हटा दिया गया है!"
+      success_team: "असाइनमेंट %{assignment_id} की टीम %{team_id} में प्रतिभागी %{id} को सफलतापूर्वक हटा दिया गया है!"
+    not_found: "प्रतिभागी नहीं मिला"
+    user_not_found: "उपयोगकर्ता नहीं मिला"
+    assignment_not_found: "असाइनमेंट नहीं मिला"
+    authorization_required: "प्राधिकरण आवश्यक है"
+    authorization_invalid: "प्राधिकरण मान्य नहीं है। मान्य प्राधिकरण हैं: पाठक, समीक्षक, प्रस्तुतकर्ता, संरक्षक"

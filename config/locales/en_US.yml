@@ -52,3 +52,12 @@ en_US:
         destroy:
           success: "Role %{role_name} with id %{id} deleted successfully!"
         parameter_missing: "Parameter missing"
+      participants:
+        destroy:
+          success_assignment: "Participant %{id} in Assignment %{assignment_id} has been deleted successfully!"
+          success_team: "Participant %{id} in Team %{team_id} of Assignment %{assignment_id} has been deleted successfully!"
+        not_found: "Participant not found"
+        user_not_found: "User not found"
+        assignment_not_found: "Assignment not found"
+        authorization_required: "Authorization is required"
+        authorization_invalid: "Authorization not valid. Valid authorizations are: Reader, Reviewer, Submitter, Mentor"
