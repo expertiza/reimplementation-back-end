@@ -39,7 +39,7 @@ class Api::V1::UsersController < ApplicationController
   def destroy
     user = User.find(params[:id])
     user.destroy
-    render json: { message: "User #{user.name} with id #{params[:id]} deleted successfully!" }, status: :no_content
+    render json: { message: I18n.t('users.destroy.success', name: user.name, id: params[:id]) }, status: :no_content
   end
 
   # GET /api/v1/users/institution/:id
@@ -57,7 +57,7 @@ class Api::V1::UsersController < ApplicationController
   def managed_users
     parent = User.find(params[:id])
     if parent.student?
-      render json: { error: 'Students do not manage any users' }, status: :unprocessable_entity
+      render json: { error: I18n.t('users.managed_users.student_error') }, status: :unprocessable_entity
       return
     end
     parent = User.instantiate(parent)
@@ -86,10 +86,10 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def user_not_found
-    render json: { error: "User with id #{params[:id]} not found" }, status: :not_found
+    render json: { error: I18n.t('users.not_found', id: params[:id]) }, status: :not_found
   end
 
   def parameter_missing
-    render json: { error: 'Parameter missing' }, status: :unprocessable_entity
+    render json: { error: I18n.t('users.parameter_missing') }, status: :unprocessable_entity
   end
 end

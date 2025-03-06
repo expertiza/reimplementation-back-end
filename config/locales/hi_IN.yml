@@ -30,3 +30,10 @@ hi_IN:
     assignment_not_found: "असाइनमेंट नहीं मिला"
     authorization_required: "प्राधिकरण आवश्यक है"
     authorization_invalid: "प्राधिकरण मान्य नहीं है। मान्य प्राधिकरण हैं: पाठक, समीक्षक, प्रस्तुतकर्ता, संरक्षक"
+  users:
+    destroy:
+      success: "उपयोगकर्ता %{name} आईडी %{id} के साथ सफलतापूर्वक हटा दिया गया है!"
+    not_found: "आईडी %{id} के साथ उपयोगकर्ता नहीं मिला"
+    parameter_missing: "पैरामीटर गायब है"
+    managed_users:
+      student_error: "छात्र किसी भी उपयोगकर्ताओं का प्रबंधन नहीं करते हैं"
