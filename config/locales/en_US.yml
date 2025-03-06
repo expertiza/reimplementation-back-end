@@ -38,6 +38,9 @@ en_US:
             user_not_found: User not found
             course_not_found: Course not found
             no_questionnaire: No questionnaire/rubric exists for this assignment.
+      institution:
+            not_found: "Institution not found"
+            deleted: "Institution deleted"
       course:
             not_found: "Course with id %{id} not found"
             deleted: "Course with id %{id}, deleted"

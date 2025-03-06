@@ -14,3 +14,6 @@ hi_IN:
     copy_success: "कोर्स %{name} को सफलतापूर्वक कॉपी किया गया है"
     copy_failure: "कोर्स को कॉपी नहीं किया जा सका"
     parameter_missing: "पैरामीटर गायब है"
+  institution:
+    not_found: "संस्थान नहीं मिला"
+    deleted: "संस्थान हटा दिया गया"
