@@ -29,11 +29,12 @@
 # To learn more, please read the Rails Internationalization guide
 # available at https://guides.rubyonrails.org/i18n.html.
 
-en: assignment:
-      not_found: "Assignment not found"
-      deleted_successfully: "Assignment deleted successfully!"
-      failed_to_delete: "Failed to delete assignment"
-      participant_removed: "Participant removed successfully!"
-      user_not_found: "User not found"
-      course_not_found: "Course not found"
-      no_questionnaire: "No questionnaire/rubric exists for this assignment."
+en_US:
+      assignment:
+            not_found: Assignment not found
+            deleted_successfully: Assignment deleted successfully!
+            failed_to_delete: Failed to delete assignment
+            participant_removed: Participant removed successfully!
+            user_not_found: User not found
+            course_not_found: Course not found
+            no_questionnaire: No questionnaire/rubric exists for this assignment.
