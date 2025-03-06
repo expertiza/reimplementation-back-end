@@ -43,7 +43,7 @@ class Api::V1::RolesController < ApplicationController
     role = Role.find(params[:id])
     role_name = role.name
     role.destroy
-    render json: { message: "Role #{role_name} with id #{params[:id]} deleted successfully!" }, status: :no_content
+    render json: { message: I18n.t('roles.destroy.success', role_name: role_name, id: params[:id]) }, status: :no_content
   end
 
   def subordinate_roles
@@ -64,6 +64,6 @@ class Api::V1::RolesController < ApplicationController
   # end
 
   def parameter_missing
-    render json: { error: 'Parameter missing' }, status: :unprocessable_entity
+    render json: { error: I18n.t('roles.parameter_missing') }, status: :unprocessable_entity
   end
 end

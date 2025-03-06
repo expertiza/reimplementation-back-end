@@ -17,3 +17,7 @@ hi_IN:
   institution:
     not_found: "संस्थान नहीं मिला"
     deleted: "संस्थान हटा दिया गया"
+  roles:
+    destroy:
+      success: "भूमिका %{role_name} आईडी %{id} के साथ सफलतापूर्वक हटा दी गई!"
+    parameter_missing: "पैरामीटर गायब है"
