@@ -34,7 +34,7 @@ class Api::V1::AssignmentsController < ApplicationController
   end
 
   def not_found
-    render json: { error: "Assignment not found" }, status: :not_found
+    render json: { error: I18n.t('assignment.not_found') }, status: :not_found
   end
 
   # DELETE /api/v1/assignments/:id
@@ -42,12 +42,12 @@ class Api::V1::AssignmentsController < ApplicationController
     assignment = Assignment.find_by(id: params[:id])
     if assignment
       if assignment.destroy
-        render json: { message: "Assignment deleted successfully!" }, status: :ok
+        render json: { message: I18n.t('assignment.deleted_successfully') }, status: :ok
       else
-        render json: { error: "Failed to delete assignment", details: assignment.errors.full_messages }, status: :unprocessable_entity
+        render json: { error: I18n.t('assignment.failed_to_delete'), details: assignment.errors.full_messages }, status: :unprocessable_entity
       end
     else
-      render json: { error: "Assignment not found" }, status: :not_found
+      render json: { error: I18n.t('assignment.not_found') }, status: :not_found
     end
   end
   
@@ -55,7 +55,7 @@ class Api::V1::AssignmentsController < ApplicationController
   def add_participant
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
-      render json: { error: "Assignment not found" }, status: :not_found
+      render json: { error: I18n.t('assignment.not_found') }, status: :not_found
     else
       new_participant = assignment.add_participant(params[:user_id])
       if new_participant.save
@@ -73,12 +73,12 @@ class Api::V1::AssignmentsController < ApplicationController
     if user && assignment
       assignment.remove_participant(user.id)
       if assignment.save
-        render json: { message: "Participant removed successfully!" }, status: :ok
+        render json: { message: I18n.t('assignment.participant_removed') }, status: :ok
       else
         render json: assignment.errors, status: :unprocessable_entity
       end
     else
-      not_found_message = user ? "Assignment not found" : "User not found"
+      not_found_message = user ? I18n.t('assignment.user_not_found') : I18n.t('assignment.not_found')
       render json: { error: not_found_message }, status: :not_found
     end
   end
@@ -88,7 +88,7 @@ class Api::V1::AssignmentsController < ApplicationController
   def remove_assignment_from_course
     assignment = Assignment.find(params[:assignment_id])
     if assignment.nil?
-      render json: { error: "Assignment not found" }, status: :not_found
+      render json: { error: I18n.t('assignment.not_found') }, status: :not_found
     else
       assignment = assignment.remove_assignment_from_course
       if assignment.save
@@ -112,7 +112,7 @@ class Api::V1::AssignmentsController < ApplicationController
         render json: assignment.errors, status: :unprocessable_entity
       end
     else
-      not_found_message = course ? "Assignment not found" : "Course not found"
+      not_found_message = course ? I18n.t('assignment.course_not_found') : I18n.t('assignment.not_found')
       render json: { error: not_found_message }, status: :not_found
     end
   end
@@ -121,7 +121,7 @@ class Api::V1::AssignmentsController < ApplicationController
   def copy_assignment
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
-      render json: { error: "Assignment not found" }, status: :not_found
+      render json: { error: I18n.t('assignment.not_found') }, status: :not_found
     else
       new_assignment = assignment.copy
       if new_assignment.save
@@ -137,7 +137,7 @@ class Api::V1::AssignmentsController < ApplicationController
   def show_assignment_details
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
-      render json: { error: "Assignment not found" }, status: :not_found
+      render json: { error: I18n.t('assignment.not_found') }, status: :not_found
     else
       render json: {
         id: assignment.id,
@@ -155,7 +155,7 @@ class Api::V1::AssignmentsController < ApplicationController
   def has_topics
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
-      render json: { error: "Assignment not found" }, status: :not_found
+      render json: { error: I18n.t('assignment.not_found') }, status: :not_found
     else
       render json: assignment.topics?, status: :ok
     end
@@ -166,7 +166,7 @@ class Api::V1::AssignmentsController < ApplicationController
   def team_assignment
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
-      render json: { error: "Assignment not found" }, status: :not_found
+      render json: { error: I18n.t('assignment.not_found') }, status: :not_found
     else
       render json: assignment.team_assignment?, status: :ok
     end
@@ -178,7 +178,7 @@ class Api::V1::AssignmentsController < ApplicationController
     assignment = Assignment.find_by(id: params[:assignment_id])
     review_type = params[:review_type]
     if assignment.nil?
-      render json: { error: "Assignment not found" }, status: :not_found
+      render json: { error: I18n.t('assignment.not_found') }, status: :not_found
     else
       render json: assignment.valid_num_review(review_type), status: :ok
     end
@@ -189,7 +189,7 @@ class Api::V1::AssignmentsController < ApplicationController
   def has_teams
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
-      render json: { error: "Assignment not found" }, status: :not_found
+      render json: { error: I18n.t('assignment.not_found') }, status: :not_found
     else
       render json: assignment.teams?, status: :ok
     end
@@ -200,12 +200,12 @@ class Api::V1::AssignmentsController < ApplicationController
   def varying_rubrics_by_round?
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
-      render json: { error: "Assignment not found" }, status: :not_found
+      render json: { error: I18n.t('assignment.not_found') }, status: :not_found
     else
       if AssignmentQuestionnaire.exists?(assignment_id: assignment.id)
         render json: assignment.varying_rubrics_by_round?, status: :ok
       else
-        render json: { error: "No questionnaire/rubric exists for this assignment." }, status: :not_found
+        render json: { error: I18n.t('assignment.no_questionnaire') }, status: :not_found
       end
     end
   end
