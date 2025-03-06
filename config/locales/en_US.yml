@@ -48,3 +48,7 @@ en_US:
             copy_success: "The course %{name} has been successfully copied"
             copy_failure: "The course was not able to be copied"
             parameter_missing: "Parameter missing"
+      roles:
+        destroy:
+          success: "Role %{role_name} with id %{id} deleted successfully!"
+        parameter_missing: "Parameter missing"
