@@ -45,13 +45,6 @@ class Response < ApplicationRecord
     (average_score - score).abs * 100 > allowed_difference_percentage
   end
 
-  # Send response email from reviewer to author
-  def send_response_email
-    ResponseMailer.with(response: self)
-      .send_response_email
-      .deliver_later
-  end
-
   def aggregate_questionnaire_score
     # only count the scorable questions, only when the answer is not nil
     # we accept nil as answer for scorable questions, and they will not be counted towards the total score
