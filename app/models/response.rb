@@ -56,4 +56,9 @@ class Response < ApplicationRecord
     end
     sum
   end
+
+  # sorts the questions passed by sequence number in ascending order, call like Response.sort_questions(@questionnare.questions)
+  def self.sort_questions(questions)
+    questions.sort_by(&:seq)
+  end
 end
