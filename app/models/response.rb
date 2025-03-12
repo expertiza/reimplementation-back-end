@@ -57,8 +57,11 @@ class Response < ApplicationRecord
     sum
   end
 
-  # sorts the questions passed by sequence number in ascending order, call like Response.sort_questions(@questionnare.questions)
-  def self.sort_questions(questions)
-    questions.sort_by(&:seq)
+  # Sort responses by version number, descending
+  def sort_by_version
+    responses = Response.where(map_id: @map.id).to_a
+
+    return [] if responses.empty?
+    responses.sort_by { |response| response.version_num.to_i }.reverse
   end
 end
