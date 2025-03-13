@@ -83,4 +83,10 @@ en_US:
       signed_up_teams:
         create_success: "Signed up team successful!"
         update_success: "The team has been updated successfully."
-        delete_success: "Signed up team was deleted successfully!"  
+        delete_success: "Signed up team was deleted successfully!"
+      account_requests:
+        user_exists: "A user with this email already exists. Cannot approve the account request."
+        create_success: "Account Request Approved and User successfully created."
+        delete_success: "Account Request deleted"
+        status_error: "Status can only be Approved or Rejected"
+        user_exists_warning: "WARNING: User with this email already exists!"    
