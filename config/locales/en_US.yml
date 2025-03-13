@@ -68,3 +68,5 @@ en_US:
         parameter_missing: "Parameter missing"
         managed_users:
           student_error: "Students do not manage any users"
+      bookmarks:
+        not_found: "Couldn't find Bookmark"    

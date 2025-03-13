@@ -37,3 +37,5 @@ hi_IN:
     parameter_missing: "पैरामीटर गायब है"
     managed_users:
       student_error: "छात्र किसी भी उपयोगकर्ताओं का प्रबंधन नहीं करते हैं"
+  bookmarks:
+    not_found: "बुकमार्क नहीं मिला"    
