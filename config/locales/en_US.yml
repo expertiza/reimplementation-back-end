@@ -79,4 +79,8 @@ en_US:
         delete_success: "JoinTeamRequest was successfully deleted"
         delete_failure: "Failed to delete JoinTeamRequest"
         decline_success: "JoinTeamRequest declined successfully"
-        team_full: "This team is full."    
+        team_full: "This team is full."   
+      signed_up_teams:
+        create_success: "Signed up team successful!"
+        update_success: "The team has been updated successfully."
+        delete_success: "Signed up team was deleted successfully!"  
