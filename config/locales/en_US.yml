@@ -68,3 +68,30 @@ en_US:
         parameter_missing: "Parameter missing"
         managed_users:
           student_error: "Students do not manage any users"
+      bookmarks:
+        not_found: "Couldn't find Bookmark"  
+      join_team_requests:
+        unauthorized: "Unauthorized"
+        already_in_team: "You already belong to the team"
+        participant_not_found: "Participant not found"
+        update_success: "JoinTeamRequest was successfully updated"
+        update_failure: "Failed to update JoinTeamRequest"
+        delete_success: "JoinTeamRequest was successfully deleted"
+        delete_failure: "Failed to delete JoinTeamRequest"
+        decline_success: "JoinTeamRequest declined successfully"
+        team_full: "This team is full."   
+      signed_up_teams:
+        create_success: "Signed up team successful!"
+        update_success: "The team has been updated successfully."
+        delete_success: "Signed up team was deleted successfully!"
+      account_requests:
+        user_exists: "A user with this email already exists. Cannot approve the account request."
+        create_success: "Account Request Approved and User successfully created."
+        delete_success: "Account Request deleted"
+        status_error: "Status can only be Approved or Rejected"
+        user_exists_warning: "WARNING: User with this email already exists!"
+      sign_up_topics:
+        assignment_id_required: "Assignment ID is required!"
+        create_success: "The topic: \"%{topic_name}\" has been created successfully."
+        update_success: "The topic: \"%{topic_name}\" has been updated successfully."
+        delete_success: "The topic has been deleted successfully."

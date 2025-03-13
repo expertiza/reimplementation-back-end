@@ -18,7 +18,7 @@ class Api::V1::AccountRequestsController < ApplicationController
     if @account_request.save
       response = { account_request: @account_request }
       if User.find_by(email: @account_request.email)
-        response[:warnings] = 'WARNING: User with this email already exists!'
+        response[:warnings] = I18n.t('account_requests.user_exists_warning')
       end
       render json: response, status: :created
     else
@@ -60,7 +60,7 @@ class Api::V1::AccountRequestsController < ApplicationController
   def destroy
     @account_request = AccountRequest.find(params[:id])
     @account_request.destroy
-    render json: { message: 'Account Request deleted' }, status: :no_content
+    render json: { message: I18n.t('account_requests.delete_success') }, status: :no_content
   rescue ActiveRecord::RecordNotFound => e
       render json: { error: e.message }, status: :not_found
   end
@@ -74,7 +74,7 @@ class Api::V1::AccountRequestsController < ApplicationController
       params[:account_request][:status] = 'Under Review'
     # For Approval or Rejection of an existing request, raise error if user sends a status other than Approved or Rejected
     elsif !['Approved', 'Rejected'].include?(params[:account_request][:status])
-      raise StandardError, 'Status can only be Approved or Rejected'
+      raise StandardError, I18n.t('account_requests.status_error')
     end
     params.require(:account_request).permit(:username, :full_name, :email, :status, :introduction, :role_id, :institution_id)
   end
@@ -82,12 +82,12 @@ class Api::V1::AccountRequestsController < ApplicationController
   # Create a new user if account request is approved
   def create_approved_user
     if User.exists?(email: @account_request.email)
-      render json: { error: 'A user with this email already exists. Cannot approve the account request.' }, status: :unprocessable_entity
+      render json: { error: I18n.t('account_requests.user_exists') }, status: :unprocessable_entity
       return
     end
     @new_user = User.new(name: @account_request.username, role_id: @account_request.role_id, institution_id: @account_request.institution_id, full_name: @account_request.full_name, email: @account_request.email, password: 'password')
     if @new_user.save
-      render json: { success: 'Account Request Approved and User successfully created.', user: @new_user}, status: :ok
+      render json: { success: I18n.t('account_requests.create_success'), user: @new_user }, status: :ok
     else
       render json: @new_user.errors, status: :unprocessable_entity
     end
