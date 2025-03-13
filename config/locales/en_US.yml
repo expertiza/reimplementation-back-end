@@ -89,4 +89,9 @@ en_US:
         create_success: "Account Request Approved and User successfully created."
         delete_success: "Account Request deleted"
         status_error: "Status can only be Approved or Rejected"
-        user_exists_warning: "WARNING: User with this email already exists!"    
+        user_exists_warning: "WARNING: User with this email already exists!"
+      sign_up_topics:
+        assignment_id_required: "Assignment ID is required!"
+        create_success: "The topic: \"%{topic_name}\" has been created successfully."
+        update_success: "The topic: \"%{topic_name}\" has been updated successfully."
+        delete_success: "The topic has been deleted successfully."
