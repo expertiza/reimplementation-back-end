@@ -69,4 +69,14 @@ en_US:
         managed_users:
           student_error: "Students do not manage any users"
       bookmarks:
-        not_found: "Couldn't find Bookmark"    
+        not_found: "Couldn't find Bookmark"  
+      join_team_requests:
+        unauthorized: "Unauthorized"
+        already_in_team: "You already belong to the team"
+        participant_not_found: "Participant not found"
+        update_success: "JoinTeamRequest was successfully updated"
+        update_failure: "Failed to update JoinTeamRequest"
+        delete_success: "JoinTeamRequest was successfully deleted"
+        delete_failure: "Failed to delete JoinTeamRequest"
+        decline_success: "JoinTeamRequest declined successfully"
+        team_full: "This team is full."    

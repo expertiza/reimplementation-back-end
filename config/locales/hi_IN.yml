@@ -38,4 +38,14 @@ hi_IN:
     managed_users:
       student_error: "छात्र किसी भी उपयोगकर्ताओं का प्रबंधन नहीं करते हैं"
   bookmarks:
-    not_found: "बुकमार्क नहीं मिला"    
+    not_found: "बुकमार्क नहीं मिला"
+  join_team_requests:
+    unauthorized: "अनधिकृत"
+    already_in_team: "आप पहले से ही टीम में हैं"
+    participant_not_found: "प्रतिभागी नहीं मिला"
+    update_success: "JoinTeamRequest सफलतापूर्वक अपडेट किया गया"
+    update_failure: "JoinTeamRequest को अपडेट करने में विफल"
+    delete_success: "JoinTeamRequest सफलतापूर्वक हटा दिया गया"
+    delete_failure: "JoinTeamRequest को हटाने में विफल"
+    decline_success: "JoinTeamRequest को सफलतापूर्वक अस्वीकार कर दिया गया"
+    team_full: "यह टीम पूरी हो चुकी है।"      
