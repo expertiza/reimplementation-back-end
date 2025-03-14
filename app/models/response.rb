@@ -66,4 +66,11 @@ class Response < ApplicationRecord
 
     sorted[0]
   end
+
+  # Send response email from reviewer to author
+  def send_response_email
+    ResponseMailer.with(response: self)
+      .send_response_email
+      .deliver_later
+  end
 end
