@@ -59,9 +59,9 @@ RSpec.describe 'Participants API', type: :request do
           data = JSON.parse(response.body)
           participant = data[0]
           expect(participant).to be_a(Hash)
-          expect(participant['id']).to eq(1) 
-          expect(participant['user_id']).to eq(2)
-          expect(participant['assignment_id']).to eq(1)
+          expect(participant['id']).to eq(participant1.id) 
+          expect(participant['user_id']).to eq(studenta.id)
+          expect(participant['assignment_id']).to eq(assignment1.id)
         end
       end
 
