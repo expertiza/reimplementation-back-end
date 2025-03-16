@@ -82,6 +82,14 @@ class Api::V1::QuestionsController < ApplicationController
     end
   end
 
+  def destroy
+    @item = Item.find(params[:id])
+    @item.destroy
+    head :no_content
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Couldn't find Item" }, status: :not_found
+  end
+
   # DELETE /api/v1/questions/delete_all/questionnaire/:id
   def delete_all
     questionnaire = Questionnaire.find(params[:id])
