@@ -2,9 +2,9 @@ name: CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: [ rspec-users-controller ]
   pull_request:
-    branches: [ main ]
+    branches: [ rspec-users-controller ]
 
 jobs:
   test:
