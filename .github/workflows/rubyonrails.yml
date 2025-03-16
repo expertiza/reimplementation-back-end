@@ -40,11 +40,18 @@ jobs:
           ruby-version: 3.2.7 # Ensure this matches your Gemfile
           bundler-cache: true
 
-      - name: Set up database schema
+      - name: Setup database configuration
         run: |
-          cp config/database.yml.github-actions config/database.yml || echo "No custom DB config"
-          bin/rails db:create
-          bin/rails db:schema:load
+            echo "test:" > config/database.yml
+            echo "  adapter: mysql2" >> config/database.yml
+             echo "  database: rails_test" >> config/database.yml
+             echo "  username: root" >> config/database.yml
+             echo "  password: root" >> config/database.yml
+             echo "  host: 127.0.0.1" >> config/database.yml
+             echo "  port: 3306" >> config/database.yml
+            bin/rails db:create
+            bin/rails db:schema:load
+        
       - name: Run tests
         run: bin/rspec
 
