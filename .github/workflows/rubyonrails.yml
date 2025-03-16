@@ -39,7 +39,11 @@ jobs:
         with:
           ruby-version: 3.2.7 # Ensure this matches your Gemfile
           bundler-cache: true
-
+      - name: Update Bundler and Install Dependencies
+        run: |
+          gem uninstall logger || true
+          gem install logger -v 1.6.6
+          bundle install
       - name: Setup database configuration
         run: |
             mkdir -p config
