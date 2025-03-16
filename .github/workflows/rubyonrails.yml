@@ -8,9 +8,9 @@ name: "Ruby on Rails CI"
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "rspec-users-controller" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "rspec-users-controller" ]
 
 jobs:
   test:
