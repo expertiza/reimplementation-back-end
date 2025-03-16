@@ -15,6 +15,19 @@ Things you may want to cover:
 - Make sure that the Docker plugin [is enabled](https://www.jetbrains.com/help/ruby/docker.html#enable_docker).
 
 
+### To Run the application
+#### On one terminal:
+
+- docker-compose build --no-cache
+- docker-compose up
+
+#### On another terminal:
+
+- docker exec -it  reimplementation-back-end-app-1 bash 
+- rake db:migrate:reset
+- rake db:seed
+
+
 ### Instructions
 Tutorial: [Docker Compose as a remote interpreter](https://www.jetbrains.com/help/ruby/using-docker-compose-as-a-remote-interpreter.html)
 
