@@ -42,16 +42,19 @@ jobs:
 
       - name: Setup database configuration
         run: |
-            echo "test:" > config/database.yml
-            echo "  adapter: mysql2" >> config/database.yml
-             echo "  database: rails_test" >> config/database.yml
-             echo "  username: root" >> config/database.yml
-             echo "  password: root" >> config/database.yml
-             echo "  host: 127.0.0.1" >> config/database.yml
-             echo "  port: 3306" >> config/database.yml
-            bin/rails db:create
-            bin/rails db:schema:load
-        
+            mkdir -p config
+            cat <<EOT > config/database.yml
+            test:
+              adapter: mysql2
+              database: rails_test
+              username: root
+              password: root
+              host: 127.0.0.1
+              port: 3306
+            EOT
+               bin/rails db:create
+               bin/rails db:schema:load
+            
       - name: Run tests
         run: bin/rspec
 
