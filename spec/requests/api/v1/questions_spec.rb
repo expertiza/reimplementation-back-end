@@ -76,6 +76,7 @@ RSpec.describe 'api/v1/questions', type: :request do
           txt: "test item",
           question_type: "multiple_choice", 
           break_before: false,
+          seq: 1,
           weight: 10
         }
       end
@@ -114,10 +115,7 @@ RSpec.describe 'api/v1/questions', type: :request do
 
       # post request on /api/v1/questions returns 201 created response and creates a item with given valid parameters
       response(201, 'created') do
-        let(:item) do
-          questionnaire
-          Item.create(valid_question_params)
-        end
+        let(:item) { valid_question_params }
         run_test! do
           expect(response.body).to include('"seq":1')
         end
@@ -134,10 +132,7 @@ RSpec.describe 'api/v1/questions', type: :request do
 
       # post request on /api/v1/questions returns 422 unprocessable entity when incorrect parameters are passed to create a item
       response(422, 'unprocessable entity') do
-        let(:item) do
-          instructor
-          Item.create(invalid_question_params2)
-        end
+        let(:item) { invalid_question_params2 }   # <--- pass invalid params directly to the request
         run_test!
       end
 
