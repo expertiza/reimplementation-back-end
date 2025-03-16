@@ -1,0 +1,64 @@
+# This workflow uses actions that are not certified by GitHub.  They are
+# provided by a third-party and are governed by separate terms of service,
+# privacy policy, and support documentation.
+#
+# This workflow will install a prebuilt Ruby version, install dependencies, and
+# run tests and linters.
+name: "Ruby on Rails CI"
+
+on:
+  push:
+    branches: [ "main", "rspec-users-controller", "rspec-testing" ]
+  pull_request:
+    branches: [ "main", "rspec-users-controller", "rspec-testing" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:5.7
+        ports:
+          - "3306:3306"
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: rails_test
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+    
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: "mysql2://root:root@127.0.0.1:3306/rails_test"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Ruby and gems
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.2.7 # Ensure this matches your Gemfile
+          bundler-cache: true
+      - name: Update Bundler and Install Dependencies
+        run: |
+          gem uninstall logger || true
+          gem install logger -v 1.6.6
+          bundle install
+      - name: Setup database configuration
+        run: |
+            mkdir -p config
+            cat <<EOT > config/database.yml
+            test:
+              adapter: mysql2
+              database: rails_test
+              username: root
+              password: root
+              host: 127.0.0.1
+              port: 3306
+            EOT
+               bin/rails db:create
+               bin/rails db:schema:load
+            
+      - name: Run tests
+        run: bin/rspec
+
