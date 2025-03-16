@@ -8,9 +8,9 @@ name: "Ruby on Rails CI"
 
 on:
   push:
-    branches: [ "main", "rspec-users-controller", "rspec-testing" ]
+    branches: ["main", "rspec-users-controller", "rspec-testing"]
   pull_request:
-    branches: [ "main", "rspec-users-controller", "rspec-testing" ]
+    branches: ["main", "rspec-users-controller", "rspec-testing"]
 
 jobs:
   test:
@@ -23,11 +23,7 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: rails_test
-        options: >-
-          --health-cmd="mysqladmin ping --silent"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
+        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
 
     env:
       RAILS_ENV: test
@@ -63,17 +59,16 @@ jobs:
       - name: Setup database configuration
         run: |
           mkdir -p config
-          cat <<EOT > config/database.yml
-          test:
-            adapter: mysql2
-            database: rails_test
-            username: root
-            password: root
-            host: 127.0.0.1
-            port: 3306
-          EOT
+          echo "test:" > config/database.yml
+          echo "  adapter: mysql2" >> config/database.yml
+          echo "  database: rails_test" >> config/database.yml
+          echo "  username: root" >> config/database.yml
+          echo "  password: root" >> config/database.yml
+          echo "  host: 127.0.0.1" >> config/database.yml
+          echo "  port: 3306" >> config/database.yml
           bin/rails db:create
           bin/rails db:schema:load
 
       - name: Run tests
         run: bin/rspec
+
