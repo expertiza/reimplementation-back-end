@@ -43,6 +43,12 @@ jobs:
           ruby-version: 3.2.7
           bundler-cache: true
 
+      - name: Update Bundler and Install Dependencies
+        run: |
+          gem uninstall logger || true
+          gem install logger -v 1.6.6
+          bundle install
+
       - name: Wait for MySQL to be ready
         run: |
           for i in {1..10}; do
@@ -71,3 +77,4 @@ jobs:
 
       - name: Run tests
         run: bin/rspec
+
