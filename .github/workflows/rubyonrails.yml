@@ -25,7 +25,10 @@ jobs:
           MYSQL_DATABASE: rails_test
         options: >-
           --health-cmd="mysqladmin ping --silent"
-    
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
     env:
       RAILS_ENV: test
       DATABASE_URL: "mysql2://root:root@127.0.0.1:3306/rails_test"
@@ -37,28 +40,34 @@ jobs:
       - name: Install Ruby and gems
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.2.7 # Ensure this matches your Gemfile
+          ruby-version: 3.2.7
           bundler-cache: true
-      - name: Update Bundler and Install Dependencies
+
+      - name: Wait for MySQL to be ready
         run: |
-          gem uninstall logger || true
-          gem install logger -v 1.6.6
-          bundle install
+          for i in {1..10}; do
+            if mysqladmin ping -h 127.0.0.1 --silent; then
+              echo "MySQL is up!"
+              break
+            fi
+            echo "Waiting for MySQL..."
+            sleep 5
+          done
+
       - name: Setup database configuration
         run: |
-            mkdir -p config
-            cat <<EOT > config/database.yml
-            test:
-              adapter: mysql2
-              database: rails_test
-              username: root
-              password: root
-              host: 127.0.0.1
-              port: 3306
-            EOT
-               bin/rails db:create
-               bin/rails db:schema:load
-            
+          mkdir -p config
+          cat <<EOT > config/database.yml
+          test:
+            adapter: mysql2
+            database: rails_test
+            username: root
+            password: root
+            host: 127.0.0.1
+            port: 3306
+          EOT
+          bin/rails db:create
+          bin/rails db:schema:load
+
       - name: Run tests
         run: bin/rspec
-
