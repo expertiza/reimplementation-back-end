@@ -37,7 +37,7 @@ jobs:
       - name: Install Ruby and gems
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.2.2 # Adjust based on your Gemfile
+          ruby-version: 3.2.7 # Adjust based on your Gemfile
           bundler-cache: true
 
       - name: Set up database schema
@@ -57,7 +57,7 @@ jobs:
       - name: Install Ruby and gems
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.2.2 # Adjust based on your project
+          ruby-version: 3.2.7 # Adjust based on your project
           bundler-cache: true
       - name: Generate binstubs
         run: bundle binstubs bundler-audit brakeman rubocop
