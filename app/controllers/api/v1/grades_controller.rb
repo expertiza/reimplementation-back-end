@@ -8,16 +8,12 @@ class Api::V1::GradesController < ApplicationController
                 else
                   has_privileges_of?('Teaching Assistant')
                 end
-    render json: { allowed: permitted }, status: permitted ? :ok : :forbidden
+    render json: { allowed: permitted }, status: permitted ? :ok : :forbidden
   end
 
-
   def edit
-    @participant = AssignmentParticipant.find(params[:id])
-    if @participant.nil?
-      render json: { message: "Assignment participant #{params[:id]} not found" }, status: :not_found
-      return
-    end
+    @participant = find_participant(params[:id])
+    return unless @participant # Exit early if participant not found
     @assignment = @participant.assignment
     @questions = list_questions(@assignment)
     @scores = participant_scores(@participant, @questions)
@@ -54,7 +50,44 @@ class Api::V1::GradesController < ApplicationController
     redirect_to controller: 'grades', action: 'view_team', id: params[:id]
   end
 
+
+  def instructor_review
+    participant = find_participant(params[:id])
+    return unless participant # Exit early if participant not found
+  
+    reviewer = find_or_create_reviewer(session[:user].id, participant.assignment.id)
+    review_mapping = find_or_create_review_mapping(participant.team.id, reviewer.id, participant.assignment.id)
+  
+    redirect_to_review(review_mapping)
+  end
+  
   private
+  
+  def find_participant(participant_id)
+    AssignmentParticipant.find(participant_id)
+  rescue ActiveRecord::RecordNotFound
+    flash[:error] = "Assignment participant #{participant_id} not found"
+    nil
+  end
+  
+  def find_or_create_reviewer(user_id, assignment_id)
+    reviewer = AssignmentParticipant.find_or_create_by(user_id: user_id, parent_id: assignment_id)
+    reviewer.set_handle if reviewer.new_record?
+    reviewer
+  end
+  
+  def find_or_create_review_mapping(reviewee_id, reviewer_id, assignment_id)
+    ReviewResponseMap.find_or_create_by(reviewee_id: reviewee_id, reviewer_id: reviewer_id, reviewed_object_id: assignment_id)
+  end
+  
+  def redirect_to_review(review_mapping)
+    if review_mapping.new_record?
+      redirect_to controller: 'response', action: 'new', id: review_mapping.map_id, return: 'instructor'
+    else
+      review = Response.find_by(map_id: review_mapping.map_id)
+      redirect_to controller: 'response', action: 'edit', id: review.id, return: 'instructor'
+    end
+  end
 
   def handle_not_found
     flash[:error] = 'Participant not found.'
@@ -73,6 +106,13 @@ class Api::V1::GradesController < ApplicationController
 end
 
 
+def find_assignment(assignment_id)
+  AssignmentParticipant.find(assignment_id)
+rescue ActiveRecord::RecordNotFound
+  flash[:error] = "Assignment participant #{assignment_id} not found"
+  nil
+end
+
 def filter_questionnaires(assignment)
   questionnaires = assignment.questionnaires
   if assignment.varying_rubrics_by_round?
@@ -86,13 +126,32 @@ def filter_questionnaires(assignment)
   end
 end
 
-def get_data_for_heat_map(id)
+def get_data_for_heat_map(assignment_id)
   # Finds the assignment
-  @assignment = Assignment.find(id)
+  @assignment = find_assignment(assignment_id)
   # Extracts the questionnaires
   @questions = filter_questionnaires(@assignment)
   @scores = review_grades(@assignment, @questions)
   @review_score_count = @scores[:participants].length # After rejecting nil scores need original length to iterate over hash
   @averages = filter_scores(@scores[:teams])
   @avg_of_avg = mean(@averages)
+end
+
+def self_review_finished?
+  participant = Participant.find(params[:id])
+  assignment = participant.try(:assignment)
+  self_review_enabled = assignment.try(:is_selfreview_enabled)
+  not_submitted = unsubmitted_self_review?(participant.try(:id))
+  if self_review_enabled
+    !not_submitted
+  else
+    true
+  end
+end
+
+def unsubmitted_self_review?(participant_id)
+  self_review = SelfReviewResponseMap.where(reviewer_id: participant_id).first.try(:response).try(:last)
+  return !self_review.try(:is_submitted) if self_review
+
+  true
 end
