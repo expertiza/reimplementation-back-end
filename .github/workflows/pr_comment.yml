@@ -1,9 +1,9 @@
 name: PR Comment Workflow
 
 on:
-    pull_request:
-      branches: [ main ]
-      types: [ opened, synchronize, reopened ]
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
 
 jobs:
   test:
