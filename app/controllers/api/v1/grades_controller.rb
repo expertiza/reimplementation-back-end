@@ -3,29 +3,41 @@ class Api::V1::GradesController < ApplicationController
   def action_allowed?
     permitted = case params[:action]
                 when 'view_my_scores'
-                  has_role?('Student') && self_review_finished? && are_needed_authorizations_present?(params[:id], 'reader', 'reviewer')
+                  student_with_permissions?
                 when 'view_team'
-                  
-
+                  student_viewing_own_team? || has_privileges_of?('Teaching Assistant')
                 else
                   has_privileges_of?('Teaching Assistant')
                 end
+  
     render json: { allowed: permitted }, status: permitted ? :ok : :forbidden
   end
+
+
+
+
 
   def edit
     @participant = find_participant(params[:id])
     return unless @participant # Exit early if participant not found
     @assignment = @participant.assignment
     @questions = list_questions(@assignment)
-    @scores = participant_scores(@participant, @questions)
+    @scores = Response.review_grades(@participant, @questions)
   end
+
+
+
+
 
   def list_questions(assignment)
     assignment.questionnaires.each_with_object({}) do |questionnaire, questions|
       questions[questionnaire.id.to_s] = questionnaire.questions
     end
   end
+
+
+
+
 
   def update
     participant = AssignmentParticipant.find_by(id: params[:id])
@@ -38,6 +50,11 @@ class Api::V1::GradesController < ApplicationController
     end
     redirect_to action: 'edit', id: params[:id]
   end
+
+
+
+
+
 
   def update_team
     participant = AssignmentParticipant.find_by(id: params[:participant_id])
@@ -53,6 +70,10 @@ class Api::V1::GradesController < ApplicationController
   end
 
 
+
+
+
+
   def instructor_review
     participant = find_participant(params[:id])
     return unless participant # Exit early if participant not found
@@ -63,21 +84,49 @@ class Api::V1::GradesController < ApplicationController
     redirect_to_review(review_mapping)
   end
   
+
+
+
   private
-  
-  def find_participant(participant_id)
-    AssignmentParticipant.find(participant_id)
-  rescue ActiveRecord::RecordNotFound
-    flash[:error] = "Assignment participant #{participant_id} not found"
-    nil
+
+
+
+# Helper methods for action_allowed?
+
+  def student_with_permissions?
+    has_role?('Student') &&
+      self_review_finished? &&
+      are_needed_authorizations_present?(params[:id], 'reader', 'reviewer')
   end
+
+  def student_viewing_own_team?
+    return false unless has_role?('Student')
   
+    participant = AssignmentParticipant.find_by(id: params[:id])
+    participant && current_user_is_assignment_participant?(participant.assignment.id)
+  end
+
+  def self_review_finished?
+    participant = Participant.find(params[:id])
+    assignment = participant.try(:assignment)
+    self_review_enabled = assignment.try(:is_selfreview_enabled)
+    not_submitted = ResponseMap.unsubmitted_self_review?(participant.try(:id))
+    if self_review_enabled
+      !not_submitted
+    else
+      true
+    end
+  end
+
+
+# Helper methods for the instructor_review
+
   def find_or_create_reviewer(user_id, assignment_id)
     reviewer = AssignmentParticipant.find_or_create_by(user_id: user_id, parent_id: assignment_id)
     reviewer.set_handle if reviewer.new_record?
     reviewer
   end
-  
+
   def find_or_create_review_mapping(reviewee_id, reviewer_id, assignment_id)
     ReviewResponseMap.find_or_create_by(reviewee_id: reviewee_id, reviewer_id: reviewer_id, reviewed_object_id: assignment_id)
   end
@@ -90,6 +139,10 @@ class Api::V1::GradesController < ApplicationController
       redirect_to controller: 'response', action: 'edit', id: review.id, return: 'instructor'
     end
   end
+
+
+
+# Helper methods for update
 
   def handle_not_found
     flash[:error] = 'Participant not found.'
@@ -106,13 +159,26 @@ class Api::V1::GradesController < ApplicationController
                              "A score of #{participant.grade}% has been saved for #{participant.user.name}."
   end
 
+# These could go in a helper method
+
+  def find_participant(participant_id)
+    AssignmentParticipant.find(participant_id)
+  rescue ActiveRecord::RecordNotFound
+    flash[:error] = "Assignment participant #{participant_id} not found"
+    nil
+  end
+  
 
   def find_assignment(assignment_id)
-    AssignmentParticipant.find(assignment_id)
+    Assignment.find(assignment_id)
   rescue ActiveRecord::RecordNotFound
     flash[:error] = "Assignment participant #{assignment_id} not found"
     nil
   end
+
+
+# Helper methods for views
+
 
   def filter_questionnaires(assignment)
     questionnaires = assignment.questionnaires
@@ -132,46 +198,14 @@ class Api::V1::GradesController < ApplicationController
     @assignment = find_assignment(assignment_id)
     # Extracts the questionnaires
     @questions = filter_questionnaires(@assignment)
-    @scores = review_grades(@assignment, @questions)
+    @scores = Response.review_grades(@assignment, @questions)
     @review_score_count = @scores[:participants].length # After rejecting nil scores need original length to iterate over hash
     @averages = filter_scores(@scores[:teams])
     @avg_of_avg = mean(@averages)
   end
 
-  def self_review_finished?
-    participant = Participant.find(params[:id])
-    assignment = participant.try(:assignment)
-    self_review_enabled = assignment.try(:is_selfreview_enabled)
-    not_submitted = unsubmitted_self_review?(participant.try(:id))
-    if self_review_enabled
-      !not_submitted
-    else
-      true
-    end
-  end
-
-  def unsubmitted_self_review?(participant_id)
-    self_review = SelfReviewResponseMap.where(reviewer_id: participant_id).first.try(:response).try(:last)
-    return !self_review.try(:is_submitted) if self_review
-
-    true
-  end
-
-  def self_review_finished?
-    participant = Participant.find(params[:id])
-    assignment = participant.try(:assignment)
-    self_review_enabled = assignment.try(:is_selfreview_enabled)
-    not_submitted = unsubmitted_self_review?(participant.try(:id))
-    if self_review_enabled
-      !not_submitted
-    else
-      true
-    end
-  end
 
 
-<<<<<<< HEAD
-=======
-  true
 end
->>>>>>> 5a228062470e796af260ad346fdefee12843bf04
+
+
