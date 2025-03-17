@@ -20,8 +20,9 @@ class Api::V1::GradesController < ApplicationController
     fetch_penalties
     @show_reputation = false
 
-
     
+
+
   def view_my_scores
     fetch_participant_and_assignment
     @team_id = TeamsUser.team_id(@participant.parent_id, @participant.user_id)
@@ -218,9 +219,8 @@ class Api::V1::GradesController < ApplicationController
   end
 
 
-# Helper methods for views
-
-
+  # Helper methods for views
+  
   def filter_questionnaires(assignment)
     questionnaires = assignment.questionnaires
     if assignment.varying_rubrics_by_round?
