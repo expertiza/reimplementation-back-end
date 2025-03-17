@@ -60,7 +60,7 @@ jobs:
           chmod +x ./cc-test-reporter
           ./cc-test-reporter before-build
 
-      - name: Run tests
+      - name: Run model tests
         run: bundle exec rspec spec/models
 
       - name: Run controller tests

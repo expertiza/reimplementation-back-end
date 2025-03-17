@@ -50,7 +50,6 @@ RSpec.describe 'Participants API', type: :request do
       produces 'application/json'
 
       parameter name: :user_id, in: :path, type: :integer, description: 'ID of the user'
-      # parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
 
       response '200', 'Returns participants' do
         let(:user_id) { studenta.id }
@@ -77,7 +76,6 @@ RSpec.describe 'Participants API', type: :request do
 
       response '404', 'User Not Found' do
         let(:user_id) { 99 }
-        # let(:'Authorization') { "Bearer #{@token}" }
 
         run_test! do |response|
           expect(JSON.parse(response.body)['error']).to eql('User not found')
@@ -104,7 +102,6 @@ RSpec.describe 'Participants API', type: :request do
 
       response '200', 'Returns participants' do
         let(:assignment_id) { assignment1.id }
-        # let(:'Authorization') { "Bearer #{@token}" }
 
         run_test! do |response|
           data = JSON.parse(response.body)
@@ -155,7 +152,6 @@ RSpec.describe 'Participants API', type: :request do
 
       response '404', 'Participant not found' do
         let(:id) { 99 }
-        # let(:'Authorization') { "Bearer #{@token}" }
 
         run_test! do |response|
           expect(JSON.parse(response.body)['error']).to eql('Not Found')
@@ -308,7 +304,6 @@ RSpec.describe 'Participants API', type: :request do
 
       response '404', 'User not found' do
         let(:authorization) { 'mentor' }
-        # let(:'Authorization') { "Bearer #{@token}" }
         let(:participant) { { user_id: 99, assignment_id: 1 } }
 
         run_test! do |response|
@@ -318,7 +313,6 @@ RSpec.describe 'Participants API', type: :request do
 
       response '404', 'Assignment not found' do
         let(:authorization) { 'mentor' }
-        # let(:'Authorization') { "Bearer #{@token}" }
         let(:participant) { { user_id: studenta.id, assignment_id: 99 } }
 
         run_test! do |response|
