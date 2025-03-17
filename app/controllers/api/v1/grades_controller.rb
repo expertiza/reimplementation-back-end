@@ -1,7 +1,5 @@
 class Api::V1::GradesController < ApplicationController
   include AuthorizationHelper
-
-<<<<<<< HEAD
   def action_allowed?
     permitted = case params[:action]
                 when 'view_team'
@@ -12,8 +10,6 @@ class Api::V1::GradesController < ApplicationController
     render json: { allowed: permitted }, status: permitted ? :ok : :forbidden
   end
 
-=======
->>>>>>> f2cbf0fb88816d0cbe20d5320c91e0be02be0102
   def edit
     @participant = find_participant(params[:id])
     return unless @participant # Exit early if participant not found
@@ -107,8 +103,6 @@ class Api::V1::GradesController < ApplicationController
                              "A score of #{participant.grade}% has been saved for #{participant.user.name}."
   end
 end
-<<<<<<< HEAD
-
 
 def find_assignment(assignment_id)
   AssignmentParticipant.find(assignment_id)
@@ -159,5 +153,3 @@ def unsubmitted_self_review?(participant_id)
 
   true
 end
-=======
->>>>>>> f2cbf0fb88816d0cbe20d5320c91e0be02be0102
