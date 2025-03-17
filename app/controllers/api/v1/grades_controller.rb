@@ -1,5 +1,7 @@
 class Api::V1::GradesController < ApplicationController
   include AuthorizationHelper
+  include GradesHelper
+
   def action_allowed?
     permitted = case params[:action]
                 when 'view_my_scores'
@@ -13,7 +15,46 @@ class Api::V1::GradesController < ApplicationController
     render json: { allowed: permitted }, status: permitted ? :ok : :forbidden
   end
 
+  def view
+    get_data_for_heat_map(params[:id])
+    fetch_penalties
+    @show_reputation = false
 
+
+    
+  def view_my_scores
+    fetch_participant_and_assignment
+    @team_id = TeamsUser.team_id(@participant.parent_id, @participant.user_id)
+    return if redirect_when_disallowed
+
+    fetch_questionnaires_and_questions
+    fetch_participant_scores
+    # get_data_for_heat_map()
+
+    @topic_id = SignedUpTeam.topic_id(@participant.assignment.id, @participant.user_id)
+    @stage = @participant.assignment.current_stage(@topic_id)
+    fetch_penalties
+    
+    # prepare feedback summaries
+    fetch_feedback_summary
+  end
+
+
+
+
+  def view_team
+    fetch_participant_and_assignment
+    @team = @participant.team
+    @team_id = @team.id
+
+    questionnaires = AssignmentQuestionnaire.where(assignment_id: @assignment.id, topic_id: nil).map(&:questionnaire)
+    @questions = retrieve_questions(questionnaires, @assignment.id)
+    @pscore = Response.participant_scores(@participant, @questions)
+    @penalties = calculate_penalty(@participant.id)
+    @vmlist = process_questionare_for_team(@assignment, @team_id)
+
+    @current_role_name = current_role_name
+  end
 
 
 
@@ -199,10 +240,11 @@ class Api::V1::GradesController < ApplicationController
     # Extracts the questionnaires
     @questions = filter_questionnaires(@assignment)
     @scores = Response.review_grades(@assignment, @questions)
-    @review_score_count = @scores[:participants].length # After rejecting nil scores need original length to iterate over hash
-    @averages = filter_scores(@scores[:teams])
-    @avg_of_avg = mean(@averages)
+    @review_score_count = @scores[:teams].length # After rejecting nil scores need original length to iterate over hash
+    @averages = Response.extract_team_averages(@scores[:teams])
+    @avg_of_avg = Response.average_team_scores(@averages)
   end
+
 
 
 
