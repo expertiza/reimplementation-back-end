@@ -17,14 +17,17 @@ jobs:
     runs-on: ubuntu-latest
     services:
       mysql:
-        image: mysql:5.7
+        image: mysql:8.0
         ports:
           - "3306:3306"
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: rails_test
-        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
-
+        options: >-
+         --health-cmd="mysqladmin ping --silent"
+         --health-interval=10s
+         --health-timeout=5s
+          --health-retries=3
     env:
       RAILS_ENV: test
       DATABASE_URL: "mysql2://root:root@127.0.0.1:3306/rails_test"
