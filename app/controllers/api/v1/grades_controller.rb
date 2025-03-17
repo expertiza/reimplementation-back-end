@@ -1,6 +1,5 @@
 class Api::V1::GradesController < ApplicationController
   include AuthorizationHelper
-
   def action_allowed?
     permitted = case params[:action]
                 when 'view_my_scores'
@@ -108,7 +107,6 @@ class Api::V1::GradesController < ApplicationController
   end
 
 
-
   def find_assignment(assignment_id)
     AssignmentParticipant.find(assignment_id)
   rescue ActiveRecord::RecordNotFound
@@ -172,3 +170,8 @@ class Api::V1::GradesController < ApplicationController
   end
 
 
+<<<<<<< HEAD
+=======
+  true
+end
+>>>>>>> 5a228062470e796af260ad346fdefee12843bf04
