@@ -1,19 +1,19 @@
 class Api::V1::GradesController < ApplicationController
   include AuthorizationHelper
 
-<<<<<<< HEAD
   def action_allowed?
     permitted = case params[:action]
+                when 'view_my_scores'
+                  has_role?('Student') && self_review_finished? && are_needed_authorizations_present?(params[:id], 'reader', 'reviewer')
                 when 'view_team'
-                  has_role?('Student') 
+                  
+
                 else
                   has_privileges_of?('Teaching Assistant')
                 end
     render json: { allowed: permitted }, status: permitted ? :ok : :forbidden
   end
 
-=======
->>>>>>> f2cbf0fb88816d0cbe20d5320c91e0be02be0102
   def edit
     @participant = find_participant(params[:id])
     return unless @participant # Exit early if participant not found
@@ -106,58 +106,69 @@ class Api::V1::GradesController < ApplicationController
     participant.grade.nil? ? "The computed score will be used for #{participant.user.name}." :
                              "A score of #{participant.grade}% has been saved for #{participant.user.name}."
   end
-end
-<<<<<<< HEAD
 
 
-def find_assignment(assignment_id)
-  AssignmentParticipant.find(assignment_id)
-rescue ActiveRecord::RecordNotFound
-  flash[:error] = "Assignment participant #{assignment_id} not found"
-  nil
-end
 
-def filter_questionnaires(assignment)
-  questionnaires = assignment.questionnaires
-  if assignment.varying_rubrics_by_round?
-    retrieve_questions(questionnaires, assignment.id)
-  else
-    questions = {}
-    questionnaires.each do |questionnaire|
-      questions[questionnaire.id.to_s.to_sym] = questionnaire.questions
-    end
-    questions
+  def find_assignment(assignment_id)
+    AssignmentParticipant.find(assignment_id)
+  rescue ActiveRecord::RecordNotFound
+    flash[:error] = "Assignment participant #{assignment_id} not found"
+    nil
   end
-end
 
-def get_data_for_heat_map(assignment_id)
-  # Finds the assignment
-  @assignment = find_assignment(assignment_id)
-  # Extracts the questionnaires
-  @questions = filter_questionnaires(@assignment)
-  @scores = review_grades(@assignment, @questions)
-  @review_score_count = @scores[:participants].length # After rejecting nil scores need original length to iterate over hash
-  @averages = filter_scores(@scores[:teams])
-  @avg_of_avg = mean(@averages)
-end
+  def filter_questionnaires(assignment)
+    questionnaires = assignment.questionnaires
+    if assignment.varying_rubrics_by_round?
+      retrieve_questions(questionnaires, assignment.id)
+    else
+      questions = {}
+      questionnaires.each do |questionnaire|
+        questions[questionnaire.id.to_s.to_sym] = questionnaire.questions
+      end
+      questions
+    end
+  end
 
-def self_review_finished?
-  participant = Participant.find(params[:id])
-  assignment = participant.try(:assignment)
-  self_review_enabled = assignment.try(:is_selfreview_enabled)
-  not_submitted = unsubmitted_self_review?(participant.try(:id))
-  if self_review_enabled
-    !not_submitted
-  else
+  def get_data_for_heat_map(assignment_id)
+    # Finds the assignment
+    @assignment = find_assignment(assignment_id)
+    # Extracts the questionnaires
+    @questions = filter_questionnaires(@assignment)
+    @scores = review_grades(@assignment, @questions)
+    @review_score_count = @scores[:participants].length # After rejecting nil scores need original length to iterate over hash
+    @averages = filter_scores(@scores[:teams])
+    @avg_of_avg = mean(@averages)
+  end
+
+  def self_review_finished?
+    participant = Participant.find(params[:id])
+    assignment = participant.try(:assignment)
+    self_review_enabled = assignment.try(:is_selfreview_enabled)
+    not_submitted = unsubmitted_self_review?(participant.try(:id))
+    if self_review_enabled
+      !not_submitted
+    else
+      true
+    end
+  end
+
+  def unsubmitted_self_review?(participant_id)
+    self_review = SelfReviewResponseMap.where(reviewer_id: participant_id).first.try(:response).try(:last)
+    return !self_review.try(:is_submitted) if self_review
+
     true
   end
-end
 
-def unsubmitted_self_review?(participant_id)
-  self_review = SelfReviewResponseMap.where(reviewer_id: participant_id).first.try(:response).try(:last)
-  return !self_review.try(:is_submitted) if self_review
+  def self_review_finished?
+    participant = Participant.find(params[:id])
+    assignment = participant.try(:assignment)
+    self_review_enabled = assignment.try(:is_selfreview_enabled)
+    not_submitted = unsubmitted_self_review?(participant.try(:id))
+    if self_review_enabled
+      !not_submitted
+    else
+      true
+    end
+  end
 
-  true
-end
-=======
->>>>>>> f2cbf0fb88816d0cbe20d5320c91e0be02be0102
+

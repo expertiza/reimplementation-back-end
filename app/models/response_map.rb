@@ -38,4 +38,12 @@ class ResponseMap < ApplicationRecord
     end
     responses
   end
+
+  def unsubmitted_self_review?(participant_id)
+    self_review = SelfReviewResponseMap.where(reviewer_id: participant_id).first.try(:response).try(:last)
+    return !self_review.try(:is_submitted) if self_review
+
+    true
+  end
+  
 end
