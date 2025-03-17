@@ -1,17 +1,6 @@
 class Api::V1::GradesController < ApplicationController
   include AuthorizationHelper
 
-  def action_allowed?
-    permitted = case params[:action]
-                when 'view_team'
-                  has_role?('Student') 
-                else
-                  has_privileges_of?('Teaching Assistant')
-                end
-    render json: { allowed: permitted }, status: permitted ? :ok : :forbidden
-  end
-
-
   def edit
     @participant = AssignmentParticipant.find(params[:id])
     if @participant.nil?
@@ -70,29 +59,4 @@ class Api::V1::GradesController < ApplicationController
     participant.grade.nil? ? "The computed score will be used for #{participant.user.name}." :
                              "A score of #{participant.grade}% has been saved for #{participant.user.name}."
   end
-end
-
-
-def filter_questionnaires(assignment)
-  questionnaires = assignment.questionnaires
-  if assignment.varying_rubrics_by_round?
-    retrieve_questions(questionnaires, assignment.id)
-  else
-    questions = {}
-    questionnaires.each do |questionnaire|
-      questions[questionnaire.id.to_s.to_sym] = questionnaire.questions
-    end
-    questions
-  end
-end
-
-def get_data_for_heat_map(id)
-  # Finds the assignment
-  @assignment = Assignment.find(id)
-  # Extracts the questionnaires
-  @questions = filter_questionnaires(@assignment)
-  @scores = review_grades(@assignment, @questions)
-  @review_score_count = @scores[:participants].length # After rejecting nil scores need original length to iterate over hash
-  @averages = filter_scores(@scores[:teams])
-  @avg_of_avg = mean(@averages)
 end
