@@ -1,5 +1,5 @@
 class Api::V1::TeamsParticipantsController < ApplicationController
-  include AuthorizationHelper
+  # include AuthorizationHelper
 
   def action_allowed?
     # Allow duty updation for a team if current user is student, else require TA or above Privileges.
@@ -120,7 +120,6 @@ class Api::V1::TeamsParticipantsController < ApplicationController
     urlParticipantList = url_for controller: 'participants', action: 'list', id: parent_id, model: model, authorization: 'participant'
     "\"#{find_participant.name}\" is not a participant of the current assignment. Please <a href=\"#{urlParticipantList}\">add</a> this user before continuing."
   end
-end
 
   def delete_participant
     @teams_user = TeamsUser.find(params[:id])
