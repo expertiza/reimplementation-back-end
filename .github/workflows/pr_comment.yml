@@ -1,0 +1,81 @@
+name: PR Comment Workflow
+
+on:
+    pull_request:
+      branches: [ main ]
+      types: [ opened, synchronize, reopened ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: mysql2://root:expertiza@127.0.0.1:3306/expertiza_test
+      RAILS_ENV: test
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: expertiza
+          MYSQL_DATABASE: expertiza_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.2.7
+          bundler-cache: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y netcat-traditional
+
+      - name: Install Ruby dependencies
+        run: |
+          gem update --system
+          gem install bundler:2.4.7
+          bundle install
+
+      - name: Setup database
+        run: |
+          bundle exec rails db:create RAILS_ENV=test
+          bundle exec rails db:schema:load RAILS_ENV=test
+
+
+      - name: Run Tests
+        id: run_tests
+        continue-on-error: true  # Allow failure capturing
+        run: |
+          bundle exec rspec spec/models --format documentation > rspec_results.txt || true
+
+      - name: Extract Failed Tests
+        if: always()  # Ensures this step runs regardless of test outcome
+        run: |
+          grep "FAILED" rspec_results.txt > failed_tests.txt || echo "All test passed." > failed_tests.txt
+          echo "FAILED_TESTS<<EOF" >> $GITHUB_ENV
+          cat failed_tests.txt >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Comment on PR if Tests Fail
+        if: always() # Check if tests actually failed
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            🚨 **RSpec Tests Report!**
+            ```
+            ${{ env.FAILED_TESTS }}
+            ```
+          GITHUB_TOKEN: ${{ secrets.DANGER_BOT_TOKEN_PLACEHOLDER }}
+
