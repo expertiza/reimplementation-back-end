@@ -1,0 +1,3 @@
+module PenaltyHelper
+
+end
