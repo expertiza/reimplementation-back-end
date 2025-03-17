@@ -59,6 +59,15 @@ jobs:
             echo "Waiting for MySQL..."
             sleep 5
           done
+          
+            - name: Debugging Step
+            run: |
+               echo "Listing current directory:"
+               ls -la
+               echo "Checking Ruby version:"
+               ruby -v
+                echo "Checking Bundler version:"
+                bundle -v
 
       - name: Setup database configuration
         run: |
@@ -73,15 +82,7 @@ jobs:
           bin/rails db:create
           bin/rails db:schema:load
           
-          - name: Debugging Step
-            run: |
-               echo "Listing current directory:"
-               ls -la
-               echo "Checking Ruby version:"
-               ruby -v
-                echo "Checking Bundler version:"
-                bundle -v
-
+         
 
       - name: Run tests
         run: bundle exec rspec
