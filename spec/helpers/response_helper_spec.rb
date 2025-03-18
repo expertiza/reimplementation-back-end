@@ -8,7 +8,6 @@ RSpec.describe ResponsesHelper, type: :helper do
   let(:self_review_response_map) { double('SelfReviewResponseMap', type: 'SelfReviewResponseMap') }
   let(:metareview_response_map) { double('MetareviewResponseMap', type: 'MetareviewResponseMap') }
 
-
   describe '#questionnaire_from_response_map' do
     context 'when map type is ReviewResponseMap' do
       it 'calls get_questionnaire_by_contributor' do
@@ -34,9 +33,12 @@ RSpec.describe ResponsesHelper, type: :helper do
 
   describe '#get_questionnaire_by_contributor' do
     it 'returns the correct questionnaire' do
-      allow(SignedUpTeam).to receive(:topic_id_by_team_id).with(contributor.id).and_return(1)
-      allow(assignment).to receive(:number_of_current_round).with(1).and_return(2)
-      allow(map).to receive(:questionnaire).with(2, 1).and_return('Questionnaire')
+      reviewees_topic = double(1)
+      signedUpTeam = double('SignedUpTeam')
+      allow(SignedUpTeam).to receive(:find_by).with(team_id: contributor.id).and_return(signedUpTeam)
+      allow(signedUpTeam).to receive(:sign_up_topic_id).and_return(reviewees_topic)
+      allow(DueDate).to receive(:next_due_date).with(reviewees_topic).and_return(double('DueDate', round: 2))
+      allow(map).to receive(:questionnaire).with(2, reviewees_topic).and_return('Questionnaire')
 
       expect(helper.get_questionnaire_by_contributor(map, contributor, assignment)).to eq('Questionnaire')
     end

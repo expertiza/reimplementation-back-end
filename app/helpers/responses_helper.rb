@@ -7,16 +7,17 @@ module ResponsesHelper
         end
     end
     def get_questionnaire_by_contributor(map, contributor, assignment)
-        reviewees_topic = SignedUpTeam.topic_id_by_team_id(@contributor.id)
-        @current_round = @assignment.number_of_current_round(reviewees_topic)
-        @questionnaire = @map.questionnaire(@current_round, reviewees_topic)
+        
+        reviewees_topic = SignedUpTeam.find_by(team_id: contributor.id)&.sign_up_topic_id
+        current_round = DueDate.next_due_date(reviewees_topic).round
+        map.questionnaire(current_round, reviewees_topic)
     end
     def get_questionnaire_by_duty(map, assignment)
-        if @assignment.duty_based_assignment?
+        if assignment.duty_based_assignment?
             # E2147 : gets questionnaire of a particular duty in that assignment rather than generic questionnaire
-            @questionnaire = @map.questionnaire_by_duty(@map.reviewee.duty_id)
+            map.questionnaire_by_duty(map.reviewee.duty_id)
         else
-            @questionnaire = @map.questionnaire
+            map.questionnaire
         end
     end
 end
