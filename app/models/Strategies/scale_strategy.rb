@@ -2,7 +2,7 @@ module Strategies
   class ScaleStrategy < ChoiceStrategy
     def render(item)
       # Render scale (numeric sequence of options)
-      item.alternatives.map { |alt| "<option value='#{alt}'>#{alt}</option>" }.join
+      (item.alternatives || []).map { |alt| "<option value='#{alt}'>#{alt}</option>" }.join
     end
 
     def validate(item)
