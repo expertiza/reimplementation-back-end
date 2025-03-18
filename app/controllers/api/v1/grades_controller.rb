@@ -59,7 +59,7 @@ class Api::V1::GradesController < ApplicationController
 
 
 
-  def edit
+  def edit_participant_scores 
     @participant = find_participant(params[:id])
     return unless @participant # Exit early if participant not found
     @assignment = @participant.assignment
@@ -81,7 +81,7 @@ class Api::V1::GradesController < ApplicationController
 
 
 
-  def update
+  def update_participant_grade
     participant = AssignmentParticipant.find_by(id: params[:id])
     return handle_not_found unless participant
 
