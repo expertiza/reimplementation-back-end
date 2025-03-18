@@ -106,27 +106,35 @@ module GradesHelper
   end
 
 
-
-
-  # Copied from Expertiza code
   def redirect_when_disallowed
-    # For author feedback, participants need to be able to read feedback submitted by other teammates.
-    # If response is anything but author feedback, only the person who wrote feedback should be able to see it.
-    ## This following code was cloned from response_controller.
-
-    # ACS Check if team count is more than 1 instead of checking if it is a team assignment
-    if @participant.assignment.max_team_size > 1
-      team = @participant.team
-      unless team.nil? || (team.user? session[:user])
-        flash[:error] = 'You are not on the team that wrote this feedback'
-        redirect_to '/'
-        return true
-      end
+    if team_assignment?
+      redirect_if_not_on_correct_team
     else
-      reviewer = AssignmentParticipant.where(user_id: session[:user].id, parent_id: @participant.assignment.id).first
-      return true unless current_user_id?(reviewer.try(:user_id))
+      redirect_if_not_authorized_reviewer
     end
     false
+  end
+  
+  private
+  
+  def team_assignment?
+    @participant.assignment.max_team_size > 1
+  end
+  
+  def redirect_if_not_on_correct_team
+    team = @participant.team
+    if team.nil? || !team.user?(session[:user])
+      flash[:error] = 'You are not on the team that wrote this feedback'
+      redirect_to '/'
+    end
+  end
+  
+  def redirect_if_not_authorized_reviewer
+    reviewer = AssignmentParticipant.where(user_id: session[:user].id, parent_id: @participant.assignment.id).first
+    return if current_user_id?(reviewer.try(:user_id))
+  
+    flash[:error] = 'You are not authorized to view this feedback'
+    redirect_to '/'
   end
 
   def populate_view_model(questionnaire)
