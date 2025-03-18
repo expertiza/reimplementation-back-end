@@ -57,8 +57,20 @@ class Response < ApplicationRecord
     sum
   end
 
-  # sorts the questions passed by sequence number in ascending order, call like Response.sort_questions(@questionnare.questions)
-  def self.sort_questions(questions)
-    questions.sort_by(&:seq)
+  # Sort responses by version number, descending
+  def sort_by_version
+    review_scores = Response.where(map_id: @map.id).to_a
+
+    return [] if review_scores.empty?
+    sorted = review_scores.sort_by { |response| response.version_num.to_i }.reverse
+
+    sorted[0]
+  end
+
+  # Send response email from reviewer to author
+  def send_response_email
+    ResponseMailer.with(response: self)
+      .send_response_email
+      .deliver_later
   end
 end
