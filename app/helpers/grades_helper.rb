@@ -1,25 +1,43 @@
 module GradesHelper
   include PenaltyHelper
 
-  # This function calculates all the penalties
   def penalties(assignment_id)
-    @all_penalties = {}
     @assignment = Assignment.find(assignment_id)
-    calculate_for_participants = true unless @assignment.is_penalty_calculated
+    calculate_for_participants = should_calculate_penalties?
+  
     Participant.where(parent_id: assignment_id).each do |participant|
       penalties = calculate_penalty(participant.id)
-      @total_penalty = 0
-
-      unless penalties[:submission].zero? || penalties[:review].zero? || penalties[:meta_review].zero?
-
-        @total_penalty = (penalties[:submission] + penalties[:review] + penalties[:meta_review])
-        l_policy = LatePolicy.find(@assignment.late_policy_id)
-        @total_penalty = l_policy.max_penalty if @total_penalty > l_policy.max_penalty
+      @total_penalty = calculate_total_penalty(penalties)
+  
+      if @total_penalty > 0
+        @total_penalty = apply_max_penalty(@total_penalty)
         attributes(@participant) if calculate_for_participants
       end
+  
       assign_all_penalties(participant, penalties)
     end
-    @assignment[:is_penalty_calculated] = true unless @assignment.is_penalty_calculated
+  
+    mark_penalty_as_calculated unless @assignment.is_penalty_calculated
+  end
+  
+  private
+  
+  def should_calculate_penalties?
+    !@assignment.is_penalty_calculated
+  end
+  
+  def calculate_total_penalty(penalties)
+    total = penalties[:submission] + penalties[:review] + penalties[:meta_review]
+    total > 0 ? total : 0
+  end
+  
+  def apply_max_penalty(total_penalty)
+    late_policy = LatePolicy.find(@assignment.late_policy_id)
+    total_penalty > late_policy.max_penalty ? late_policy.max_penalty : total_penalty
+  end
+  
+  def mark_penalty_as_calculated
+    @assignment.update(is_penalty_calculated: true)
   end
 
 

@@ -152,7 +152,7 @@ class Api::V1::GradesController < ApplicationController
     participant = Participant.find(params[:id])
     assignment = participant.try(:assignment)
     self_review_enabled = assignment.try(:is_selfreview_enabled)
-    not_submitted = ResponseMap.unsubmitted_self_review?(participant.try(:id))
+    not_submitted = ResponseMap.self_review_pending?(participant.try(:id))
     if self_review_enabled
       !not_submitted
     else
