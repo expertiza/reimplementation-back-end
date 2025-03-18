@@ -5,7 +5,6 @@ FactoryBot.define do
 
     initialize_with { Role.find_or_create_by(id: id) }
 
-
     trait :student do
       id { Role::STUDENT }
       name { 'Student' }
