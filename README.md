@@ -7,6 +7,7 @@ Things you may want to cover:
 
 * Ruby version - 3.2.1
 
+
 ## Development Environment
 
 ### Prerequisites
