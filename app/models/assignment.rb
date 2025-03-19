@@ -8,7 +8,7 @@ class Assignment < ApplicationRecord
   has_many :questionnaires, through: :assignment_questionnaires
   has_many :response_maps, foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
-  has_many :sign_up_topics , class_name: 'SignUpTopic', foreign_key: 'assignment_id', dependent: :destroy
+  has_many :sign_up_topics , class_name: 'ProjectTopic', foreign_key: 'assignment_id', dependent: :destroy
   has_many :due_dates, class_name: 'DueDate', foreign_key: 'due_date_id', dependent: :destroy, as: :parent
   belongs_to :course, optional: true
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments
@@ -138,7 +138,7 @@ class Assignment < ApplicationRecord
   #This method return the value of the has_topics field for the given assignment object.
   # has_topics is of boolean type and is set true if there is any topic associated with the assignment.
   def topics?
-    @has_topics ||= sign_up_topics.any?
+    @has_topics ||= project_topics.any?
   end
 
   #This method return if the given assignment is a team assignment.
