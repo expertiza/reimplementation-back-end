@@ -1,9 +1,16 @@
 # spec/factories/roles.rb
 FactoryBot.define do
   factory :role do
-    sequence(:name) { |n| "Role #{n}" }
+    # sequence(:name) { |n| "Role #{n}" }
 
+    sequence(:id) { |n| n } # Ensures unique IDs for roles without traits
     initialize_with { Role.find_or_create_by(id: id) }
+
+    # initialize_with do
+    #   Role.find_or_create_by(id: id) do |role|
+    #     role.name = name
+    #   end
+    # end
 
     trait :student do
       id { Role::STUDENT }

@@ -206,13 +206,13 @@ class Assignment < ApplicationRecord
     users.flatten.include? user
   end
   # Validates if a user is eligible to join a team for the current assignment.
-  def valid_team_participant?(user)
+  def valid_team_participant?(user, assignment_id)
     # Check if the user is already part of a team for this assignment.
     if user_on_team?(user)
       { success: false, error: "This user is already assigned to a team for this assignment" }
 
       # Check if the user is a registered participant in the assignment.
-    elsif AssignmentParticipant.find_by(user_id: user.id, parent_id: assignment_id).nil?
+    elsif AssignmentParticipant.find_by(user_id: user.id, assignment_id: assignment_id).nil?
       { success: false, error: "#{user.name} is not a participant in this assignment" }
 
       # If both checks pass, the user is eligible to join the team.

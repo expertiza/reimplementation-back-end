@@ -120,6 +120,15 @@ Rails.application.routes.draw do
           delete '/:id', to: 'participants#destroy'
         end
       end
+      resources :teams_participants, only: [] do
+        collection do
+          put :update_duties
+          get 'list_participants/:id', action: :list_participants
+          post 'add_participant/:id', action: :add_participant
+          delete 'delete_participant/:id', action: :delete_participant
+          delete 'delete_selected_participants/:id', action: :delete_selected_participants
+        end
+      end
     end
   end
 end
