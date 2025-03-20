@@ -112,8 +112,8 @@ Rails.application.routes.draw do
 
       resources :participants do
         collection do
-          get '/user/:user_id', to: 'participants#user_index'
-          get '/assignment/:assignment_id', to: 'participants#assignment_index'
+          get '/user/:user_id', to: 'participants#list_user_participants'
+          get '/assignment/:assignment_id', to: 'participants#list_assignment_participants'
           get '/:id', to: 'participants#show'
           post '/:authorization', to: 'participants#add'
           patch '/:id/:authorization', to: 'participants#update_authorization'

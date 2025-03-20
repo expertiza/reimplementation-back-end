@@ -29,6 +29,15 @@ class Api::V1::QuestionsController < ApplicationController
     end
   end
 
+  # GET /api/v1/questions/show_all/questionnaire/:id
+  def show_all
+    questionnaire = Questionnaire.find(params[:id])
+    items = questionnaire.items.order(:id)
+    render json: items, status: :ok
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Couldn't find Questionnaire" }, status: :not_found
+  end
+
   # POST /questions
   def create
     questionnaire_id = params[:questionnaire_id]
@@ -72,7 +81,33 @@ class Api::V1::QuestionsController < ApplicationController
       render json: { error: @item.errors.full_messages.to_sentence }, status: :unprocessable_entity
     end
   end
-  
+
+  def destroy
+    @item = Item.find(params[:id])
+    @item.destroy
+    head :no_content
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Couldn't find Item" }, status: :not_found
+  end
+
+  # DELETE /api/v1/questions/delete_all/questionnaire/:id
+  def delete_all
+    questionnaire = Questionnaire.find(params[:id])
+    if questionnaire.items.delete_all
+      render json: { message: "All questions deleted" }, status: :ok
+    else
+      render json: { error: "Deletion failed" }, status: :unprocessable_entity
+    end
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Couldn't find Questionnaire" }, status: :not_found
+  end
+
+  def types
+    types = Item.pluck(:question_type).uniq
+    render json: types, status: :ok
+  end
+
+
   private
 
   def set_question
