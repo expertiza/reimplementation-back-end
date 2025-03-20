@@ -15,7 +15,7 @@ class Api::V1::GradesController < ApplicationController
     render json: { allowed: permitted }, status: permitted ? :ok : :forbidden
   end
 
-  def view
+  def view_grading_report
     get_data_for_heat_map(params[:id])
     fetch_penalties
     @show_reputation = false
