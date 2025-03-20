@@ -19,7 +19,7 @@ class Api::V1::GradesController < ApplicationController
     get_data_for_heat_map(params[:id])
     fetch_penalties
     @show_reputation = false
-
+  end
     
 
 
