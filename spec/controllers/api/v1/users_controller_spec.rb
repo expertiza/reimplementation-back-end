@@ -1,6 +1,9 @@
 require 'rails_helper'
 
 RSpec.describe Api::V1::UsersController, type: :controller do
+  # Disable authentication for tests
+  before { allow(controller).to receive(:authenticate_user!).and_return(true) }
+
   let!(:user) { User.create(name: "John Doe", email: "john@example.com", password: "password123") }
 
   describe "GET #index" do
@@ -18,3 +21,4 @@ RSpec.describe Api::V1::UsersController, type: :controller do
     end
   end
 end
+
