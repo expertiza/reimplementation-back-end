@@ -1,13 +1,16 @@
 require 'rails_helper'
 
-RSpec.describe 'Assignments API', type: :request do
-  let!(:instructor) { User.create!(name: "Instructor", email: "instructor@example.com", password: "password") }
-  let!(:assignment) do
-    Assignment.create!(
+RSpec.describe Api::V1::AssignmentsController, type: :controller do
+  let!(:instructor) { User.create!(name: "Instructor", email: "instructor@example.com", password: "password123") }
+  let!(:valid_attributes) do
+    {
       name: "Test Assignment",
       description: "Test Desc",
       due_date: "2025-12-31",
       instructor_id: instructor.id
+    }
+  end
+   let!(:assignment) { Assignment.create!(valid_attributes) }
     
   before do
     allow_any_instance_of(Api::V1::AssignmentsController).to receive(:authenticate_user!).and_return(true)
