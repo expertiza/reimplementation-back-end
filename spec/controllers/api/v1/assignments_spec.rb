@@ -8,9 +8,7 @@ RSpec.describe 'Assignments API', type: :request do
       description: "Test Desc",
       due_date: "2025-12-31",
       instructor_id: instructor.id
-    )
-  end
-
+    
   before do
     allow_any_instance_of(Api::V1::AssignmentsController).to receive(:authenticate_user!).and_return(true)
   end
