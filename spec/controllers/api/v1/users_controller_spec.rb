@@ -2,6 +2,11 @@ require 'rails_helper'
 
 RSpec.describe Api::V1::UsersController, type: :controller do
   let!(:user) { User.create(name: "John Doe", email: "john@example.com", password: "password123") }
+  
+   # Stub authentication before each test
+  before do
+    allow(controller).to receive(:authenticate_user!).and_return(true)
+  end
 
   describe "GET #index" do
     it "returns a successful response" do
