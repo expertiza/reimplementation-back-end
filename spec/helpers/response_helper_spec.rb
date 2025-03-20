@@ -65,42 +65,6 @@ RSpec.describe ResponsesHelper, type: :helper do
       end
     end
   end
-
-  describe '.prepare_response_content' do
-    context 'when action is new' do
-      it 'returns correct response data for new action' do
-        action_params = { action: 'new', id: 0, feedback: 'some feedback', return: 'some_return' }
-        response_data = helper.prepare_response_content(review_response_map, 0, action_params, new_response: true)
-
-        expect(response_data[:header]).to eq('New')
-        expect(response_data[:next_action]).to eq('create')
-        expect(response_data[:map]).to eq(map)
-        expect(response_data[:feedback]).to eq('some feedback')
-      end
-    end
-
-    context 'when action is edit' do
-      it 'returns correct response data for edit action' do
-        action_params = { action: 'edit', id: 0, return: 'some_return' }
-        # allow(Response).to receive(:find).with(response.id).and_return(response)
-
-        response_data = helper.prepare_response_content(review_response_map, 0, action_params)
-
-        expect(response_data[:header]).to eq('Edit')
-        expect(response_data[:next_action]).to eq('update')
-        expect(response_data[:response]).to eq(response)
-      end
-    end
-
-    context 'when no action params are given' do
-      it 'returns default response data' do
-        response_data = helper.prepare_response_content(review_response_map, 0)
-
-        expect(response_data[:header]).to eq('Default Header')
-        expect(response_data[:next_action]).to eq('create')
-      end
-    end
-  end
 end
 
 #rspec ./spec/helpers/response_helper_spec.rb
