@@ -58,7 +58,7 @@ class Response < ApplicationRecord
   end
 
   # Sort responses by version number, descending
-  def sort_by_version
+  def self.sort_by_version
     review_scores = Response.where(map_id: @map.id).to_a
 
     return [] if review_scores.empty?

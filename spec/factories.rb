@@ -36,6 +36,7 @@ FactoryBot.define do
     reviewee_team { nil }
     type { 'ReviewResponseMap' }
     assignment { nil }
+    title { nil }
   end
 
 end

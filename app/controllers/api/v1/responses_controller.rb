@@ -1,5 +1,5 @@
 class Api::V1::ResponsesController < ApplicationController
-  include ResponseHelper
+  include ResponsesHelper
   before_action :set_response, only: %i[ show update destroy ]
 
   # GET /api/v1/responses
