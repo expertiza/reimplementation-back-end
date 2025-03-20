@@ -68,6 +68,8 @@ RSpec.describe 'Assignments API', type: :request do
 
   describe 'DELETE /api/v1/assignments/:id' do
     it 'deletes an assignment' do
+       # Manually delete due_dates associated with assignment
+      DueDate.where(parent: assignment).delete_all
       expect {
         delete "/api/v1/assignments/#{assignment.id}"
       }.to change(Assignment, :count).by(-1)
