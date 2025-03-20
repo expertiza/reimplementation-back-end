@@ -3,7 +3,7 @@ require 'rails_helper'
 RSpec.describe Api::V1::InstitutionsController, type: :controller do
   let!(:institution) { create(:institution) }  
 
-  # Test for action_allowed? method
+  
   describe 'action_allowed?' do
     context 'when user has Instructor role' do
       it 'returns true' do
