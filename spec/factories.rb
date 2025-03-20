@@ -28,4 +28,15 @@ FactoryBot.define do
     institution factory: :institution
   end
 
+  factory :response_map do
+    # Define the necessary attributes for response_map
+    reviewee { create(:user) }
+    reviewer { create(:user) }
+    id { 0 }
+    reviewee_team { nil }
+    type { 'ReviewResponseMap' }
+    assignment { nil }
+    title { nil }
+  end
+
 end

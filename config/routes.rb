@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :responses
 
   mount Rswag::Api::Engine => 'api-docs'
   mount Rswag::Ui::Engine => 'api-docs'
@@ -9,6 +10,7 @@ Rails.application.routes.draw do
   post '/login', to: 'authentication#login'
   namespace :api do
     namespace :v1 do
+      resources :responses
       resources :institutions
       resources :roles do
         collection do

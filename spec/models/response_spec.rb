@@ -12,6 +12,11 @@ describe Response do
   let(:review_response_map) { ReviewResponseMap.new(assignment: assignment, reviewee: team) }
   let(:response_map) { ResponseMap.new(assignment: assignment, reviewee: participant, reviewer: participant) }
   let(:response) { Response.new(map_id: 1, response_map: review_response_map, scores: [answer]) }
+  let(:response1) { Response.new(map_id: 2, response_map: response_map, scores: [answer]) }
+  let(:response2) { Response.new(map_id: 3, response_map: response_map, scores: [answer]) }
+  let(:response3) { Response.new(map_id: 4, response_map: response_map, scores: [answer]) }
+  let(:responses) { [response1, response2, response3] }
+
 
   # Compare the current response score with other scores on the same artifact, and test if the difference is significant enough to notify
   # instructor.
@@ -109,6 +114,19 @@ describe Response do
 
       expect(review_response_map.response_assignment).to eq(assignment)
 
+    end
+  end
+
+  describe '.sort_by_version' do
+
+    it 'returns responses sorted by version number in descending order' do
+      sorted_responses = response2.sort_by_version
+      expect(sorted_responses).to eq(response2)
+    end
+
+    it 'returns an empty array if there are no responses' do
+      response4 = Response.new()
+      expect(response4.sort_by_version).to eq([])
     end
   end
 end
