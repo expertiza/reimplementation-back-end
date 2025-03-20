@@ -4,7 +4,8 @@ RSpec.describe ResponsesHelper, type: :helper do
   let(:contributor) { double('Contributor', id: 1) }
   let(:assignment) { double('Assignment') }
   let(:map) { double('ResponseMap') }
-  let(:review_response_map) { double('ReviewResponseMap', type: 'ReviewResponseMap') }
+  let(:review_response_map) { double('ReviewResponseMap', type: 'ReviewResponseMap', get_title: double('testMap'), 
+    survey?: nil, reviewer: double('Reviewer'), contributor: contributor, assignment: :assignment, id: 0) }
   let(:self_review_response_map) { double('SelfReviewResponseMap', type: 'SelfReviewResponseMap') }
   let(:metareview_response_map) { double('MetareviewResponseMap', type: 'MetareviewResponseMap') }
 
@@ -65,3 +66,5 @@ RSpec.describe ResponsesHelper, type: :helper do
     end
   end
 end
+
+#rspec ./spec/helpers/response_helper_spec.rb
