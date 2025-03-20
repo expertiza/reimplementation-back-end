@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe Api::V1::SignUpTopicsController, type: :routing do
+RSpec.describe Api::V1::ProjectTopicsController, type: :routing do
   describe "routing" do
     it "routes to #index" do
       expect(get: "/api/v1/sign_up_topics").to route_to("api/v1/sign_up_topics#index")
