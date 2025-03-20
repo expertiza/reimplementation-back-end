@@ -6,6 +6,7 @@ RSpec.describe Api::V1::UsersController, type: :controller do
   # Stub authentication before each test
   before do
     allow(controller).to receive(:authenticate_user!).and_return(true)
+    allow(controller).to receive(:current_user).and_return(user)
   end
 
   describe "GET #index" do
