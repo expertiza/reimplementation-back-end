@@ -1,6 +1,7 @@
 require 'rails_helper'
 
-RSpec.describe Api::V1::AssignmentsController, type: :controller do
+RSpec.describe 'Assignments API', type: :request do
+
   let!(:instructor) { User.create!(name: "Instructor", email: "instructor@example.com", password: "password123") }
   let!(:valid_attributes) do
     {
