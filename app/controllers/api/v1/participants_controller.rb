@@ -37,7 +37,7 @@ class Api::V1::ParticipantsController < ApplicationController
     render json: @participant
   end
 
-  #getting the user by user_index
+  #getting the user by user_index and retrive and how on swagger ui
   def user_index
     participants = Participant.where(user_id: params[:user_id])
     render json: participants, status: :ok
