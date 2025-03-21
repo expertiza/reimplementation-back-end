@@ -1,70 +1,109 @@
+# spec/controllers/api/v1/assignments_controller_spec.rb
+
 require 'rails_helper'
 
 RSpec.describe Api::V1::AssignmentsController, type: :controller do
-  let!(:instructor) { User.create!(name: "Instructor", email: "instructor@example.com", password: "password123") }
-  let!(:course) { Course.create!(title: "Test Course", description: "Some desc") }
-
-  let(:valid_attributes) do
-    {
-      name: "Test Assignment",
-      description: "Test Desc",
-      due_date: "2025-12-31",
-      instructor_id: instructor.id,
-      course_id: course.id,
-      max_team_size: 2
-    }
-  end
-
-  before do
-    allow_any_instance_of(Api::V1::AssignmentsController).to receive(:authenticate_user!).and_return(true)
-  end
-
   describe 'GET #index' do
-    it 'returns a success response' do
-      assignment = Assignment.create!(valid_attributes) # inside test
-      get :index
+    it 'returns a successful response' do
+      get :index, format: :json
       expect(response).to have_http_status(:ok)
-      parsed = JSON.parse(response.body)
-      expect(parsed.first['name']).to eq('Test Assignment')
+    end
+
+    it 'returns all assignments as JSON' do
+      assignment1 = create(:assignment, title: 'Assignment 1')
+      assignment2 = create(:assignment, title: 'Assignment 2')
+
+      get :index, format: :json
+      json_response = JSON.parse(response.body)
+
+      expect(json_response.size).to eq(2)
+      expect(json_response.map { |a| a['title'] }).to match_array(['Assignment 1', 'Assignment 2'])
     end
   end
 
   describe 'GET #show' do
-    it 'returns a specific assignment' do
-      assignment = Assignment.create!(valid_attributes)
-      get :show, params: { id: assignment.id }
+    it 'returns a successful response' do
+      assignment = create(:assignment)
+      get :show, params: { id: assignment.id }, format: :json
       expect(response).to have_http_status(:ok)
-      parsed = JSON.parse(response.body)
-      expect(parsed['id']).to eq(assignment.id)
+    end
+
+    it 'returns the requested assignment as JSON' do
+      assignment = create(:assignment, title: 'Specific Assignment')
+      get :show, params: { id: assignment.id }, format: :json
+      json_response = JSON.parse(response.body)
+      expect(json_response['title']).to eq('Specific Assignment')
+    end
+
+    it 'returns a 404 if the assignment is not found' do
+      get :show, params: { id: 999 }, format: :json
+      expect(response).to have_http_status(:not_found)
     end
   end
 
   describe 'POST #create' do
     it 'creates a new assignment' do
       expect {
-        post :create, params: { assignment: valid_attributes }
+        post :create, params: { assignment: attributes_for(:assignment) }, format: :json
       }.to change(Assignment, :count).by(1)
-      expect(response).to have_http_status(:created)
+    end
+
+    it 'returns the created assignment as JSON' do
+      post :create, params: { assignment: attributes_for(:assignment, title: 'New Assignment') }, format: :json
+      json_response = JSON.parse(response.body)
+      expect(json_response['title']).to eq('New Assignment')
+    end
+
+    it 'returns a 422 if the assignment is invalid' do
+      post :create, params: { assignment: { title: nil } }, format: :json
+      expect(response).to have_http_status(:unprocessable_entity)
     end
   end
 
   describe 'PUT #update' do
-    it 'updates an assignment' do
-      assignment = Assignment.create!(valid_attributes)
-      put :update, params: { id: assignment.id, assignment: { name: 'Updated Assignment' } }
-      expect(response).to have_http_status(:ok)
+    it 'updates the assignment' do
+      assignment = create(:assignment, title: 'Original Title')
+      put :update, params: { id: assignment.id, assignment: { title: 'Updated Title' } }, format: :json
       assignment.reload
-      expect(assignment.name).to eq('Updated Assignment')
+      expect(assignment.title).to eq('Updated Title')
+    end
+
+    it 'returns the updated assignment as JSON' do
+      assignment = create(:assignment)
+      put :update, params: { id: assignment.id, assignment: { title: 'Updated Title' } }, format: :json
+      json_response = JSON.parse(response.body)
+      expect(json_response['title']).to eq('Updated Title')
+    end
+
+    it 'returns a 422 if the assignment is invalid' do
+      assignment = create(:assignment)
+      put :update, params: { id: assignment.id, assignment: { title: nil } }, format: :json
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it 'returns a 404 if the assignment is not found' do
+      put :update, params: { id: 999, assignment: { title: 'Updated Title' } }, format: :json
+      expect(response).to have_http_status(:not_found)
     end
   end
 
   describe 'DELETE #destroy' do
-    it 'deletes an assignment' do
-      assignment = Assignment.create!(valid_attributes)
+    it 'deletes the assignment' do
+      assignment = create(:assignment)
       expect {
-        delete :destroy, params: { id: assignment.id }
+        delete :destroy, params: { id: assignment.id }, format: :json
       }.to change(Assignment, :count).by(-1)
+    end
+
+    it 'returns a 204 after successful deletion' do
+      assignment = create(:assignment)
+      delete :destroy, params: { id: assignment.id }, format: :json
       expect(response).to have_http_status(:no_content)
+    end
+
+    it 'returns a 404 if the assignment is not found' do
+      delete :destroy, params: { id: 999 }, format: :json
+      expect(response).to have_http_status(:not_found)
     end
   end
 end
