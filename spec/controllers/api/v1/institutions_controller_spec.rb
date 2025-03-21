@@ -3,6 +3,24 @@ require 'rails_helper'
 RSpec.describe Api::V1::InstitutionsController, type: :controller do
   let!(:institution) { create(:institution) }  
 
+  # MYSQL wait check before tests
+  before(:all) do 
+    retries = 0
+    begin
+      ActiveRecord::Base.establish_connection 
+      ActiveRecord::Base.connection.execute('SELECT 1')
+    rescue => e
+      retries += 1
+      if retries < 10
+        puts "Waiting for MySQL... Retry #{retries}/10"
+        sleep 5
+        retry 
+      else 
+        raise e
+      end 
+    end 
+  end     
+
   
   describe 'action_allowed?' do
     context 'when user has Instructor role' do
