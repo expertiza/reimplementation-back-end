@@ -9,6 +9,8 @@ RSpec.describe 'Assignments API', type: :request do
       description: "Test Desc",
       due_date: "2025-12-31",
       instructor_id: instructor.id
+      course_id: course.id, # Example if course is required
+       max_team_size: 2
     }
   end
    let!(:assignment) do
