@@ -84,7 +84,7 @@ class Api::V1::TeamsParticipantsController < ApplicationController
     find_participant = find_participant_by_name
 
     unless find_participant
-      render json: { error: "Couldn't find participant" }, status: :not_found
+      render json: { error: "Couldn't find User" }, status: :not_found
       return
     end
 
@@ -103,19 +103,20 @@ class Api::V1::TeamsParticipantsController < ApplicationController
     redirect_to action: 'list_participants', id: params[:id]
   end
 
-  private
+  # private
 
   # Helper method to find a user by their name.
   def find_participant_by_name
     # Locate the user by their name.
-    find_participant = User.find_by(name: params[:user][:name].strip)
+    # find_participant = User.find_by(name: params[:user][:name].strip)
+    User.find_by(name: params[:user][:name].strip)
 
-    # Display an error if the user is not found.
-    unless find_participant
-      return participant_not_found_error
-      # redirect_back fallback_location: root_path
-    end
-    find_participant
+    # # Display an error if the user is not found.
+    # unless find_participant
+    #   return participant_not_found_error
+    #   # redirect_back fallback_location: root_path
+    # end
+    # find_participant
   end
 
   # Helper method to fetch a team by its ID.
@@ -168,7 +169,8 @@ class Api::V1::TeamsParticipantsController < ApplicationController
   def participant_not_found_error
     # new_participnat_url = url_for controller: 'users', action: 'new'
     # "\"#{params[:user][:name].strip}\" is not defined. Please <a href=\"#{new_participant_url}\">create</a> this user before continuing."
-    "Couldn't find participant"
+    # "Couldn't find participant"
+    return nil
   end
 
   def non_participant_error(find_participant, parent_id, model)
@@ -197,12 +199,34 @@ class Api::V1::TeamsParticipantsController < ApplicationController
     # redirect_to action: 'list_participants', id: parent_id
   end
 
+  # def delete_selected_participants
+  #   params[:item].each do |item_id|
+  #     team_user = TeamsUser.find(item_id).first
+  #     team_user.destroy
+  #   end
+  #
+  #   redirect_to action: 'list_participants', id: params[:id]
+  # end
+
   def delete_selected_participants
-    params[:item].each do |item_id|
-      team_user = TeamsUser.find(item_id).first
-      team_user.destroy
+    # Try to fetch the item IDs from params.
+    # Adjust according to how your request payload is structured.
+    # item_ids = params[:item] || (params[:payload] && params[:payload][:item])
+    item_ids = params[:item]
+
+    if item_ids.size == 0
+      render json: { error: "No participants selected" }, status: 200 and return
     end
 
-    redirect_to action: 'list_participants', id: params[:id]
+    item_ids.each do |item_id|
+      team_user = TeamsUser.find_by(id: item_id)
+      team_user.destroy
+      print "test"
+    end
+
+    render json: { message: "Participants deleted successfully" }, status: 200
   end
+
+
+
 end

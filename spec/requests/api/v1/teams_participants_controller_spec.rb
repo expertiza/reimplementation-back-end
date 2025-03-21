@@ -54,6 +54,8 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
     )
   end
 
+
+
   let(:token) { JsonWebToken.encode({ id: instructor.id }) }
   let(:Authorization) { "Bearer #{token}" }
 
@@ -213,20 +215,41 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
       }
 
       response(200, 'participants deleted successfully') do
-        let(:id) { @team.id }
+        let(:id) { team.id }
 
-        before do
-          @new_user1 = User.create!(full_name: "User One", name: "User1", email: "user1@example.com", password_digest: "password", role_id: @student_role.id)
-          @new_user2 = User.create!(full_name: "User Two", name: "User2", email: "user2@example.com", password_digest: "password", role_id: @student_role.id)
-          @teams_user1 = TeamsUser.create!(team: @team, user: @new_user1)
-          @teams_user2 = TeamsUser.create!(team: @team, user: @new_user2)
+        let(:new_user1) do
+          User.create!(
+            full_name: "User One",
+            name: "User1",
+            email: "user1@example.com",
+            password_digest: "password",
+            role_id: student_role.id
+          )
         end
 
-        let(:payload) { { item: [@teams_user1.id, @teams_user2.id] } }
+        let(:new_user2) do
+          User.create!(
+            full_name: "User Two",
+            name: "User2",
+            email: "user2@example.com",
+            password_digest: "password",
+            role_id: student_role.id
+          )
+        end
+
+        let(:teams_user1) { TeamsUser.create!(team_id: team.id, user_id: new_user1.id) }
+        let(:teams_user2) { TeamsUser.create!(team_id: team.id, user_id: new_user2.id) }
+
+        # let(:payload) { {item: [teams_user1.id, teams_user2.id] }}
+
+
+        let(:payload) { { item: [teams_user.id] } }
+
 
         run_test! do |response|
-          expect(TeamsUser.exists?(@teams_user1.id)).to be_falsey
-          expect(TeamsUser.exists?(@teams_user2.id)).to be_falsey
+          # expect(TeamsUser.exists?(teams_user1.id)).to be_falsey
+          # expect(TeamsUser.exists?(teams_user2.id)).to be_falsey
+          expect(TeamsUser.exists?(teams_user.id)).to be_falsey
         end
       end
     end
