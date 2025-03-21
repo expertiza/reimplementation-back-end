@@ -1,12 +1,11 @@
 class Api::V1::ParticipantsController < ApplicationController
   include ParticipantsHelper
   # autocomplete :user, :name
-
   def index
     participants = Participant.all
     render json: participants
   end
-  #keeping this off as to test
+  #keeping this commented as to test
   # def action_allowed?
   #   if %w[change_handle update_duties].include? params[:action]
   #     current_user_has_student_privileges?
@@ -14,6 +13,45 @@ class Api::V1::ParticipantsController < ApplicationController
   #     current_user_has_ta_privileges?
   #   end
   # end
+  # def action_allowed?
+  #   has_required_role?('Teaching Assistant')
+  # end
+  def create
+    @participant = Participant.new(participant_params)
+    if @participant.save
+      render json: @participant, status: :created
+    else
+      render json: { errors: @participant.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+  before_action :set_participant, only: [:show, :update, :destroy]
+
+  # GET /api/v1/participants/:id
+  def show
+    render json: @participant
+  end
+
+  def user_index
+    participants = Participant.where(user_id: params[:user_id])
+    render json: participants, status: :ok
+  end
+
+  private
+
+  def set_participant
+    @participant = Participant.find(params[:id])
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Participant not found" }, status: 404
+  end
+
+
+  def participant_params
+    params.require(:participant).permit(:user_id, :assignment_id)
+  end
+
+  
+  
+  # *****************************************************
 
   def controller_locale
     locale_for_student
