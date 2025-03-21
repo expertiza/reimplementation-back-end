@@ -3,23 +3,26 @@ require 'rails_helper'
 RSpec.describe 'Assignments API', type: :request do
 
   let!(:instructor) { User.create!(name: "Instructor", email: "instructor@example.com", password: "password123") }
+  let!(:course) { Course.create!(title: "Test Course", description: "Some desc") } # Add this line!
+  
   let!(:valid_attributes) do
     {
       name: "Test Assignment",
       description: "Test Desc",
       due_date: "2025-12-31",
-      instructor_id: instructor.id
-      course_id: course.id, # Example if course is required
-       max_team_size: 2
+      instructor_id: instructor.id,
+      course_id: course.id,
+      max_team_size: 2
     }
   end
-   let!(:assignment) do
-       assignment = Assignment.new(valid_attributes)
-       assignment.valid?
-       puts "Validation Errors: #{assignment.errors.full_messages}"
-       assignment.save! # Still raises, but now you see WHY
-       assignment
-     end
+
+  let!(:assignment) do
+    assignment = Assignment.new(valid_attributes)
+    assignment.valid?
+    puts "Validation Errors: #{assignment.errors.full_messages}"
+    assignment.save!
+    assignment
+  end
           
   before do
     allow_any_instance_of(Api::V1::AssignmentsController).to receive(:authenticate_user!).and_return(true)
@@ -47,7 +50,7 @@ RSpec.describe 'Assignments API', type: :request do
   describe 'POST /api/v1/assignments' do
     it 'creates a new assignment with valid params' do
       expect {
-        post '/api/v1/assignments', params: { assignment: { name: 'New Assignment', description: 'Desc', due_date: '2025-11-30', instructor_id: instructor.id } }, as: :json
+        post '/api/v1/assignments', params: { assignment: { name: 'New Assignment', description: 'Desc', due_date: '2025-11-30', instructor_id: instructor.id, course_id: course.id, max_team_size: 2 } }, as: :json
       }.to change(Assignment, :count).by(1)
       expect(response).to have_http_status(:created)
     end
