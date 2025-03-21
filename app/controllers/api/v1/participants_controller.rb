@@ -6,6 +6,7 @@ class Api::V1::ParticipantsController < ApplicationController
     participants = Participant.all
     render json: participants
   end
+  #keeping this off as to test
   # def action_allowed?
   #   if %w[change_handle update_duties].include? params[:action]
   #     current_user_has_student_privileges?
