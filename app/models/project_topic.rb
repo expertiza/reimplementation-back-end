@@ -43,11 +43,14 @@ class ProjectTopic < ApplicationRecord
   end
 
   def confirmed_teams
-    teams.confirmed
+    teams.joins(:signed_up_teams)
+         .where(signed_up_teams: { is_waitlisted: false })
   end
 
   def waitlisted_teams
-    teams.waitlisted.order('signed_up_teams.created_at ASC')
+    teams.joins(:signed_up_teams)
+         .where(signed_up_teams: { is_waitlisted: true })
+         .order('signed_up_teams.created_at ASC')
   end
 
   private

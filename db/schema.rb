@@ -324,13 +324,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_21_222753) do
   end
 
   create_table "signed_up_teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.bigint "sign_up_topic_id", null: false
+    t.bigint "project_topic_id", null: false
     t.bigint "team_id", null: false
     t.boolean "is_waitlisted"
     t.integer "preference_priority_number"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["sign_up_topic_id"], name: "index_signed_up_teams_on_sign_up_topic_id"
+    t.index ["project_topic_id"], name: "index_signed_up_teams_on_project_topic_id"
     t.index ["team_id"], name: "index_signed_up_teams_on_team_id"
   end
 
@@ -401,14 +401,4 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_21_222753) do
   add_foreign_key "project_topics", "assignments"
   add_foreign_key "question_advices", "items", column: "question_id"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
-  add_foreign_key "signed_up_teams", "project_topics", column: "sign_up_topic_id"
-  add_foreign_key "signed_up_teams", "teams"
-  add_foreign_key "ta_mappings", "courses"
-  add_foreign_key "ta_mappings", "users"
-  add_foreign_key "teams", "assignments"
-  add_foreign_key "teams_users", "teams"
-  add_foreign_key "teams_users", "users"
-  add_foreign_key "users", "institutions"
-  add_foreign_key "users", "roles"
-  add_foreign_key "users", "users", column: "parent_id"
 end
