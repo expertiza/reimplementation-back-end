@@ -1,19 +1,18 @@
 require 'rails_helper'
 
 RSpec.describe Api::V1::AssignmentsController, type: :controller do
-  # Setup required data
   let!(:instructor) { User.create!(name: "Instructor", email: "instructor@example.com", password: "password123") }
-  let!(:course) { Course.create!(title: "Sample Course", description: "Course Desc") }
+  let!(:course) { Course.create!(title: "Test Course", description: "Course description") }
 
-  let!(:assignment) do
-    Assignment.create!(
-      name: "Sample Assignment",
-      description: "Assignment Desc",
+  let(:valid_attributes) do
+    {
+      name: "Test Assignment",
+      description: "Test Desc",
       due_date: "2025-12-31",
       instructor_id: instructor.id,
       course_id: course.id,
       max_team_size: 2
-    )
+    }
   end
 
   # Stub authentication
@@ -22,16 +21,18 @@ RSpec.describe Api::V1::AssignmentsController, type: :controller do
   end
 
   describe 'GET #index' do
-    it 'returns all assignments' do
+    it 'returns a success response' do
+      assignment = Assignment.create!(valid_attributes) # Move inside test!
       get :index
       expect(response).to have_http_status(:ok)
       parsed = JSON.parse(response.body)
-      expect(parsed.first['name']).to eq('Sample Assignment')
+      expect(parsed.first['name']).to eq('Test Assignment')
     end
   end
 
   describe 'GET #show' do
     it 'returns a specific assignment' do
+      assignment = Assignment.create!(valid_attributes)
       get :show, params: { id: assignment.id }
       expect(response).to have_http_status(:ok)
       parsed = JSON.parse(response.body)
@@ -42,7 +43,7 @@ RSpec.describe Api::V1::AssignmentsController, type: :controller do
   describe 'POST #create' do
     it 'creates a new assignment' do
       expect {
-        post :create, params: { assignment: { name: 'New Assignment', description: 'Desc', due_date: '2025-12-31', instructor_id: instructor.id, course_id: course.id, max_team_size: 3 } }
+        post :create, params: { assignment: valid_attributes }
       }.to change(Assignment, :count).by(1)
       expect(response).to have_http_status(:created)
     end
@@ -50,6 +51,7 @@ RSpec.describe Api::V1::AssignmentsController, type: :controller do
 
   describe 'PUT #update' do
     it 'updates an assignment' do
+      assignment = Assignment.create!(valid_attributes)
       put :update, params: { id: assignment.id, assignment: { name: 'Updated Assignment' } }
       expect(response).to have_http_status(:ok)
       assignment.reload
@@ -59,6 +61,7 @@ RSpec.describe Api::V1::AssignmentsController, type: :controller do
 
   describe 'DELETE #destroy' do
     it 'deletes an assignment' do
+      assignment = Assignment.create!(valid_attributes)
       expect {
         delete :destroy, params: { id: assignment.id }
       }.to change(Assignment, :count).by(-1)
