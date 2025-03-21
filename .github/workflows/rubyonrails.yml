@@ -30,8 +30,8 @@ jobs:
           --health-retries=3
     env:
       RAILS_ENV: test
-      DATABASE_URL: "mysql2://root:root@mysql:3306/rails_test"
-      DB_HOST: mysql
+      DATABASE_URL: "mysql2://root:root@127.0.0.1:3306/rails_test"
+      DB_HOST: 127.0.0.1
       DB_PORT: 3306
       DB_USERNAME: root
       DB_PASSWORD: root
@@ -89,7 +89,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y mysql-client
-          mysql -h  mysql -P 3306 -u root -p root -e "SHOW DATABASES;"
+          mysql -h  mysql -P 3306 -u root -proot -e "SHOW DATABASES;"
           sleep 5
       
       - name: Prepare database
