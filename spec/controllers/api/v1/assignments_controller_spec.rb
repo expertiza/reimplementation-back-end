@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe Api::V1::AssignmentsController, type: :controller do
   let!(:instructor) { User.create!(name: "Instructor", email: "instructor@example.com", password: "password123") }
-  let!(:course) { Course.create!(title: "Test Course", description: "Course description") }
+  let!(:course) { Course.create!(title: "Test Course", description: "Some desc") }
 
   let(:valid_attributes) do
     {
@@ -15,14 +15,13 @@ RSpec.describe Api::V1::AssignmentsController, type: :controller do
     }
   end
 
-  # Stub authentication
   before do
     allow_any_instance_of(Api::V1::AssignmentsController).to receive(:authenticate_user!).and_return(true)
   end
 
   describe 'GET #index' do
     it 'returns a success response' do
-      assignment = Assignment.create!(valid_attributes) # Move inside test!
+      assignment = Assignment.create!(valid_attributes) # inside test
       get :index
       expect(response).to have_http_status(:ok)
       parsed = JSON.parse(response.body)
