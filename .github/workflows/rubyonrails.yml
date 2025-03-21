@@ -86,5 +86,5 @@ jobs:
          
 
       - name: Run tests
-        run: bundle exec rspec--format documentation --color
+        run: bundle exec rspec --format documentation --color
 
