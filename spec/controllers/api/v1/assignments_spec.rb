@@ -18,8 +18,9 @@ RSpec.describe 'Assignments API', type: :request do
 
   let!(:assignment) do
     assignment = Assignment.new(valid_attributes)
-    assignment.valid?
-    puts "Validation Errors: #{assignment.errors.full_messages}"
+     unless assignment.valid?
+         puts "Validation Errors: #{assignment.errors.full_messages}"
+     end
     assignment.save!
     assignment
   end
