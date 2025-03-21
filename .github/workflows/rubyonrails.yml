@@ -18,32 +18,33 @@ jobs:
     services:
       mysql:
         image: mysql:8.0
-       
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: rails_test
         options: >
-          -health-cmd="mysqladmin ping --silent"
-          -health-interval=10s 
-          -health-timeout=5s 
-          -health-retries=3
-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
     env:
       RAILS_ENV: test
-      DB_HOST: mysql
-      RAILS_MAX_THREADS: 5
+      DATABASE_URL: "mysql2://root:root@127.0.0.1:3306/rails_test"
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_USERNAME: root
+      DB_PASSWORD: root
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Ruby and gems
+      - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.2.7
           bundler-cache: true
 
-      - name: Update Bundler and Install Dependencies
+      - name: Install dependencies
         run: |
           gem uninstall logger || true
           gem install logger -v 1.6.6
@@ -52,24 +53,15 @@ jobs:
       - name: Wait for MySQL to be ready
         run: |
           for i in {1..20}; do
-            if mysqladmin ping -h mysql --silent; then
+            if mysqladmin ping -h 127.0.0.1 --silent; then
               echo "MySQL is up!"
               break
             fi
             echo "Waiting for MySQL..."
             sleep 5
           done
-          
-      - name: Debugging Step
-        run: |
-           echo "Listing current directory:"
-            ls -la
-            echo "Checking Ruby version:"
-            ruby -v
-             echo "Checking Bundler version:"
-              bundle -v
 
-      - name: Setup database 
+      - name: Set up database configuration
         run: |
           mkdir -p config
           echo "test:" > config/database.yml
@@ -77,21 +69,16 @@ jobs:
           echo "  database: rails_test" >> config/database.yml
           echo "  username: root" >> config/database.yml
           echo "  password: root" >> config/database.yml
-          echo "  host: mysql" >> config/database.yml
+          echo "  host: 127.0.0.1" >> config/database.yml
           echo "  port: 3306" >> config/database.yml
-          cat config/database.yml #print the database.yml file.
+          cat config/database.yml
+
+      - name: Prepare database
+        run: |
           bin/rails db:create
           bin/rails db:schema:load
-          bin/rails db:migrate # run migrations.
-         
-      - name: Check MySQL Status
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y mysql-client
-          mysql -h  mysql -P 3306 -u root -proot -e "SHOW DATABASES;"
-          sleep 5
+          bin/rails db:migrate
 
       - name: Run tests
         run: |
-         bundle exec rspec --format documentation --color
-
+          bundle exec rspec --format documentation --color
