@@ -18,6 +18,8 @@ jobs:
     services:
       mysql:
         image: mysql:8.0
+        ports:
+          - "3306:3306"
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: rails_test
@@ -28,21 +30,23 @@ jobs:
           --health-retries=3
     env:
       RAILS_ENV: test
-      DATABASE_URL: "mysql2://root:root@127.0.0.1:3306/rails_test"
-      DB_HOST: 127.0.0.1
+      DATABASE_URL: "mysql2://root:root@mysql:3306/rails_test"
+      DB_HOST: mysql
       DB_PORT: 3306
       DB_USERNAME: root
       DB_PASSWORD: root
+      RAILS_MAX_THREADS: 5
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Ruby
+      - name: Set up Ruby and gems
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.2.7
           bundler-cache: true
+   
 
       - name: Install dependencies
         run: |
@@ -53,14 +57,22 @@ jobs:
       - name: Wait for MySQL to be ready
         run: |
           for i in {1..20}; do
-            if mysqladmin ping -h 127.0.0.1 --silent; then
+            if mysqladmin ping -h mysql --silent; then
               echo "MySQL is up!"
               break
             fi
             echo "Waiting for MySQL..."
             sleep 5
           done
-
+      - name: Debugging Step
+        run: |
+           echo "Listing current directory:"
+            ls -la
+            echo "Checking Ruby version:"
+            ruby -v
+             echo "Checking Bundler version:"
+              bundle -v
+              
       - name: Set up database configuration
         run: |
           mkdir -p config
@@ -69,10 +81,17 @@ jobs:
           echo "  database: rails_test" >> config/database.yml
           echo "  username: root" >> config/database.yml
           echo "  password: root" >> config/database.yml
-          echo "  host: 127.0.0.1" >> config/database.yml
+          echo "  host: mysql" >> config/database.yml
           echo "  port: 3306" >> config/database.yml
           cat config/database.yml
-
+      
+      - name: Check MySQL Status
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mysql-client
+          mysql -h  mysql -P 3306 -u root -p root -e "SHOW DATABASES;"
+          sleep 5
+      
       - name: Prepare database
         run: |
           bin/rails db:create
