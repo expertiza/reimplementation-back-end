@@ -17,6 +17,7 @@ describe Course, type: :model do
       expect(course).not_to be_valid
     end
   end
+
   describe '#path' do
     context 'when there is no associated instructor' do
       it 'an error is raised' do
