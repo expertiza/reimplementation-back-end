@@ -5,6 +5,24 @@ RSpec.describe Api::V1::ParticipantsController, type: :controller do
   let!(:assignment) { create(:assignment) }  
   let!(:participant) { create(:participant, user: user, assignment: assignment) }  
 
+    # MYSQL wait check before tests
+    before(:all) do 
+      retries = 0
+      begin
+        ActiveRecord::Base.establish_connection 
+        ActiveRecord::Base.connection.execute('SELECT 1')
+      rescue => e
+        retries += 1
+        if retries < 10
+          puts "Waiting for MySQL... Retry #{retries}/10"
+          sleep 5
+          retry 
+        else 
+          raise e
+        end 
+      end 
+    end
+
   
   describe 'GET #list_user_participants' do
     context 'when user exists' do
