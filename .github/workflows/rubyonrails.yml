@@ -60,11 +60,11 @@ jobs:
             sleep 5
           done
           
-            - name: Debugging Step
-            run: |
-               echo "Listing current directory:"
-               ls -la
-               echo "Checking Ruby version:"
+      - name: Debugging Step
+        run: |
+          echo "Listing current directory:"
+          ls -la
+           echo "Checking Ruby version:"
                ruby -v
                 echo "Checking Bundler version:"
                 bundle -v
