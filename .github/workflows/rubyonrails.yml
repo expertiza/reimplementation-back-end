@@ -18,8 +18,7 @@ jobs:
     services:
       mysql:
         image: mysql:8.0
-        ports:
-          - "3306:3306"
+       
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: rails_test
@@ -31,7 +30,6 @@ jobs:
 
     env:
       RAILS_ENV: test
-      DATABASE_URL: "mysql2://root:root@mysql:3306/rails_test"
       DB_HOST: mysql
       RAILS_MAX_THREADS: 5
 
@@ -53,7 +51,7 @@ jobs:
 
       - name: Wait for MySQL to be ready
         run: |
-          for i in {1..10}; do
+          for i in {1..20}; do
             if mysqladmin ping -h mysql --silent; then
               echo "MySQL is up!"
               break
@@ -71,7 +69,7 @@ jobs:
              echo "Checking Bundler version:"
               bundle -v
 
-      - name: Setup database configuration
+      - name: Setup database 
         run: |
           mkdir -p config
           echo "test:" > config/database.yml
