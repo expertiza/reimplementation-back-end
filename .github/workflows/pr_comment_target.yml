@@ -63,7 +63,7 @@ jobs:
       - name: Extract Failed Tests
         if: always()  # Ensures this step runs regardless of test outcome
         run: |
-          awk '/Failures:/ {f=1} f && /^[[:space:]]*[0-9]+\)/ {print $0} f && /spec\// {print $0}' rspec_results.txt | tail -n 2 > failed_tests.txt || echo "All tests passed." > failed_tests.txt
+          awk '/Failures:/ {f=1} f && /^[[:space:]]*[0-9]+\)/ {print $0} f && /spec\// {print $0}' rspec_results.txt | tail -n 2 > failed_tests.txt && [ -s failed_tests.txt ] && echo "Above test cases failed" >> failed_tests.txt || echo "All tests passed." > failed_tests.txt
           echo "FAILED_TESTS<<EOF" >> $GITHUB_ENV
           cat failed_tests.txt >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
