@@ -23,7 +23,7 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: rails_test
-        options: "--health-cmd='mysqladmin ping --silent' --health-interval=10s --health-timeout=5s --health-retries=3"
+          options: "--health-cmd=\"mysqladmin ping --silent\" --health-interval=10s --health-timeout=5s --health-retries=3"
 
     env:
       RAILS_ENV: test
