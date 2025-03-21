@@ -5,6 +5,7 @@ class Api::V1::ParticipantsController < ApplicationController
     participants = Participant.all
     render json: participants
   end
+  # ************************************************************
   #keeping this commented as to test
   # def action_allowed?
   #   if %w[change_handle update_duties].include? params[:action]
@@ -13,6 +14,8 @@ class Api::V1::ParticipantsController < ApplicationController
   #     current_user_has_ta_privileges?
   #   end
   # end
+  # ************************************************************
+  #redundant by may be required later
   # def action_allowed?
   #   has_required_role?('Teaching Assistant')
   # end
@@ -31,10 +34,21 @@ class Api::V1::ParticipantsController < ApplicationController
     render json: @participant
   end
 
+  #getting the user by user_index
   def user_index
     participants = Participant.where(user_id: params[:user_id])
     render json: participants, status: :ok
   end
+
+  #updating the participant by request body of  example { "can_submit": true, "can_review": true}
+  def update
+    if @participant.update(participant_params)
+      render json: @participant, status: :ok
+    else
+      render json: { errors: @participant.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+  
 
   private
 
