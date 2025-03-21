@@ -79,11 +79,12 @@ jobs:
           echo "  password: root" >> config/database.yml
           echo "  host: 127.0.0.1" >> config/database.yml
           echo "  port: 3306" >> config/database.yml
+          cat config/database.yml #print the database.yml file.
           bin/rails db:create
           bin/rails db:schema:load
-          
+          bin/rails db:migrate # run migrations.
          
 
       - name: Run tests
-        run: bundle exec rspec
+        run: bundle exec rspec--format documentation --color
 
