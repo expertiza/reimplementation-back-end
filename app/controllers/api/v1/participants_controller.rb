@@ -19,6 +19,8 @@ class Api::V1::ParticipantsController < ApplicationController
   # def action_allowed?
   #   has_required_role?('Teaching Assistant')
   # end
+  # ************************************************************
+
   def create
     @participant = Participant.new(participant_params)
     if @participant.save
@@ -27,6 +29,7 @@ class Api::V1::ParticipantsController < ApplicationController
       render json: { errors: @participant.errors.full_messages }, status: :unprocessable_entity
     end
   end
+
   before_action :set_participant, only: [:show, :update, :destroy]
 
   # GET /api/v1/participants/:id
