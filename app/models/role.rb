@@ -47,6 +47,7 @@ class Role < ApplicationRecord
 
   # checks if the current role has all the privileges of the target role
   def all_privileges_of?(target_role)
+    return false if target_role.nil? || name.nil?
     privileges = {
       'Student' => 1,
       'Teaching Assistant' => 2,
