@@ -11,8 +11,14 @@ RSpec.describe 'Assignments API', type: :request do
       instructor_id: instructor.id
     }
   end
-   let!(:assignment) { Assignment.create!(valid_attributes) }
-    
+   let!(:assignment) do
+       assignment = Assignment.new(valid_attributes)
+       assignment.valid?
+       puts "Validation Errors: #{assignment.errors.full_messages}"
+       assignment.save! # Still raises, but now you see WHY
+       assignment
+     end
+          
   before do
     allow_any_instance_of(Api::V1::AssignmentsController).to receive(:authenticate_user!).and_return(true)
   end
