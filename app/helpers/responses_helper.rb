@@ -22,7 +22,7 @@ module ResponsesHelper
     end
 
     #Combine functionality of set_content and assign_action_parameters
-    def prepare_response_content(map, current_round, action_params = nil, new_response = false)
+    def prepare_response_content(map, action_params = nil, new_response = false)
         # Set title and other initial content based on the map
 
         title = map.get_title
@@ -37,24 +37,27 @@ module ResponsesHelper
           assignment = map.assignment
         end
   
-        # Initialize response if new_response is true
-        response = nil
-        if new_response
-          response = Response.where(map_id: map.id, round: current_round.to_i).order(updated_at: :desc).first
-          if response.nil?
-            response = Response.create(map_id: map.id, additional_comment: '', round: current_round.to_i, is_submitted: 0)
-          end
-        end
-  
         # Get the questionnaire and sort questions
         questionnaire = questionnaire_from_response_map(map, contributor, assignment)
         review_questions = Response.sort_by_version(questionnaire.questions)
         min = questionnaire.min_question_score
         max = questionnaire.max_question_score
+
+        # Initialize response if new_response is true
+        response = nil
+        if new_response
+          response = Response.where(map_id: map.id).order(updated_at: :desc).first
+          if response.nil?
+            response = Response.create(map_id: map.id, additional_comment: '', is_submitted: 0)
+          end
+        end
+  
+
   
         # Set up dropdowns or scales
         set_dropdown_or_scale
   
+        
         # Process the action parameters if provided
         if action_params
           case action_params[:action]
@@ -62,17 +65,16 @@ module ResponsesHelper
             header = 'Edit'
             next_action = 'update'
             response = Response.find(action_params[:id])
-            map = response.map
             contributor = map.contributor
           when 'new'
             header = 'New'
             next_action = 'create'
             feedback = action_params[:feedback]
-            map = ResponseMap.find(action_params[:id])
             modified_object = map.id
           end
         end
-  
+
+        
         # Return the data as a hash
         {
           title: title,
@@ -102,4 +104,25 @@ module ResponsesHelper
                                   'scale'
                               end
     end
+
+    def init_answers(response, questions)
+      questions.each do |q|
+        # it's unlikely that these answers exist, but in case the user refresh the browser some might have been inserted.
+        answer = Answer.where(response_id: response.id, question_id: q.id).first
+        if answer.nil?
+          Answer.create(response_id: response.id, question_id: q.id, answer: nil, comments: '')
+        end
+      end
+    end
+  
+  # Assigns total contribution for cake question across all reviewers to a hash map
+  # Key : question_id, Value : total score for cake question
+  def total_cake_score
+    reviewee = ResponseMap.select(:reviewee_id, :type).where(id: @response.map_id.to_s).first
+    return Cake.get_total_score_for_questions(reviewee.type,
+                                                      @review_questions,
+                                                      @participant.id,
+                                                      @assignment.id,
+                                                      reviewee.reviewee_id)
+  end
 end
