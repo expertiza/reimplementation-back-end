@@ -75,10 +75,10 @@ class Api::V1::ResponsesController < ApplicationController
       @response.update_attribute('is_submitted', true)
     end
 
-    # Add back emailing logic
-    # if (@map.is_a? ReviewResponseMap) && @response.is_submitted && @response.significant_difference?
-    #   @response.notify_instructor_on_difference
-    # end
+    #Add back emailing logic
+     if (@map.is_a? ReviewResponseMap) && @response.is_submitted && @response.significant_difference?
+      @response.send_score_difference_email
+    end
 
     rescue StandardError => e
       msg = "Your response was not saved. Cause:189 #{$ERROR_INFO}"
