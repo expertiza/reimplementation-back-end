@@ -19,7 +19,7 @@ one:
   copy_of_emails: false
   institution_id: 1
   etc_icons_on_homepage: false
-  locale: 1
+  locale: en
 
 two:
   name: MyString
@@ -40,4 +40,4 @@ two:
   copy_of_emails: false
   institution_id: 1
   etc_icons_on_homepage: false
-  locale: 1
+  locale: en

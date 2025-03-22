@@ -376,7 +376,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_22_173512) do
     t.string "timeZonePref"
     t.boolean "copy_of_emails", default: false
     t.boolean "etc_icons_on_homepage", default: false
-    t.integer "locale"
+    t.string "locale"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "institution_id"

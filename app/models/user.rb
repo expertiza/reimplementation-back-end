@@ -112,6 +112,7 @@ class User < ApplicationRecord
     self.email_on_submission ||= false
     self.email_on_review_of_review ||= false
     self.etc_icons_on_homepage ||= true
+    self.locale ||= 'en'
   end
 
 end
