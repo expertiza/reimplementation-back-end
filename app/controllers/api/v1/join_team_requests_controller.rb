@@ -19,7 +19,7 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   # gets a list of all the join team requests
   def index
     unless @current_user.administrator?
-      return render json: { errors: 'Unauthorized' }, status: :unauthorized
+      return render json: { errors: I18n.t('join_team_requests.unauthorized') }, status: :unauthorized
     end
     join_team_requests = JoinTeamRequest.all
     render json: join_team_requests, status: :ok
@@ -42,7 +42,7 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
     team = Team.find(params[:team_id])
 
     if team.participants.include?(participant)
-      render json: { error: 'You already belong to the team' }, status: :unprocessable_entity
+      render json: { error: I18n.t('join_team_requests.already_in_team') }, status: :unprocessable_entity
     elsif participant
       join_team_request.participant_id = participant.id
       if join_team_request.save
@@ -51,7 +51,7 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
         render json: { errors: join_team_request.errors.full_messages }, status: :unprocessable_entity
       end
     else
-      render json: { errors: 'Participant not found' }, status: :unprocessable_entity
+      render json: { errors: I18n.t('join_team_requests.participant_not_found') }, status: :unprocessable_entity
     end
   end
 
@@ -59,7 +59,7 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   # Updates a join team request
   def update
     if @join_team_request.update(join_team_request_params)
-      render json: { message: 'JoinTeamRequest was successfully updated' }, status: :ok
+      render json: { message: I18n.t('join_team_requests.update_success') }, status: :ok
     else
       render json: { errors: @join_team_request.errors.full_messages }, status: :unprocessable_entity
     end
@@ -69,9 +69,9 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   # delete a join team request
   def destroy
     if @join_team_request.destroy
-      render json: { message: 'JoinTeamRequest was successfully deleted' }, status: :ok
+      render json: { message: I18n.t('join_team_requests.delete_success') }, status: :ok
     else
-      render json: { errors: 'Failed to delete JoinTeamRequest' }, status: :unprocessable_entity
+      render json: { errors: I18n.t('join_team_requests.delete_failure') }, status: :unprocessable_entity
     end
   end
 
@@ -79,7 +79,7 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   def decline
     @join_team_request.status = DECLINED
     if @join_team_request.save
-      render json: { message: 'JoinTeamRequest declined successfully' }, status: :ok
+      render json: { message: I18n.t('join_team_requests.decline_success') }, status: :ok
     else
       render json: { errors: @join_team_request.errors.full_messages }, status: :unprocessable_entity
     end
@@ -90,7 +90,7 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   def check_team_status
     team = Team.find(params[:team_id])
     if team.full?
-      render json: { message: 'This team is full.' }, status: :unprocessable_entity
+      render json: { message: I18n.t('join_team_requests.team_full') }, status: :unprocessable_entity
     end
   end
 
