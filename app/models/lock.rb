@@ -10,4 +10,7 @@ class Lock < ApplicationRecord
     def self.create_lock()
     end
 
+    def self.lock_between?()
+    end
+
 end

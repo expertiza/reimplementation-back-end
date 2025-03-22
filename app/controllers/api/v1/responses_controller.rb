@@ -1,5 +1,6 @@
 class Api::V1::ResponsesController < ApplicationController
   include ResponsesHelper
+  include ScorableHelper
   before_action :set_response, only: %i[ show update destroy ]
 
   # GET /api/v1/responses
@@ -34,11 +35,34 @@ class Api::V1::ResponsesController < ApplicationController
 
   # PATCH/PUT /api/v1/responses/1
   def update
-    if @response.update(response_params)
-      render json: @response
-    else
-      render json: @response.errors, status: :unprocessable_entity
+
+    return render nothing: true unless action_allowed?
+
+    
+    @response.update_attribute('additional_comment', params[:review][:comments])
+    @questionnaire = @response.questionnaire_by_answer(@response.scores.first)
+    
+    questions = sort_items(@questionnaire.questions)
+
+    # for some rubrics, there might be no questions but only file submission (Dr. Ayala's rubric)
+    create_answers(params, questions) unless params[:responses].nil?
+    if params['isSubmit'] && params['isSubmit'] == 'Yes'
+      @response.update_attribute('is_submitted', true)
     end
+
+    # Add back emailing logic
+    # if (@map.is_a? ReviewResponseMap) && @response.is_submitted && @response.significant_difference?
+    #   @response.notify_instructor_on_difference
+    # end
+
+    rescue StandardError => e
+      msg = "Your response was not saved. Cause:189 #{$ERROR_INFO}"
+    end
+
+    redirect_to controller: 'responses', action: 'save', id: @map.map_id,
+              return: params.permit(:return)[:return], msg: msg, review: params.permit(:review)[:review],
+              save_options: params.permit(:save_options)[:save_options]
+
   end
 
   # DELETE /api/v1/responses/1
@@ -56,4 +80,6 @@ class Api::V1::ResponsesController < ApplicationController
     def response_params
       params.fetch(:response, {})
     end
+
+
 end
