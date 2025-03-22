@@ -38,6 +38,10 @@ Rails.application.routes.draw do
           get '/:assignment_id/varying_rubrics_by_round', action: :varying_rubrics_by_round?
           post '/:assignment_id/create_node',action: :create_node
         end
+
+        member do
+          get 'list_submissions', action: :list_submissions
+        end
       end
 
       resources :bookmarks, except: [:new, :edit] do
