@@ -120,7 +120,7 @@ class Api::V1::ParticipantsController < ApplicationController
   end
 
 
-  #updating authorization of the users
+  #updating authorization of the participants
   def update_authorization
     participant = Participant.find(params[:id])
   
