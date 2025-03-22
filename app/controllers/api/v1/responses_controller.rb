@@ -14,6 +14,22 @@ class Api::V1::ResponsesController < ApplicationController
     render json: @response
   end
 
+  def new
+    @map = ResponseMap.find(params[:id])
+    attributes = prepare_response_content(map, 'New', true)
+    attributes.each do |key, value|
+      instance_variable_set("@#{key}", value)
+    end
+    if @assignment
+      @stage = @assignment.current_stage(SignedUpTeam.topic_id(@participant.parent_id, @participant.user_id))
+    end
+
+    questions = sort_questions(@questionnaire.questions)
+    @total_score = total_cake_score
+    init_answers(@response, questions)
+    render action: 'response'
+  end
+
   # POST /api/v1/responses
   def create
     @response = Response.new(response_params)
