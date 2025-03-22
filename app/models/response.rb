@@ -322,9 +322,8 @@ class Response < ApplicationRecord
     end
     scores
   end
-end
 
-private
+  private
 
 # Get all of the questions asked during peer review for the given team's work
 def peer_review_questions_for_team(assignment, team, round_number = nil)
@@ -419,5 +418,7 @@ def merge_grades_by_rounds(assignment, grades_by_rounds, num_of_assessments, tot
   end
   team_scores
 end
-
 end
+
+
+

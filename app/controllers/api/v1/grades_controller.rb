@@ -1,20 +1,6 @@
 class Api::V1::GradesController < ApplicationController
   include GradesHelper
 
-  # def action_allowed?
-  #   permitted = case params[:action]
-  #               when 'view_my_scores'
-  #                 student_with_permissions?
-  #               when 'view_team'
-  #                 student_viewing_own_team? || has_privileges_of?('Teaching Assistant')
-  #               else
-  #                 has_privileges_of?('Teaching Assistant')
-  #               end
-  
-  #   render json: { allowed: permitted }, status: permitted ? :ok : :forbidden
-  # end
-
-
   # Defines permissions for different actions based on user roles.
   # 'view_my_scores' is allowed for students with specific permissions.
   # 'view_team' is allowed for both students and TAs.

@@ -124,6 +124,8 @@ Rails.application.routes.draw do
       resources :grades do
         collection do
           get 'action_allowed'
+          get 'view_grading_report'
+          get 'instructor_review'
         end
       end
     end
