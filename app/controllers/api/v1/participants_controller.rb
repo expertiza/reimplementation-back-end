@@ -95,6 +95,9 @@ class Api::V1::ParticipantsController < ApplicationController
   #     render json: { errors: participant.errors.full_messages }, status: :unprocessable_entity
   #   end
   # end
+
+
+  #adding a participant with authorization
   def add
     assignment = Assignment.find(params[:id])
     user = User.find_or_create_by(user_params) # 👈 You were probably missing this line
@@ -115,6 +118,24 @@ class Api::V1::ParticipantsController < ApplicationController
   
     render json: participant, status: :created
   end
+
+
+  #updating authorization of the users
+  def update_authorization
+    participant = Participant.find(params[:id])
+  
+    permissions = participant_permissions(params[:authorization])
+  
+    participant.update!(
+      can_submit: permissions[:can_submit],
+      can_review: permissions[:can_review],
+      can_take_quiz: permissions[:can_take_quiz],
+      can_mentor: permissions[:can_mentor]
+    )
+  
+    render json: participant, status: :ok
+  end
+  
   
   
   
@@ -220,17 +241,17 @@ class Api::V1::ParticipantsController < ApplicationController
     redirect_to action: 'list', id: parent_id, model: participant.class.to_s.gsub('Participant', '')
   end
 
-  def destroy
-    participant = Participant.find(params[:id])
-    parent_id = participant.parent_id
-    begin
-      participant.destroy
-      flash[:note] = undo_link("The user \"#{participant.user.name}\" has been successfully removed as a participant.")
-    rescue StandardError
-      flash[:error] = 'This participant is on a team, or is assigned as a reviewer for someone’s work.'
-    end
-    redirect_to action: 'list', id: parent_id, model: participant.class.to_s.gsub('Participant', '')
-  end
+  # def destroy
+  #   participant = Participant.find(params[:id])
+  #   parent_id = participant.parent_id
+  #   begin
+  #     participant.destroy
+  #     flash[:note] = undo_link("The user \"#{participant.user.name}\" has been successfully removed as a participant.")
+  #   rescue StandardError
+  #     flash[:error] = 'This participant is on a team, or is assigned as a reviewer for someone’s work.'
+  #   end
+  #   redirect_to action: 'list', id: parent_id, model: participant.class.to_s.gsub('Participant', '')
+  # end
 
   # Copies existing participants from a course down to an assignment
   def inherit
