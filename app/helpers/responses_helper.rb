@@ -53,7 +53,7 @@ module ResponsesHelper
         max = questionnaire.max_question_score
   
         # Set up dropdowns or scales
-        set_dropdown_or_scale
+        set_dropdown_or_scale(questionnaire, assignment)
   
         # Process the action parameters if provided
         if action_params
@@ -93,9 +93,9 @@ module ResponsesHelper
         }
     end
   
-    def set_dropdown_or_scale
-          @dropdown_or_scale = if AssignmentQuestionnaire.exists?(assignment_id: @assignment&.id, 
-                                                                   questionnaire_id: @questionnaire&.id, 
+    def set_dropdown_or_scale(assignment, questionaire)
+          @dropdown_or_scale = if AssignmentQuestionnaire.exists?(assignment_id: @assignment.try(:id), 
+                                                                   questionnaire_id: @questionnaire.try(:id), 
                                                                    dropdown: true)
                                   'dropdown'
                               else

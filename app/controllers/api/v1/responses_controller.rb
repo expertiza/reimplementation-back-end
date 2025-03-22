@@ -33,6 +33,22 @@ class Api::V1::ResponsesController < ApplicationController
     end
   end
 
+  def edit 
+
+    action_params = { action: 'edit', id: params[:id], return: params[:return] }
+    response_content = prepare_response_content(@map, params[:round], action_params)
+  
+    # Assign variables from response_content hash
+    response_content.each { |key, value| instance_variable_set("@#{key}", value) }
+
+    @largest_version_num  = Response.sort_by_version(@review_questions)
+    @review_scores = @review_questions.map do |question|
+      Answer.where(response_id: @response.response_id, question_id: question.id).first
+    end
+
+    render action: 'response'
+  end
+
   # PATCH/PUT /api/v1/responses/1
   def update
 
