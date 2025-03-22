@@ -24,10 +24,14 @@ class Api::V1::GradesController < ApplicationController
     'view_team' => :student_or_ta?
   }.freeze
 
+<<<<<<< Updated upstream
   # Determines if the current user is allowed to perform the specified action.
   # Checks the permission using the action parameter and returns a JSON response.
   # If the action is permitted, the response status is :ok; otherwise, it is :forbidden.
   def action_allowed?
+=======
+  def action_allowed
+>>>>>>> Stashed changes
     permitted = check_permission(params[:action])
     render json: { allowed: permitted }, status: permitted ? :ok : :forbidden
   end

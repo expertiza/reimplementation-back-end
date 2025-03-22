@@ -120,6 +120,12 @@ Rails.application.routes.draw do
           delete '/:id', to: 'participants#destroy'
         end
       end
+
+      resources :grades do
+        collection do
+          get 'action_allowed'
+        end
+      end
     end
   end
 end
