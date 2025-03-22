@@ -51,6 +51,23 @@ class Api::V1::ParticipantsController < ApplicationController
       render json: { errors: @participant.errors.full_messages }, status: :unprocessable_entity
     end
   end
+
+  #destroying the user by the id of the
+  def destroy
+    participant = Participant.find(params[:id])
+    participant.destroy
+    render json: { message: "Participant deleted successfully" }, status: :ok
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Participant not found" }, status: :not_found
+  end
+
+  #finding partcipant by assignment id
+  def assignment_index
+    participants = Participant.where(assignment_id: params[:assignment_id])
+    render json: participants, status: :ok
+  end
+  
+  
   
 
   private
