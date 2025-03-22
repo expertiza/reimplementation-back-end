@@ -91,7 +91,7 @@ class User < ApplicationRecord
   # that only the id, name, and email attributes should be included when a User object is serialized.
   def as_json(options = {})
     super(options.merge({
-                          only: %i[id name email full_name email_on_review email_on_submission
+                          only: %i[id name email full_name locale email_on_review email_on_submission
                                    email_on_review_of_review],
                           include:
                           {
