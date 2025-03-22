@@ -14,6 +14,13 @@ class Api::V1::ResponsesController < ApplicationController
     render json: @response
   end
 
+  # GET /api/v1/json?response_id=xx
+  def json
+    response_id = params[:response_id] if params.key?(:response_id)
+    response = Response.find(response_id)
+    render json: response
+  end
+
   # POST /api/v1/responses
   def create
     @response = Response.new(response_params)

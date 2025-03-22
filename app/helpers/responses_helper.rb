@@ -102,4 +102,13 @@ module ResponsesHelper
                                   'scale'
                               end
     end
+
+    def action_allowed
+
+    end
+
+    #Renamed to sort_items from sort_questions
+    def sort_items(questions)
+      questions.sort_by(&:seq)
+    end
 end

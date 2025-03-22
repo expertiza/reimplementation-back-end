@@ -92,9 +92,6 @@ GEM
       thor
     crass (1.0.6)
     date (3.4.1)
-    debug (1.8.0)
-      irb (>= 1.5.0)
-      reline (>= 0.3.1)
     diff-lcs (1.5.0)
     docile (1.4.0)
     domain_name (0.6.20240107)
@@ -315,7 +312,6 @@ DEPENDENCIES
   bcrypt (~> 3.1.7)
   bootsnap (>= 1.18.4)
   coveralls
-  debug
   factory_bot_rails
   faker
   find_with_order
