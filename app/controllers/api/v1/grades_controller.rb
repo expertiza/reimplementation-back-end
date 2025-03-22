@@ -35,7 +35,7 @@ class Api::V1::GradesController < ApplicationController
   # difference in scores among the reviews.
   def view_grading_report
     get_data_for_heat_map(params[:id])
-    fetch_penalties
+    update_penalties
     @show_reputation = false
   end
     
@@ -53,7 +53,7 @@ class Api::V1::GradesController < ApplicationController
   
     @topic_id = SignedUpTeam.topic_id(@participant.assignment.id, @participant.user_id)
     @stage = @participant.assignment.current_stage(@topic_id)
-    fetch_penalties
+    update_penalties
     
     # prepare feedback summaries
     fetch_feedback_summary

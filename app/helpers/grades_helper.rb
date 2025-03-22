@@ -22,7 +22,7 @@ module GradesHelper
   end
 
   # Calculates and applies penalties for the current assignment.
-  def fetch_penalties
+  def update_penalties
     penalties(@assignment.id)
   end
 
@@ -167,6 +167,15 @@ module GradesHelper
   # Marks the assignment's penalty status as calculated.
   def mark_penalty_as_calculated
     @assignment.update(is_penalty_calculated: true)
+  end
+
+  def assign_all_penalties(participant, penalties)
+    @all_penalties[participant.id] = {
+      submission: penalties[:submission],
+      review: penalties[:review],
+      meta_review: penalties[:meta_review],
+      total_penalty: @total_penalty
+    }
   end
 
   # Checks if the assignment is a team assignment based on the maximum team size.

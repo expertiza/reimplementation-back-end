@@ -17,15 +17,15 @@ RSpec.describe Api::V1::GradesController, type: :controller do
       )
     end
 
-    let(:s1) {
-    User.create(
-      name: "studenta",
-      password_digest: "password",
-      role_id: @roles[:student].id,
-      full_name: "student A",
-      email: "testuser@example.com"
-    )
-  }
+    let(:s1) do
+        User.create(
+        name: "studenta",
+        password_digest: "password",
+        role_id: @roles[:student].id,
+        full_name: "student A",
+        email: "testuser@example.com"
+        )
+    end
 
     let(:ta_token) { JsonWebToken.encode({id: ta.id}) }
     let(:student_token) { JsonWebToken.encode({id: s1.id}) }
