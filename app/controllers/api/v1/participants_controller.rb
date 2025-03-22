@@ -66,11 +66,81 @@ class Api::V1::ParticipantsController < ApplicationController
     participants = Participant.where(assignment_id: params[:assignment_id])
     render json: participants, status: :ok
   end
+
+  # def add
+  #   handle = "#{user.name.parameterize}-#{SecureRandom.hex(2)}"
+
+  #   assignment_id = params[:id]
+  #   authorization = params[:authorization]
+  #   user_name = params[:user][:name]
+  
+  #   user = User.find_by(name: user_name)
+  #   return render json: { error: "User not found" }, status: :not_found if user.nil?
+  
+  #   assignment = Assignment.find(assignment_id)
+  #   permissions = participant_permissions(authorization)
+  
+  #   participant = assignment.participants.create(
+  #     user: user,
+  #     handle: handle,
+  #     can_submit: permissions[:can_submit],
+  #     can_review: permissions[:can_review],
+  #     can_take_quiz: permissions[:can_take_quiz],
+  #     can_mentor: permissions[:can_mentor]
+  #   )
+  
+  #   if participant.persisted?
+  #     render json: participant, status: :created
+  #   else
+  #     render json: { errors: participant.errors.full_messages }, status: :unprocessable_entity
+  #   end
+  # end
+  def add
+    assignment = Assignment.find(params[:id])
+    user = User.find_or_create_by(user_params) # 👈 You were probably missing this line
+  
+    # Now you can safely use `user` below
+    handle = "#{user.name.parameterize}-#{SecureRandom.hex(2)}"
+  
+    permissions = participant_permissions(params[:authorization])
+  
+    participant = assignment.participants.create!(
+      user: user,
+      handle: handle,
+      can_submit: permissions[:can_submit],
+      can_review: permissions[:can_review],
+      can_take_quiz: permissions[:can_take_quiz],
+      can_mentor: permissions[:can_mentor]
+    )
+  
+    render json: participant, status: :created
+  end
+  
+  
   
   
   
 
   private
+
+  def user_params
+    params.require(:user).permit(:name)
+  end
+
+  def participant_permissions(role)
+    case role
+    when 'Student'
+      { can_submit: true, can_review: false, can_take_quiz: false, can_mentor: false }
+    when 'Reviewer'
+      { can_submit: false, can_review: true, can_take_quiz: false, can_mentor: false }
+    when 'Teaching Assistant'
+      { can_submit: false, can_review: true, can_take_quiz: false, can_mentor: true }
+    when 'Mentor'
+      { can_submit: false, can_review: false, can_take_quiz: false, can_mentor: true }
+    else
+      { can_submit: false, can_review: false, can_take_quiz: false, can_mentor: false }
+    end
+  end
 
   def set_participant
     @participant = Participant.find(params[:id])
@@ -105,30 +175,30 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
-  def add
-    curr_object = Object.const_get(params[:model]).find(params[:id]) if Participant::PARTICIPANT_TYPES.include? params[:model]
-    begin
-      permissions = participant_permissions(params[:authorization])
-      can_submit = permissions[:can_submit]
-      can_review = permissions[:can_review]
-      can_take_quiz = permissions[:can_take_quiz]
-      #E2351 - add corresponding duty fill from permissions
-      can_mentor = permissions[:can_mentor]
-      if curr_object.is_a?(Assignment)
-        curr_object.add_participant(params[:user][:name], can_submit, can_review, can_take_quiz, can_mentor)
-      elsif curr_object.is_a?(Course)
-        curr_object.add_participant(params[:user][:name])
-      end
-      user = User.find_by(name: params[:user][:name])
-      @model = params[:model]
-      @participant = curr_object.participants.find_by(user_id: user.id)
-      flash.now[:note] = "The user <b>#{params[:user][:name]}</b> has successfully been added."
-    rescue StandardError
-      url_for controller: 'users', action: 'new'
-      flash.now[:error] = "The user <b>#{params[:user][:name]}</b> does not exist or has already been added."
-    end
-    render action: 'add.js.erb', layout: false
-  end
+  # def add
+  #   curr_object = Object.const_get(params[:model]).find(params[:id]) if Participant::PARTICIPANT_TYPES.include? params[:model]
+  #   begin
+  #     permissions = participant_permissions(params[:authorization])
+  #     can_submit = permissions[:can_submit]
+  #     can_review = permissions[:can_review]
+  #     can_take_quiz = permissions[:can_take_quiz]
+  #     #E2351 - add corresponding duty fill from permissions
+  #     can_mentor = permissions[:can_mentor]
+  #     if curr_object.is_a?(Assignment)
+  #       curr_object.add_participant(params[:user][:name], can_submit, can_review, can_take_quiz, can_mentor)
+  #     elsif curr_object.is_a?(Course)
+  #       curr_object.add_participant(params[:user][:name])
+  #     end
+  #     user = User.find_by(name: params[:user][:name])
+  #     @model = params[:model]
+  #     @participant = curr_object.participants.find_by(user_id: user.id)
+  #     flash.now[:note] = "The user <b>#{params[:user][:name]}</b> has successfully been added."
+  #   rescue StandardError
+  #     url_for controller: 'users', action: 'new'
+  #     flash.now[:error] = "The user <b>#{params[:user][:name]}</b> does not exist or has already been added."
+  #   end
+  #   render action: 'add.js.erb', layout: false
+  # end
 
   # when you change the duties, changes the permissions based on the new duty you go to
   def update_authorizations
