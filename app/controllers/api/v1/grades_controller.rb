@@ -1,19 +1,31 @@
 class Api::V1::GradesController < ApplicationController
-  include AuthorizationHelper
   include GradesHelper
 
-  def action_allowed?
-    permitted = case params[:action]
-                when 'view_my_scores'
-                  student_with_permissions?
-                when 'view_team'
-                  student_viewing_own_team? || has_privileges_of?('Teaching Assistant')
-                else
-                  has_privileges_of?('Teaching Assistant')
-                end
+  # def action_allowed?
+  #   permitted = case params[:action]
+  #               when 'view_my_scores'
+  #                 student_with_permissions?
+  #               when 'view_team'
+  #                 student_viewing_own_team? || has_privileges_of?('Teaching Assistant')
+  #               else
+  #                 has_privileges_of?('Teaching Assistant')
+  #               end
   
+  #   render json: { allowed: permitted }, status: permitted ? :ok : :forbidden
+  # end
+
+  ACTION_PERMISSIONS = {
+    'view_my_scores' => :student_with_permissions?,
+    'view_team' => :student_or_ta?
+  }.freeze
+
+  def action_allowed?
+    permitted = check_permission(params[:action])
     render json: { allowed: permitted }, status: permitted ? :ok : :forbidden
   end
+
+  
+
 
   def view_grading_report
     get_data_for_heat_map(params[:id])
@@ -135,10 +147,20 @@ class Api::V1::GradesController < ApplicationController
 
 # Helper methods for action_allowed?
 
+  def check_permission(action)
+    return has_privileges_of?('Teaching Assistant') unless ACTION_PERMISSIONS.key?(action)
+
+    send(ACTION_PERMISSIONS[action])
+  end
+
   def student_with_permissions?
     has_role?('Student') &&
       self_review_finished? &&
       are_needed_authorizations_present?(params[:id], 'reader', 'reviewer')
+  end
+
+  def student_or_ta?
+    student_viewing_own_team? || has_privileges_of?('Teaching Assistant')
   end
 
   def student_viewing_own_team?
