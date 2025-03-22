@@ -49,7 +49,7 @@ class Api::V1::BookmarksController < ApplicationController
 
   # Handle the case when an invalid bookmark id is being passed
   def not_found
-    render json: { error: "Couldn't find Bookmark" }, status: :not_found
+    render json: { error: I18n.t('bookmarks.not_found') }, status: :not_found
   end
 
   # Destroy method deletes the bookmark object with id- {:id}
