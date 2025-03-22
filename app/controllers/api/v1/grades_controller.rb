@@ -25,7 +25,7 @@ class Api::V1::GradesController < ApplicationController
   }.freeze
 
   def action_allowed
-    permitted = check_permission(params[:action])
+    permitted = check_permission(params[:requested_action])
     render json: { allowed: permitted }, status: permitted ? :ok : :forbidden
   end
 
