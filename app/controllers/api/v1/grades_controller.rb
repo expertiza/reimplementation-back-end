@@ -105,15 +105,17 @@ class Api::V1::GradesController < ApplicationController
   def update_team
     participant = AssignmentParticipant.find_by(id: params[:participant_id])
     return handle_not_found unless participant
-
+  
     if participant.team.update(grade_for_submission: params[:grade_for_submission],
                                comment_for_submission: params[:comment_for_submission])
-      flash[:success] = 'Grade and comment for submission successfully saved.'
+      render json: { message: 'Grade and comment for submission successfully saved.' }, status: :ok
+      return
     else
-      flash[:error] = 'Error saving grade and comment.'
+      render json: { error: 'Error saving grade and comment.' }, status: :unprocessable_entity
+      return
     end
-    redirect_to controller: 'grades', action: 'view_team', id: params[:id]
   end
+  
 
   # Determines the appropriate controller action for an instructor's review based on the current state.
   # This method checks if a review mapping exists for the participant. If it does, the instructor is directed to edit the existing review.
@@ -213,7 +215,7 @@ class Api::V1::GradesController < ApplicationController
   # Private Method associated with Update methods:
   # Displays an error message if the participant is not found.
   def handle_not_found
-    flash[:error] = 'Participant not found.'
+    render json: { error: 'Participant not found.' }, status: :not_found
   end
 
   # Checks if the participant's grade has changed compared to the new grade.

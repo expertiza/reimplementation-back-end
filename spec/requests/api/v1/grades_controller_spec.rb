@@ -201,4 +201,54 @@ RSpec.describe Api::V1::GradesController, type: :controller do
         end
     end
 
+    describe '#update_team' do
+        context 'when participant is found and update is successful' do
+            it 'updates grade and comment for submission and redirects to grades#view_team page' do
+            allow(AssignmentParticipant).to receive(:find_by).with(id: 1).and_return(participant)
+            allow(participant.team).to receive(:update).with(grade_for_submission: 100, comment_for_submission: 'comment').and_return(true)
+
+            request.headers['Authorization'] = "Bearer #{ta_token}"
+            request.headers['Content-Type'] = 'application/json'
+          
+            request_params = {participant_id: 1,grade_for_submission: 100,comment_for_submission: 'comment' }
+            
+            post :update_team, params: request_params
+            
+            expect(response).to have_http_status(:ok)
+            expect(JSON.parse(response.body)).to eq({ "message" => "Grade and comment for submission successfully saved." })            end
+        end
+
+        context 'when participant is not found' do
+            it 'returns a JSON error message with status 404' do
+              allow(AssignmentParticipant).to receive(:find_by).with(id: 1).and_return(nil)
+
+              request.headers['Authorization'] = "Bearer #{ta_token}"
+              request.headers['Content-Type'] = 'application/json'
+              request_params = { participant_id: 1, grade_for_submission: 100, comment_for_submission: 'comment' }
+              
+              post :update_team, params: request_params
+          
+              expect(response).to have_http_status(:not_found)
+              expect(JSON.parse(response.body)).to eq({ "error" => "Participant not found." })
+            end
+        end
+          
+        context 'when update fails' do
+            it 'returns a JSON error message with status 422' do
+              allow(AssignmentParticipant).to receive(:find_by).with(id: 1).and_return(participant)
+              allow(participant.team).to receive(:update).with(grade_for_submission: 100, comment_for_submission: 'comment').and_return(false)
+              
+              request.headers['Authorization'] = "Bearer #{ta_token}"
+              request.headers['Content-Type'] = 'application/json'
+              request_params = { participant_id: 1, grade_for_submission: 100, comment_for_submission: 'comment' }
+              
+              post :update_team, params: request_params
+
+              expect(response).to have_http_status(:unprocessable_entity)
+              expect(JSON.parse(response.body)).to eq({ "error" => "Error saving grade and comment." })
+            end
+        end
+    end
+
+
 end

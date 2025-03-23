@@ -126,6 +126,7 @@ Rails.application.routes.draw do
           get 'action_allowed'
           get 'view_grading_report'
           get 'instructor_review'
+          post 'update_team'
         end
       end
     end
