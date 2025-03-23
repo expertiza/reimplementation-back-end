@@ -87,18 +87,9 @@ class Api::V1::StudentQuizzesController < ApplicationController
 
   #To get quiz from db
   def set_student_quiz
-    @student_quiz = find_resource_by_id(Questionnaire, params[:id])
+    @student_quiz = FindResourceService.call(Questionnaire, params[:id])
   end
-
   
-  # Find a specific resource by ID, handling the case where it's not found
-  def find_resource_by_id(model, id)
-    model.find(id)
-  rescue ActiveRecord::RecordNotFound
-    render_error("#{model.name} not found", :not_found)
-    nil
-  end
-
   # Check if a quiz has already been assigned to a participant
   def quiz_already_assigned?(participant, questionnaire)
     ResponseMap.exists?(
