@@ -52,7 +52,7 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
-  #destroying the user by the id of the
+  #destroying the user by the id of the specific user
   def destroy
     participant = Participant.find(params[:id])
     participant.destroy
