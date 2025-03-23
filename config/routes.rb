@@ -127,6 +127,7 @@ Rails.application.routes.draw do
           get 'view_grading_report'
           get 'instructor_review'
           post 'update_team'
+          post 'update_participant_grade'
         end
       end
     end

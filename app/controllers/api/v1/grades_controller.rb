@@ -88,14 +88,13 @@ class Api::V1::GradesController < ApplicationController
     return handle_not_found unless participant
 
     new_grade = params[:participant][:grade]
+  
     if grade_changed?(participant, new_grade)
       participant.update(grade: new_grade)
-      flash[:note] = grade_message(participant)
+      render json: { message: grade_message(participant) }, status: :ok
     else
-      flash[:error] = 'Error updating participant grade.'
+      render json: { error: 'Error updating participant grade.' }, status: :unprocessable_entity
     end
-    # Redirect to the edit action for the participant.
-    redirect_to action: 'edit', id: params[:id]
   end
 
   # Update the grade and comment for a participant's submission.

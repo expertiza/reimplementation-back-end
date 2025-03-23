@@ -250,5 +250,79 @@ RSpec.describe Api::V1::GradesController, type: :controller do
         end
     end
 
+    describe '#update_participant_grade' do
+        context 'when participant is not found' do
+            it 'returns a 404 response with an error message' do
+            allow(AssignmentParticipant).to receive(:find_by).with(id: 1).and_return(nil)
+        
+            request_params = {
+                id: 1,
+                participant: { grade: 100 }
+            }
+        
+            request.headers['Authorization'] = "Bearer #{ta_token}"
+            request.headers['Content-Type'] = 'application/json'
+            
+            # Perform the request
+            post :update_participant_grade, params: request_params
+        
+            # Expecting the response to return 404 with error message
+            expect(response.status).to eq(404)
+            expect(JSON.parse(response.body)['error']).to eq('Participant not found.')
+            end
+        end
+
+        context 'when grade is updated successfully' do
+            it 'returns a success message with a 200 status' do
+              allow(participant).to receive(:update).with(grade: 100).and_return(true)
+          
+              request_params = {
+                id: participant.id,
+                participant: { grade: 100 },
+                total_score: 100.00
+              }
+          
+              request.headers['Authorization'] = "Bearer #{ta_token}"
+              request.headers['Content-Type'] = 'application/json'
+          
+              post :update_participant_grade, params: request_params
+          
+              new_grade = 100.00
+              # Use request_params[:total_score] instead of params[:total_score]
+              expect(format('%.2f', request_params[:total_score].to_f)).to eq(format('%.2f', new_grade))
+          
+              expect(response.status).to eq(200)
+              expect(JSON.parse(response.body)['message']).to eq("A score of 100.0% has been saved for studenta.")
+            end
+        end
+          
+        context 'when grade update fails' do
+            it 'returns an error message with a 422 status' do
+              allow(participant).to receive(:update).and_return(false) 
+              allow(participant).to receive(:errors).and_return(double(full_messages: ['Grade cannot be blank']))
+          
+              request_params = {
+                id: participant.id,
+                participant: { grade: nil }, 
+                total_score: nil 
+              }
+          
+              request.headers['Authorization'] = "Bearer #{ta_token}"
+              request.headers['Content-Type'] = 'application/json'
+          
+              post :update_participant_grade, params: request_params
+
+              new_grade = 100.00
+              formatted_total_score = request_params[:total_score].nil? ? '0.00' : format('%.2f', request_params[:total_score].to_f)
+          
+              expect(formatted_total_score).not_to eq(format('%.2f', new_grade))
+          
+              expect(response.status).to eq(422)
+              expect(JSON.parse(response.body)['message']).to eq(nil)
+            end
+        end
+          
+    end
+
 
 end
