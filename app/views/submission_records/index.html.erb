@@ -1,0 +1,36 @@
+<h1>Submission History</h1>
+
+<% if @submission_records.any? %>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Submission ID</th>
+        <th>Submitted By</th>
+        <th>Submission Time</th>
+        <th>File</th>
+        <th>Comments</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @submission_records.each do |record| %>
+        <tr>
+          <td><%= record.id %></td>
+          <td><%= record.submitter.try(:name) || "Unknown" %></td>
+          <td><%= record.created_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+          <td>
+            <% if record.file_url.present? %>
+              <%= link_to "View File", record.file_url, target: "_blank" %>
+            <% else %>
+              No file uploaded
+            <% end %>
+          </td>
+          <td><%= record.comments.presence || "No comments" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p>No submission records found for this team.</p>
+<% end %>
+
+<%= link_to "Back to Assignments", assignments_path, class: "btn btn-primary" %>
