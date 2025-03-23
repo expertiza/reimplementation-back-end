@@ -58,6 +58,17 @@ class Api::V1::ResponsesController < ApplicationController
     render action: 'response'
   end
 
+  # view response
+  def view
+    action_params = { action: 'view', id: params[:id] }
+    response_content = prepare_response_content(@map, params[:round], action_params)
+  
+    # Assign variables from response_content hash
+    response_content.each { |key, value| instance_variable_set("@#{key}", value) }
+  
+    render action: 'response'
+  end
+
   # PATCH/PUT /api/v1/responses/1
   def update
 
