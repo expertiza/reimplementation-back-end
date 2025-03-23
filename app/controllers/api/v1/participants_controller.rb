@@ -182,19 +182,19 @@ class Api::V1::ParticipantsController < ApplicationController
     locale_for_student
   end
 
-  def list
-    if Participant::PARTICIPANT_TYPES.include? params[:model]
-      @root_node = Object.const_get(params[:model] + 'Node').find_by(node_object_id: params[:id])
-      @parent = Object.const_get(params[:model]).find(params[:id])
-    end
-    begin
-      @participants = @parent.participants
-      @model = params[:model]
-      @authorization = params[:authorization]
-    rescue StandardError
-      flash[:error] = $ERROR_INFO
-    end
-  end
+  #def list
+  #  if Participant::PARTICIPANT_TYPES.include? params[:model]
+  #    @root_node = Object.const_get(params[:model] + 'Node').find_by(node_object_id: params[:id])
+  #    @parent = Object.const_get(params[:model]).find(params[:id])
+  #  end
+  #  begin
+  #    @participants = @parent.participants
+  #    @model = params[:model]
+  #    @authorization = params[:authorization]
+  #  rescue StandardError
+  #    flash[:error] = $ERROR_INFO
+  #  end
+  #send
 
   # def add
   #   curr_object = Object.const_get(params[:model]).find(params[:id]) if Participant::PARTICIPANT_TYPES.include? params[:model]
@@ -222,85 +222,85 @@ class Api::V1::ParticipantsController < ApplicationController
   # end
 
   # when you change the duties, changes the permissions based on the new duty you go to
-  def update_authorizations
-    participant = Participant.find(params[:id])
-    permissions = participant_permissions(params[:authorization])
-    can_submit = permissions[:can_submit]
-    can_review = permissions[:can_review]
-    can_take_quiz = permissions[:can_take_quiz]
-    can_mentor = permissions[:can_mentor]
-    parent_id = participant.parent_id
-    # Upon successfully updating the attributes based on user role, a flash message is displayed to the user after the
-    # change in the database. This also gives the user the error message if the update fails.
-    begin
-      participant.update_attributes(can_submit: can_submit, can_review: can_review, can_take_quiz: can_take_quiz, can_mentor: can_mentor)
-      flash[:success] = 'The role of the selected participants has been successfully updated.'
-    rescue StandardError
-      flash[:error] = 'The update action failed.'
-    end
-    redirect_to action: 'list', id: parent_id, model: participant.class.to_s.gsub('Participant', '')
-  end
-
-  # def destroy
+  # def update_authorizations
   #   participant = Participant.find(params[:id])
+  #   permissions = participant_permissions(params[:authorization])
+  #   can_submit = permissions[:can_submit]
+  #   can_review = permissions[:can_review]
+  #   can_take_quiz = permissions[:can_take_quiz]
+  #   can_mentor = permissions[:can_mentor]
   #   parent_id = participant.parent_id
+  #   # Upon successfully updating the attributes based on user role, a flash message is displayed to the user after the
+  #   # change in the database. This also gives the user the error message if the update fails.
   #   begin
-  #     participant.destroy
-  #     flash[:note] = undo_link("The user \"#{participant.user.name}\" has been successfully removed as a participant.")
+  #     participant.update_attributes(can_submit: can_submit, can_review: can_review, can_take_quiz: can_take_quiz, can_mentor: can_mentor)
+  #     flash[:success] = 'The role of the selected participants has been successfully updated.'
   #   rescue StandardError
-  #     flash[:error] = 'This participant is on a team, or is assigned as a reviewer for someone’s work.'
+  #     flash[:error] = 'The update action failed.'
   #   end
   #   redirect_to action: 'list', id: parent_id, model: participant.class.to_s.gsub('Participant', '')
   # end
 
-  # Copies existing participants from a course down to an assignment
-  def inherit
-    assignment = Assignment.find(params[:id])
-    course = assignment.course
-    @copied_participants = []
-    if course
-      participants = course.participants
-      if !participants.empty?
-        participants.each do |participant|
-          new_participant = participant.copy(params[:id])
-          @copied_participants.push new_participant if new_participant
-        end
-        # Only display undo link if copies of participants are created
-        if !@copied_participants.empty?
-          undo_link("The participants from \"#{course.name}\" have been successfully copied to this assignment. ")
-        else
-          flash[:note] = 'All course participants are already in this assignment'
-        end
-      else
-        flash[:note] = 'No participants were found to inherit this assignment.'
-      end
-    else
-      flash[:error] = 'No course was found for this assignment.'
-    end
-    redirect_to controller: 'participants', action: 'list', id: assignment.id, model: 'Assignment'
-  end
+  # # def destroy
+  # #   participant = Participant.find(params[:id])
+  # #   parent_id = participant.parent_id
+  # #   begin
+  # #     participant.destroy
+  # #     flash[:note] = undo_link("The user \"#{participant.user.name}\" has been successfully removed as a participant.")
+  # #   rescue StandardError
+  # #     flash[:error] = 'This participant is on a team, or is assigned as a reviewer for someone’s work.'
+  # #   end
+  # #   redirect_to action: 'list', id: parent_id, model: participant.class.to_s.gsub('Participant', '')
+  # # end
 
-  # Take all participants from an assignment and "bequeath" them to course as course_participants.
-  def bequeath_all
-    @copied_participants = []
-    assignment = Assignment.find(params[:id])
-    if assignment.course
-      course = assignment.course
-      assignment.participants.each do |participant|
-        new_participant = participant.copy_to_course(course.id)
-        @copied_participants.push new_participant if new_participant
-      end
-      # only display undo link if copies of participants are created
-      if !@copied_participants.empty?
-        undo_link("All participants were successfully copied to \"#{course.name}\". ")
-      else
-        flash[:note] = 'All assignment participants are already part of the course'
-      end
-    else
-      flash[:error] = 'This assignment is not associated with a course.'
-    end
-    redirect_to controller: 'participants', action: 'list', id: assignment.id, model: 'Assignment'
-  end
+  # # Copies existing participants from a course down to an assignment
+  # def inherit
+  #   assignment = Assignment.find(params[:id])
+  #   course = assignment.course
+  #   @copied_participants = []
+  #   if course
+  #     participants = course.participants
+  #     if !participants.empty?
+  #       participants.each do |participant|
+  #         new_participant = participant.copy(params[:id])
+  #         @copied_participants.push new_participant if new_participant
+  #       end
+  #       # Only display undo link if copies of participants are created
+  #       if !@copied_participants.empty?
+  #         undo_link("The participants from \"#{course.name}\" have been successfully copied to this assignment. ")
+  #       else
+  #         flash[:note] = 'All course participants are already in this assignment'
+  #       end
+  #     else
+  #       flash[:note] = 'No participants were found to inherit this assignment.'
+  #     end
+  #   else
+  #     flash[:error] = 'No course was found for this assignment.'
+  #   end
+  #   redirect_to controller: 'participants', action: 'list', id: assignment.id, model: 'Assignment'
+  # end
+
+  # # Take all participants from an assignment and "bequeath" them to course as course_participants.
+  # def bequeath_all
+  #   @copied_participants = []
+  #   assignment = Assignment.find(params[:id])
+  #   if assignment.course
+  #     course = assignment.course
+  #     assignment.participants.each do |participant|
+  #       new_participant = participant.copy_to_course(course.id)
+  #       @copied_participants.push new_participant if new_participant
+  #     end
+  #     # only display undo link if copies of participants are created
+  #     if !@copied_participants.empty?
+  #       undo_link("All participants were successfully copied to \"#{course.name}\". ")
+  #     else
+  #       flash[:note] = 'All assignment participants are already part of the course'
+  #     end
+  #   else
+  #     flash[:error] = 'This assignment is not associated with a course.'
+  #   end
+  #   redirect_to controller: 'participants', action: 'list', id: assignment.id, model: 'Assignment'
+  # end
 
   # Allow participant to change handle for this assignment
   # If the participant parameters are available, update the participant
