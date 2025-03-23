@@ -125,4 +125,13 @@ module ResponsesHelper
                                                       @assignment.id,
                                                       reviewee.reviewee_id)
   end
+
+    # This method is called within set_content when the new_response flag is set to False
+  # This method gets the questionnaire directly from the response object since it is available.
+  def questionnaire_from_response
+    # if user is not filling a new rubric, the @response object should be available.
+    # we can find the questionnaire from the question_id in answers
+    answer = @response.scores.first
+    @questionnaire = @response.questionnaire_by_answer(answer)
+  end
 end
