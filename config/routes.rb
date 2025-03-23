@@ -23,6 +23,9 @@ Rails.application.routes.draw do
           get 'role/:name', action: :role_users
         end
       end
+
+      resources :submission_records, only: [:index]
+      
       resources :assignments do
         collection do
           post '/:assignment_id/add_participant/:user_id',action: :add_participant
