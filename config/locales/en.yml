@@ -60,7 +60,7 @@ en:
         user_not_found: "User not found"
         assignment_not_found: "Assignment not found"
         authorization_required: "Authorization is required"
-        authorization_invalid: "Authorization not valid. Valid authorizations are: Reader, Reviewer, Submitter, Mentor"
+        authorization_invalid: "authorization not valid. Valid authorizations are: Reader, Reviewer, Submitter, Mentor"
       users:
         destroy:
           success: "User %{name} with id %{id} deleted successfully!"
