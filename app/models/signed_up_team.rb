@@ -1,4 +1,5 @@
 class SignedUpTeam < ApplicationRecord
+  """Scopes for filtering confirmed/waitlisted records"""
   scope :confirmed, -> { where(is_waitlisted: false) }
   scope :waitlisted, -> { where(is_waitlisted: true) }
 
@@ -10,10 +11,12 @@ class SignedUpTeam < ApplicationRecord
             uniqueness: { scope: :project_topic }
 
   def self.signup_for_topic(team, topic)
+    """Wrapper method to initiate team signup for a specific topic."""
     topic.signup_team(team)
   end
 
   def self.remove_team_signups(team)
+    """Removes all topic associations for a team."""
     team.signed_up_teams.includes(:project_topic).each do |sut|
       sut.project_topic.drop_team(team)
     end

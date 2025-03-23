@@ -10,6 +10,7 @@ class ProjectTopic < ApplicationRecord
   validates :topic_name, presence: true
 
   def signup_team(team)
+    """Signs up a team, adding to waitlist if no slots available. Returns success status"""
     return false if signed_up_teams.exists?(team: team)
 
     ActiveRecord::Base.transaction do
@@ -26,6 +27,7 @@ class ProjectTopic < ApplicationRecord
   end
 
   def drop_team(team)
+    """Removes a team from the topic. Promotes next waitlisted team if slot opens"""
     signed_up_team = signed_up_teams.find_by(team: team)
     return unless signed_up_team
 
@@ -35,19 +37,23 @@ class ProjectTopic < ApplicationRecord
   end
 
   def available_slots
+    """Calculates remaining available slots for confirmed teams"""
     max_choosers - confirmed_teams_count
   end
 
   def slot_available?
+    """Checks if there are available slots for immediate confirmation"""
     available_slots.positive?
   end
 
   def confirmed_teams
+    """Returns confirmed (non-waitlisted) teams for this topic"""
     teams.joins(:signed_up_teams)
          .where(signed_up_teams: { is_waitlisted: false })
   end
 
   def waitlisted_teams
+    """Returns waitlisted teams in first-come-first-served order"""
     teams.joins(:signed_up_teams)
          .where(signed_up_teams: { is_waitlisted: true })
          .order('signed_up_teams.created_at ASC')
@@ -60,6 +66,7 @@ class ProjectTopic < ApplicationRecord
   end
 
   def promote_waitlisted_team
+    """Promotes the first waitlisted team to confirmed status"""
     next_team = waitlisted_teams.first
     return unless next_team
 
@@ -68,6 +75,7 @@ class ProjectTopic < ApplicationRecord
   end
 
   def remove_from_other_waitlists(team)
+    """Removes team from all other topic waitlists after successful confirmation"""
     team.signed_up_teams.waitlisted.destroy_all
   end
 end
