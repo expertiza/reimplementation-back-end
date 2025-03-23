@@ -2,9 +2,9 @@ name: CI/CD
 
 on:
   push:
-    branches: [ main, rspec-testing ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, rspec-testing  ]
+    branches: [ main ]
 
 jobs:
   test:
