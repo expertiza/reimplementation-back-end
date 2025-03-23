@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'rails_helper'
 
-##just needs to validate that submission is valid, if anything
+#just needs to validate that submission is valid, if anything
 
 RSpec.describe SubmissionRecord, type: :model do
   describe "validations" do
