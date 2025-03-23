@@ -55,9 +55,8 @@ module ResponsesHelper
 
   
         # Set up dropdowns or scales
-        set_dropdown_or_scale
+        set_dropdown_or_scale(questionnaire, assignment)
   
-        
         # Process the action parameters if provided
         if action_params
           case action_params[:action]
@@ -95,14 +94,49 @@ module ResponsesHelper
         }
     end
   
-    def set_dropdown_or_scale
-          @dropdown_or_scale = if AssignmentQuestionnaire.exists?(assignment_id: @assignment&.id, 
-                                                                   questionnaire_id: @questionnaire&.id, 
+    def set_dropdown_or_scale(assignment, questionaire)
+          @dropdown_or_scale = if AssignmentQuestionnaire.exists?(assignment_id: @assignment.try(:id), 
+                                                                   questionnaire_id: @questionnaire.try(:id), 
                                                                    dropdown: true)
                                   'dropdown'
                               else
                                   'scale'
                               end
+    end
+
+    def action_allowed?
+      return !session[:user].nil? unless %w[edit delete update view].include?(params[:action])
+    
+      response = Response.find(params[:id])
+      user_id = response.map.reviewer&.user_id
+    
+      case params[:action]
+      when 'edit'
+        return false if response.is_submitted
+        current_user_is_reviewer?(response.map, user_id)
+      when 'delete', 'update'
+        current_user_is_reviewer?(response.map, user_id)
+      when 'view'
+        response_edit_allowed?(response.map, user_id)
+      end
+    end
+
+    #Renamed to sort_items from sort_questions
+    def sort_items(questions)
+      questions.sort_by(&:seq)
+    end
+
+    def current_user_is_reviewer?(map, _reviewer_id)
+      map.reviewer.current_user_is_reviewer?(current_user&.id)
+    end
+
+    def create_answers(params, questions)
+      params[:responses].each do |key, value|
+        question_id = questions[key.to_i].id
+        answer = Answer.find_or_initialize_by(response_id: @response.id, question_id: question_id)
+        
+        answer.update(answer: value[:score], comments: value[:comment])
+      end
     end
 
     def init_answers(response, questions)
