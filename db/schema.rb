@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_03_23_015142) do
+ActiveRecord::Schema[8.0].define(version: 2025_03_23_040421) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -273,6 +273,23 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_23_015142) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "questions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.text "txt"
+    t.integer "weight"
+    t.decimal "seq", precision: 10
+    t.string "question_type"
+    t.string "size"
+    t.string "alternatives"
+    t.boolean "break_before"
+    t.string "max_label"
+    t.string "min_label"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "questionnaire_id", null: false
+    t.index ["questionnaire_id"], name: "fk_question_questionnaires"
+    t.index ["questionnaire_id"], name: "index_questions_on_questionnaire_id"
+  end
+
   create_table "quiz_question_choices", id: :integer, charset: "latin1", force: :cascade do |t|
     t.integer "question_id"
     t.text "txt"
@@ -400,6 +417,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_23_015142) do
   add_foreign_key "participants", "teams"
   add_foreign_key "participants", "users"
   add_foreign_key "question_advices", "items", column: "question_id"
+  add_foreign_key "questions", "questionnaires"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
   add_foreign_key "sign_up_topics", "assignments"
   add_foreign_key "signed_up_teams", "sign_up_topics"

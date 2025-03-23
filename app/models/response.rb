@@ -157,7 +157,7 @@ class Response < ApplicationRecord
   #   }
   # }
   # Called in: grades_controller.rb (view), assignment.rb (self.export)
-  def review_grades(assignment, questions)
+  def self.review_grades(assignment, questions)
     scores = { participants: {}, teams: {} }
     assignment.participants.each do |participant|
       scores[:participants][participant.id.to_s.to_sym] = participant_scores(participant, questions)

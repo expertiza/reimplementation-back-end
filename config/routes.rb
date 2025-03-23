@@ -128,6 +128,7 @@ Rails.application.routes.draw do
           get 'instructor_review'
           post 'update_team'
           post 'update_participant_grade'
+          get 'edit_participant_scores'
         end
       end
     end

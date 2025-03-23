@@ -2,6 +2,7 @@ class Questionnaire < ApplicationRecord
   belongs_to :instructor
   has_many :items, class_name: "Item", foreign_key: "questionnaire_id", dependent: :destroy # the collection of questions associated with this Questionnaire
   before_destroy :check_for_question_associations
+  has_many :questions
 
   validate :validate_questionnaire
   validates :name, presence: true

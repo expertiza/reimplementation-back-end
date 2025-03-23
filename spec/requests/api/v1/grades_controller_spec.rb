@@ -47,8 +47,20 @@ RSpec.describe Api::V1::GradesController, type: :controller do
         )
     end
 
+    let!(:instructor) do
+        User.create!(
+        name: "profn",
+        password_digest: "password",
+        role_id: @roles[:instructor].id,
+        full_name: "Prof n",
+        email: "testussder@example.com",
+        mru_directory_path: "/home/testuser"
+        )
+    end
+
     let(:ta_token) { JsonWebToken.encode({id: ta.id}) }
     let(:student_token) { JsonWebToken.encode({id: s1.id}) }
+    let(:instructor_token) { JsonWebToken.encode({ id: instructor.id }) }
     
 
     let!(:assignment) { Assignment.create!(name: 'Test Assignment',instructor_id: prof.id) }
@@ -56,8 +68,12 @@ RSpec.describe Api::V1::GradesController, type: :controller do
     let!(:participant) { AssignmentParticipant.create!(user: s1, assignment_id: assignment.id, team: team, handle: 'handle') }
     let!(:questionnaire) { Questionnaire.create!(name: 'Review Questionnaire',max_question_score:100,min_question_score:0,instructor_id:prof.id) }
     let!(:assignment_questionnaire) { AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire) }
-    # let!(:question) { Question.create!(questionnaire: questionnaire, txt: 'Question 1', type: 'Criterion', seq: 1) }
-    # let!(:question) { questionnaire.items.create!(txt: 'Question 1',  seq: 1) }
+    let!(:question) { Question.create!(questionnaire: questionnaire, txt: 'Question 1',  seq: 1, break_before: 1) }
+    # let(:review_questionnaire) { build(:questionnaire, id: 1, questions: [question]) }
+    let!(:review_questionnaire) do
+        questionnaire.update(questions: [question])
+        questionnaire
+      end
 
     describe '#action_allowed' do
         context 'when the user is a Teaching Assistant' do
@@ -121,18 +137,6 @@ RSpec.describe Api::V1::GradesController, type: :controller do
     end
 
     describe '#instructor_review' do
-        let!(:instructor) do
-            User.create!(
-            name: "profn",
-            password_digest: "password",
-            role_id: @roles[:instructor].id,
-            full_name: "Prof n",
-            email: "testussder@example.com",
-            mru_directory_path: "/home/testuser"
-            )
-        end
-
-        let(:instructor_token) { JsonWebToken.encode({ id: instructor.id }) }
         let!(:participant) { AssignmentParticipant.create!(user: s1, assignment_id: assignment.id, team: team, handle: 'handle') }
         let!(:participant2) { AssignmentParticipant.create!(user: s2, assignment_id: assignment.id, team: team, handle: 'handle') }
 
@@ -324,5 +328,24 @@ RSpec.describe Api::V1::GradesController, type: :controller do
           
     end
 
+    describe '#edit_participant_scores' do
+        before do
+            allow(controller).to receive(:find_participant).with(participant.id.to_s).and_return(participant)
+            allow(controller).to receive(:list_questions).with(assignment).and_return(question)
+            allow(Response).to receive(:review_grades).with(participant, question).and_return([95, 90, 85])  # Example scores
+        end
 
+        describe 'GET #edit_participant_scores' do
+            it 'renders the edit page and sets instance variables' do
+                request.headers['Authorization'] = "Bearer #{instructor_token}"
+                request.headers['Content-Type'] = 'application/json'
+
+                get :edit_participant_scores, params: { id: participant.id }
+
+                expect(assigns(:participant)).to eq(participant)
+                expect(assigns(:assignment)).to eq(assignment)
+                expect(assigns(:scores)).to eq([95, 90, 85])
+            end
+        end
+    end
 end
