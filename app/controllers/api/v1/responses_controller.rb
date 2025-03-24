@@ -15,19 +15,18 @@ class Api::V1::ResponsesController < ApplicationController
   end
 
   def new
-    @map = ResponseMap.find(params[:id])
-    attributes = prepare_response_content(map, 'New', true)
-    attributes.each do |key, value|
-      instance_variable_set("@#{key}", value)
-    end
-    if @assignment
-      @stage = @assignment.current_stage(SignedUpTeam.topic_id(@participant.parent_id, @participant.user_id))
-    end
-
-    questions = sort_questions(@questionnaire.questions)
-    @total_score = total_cake_score
-    init_answers(@response, questions)
-    render action: 'response'
+    @map_id = 1
+    puts @map_id
+    #@map = ResponseMap.find(params[:id])
+    #attributes = prepare_response_content(@map, 'New', true)
+    #attributes.each do |key, value|
+    #  instance_variable_set("@#{key}", value)
+    #end
+    #@response = find_or_create_response
+    #questions = @response.sort_items(@questionnaire.items)
+    #@total_score = total_cake_score(@response)
+    #init_answers(@response, questions)
+    #render action: 'response'
   end
 
   # POST /api/v1/responses
@@ -40,7 +39,7 @@ class Api::V1::ResponsesController < ApplicationController
     was_submitted = @response.is_submitted
 
     update_response(is_submitted)
-    #process_questions if params[:responses]
+    process_items if params[:responses]
 
     notify_instructor_if_needed(was_submitted)
 
@@ -64,26 +63,25 @@ class Api::V1::ResponsesController < ApplicationController
 
 
   private
+
   def find_map
+    puts "find_map method"
     map_id = params[:map_id] || params[:id]
-    return nil if map_id.nil?
-  
+
     ResponseMap.find_by(id: map_id)
-  rescue ActiveRecord::RecordNotFound
-    nil
   end
+
   def find_questionnaire
     if params[:review][:questionnaire_id]
       questionnaire = Questionnaire.find(params[:review][:questionnaire_id])
     else
       questionnaire = nil
-
     end
     questionnaire
   end
 
-  def find_or_create_response(is_submitted)
-    response = Response.where(map_id: @map.id).order(created_at: :desc).first
+  def find_or_create_response(is_submitted = false)
+    response = Response.where(map_id: @map.map_id).order(created_at: :desc).first
     if response.nil?
       response = Response.create(map_id: @map.id, additional_comment: params[:review][:comments],
                                  is_submitted: is_submitted)
@@ -95,9 +93,10 @@ class Api::V1::ResponsesController < ApplicationController
     @response.update(additional_comment: params[:review][:comments], is_submitted: is_submitted)
   end
 
-  def process_questions
-    questions = sort_questions(@questionnaire.questions)
-    create_answers(params, questions)
+  def process_items
+    items = sort_items(@questionnaire.items)
+    items = @questionnaire.items
+    create_answers(params, items)
   end
 
   def notify_instructor_if_needed(was_submitted)
@@ -114,13 +113,21 @@ class Api::V1::ResponsesController < ApplicationController
                 return: params.permit(:return)[:return], msg: msg, error_msg: error_msg, review: params.permit(:review)[:review], save_options: params.permit(:save_options)[:save_options]
   end  
 
-    # Use callbacks to share common setup or constraints between actions.
-    def set_response
-      @response = Api::V1::Response.find(params.expect(:id))
-    end
+  # Use callbacks to share common setup or constraints between actions.
+  def set_response
+    @response = Api::V1::Response.find(params.expect(:id))
+  end
 
-    # Only allow a list of trusted parameters through.
-    def response_params
-      params.fetch(:response, {})
-    end
+  # Only allow a list of trusted parameters through.
+  def response_params
+    params.require(:response).permit(
+      :isSubmit,
+      :map_id,
+      :id,
+      review: [:comments, :questionnaire_id],
+      responses: {}, # Adjust based on structure
+      save_options: {},
+      return: {}
+    )
+  end
 end

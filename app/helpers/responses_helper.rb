@@ -117,8 +117,8 @@ module ResponsesHelper
   
   # Assigns total contribution for cake question across all reviewers to a hash map
   # Key : question_id, Value : total score for cake question
-  def total_cake_score
-    reviewee = ResponseMap.select(:reviewee_id, :type).where(id: @response.map_id.to_s).first
+  def total_cake_score(response)
+    reviewee = ResponseMap.select(:reviewee_id, :type).where(id: response.map_id).first
     return Cake.get_total_score_for_questions(reviewee.type,
                                                       @review_questions,
                                                       @participant.id,

@@ -73,4 +73,6 @@ class Response < ApplicationRecord
       .send_response_email
       .deliver_later
   end
+
+  
 end
