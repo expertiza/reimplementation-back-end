@@ -13,6 +13,7 @@ class Api::V1::ParticipantsController < ApplicationController
   #   else
   #     current_user_has_ta_privileges?
   #   end
+
   # end
   # ************************************************************
   #redundant by may be required later
@@ -104,8 +105,10 @@ class Api::V1::ParticipantsController < ApplicationController
   
     # Now you can safely use `user` below
     handle = "#{user.name.parameterize}-#{SecureRandom.hex(2)}"
-  
-    permissions = participant_permissions(params[:authorization])
+
+    # Updates RoleContext with appropriate strategy for user
+    update_context(params[:authorization])
+    permissions = @context.get_permissions
   
     participant = assignment.participants.create!(
       user: user,
@@ -120,12 +123,16 @@ class Api::V1::ParticipantsController < ApplicationController
   end
 
 
-  #updating authorization of the participants
+  # Updating authorization of the participants
   def update_authorization
+    # Get participant via ID
     participant = Participant.find(params[:id])
   
-    permissions = participant_permissions(params[:authorization])
+    # Updates the RoleContext with the necessary strategy and obtains permissions
+    update_context(params[:authorization])
+    permissions = @context.get_permissions()
   
+    # Updates the participant's permissions to match
     participant.update!(
       can_submit: permissions[:can_submit],
       can_review: permissions[:can_review],
@@ -135,12 +142,7 @@ class Api::V1::ParticipantsController < ApplicationController
   
     render json: participant, status: :ok
   end
-  
-  
-  
-  
-  
-  
+
 
   private
 
@@ -148,20 +150,20 @@ class Api::V1::ParticipantsController < ApplicationController
     params.require(:user).permit(:name)
   end
 
-  def participant_permissions(role)
-    case role
-    when 'Student'
-      { can_submit: true, can_review: false, can_take_quiz: false, can_mentor: false }
-    when 'Reviewer'
-      { can_submit: false, can_review: true, can_take_quiz: false, can_mentor: false }
-    when 'Teaching Assistant'
-      { can_submit: false, can_review: true, can_take_quiz: false, can_mentor: true }
-    when 'Mentor'
-      { can_submit: false, can_review: false, can_take_quiz: false, can_mentor: true }
-    else
-      { can_submit: false, can_review: false, can_take_quiz: false, can_mentor: false }
-    end
-  end
+  # def participant_permissions(role)
+  #   case role
+  #   when 'Student'
+  #     { can_submit: true, can_review: false, can_take_quiz: false, can_mentor: false }
+  #   when 'Reviewer'
+  #     { can_submit: false, can_review: true, can_take_quiz: false, can_mentor: false }
+  #   when 'Teaching Assistant'
+  #     { can_submit: false, can_review: true, can_take_quiz: false, can_mentor: true }
+  #   when 'Mentor'
+  #     { can_submit: false, can_review: false, can_take_quiz: false, can_mentor: true }
+  #   else
+  #     { can_submit: false, can_review: false, can_take_quiz: false, can_mentor: false }
+  #   end
+  # end
 
   def set_participant
     @participant = Participant.find(params[:id])
@@ -361,6 +363,16 @@ class Api::V1::ParticipantsController < ApplicationController
   end
 
   private
+
+  # Private method that ensures that the context is initialized and updates
+  # The strategy being used by the context given the 
+  def update_context(role)
+    # Creates new RoleContext if one does not already exist
+    if @context.nil?
+      @context = RoleContext.new
+    # Sets the assigned strategy for the context
+    @context.set_strategy_by_role(role)
+  end
 
   def participant_params
     params.require(:participant).permit(:can_submit, :can_review, :user_id, :parent_id, :submitted_at,
