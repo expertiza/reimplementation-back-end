@@ -30,12 +30,12 @@ class Api::V1::StudentQuizzesController < ApplicationController
   end
 
   #POST /student_quizzes/assign
-  def assign_quiz_to_student
+  def assign_quiz
     participant = find_resource_by_id(Participant, params[:participant_id])
     questionnaire = find_resource_by_id(Questionnaire, params[:questionnaire_id])
     return unless participant && questionnaire
 
-    if quiz_already_assigned?(participant, questionnaire)
+    if quiz_assigned?(participant, questionnaire)
       render_error("This student is already assigned to the quiz.", :unprocessable_entity)
       return
     end
@@ -86,12 +86,12 @@ class Api::V1::StudentQuizzesController < ApplicationController
   private
 
   #To get quiz from db
-  def set_student_quiz
+  def fetch_quiz
     @student_quiz = FindResourceService.call(Questionnaire, params[:id])
   end
   
   # Check if a quiz has already been assigned to a participant
-  def quiz_already_assigned?(participant, questionnaire)
+  def quiz_assigned?(participant, questionnaire)
     ResponseMap.exists?(
       reviewee_id: participant.user_id,
       reviewed_object_id: questionnaire.id
