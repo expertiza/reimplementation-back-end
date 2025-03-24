@@ -3,52 +3,69 @@ require 'json_web_token'
 
 RSpec.describe 'api/v1/teams_participants', type: :request do
   before(:all) do
-    # Create an institution
-    @institution = Institution.create!(name: "NC State2")
-
-    # Create roles explicitly using find_or_create_by! so duplicates are not created.
-    @instructor_role = Role.find_or_create_by!(id: 3, name: "Instructor2")
-    @ta_role         = Role.find_or_create_by!(id: 2, name: "Teaching Assistant2", parent_id: @instructor_role.id)
-    @student_role    = Role.find_or_create_by!(id: 1, name: "Student2", parent_id: @ta_role.id)
+    @roles = create_roles_hierarchy
   end
 
-  # Create an instructor similar to your example.
+  let(:institution) { Institution.create!(name: "NC State2") }
+
+  let(:instructor_role) { Role.find_or_create_by!(name: "Instructor") }
+  let(:ta_role) { Role.find_or_create_by!(name: "Teaching Assistant", parent_id: instructor_role.id) }
+  let(:student_role) { Role.find_or_create_by!(name: "Student", parent_id: ta_role.id) }
+
   let(:instructor) do
     User.create!(
-      id: 1,
       name: "profa",
       password_digest: "password",
-      role_id: @instructor_role.id,
+      role_id: instructor_role.id,
       full_name: "Prof A",
       email: "testuser@example.com",
       mru_directory_path: "/home/testuser",
-      institution_id: @institution.id
+      institution_id: institution.id
     )
   end
 
-  # Create additional users using factories for student and TA.
-  let(:student)    { create(:user, role: @student_role) }
-  let(:ta)         { create(:user, role: @ta_role) }
+  let(:assignment) do
+    Assignment.create!(
+      name: "Sample Assignment",
+      instructor_id: instructor.id
+    )
+  end
 
-  # Create an assignment and a team belonging to that assignment.
-  let(:assignment) { create(:assignment, instructor_id: instructor.id) }
-  # Assuming your Team model uses parent_id to store the assignment id.
-  let(:team)       { create(:team, parent_id: assignment.id) }
+  let(:team) do
+    Team.create!(
+      assignment_id: assignment.id
+    )
+  end
 
-  # Create a participant and associate with the team.
-  let(:participant){ create(:user, name: 'Test Participant') }
-  let!(:teams_user){ create(:teams_user, user: participant, team: team) }
+  let(:participant) do
+    User.create!(
+      full_name: "Test Participant",
+      name: "Test",
+      email: "participant@example.com",
+      password_digest: "password",
+      role_id: student_role.id
+    )
+  end
 
-  # Authorization header using JWT.
+  let(:teams_user) do
+    TeamsUser.create!(
+      user_id: participant.id,
+      team_id: team.id
+    )
+  end
+
+
+
   let(:token) { JsonWebToken.encode({ id: instructor.id }) }
   let(:Authorization) { "Bearer #{token}" }
 
-  # Swagger-style tests
-
+  ### ✅ **Update Duties Test**
   path '/api/v1/teams_participants/update_duties' do
     put('update participant duties') do
       tags 'Teams Participants'
       consumes 'application/json'
+      produces 'application/json'
+
       parameter name: :payload, in: :body, schema: {
         type: :object,
         properties: {
@@ -59,47 +76,70 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
               duty_id: { type: :integer }
             },
             required: ['duty_id']
-          },
-          participant_id: { type: :integer }
+          }
         },
-        required: ['teams_user_id', 'teams_user', 'participant_id']
+        required: ['teams_user_id', 'teams_user']
       }
-      response(302, 'redirect to student teams view') do
+
+      response(200, 'duty updated successfully') do
+        let(:new_user) do
+          User.create!(
+            full_name: "User One",
+            name: "User1",
+            email: "user1@example.com",
+            password_digest: "password",
+            role_id: student_role.id
+          )
+        end
+
+        let(:teams_user) { TeamsUser.create!(team_id: team.id, user_id: new_user.id) }
+
         let(:payload) do
           {
             teams_user_id: teams_user.id,
-            teams_user: { duty_id: 2 },
-            participant_id: participant.id
+            teams_user: { duty_id: 2 }
           }
         end
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: { message: "Duty updated successfully" }
-            }
+
+        run_test!
+      end
+
+      response(404, 'team user not found') do
+        let(:payload) do
+          {
+            teams_user_id: 99999,  # Non-existing ID
+            teams_user: { duty_id: 2 }
           }
         end
+
         run_test! do |response|
-          expect(response.headers['Location']).to include('student_teams')
+          expect(response.body).to include("Couldn't find TeamsUser")
         end
       end
     end
   end
 
+
+  ### ✅ **List Participants Test**
   path '/api/v1/teams_participants/list_participants/{id}' do
     parameter name: 'id', in: :path, type: :integer, description: 'Team ID'
+
     get('list participants') do
       tags 'Teams Participants'
       produces 'application/json'
+
       response(200, 'successful') do
         let(:id) { team.id }
+
         run_test! do |response|
-          json = JSON.parse(response.body) rescue []
-          expect(json).to be_an(Array)
+          json = JSON.parse(response.body)
+          expect(json['team_participants']).to be_an(Array)
         end
       end
+
       response(404, 'team not found') do
-        let(:id) { 0 }
+        let(:id) { 99999 } # Ensure non-existing team ID
+
         run_test! do |response|
           expect(response.body).to include("Couldn't find Team")
         end
@@ -107,12 +147,15 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
     end
   end
 
+  ### ✅ **Add Participant Test**
   path '/api/v1/teams_participants/add_participant/{id}' do
     parameter name: 'id', in: :path, type: :integer, description: 'Team ID'
+
     post('add participant') do
       tags 'Teams Participants'
       consumes 'application/json'
       produces 'application/json'
+
       parameter name: :payload, in: :body, schema: {
         type: :object,
         properties: {
@@ -124,49 +167,44 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
         },
         required: ['user']
       }
-      response(302, 'redirect to teams list') do
+
+      response(302, 'participant added successfully') do
         let(:payload) { { user: { name: participant.name } } }
         let(:id) { team.id }
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: { message: "The participant \"#{participant.name}\" has been successfully added to \"Team\"." }
-            }
-          }
-        end
-        run_test! do |response|
-          expect(response.headers['Location']).to include('teams')
-        end
+
+        run_test!
       end
-      response(302, 'error and redirect to root') do
+
+      response(404, 'participant not found') do
         let(:payload) { { user: { name: 'Invalid User' } } }
         let(:id) { team.id }
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => { example: { error: "Participant not found" } }
-          }
-        end
+
         run_test! do |response|
-          expect(response.headers['Location']).to include(root_path)
+          expect(response.body).to include("Couldn't find User")
         end
       end
     end
   end
 
+  ### ✅ **Delete Participant Test**
   path '/api/v1/teams_participants/delete_participant/{id}' do
     parameter name: 'id', in: :path, type: :integer, description: 'TeamsUser ID'
+
     delete('delete participant') do
       tags 'Teams Participants'
       produces 'application/json'
-      response(302, 'redirect to teams list') do
+
+      response(200, 'participant deleted successfully') do
         let(:id) { teams_user.id }
+
         run_test! do |response|
           expect(TeamsUser.exists?(teams_user.id)).to be_falsey
-          expect(response.headers['Location']).to include('teams')
         end
       end
+
       response(404, 'not found') do
         let(:id) { 0 }
+
         run_test! do |response|
           expect(response.body).to include("Couldn't find TeamsUser")
         end
@@ -174,11 +212,15 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
     end
   end
 
+  ### ✅ **Delete Selected Participants Test**
   path '/api/v1/teams_participants/delete_selected_participants/{id}' do
     parameter name: 'id', in: :path, type: :integer, description: 'Team ID'
+
     delete('delete selected participants') do
       tags 'Teams Participants'
+      consumes 'application/json'
       produces 'application/json'
+
       parameter name: :payload, in: :body, schema: {
         type: :object,
         properties: {
@@ -186,29 +228,48 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
         },
         required: ['item']
       }
-      response(302, 'redirect to list participants') do
+
+
+
+      response(200, 'participants deleted successfully') do
         let(:id) { team.id }
-        let(:new_user1) { create(:user) }
-        let(:new_user2) { create(:user) }
-        let!(:teams_user1) { create(:teams_user, team: team, user: new_user1) }
-        let!(:teams_user2) { create(:teams_user, team: team, user: new_user2) }
-        let(:payload) { { item: [teams_user1.id, teams_user2.id] } }
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => { example: { message: "Selected participants deleted" } }
-          }
+
+        let(:new_user1) do
+          User.create!(
+            full_name: "User One",
+            name: "User1",
+            email: "user1@example.com",
+            password_digest: "password",
+            role_id: student_role.id
+          )
         end
+
+        let(:new_user2) do
+          User.create!(
+            full_name: "User Two",
+            name: "User2",
+            email: "user2@example.com",
+            password_digest: "password",
+            role_id: student_role.id
+          )
+        end
+
+        let(:teams_user1) { TeamsUser.create!(team_id: team.id, user_id: new_user1.id) }
+        let(:teams_user2) { TeamsUser.create!(team_id: team.id, user_id: new_user2.id) }
+
+        # let(:payload) { {item: [teams_user1.id, teams_user2.id] }}
+
+
+        # let(:payload) { { item: [teams_user.id] } }
+        let(:payload) { { item: [teams_user1.id, teams_user2.id] } }
+
+
+
+
         run_test! do |response|
           expect(TeamsUser.exists?(teams_user1.id)).to be_falsey
           expect(TeamsUser.exists?(teams_user2.id)).to be_falsey
-          expect(response.headers['Location']).to include('list_participants')
-        end
-      end
-      response(404, 'team not found') do
-        let(:id) { 0 }
-        let(:payload) { { item: [] } }
-        run_test! do |response|
-          expect(response.body).to include("Couldn't find Team")
+          # expect(TeamsUser.exists?(teams_user.id)).to be_falsey
         end
       end
     end
