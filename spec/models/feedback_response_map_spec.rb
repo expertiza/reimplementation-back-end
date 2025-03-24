@@ -21,7 +21,7 @@ describe FeedbackResponseMap do
       allow(review_response_map).to receive(:assignment).and_return(assignment)
       allow(feedback_response_map).to receive(:assignment).and_return(assignment)
       allow(assignment).to receive(:questionnaires).and_return(questionnaires)
-    #   allow(questionnaires).to receive(:find_by).with(type: 'AuthorFeedbackQuestionnaire').and_return([questionnaire1])
+    #   allow(questionnaires).to receive(:find_by).with(questionnaire_type: 'AuthorFeedbackQuestionnaire').and_return([questionnaire1])
     end
   
     describe '#assignment' do
@@ -33,6 +33,44 @@ describe FeedbackResponseMap do
     describe '#title' do
       it 'returns "Feedback"' do
         expect(feedback_response_map.title).to eq('Feedback')
+      end
+    end
+
+    describe '#questionnaire' do
+      it 'returns an AuthorFeedbackQuestionnaire' do
+        # Assuming `feedback_response_map.questionnaire` returns the actual questionnaire object
+        expect(feedback_response_map.questionnaire).to eq([questionnaire1, questionnaire2])
+      end
+    end
+    
+    describe '#contributor' do
+      it 'returns the reviewee (the original contributor)' do
+        expect(feedback_response_map.contributor).to eq(participant)
+      end
+    end
+
+    # describe '#team' do
+    #   it 'returns the team being reviewed' do
+    #     expect(feedback_response_map.team).to eq(team)
+    #   end
+    # end
+
+    describe '#reviewer' do
+      it 'returns the reviewer who gave the original review' do
+        expect(feedback_response_map.reviewer).to eq(assignment_participant)
+      end
+    end
+
+    describe '#round' do
+      it 'returns the round number of the original review' do
+        # Mock the response round number
+        allow(feedback_response_map).to receive(:round).and_return(1)
+        expect(feedback_response_map.round).to eq(1)
+      end
+
+      it 'returns nil if the round number is not present' do
+        allow(feedback_response_map).to receive(:round).and_return(nil)
+        expect(feedback_response_map.round).to be_nil
       end
     end
   end
