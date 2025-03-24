@@ -107,7 +107,6 @@ class Api::V1::ResponsesController < ApplicationController
     @response.destroy!
   end
 
-
   def save
     @map = ResponseMap.find(params[:id])
     @return = params[:return]
@@ -117,6 +116,15 @@ class Api::V1::ResponsesController < ApplicationController
     redirect_to controller: 'responses', action: 'save', id: @map.map_id,
             return: params.permit(:return)[:return], msg: msg, review: params.permit(:review)[:review],
             save_options: params.permit(:save_options)[:save_options]
+  end
+  
+  def new_feedback
+    find_response
+    if @review
+      @reviewer = AssignmentParticipant.where(user_id: session[:user].id, parent_id: review.map.assignment.id).first
+      find_FeedbackResponseMap_or_create_new
+      render json: @response, status: 201, location: @response
+    end
   end
 
   private
@@ -137,6 +145,13 @@ class Api::V1::ResponsesController < ApplicationController
     questionnaire
   end
 
+    def find_response
+      @review = Response.find(params[:id]) unless params[:id].nil?
+    end
+
+    # Only allow a list of trusted parameters through.
+    def response_params
+      params.fetch(:response, {})
   def find_or_create_response(is_submitted = false)
     response = Response.where(map_id: @map.map_id).order(created_at: :desc).first
     if response.nil?
