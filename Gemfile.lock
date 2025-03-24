@@ -91,6 +91,10 @@ GEM
       term-ansicolor
       thor
     crass (1.0.6)
+    database_cleaner-active_record (2.2.0)
+      activerecord (>= 5.a)
+      database_cleaner-core (~> 2.0.0)
+    database_cleaner-core (2.0.1)
     date (3.4.1)
     diff-lcs (1.5.0)
     docile (1.4.0)
@@ -200,6 +204,10 @@ GEM
       activesupport (= 8.0.1)
       bundler (>= 1.15.0)
       railties (= 8.0.1)
+    rails-controller-testing (1.0.5)
+      actionpack (>= 5.0.1.rc1)
+      actionview (>= 5.0.1.rc1)
+      activesupport (>= 5.0.1.rc1)
     rails-dom-testing (2.2.0)
       activesupport (>= 5.0.0)
       minitest
@@ -312,6 +320,7 @@ DEPENDENCIES
   bcrypt (~> 3.1.7)
   bootsnap (>= 1.18.4)
   coveralls
+  database_cleaner-active_record
   factory_bot_rails
   faker
   find_with_order
@@ -321,6 +330,7 @@ DEPENDENCIES
   puma (~> 5.0)
   rack-cors
   rails (~> 8.0, >= 8.0.1)
+  rails-controller-testing
   rspec-rails
   rswag-api
   rswag-specs

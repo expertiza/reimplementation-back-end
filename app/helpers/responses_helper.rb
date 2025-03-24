@@ -151,12 +151,21 @@ module ResponsesHelper
   
   # Assigns total contribution for cake question across all reviewers to a hash map
   # Key : question_id, Value : total score for cake question
-  def total_cake_score
-    reviewee = ResponseMap.select(:reviewee_id, :type).where(id: @response.map_id.to_s).first
+  def total_cake_score(response)
+    reviewee = ResponseMap.select(:reviewee_id, :type).where(id: response.map_id).first
     return Cake.get_total_score_for_questions(reviewee.type,
                                                       @review_questions,
                                                       @participant.id,
                                                       @assignment.id,
                                                       reviewee.reviewee_id)
+  end
+
+    # This method is called within set_content when the new_response flag is set to False
+  # This method gets the questionnaire directly from the response object since it is available.
+  def questionnaire_from_response
+    # if user is not filling a new rubric, the @response object should be available.
+    # we can find the questionnaire from the question_id in answers
+    answer = @response.scores.first
+    @questionnaire = @response.questionnaire_by_answer(answer)
   end
 end
