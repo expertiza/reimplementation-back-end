@@ -24,7 +24,15 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :submission_records, only: [:index]
+     resources :submission_records, only: [:create, :update, :destroy] do
+    collection do
+      # This will allow access to submission records based on team_id
+      get 'index/:team_id', to: 'submission_records#index', as: 'team_submission_records'
+    end
+  end
+
+  # Define individual routes for show, create, update, destroy actions
+  resources :submission_records, only: [:show]
       
       resources :assignments do
         collection do
