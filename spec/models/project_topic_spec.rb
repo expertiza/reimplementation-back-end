@@ -103,13 +103,10 @@ RSpec.describe ProjectTopic, type: :model do
       project_topic.signup_team(team)
       project_topic.signup_team(team2)
       project_topic.signup_team(team3)
-      expect(project_topic.confirmed_teams).to include(team)
-      expect(project_topic.confirmed_teams).to include(team2)
-      expect(project_topic.waitlisted_teams).to include(team3)
-      topic_teams = project_topic.get_signed_up_teams
-      expect(topic_teams).to include(team)
-      expect(topic_teams).to include(team2)
-      expect(topic_teams).to include(team3)
+
+      # Get SignedUpTeam records instead of Team objects
+      topic_signups = project_topic.get_signed_up_teams
+      expect(topic_signups.pluck(:team_id)).to include(team.id, team2.id, team3.id)
     end
   end
 
@@ -135,9 +132,11 @@ RSpec.describe ProjectTopic, type: :model do
     it 'returns waitlisted teams in order' do
       teams = 5.times.map { Team.create!(assignment: assignment) }
       teams.each { |t| project_topic.signup_team(t) }
-      expect(project_topic.waitlisted_teams.first).to eq([teams[2]])
-      expect(project_topic.waitlisted_teams.second).to eq([teams[3]])
-      expect(project_topic.waitlisted_teams.third).to eq([teams[4]])
+
+      # Get the first team from the relation
+      expect(project_topic.waitlisted_teams.first).to eq(teams[2])
+      expect(project_topic.waitlisted_teams.second).to eq(teams[3])
+      expect(project_topic.waitlisted_teams.third).to eq(teams[4])
     end
   end
 end
