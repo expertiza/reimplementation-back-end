@@ -168,6 +168,30 @@ RSpec.describe 'Institutions API', type: :request do
         end
         run_test!
       end
+
+      response(404, 'institution not found in Hindi') do
+        let(:id) { 999 } # Non-existent ID
+  
+        let!(:hindi_user) do
+          User.create!(
+            name: "hindiprof",
+            full_name: "Hindi Professor",
+            email: "hindiprof@example.com",
+            password_digest: "password",
+            role_id: @roles[:instructor].id,
+            locale: :hi
+          )
+        end
+  
+        let(:token) { JsonWebToken.encode({ id: hindi_user.id }) }
+        let(:Authorization) { "Bearer #{token}" }
+  
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['error']).to eq(I18n.t('institution.not_found', locale: :hi))
+        end
+      end
+  
     end
 
     delete('delete institution') do
@@ -183,6 +207,31 @@ RSpec.describe 'Institutions API', type: :request do
         end
         run_test!
       end
+
+      response(200, 'institution deleted message is internationalized') do
+        let(:institution) { Institution.create(name: 'Test institution') }
+        let(:id) { institution.id }
+  
+        let!(:hindi_user) do
+          User.create!(
+            name: "hindiprof",
+            full_name: "Hindi Professor",
+            email: "hindiprof@example.com",
+            password_digest: "password",
+            role_id: @roles[:instructor].id,
+            locale: :hi
+          )
+        end
+  
+        let(:token) { JsonWebToken.encode({ id: hindi_user.id }) }
+        let(:Authorization) { "Bearer #{token}" }
+  
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['message']).to eq(I18n.t('institution.deleted', locale: :hi))
+        end
+      end
+  
     end
   end
 end
