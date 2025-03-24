@@ -17,10 +17,11 @@ class Api::V1::ResponsesController < ApplicationController
 
   # GET /api/v1/responses/1
   def show
-    render json: @response, status: :ok
-    
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: 'Response not found' }, status: :not_found
+    if @response
+      render json: @response, status: :ok
+    else
+      render json: { error: 'Response not found' }, status: :not_found
+    end
   end
 
   def new
@@ -60,7 +61,7 @@ class Api::V1::ResponsesController < ApplicationController
 
   def edit 
     action_params = { action: 'edit', id: params[:id], return: params[:return] }
-    response_content = prepare_response_content(@map, params[:round], action_params)
+    response_content = prepare_response_content(@map, action_params)
   
     # Assign variables from response_content hash
     response_content.each { |key, value| instance_variable_set("@#{key}", value) }
@@ -119,11 +120,19 @@ class Api::V1::ResponsesController < ApplicationController
   end
   
   def new_feedback
-    find_response
-    if @review
-      @reviewer = AssignmentParticipant.where(user_id: session[:user].id, parent_id: review.map.assignment.id).first
-      find_FeedbackResponseMap_or_create_new
-      render json: @response, status: 201, location: @response
+    if Response.find(params[:id])
+      @map = Response.find(params[:id]).map
+      response_content = prepare_response_content(@map)
+    
+      # Assign variables from response_content hash
+      response_content.each { |key, value| instance_variable_set("@#{key}", value) }
+      if @response
+        @reviewer = AssignmentParticipant.where(user_id: current_user.id, parent_id: @response.map.assignment.id).first
+        map = find_or_create_feedback
+        redirect_to action: 'new', id: map.id, return: 'feedback'
+      end
+    else
+      redirect_back fallback_location: root_path
     end
   end
 
@@ -145,13 +154,10 @@ class Api::V1::ResponsesController < ApplicationController
     questionnaire
   end
 
-    def find_response
-      @review = Response.find(params[:id]) unless params[:id].nil?
-    end
+  def find_response
+    @review = Response.find(params[:id]) unless params[:id].nil?
+  end
 
-    # Only allow a list of trusted parameters through.
-    def response_params
-      params.fetch(:response, {})
   def find_or_create_response(is_submitted = false)
     response = Response.where(map_id: @map.map_id).order(created_at: :desc).first
     if response.nil?

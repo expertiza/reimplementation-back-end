@@ -12,7 +12,8 @@ Rails.application.routes.draw do
       resources :responses do
         collection do
           get 'new', action: :new
-          post 'save', to: 'responses#save', as: :save_response
+          post 'save', to: 'responses#save'
+          post 'new_feedback', to: 'responses#new_feedback'
         end
       end
       resources :institutions
