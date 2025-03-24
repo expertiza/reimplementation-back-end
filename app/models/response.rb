@@ -323,6 +323,15 @@ class Response < ApplicationRecord
     scores
   end
 
+  def self.extract_team_averages(scores)
+    scores[:teams].reject! { |_k, v| v[:scores][:avg].nil? }
+    scores[:teams].map { |_k, v| v[:scores][:avg].to_i }
+  end
+  
+  def self.average_team_scores(array)
+    array.inject(0) { |sum, x| sum + x } / array.size.to_f
+  end
+
   private
 
 # Get all of the questions asked during peer review for the given team's work

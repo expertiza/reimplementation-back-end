@@ -448,4 +448,39 @@ RSpec.describe Api::V1::GradesController, type: :controller do
         end
     end
 
+
+    describe '#view_grading_report' do
+        let(:scores) { { teams: [double('score1'), double('score2')] } }
+        let(:averages) { [double('average1'), double('average2')] }
+
+        before do
+            allow(controller).to receive(:find_assignment).and_return(assignment)
+            allow(controller).to receive(:filter_questionnaires).with(assignment).and_return(question)
+            allow(Response).to receive(:review_grades).and_return(scores)
+            allow(Response).to receive(:extract_team_averages).and_return(averages) 
+            allow(Response).to receive(:average_team_scores).and_return(5.0)
+            allow(controller).to receive(:penalties).and_return(nil)  
+
+            allow(controller).to receive(:get_data_for_heat_map).and_call_original
+            allow(controller).to receive(:update_penalties).and_call_original
+            
+        end
+        it 'sets @assignment, @questions, @scores, @review_score_count, @averages, and @avg_of_avg' do
+            request.headers['Authorization'] = "Bearer #{ta_token}"
+            request.headers['Content-Type'] = 'application/json'
+            get :view_grading_report, params: { id: assignment.id }
+
+            expect(controller).to have_received(:get_data_for_heat_map).with(assignment.id)
+            expect(controller).to have_received(:update_penalties)
+
+            expect(assigns(:assignment)).to eq(assignment)
+            expect(assigns(:scores)).to eq(scores)
+            expect(assigns(:review_score_count)).to eq(2)  # Since there are 2 teams in scores
+            expect(assigns(:averages)).to eq(averages)
+            expect(assigns(:avg_of_avg)).to eq(5.0)
+
+            # Check the @show_reputation instance variable
+            expect(assigns(:show_reputation)).to be false
+        end
+  end
 end

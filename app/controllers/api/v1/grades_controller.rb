@@ -11,7 +11,7 @@ class Api::V1::GradesController < ApplicationController
   # Additionally, it provides a final score, which is the average of all reviews, and highlights the greatest
   # difference in scores among the reviews.
   def view_grading_report
-    get_data_for_heat_map(params[:id])
+    get_data_for_heat_map(params[:id].to_i)
     update_penalties
     @show_reputation = false
   end
