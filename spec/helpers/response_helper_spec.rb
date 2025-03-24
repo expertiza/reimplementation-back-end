@@ -12,12 +12,17 @@ RSpec.describe ResponsesHelper, type: :helper do
     survey?: nil, reviewer: double('Reviewer'), contributor: contributor, assignment: :assignment, id: 0) }
   let(:self_review_response_map) { double('SelfReviewResponseMap', type: 'SelfReviewResponseMap') }
   let(:metareview_response_map) { double('MetareviewResponseMap', type: 'MetareviewResponseMap') }
+  let(:feedback_response_map) { double('FeedbackResponseMap', type: 'FeedbackResponseMap') }
+  let(:review) { double('Review', id: 1, reviewer_id: 1, reviewee_id: 1, type: 'Review') }
+  let(:reviewer) { double('Reviewer', id: 1)}
 
   before do
     helper.instance_variable_set(:@response, response)
     helper.instance_variable_set(:@assignment, assignment)
     helper.instance_variable_set(:@participant, participant)
     helper.instance_variable_set(:@review_questions, review_questions)
+    helper.instance_variable_set(:@review, review)
+    helper.instance_variable_set(:@reviewer, reviewer)
   end
 
   describe '#questionnaire_from_response_map' do
@@ -112,6 +117,14 @@ RSpec.describe ResponsesHelper, type: :helper do
       ).and_return(100)
 
       expect(helper.total_cake_score).to eq(100)
+    end
+  end
+
+  describe '#find_or_create_feedback' do
+    it 'returns the existing FeedbackResponseMap' do
+      allow(FeedbackResponseMap).to receive(:where).with(reviewed_object_id: 1, reviewer_id: 1).to receive(:first).and_return(feedback_response_map)
+      map = find_or_create_feedback
+      expect(map).to eq(feedback_response_map)
     end
   end
 end

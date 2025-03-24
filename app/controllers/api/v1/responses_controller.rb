@@ -55,10 +55,23 @@ class Api::V1::ResponsesController < ApplicationController
     @response.destroy!
   end
 
+  def new_feedback
+    find_response
+    if @review
+      @reviewer = AssignmentParticipant.where(user_id: session[:user].id, parent_id: review.map.assignment.id).first
+      find_FeedbackResponseMap_or_create_new
+      render json: @response, status: 201, location: @response
+    end
+  end
+
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_response
       @response = Api::V1::Response.find(params.expect(:id))
+    end
+
+    def find_response
+      @review = Response.find(params[:id]) unless params[:id].nil?
     end
 
     # Only allow a list of trusted parameters through.
