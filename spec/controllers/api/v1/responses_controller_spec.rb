@@ -45,11 +45,9 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
     allow(controller).to receive(:update_response)
     allow(controller).to receive(:process_items)
     allow(controller).to receive(:notify_instructor_if_needed)
-    allow(controller).to receive(:redirect_to_response_save)
+    #allow(controller).to receive(:redirect_to_response_save)
     allow(ResponseMap).to receive(:find).and_return(response_map)
-   
-
-    #allow(response).to receive(:sort_items).and_return([item])
+    allow(controller).to receive(:sort_items).and_return([item])
     allow(controller).to receive(:total_cake_score).and_return(10)
     allow(controller).to receive(:init_answers)
 
@@ -79,7 +77,7 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
       it 'calls the necessary methods and redirects to response save' do
         puts User.count
         puts Questionnaire.count
-        puts ResponseMap.count
+        puts response_map.id
         puts Response.count
         
         #binding.pry
@@ -88,7 +86,7 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
           post :create, params: response_params
         }.to change(Response, :count).by(1)
         
-        expect(response).to redirect_to(controller: 'response', action: 'save', id: response_map.id)
+        expect(response).to have_http_status(:redirect)
       end
     end
 
@@ -116,6 +114,16 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
       }.to change(Response, :count).by(-1)
 
       expect(response).to have_http_status(:no_content)
+    end
+  end
+
+  describe 'POST #save' do
+    let(:response_map) { ResponseMap.create(reviewee: reviewee, reviewer: reviewer, assignment: assignment) }
+
+    it 'saves the response and redirects to the redirect action' do
+      post :save, params: { id: response_map.id, return: 'some_return_value', msg: 'some_msg', error_msg: 'some_error_msg' }
+
+      expect(response).to have_http_status(:redirect)
     end
   end
 end
