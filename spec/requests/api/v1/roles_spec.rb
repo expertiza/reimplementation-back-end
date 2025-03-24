@@ -79,6 +79,27 @@ RSpec.describe 'Roles API', type: :request do
         end
         run_test!
       end
+
+      response(422, 'parameter missing in Hindi') do
+        let(:role) { {} }
+        let!(:hindi_user) do
+          User.create!(
+            name: "hindiuser",
+            full_name: "Hindi User",
+            email: "hindi@example.com",
+            password_digest: "password",
+            role_id: @roles[:admin].id,
+            locale: :hi
+          )
+        end
+        let(:token) { JsonWebToken.encode({ id: hindi_user.id }) }
+        let(:Authorization) { "Bearer #{token}" }
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['error']).to eq(I18n.t('roles.parameter_missing', locale: :hi))
+        end
+      end
     end
   end
 
