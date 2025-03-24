@@ -29,7 +29,7 @@ class Api::V1::ResponsesController < ApplicationController
     attributes.each do |key, value|
       instance_variable_set("@#{key}", value)
     end
-    questions = @response.sort_items(@questionnaire.items)
+    questions = sort_items(@questionnaire.items)
     @total_score = total_cake_score(@response)
     init_answers(@response, questions)
     render action: 'response'
@@ -44,12 +44,18 @@ class Api::V1::ResponsesController < ApplicationController
     @response = find_or_create_response(is_submitted)
     was_submitted = @response.is_submitted
 
-    update_response(is_submitted)
-    process_items if params[:responses]
-
-    notify_instructor_if_needed(was_submitted)
-
-    redirect_to_response_save
+    if @response.save
+      update_response(is_submitted)
+      process_items if params[:responses]
+      notify_instructor_if_needed(was_submitted)
+      msg = 'Your response was successfully saved'
+      error_msg = ''
+      redirect_to controller: 'responses', action: 'save', id: @map.map_id,
+              return: params.permit(:return)[:return], msg: msg, review: params.permit(:review)[:review],
+              save_options: params.permit(:save_options)[:save_options]
+    else
+      render json: @response.errors, status: :unprocessable_entity
+    end
   end
 
   def edit 
@@ -101,6 +107,17 @@ class Api::V1::ResponsesController < ApplicationController
     @response.destroy!
   end
 
+  def save
+    @map = ResponseMap.find(params[:id])
+    @return = params[:return]
+    @map.save
+    msg = 'Your response was successfully saved'
+    error_msg = ''
+    redirect_to controller: 'responses', action: 'save', id: @map.map_id,
+            return: params.permit(:return)[:return], msg: msg, review: params.permit(:review)[:review],
+            save_options: params.permit(:save_options)[:save_options]
+  end
+  
   def new_feedback
     find_response
     if @review
@@ -159,13 +176,6 @@ class Api::V1::ResponsesController < ApplicationController
       @response.notify_instructor_on_difference
       @response.email
     end
-  end
-
-  def redirect_to_response_save
-    msg = 'Your response was successfully saved.'
-    error_msg = ''
-    redirect_to controller: 'response', action: 'save', id: @map.map_id,
-                return: params.permit(:return)[:return], msg: msg, error_msg: error_msg, review: params.permit(:review)[:review], save_options: params.permit(:save_options)[:save_options]
   end
 
   def redirect_to_response_update

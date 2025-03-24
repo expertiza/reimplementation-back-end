@@ -9,7 +9,12 @@ Rails.application.routes.draw do
   post '/login', to: 'authentication#login'
   namespace :api do
     namespace :v1 do
-      resources :responses, only: [:index, :show, :new, :create, :update, :destroy]
+      resources :responses do
+        collection do
+          get 'new', action: :new
+          post 'save', to: 'responses#save', as: :save_response
+        end
+      end
       resources :institutions
       resources :roles do
         collection do
