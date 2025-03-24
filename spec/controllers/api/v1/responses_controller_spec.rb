@@ -106,4 +106,16 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
       end
     end
   end
+
+  describe 'DELETE #delete' do
+    let!(:response_to_delete) { Response.create(map_id: response_map.id, additional_comment: 'Test Comment') }
+
+    it 'destroys the requested response and returns status success' do
+      expect {
+        delete :destroy, params: { id: response_to_delete.id }
+      }.to change(Response, :count).by(-1)
+
+      expect(response).to have_http_status(:no_content)
+    end
+  end
 end

@@ -20,7 +20,7 @@ class Api::V1::ResponsesController < ApplicationController
     render json: @response, status: :ok
     
   rescue ActiveRecord::RecordNotFound
-      render json: { error: 'Response not found' }, status: :not_found
+    render json: { error: 'Response not found' }, status: :not_found
   end
 
   def new
@@ -51,10 +51,8 @@ class Api::V1::ResponsesController < ApplicationController
 
     redirect_to_response_save
   end
-  
 
   def edit 
-
     action_params = { action: 'edit', id: params[:id], return: params[:return] }
     response_content = prepare_response_content(@map, params[:round], action_params)
   
@@ -65,15 +63,12 @@ class Api::V1::ResponsesController < ApplicationController
     @review_scores = @review_questions.map do |question|
       Answer.where(response_id: @response.response_id, question_id: question.id).first
     end
-
   end
 
   # PATCH/PUT /api/v1/responses/1
   def update
-
     return render nothing: true unless action_allowed?
 
-    
     @response.update_attribute('additional_comment', params[:review][:comments])
     @questionnaire = @response.questionnaire_by_answer(@response.scores.first)
     
@@ -83,26 +78,28 @@ class Api::V1::ResponsesController < ApplicationController
     create_answers(params, questions) unless params[:responses].nil?
     if params['isSubmit'] && params['isSubmit'] == 'Yes'
       @response.update_attribute('is_submitted', true)
-    
     end
 
-    #Add back emailing logic
-     if (@map.is_a? ReviewResponseMap) && @response.is_submitted && @response.significant_difference?
+    # Add back emailing logic
+    if (@map.is_a? ReviewResponseMap) && @response.is_submitted && @response.significant_difference?
       @response.send_score_difference_email
     end
 
-    rescue StandardError => e
-      msg = "Your response was not saved. Cause:189 #{$ERROR_INFO}"
-    end
-
     redirect_to_response_update
+  end
+
+  def delete
+    if @response.delete
+      render json: @response, status: :deleted, location: @response
+    else
+      render json: @response.errors, status: :unprocessable_entity
+    end
   end
 
   # DELETE /api/v1/responses/1
   def destroy
     @response.destroy!
   end
-
 
   private
 
@@ -146,7 +143,6 @@ class Api::V1::ResponsesController < ApplicationController
       @response.notify_instructor_on_difference
       @response.email
     end
-
   end
 
   def redirect_to_response_save
@@ -166,7 +162,7 @@ class Api::V1::ResponsesController < ApplicationController
 
   # Use callbacks to share common setup or constraints between actions.
   def set_response
-    @response = Api::V1::Response.find(params.expect(:id))
+    @response = Response.find(params.expect(:id))
   end
 
   # Only allow a list of trusted parameters through.
@@ -181,5 +177,4 @@ class Api::V1::ResponsesController < ApplicationController
       return: {}
     )
   end
-
 end
