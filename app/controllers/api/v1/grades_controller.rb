@@ -21,9 +21,9 @@ class Api::V1::GradesController < ApplicationController
   # Additionally, it applies any penalties and determines the current stage of the assignment.
   # This method ensures participants have a comprehensive understanding of their scores and feedback
   def view_my_scores
-    @participant = AssignmentParticipant.find(params[:id])
+    @participant = AssignmentParticipant.find(params[:id].to_i)
     @assignment = @participant.assignment
-    @team_id = TeamsUser.team_id(@participant.parent_id, @participant.user_id)
+    @team_id = TeamsUser.team_id(@participant.assignment_id, @participant.user_id)
     return if redirect_when_disallowed
 
     fetch_questionnaires_and_questions

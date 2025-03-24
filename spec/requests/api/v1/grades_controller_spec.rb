@@ -393,4 +393,59 @@ RSpec.describe Api::V1::GradesController, type: :controller do
             expect(assigns(:current_role_name)).to eq(current_role_name)
         end
     end
+
+    describe '#view_my_scores' do
+        let(:team_id) { 16 }
+        let(:topic_id) { 16 }
+        let(:stage) { instance_double('Current Stage') }
+        let(:penalty) { { submission: 0, review: 0, meta_review: 0 } }
+        let!(:participant2) { AssignmentParticipant.create!(user: s2, assignment_id: assignment.id, team: team, handle: 'handle') }
+
+        before do
+            allow(AssignmentParticipant).to receive(:find).with(participant2.id).and_return(participant2)
+            allow(participant2).to receive(:assignment).and_return(assignment)
+            allow(TeamsUser).to receive(:team_id).with(anything, anything).and_return(16)
+            allow(SignedUpTeam).to receive(:topic_id).with(anything, anything).and_return(16)
+            allow(participant2).to receive_message_chain(:assignment, :current_stage).and_return(stage)
+            
+            # Mock the methods being called in view_my_scores
+            allow(controller).to receive(:redirect_when_disallowed).and_return(false) # Assuming no redirect
+            allow(controller).to receive(:fetch_questionnaires_and_questions)
+            allow(controller).to receive(:fetch_participant_scores)
+            allow(controller).to receive(:update_penalties)
+            allow(controller).to receive(:fetch_feedback_summary)
+        end
+
+        it 'sets up participant and assignment variables' do
+            request.headers['Authorization'] = "Bearer #{student_token}"
+            request.headers['Content-Type'] = 'application/json'
+
+            get :view_my_scores, params: { id: participant2.id }
+
+            expect(assigns(:assignment)).to eq(assignment)
+        end
+
+        it 'sets up team_id, topic_id, and stage' do
+            request.headers['Authorization'] = "Bearer #{student_token}"
+            request.headers['Content-Type'] = 'application/json'
+
+            get :view_my_scores, params: { id: participant2.id }
+
+            expect(assigns(:team_id)).to eq(team_id)
+            expect(assigns(:topic_id)).to eq(topic_id)
+            expect(assigns(:stage)).to eq(stage)
+        end
+
+        it 'fetches questionnaires and questions, participant scores, and feedback summary' do
+            request.headers['Authorization'] = "Bearer #{student_token}"
+            request.headers['Content-Type'] = 'application/json'
+
+            get :view_my_scores, params: { id: participant2.id }
+
+            expect(controller).to have_received(:fetch_questionnaires_and_questions)
+            expect(controller).to have_received(:fetch_participant_scores)
+            expect(controller).to have_received(:fetch_feedback_summary)
+        end
+    end
+
 end
