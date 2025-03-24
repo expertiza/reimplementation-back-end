@@ -370,6 +370,7 @@ class Api::V1::ParticipantsController < ApplicationController
     # Creates new RoleContext if one does not already exist
     if @context.nil?
       @context = RoleContext.new
+    end
     # Sets the assigned strategy for the context
     @context.set_strategy_by_role(role)
   end
