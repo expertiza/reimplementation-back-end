@@ -23,10 +23,9 @@ RSpec.describe ProjectTopic, type: :model do
         expect(project_topic.confirmed_teams).to include(team)
       end
 
-      it 'removes team from other waitlists' do
+      it 'removes team from waitlist' do
         other_topic = ProjectTopic.create!(topic_name: "Other Topic", assignment: assignment, max_choosers: 1)
         other_topic.signup_team(team)
-        
         project_topic.signup_team(team)
         expect(other_topic.reload.waitlisted_teams).not_to include(team)
       end
@@ -49,7 +48,6 @@ RSpec.describe ProjectTopic, type: :model do
 
     context 'when team already signed up' do
       before { project_topic.signup_team(team) }
-      
       it 'returns false' do
         expect(project_topic.signup_team(team)).to be false
       end
@@ -65,33 +63,53 @@ RSpec.describe ProjectTopic, type: :model do
     context 'when dropping confirmed team' do
       it 'promotes waitlisted team' do
         waitlisted_team = Team.create!(assignment: assignment)
+        waitlisted_team2 = Team.create!(assignment: assignment)
         project_topic.signup_team(waitlisted_team)
-        
+        project_topic.signup_team(waitlisted_team2)
         expect {
           project_topic.drop_team(team)
         }.to change { project_topic.confirmed_teams.count }.by(0)
-        
         expect(waitlisted_team.reload.signed_up_teams.first.is_waitlisted).to be false
+        expect(project_topic.waitlisted_teams.first).to eq(waitlisted_team2)
       end
     end
 
     context 'when dropping waitlisted team' do
       it 'does not promote other teams' do
         waitlisted_team = Team.create!(assignment: assignment)
+        waitlisted_team2 = Team.create!(assignment: assignment)
         project_topic.signup_team(waitlisted_team)
-        
+        project_topic.signup_team(waitlisted_team2)
         expect {
           project_topic.drop_team(waitlisted_team)
         }.not_to change { project_topic.confirmed_teams.count }
+        expect(project_topic.waitlisted_teams.first).to eq(waitlisted_team2)
       end
     end
   end
 
   describe '#available_slots' do
-    it 'calculates correctly' do
+    it 'returns # of available slots correctly' do
       expect(project_topic.available_slots).to eq(2)
       project_topic.signup_team(team)
       expect(project_topic.available_slots).to eq(1)
+    end
+  end
+
+  describe '#get_signed_up_teams' do
+    it 'returns confirmed and waitlisted teams' do
+      team2 = Team.create!(assignment: assignment)
+      team3 = Team.create!(assignment: assignment)
+      project_topic.signup_team(team)
+      project_topic.signup_team(team2)
+      project_topic.signup_team(team3)
+      expect(project_topic.confirmed_teams).to include(team)
+      expect(project_topic.confirmed_teams).to include(team2)
+      expect(project_topic.waitlisted_teams).to include(team3)
+      topic_teams = project_topic.get_signed_up_teams
+      expect(topic_teams).to include(team)
+      expect(topic_teams).to include(team2)
+      expect(topic_teams).to include(team3)
     end
   end
 
@@ -107,7 +125,7 @@ RSpec.describe ProjectTopic, type: :model do
   end
 
   describe '#confirmed_teams' do
-    it 'returns non-waitlisted teams' do
+    it 'returns confirmed teams' do
       project_topic.signup_team(team)
       expect(project_topic.confirmed_teams).to include(team)
     end
@@ -115,10 +133,11 @@ RSpec.describe ProjectTopic, type: :model do
 
   describe '#waitlisted_teams' do
     it 'returns waitlisted teams in order' do
-      teams = 3.times.map { Team.create!(assignment: assignment) }
+      teams = 5.times.map { Team.create!(assignment: assignment) }
       teams.each { |t| project_topic.signup_team(t) }
-      
-      expect(project_topic.waitlisted_teams).to eq([teams[2]])
+      expect(project_topic.waitlisted_teams.first).to eq([teams[2]])
+      expect(project_topic.waitlisted_teams.second).to eq([teams[3]])
+      expect(project_topic.waitlisted_teams.third).to eq([teams[4]])
     end
   end
 end

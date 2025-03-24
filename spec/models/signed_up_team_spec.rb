@@ -50,7 +50,7 @@ RSpec.describe SignedUpTeam, type: :model do
     end
   end
 
-  describe '.signup_for_topic' do
+  describe 'signup_for_topic' do
     it 'delegates to project topic signup' do
       allow(project_topic).to receive(:signup_team).with(team).and_return(true)
       result = SignedUpTeam.signup_for_topic(team, project_topic)
@@ -59,12 +59,11 @@ RSpec.describe SignedUpTeam, type: :model do
     end
   end
 
-  describe '.remove_team_signups' do
+  describe 'remove_team_signups' do
     let!(:topic1) { ProjectTopic.create!(topic_name: "Topic 1", assignment: assignment) }
     let!(:topic2) { ProjectTopic.create!(topic_name: "Topic 2", assignment: assignment) }
     let!(:signup1) { SignedUpTeam.create!(project_topic: topic1, team: team) }
     let!(:signup2) { SignedUpTeam.create!(project_topic: topic2, team: team) }
-
     it 'removes all team signups across topics' do
       expect {
         SignedUpTeam.remove_team_signups(team)
