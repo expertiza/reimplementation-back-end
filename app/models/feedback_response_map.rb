@@ -1,7 +1,7 @@
 class FeedbackResponseMap < ResponseMap
   # old implementation improvements and corrections
-  # belongs_to :reviewee, class_name: 'Participant', foreign_key: 'reviewee_id'
-  # belongs_to :reviewer, class_name: 'AssignmentParticipant', dependent: :destroy
+  belongs_to :reviewee, class_name: 'Participant', foreign_key: 'reviewee_id'
+  belongs_to :reviewer, class_name: 'AssignmentParticipant', dependent: :destroy
   belongs_to :review, class_name: 'Response', foreign_key: 'reviewed_object_id'
 
   # Returns the title used for display
