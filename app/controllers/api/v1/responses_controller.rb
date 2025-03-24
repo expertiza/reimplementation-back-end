@@ -17,10 +17,11 @@ class Api::V1::ResponsesController < ApplicationController
 
   # GET /api/v1/responses/1
   def show
-    render json: @response, status: :ok
-    
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: 'Response not found' }, status: :not_found
+    if @response
+      render json: @response, status: :ok
+    else
+      render json: { error: 'Response not found' }, status: :not_found
+    end
   end
 
   def new
@@ -60,7 +61,7 @@ class Api::V1::ResponsesController < ApplicationController
 
   def edit 
     action_params = { action: 'edit', id: params[:id], return: params[:return] }
-    response_content = prepare_response_content(@map, params[:round], action_params)
+    response_content = prepare_response_content(@map, action_params)
   
     # Assign variables from response_content hash
     response_content.each { |key, value| instance_variable_set("@#{key}", value) }
@@ -119,16 +120,20 @@ class Api::V1::ResponsesController < ApplicationController
   end
   
   def new_feedback
-    find_response
-    if @review
-      @reviewer = AssignmentParticipant.where(user_id: current_user, parent_id: @review.map.assignment.id).first
-      find_or_create_feedback
-      render json: @response, status: 201, location: @response
+    if Response.find(params[:id])
+      @map = Response.find(params[:id]).map
+      response_content = prepare_response_content(@map)
+
+      # Assign variables from response_content hash
+      response_content.each { |key, value| instance_variable_set("@#{key}", value) }
+      if @response
+        @reviewer = AssignmentParticipant.where(user_id: current_user.id, parent_id: @response.map.assignment.id).first
+        map = find_or_create_feedback
+        redirect_to action: 'new', id: map.id, return: 'feedback'
+      end
+    else
+      redirect_back fallback_location: root_path
     end
-  end
-
-  def toggle_permission
-
   end
 
   private
