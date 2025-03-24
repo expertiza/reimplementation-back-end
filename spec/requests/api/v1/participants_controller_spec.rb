@@ -146,7 +146,7 @@ RSpec.describe 'Participants API', type: :request do
       parameter name: :id, in: :path, type: :integer, description: 'ID of the participant'
       parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
 
-      response '200', 'Participant deleted' do
+      response '204', 'Participant deleted' do
         let(:id) { 2 }
         let(:'Authorization') { "Bearer #{@token}" }
 
