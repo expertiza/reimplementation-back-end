@@ -74,5 +74,6 @@ class Response < ApplicationRecord
       .deliver_later
   end
 
-  
+  def sort_items(items)
+  end
 end

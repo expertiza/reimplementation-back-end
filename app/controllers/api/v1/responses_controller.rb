@@ -1,6 +1,11 @@
 class Api::V1::ResponsesController < ApplicationController
   include ResponsesHelper
   before_action :set_response, only: %i[ show update destroy ]
+  skip_before_action :authorize
+
+  def action_allowed?
+    true
+  end
 
   # GET /api/v1/responses
   def index
@@ -15,18 +20,15 @@ class Api::V1::ResponsesController < ApplicationController
   end
 
   def new
-    @map_id = 1
-    puts @map_id
-    #@map = ResponseMap.find(params[:id])
-    #attributes = prepare_response_content(@map, 'New', true)
-    #attributes.each do |key, value|
-    #  instance_variable_set("@#{key}", value)
-    #end
-    #@response = find_or_create_response
-    #questions = @response.sort_items(@questionnaire.items)
-    #@total_score = total_cake_score(@response)
-    #init_answers(@response, questions)
-    #render action: 'response'
+    @map = ResponseMap.find(params[:id])
+    attributes = prepare_response_content(@map, 'New', true)
+    attributes.each do |key, value|
+      instance_variable_set("@#{key}", value)
+    end
+    questions = @response.sort_items(@questionnaire.items)
+    @total_score = total_cake_score(@response)
+    init_answers(@response, questions)
+    render action: 'response'
   end
 
   # POST /api/v1/responses

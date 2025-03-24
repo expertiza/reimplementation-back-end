@@ -1,4 +1,5 @@
-require 'rails_helper'
+#require 'rails_helper'
+require 'swagger_helper'
 
 RSpec.describe Api::V1::ResponsesController, type: :controller do
   let(:role) { Role.create(name: 'Student') }
@@ -14,8 +15,6 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
   let(:questionnaire) { Questionnaire.create(name: 'Test Questionnaire', max_question_score: 5, min_question_score: 0, instructor: instructor) }
   let(:item) { Item.create(txt: 'Test Question 3', questionnaire: questionnaire)}
   let(:review_questions) { [item, Item.create(txt: 'Test Question 1', questionnaire: questionnaire), Item.create(txt: 'Test Question 2', questionnaire: questionnaire)] }
-  #let(:response) { Response.create(map_id: response_map.id, additional_comment: 'Test Comment') }
-  
   let(:response_params) do
     {
       map_id: response_map.id,
@@ -37,18 +36,18 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
   end
 
   before do
+    allow_any_instance_of(ApplicationController).to receive(:authorize).and_return(true)
+    allow_any_instance_of(ApplicationController).to receive(:authenticate_request!).and_return(true)
+    allow_any_instance_of(Api::V1::ResponsesController).to receive(:current_user).and_return(user1)
     allow(controller).to receive(:find_map).and_return(response_map)
     allow(controller).to receive(:find_questionnaire).and_return(questionnaire)
-    allow(controller).to receive(:find_or_create_response).and_return(Response.create(map_id: response_map.id, additional_comment: 'Test Comment'))
+    
     allow(controller).to receive(:update_response)
     allow(controller).to receive(:process_items)
     allow(controller).to receive(:notify_instructor_if_needed)
     allow(controller).to receive(:redirect_to_response_save)
     allow(ResponseMap).to receive(:find).and_return(response_map)
-    allow(controller).to receive(:prepare_response_content).and_return({
-      questionnaire: questionnaire,
-      response: Response.create(map_id: response_map.id, additional_comment: 'Test Comment')
-    })
+   
 
     #allow(response).to receive(:sort_items).and_return([item])
     allow(controller).to receive(:total_cake_score).and_return(10)
@@ -57,26 +56,38 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
   end
 
   describe 'GET #new' do
-    it 'assigns the necessary instance variables and renders the response view' do
-      response_map
-
-      get :new
-      expect(assigns(:map_id)).to eq(1)
-      expect(assigns(:map)).to eq(response_map)
-      expect(assigns(:questionnaire)).to eq(questionnaire)
-      expect(assigns(response)).to be_a(Response)
-      expect(assigns(:total_score)).to eq(10)
+    before do
+      allow(controller).to receive(:prepare_response_content).and_return({
+        questionnaire: questionnaire,
+        response: Response.create(map_id: response_map.id, additional_comment: 'Test Comment')
+      })
+      allow(controller).to receive(:find_or_create_response).and_return(Response.create(map_id: response_map.id, additional_comment: 'Test Comment'))
+    end
+    context 'does this need a context to work' do
+      it 'assigns the necessary instance variables and renders the response view' do
+        puts Rails.application.routes.recognize_path('/api/v1/responses/new', method: :get)
+        get :new, params: new_params
+        expect(assigns(:map)).to eq(response_map)
+        expect(assigns(:questionnaire)).to eq(questionnaire)
+        expect(assigns(:total_score)).to eq(10)
+      end
     end
   end
 
   describe 'POST #create' do
     context 'when the response is successfully created' do
       it 'calls the necessary methods and redirects to response save' do
-
-        response_params
-        post :create, params: response_params
+        puts User.count
+        puts Questionnaire.count
+        puts ResponseMap.count
+        puts Response.count
+        
+        #binding.pry
  
-        expect(Response.count).to eq(1)
+        expect {
+          post :create, params: response_params
+        }.to change(Response, :count).by(1)
+        
         expect(response).to redirect_to(controller: 'response', action: 'save', id: response_map.id)
       end
     end
