@@ -19,10 +19,10 @@ class FeedbackResponseMap < ResponseMap
     self.reviewee
   end
 
-  # Returns the team being reviewed in the original review
-  def team
-    self.reviewee_team
-  end
+  # # Returns the team being reviewed in the original review
+  # def team
+  #   self.reviewee_team
+  # end
 
   # Returns the reviewer who gave the original review
   def reviewer

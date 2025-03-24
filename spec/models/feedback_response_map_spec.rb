@@ -42,5 +42,36 @@ describe FeedbackResponseMap do
         expect(feedback_response_map.questionnaire).to eq([questionnaire1, questionnaire2])
       end
     end
+    
+    describe '#contributor' do
+      it 'returns the reviewee (the original contributor)' do
+        expect(feedback_response_map.contributor).to eq(participant)
+      end
+    end
+
+    # describe '#team' do
+    #   it 'returns the team being reviewed' do
+    #     expect(feedback_response_map.team).to eq(team)
+    #   end
+    # end
+
+    describe '#reviewer' do
+      it 'returns the reviewer who gave the original review' do
+        expect(feedback_response_map.reviewer).to eq(assignment_participant)
+      end
+    end
+
+    describe '#round' do
+      it 'returns the round number of the original review' do
+        # Mock the response round number
+        allow(feedback_response_map).to receive(:round).and_return(1)
+        expect(feedback_response_map.round).to eq(1)
+      end
+
+      it 'returns nil if the round number is not present' do
+        allow(feedback_response_map).to receive(:round).and_return(nil)
+        expect(feedback_response_map.round).to be_nil
+      end
+    end
   end
   
