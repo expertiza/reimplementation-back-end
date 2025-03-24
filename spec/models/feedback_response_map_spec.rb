@@ -21,7 +21,7 @@ describe FeedbackResponseMap do
       allow(review_response_map).to receive(:assignment).and_return(assignment)
       allow(feedback_response_map).to receive(:assignment).and_return(assignment)
       allow(assignment).to receive(:questionnaires).and_return(questionnaires)
-    #   allow(questionnaires).to receive(:find_by).with(type: 'AuthorFeedbackQuestionnaire').and_return([questionnaire1])
+    #   allow(questionnaires).to receive(:find_by).with(questionnaire_type: 'AuthorFeedbackQuestionnaire').and_return([questionnaire1])
     end
   
     describe '#assignment' do
@@ -33,6 +33,13 @@ describe FeedbackResponseMap do
     describe '#title' do
       it 'returns "Feedback"' do
         expect(feedback_response_map.title).to eq('Feedback')
+      end
+    end
+
+    describe '#questionnaire' do
+      it 'returns an AuthorFeedbackQuestionnaire' do
+        # Assuming `feedback_response_map.questionnaire` returns the actual questionnaire object
+        expect(feedback_response_map.questionnaire).to eq([questionnaire1, questionnaire2])
       end
     end
   end

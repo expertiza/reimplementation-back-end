@@ -11,27 +11,27 @@ class FeedbackResponseMap < ResponseMap
 
   # Gets the feedback questionnaire associated with the assignment
   def questionnaire
-    review_response_map.assignment.questionnaires.find_by(type: 'AuthorFeedbackQuestionnaire')
+    self.assignment.questionnaires
   end
 
   # Returns the original contributor (the author who received the review)
   def contributor
-    review_response_map.reviewee
+    self.reviewee
   end
 
   # Returns the team being reviewed in the original review
   def team
-    review_response_map.reviewee_team
+    self.reviewee_team
   end
 
   # Returns the reviewer who gave the original review
   def reviewer
-    review_response_map.reviewer
+    self.reviewer
   end
 
   # Returns the round number of the original review (if applicable)
   def round
-    review_response_map&.response&.round
+    self&.response&.round
   end
 
   # Returns a report of feedback responses, grouped dynamically by round
