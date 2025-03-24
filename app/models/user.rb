@@ -129,9 +129,9 @@ class User < ApplicationRecord
     update(reset_password_token: nil, reset_password_sent_at: nil)
   end
 
-  # Method to check if the password reset token is valid (within 2 hours)
+  # Method to check if the password reset token is valid (within 24 hours)
   def password_reset_valid?
-    (reset_password_sent_at + 2.hours) > Time.zone.now
+    (reset_password_sent_at + 24.hours) > Time.zone.now
   end
 
 end
