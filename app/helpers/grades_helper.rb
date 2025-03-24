@@ -56,8 +56,8 @@ module GradesHelper
   end
 
   # Retrieves the participant and their associated assignment data.
-  def fetch_participant_and_assignment
-    @participant = AssignmentParticipant.find(params[:id])
+  def fetch_participant_and_assignment(id)
+    @participant = AssignmentParticipant.find(id)
     @assignment = @participant.assignment
   end
 

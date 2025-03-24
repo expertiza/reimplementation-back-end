@@ -348,4 +348,49 @@ RSpec.describe Api::V1::GradesController, type: :controller do
             end
         end
     end
+
+    describe '#view_team' do
+        let(:penalties) { { submission: 0, review: 0, meta_review: 0 } }
+        let(:participant_scores) { { total: 90 } }
+        let(:vmlist) { double('vmlist') }
+        let(:current_role_name) { 'Student' }
+
+        before do
+            allow(controller).to receive(:fetch_participant_and_assignment).with(participant.id.to_s) do
+                controller.instance_variable_set(:@participant, participant)
+                controller.instance_variable_set(:@assignment, assignment)
+            end
+            allow(controller).to receive(:current_role_name).and_return(current_role_name)
+
+            allow(AssignmentQuestionnaire).to receive(:where)
+            .with(assignment_id: assignment.id, topic_id: nil)
+            .and_return([assignment_questionnaire])
+
+            allow(controller).to receive(:retrieve_questions).and_return(question)
+            
+            # response_instance = instance_double(Response)
+            allow(Response).to receive(:participant_scores).with(participant, question).and_return(participant_scores)
+            
+            allow(controller).to receive(:get_penalty).with(participant.id).and_return(penalties)
+            allow(controller).to receive(:process_questionare_for_team).with(assignment, team.id).and_return(vmlist)
+            allow(controller).to receive(:instance_variable_set)
+            allow(controller).to receive(:instance_variable_get).and_call_original
+        end
+
+        it 'assigns correct instance variables' do
+
+            request.headers['Authorization'] = "Bearer #{student_token}"
+            request.headers['Content-Type'] = 'application/json'
+
+            get :view_team, params: { id: participant.id }
+            
+            expect(assigns(:team)).to eq(team)
+            expect(assigns(:team_id)).to eq(team.id)
+            expect(assigns(:questions)).to eq(question)
+            expect(assigns(:pscore)).to eq(participant_scores)
+            expect(assigns(:penalties)).to eq(penalties)
+            expect(assigns(:vmlist)).to eq(vmlist)
+            expect(assigns(:current_role_name)).to eq(current_role_name)
+        end
+    end
 end

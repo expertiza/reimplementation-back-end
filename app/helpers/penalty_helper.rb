@@ -1,5 +1,5 @@
 module PenaltyHelper
-  def calculate_penalty(participant_id)
+  def get_penalty(participant_id)
     set_participant_and_assignment(participant_id)
     set_late_policy if @assignment.late_policy_id
   

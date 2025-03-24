@@ -21,7 +21,8 @@ class Api::V1::GradesController < ApplicationController
   # Additionally, it applies any penalties and determines the current stage of the assignment.
   # This method ensures participants have a comprehensive understanding of their scores and feedback
   def view_my_scores
-    fetch_participant_and_assignment
+    @participant = AssignmentParticipant.find(params[:id])
+    @assignment = @participant.assignment
     @team_id = TeamsUser.team_id(@participant.parent_id, @participant.user_id)
     return if redirect_when_disallowed
 
@@ -41,14 +42,15 @@ class Api::V1::GradesController < ApplicationController
   # Additionally, it prepares the necessary data for displaying team-related information.
   # This method ensures participants have a clear understanding of their team's performance and any associated penalties.
   def view_team
-    fetch_participant_and_assignment
+    @participant = AssignmentParticipant.find(params[:id])
+    @assignment = @participant.assignment
     @team = @participant.team
     @team_id = @team.id
 
     questionnaires = AssignmentQuestionnaire.where(assignment_id: @assignment.id, topic_id: nil).map(&:questionnaire)
     @questions = retrieve_questions(questionnaires, @assignment.id)
     @pscore = Response.participant_scores(@participant, @questions)
-    @penalties = calculate_penalty(@participant.id)
+    @penalties = get_penalty(@participant.id)
     @vmlist = process_questionare_for_team(@assignment, @team_id)
 
     @current_role_name = current_role_name

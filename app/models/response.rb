@@ -177,7 +177,7 @@ class Response < ApplicationRecord
   end
 
  
-  def participant_scores(participant, questions)
+  def self.participant_scores(participant, questions)
     assignment = participant.assignment
     scores = {}
     scores[:participant] = participant
