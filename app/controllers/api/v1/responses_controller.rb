@@ -12,7 +12,10 @@ class Api::V1::ResponsesController < ApplicationController
 
   # GET /api/v1/responses/1
   def show
-    render json: @response
+    render json: @response, status: :ok
+    
+  rescue ActiveRecord::RecordNotFound
+      render json: { error: 'Response not found' }, status: :not_found
   end
 
   def new
@@ -61,18 +64,6 @@ class Api::V1::ResponsesController < ApplicationController
       Answer.where(response_id: @response.response_id, question_id: question.id).first
     end
 
-    render action: 'response'
-  end
-
-  # view response
-  def view
-    action_params = { action: 'view', id: params[:id] }
-    response_content = prepare_response_content(@map, params[:round], action_params)
-  
-    # Assign variables from response_content hash
-    response_content.each { |key, value| instance_variable_set("@#{key}", value) }
-  
-    render action: 'response'
   end
 
   # PATCH/PUT /api/v1/responses/1
@@ -90,6 +81,7 @@ class Api::V1::ResponsesController < ApplicationController
     create_answers(params, questions) unless params[:responses].nil?
     if params['isSubmit'] && params['isSubmit'] == 'Yes'
       @response.update_attribute('is_submitted', true)
+    
     end
 
     #Add back emailing logic
@@ -101,10 +93,7 @@ class Api::V1::ResponsesController < ApplicationController
       msg = "Your response was not saved. Cause:189 #{$ERROR_INFO}"
     end
 
-    redirect_to controller: 'responses', action: 'save', id: @map.map_id,
-              return: params.permit(:return)[:return], msg: msg, review: params.permit(:review)[:review],
-              save_options: params.permit(:save_options)[:save_options]
-
+    redirect_to_response_update
   end
 
   # DELETE /api/v1/responses/1
@@ -163,7 +152,15 @@ class Api::V1::ResponsesController < ApplicationController
     error_msg = ''
     redirect_to controller: 'response', action: 'save', id: @map.map_id,
                 return: params.permit(:return)[:return], msg: msg, error_msg: error_msg, review: params.permit(:review)[:review], save_options: params.permit(:save_options)[:save_options]
-  end  
+  end
+
+  def redirect_to_response_update
+    msg = 'Your response was successfully updated'
+    error_msg = ''
+    redirect_to controller: 'responses', action: 'save', id: @map.map_id,
+              return: params.permit(:return)[:return], msg: msg, review: params.permit(:review)[:review],
+              save_options: params.permit(:save_options)[:save_options]
+  end
 
   # Use callbacks to share common setup or constraints between actions.
   def set_response
