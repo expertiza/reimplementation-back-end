@@ -1,6 +1,7 @@
 class Team < ApplicationRecord
   has_many :signed_up_teams, dependent: :destroy
   has_many :teams_users, dependent: :destroy
+  has_many :team_participants, dependent: :destroy
   has_many :users, through: :teams_users
   has_many :participants
   belongs_to :assignment
@@ -24,7 +25,7 @@ class Team < ApplicationRecord
     can_add_member = false
     unless full?
       can_add_member = true
-      t_user = TeamsUser.create(user_id: user.id, team_id: id)
+      t_user = TeamParticipant.create(user_id: user.id, team_id: id)
       parent = TeamNode.find_by(node_object_id: id)
       TeamUserNode.create(parent_id: parent.id, node_object_id: t_user.id)
       add_participant(parent_id, user)

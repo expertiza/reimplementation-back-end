@@ -6,7 +6,7 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
     @roles = create_roles_hierarchy
   end
 
-  let(:institution) { Institution.create!(name: "NC State2") }
+  let(:institution) { Institution.create!(name: "NC State") }
 
   let(:instructor_role) { Role.find_or_create_by!(name: "Instructor") }
   let(:ta_role) { Role.find_or_create_by!(name: "Teaching Assistant", parent_id: instructor_role.id) }
@@ -47,14 +47,12 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
     )
   end
 
-  let(:teams_user) do
-    TeamsUser.create!(
+  let(:team_participant) do
+    TeamParticipant.create!(
       user_id: participant.id,
       team_id: team.id
     )
   end
-
-
 
   let(:token) { JsonWebToken.encode({ id: instructor.id }) }
   let(:Authorization) { "Bearer #{token}" }
@@ -69,8 +67,8 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
       parameter name: :payload, in: :body, schema: {
         type: :object,
         properties: {
-          teams_user_id: { type: :integer },
-          teams_user: {
+          team_participant_id: { type: :integer },
+          team_participant: {
             type: :object,
             properties: {
               duty_id: { type: :integer }
@@ -78,7 +76,7 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
             required: ['duty_id']
           }
         },
-        required: ['teams_user_id', 'teams_user']
+        required: ['team_participant_id', 'team_participant']
       }
 
       response(200, 'duty updated successfully') do
@@ -92,33 +90,32 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
           )
         end
 
-        let(:teams_user) { TeamsUser.create!(team_id: team.id, user_id: new_user.id) }
+        let(:team_participant) { TeamParticipant.create!(team_id: team.id, user_id: new_user.id) }
 
         let(:payload) do
           {
-            teams_user_id: teams_user.id,
-            teams_user: { duty_id: 2 }
+            team_participant_id: team_participant.id,
+            team_participant: { duty_id: 2 }
           }
         end
 
         run_test!
       end
 
-      response(404, 'team user not found') do
+      response(404, 'team participant not found') do
         let(:payload) do
           {
-            teams_user_id: 99999,  # Non-existing ID
-            teams_user: { duty_id: 2 }
+            team_participant_id: 99999,  # Non-existing ID
+            team_participant: { duty_id: 2 }
           }
         end
 
         run_test! do |response|
-          expect(response.body).to include("Couldn't find TeamsUser")
+          expect(response.body).to include("Couldn't find TeamParticipant")
         end
       end
     end
   end
-
 
   ### ✅ **List Participants Test**
   path '/api/v1/teams_participants/list_participants/{id}' do
@@ -138,7 +135,7 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
       end
 
       response(404, 'team not found') do
-        let(:id) { 99999 } # Ensure non-existing team ID
+        let(:id) { 99999 } # Non-existing team ID
 
         run_test! do |response|
           expect(response.body).to include("Couldn't find Team")
@@ -188,17 +185,17 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
 
   ### ✅ **Delete Participant Test**
   path '/api/v1/teams_participants/delete_participant/{id}' do
-    parameter name: 'id', in: :path, type: :integer, description: 'TeamsUser ID'
+    parameter name: 'id', in: :path, type: :integer, description: 'TeamParticipant ID'
 
     delete('delete participant') do
       tags 'Teams Participants'
       produces 'application/json'
 
       response(200, 'participant deleted successfully') do
-        let(:id) { teams_user.id }
+        let(:id) { team_participant.id }
 
         run_test! do |response|
-          expect(TeamsUser.exists?(teams_user.id)).to be_falsey
+          expect(TeamParticipant.exists?(team_participant.id)).to be_falsey
         end
       end
 
@@ -206,7 +203,7 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
         let(:id) { 0 }
 
         run_test! do |response|
-          expect(response.body).to include("Couldn't find TeamsUser")
+          expect(response.body).to include("Couldn't find TeamParticipant")
         end
       end
     end
@@ -228,8 +225,6 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
         },
         required: ['item']
       }
-
-
 
       response(200, 'participants deleted successfully') do
         let(:id) { team.id }
@@ -254,22 +249,14 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
           )
         end
 
-        let(:teams_user1) { TeamsUser.create!(team_id: team.id, user_id: new_user1.id) }
-        let(:teams_user2) { TeamsUser.create!(team_id: team.id, user_id: new_user2.id) }
+        let(:team_participant1) { TeamParticipant.create!(team_id: team.id, user_id: new_user1.id) }
+        let(:team_participant2) { TeamParticipant.create!(team_id: team.id, user_id: new_user2.id) }
 
-        # let(:payload) { {item: [teams_user1.id, teams_user2.id] }}
-
-
-        # let(:payload) { { item: [teams_user.id] } }
-        let(:payload) { { item: [teams_user1.id, teams_user2.id] } }
-
-
-
+        let(:payload) { { item: [team_participant1.id, team_participant2.id] } }
 
         run_test! do |response|
-          expect(TeamsUser.exists?(teams_user1.id)).to be_falsey
-          expect(TeamsUser.exists?(teams_user2.id)).to be_falsey
-          # expect(TeamsUser.exists?(teams_user.id)).to be_falsey
+          expect(TeamParticipant.exists?(team_participant1.id)).to be_falsey
+          expect(TeamParticipant.exists?(team_participant2.id)).to be_falsey
         end
       end
     end
