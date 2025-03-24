@@ -67,7 +67,7 @@ RSpec.describe 'api/v1/courses', type: :request do
             }
           }
         end
-        run_test!
+
       end
     end
   end

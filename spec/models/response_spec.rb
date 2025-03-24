@@ -19,7 +19,7 @@ describe Response do
     context 'when count is 0' do
       it 'returns false' do
         allow(ReviewResponseMap).to receive(:assessments_for).with(team).and_return([response])
-        expect(response.reportable_difference?).to be true
+        expect(response.reportable_difference?).to be false
       end
     end
 

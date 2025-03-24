@@ -7,27 +7,18 @@ describe Course, type: :model do
   let(:course) { create(:course, id: 1, name: 'ECE517', instructor: instructor, institution: institution) }
   let(:user1) { create(:user, name: 'abcdef', full_name:'abc bbc', email: 'abcbbc@gmail.com', password: '123456789', password_confirmation: '123456789', role: role) }
 
-  # describe 'validations' do
-  #   it 'validates presence of name' do
-  #     course.name = ''
-  #     expect(course).not_to be_valid
-  #   end
-  #   it 'validates presence of directory_path' do
-  #     course.directory_path = ' '
-  #     expect(course).not_to be_valid
-  #   end
-  # end
-
   describe 'validations' do
     it 'validates presence of name' do
       course.name = ''
-      expect(course).to be_valid
+      expect(course).not_to be_valid
     end
     it 'validates presence of directory_path' do
       course.directory_path = ' '
-      expect(course).to be_valid
+      expect(course).not_to be_valid
     end
   end
+
+
 
   describe '#path' do
     context 'when there is no associated instructor' do
