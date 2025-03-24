@@ -30,6 +30,8 @@ class Api::V1::TeamsParticipantsController < ApplicationController
     # Update the duty of the team member.
     team_member_relationship.update_attribute(:duty_id, params[:teams_user]['duty_id'])
 
+    render json: { message: "Duty updated successfully" }, status: :ok
+
     # Redirect to the participant's team view page.
     # redirect_to controller: 'student_teams', action: 'view', student_id: params[:participant_id]
   end
@@ -208,24 +210,43 @@ class Api::V1::TeamsParticipantsController < ApplicationController
   #   redirect_to action: 'list_participants', id: params[:id]
   # end
 
-  def delete_selected_participants
-    # Try to fetch the item IDs from params.
-    # Adjust according to how your request payload is structured.
-    # item_ids = params[:item] || (params[:payload] && params[:payload][:item])
-    item_ids = params[:item]
+  # def delete_selected_participants
+  #   # Try to fetch the item IDs from params.
+  #   # Adjust according to how your request payload is structured.
+  #   # item_ids = params[:item] || (params[:payload] && params[:payload][:item])
+  #   item_ids = params[:item] || request.request_parameters[:item]
+  #
+  #   if item_ids.size == 0
+  #     render json: { error: "No participants selected" }, status: 200 and return
+  #   end
+  #
+  #   item_ids.each do |item_id|
+  #     team_user = TeamsUser.find_by(id: item_id)
+  #     team_user.destroy
+  #     print "test"
+  #   end
+  #
+  #   render json: { message: "Participants deleted successfully" }, status: 200
+  # end
 
-    if item_ids.size == 0
+
+  def delete_selected_participants
+    # Try to extract item IDs from the payload first, then fall back to a top-level key.
+    item_ids = params.dig(:payload, :item) || params.dig("payload", "item") || params[:item]
+
+    if item_ids.blank?
       render json: { error: "No participants selected" }, status: 200 and return
     end
 
     item_ids.each do |item_id|
       team_user = TeamsUser.find_by(id: item_id)
-      team_user.destroy
-      print "test"
+      team_user&.destroy
+      Rails.logger.debug "Deleted TeamsUser with id: #{item_id}"
     end
 
     render json: { message: "Participants deleted successfully" }, status: 200
   end
+
 
 
 
