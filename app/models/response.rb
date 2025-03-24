@@ -74,6 +74,10 @@ class Response < ApplicationRecord
       .deliver_later
   end
 
+
+  def sort_items(items)
+  end
+
   def self.send_score_difference_email
     ResponseMailer.with(response: self)
       .send_score_difference_email
