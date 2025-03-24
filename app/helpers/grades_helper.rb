@@ -1,6 +1,15 @@
 module GradesHelper
   include PenaltyHelper
 
+  # Defines permissions for different actions based on user roles.
+  # 'view_my_scores' is allowed for students with specific permissions.
+  # 'view_team' is allowed for both students and TAs.
+  # 'view_grading_report' is allowed TAs and higher roles. 
+  ACTION_PERMISSIONS = {
+    'view_my_scores' => :student_with_permissions?,
+    'view_team' => :student_or_ta?
+  }.freeze
+
   # Calculates and applies penalties for participants of a given assignment.
   def penalties(assignment_id)
     @assignment = Assignment.find(assignment_id)
@@ -143,6 +152,126 @@ module GradesHelper
   rescue ActiveRecord::RecordNotFound
     flash[:error] = "Assignment participant #{assignment_id} not found"
     nil
+  end
+
+  # Method associated with action_allowed?: 
+  # Checks if the user has permission for the given action and executes the corresponding method.
+  def check_permission(action)
+    return has_privileges_of?('Teaching Assistant') unless ACTION_PERMISSIONS.key?(action)
+
+    send(ACTION_PERMISSIONS[action])
+  end
+
+  # Checks if the student has the necessary permissions and authorizations to proceed.
+  def student_with_permissions?
+    has_role?('Student') &&
+      self_review_finished? &&
+      are_needed_authorizations_present?(params[:id], 'reader', 'reviewer')
+  end
+
+  # Checks if the user is either a student viewing their own team or has Teaching Assistant privileges.
+  def student_or_ta?
+    student_viewing_own_team? || has_privileges_of?('Teaching Assistant')
+  end
+
+  # This method checks if the current user, who must have the 'Student' role, is viewing their own team.
+  def student_viewing_own_team?
+    return false unless has_role?('Student')
+  
+    participant = AssignmentParticipant.find_by(id: params[:id])
+    participant && current_user_is_assignment_participant?(participant.assignment.id)
+  end
+
+  # Check if the self-review for the participant is finished based on assignment settings and submission status.
+  def self_review_finished?
+    participant = Participant.find(params[:id])
+    assignment = participant.try(:assignment)
+    self_review_enabled = assignment.try(:is_selfreview_enabled)
+    not_submitted = ResponseMap.self_review_pending?(participant.try(:id))
+    if self_review_enabled
+      !not_submitted
+    else
+      true
+    end
+  end
+
+
+  # Methods associated with View methods:
+  # Determines if the rubric changes by round and returns the corresponding questions based on the criteria.
+  def filter_questionnaires(assignment)
+    questionnaires = assignment.questionnaires
+    if assignment.varying_rubrics_by_round?
+      retrieve_questions(questionnaires, assignment.id)
+    else
+      questions = {}
+      questionnaires.each do |questionnaire|
+        questions[questionnaire.id.to_s.to_sym] = questionnaire.questions
+      end
+      questions
+    end
+  end
+
+  # Generates data for visualizing heat maps in the view statements.
+  def get_data_for_heat_map(assignment_id)
+    # Finds the assignment
+    @assignment = find_assignment(assignment_id)
+    # Extracts the questionnaires
+    @questions = filter_questionnaires(@assignment)
+    @scores = Response.review_grades(@assignment, @questions)
+    @review_score_count = @scores[:teams].length # After rejecting nil scores need original length to iterate over hash
+    @averages = Response.extract_team_averages(@scores[:teams])
+    @avg_of_avg = Response.average_team_scores(@averages)
+  end
+  
+  # Method associated with edit_participant_scores:
+  # This method retrieves all questions from relevant questionnaires associated with this assignment. 
+  def list_questions(assignment)
+    assignment.questionnaires.each_with_object({}) do |questionnaire, questions|
+      questions[questionnaire.id.to_s] = questionnaire.questions
+    end
+  end
+
+  # Method associated with Update methods:
+  # Displays an error message if the participant is not found.
+  def handle_not_found
+    render json: { error: 'Participant not found.' }, status: :not_found
+  end
+
+  # Checks if the participant's grade has changed compared to the new grade.
+  def grade_changed?(participant, new_grade)
+    return false if new_grade.nil?
+
+    format('%.2f', params[:total_score]) != new_grade
+  end
+
+  # Generates a message based on whether the participant's grade is present or computed.
+  def grade_message(participant)
+    participant.grade.nil? ? "The computed score will be used for #{participant.user.name}." :
+                             "A score of #{participant.grade}% has been saved for #{participant.user.name}."
+  end
+
+
+  # Methods associated with instructor_review: 
+  # Finds or creates a reviewer for the given user and assignment, and sets a handle if it's a new record
+  def find_or_create_reviewer(user_id, assignment_id)
+    reviewer = AssignmentParticipant.find_or_create_by(user_id: user_id, parent_id: assignment_id)
+    reviewer.set_handle if reviewer.new_record?
+    reviewer
+  end
+
+  # Finds or creates a review mapping between the reviewee and reviewer for the given assignment.
+  def find_or_create_review_mapping(reviewee_id, reviewer_id, assignment_id)
+    ReviewResponseMap.find_or_create_by(reviewee_id: reviewee_id, reviewer_id: reviewer_id, reviewed_object_id: assignment_id)
+  end
+  
+  # Redirects to the appropriate review page based on whether the review mapping is new or existing.
+  def redirect_to_review(review_mapping)
+    if review_mapping.new_record?
+      redirect_to controller: 'response', action: 'new', id: review_mapping.map_id, return: 'instructor'
+    else
+      review = Response.find_by(map_id: review_mapping.map_id)
+      redirect_to controller: 'response', action: 'edit', id: review.id, return: 'instructor'
+    end
   end
 
   private
