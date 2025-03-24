@@ -121,10 +121,14 @@ class Api::V1::ResponsesController < ApplicationController
   def new_feedback
     find_response
     if @review
-      @reviewer = AssignmentParticipant.where(user_id: session[:user].id, parent_id: review.map.assignment.id).first
-      find_FeedbackResponseMap_or_create_new
+      @reviewer = AssignmentParticipant.where(user_id: current_user, parent_id: @review.map.assignment.id).first
+      find_or_create_feedback
       render json: @response, status: 201, location: @response
     end
+  end
+
+  def toggle_permission
+
   end
 
   private
@@ -145,13 +149,15 @@ class Api::V1::ResponsesController < ApplicationController
     questionnaire
   end
 
-    def find_response
-      @review = Response.find(params[:id]) unless params[:id].nil?
-    end
+  def find_response
+    @review = Response.find(params[:id]) unless params[:id].nil?
+  end
 
-    # Only allow a list of trusted parameters through.
-    def response_params
-      params.fetch(:response, {})
+  # Only allow a list of trusted parameters through.
+  def response_params
+    params.fetch(:response, {})
+  end
+
   def find_or_create_response(is_submitted = false)
     response = Response.where(map_id: @map.map_id).order(created_at: :desc).first
     if response.nil?

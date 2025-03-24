@@ -19,6 +19,8 @@ RSpec.describe ResponsesHelper, type: :helper do
     helper.instance_variable_set(:@assignment, assignment)
     helper.instance_variable_set(:@participant, participant)
     helper.instance_variable_set(:@review_questions, review_questions)
+    helper.instance_variable_set(@reviewer, participant)
+    helper.instance_variable_set(@review, response)
   end
 
   describe '#questionnaire_from_response_map' do

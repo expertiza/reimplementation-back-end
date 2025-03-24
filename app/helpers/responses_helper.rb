@@ -161,9 +161,9 @@ module ResponsesHelper
   end
 
   def find_or_create_feedback
-    map = FeedbackResponseMap.where(reviewed_object_id: @response.id, reviewer_id: @participant.id).first
+    map = FeedbackResponseMap.where(reviewed_object_id: @review.id, reviewer_id: @reviewer.id).first
     if map.nil?
-      map = FeedbackresponseMap.create(reviewed_object_id: @response.id, reviewer_id: @participant.id, reviewee_id: @response.map.reviewer.id)
+      map = FeedbackResponseMap.create(reviewed_object_id: @review.id, reviewer_id: @reviewer.id, reviewee_id: @review.map.reviewer.id)
     end
     map
   end
