@@ -1,6 +1,12 @@
 class Api::V1::ResponsesController < ApplicationController
   include ResponsesHelper
+  include ScorableHelper
   before_action :set_response, only: %i[ show update destroy ]
+  skip_before_action :authorize
+
+  def action_allowed?
+    true
+  end
 
   # GET /api/v1/responses
   def index
@@ -11,40 +17,80 @@ class Api::V1::ResponsesController < ApplicationController
 
   # GET /api/v1/responses/1
   def show
-    render json: @response
+    render json: @response, status: :ok
+    
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: 'Response not found' }, status: :not_found
   end
 
   def new
     @map = ResponseMap.find(params[:id])
-    attributes = prepare_response_content(map, 'New', true)
+    attributes = prepare_response_content(@map, 'New', true)
     attributes.each do |key, value|
       instance_variable_set("@#{key}", value)
     end
-    if @assignment
-      @stage = @assignment.current_stage(SignedUpTeam.topic_id(@participant.parent_id, @participant.user_id))
-    end
-
-    questions = sort_questions(@questionnaire.questions)
-    @total_score = total_cake_score
+    questions = @response.sort_items(@questionnaire.items)
+    @total_score = total_cake_score(@response)
     init_answers(@response, questions)
     render action: 'response'
   end
 
   # POST /api/v1/responses
   def create
-    @response = Response.new(response_params)
+    @map = find_map
+    @questionnaire = find_questionnaire
+    is_submitted = (params[:isSubmit] == 'Yes')
 
-    if @response.save
-      render json: @response, status: :created, location: @response
-    else
-      render json: @response.errors, status: :unprocessable_entity
+    @response = find_or_create_response(is_submitted)
+    was_submitted = @response.is_submitted
+
+    update_response(is_submitted)
+    process_items if params[:responses]
+
+    notify_instructor_if_needed(was_submitted)
+
+    redirect_to_response_save
+  end
+
+  def edit 
+    action_params = { action: 'edit', id: params[:id], return: params[:return] }
+    response_content = prepare_response_content(@map, params[:round], action_params)
+  
+    # Assign variables from response_content hash
+    response_content.each { |key, value| instance_variable_set("@#{key}", value) }
+
+    @largest_version_num  = Response.sort_by_version(@review_questions)
+    @review_scores = @review_questions.map do |question|
+      Answer.where(response_id: @response.response_id, question_id: question.id).first
     end
   end
 
   # PATCH/PUT /api/v1/responses/1
   def update
-    if @response.update(response_params)
-      render json: @response
+    return render nothing: true unless action_allowed?
+
+    @response.update_attribute('additional_comment', params[:review][:comments])
+    @questionnaire = @response.questionnaire_by_answer(@response.scores.first)
+    
+    questions = sort_items(@questionnaire.questions)
+
+    # for some rubrics, there might be no questions but only file submission (Dr. Ayala's rubric)
+    create_answers(params, questions) unless params[:responses].nil?
+    if params['isSubmit'] && params['isSubmit'] == 'Yes'
+      @response.update_attribute('is_submitted', true)
+    end
+
+    # Add back emailing logic
+    if (@map.is_a? ReviewResponseMap) && @response.is_submitted && @response.significant_difference?
+      @response.send_score_difference_email
+    end
+
+    redirect_to_response_update
+  end
+
+  def delete
+    if @response.delete
+      render json: @response, status: :deleted, location: @response
     else
       render json: @response.errors, status: :unprocessable_entity
     end
@@ -65,10 +111,22 @@ class Api::V1::ResponsesController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_response
-      @response = Api::V1::Response.find(params.expect(:id))
+
+  def find_map
+    puts "find_map method"
+    map_id = params[:map_id] || params[:id]
+
+    ResponseMap.find_by(id: map_id)
+  end
+
+  def find_questionnaire
+    if params[:review][:questionnaire_id]
+      questionnaire = Questionnaire.find(params[:review][:questionnaire_id])
+    else
+      questionnaire = nil
     end
+    questionnaire
+  end
 
     def find_response
       @review = Response.find(params[:id]) unless params[:id].nil?
@@ -77,5 +135,62 @@ class Api::V1::ResponsesController < ApplicationController
     # Only allow a list of trusted parameters through.
     def response_params
       params.fetch(:response, {})
+  def find_or_create_response(is_submitted = false)
+    response = Response.where(map_id: @map.map_id).order(created_at: :desc).first
+    if response.nil?
+      response = Response.create(map_id: @map.id, additional_comment: params[:review][:comments],
+                                 is_submitted: is_submitted)
     end
+    response
+  end
+
+  def update_response(is_submitted)
+    @response.update(additional_comment: params[:review][:comments], is_submitted: is_submitted)
+  end
+
+  def process_items
+    items = sort_items(@questionnaire.items)
+    items = @questionnaire.items
+    create_answers(params, items)
+  end
+
+  def notify_instructor_if_needed(was_submitted)
+    if @map.is_a?(ReviewResponseMap) && !was_submitted && @response.is_submitted && @response.significant_difference?
+      @response.notify_instructor_on_difference
+      @response.email
+    end
+  end
+
+  def redirect_to_response_save
+    msg = 'Your response was successfully saved.'
+    error_msg = ''
+    redirect_to controller: 'response', action: 'save', id: @map.map_id,
+                return: params.permit(:return)[:return], msg: msg, error_msg: error_msg, review: params.permit(:review)[:review], save_options: params.permit(:save_options)[:save_options]
+  end
+
+  def redirect_to_response_update
+    msg = 'Your response was successfully updated'
+    error_msg = ''
+    redirect_to controller: 'responses', action: 'save', id: @map.map_id,
+              return: params.permit(:return)[:return], msg: msg, review: params.permit(:review)[:review],
+              save_options: params.permit(:save_options)[:save_options]
+  end
+
+  # Use callbacks to share common setup or constraints between actions.
+  def set_response
+    @response = Response.find(params.expect(:id))
+  end
+
+  # Only allow a list of trusted parameters through.
+  def response_params
+    params.require(:response).permit(
+      :isSubmit,
+      :map_id,
+      :id,
+      review: [:comments, :questionnaire_id],
+      responses: {}, # Adjust based on structure
+      save_options: {},
+      return: {}
+    )
+  end
 end
