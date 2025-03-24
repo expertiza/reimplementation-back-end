@@ -45,7 +45,6 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
     allow(controller).to receive(:update_response)
     allow(controller).to receive(:process_items)
     allow(controller).to receive(:notify_instructor_if_needed)
-    #allow(controller).to receive(:redirect_to_response_save)
     allow(ResponseMap).to receive(:find).and_return(response_map)
     allow(controller).to receive(:sort_items).and_return([item])
     allow(controller).to receive(:total_cake_score).and_return(10)
@@ -124,6 +123,42 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
       post :save, params: { id: response_map.id, return: 'some_return_value', msg: 'some_msg', error_msg: 'some_error_msg' }
 
       expect(response).to have_http_status(:redirect)
+    end
+  end
+
+  describe 'GET #new_feedback' do
+    let(:response_1) { Response.create(map_id: response_map.id, additional_comment: 'Test Comment') }
+    let(:new_feedback_params) { { id: response_1.id } }
+    before do
+      allow(controller).to receive(:prepare_response_content).and_return({
+        questionnaire: questionnaire,
+        reviewer: reviewer,
+        response: response_1
+      })
+      allow(AssignmentParticipant).to receive(:where).and_return([user2])
+    end
+
+    context 'when the response exists' do
+      it 'assigns the necessary instance variables and redirects to new feedback' do
+        get :new_feedback, params: new_feedback_params
+
+        expect(assigns(:map)).to eq(response_map)
+        expect(assigns(:questionnaire)).to eq(questionnaire)
+        expect(assigns(:response)).to eq(response_1)
+        expect(response).to have_http_status(:found)
+      end
+    end
+
+    context 'when the response does not exist' do
+      before do
+        allow(Response).to receive(:find).and_return(nil)
+      end
+
+      it 'redirects back to the fallback location' do
+        get :new_feedback, params: new_feedback_params
+
+        expect(controller).to redirect_back(fallback_location: root_path)
+      end
     end
   end
 end
