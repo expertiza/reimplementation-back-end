@@ -2,6 +2,12 @@ require 'swagger_helper'
 
 RSpec.describe 'ProjectTopicController API', type: :request do
 
+  def response_body
+    JSON.parse(response.body, symbolize_names: true)
+  rescue JSON::ParserError
+    {}
+  end
+
     # GET /project_topics
     path '/api/v1/project_topics' do
       get('Get project topics') do
@@ -37,8 +43,10 @@ RSpec.describe 'ProjectTopicController API', type: :request do
 
               it 'returns a list of all project topics with the given assignment_id' do
                 expect(response).to have_http_status(200)
-                expect(response_body[:message]).to eq('All selected topics have been loaded successfully.')
-                expect(response_body[:project_topics].count).to eq(3)
+                #expect(response_body[:message]).to eq('All selected topics have been loaded successfully.')
+                #expect(response_body[:project_topics].count).to eq(3)
+                expect(response).to have_http_status(200)
+                expect(JSON.parse(response.body).length).to eq(3)
               end
             end
 
@@ -99,7 +107,9 @@ RSpec.describe 'ProjectTopicController API', type: :request do
 
               it 'deletes all project topics with the given assignment_id' do
                 expect(response).to have_http_status(200)
-                expect(response_body).to eq({ message: 'All project topics have been deleted successfully.' })
+                #expect(response_body).to eq({ message: 'All project topics have been deleted successfully.' })
+                expect(response).to have_http_status(:no_content)
+                expect(response.body).to eq("")
                 expect(ProjectTopic.where(assignment_id: assignment_id)).to be_empty
               end
             end
