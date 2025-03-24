@@ -339,4 +339,91 @@ RSpec.describe 'Participants API', type: :request do
       end
     end
   end
+
+  context 'I18n tests for Participants API' do
+    let!(:hindi_user) do
+      User.create!(
+        name: "hindiuser",
+        password_digest: "password",
+        role_id: @roles[:student].id,
+        full_name: "Hindi User",
+        email: "hindi@example.com",
+        locale: :hi
+      )
+    end
+  
+    let(:token) { JsonWebToken.encode({ id: hindi_user.id }) }
+    let(:authorization) { "Bearer #{token}" }
+  
+    describe 'GET /api/v1/participants/user/{user_id}' do
+      it 'returns user not found error message in Hindi' do
+        get '/api/v1/participants/user/9999', headers: { 'Authorization' => authorization }
+  
+        expect(response).to have_http_status(:not_found)
+        expect(JSON.parse(response.body)['error']).to eq(I18n.t('participants.user_not_found', locale: :hi))
+      end
+    end
+  
+    describe 'GET /api/v1/participants/assignment/{assignment_id}' do
+      it 'returns assignment not found error message in Hindi' do
+        get '/api/v1/participants/assignment/9999', headers: { 'Authorization' => authorization }
+  
+        expect(response).to have_http_status(:not_found)
+        expect(JSON.parse(response.body)['error']).to eq(I18n.t('participants.assignment_not_found', locale: :hi))
+      end
+    end
+  
+    describe 'PATCH /api/v1/participants/{id}/{authorization}' do
+      it 'returns invalid authorization error message in Hindi' do
+        patch "/api/v1/participants/#{participant1.id}/invalid_auth",
+              headers: { 'Authorization' => authorization }
+  
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(JSON.parse(response.body)['error']).to eq(I18n.t('participants.authorization_invalid', locale: :hi))
+      end
+  
+      it 'returns participant not found error message in Hindi' do
+        patch "/api/v1/participants/9999/mentor",
+              headers: { 'Authorization' => authorization }
+  
+        expect(response).to have_http_status(:not_found)
+        expect(JSON.parse(response.body)['error']).to eq(I18n.t('participants.not_found', locale: :hi))
+      end
+    end
+  
+    describe 'DELETE /api/v1/participants/{id}' do
+      it 'returns successful deletion message in Hindi (assignment)' do
+        delete "/api/v1/participants/#{participant1.id}",
+               headers: { 'Authorization' => authorization },
+               params: { assignment_id: assignment1.id }
+  
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body)['message']).to eq(
+          I18n.t('participants.destroy.success_assignment', id: participant1.id, assignment_id: assignment1.id, locale: :hi)
+        )
+      end
+  
+      it 'returns participant not found error message in Hindi' do
+        delete "/api/v1/participants/9999", headers: { 'Authorization' => authorization }
+  
+        expect(response).to have_http_status(:not_found)
+        expect(JSON.parse(response.body)['error']).to eq('Not Found') # Assuming the literal text remains as 'Not Found'
+      end
+    end
+  
+    describe 'POST /api/v1/participants/{authorization}' do
+  
+      it 'returns user not found error message in Hindi' do
+        post "/api/v1/participants/mentor",
+             headers: { 'Authorization' => authorization },
+             params: { participant: { user_id: 9999, assignment_id: assignment1.id } }
+  
+        expect(response).to have_http_status(:not_found)
+        expect(JSON.parse(response.body)['error']).to eq(
+          I18n.t('participants.user_not_found', locale: :hi)
+        )
+      end
+    end
+  end
+  
 end
