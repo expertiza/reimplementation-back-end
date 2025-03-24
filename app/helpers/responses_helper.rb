@@ -160,6 +160,14 @@ module ResponsesHelper
                                                       reviewee.reviewee_id)
   end
 
+  def find_or_create_feedback
+    map = FeedbackResponseMap.where(reviewed_object_id: @response.id, reviewer_id: @participant.id).first
+    if map.nil?
+      map = FeedbackresponseMap.create(reviewed_object_id: @response.id, reviewer_id: @participant.id, reviewee_id: @response.map.reviewer.id)
+    end
+    map
+  end
+    
     # This method is called within set_content when the new_response flag is set to False
   # This method gets the questionnaire directly from the response object since it is available.
   def questionnaire_from_response
