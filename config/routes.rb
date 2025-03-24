@@ -120,6 +120,8 @@ Rails.application.routes.draw do
           delete '/:id', to: 'participants#destroy'
         end
       end
+
+      resources :password_resets, only: [:create, :update]
     end
   end
 end
