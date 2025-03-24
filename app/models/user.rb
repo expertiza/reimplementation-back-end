@@ -114,4 +114,24 @@ class User < ApplicationRecord
     self.etc_icons_on_homepage ||= true
   end
 
+  
+  validates :reset_password_token, uniqueness: true, allow_nil: true
+
+  # Method to generate reset password token
+  def generate_password_reset_token!
+    self.reset_password_token = SecureRandom.urlsafe_base64
+    self.reset_password_sent_at = Time.zone.now
+    save!
+  end
+
+  # Method to clear the reset token after a successful password reset
+  def clear_password_reset_token!
+    update(reset_password_token: nil, reset_password_sent_at: nil)
+  end
+
+  # Method to check if the password reset token is valid (within 2 hours)
+  def password_reset_valid?
+    (reset_password_sent_at + 2.hours) > Time.zone.now
+  end
+
 end
