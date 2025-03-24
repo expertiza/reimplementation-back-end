@@ -31,8 +31,8 @@ class Api::V1::StudentQuizzesController < ApplicationController
 
   #POST /student_quizzes/assign
   def assign_quiz
-    participant = find_resource_by_id(Participant, params[:participant_id])
-    questionnaire = find_resource_by_id(Questionnaire, params[:questionnaire_id])
+    participant = FindResourceService.call(Participant, params[:participant_id])
+    questionnaire = FindResourceService.call(Questionnaire, params[:questionnaire_id])
     return unless participant && questionnaire
 
     if quiz_assigned?(participant, questionnaire)
