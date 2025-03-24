@@ -95,7 +95,7 @@ describe Response do
       allow(Participant).to receive(:find).and_return(participant)
       allow(participant).to receive(:assignment).and_return(assignment)
 
-      expect(response_map.response_assignment).to eq(assignment)
+      expect(review_response_map.response_assignment).to eq(assignment)
     end
 
     # Expects to return ResponseMap's assignment

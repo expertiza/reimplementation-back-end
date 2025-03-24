@@ -1,7 +1,7 @@
 class ResponseMap < ApplicationRecord
   # 'reviewer_id' points to the User who is the instructor.
-  belongs_to :reviewer, class_name: 'User', foreign_key: 'reviewer_id', optional: true
-  belongs_to :reviewee, class_name: 'User', foreign_key: 'reviewee_id', optional: true
+  belongs_to :reviewer, class_name: 'Participant', foreign_key: 'reviewer_id', inverse_of: false
+  belongs_to :reviewee, class_name: 'Participant', foreign_key: 'reviewee_id', inverse_of: false
   belongs_to :questionnaire, foreign_key: 'reviewed_object_id', optional: true
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'reviewed_object_id', inverse_of: false
   has_many :response, foreign_key: 'map_id', dependent: :destroy, inverse_of: false
@@ -61,6 +61,12 @@ class ResponseMap < ApplicationRecord
       reviewed_object_id: questionnaire_id
     )
   end
+
+  # # Returns the assignment related to the response map
+  # def response_assignment
+  #   assignment
+  # end
+
   private
 
   def find_or_initialize_response(response_map_id, question_id)
