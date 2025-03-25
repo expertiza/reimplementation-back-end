@@ -15,6 +15,7 @@ Rails.application.routes.draw do
           post 'save', to: 'responses#save'
           post 'new_feedback', to: 'responses#new_feedback'
           post 'toggle_permission', to: 'responses#toggle_permission'
+          post 'redirect', to: 'responses#redirect'
         end
       end
       resources :institutions

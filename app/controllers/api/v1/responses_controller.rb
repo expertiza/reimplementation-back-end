@@ -21,6 +21,7 @@ class Api::V1::ResponsesController < ApplicationController
     end
   end
 
+  
 
   # GET /api/v1/responses
   def index
@@ -149,7 +150,7 @@ class Api::V1::ResponsesController < ApplicationController
       redirect_back fallback_location: root_path
     end
   end
-
+  
   # toggle_permission allows user update visibility.
   def toggle_permission
     return head :no_content unless action_allowed?
@@ -162,6 +163,57 @@ class Api::V1::ResponsesController < ApplicationController
     end
     redirect_to action: 'redirect', id: map_id, return: params[:return], msg: params[:msg], error_msg: error
   end
+
+  def show_calibration_results_for_student
+    @assignment = Assignment.find(params[:assignment_id])
+    @calibration_response = ReviewResponseMap.find(params[:calibration_response_map_id]).response[0]
+    @review_response = ReviewResponseMap.find(params[:review_response_map_id]).response[0]
+    @review_questions = AssignmentQuestionnaire.get_questions_by_assignment_id(params[:assignment_id])
+  end
+
+  def authorize_show_calibration_results
+    response_map = ResponseMap.find(params[:review_response_map_id])
+    user_id = response_map.reviewer.user_id if response_map.reviewer
+    # Deny access to the calibration result page if the current user is not a reviewer.
+    unless current_user_is_reviewer?(response_map, user_id)
+      flash[:error] = 'You are not allowed to view this calibration result'
+      redirect_to controller: 'student_review', action: 'list', id: user_id
+    end
+  end
+
+  #This method was not updated
+  def redirect
+    error_id = params[:error_msg]
+    message_id = params[:msg]
+    flash[:error] = error_id unless error_id&.empty?
+    flash[:note] = message_id unless message_id&.empty?
+    @map = Response.find_by(map_id: params[:id])
+    case params[:return]
+    when 'feedback'
+      redirect_to controller: 'grades', action: 'view_my_scores', id: @map.reviewer.id
+    when 'teammate'
+      redirect_to view_student_teams_path student_id: @map.reviewer.id
+    when 'instructor'
+      redirect_to controller: 'grades', action: 'view', id: @map.response_map.assignment.id
+    when 'assignment_edit'
+      redirect_to controller: 'assignments', action: 'edit', id: @map.response_map.assignment.id
+    when 'selfreview'
+      redirect_to controller: 'submitted_content', action: 'edit', id: @map.response_map.reviewer_id
+    when 'survey'
+      redirect_to controller: 'survey_deployment', action: 'pending_surveys'
+    when 'bookmark'
+      bookmark = Bookmark.find(@map.response_map.reviewee_id)
+      redirect_to controller: 'bookmarks', action: 'list', id: bookmark.topic_id
+    when 'ta_review' # Page should be directed to list_submissions if TA/instructor performs the review
+      redirect_to controller: 'assignments', action: 'list_submissions', id: @map.response_map.assignment.id
+    else
+      # if reviewer is team, then we have to get the id of the participant from the team
+      # the id in reviewer_id is of an AssignmentTeam
+      reviewer_id = @map.response_map.reviewer.get_logged_in_reviewer_id(current_user.try(:id))
+      redirect_to controller: 'student_review', action: 'list', id: reviewer_id
+    end
+  end
+
 
   private
 
