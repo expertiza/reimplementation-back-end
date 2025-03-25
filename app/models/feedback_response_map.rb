@@ -37,8 +37,9 @@ class FeedbackResponseMap < ResponseMap
   # Returns a report of feedback responses, grouped dynamically by round
   def self.feedback_response_report(assignment_id, _type)
     authors = fetch_authors_for_assignment(assignment_id)
-    review_map_ids = ReviewResponseMap.where(reviewed_object_id: assignment_id).pluck(:id)
-    review_responses = Response.where(map_id: review_map_ids).order(created_at: :desc)
+    review_map_ids = review_map_ids = ReviewResponseMap.where(["reviewed_object_id = ?", assignment_id]).pluck("id")
+    review_responses = Response.where(["map_id IN (?)", review_map_ids])
+    review_responses = review_responses.order("created_at DESC") if review_responses.respond_to?(:order)
 
     if Assignment.find(assignment_id).varying_rubrics_by_round?
       latest_by_map_and_round = {}
