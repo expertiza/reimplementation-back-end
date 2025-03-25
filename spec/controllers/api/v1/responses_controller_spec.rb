@@ -226,4 +226,13 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
       end
     end
   end
+
+  describe 'PUT #toggle_permission' do
+    it 'updates attributes and redirects to response' do
+      toggle_permission(false)
+      expect{
+        @response.update(visibility: false)
+      }.to change(Response, :visibility).to(false)
+    end
+  end
 end

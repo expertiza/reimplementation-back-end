@@ -1,7 +1,7 @@
 class Api::V1::ResponsesController < ApplicationController
   include ResponsesHelper
   include ScorableHelper
-  before_action :set_response, only: %i[ show update destroy]
+  before_action :set_response, only: %i[ show update destroy toggle_permission]
   skip_before_action :authorize
 
   def action_allowed?

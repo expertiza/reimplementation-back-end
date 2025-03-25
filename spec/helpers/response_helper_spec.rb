@@ -135,15 +135,6 @@ RSpec.describe ResponsesHelper, type: :helper do
       end
     end
   end
-
-  describe '#toggle_permission' do
-    it 'updates attributes and redirects to response' do
-      toggle_permission(false)
-      expect{
-        @response.update(visibility: false)
-      }.to change(Response, :visibility).to(false)
-    end
-  end
 end
 
 #rspec ./spec/helpers/response_helper_spec.rb
