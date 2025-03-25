@@ -27,3 +27,12 @@ alt="IMAGE ALT TEXT HERE" width="560" height="315" border="10" /></a>
 ### Database Credentials
 - username: root
 - password: expertiza 
+
+### Admin User Credentials
+- username: admin2@example.com
+- password: password123
+
+### Logging in to Swagger UI
+TO login to the Swagger UI, go to http://localhost:3002/api-docs/index.html and log in at 
+the Authentication /login API using the Admin credentials above. Then, use the given token in
+Authorize at the top of the page.

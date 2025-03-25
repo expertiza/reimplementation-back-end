@@ -12,6 +12,167 @@ components:
 security:
 - bearerAuth: []
 paths:
+  "/api/v1/participants":
+    get:
+      summary: List all participants
+      tags:
+        - Participants
+      responses:
+        '200':
+          description: A list of participants
+    post:
+      summary: Create a new participant
+      tags:
+        - Participants
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                assignment_id:
+                  type: integer
+              required:
+                - user_id
+                - assignment_id
+      responses:
+        '201':
+          description: Participant created
+        '422':
+          description: Unprocessable entity
+
+  "/api/v1/participants/{id}":
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Retrieve a participant by ID
+      tags:
+        - Participants
+      responses:
+        '200':
+          description: Returns the participant details
+        '404':
+          description: Participant not found
+    put:
+      summary: Update a participant
+      tags:
+        - Participants
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                can_submit:
+                  type: boolean
+                can_review:
+                  type: boolean
+              required:
+                - can_submit
+                - can_review
+      responses:
+        '200':
+          description: Participant updated
+        '422':
+          description: Unprocessable entity
+    delete:
+      summary: Delete a participant
+      tags:
+        - Participants
+      responses:
+        '204':
+          description: Participant deleted
+
+  "/api/v1/participants/user/{user_id}":
+    parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get participants by user ID
+      tags:
+        - Participants
+      responses:
+        '200':
+          description: List of participants for the user
+
+  "/api/v1/participants/assignment/{assignment_id}":
+    parameters:
+      - name: assignment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get participants by assignment ID
+      tags:
+        - Participants
+      responses:
+        '200':
+          description: List of participants for the assignment
+
+  "/api/v1/participants/{id}/{authorization}":
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: authorization
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Add a participant with authorization
+      tags:
+        - Participants
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+              required:
+                - user
+      responses:
+        '201':
+          description: Participant added successfully
+        '404':
+          description: User not found
+    patch:
+      summary: Update participant authorization
+      tags:
+        - Participants
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                can_submit:
+                  type: boolean
+                can_review:
+                  type: boolean
+      responses:
+        '200':
+          description: Authorization updated
+        '422':
+          description: Unprocessable entity
+          # *******
   "/api/v1/account_requests/pending":
     get:
       summary: List all Pending Account Requests

@@ -1,194 +1,215 @@
 class Api::V1::ParticipantsController < ApplicationController
   include ParticipantsHelper
+  # autocomplete :user, :name
+  def index
+    participants = Participant.all
+    render json: participants
+  end
 
-  # Return a list of participants for a given user
-  # params - user_id
-  # GET /participants/user/:user_id
-  def list_user_participants
-    user = find_user if params[:user_id].present?
-    return if params[:user_id].present? && user.nil?
-
-    participants = filter_user_participants(user)
-
-    if participants.nil?
-      render json: participants.errors, status: :unprocessable_entity
+  def create
+    @participant = Participant.new(participant_params)
+    if @participant.save
+      render json: @participant, status: :created
     else
-      render json: participants, status: :ok
+      render json: { errors: @participant.errors.full_messages }, status: :unprocessable_entity
     end
   end
 
-  # Return a list of participants for a given assignment
-  # params - assignment_id
-  # GET /participants/assignment/:assignment_id
-  def list_assignment_participants
-    assignment = find_assignment if params[:assignment_id].present?
-    return if params[:assignment_id].present? && assignment.nil?
+  before_action :set_participant, only: %i[show update destroy]
 
-    participants = filter_assignment_participants(assignment)
 
-    if participants.nil?
-      render json: participants.errors, status: :unprocessable_entity
-    else
-      render json: participants, status: :ok
-    end
-  end
-
-  # Return a specified participant
-  # params - id
-  # GET /participants/:id
+  # GET /api/v1/participants/:id
   def show
+    render json: @participant
+  end
+
+  # getting the user by user_index and retrive and how on swagger ui
+  def user_index
+    participants = Participant.where(user_id: params[:user_id])
+    if participants.empty?
+      #render json: participants, status: :not_found 
+      render json: { error: "User not found" }, status: :not_found
+    else
+      render json: participants, status: :ok 
+    end
+  end
+
+  # updating the participant by request body of  example { "can_submit": true, "can_review": true}
+  def update
+    if @participant.update(participant_params)
+      render json: @participant, status: :ok
+    else
+      render json: { errors: @participant.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  # destroying the user by the id of the specific user
+  def destroy
+    participant = Participant.find(params[:id])
+    participant.destroy
+    render json: { message: "Participant deleted successfully" }, status: :no_content
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Participant Not Found" }, status: :not_found
+  end
+
+  # finding partcipant by assignment id
+  def assignment_index
+    participants = Participant.where(assignment_id: params[:assignment_id])
+    #render json: participants, status: :ok
+    if participants.empty?
+      #render json: participants, status: :not_found 
+      render json: { error: "Assignment not found" }, status: :not_found
+    else
+      render json: participants, status: :ok 
+    end
+  end
+
+  #adding a participant with authorization
+
+  def add
+    assignment = Assignment.find(params[:id])
+    user = User.find_or_create_by(user_params) # 👈 You were probably missing this line
+
+    # Now you can safely use `user` below
+    handle = "#{user.name.parameterize}-#{SecureRandom.hex(2)}"
+
+    # Updates RoleContext with appropriate strategy for user
+    update_context(params[:authorization])
+    permissions = @context.get_permissions
+
+    participant = assignment.participants.create!(
+      user: user,
+      handle: handle,
+      can_submit: permissions[:can_submit],
+      can_review: permissions[:can_review],
+      can_take_quiz: permissions[:can_take_quiz],
+      can_mentor: permissions[:can_mentor]
+    )
+
+    render json: participant, status: :created
+  end
+
+  # Updating authorization of the participants
+  def update_authorization
+    # Get participant via ID
     participant = Participant.find(params[:id])
 
-    if participant.nil?
-      render json: participant.errors, status: :unprocessable_entity
-    else
-      render json: participant, status: :created
-    end
-  end
+    # Updates the RoleContext with the necessary strategy and obtains permissions
+    update_context(params[:authorization])
+    permissions = @context.get_permissions
 
-  # Assign the specified authorization to the participant and add them to an assignment
-  # POST /participants/:authorization
-  def add
-    user = find_user
-    return unless user
+    # Updates the participant's permissions to match
+    participant.update!(
+      can_submit: permissions[:can_submit],
+      can_review: permissions[:can_review],
+      can_take_quiz: permissions[:can_take_quiz],
+      can_mentor: permissions[:can_mentor]
+    )
 
-    assignment = find_assignment
-    return unless assignment
-
-    authorization = validate_authorization
-    return unless authorization
-
-    permissions = retrieve_participant_permissions(authorization)
-
-    participant = assignment.add_participant(user)
-    participant.authorization = authorization
-    participant.can_submit = permissions[:can_submit]
-    participant.can_review = permissions[:can_review]
-    participant.can_take_quiz = permissions[:can_take_quiz]
-    participant.can_mentor = permissions[:can_mentor]
-
-    if participant.save
-      render json: participant, status: :created
-    else
-      render json: participant.errors, status: :unprocessable_entity
-    end
-  end
-
-  # Update the specified participant to the specified authorization
-  # PATCH /participants/:id/:authorization
-  def update_authorization
-    participant = find_participant
-    return unless participant
-
-    authorization = validate_authorization
-    return unless authorization
-
-    permissions = retrieve_participant_permissions(authorization)
-
-    participant.authorization = authorization
-    participant.can_submit = permissions[:can_submit]
-    participant.can_review = permissions[:can_review]
-    participant.can_take_quiz = permissions[:can_take_quiz]
-    participant.can_mentor = permissions[:can_mentor]
-
-    if participant.save
-      render json: participant, status: :created
-    else
-      render json: participant.errors, status: :unprocessable_entity
-    end
-  end
-
-  # Delete a participant
-  # params - id
-  # DELETE /participants/:id
-  def destroy
-    participant = Participant.find_by(id: params[:id])
-  
-    if participant.nil?
-      render json: { error: 'Not Found' }, status: :not_found
-    elsif participant.destroy
-      successful_deletion_message = if params[:team_id].nil?
-                                      "Participant #{params[:id]} in Assignment #{params[:assignment_id]} has been deleted successfully!"
-                                    else
-                                      "Participant #{params[:id]} in Team #{params[:team_id]} of Assignment #{params[:assignment_id]} has been deleted successfully!"
-                                    end
-      render json: { message: successful_deletion_message }, status: :ok
-    else
-      render json: participant.errors, status: :unprocessable_entity
-    end
-  end
-
-  # Permitted parameters for creating a Participant object
-  def participant_params
-    params.require(:participant).permit(:user_id, :assignment_id, :authorization, :can_submit,
-                                        :can_review, :can_take_quiz, :can_mentor, :handle,
-                                        :team_id, :join_team_request_id, :permission_granted,
-                                        :topic, :current_stage, :stage_deadline)
+    render json: participant, status: :ok
   end
 
   private
 
-  # Filters participants based on the provided user
-  # Returns participants ordered by their IDs
-  def filter_user_participants(user)
-    participants = Participant.all
-    participants = participants.where(user_id: user.id) if user
-    participants.order(:id)
+  def user_params
+    params.require(:user).permit(:name)
   end
 
-  # Filters participants based on the provided assignment
-  # Returns participants ordered by their IDs
-  def filter_assignment_participants(assignment)
-    participants = Participant.all
-    participants = participants.where(assignment_id: assignment.id) if assignment
-    participants.order(:id)
+  def set_participant
+    @participant = Participant.find(params[:id])
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Participant Not Found" }, status: 404
+
   end
 
-  # Finds a user based on the user_id parameter
-  # Returns the user if found
-  def find_user
-    user_id = params[:user_id]
-    user = User.find_by(id: user_id)
-    render json: { error: 'User not found' }, status: :not_found unless user
+  def participant_params
+    params.require(:participant).permit(:user_id, :assignment_id)
+  end
+
+  def controller_locale
+    locale_for_student
+  end
+
+  # Deletes participants from an assignment
+  def delete
+    contributor = AssignmentParticipant.find(params[:id])
+    name = contributor.name
+    assignment_id = contributor.assignment
+    begin
+      contributor.destroy
+      flash[:note] = "\"#{name}\" is no longer a participant in this assignment."
+    rescue StandardError
+      flash[:error] =
+        "\"#{name}\" was not removed from this assignment. Please ensure that \"#{name}\" is not a reviewer or metareviewer and try again."
+    end
+    redirect_to controller: 'review_mapping', action: 'list_mappings', id: assignment_id
+  end
+
+  # A ‘copyright grant’ means the author has given permission to the instructor to use the work outside the course.
+  # This is incompletely implemented, but the values in the last column in http://expertiza.ncsu.edu/student_task/list are sourced from here.
+  def view_copyright_grants
+    assignment_id = params[:id]
+    assignment = Assignment.find(assignment_id)
+    @assignment_name = assignment.name
+    @has_topics = false
+    @teams_info = []
+    teams = Team.where(parent_id: assignment_id)
+    teams.each do |team|
+      team_info = {}
+      team_info[:name] = team.name(session[:ip])
+      users = []
+      team.users { |team_user| users.append(get_user_info(team_user, assignment)) }
+      team_info[:users] = users
+      @has_topics = get_signup_topics_for_assignment(assignment_id, team_info, team.id)
+      team_without_topic = SignedUpTeam.where('team_id = ?', team.id).none?
+      next if @has_topics && team_without_topic
+
+      @teams_info.append(team_info)
+    end
+    @teams_info = @teams_info.sort_by { |hashmap| [hashmap[:topic_id] ? 0 : 1, hashmap[:topic_id] || 0] }
+  end
+
+  private
+
+  # Private method that ensures that the context is initialized and updates
+  # The strategy being used by the context given the
+  def update_context(role)
+    # Creates new RoleContext if one does not already exist
+    @context = RoleContext.new if @context.nil?
+    # Sets the assigned strategy for the context
+    @context.set_strategy_by_role(role)
+  end
+
+  # Get the user info from the team user
+  def get_user_info(team_user, assignment)
+    user = {}
+    user[:name] = team_user.name
+    user[:fullname] = team_user.fullname
+    # set by default
+    permission_granted = false
+    assignment.participants.each do |participant|
+      permission_granted = participant.permission_granted? if team_user.id == participant.user.id
+    end
+    # If permission is granted, set the publisting rights string
+    user[:pub_rights] = permission_granted ? 'Granted' : 'Denied'
+    user[:verified] = false
     user
   end
 
-  # Finds an assignment based on the assignment_id parameter
-  # Returns the assignment if found
-  def find_assignment
-    assignment_id = params[:assignment_id]
-    assignment = Assignment.find_by(id: assignment_id)
-    render json: { error: 'Assignment not found' }, status: :not_found unless assignment
-    assignment
-  end
-
-  # Finds a participant based on the id parameter
-  # Returns the participant if found
-  def find_participant
-    participant_id = params[:id]
-    participant = Participant.find_by(id: participant_id)
-    render json: { error: 'Participant not found' }, status: :not_found unless participant
-    participant
-  end
-
-  # Validates that the authorization parameter is present and is one of the following valid authorizations: reader, reviewer, submitter, mentor
-  # Returns the authorization if valid
-  def validate_authorization
-    valid_authorizations = %w[reader reviewer submitter mentor]
-    authorization = params[:authorization]
-    authorization = authorization.downcase if authorization.present?
-
-    unless authorization
-      render json: { error: 'authorization is required' }, status: :unprocessable_entity
-      return
+  # Get the signup topics for the assignment
+  def get_signup_topics_for_assignment(assignment_id, team_info, team_id)
+    signup_topics = SignUpTopic.where('assignment_id = ?', assignment_id)
+    if signup_topics.any?
+      has_topics = true
+      signup_topics.each do |signup_topic|
+        signup_topic.signed_up_teams.each do |signed_up_team|
+          if signed_up_team.team_id == team_id
+            team_info[:topic_name] = signup_topic.topic_name
+            team_info[:topic_id] = signup_topic.topic_identifier.to_i
+          end
+        end
+      end
     end
-
-    unless valid_authorizations.include?(authorization)
-      render json: { error: 'authorization not valid. Valid authorizations are: Reader, Reviewer, Submitter, Mentor' },
-             status: :unprocessable_entity
-      return
-    end
-
-    authorization
+    has_topics
   end
 end
