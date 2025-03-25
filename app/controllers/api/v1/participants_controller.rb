@@ -5,22 +5,6 @@ class Api::V1::ParticipantsController < ApplicationController
     participants = Participant.all
     render json: participants
   end
-  # ************************************************************
-  #keeping this commented as to test
-  # def action_allowed?
-  #   if %w[change_handle update_duties].include? params[:action]
-  #     current_user_has_student_privileges?
-  #   else
-  #     current_user_has_ta_privileges?
-  #   end
-
-  # end
-  # ************************************************************
-  #redundant by may be required later
-  # def action_allowed?
-  #   has_required_role?('Teaching Assistant')
-  # end
-  # ************************************************************
 
   def create
     @participant = Participant.new(participant_params)
@@ -41,7 +25,12 @@ class Api::V1::ParticipantsController < ApplicationController
   #getting the user by user_index and retrive and how on swagger ui
   def user_index
     participants = Participant.where(user_id: params[:user_id])
-    render json: participants, status: :ok
+    if participants.empty?
+      #render json: participants, status: :not_found 
+      render json: { error: "User not found" }, status: :not_found
+    else
+      render json: participants, status: :ok 
+    end
   end
 
   #updating the participant by request body of  example { "can_submit": true, "can_review": true}
@@ -57,46 +46,22 @@ class Api::V1::ParticipantsController < ApplicationController
   def destroy
     participant = Participant.find(params[:id])
     participant.destroy
-    render json: { message: "Participant deleted successfully" }, status: :ok
+    render json: { message: "Participant deleted successfully" }, status: :no_content
   rescue ActiveRecord::RecordNotFound
-    render json: { error: "Participant not found" }, status: :not_found
+    render json: { error: "Participant Not Found" }, status: :not_found
   end
 
   #finding partcipant by assignment id
   def assignment_index
     participants = Participant.where(assignment_id: params[:assignment_id])
-    render json: participants, status: :ok
+    #render json: participants, status: :ok
+    if participants.empty?
+      #render json: participants, status: :not_found 
+      render json: { error: "Assignment not found" }, status: :not_found
+    else
+      render json: participants, status: :ok 
+    end
   end
-
-  # def add
-  #   handle = "#{user.name.parameterize}-#{SecureRandom.hex(2)}"
-
-  #   assignment_id = params[:id]
-  #   authorization = params[:authorization]
-  #   user_name = params[:user][:name]
-  
-  #   user = User.find_by(name: user_name)
-  #   return render json: { error: "User not found" }, status: :not_found if user.nil?
-  
-  #   assignment = Assignment.find(assignment_id)
-  #   permissions = participant_permissions(authorization)
-  
-  #   participant = assignment.participants.create(
-  #     user: user,
-  #     handle: handle,
-  #     can_submit: permissions[:can_submit],
-  #     can_review: permissions[:can_review],
-  #     can_take_quiz: permissions[:can_take_quiz],
-  #     can_mentor: permissions[:can_mentor]
-  #   )
-  
-  #   if participant.persisted?
-  #     render json: participant, status: :created
-  #   else
-  #     render json: { errors: participant.errors.full_messages }, status: :unprocessable_entity
-  #   end
-  # end
-
 
   #adding a participant with authorization
   def add
@@ -150,25 +115,10 @@ class Api::V1::ParticipantsController < ApplicationController
     params.require(:user).permit(:name)
   end
 
-  # def participant_permissions(role)
-  #   case role
-  #   when 'Student'
-  #     { can_submit: true, can_review: false, can_take_quiz: false, can_mentor: false }
-  #   when 'Reviewer'
-  #     { can_submit: false, can_review: true, can_take_quiz: false, can_mentor: false }
-  #   when 'Teaching Assistant'
-  #     { can_submit: false, can_review: true, can_take_quiz: false, can_mentor: true }
-  #   when 'Mentor'
-  #     { can_submit: false, can_review: false, can_take_quiz: false, can_mentor: true }
-  #   else
-  #     { can_submit: false, can_review: false, can_take_quiz: false, can_mentor: false }
-  #   end
-  # end
-
   def set_participant
     @participant = Participant.find(params[:id])
   rescue ActiveRecord::RecordNotFound
-    render json: { error: "Participant not found" }, status: 404
+    render json: { error: "Participant Not Found" }, status: 404
   end
 
 
@@ -176,133 +126,9 @@ class Api::V1::ParticipantsController < ApplicationController
     params.require(:participant).permit(:user_id, :assignment_id)
   end
 
-  
-  
-  # *****************************************************
-
   def controller_locale
     locale_for_student
   end
-
-  #def list
-  #  if Participant::PARTICIPANT_TYPES.include? params[:model]
-  #    @root_node = Object.const_get(params[:model] + 'Node').find_by(node_object_id: params[:id])
-  #    @parent = Object.const_get(params[:model]).find(params[:id])
-  #  end
-  #  begin
-  #    @participants = @parent.participants
-  #    @model = params[:model]
-  #    @authorization = params[:authorization]
-  #  rescue StandardError
-  #    flash[:error] = $ERROR_INFO
-  #  end
-  #send
-
-  # def add
-  #   curr_object = Object.const_get(params[:model]).find(params[:id]) if Participant::PARTICIPANT_TYPES.include? params[:model]
-  #   begin
-  #     permissions = participant_permissions(params[:authorization])
-  #     can_submit = permissions[:can_submit]
-  #     can_review = permissions[:can_review]
-  #     can_take_quiz = permissions[:can_take_quiz]
-  #     #E2351 - add corresponding duty fill from permissions
-  #     can_mentor = permissions[:can_mentor]
-  #     if curr_object.is_a?(Assignment)
-  #       curr_object.add_participant(params[:user][:name], can_submit, can_review, can_take_quiz, can_mentor)
-  #     elsif curr_object.is_a?(Course)
-  #       curr_object.add_participant(params[:user][:name])
-  #     end
-  #     user = User.find_by(name: params[:user][:name])
-  #     @model = params[:model]
-  #     @participant = curr_object.participants.find_by(user_id: user.id)
-  #     flash.now[:note] = "The user <b>#{params[:user][:name]}</b> has successfully been added."
-  #   rescue StandardError
-  #     url_for controller: 'users', action: 'new'
-  #     flash.now[:error] = "The user <b>#{params[:user][:name]}</b> does not exist or has already been added."
-  #   end
-  #   render action: 'add.js.erb', layout: false
-  # end
-
-  # when you change the duties, changes the permissions based on the new duty you go to
-  # def update_authorizations
-  #   participant = Participant.find(params[:id])
-  #   permissions = participant_permissions(params[:authorization])
-  #   can_submit = permissions[:can_submit]
-  #   can_review = permissions[:can_review]
-  #   can_take_quiz = permissions[:can_take_quiz]
-  #   can_mentor = permissions[:can_mentor]
-  #   parent_id = participant.parent_id
-  #   # Upon successfully updating the attributes based on user role, a flash message is displayed to the user after the
-  #   # change in the database. This also gives the user the error message if the update fails.
-  #   begin
-  #     participant.update_attributes(can_submit: can_submit, can_review: can_review, can_take_quiz: can_take_quiz, can_mentor: can_mentor)
-  #     flash[:success] = 'The role of the selected participants has been successfully updated.'
-  #   rescue StandardError
-  #     flash[:error] = 'The update action failed.'
-  #   end
-  #   redirect_to action: 'list', id: parent_id, model: participant.class.to_s.gsub('Participant', '')
-  # end
-
-  # # def destroy
-  # #   participant = Participant.find(params[:id])
-  # #   parent_id = participant.parent_id
-  # #   begin
-  # #     participant.destroy
-  # #     flash[:note] = undo_link("The user \"#{participant.user.name}\" has been successfully removed as a participant.")
-  # #   rescue StandardError
-  # #     flash[:error] = 'This participant is on a team, or is assigned as a reviewer for someone’s work.'
-  # #   end
-  # #   redirect_to action: 'list', id: parent_id, model: participant.class.to_s.gsub('Participant', '')
-  # # end
-
-  # # Copies existing participants from a course down to an assignment
-  # def inherit
-  #   assignment = Assignment.find(params[:id])
-  #   course = assignment.course
-  #   @copied_participants = []
-  #   if course
-  #     participants = course.participants
-  #     if !participants.empty?
-  #       participants.each do |participant|
-  #         new_participant = participant.copy(params[:id])
-  #         @copied_participants.push new_participant if new_participant
-  #       end
-  #       # Only display undo link if copies of participants are created
-  #       if !@copied_participants.empty?
-  #         undo_link("The participants from \"#{course.name}\" have been successfully copied to this assignment. ")
-  #       else
-  #         flash[:note] = 'All course participants are already in this assignment'
-  #       end
-  #     else
-  #       flash[:note] = 'No participants were found to inherit this assignment.'
-  #     end
-  #   else
-  #     flash[:error] = 'No course was found for this assignment.'
-  #   end
-  #   redirect_to controller: 'participants', action: 'list', id: assignment.id, model: 'Assignment'
-  # end
-
-  # # Take all participants from an assignment and "bequeath" them to course as course_participants.
-  # def bequeath_all
-  #   @copied_participants = []
-  #   assignment = Assignment.find(params[:id])
-  #   if assignment.course
-  #     course = assignment.course
-  #     assignment.participants.each do |participant|
-  #       new_participant = participant.copy_to_course(course.id)
-  #       @copied_participants.push new_participant if new_participant
-  #     end
-  #     # only display undo link if copies of participants are created
-  #     if !@copied_participants.empty?
-  #       undo_link("All participants were successfully copied to \"#{course.name}\". ")
-  #     else
-  #       flash[:note] = 'All assignment participants are already part of the course'
-  #     end
-  #   else
-  #     flash[:error] = 'This assignment is not associated with a course.'
-  #   end
-  #   redirect_to controller: 'participants', action: 'list', id: assignment.id, model: 'Assignment'
-  # end
 
   # Allow participant to change handle for this assignment
   # If the participant parameters are available, update the participant
@@ -330,8 +156,8 @@ class Api::V1::ParticipantsController < ApplicationController
     name = contributor.name
     assignment_id = contributor.assignment
     begin
-        contributor.destroy
-        flash[:note] = "\"#{name}\" is no longer a participant in this assignment."
+      contributor.destroy
+      flash[:note] = "\"#{name}\" is no longer a participant in this assignment."
     rescue StandardError
       flash[:error] = "\"#{name}\" was not removed from this assignment. Please ensure that \"#{name}\" is not a reviewer or metareviewer and try again."
       end
@@ -375,12 +201,6 @@ class Api::V1::ParticipantsController < ApplicationController
     @context.set_strategy_by_role(role)
   end
 
-  def participant_params
-    params.require(:participant).permit(:can_submit, :can_review, :user_id, :parent_id, :submitted_at,
-                                        :permission_granted, :penalty_accumulated, :grade, :type, :handle,
-                                        :time_stamp, :digital_signature, :can_mentor, :can_take_quiz)
-  end
-
   # Get the user info from the team user
   def get_user_info(team_user, assignment)
     user = {}
@@ -414,85 +234,3 @@ class Api::V1::ParticipantsController < ApplicationController
     has_topics
   end
 end
-# ***************************************************************************************************
-# class Api::V1::ParticipantsController < ApplicationController
-#   before_action :set_participant, only: [:show, :update, :destroy, :update_authorization]
-
-#   def index
-#     participants = Participant.all
-#     render json: participants, status: :ok
-#   end
-
-#   def show
-#     render json: @participant, status: :ok
-#   end
-
-#   def create
-#     participant = Participant.new(participant_params)
-#     if participant.save
-#       render json: participant, status: :created
-#     else
-#       render json: { errors: participant.errors.full_messages }, status: :unprocessable_entity
-#     end
-#   end
-
-#   def update
-#     if @participant.update(participant_params)
-#       render json: @participant, status: :ok
-#     else
-#       render json: { errors: @participant.errors.full_messages }, status: :unprocessable_entity
-#     end
-#   end
-
-#   def destroy
-#     @participant.destroy
-#     render json: { message: "Participant deleted successfully" }, status: :no_content
-#   end
-
-#   def user_index
-#     participants = Participant.where(user_id: params[:user_id])
-#     render json: participants, status: :ok
-#   end
-
-#   def assignment_index
-#     participants = Participant.where(assignment_id: params[:assignment_id])
-#     render json: participants, status: :ok
-#   end
-
-#   def add
-#     user = User.find_by(name: params[:user][:name])
-#     if user.nil?
-#       render json: { error: "User not found" }, status: :not_found
-#       return
-#     end
-
-#     assignment = Assignment.find(params[:id])
-#     participant = assignment.participants.create(user: user)
-
-#     if participant.persisted?
-#       render json: participant, status: :created
-#     else
-#       render json: { errors: participant.errors.full_messages }, status: :unprocessable_entity
-#     end
-#   end
-
-#   def update_authorization
-#     permissions = participant_permissions(params[:authorization])
-#     if @participant.update(permissions)
-#       render json: @participant, status: :ok
-#     else
-#       render json: { errors: @participant.errors.full_messages }, status: :unprocessable_entity
-#     end
-#   end
-
-#   private
-
-#   def set_participant
-#     @participant = Participant.find_by(id: params[:id])
-#     render json: { error: "Participant not found" }, status: :not_found if @participant.nil?
-#   end
-
-#   def participant_params
-#     params.require(:participant).permit(:user_id, :assignment_id, :can_submit, :can_review, :can_take_quiz)
-#   end
-# end
