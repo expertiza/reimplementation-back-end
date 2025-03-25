@@ -14,6 +14,7 @@ Rails.application.routes.draw do
           get 'new', action: :new
           post 'save', to: 'responses#save'
           post 'new_feedback', to: 'responses#new_feedback'
+          post 'toggle_permission', to: 'responses#toggle_permission'
         end
       end
       resources :institutions

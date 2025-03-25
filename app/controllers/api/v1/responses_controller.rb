@@ -1,7 +1,7 @@
 class Api::V1::ResponsesController < ApplicationController
   include ResponsesHelper
   include ScorableHelper
-  before_action :set_response, only: %i[ show update destroy toggle_permission]
+  before_action :set_response, only: %i[ show update destroy ]
   skip_before_action :authorize
 
   def action_allowed?
@@ -152,16 +152,20 @@ class Api::V1::ResponsesController < ApplicationController
 
   # toggle_permission allows user update visibility.
   def toggle_permission
-    return render nothing: true unless action_allowed?
+    return head :no_content unless action_allowed?
 
     error = update_visibility(params[:visibility])
-    redirect_to action: 'redirect', id: @response.map.map_id, return: params[:return], msg: params[:msg], error_msg: error
+    if error == ''
+      map_id = @response.map.map_id
+    else
+      map_id = nil
+    end
+    redirect_to action: 'redirect', id: map_id, return: params[:return], msg: params[:msg], error_msg: error
   end
 
   private
 
   def find_map
-    puts "find_map method"
     map_id = params[:map_id] || params[:id]
 
     ResponseMap.find_by(id: map_id)
@@ -221,7 +225,7 @@ class Api::V1::ResponsesController < ApplicationController
 
   # Use callbacks to share common setup or constraints between actions.
   def set_response
-    @response = Response.find(params.expect(:id))
+    @response = Response.find(params[:id])
   end
 
   # Only allow a list of trusted parameters through.
