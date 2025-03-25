@@ -16,7 +16,7 @@ ENV RAILS_LOG_TO_STDOUT="1" \
     RAILS_SERVE_STATIC_FILES="true"
 
 # Set DATABASE_URL here
-ENV DATABASE_URL=mysql2://user:password@localhost:3306/app_name
+ENV DATABASE_URL="mysql2://user:password@localhost:3306/app_name"
 
 # Install application gems
 COPY Gemfile Gemfile.lock ./
