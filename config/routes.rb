@@ -120,6 +120,12 @@ Rails.application.routes.draw do
           delete '/:id', to: 'participants#destroy'
         end
       end
+
+      resources :feedback_response_maps do
+        collection do
+          get 'response_report/:assignment_id', action: :response_report
+        end
+      end
     end
   end
 end
