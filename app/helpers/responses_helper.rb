@@ -175,6 +175,15 @@ module ResponsesHelper
       error
   end
 
+  # toggle_permission allows user update visibility.
+  def toggle_permission
+    set_response
+    return render nothing: true unless action_allowed?
+
+    error = update_visibility(params[:visibility])
+    redirect_to action: 'redirect', id: @response.map.map_id, return: params[:return], msg: params[:msg], error_msg: error
+  end
+
   private
 
   def current_user_is_reviewer?(map, reviewer_id)
