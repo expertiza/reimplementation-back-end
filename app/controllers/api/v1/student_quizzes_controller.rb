@@ -126,9 +126,22 @@ class Api::V1::StudentQuizzesController < ApplicationController
   # Permit and require the necessary parameters for creating/updating a questionnaire
   def questionnaire_params
     params.require(:questionnaire).permit(
-      :name, :instructor_id, :min_question_score, :max_question_score, :assignment_id,
-      questions_attributes: [:id, :txt, :question_type, :break_before, :correct_answer, :score_value,
-                             { answers_attributes: %i[id answer_text correct] }]
+      :name,
+      :instructor_id,
+      :min_question_score,
+      :max_question_score,
+      :assignment_id,
+      :questionnaire_type,
+      :private,
+      questions_attributes: [
+        :id,
+        :txt,
+        :question_type,
+        :break_before,
+        :correct_answer,
+        :score_value,
+        { answers_attributes: %i[id answer_text correct] }
+      ]
     )
   end
 
