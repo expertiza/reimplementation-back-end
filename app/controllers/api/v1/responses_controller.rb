@@ -1,7 +1,7 @@
 class Api::V1::ResponsesController < ApplicationController
   include ResponsesHelper
   include ScorableHelper
-  before_action :set_response, only: %i[ show update destroy ]
+  before_action :set_response, only: %i[ show update destroy toggle_permission]
   skip_before_action :authorize
 
   def action_allowed?
@@ -134,6 +134,14 @@ class Api::V1::ResponsesController < ApplicationController
     else
       redirect_back fallback_location: root_path
     end
+  end
+
+  # toggle_permission allows user update visibility.
+  def toggle_permission
+    return render nothing: true unless action_allowed?
+
+    error = update_visibility(params[:visibility])
+    redirect_to action: 'redirect', id: @response.map.map_id, return: params[:return], msg: params[:msg], error_msg: error
   end
 
   private
