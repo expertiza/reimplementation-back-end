@@ -9,6 +9,7 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
   let(:user2) { User.create(name: 'User Two', email: 'user2@example.com', password: 'asdfas176dfadfadfa', full_name: 'Full_name 2', role: role) }
   
   let(:assignment) { Assignment.create(name: 'Test Assignment', directory_path: 'test_assignment', instructor: instructor) }
+  let(:response) { double('Response', id: 1, map_id: 1, visibility: true) }
   let(:reviewee) { Participant.create(user: user1, assignment_id: assignment.id) }
   let(:reviewer) { Participant.create(user: user2, assignment_id: assignment.id) }
   let(:response_map) { ResponseMap.create(reviewee: reviewee, reviewer: reviewer, assignment: assignment) }
@@ -49,6 +50,7 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
     allow(controller).to receive(:sort_items).and_return([item])
     allow(controller).to receive(:total_cake_score).and_return(10)
     allow(controller).to receive(:init_answers)
+    helper.instance_variable_set(@response, response)
 
   end
 
@@ -222,6 +224,15 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
 
         expect(controller).to redirect_back(fallback_location: root_path)
       end
+    end
+  end
+
+  describe 'PUT #toggle_permission' do
+    it 'updates attributes and redirects to response' do
+      toggle_permission(false)
+      expect{
+        @response.update(visibility: false)
+      }.to change(Response, :visibility).to(false)
     end
   end
 end

@@ -1,13 +1,13 @@
 require 'rails_helper'
 
 RSpec.describe ResponsesHelper, type: :helper do
-  
+
   let(:contributor) { double('Contributor', id: 1) }
   let(:assignment) { double('Assignment', id: 1) }
   let(:participant) { double('Participant', id: 1) }
   let(:review_questions) { [double('Question', id: 1), double('Question', id: 2)] }
   let(:response_map) { double('ResponseMap', id: 1, reviewee_id: 1, type: 'ReviewResponseMap', reviewer: participant) }
-  let(:response) { double('Response', id: 1, map_id: response_map.id, map: response_map) }
+  let(:response) { double('Response', id: 1, map_id: 1, map: response_map, visibility: true) }
   let(:map) { double('ResponseMap') }
   let(:review_response_map) { double('ReviewResponseMap', type: 'ReviewResponseMap', get_title: double('testMap'), 
     survey?: nil, reviewer: double('Reviewer'), contributor: contributor, assignment: :assignment, id: 0) }
@@ -20,7 +20,8 @@ RSpec.describe ResponsesHelper, type: :helper do
     helper.instance_variable_set(:@assignment, assignment)
     helper.instance_variable_set(:@participant, participant)
     helper.instance_variable_set(:@review_questions, review_questions)
-    helper.instance_variable_set(:@reviewer, participant)
+    helper.instance_variable_set(@reviewer, participant)
+    helper.instance_variable_set(@review, response)
   end
 
   describe '#questionnaire_from_response_map' do

@@ -163,6 +163,18 @@ module ResponsesHelper
     @questionnaire = @response.questionnaire_by_answer(answer)
   end
 
+  def update_visibility(visibility)
+      error = ""
+      begin
+        unless visibility.nil?
+          @response.update(visibility: visibility)
+        end
+      rescue StandardError
+        error = "Your response was not saved. Cause:189 #{$ERROR_INFO}"
+      end
+      error
+  end
+
   private
 
   def current_user_is_reviewer?(map, reviewer_id)
@@ -172,4 +184,5 @@ module ResponsesHelper
   def response_edit_allowed?(map, reviewer_id, response)
     map.reviewer.id == reviewer.id && !response.is_submitted
   end
+
 end
