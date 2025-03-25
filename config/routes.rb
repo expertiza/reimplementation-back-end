@@ -110,14 +110,24 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :participants do
+      # resources :participants, only: [:index, :show, :create, :update, :destroy] do
+      #   collection do
+      #     get '/user/:user_id', to: 'participants#user_index'
+      #     get '/assignment/:assignment_id', to: 'participants#assignment_index'
+      #     get '/:id', to: 'participants#show'
+      #     post '/:authorization', to: 'participants#add'
+      #     patch '/:id/:authorization', to: 'participants#update_authorization'
+      #     delete '/:id', to: 'participants#destroy'
+      #   end
+      # end
+      resources :participants, only: [:index, :show, :create, :update, :destroy] do
         collection do
-          get '/user/:user_id', to: 'participants#list_user_participants'
-          get '/assignment/:assignment_id', to: 'participants#list_assignment_participants'
-          get '/:id', to: 'participants#show'
+          get '/user/:user_id', to: 'participants#user_index'
+          get '/assignment/:assignment_id', to: 'participants#assignment_index'
+        end
+        member do
           post '/:authorization', to: 'participants#add'
-          patch '/:id/:authorization', to: 'participants#update_authorization'
-          delete '/:id', to: 'participants#destroy'
+          patch '/:authorization', to: 'participants#update_authorization'
         end
       end
     end
