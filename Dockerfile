@@ -13,7 +13,8 @@ WORKDIR /app
 
 # Set production environment
 ENV RAILS_LOG_TO_STDOUT="1" \
-    RAILS_SERVE_STATIC_FILES="true"
+    RAILS_SERVE_STATIC_FILES="true" \
+    RAILS_ENV="production"
 
 # Set DATABASE_URL here
 ENV DATABASE_URL="mysql2://user:password@localhost:3306/app_name"
