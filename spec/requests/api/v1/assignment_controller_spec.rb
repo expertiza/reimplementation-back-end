@@ -294,6 +294,64 @@ RSpec.describe 'Assignments API', type: :request do
   end
 
   # -------------------------------------------------------------------------
+# DELETE /api/v1/assignments/{id}
+# -------------------------------------------------------------------------
+path '/api/v1/assignments/{id}' do
+  parameter name: 'id', in: :path, type: :integer, description: 'Assignment ID'
+
+  delete('Delete an assignment') do
+    tags 'Assignments'
+    produces 'application/json'
+    consumes 'application/json'
+    parameter name: 'Content-Type', in: :header, type: :string
+    let('Content-Type') { 'application/json' }
+
+    response(200, 'successful') do
+      let(:id) { assignment.id }
+
+      run_test! do |response|
+        data = JSON.parse(response.body)
+        expect(response).to have_http_status(:ok)
+        expect(data['message']).to eq(I18n.t('assignment.deleted_successfully', locale: :en))
+      end
+    end
+
+    response(404, 'Assignment not found') do
+      let(:id) { 999 }
+
+      run_test! do |response|
+        data = JSON.parse(response.body)
+        expect(response).to have_http_status(:not_found)
+        expect(data['error']).to eq(I18n.t('assignment.not_found', locale: :en))
+      end
+    end
+
+    response(404, 'Assignment not found in Hindi') do
+      let(:id) { 999 }
+      let!(:hindi_user) do
+        User.create!(
+          name: "hindiuser",
+          full_name: "Hindi User",
+          email: "hindi@example.com",
+          password_digest: "password",
+          role_id: @roles[:instructor].id,
+          locale: :hi
+        )
+      end
+      let(:token) { JsonWebToken.encode({ id: hindi_user.id }) }
+      let(:Authorization) { "Bearer #{token}" }
+
+      run_test! do |response|
+        data = JSON.parse(response.body)
+        expect(response).to have_http_status(:not_found)
+        expect(data['error']).to eq(I18n.t('assignment.not_found', locale: :hi))
+      end
+    end
+  end
+end
+
+
+  # -------------------------------------------------------------------------
   # GET /api/v1/assignments/{assignment_id}/has_topics
   # -------------------------------------------------------------------------
   path '/api/v1/assignments/{assignment_id}/has_topics' do

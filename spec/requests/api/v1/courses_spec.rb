@@ -134,6 +134,33 @@ RSpec.describe 'api/v1/courses', type: :request do
         end
         run_test!
       end
+
+      response(200, 'TA removed message is internationalized') do
+        let!(:hindi_user) do
+          User.create!(
+            name: "hindiuser",
+            full_name: "Hindi User",
+            email: "hindi@example.com",
+            password_digest: "password",
+            role_id: @roles[:instructor].id,
+            locale: :hi
+          )
+        end
+  
+        let(:token) { JsonWebToken.encode({ id: hindi_user.id }) }
+        let(:Authorization) { "Bearer #{token}" }
+  
+        before do
+          allow_any_instance_of(Course).to receive(:remove_ta).and_return({ success: true, ta_name: ta.name })
+        end
+  
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expected_message = I18n.t('course.ta_removed', ta_name: ta.name, locale: :hi)
+          expect(response).to have_http_status(:ok)
+          expect(data['message']).to eq(expected_message)
+        end
+      end
     end
   end
 
@@ -318,6 +345,30 @@ RSpec.describe 'api/v1/courses', type: :request do
         end
         run_test!
       end
+      response(404, 'Course not found in Hindi') do
+        let(:id) { 999 } # Non-existent course ID
+      
+        let!(:hindi_user) do
+          User.create!(
+            name: "hindiuser",
+            full_name: "Hindi User",
+            email: "hindi@example.com",
+            password_digest: "password",
+            role_id: @roles[:instructor].id,
+            locale: :hi
+          )
+        end
+      
+        let(:token) { JsonWebToken.encode({ id: hindi_user.id }) }
+        let(:Authorization) { "Bearer #{token}" }
+      
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(response).to have_http_status(:not_found)
+          expect(data['error']).to eq(I18n.t('course.not_found', locale: :hi, id: id))
+        end
+      end      
     end
   end
+  
 end

@@ -16,7 +16,7 @@ class CreateUsers < ActiveRecord::Migration[7.0]
       t.string :timeZonePref
       t.boolean :copy_of_emails, default: false
       t.boolean :etc_icons_on_homepage, default: false
-      t.integer :locale
+      t.string :locale
 
       t.timestamps
     end

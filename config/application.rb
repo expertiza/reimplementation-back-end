@@ -30,5 +30,11 @@ module Reimplementation
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
     config.cache_store = :redis_store, ENV['CACHE_STORE'], { expires_in: 3.days, raise_errors: false }
+
+    # Internationalization (i18n) Settings
+    config.i18n.default_locale = :en  
+    config.i18n.available_locales = [:en, :hi]  
+    config.i18n.fallbacks = true 
+    config.i18n.enforce_available_locales = true
   end
 end
