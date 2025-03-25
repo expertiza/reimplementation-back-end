@@ -129,29 +129,6 @@ class Api::V1::ParticipantsController < ApplicationController
     locale_for_student
   end
 
-  # Allow participant to change handle for this assignment
-  # If the participant parameters are available, update the participant
-  # and redirect to the view_actions page
-  def change_handle
-    @participant = AssignmentParticipant.find(params[:id])
-    return unless current_user_id?(@participant.user_id)
-
-    return if params[:participant].nil?
-
-    if !AssignmentParticipant.where(parent_id: @participant.parent_id, handle: params[:participant][:handle]).empty?
-      ExpertizaLogger.error LoggerMessage.new(controller_name, @participant.name,
-                                              "Handle #{params[:participant][:handle]} already in use", request)
-      flash[:error] =
-        "<b>The handle #{params[:participant][:handle]}</b> is already in use for this assignment. Please select a different one."
-      redirect_to controller: 'participants', action: 'change_handle', id: @participant
-    else
-      @participant.update_attributes(participant_params)
-      ExpertizaLogger.info LoggerMessage.new(controller_name, @participant.name,
-                                             'The change handle is saved successfully', request)
-      redirect_to controller: 'student_task', action: 'view', id: @participant
-    end
-  end
-
   # Deletes participants from an assignment
   def delete
     contributor = AssignmentParticipant.find(params[:id])
