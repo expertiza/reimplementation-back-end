@@ -56,8 +56,6 @@ RSpec.describe 'Participants API', type: :request do
       end
     end
 
-
-
     path '/api/v1/participants/assignment/{assignment_id}' do
       get 'Retrieve participants for a specific assignment' do
         tags 'Participants'

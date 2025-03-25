@@ -17,6 +17,7 @@ class Api::V1::ParticipantsController < ApplicationController
 
   before_action :set_participant, only: %i[show update destroy]
 
+
   # GET /api/v1/participants/:id
   def show
     render json: @participant
