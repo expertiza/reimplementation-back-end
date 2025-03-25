@@ -47,7 +47,7 @@ RUN bash -c "set -o pipefail && apt-get update \
  && apt-get clean \
  && groupadd -g \"${GID}\" ruby \
  && useradd --create-home --no-log-init -u \"${UID}\" -g \"${GID}\" ruby \
- && mkdir /node_modules && chown ruby:ruby -R /node_modules /app")
+ && mkdir /node_modules && chown ruby:ruby -R /node_modules /app"
 
 # Precompiling assets for production without requiring secret RAILS_MASTER_KEY
 RUN bundle exec rails assets:precompile
