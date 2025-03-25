@@ -7,4 +7,9 @@ class ReviewResponseMap < ResponseMap
   def response_assignment
     return assignment
   end
+
+  # Returns all assessments (responses) for the given reviewee
+  def self.assessments_for(reviewee)
+    where(reviewee_id: reviewee.id).includes(:response).map(&:response).flatten
+  end
 end
