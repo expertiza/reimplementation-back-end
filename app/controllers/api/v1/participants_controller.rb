@@ -15,14 +15,14 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
-  before_action :set_participant, only: [:show, :update, :destroy]
+  before_action :set_participant, only: %i[show update destroy]
 
   # GET /api/v1/participants/:id
   def show
     render json: @participant
   end
 
-  #getting the user by user_index and retrive and how on swagger ui
+  # getting the user by user_index and retrive and how on swagger ui
   def user_index
     participants = Participant.where(user_id: params[:user_id])
     if participants.empty?
@@ -33,7 +33,7 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
-  #updating the participant by request body of  example { "can_submit": true, "can_review": true}
+  # updating the participant by request body of  example { "can_submit": true, "can_review": true}
   def update
     if @participant.update(participant_params)
       render json: @participant, status: :ok
@@ -42,7 +42,7 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
-  #destroying the user by the id of the specific user
+  # destroying the user by the id of the specific user
   def destroy
     participant = Participant.find(params[:id])
     participant.destroy
@@ -51,7 +51,7 @@ class Api::V1::ParticipantsController < ApplicationController
     render json: { error: "Participant Not Found" }, status: :not_found
   end
 
-  #finding partcipant by assignment id
+  # finding partcipant by assignment id
   def assignment_index
     participants = Participant.where(assignment_id: params[:assignment_id])
     #render json: participants, status: :ok
@@ -64,17 +64,18 @@ class Api::V1::ParticipantsController < ApplicationController
   end
 
   #adding a participant with authorization
+
   def add
     assignment = Assignment.find(params[:id])
     user = User.find_or_create_by(user_params) # 👈 You were probably missing this line
-  
+
     # Now you can safely use `user` below
     handle = "#{user.name.parameterize}-#{SecureRandom.hex(2)}"
 
     # Updates RoleContext with appropriate strategy for user
     update_context(params[:authorization])
     permissions = @context.get_permissions
-  
+
     participant = assignment.participants.create!(
       user: user,
       handle: handle,
@@ -83,20 +84,19 @@ class Api::V1::ParticipantsController < ApplicationController
       can_take_quiz: permissions[:can_take_quiz],
       can_mentor: permissions[:can_mentor]
     )
-  
+
     render json: participant, status: :created
   end
-
 
   # Updating authorization of the participants
   def update_authorization
     # Get participant via ID
     participant = Participant.find(params[:id])
-  
+
     # Updates the RoleContext with the necessary strategy and obtains permissions
     update_context(params[:authorization])
-    permissions = @context.get_permissions()
-  
+    permissions = @context.get_permissions
+
     # Updates the participant's permissions to match
     participant.update!(
       can_submit: permissions[:can_submit],
@@ -104,10 +104,9 @@ class Api::V1::ParticipantsController < ApplicationController
       can_take_quiz: permissions[:can_take_quiz],
       can_mentor: permissions[:can_mentor]
     )
-  
+
     render json: participant, status: :ok
   end
-
 
   private
 
@@ -119,8 +118,8 @@ class Api::V1::ParticipantsController < ApplicationController
     @participant = Participant.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Participant Not Found" }, status: 404
-  end
 
+  end
 
   def participant_params
     params.require(:participant).permit(:user_id, :assignment_id)
@@ -137,16 +136,19 @@ class Api::V1::ParticipantsController < ApplicationController
     @participant = AssignmentParticipant.find(params[:id])
     return unless current_user_id?(@participant.user_id)
 
-    unless params[:participant].nil?
-      if !AssignmentParticipant.where(parent_id: @participant.parent_id, handle: params[:participant][:handle]).empty?
-        ExpertizaLogger.error LoggerMessage.new(controller_name, @participant.name, "Handle #{params[:participant][:handle]} already in use", request)
-        flash[:error] = "<b>The handle #{params[:participant][:handle]}</b> is already in use for this assignment. Please select a different one."
-        redirect_to controller: 'participants', action: 'change_handle', id: @participant
-      else
-        @participant.update_attributes(participant_params)
-        ExpertizaLogger.info LoggerMessage.new(controller_name, @participant.name, 'The change handle is saved successfully', request)
-        redirect_to controller: 'student_task', action: 'view', id: @participant
-      end
+    return if params[:participant].nil?
+
+    if !AssignmentParticipant.where(parent_id: @participant.parent_id, handle: params[:participant][:handle]).empty?
+      ExpertizaLogger.error LoggerMessage.new(controller_name, @participant.name,
+                                              "Handle #{params[:participant][:handle]} already in use", request)
+      flash[:error] =
+        "<b>The handle #{params[:participant][:handle]}</b> is already in use for this assignment. Please select a different one."
+      redirect_to controller: 'participants', action: 'change_handle', id: @participant
+    else
+      @participant.update_attributes(participant_params)
+      ExpertizaLogger.info LoggerMessage.new(controller_name, @participant.name,
+                                             'The change handle is saved successfully', request)
+      redirect_to controller: 'student_task', action: 'view', id: @participant
     end
   end
 
@@ -159,8 +161,9 @@ class Api::V1::ParticipantsController < ApplicationController
       contributor.destroy
       flash[:note] = "\"#{name}\" is no longer a participant in this assignment."
     rescue StandardError
-      flash[:error] = "\"#{name}\" was not removed from this assignment. Please ensure that \"#{name}\" is not a reviewer or metareviewer and try again."
-      end
+      flash[:error] =
+        "\"#{name}\" was not removed from this assignment. Please ensure that \"#{name}\" is not a reviewer or metareviewer and try again."
+    end
     redirect_to controller: 'review_mapping', action: 'list_mappings', id: assignment_id
   end
 
@@ -191,12 +194,10 @@ class Api::V1::ParticipantsController < ApplicationController
   private
 
   # Private method that ensures that the context is initialized and updates
-  # The strategy being used by the context given the 
+  # The strategy being used by the context given the
   def update_context(role)
     # Creates new RoleContext if one does not already exist
-    if @context.nil?
-      @context = RoleContext.new
-    end
+    @context = RoleContext.new if @context.nil?
     # Sets the assigned strategy for the context
     @context.set_strategy_by_role(role)
   end
