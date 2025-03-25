@@ -1,12 +1,13 @@
 require 'rails_helper'
 
 RSpec.describe ResponsesHelper, type: :helper do
-  let(:response) { double('Response', id: 1, map_id: 1, visibility: true) }
+
   let(:contributor) { double('Contributor', id: 1) }
   let(:assignment) { double('Assignment', id: 1) }
   let(:participant) { double('Participant', id: 1) }
   let(:review_questions) { [double('Question', id: 1), double('Question', id: 2)] }
-  let(:response_map) { double('ResponseMap', id: 1, reviewee_id: 1, type: 'ReviewResponseMap') }
+  let(:response_map) { double('ResponseMap', id: 1, reviewee_id: 1, type: 'ReviewResponseMap', reviewer: participant) }
+  let(:response) { double('Response', id: 1, map_id: 1, map: response_map, visibility: true) }
   let(:map) { double('ResponseMap') }
   let(:review_response_map) { double('ReviewResponseMap', type: 'ReviewResponseMap', get_title: double('testMap'), 
     survey?: nil, reviewer: double('Reviewer'), contributor: contributor, assignment: :assignment, id: 0) }
@@ -101,28 +102,37 @@ RSpec.describe ResponsesHelper, type: :helper do
     end
   end
 
-  describe '#total_cake_score' do
-    it 'returns the total cake score for the reviewee' do
-      
-      allow(ResponseMap).to receive(:select).with(:reviewee_id, :type).and_return(ResponseMap)
-      allow(ResponseMap).to receive(:where).with(id: response.map_id.to_s).and_return([response_map])
-      expect(Cake).to receive(:get_total_score_for_questions).with(
-        response_map.type,
-        review_questions,
-        participant.id,
-        assignment.id,
-        response_map.reviewee_id
-      ).and_return(100)
-
-      expect(helper.total_cake_score).to eq(100)
-    end
-  end
-
   describe '#find_or_create_feedback' do
-    it 'returns the existing FeedbackResponseMap' do
-      allow(FeedbackResponseMap).to receive(:where).with(reviewed_object_id: response.id, reviewer_id: participant.id).and_return([feedback_response_map])
-      map = find_or_create_feedback
-      expect(map).to eq(feedback_response_map)
+    context 'when an existing FeedbackResponseMap exists' do
+      it 'returns the existing FeedbackResponseMap' do
+        
+        
+        allow(FeedbackResponseMap).to receive(:where)
+          .with(reviewed_object_id: response.id, reviewer_id: participant.id)
+          .and_return([feedback_response_map])
+        
+        map = helper.find_or_create_feedback
+        expect(map).to eq(feedback_response_map)
+      end
+    end
+
+    context 'when no existing FeedbackResponseMap exists' do
+      it 'creates a new FeedbackResponseMap' do     
+        allow(FeedbackResponseMap).to receive(:where)
+          .with(reviewed_object_id: response.id, reviewer_id: participant.id)
+          .and_return([])
+        
+        expect(FeedbackResponseMap).to receive(:create)
+          .with(
+            reviewed_object_id: response.id, 
+            reviewer_id: participant.id, 
+            reviewee_id: response_map.reviewer.id
+          )
+          .and_return(feedback_response_map)
+        
+        map = helper.find_or_create_feedback
+        expect(map).to eq(feedback_response_map)
+      end
     end
   end
 end

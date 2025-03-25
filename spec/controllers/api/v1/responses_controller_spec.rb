@@ -54,6 +54,69 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
 
   end
 
+  describe '#action_allowed?' do
+    let(:action) { Response.create(map_id: response_map.id, additional_comment: 'Test Comment') }
+    before do
+      allow(controller).to receive(:current_user).and_return(reviewer)
+    end
+
+    context 'when the action is not edit, delete, update, or view' do
+      it 'returns true if current_user is not nil' do
+        allow(controller).to receive(:params).and_return(action: 'new')
+        expect(controller.action_allowed?).to be true
+      end
+
+      it 'returns false if current_user is nil' do
+        allow(controller).to receive(:current_user).and_return(nil)
+        allow(controller).to receive(:params).and_return(action: 'new')
+        expect(controller.action_allowed?).to be false
+      end
+    end
+
+    context 'when the action is edit' do
+      before do
+        allow(controller).to receive(:params).and_return(action: 'edit', id: action.id)
+      end
+
+      it 'returns false if the response is submitted' do
+        allow(action).to receive(:is_submitted).and_return(true)
+        allow(Response).to receive(:find).and_return(action)
+        expect(controller.action_allowed?).to be false
+      end
+
+      it 'returns true if the current user is the reviewer and the response is not submitted' do
+        allow(action).to receive(:is_submitted).and_return(false)
+        allow(Response).to receive(:find).and_return(action)
+        allow(controller).to receive(:current_user_is_reviewer?).and_return(true)
+        expect(controller.action_allowed?).to be true
+      end
+    end
+
+    context 'when the action is delete or update' do
+      before do
+        allow(controller).to receive(:params).and_return(action: 'delete', id: action.id)
+      end
+
+      it 'returns true if the current user is the reviewer' do
+        allow(Response).to receive(:find).and_return(action)
+        allow(controller).to receive(:current_user_is_reviewer?).and_return(true)
+        expect(controller.action_allowed?).to be true
+      end
+    end
+
+    context 'when the action is view' do
+      before do
+        allow(controller).to receive(:params).and_return(action: 'view', id: action.id)
+      end
+
+      it 'returns true if the current user is the reviewer and the response is not submitted' do
+        allow(Response).to receive(:find).and_return(action)
+        allow(controller).to receive(:response_edit_allowed?).and_return(true)
+        expect(controller.action_allowed?).to be true
+      end
+    end
+  end
+
   describe 'GET #new' do
     before do
       allow(controller).to receive(:prepare_response_content).and_return({
