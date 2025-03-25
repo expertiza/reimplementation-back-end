@@ -3,8 +3,8 @@ class TeamParticipant < ApplicationRecord
   belongs_to :team
 
   # Returns the name of the associated user
-  def name(ip_address = nil)
-    user.name(ip_address)
+  def name(_ip_address = nil)
+    user.name
   end
 
   # Fetches team members given a team_id
