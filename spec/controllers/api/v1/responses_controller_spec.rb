@@ -9,7 +9,6 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
   let(:user2) { User.create(name: 'User Two', email: 'user2@example.com', password: 'asdfas176dfadfadfa', full_name: 'Full_name 2', role: role) }
   
   let(:assignment) { Assignment.create(name: 'Test Assignment', directory_path: 'test_assignment', instructor: instructor) }
-  let(:response) { double('Response', id: 1, map_id: 1, visibility: true) }
   let(:reviewee) { Participant.create(user: user1, assignment_id: assignment.id) }
   let(:reviewer) { Participant.create(user: user2, assignment_id: assignment.id) }
   let(:response_map) { ResponseMap.create(reviewee: reviewee, reviewer: reviewer, assignment: assignment) }
@@ -50,7 +49,6 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
     allow(controller).to receive(:sort_items).and_return([item])
     allow(controller).to receive(:total_cake_score).and_return(10)
     allow(controller).to receive(:init_answers)
-    helper.instance_variable_set(@response, response)
 
   end
 
@@ -127,7 +125,6 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
     end
     context 'does this need a context to work' do
       it 'assigns the necessary instance variables and renders the response view' do
-        puts Rails.application.routes.recognize_path('/api/v1/responses/new', method: :get)
         get :new, params: new_params
         expect(assigns(:map)).to eq(response_map)
         expect(assigns(:questionnaire)).to eq(questionnaire)
@@ -139,13 +136,6 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
   describe 'POST #create' do
     context 'when the response is successfully created' do
       it 'calls the necessary methods and redirects to response save' do
-        puts User.count
-        puts Questionnaire.count
-        puts response_map.id
-        puts Response.count
-        
-        #binding.pry
- 
         expect {
           post :create, params: response_params
         }.to change(Response, :count).by(1)
@@ -227,12 +217,37 @@ RSpec.describe Api::V1::ResponsesController, type: :controller do
     end
   end
 
-  describe 'PUT #toggle_permission' do
-    it 'updates attributes and redirects to response' do
-      toggle_permission(false)
-      expect{
-        @response.update(visibility: false)
-      }.to change(Response, :visibility).to(false)
+  describe 'POST #toggle_permission' do
+    let(:response_1) { Response.create(map_id: response_map.id, additional_comment: 'Test Comment') }
+    context 'when action is not allowed' do
+      before do
+        allow(controller).to receive(:action_allowed?).and_return(false)
+      end
+
+      it 'renders nothing' do
+        post :toggle_permission, params: { id: response_1.id }
+        expect(response.body).to be_empty
+        expect(response).to have_http_status(:no_content)
+      end
+    end
+
+    context 'when action is allowed' do
+      before do
+        allow(controller).to receive(:action_allowed?).and_return(true)
+        allow(controller).to receive(:params).and_return({ visibility: 'public', return: 'some_return', msg: 'some_msg' })
+      end
+
+      it 'updates the visibility and redirects' do
+        expect_any_instance_of(Response).to receive(:update).with(visibility: 'public')
+        post :toggle_permission, params: { id: response_1.id, visibility: 'public', return: 'some_return', msg: 'some_msg' }
+        expect(response).to redirect_to(action: 'redirect', id: response_map.id, return: 'some_return', msg: 'some_msg', error_msg: '')
+      end
+
+      it 'handles errors during visibility update' do
+        allow_any_instance_of(Response).to receive(:update).and_raise(StandardError.new('Some error'))
+        post :toggle_permission, params: { id: response_1.id, visibility: 'public', return: 'some_return', msg: 'some_msg' }
+        expect(response).to redirect_to(action: 'redirect', id: response_map.id, return: 'some_return', msg: 'some_msg', error_msg: 'Your response was not saved. Cause:189 Some error')
+      end
     end
   end
 end
