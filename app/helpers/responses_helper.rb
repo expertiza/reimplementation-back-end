@@ -176,4 +176,16 @@ module ResponsesHelper
     answer = @response.scores.first
     @questionnaire = @response.questionnaire_by_answer(answer)
   end
+
+    def update_visibility(visibility)
+      error = ""
+      begin
+        unless visibility.nil?
+          @response.update(visibility: visibility)
+        end
+      rescue StandardError
+        error = "Your response was not saved. Cause:189 #{$ERROR_INFO}"
+      end
+      error
+    end
 end
