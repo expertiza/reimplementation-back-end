@@ -5,8 +5,22 @@ class Api::V1::ResponsesController < ApplicationController
   skip_before_action :authorize
 
   def action_allowed?
-    true
+    return !current_user.nil? unless %w[edit delete update view].include?(params[:action])
+  
+    response = Response.find(params[:id])
+    user_id = response.map.reviewer&.user_id
+  
+    case params[:action]
+    when 'edit'
+      return false if response.is_submitted
+      current_user_is_reviewer?(response.map, user_id)
+    when 'delete', 'update'
+      current_user_is_reviewer?(response.map, user_id)
+    when 'view'
+      response_edit_allowed?(response.map, user_id, response)
+    end
   end
+
 
   # GET /api/v1/responses
   def index
