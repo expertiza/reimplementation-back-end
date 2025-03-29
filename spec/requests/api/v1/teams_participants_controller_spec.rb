@@ -105,18 +105,22 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
         required: ['team_participant_id', 'team_participant']
       }
 
-      response(200, 'duty updated successfully') do
-        let(:new_user) do
+      response(200, 'duty updated successfully by a valid team member') do
+        let(:student_user) do
           User.create!(
-            full_name: "User One",
-            name: "User1",
-            email: "user1@example.com",
+            full_name: "Student Member",
+            name: "student_member",
+            email: "studentmember@example.com",
             password_digest: "password",
             role_id: student_role.id
           )
         end
 
-        let(:team_participant) { TeamParticipant.create!(team_id: team.id, user_id: new_user.id) }
+        let(:team_participant) { TeamParticipant.create!(team_id: team.id, user_id: student_user.id) }
+
+        # Token should belong to the student who is actually on the team
+        let(:token) { JsonWebToken.encode({ id: student_user.id }) }
+        let(:Authorization) { "Bearer #{token}" }
 
         let(:payload) do
           {
@@ -125,10 +129,57 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
           }
         end
 
-        run_test!
+        run_test! do |response|
+          json = JSON.parse(response.body)
+          expect(json['message']).to eq("Duty updated successfully")
+          expect(team_participant.reload.duty_id).to eq(2)
+        end
+      end
+
+      response(403, 'forbidden: student not on team tries to update duties') do
+        let(:other_student) do
+          User.create!(
+            full_name: "Another Student",
+            name: "another_student",
+            email: "anotherstudent@example.com",
+            password_digest: "password",
+            role_id: student_role.id
+          )
+        end
+
+        let(:team_participant) { TeamParticipant.create!(team_id: team.id, user_id: participant.id) }
+
+        # Token belongs to another student NOT on this team
+        let(:token) { JsonWebToken.encode({ id: other_student.id }) }
+        let(:Authorization) { "Bearer #{token}" }
+
+        let(:payload) do
+          {
+            team_participant_id: team_participant.id,
+            team_participant: { duty_id: 2 }
+          }
+        end
+
+        run_test! do |response|
+          expect(response.status).to eq(403)
+        end
       end
 
       response(404, 'team participant not found') do
+        let(:student_user) do
+          User.create!(
+            full_name: "Student Member",
+            name: "student_member",
+            email: "studentmember@example.com",
+            password_digest: "password",
+            role_id: student_role.id
+          )
+        end
+
+        # Provide a valid student user's token, allowing authorization check to pass
+        let(:token) { JsonWebToken.encode({ id: student_user.id }) }
+        let(:Authorization) { "Bearer #{token}" }
+
         let(:payload) do
           {
             team_participant_id: 99999,  # Non-existing ID
@@ -137,11 +188,13 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
         end
 
         run_test! do |response|
+          expect(response.status).to eq(404)
           expect(response.body).to include("Couldn't find TeamParticipant")
         end
       end
     end
   end
+
 
   ### ✅ **List Participants Test**
   path '/api/v1/teams_participants/list_participants/{id}' do

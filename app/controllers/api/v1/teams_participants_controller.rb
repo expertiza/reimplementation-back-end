@@ -1,19 +1,33 @@
 class Api::V1::TeamsParticipantsController < ApplicationController
   # Allow duty updation for a team if current user is student, else require TA or above privileges.
   def action_allowed?
-    if %w[update_duties].include? params[:action]
-      has_privileges_of?('Student')
+    case params[:action]
+    when 'update_duties'
+      has_privileges_of?('Student') # Only checks role here
     else
       has_privileges_of?('Teaching Assistant')
     end
   end
 
+
   # Updates the duty (role) assigned to a participant in a team.
   def update_duties
-    team_participant = TeamParticipant.find(params[:team_participant_id])
-    team_participant.update_attribute(:duty_id, params[:team_participant]['duty_id'])
+    team_participant = TeamParticipant.find_by(id: params[:team_participant_id])
+
+    # FIRST, check existence
+    unless team_participant
+      render json: { error: "Couldn't find TeamParticipant" }, status: :not_found and return
+    end
+
+    # THEN, verify participant belongs to current user
+    unless team_participant.user_id == current_user.id
+      render json: { error: 'You are not authorized to update duties for this participant' }, status: :forbidden and return
+    end
+
+    team_participant.update(duty_id: params[:team_participant]['duty_id'])
     render json: { message: "Duty updated successfully" }, status: :ok
   end
+
 
   # Displays a list of all participants in a specific team.
   def list_participants
@@ -44,7 +58,7 @@ class Api::V1::TeamsParticipantsController < ApplicationController
     current_team = Team.find(params[:id])
 
     assignment = Assignment.find_by(id: current_team.assignment_id)
-    validation_result = assignment.valid_team_participant?(find_participant, assignment.id)
+    validation_result = assignment.can_participant_join_team_for_assignment?(find_participant, assignment.id)
 
     unless validation_result[:success]
       Rails.logger.info "Validation error: #{validation_result[:error]}"
@@ -90,10 +104,4 @@ class Api::V1::TeamsParticipantsController < ApplicationController
     render json: { message: "Participants deleted successfully" }, status: 200
   end
 
-  private
-
-  # def find_participant_by_name
-  #   User.find_by(name: params[:user][:name].strip)
-  # end
-  
 end

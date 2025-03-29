@@ -3,7 +3,7 @@ require 'rails_helper'
 
 RSpec.describe Assignment, type: :model do
 
-  let(:team) {Team.new}
+  let(:team) {Team.new(id: 1)}
   let(:assignment) { Assignment.new(id: 1, name: 'Test Assignment') }
   let(:review_response_map) { ReviewResponseMap.new(assignment: assignment, reviewee: team) }
   let(:answer) { Answer.new(answer: 1, comments: 'Answer text', question_id: 1) }
@@ -34,57 +34,115 @@ RSpec.describe Assignment, type: :model do
     end
   end
 
-  describe '#user_on_team?' do
-    let(:user) { User.new(id: 1, name: 'testuser') }
+  describe '#participant_on_team?' do
+    let!(:institution) { Institution.create!(name: "NC State") }
+    let!(:student_role) { Role.create!(name: "Student") }
+    let!(:instructor_role) { Role.create!(name: "Instructor") }
 
-    context 'when user is already on a team for assignment' do
+    let!(:instructor) do
+      User.create!(
+        name: "instructor",
+        email: "instructor@example.com",
+        password_digest: "password",
+        full_name: "Instructor User",
+        role: instructor_role,
+        institution: institution
+      )
+    end
+
+    let!(:user) do
+      User.create!(
+        name: 'testuser',
+        email: 'testuser@example.com',
+        password_digest: 'password',
+        full_name: 'Test User',
+        role: student_role,
+        institution: institution
+      )
+    end
+
+    let!(:assignment) { Assignment.create!(name: 'Test Assignment', instructor: instructor) }
+    let!(:team) { Team.create!(assignment: assignment) }
+
+    context 'when participant is already on a team for assignment' do
       it 'returns true' do
-        team.users << user
-        allow(assignment).to receive(:teams).and_return([team])
-        expect(assignment.user_on_team?(user)).to eq(true)
+        participant = Participant.create!(user: user, assignment: assignment, handle: 'handle1')
+        team.participants << participant  # explicitly add Participant to team
+
+        expect(assignment.participant_on_team?(participant)).to eq(true)
       end
     end
 
-    context 'when user is not on any team for assignment' do
+    context 'when participant is not on any team for assignment' do
       it 'returns false' do
-        allow(assignment).to receive(:teams).and_return([])
-        expect(assignment.user_on_team?(user)).to eq(false)
+        participant = Participant.create!(user: user, assignment: assignment, handle: 'handle2')
+        expect(assignment.participant_on_team?(participant)).to eq(false)
       end
     end
   end
 
 
-  describe '#valid_team_participant?' do
-    let(:user) { User.new(id: 1, name: 'testuser') } # 👈 explicitly define user
 
-    context 'when user is already on a team for the assignment' do
-      it 'returns an error message indicating the user is already assigned' do
-        allow(assignment).to receive(:user_on_team?).with(user).and_return(true)
-        result = assignment.valid_team_participant?(user, assignment.id)
+
+  describe '#can_participant_join_team_for_assignment?' do
+    let(:institution) { Institution.create!(name: "NC State") }
+    let(:student_role) { Role.create!(name: "Student") }
+    let(:instructor_role) { Role.create!(name: "Instructor") }
+
+    let(:instructor) do
+      User.create!(
+        name: "instructor",
+        email: "instructor@example.com",
+        password_digest: "password",
+        full_name: "Instructor User",
+        role: instructor_role,
+        institution: institution
+      )
+    end
+
+    let(:user) do
+      User.create!(
+        name: 'testuser',
+        email: 'testuser@example.com',
+        password_digest: 'password',
+        full_name: 'Test User',
+        role: student_role,
+        institution: institution
+      )
+    end
+
+    let(:assignment) { Assignment.create!(name: 'Test Assignment', instructor: instructor) }
+
+    context 'when participant is already on a team for the assignment' do
+      it 'returns an error message indicating the participant is already assigned' do
+        allow(assignment).to receive(:participant_on_team?).with(user).and_return(true)
+        result = assignment.can_participant_join_team_for_assignment?(user, assignment.id)
         expect(result).to eq({ success: false, error: "This user is already assigned to a team for this assignment" })
       end
     end
 
-    context 'when user is not registered as a participant for the assignment' do
-      it 'returns an error message indicating the user is not a participant' do
-        allow(assignment).to receive(:user_on_team?).with(user).and_return(false)
+    context 'when participant is not registered as a participant for the assignment' do
+      it 'returns an error message indicating the participant is not registered' do
+        allow(assignment).to receive(:participant_on_team?).with(user).and_return(false)
         allow(AssignmentParticipant).to receive(:find_by).with(user_id: user.id, assignment_id: assignment.id).and_return(nil)
-        result = assignment.valid_team_participant?(user, assignment.id)
+        result = assignment.can_participant_join_team_for_assignment?(user, assignment.id)
         expect(result).to eq({ success: false, error: "testuser is not a participant in this assignment" })
       end
     end
 
-    context 'when user is eligible to join a team for the assignment' do
-      let(:participant) { AssignmentParticipant.new(user_id: user.id, assignment_id: assignment.id) }
-
+    context 'when participant is eligible to join a team for the assignment' do
       it 'returns success true' do
-        allow(assignment).to receive(:user_on_team?).with(user).and_return(false)
+        participant = AssignmentParticipant.create!(user: user, assignment: assignment, handle: 'handle')
+        allow(assignment).to receive(:participant_on_team?).with(user).and_return(false)
         allow(AssignmentParticipant).to receive(:find_by).with(user_id: user.id, assignment_id: assignment.id).and_return(participant)
-        result = assignment.valid_team_participant?(user, assignment.id)
+
+        result = assignment.can_participant_join_team_for_assignment?(user, assignment.id)
         expect(result).to eq({ success: true })
       end
     end
   end
+
+
 
 
 end
