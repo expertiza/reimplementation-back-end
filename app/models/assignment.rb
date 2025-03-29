@@ -196,7 +196,7 @@ class Assignment < ApplicationRecord
 
 
   #E2479
-  #check if the user is on the team
+  #Check if the user is already part of a team for this assignment.
   def user_on_team?(user)
     teams = self.teams
     users = []

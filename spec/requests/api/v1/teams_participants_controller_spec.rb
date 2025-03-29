@@ -9,8 +9,8 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
   let(:institution) { Institution.create!(name: "NC State") }
 
   let(:instructor_role) { Role.find_or_create_by!(name: "Instructor") }
-  let(:ta_role) { Role.find_or_create_by!(name: "Teaching Assistant", parent_id: instructor_role.id) }
-  let(:student_role) { Role.find_or_create_by!(name: "Student", parent_id: ta_role.id) }
+  let(:ta_role)         { Role.find_or_create_by!(name: "Teaching Assistant", parent_id: instructor_role.id) }
+  let(:student_role)    { Role.find_or_create_by!(name: "Student", parent_id: ta_role.id) }
 
   let(:instructor) do
     User.create!(
@@ -31,12 +31,39 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
     )
   end
 
+  let(:assignment1) do
+    Assignment.create!(
+      name: "Sample Assignment1",
+      instructor_id: instructor.id
+    )
+  end
+
+  # This team is used for tests that require a pre-existing participant.
   let(:team) do
     Team.create!(
       assignment_id: assignment.id
     )
   end
 
+  # Create an extra empty team (no participants) for the add participant test.
+  let(:empty_team) do
+    Team.create!(
+      assignment_id: assignment1.id
+    )
+  end
+
+  # Create a new participant (as a User) to be added.
+  let(:new_participant) do
+    User.create!(
+      full_name: "New Participant",
+      name: "NewParticipant",
+      email: "newparticipant@example.com",
+      password_digest: "password",
+      role_id: student_role.id
+    )
+  end
+
+  # For update and delete tests, we create a participant and add them to the team.
   let(:participant) do
     User.create!(
       full_name: "Test Participant",
@@ -63,7 +90,6 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
       tags 'Teams Participants'
       consumes 'application/json'
       produces 'application/json'
-
       parameter name: :payload, in: :body, schema: {
         type: :object,
         properties: {
@@ -127,7 +153,6 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
 
       response(200, 'successful') do
         let(:id) { team.id }
-
         run_test! do |response|
           json = JSON.parse(response.body)
           expect(json['team_participants']).to be_an(Array)
@@ -136,7 +161,6 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
 
       response(404, 'team not found') do
         let(:id) { 99999 } # Non-existing team ID
-
         run_test! do |response|
           expect(response.body).to include("Couldn't find Team")
         end
@@ -152,7 +176,6 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
       tags 'Teams Participants'
       consumes 'application/json'
       produces 'application/json'
-
       parameter name: :payload, in: :body, schema: {
         type: :object,
         properties: {
@@ -165,19 +188,47 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
         required: ['user']
       }
 
-      response(302, 'participant added successfully') do
-        let(:payload) { { user: { name: participant.name } } }
-        let(:id) { team.id }
+      response(200, 'participant added successfully') do
+        let(:payload) { { user: { name: new_participant.name } } }
+        let(:id) { empty_team.id }
 
-        run_test!
+        before do
+          allow_any_instance_of(Team).to receive(:full?).and_return(false)
+
+          # IMPORTANT FIX HERE:
+          # Ensure AssignmentParticipant matches empty_team's assignment (assignment1)
+          AssignmentParticipant.create!(
+            user_id: new_participant.id,
+            assignment_id: assignment1.id,  # <-- FIXED THIS LINE
+            handle: new_participant.name
+          )
+
+          expect(
+            AssignmentParticipant.find_by(
+              user_id: new_participant.id,
+              assignment_id: assignment1.id
+            )
+          ).not_to be_nil
+
+          TeamParticipant.where(user_id: new_participant.id).destroy_all
+        end
+
+        run_test! do |response|
+          expect(response.status).to eq(200)
+          tp = TeamParticipant.find_by(team_id: empty_team.id, user_id: new_participant.id)
+          expect(tp).not_to be_nil
+        end
       end
+
+
+
+
 
       response(404, 'participant not found') do
         let(:payload) { { user: { name: 'Invalid User' } } }
-        let(:id) { team.id }
-
+        let(:id) { empty_team.id }
         run_test! do |response|
-          expect(response.body).to include("Couldn't find User")
+          expect(response.body).to include("Couldn't find Participant")
         end
       end
     end
@@ -193,7 +244,6 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
 
       response(200, 'participant deleted successfully') do
         let(:id) { team_participant.id }
-
         run_test! do |response|
           expect(TeamParticipant.exists?(team_participant.id)).to be_falsey
         end
@@ -201,7 +251,6 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
 
       response(404, 'not found') do
         let(:id) { 0 }
-
         run_test! do |response|
           expect(response.body).to include("Couldn't find TeamParticipant")
         end
@@ -217,7 +266,6 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
       tags 'Teams Participants'
       consumes 'application/json'
       produces 'application/json'
-
       parameter name: :payload, in: :body, schema: {
         type: :object,
         properties: {
@@ -228,7 +276,6 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
 
       response(200, 'participants deleted successfully') do
         let(:id) { team.id }
-
         let(:new_user1) do
           User.create!(
             full_name: "User One",
@@ -251,7 +298,6 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
 
         let(:team_participant1) { TeamParticipant.create!(team_id: team.id, user_id: new_user1.id) }
         let(:team_participant2) { TeamParticipant.create!(team_id: team.id, user_id: new_user2.id) }
-
         let(:payload) { { item: [team_participant1.id, team_participant2.id] } }
 
         run_test! do |response|

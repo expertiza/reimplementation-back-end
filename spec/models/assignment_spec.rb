@@ -33,4 +33,58 @@ RSpec.describe Assignment, type: :model do
       expect(assignment.volume_of_review_comments(1)).to eq([1, 2, 2, 0])
     end
   end
+
+  describe '#user_on_team?' do
+    let(:user) { User.new(id: 1, name: 'testuser') }
+
+    context 'when user is already on a team for assignment' do
+      it 'returns true' do
+        team.users << user
+        allow(assignment).to receive(:teams).and_return([team])
+        expect(assignment.user_on_team?(user)).to eq(true)
+      end
+    end
+
+    context 'when user is not on any team for assignment' do
+      it 'returns false' do
+        allow(assignment).to receive(:teams).and_return([])
+        expect(assignment.user_on_team?(user)).to eq(false)
+      end
+    end
+  end
+
+
+  describe '#valid_team_participant?' do
+    let(:user) { User.new(id: 1, name: 'testuser') } # 👈 explicitly define user
+
+    context 'when user is already on a team for the assignment' do
+      it 'returns an error message indicating the user is already assigned' do
+        allow(assignment).to receive(:user_on_team?).with(user).and_return(true)
+        result = assignment.valid_team_participant?(user, assignment.id)
+        expect(result).to eq({ success: false, error: "This user is already assigned to a team for this assignment" })
+      end
+    end
+
+    context 'when user is not registered as a participant for the assignment' do
+      it 'returns an error message indicating the user is not a participant' do
+        allow(assignment).to receive(:user_on_team?).with(user).and_return(false)
+        allow(AssignmentParticipant).to receive(:find_by).with(user_id: user.id, assignment_id: assignment.id).and_return(nil)
+        result = assignment.valid_team_participant?(user, assignment.id)
+        expect(result).to eq({ success: false, error: "testuser is not a participant in this assignment" })
+      end
+    end
+
+    context 'when user is eligible to join a team for the assignment' do
+      let(:participant) { AssignmentParticipant.new(user_id: user.id, assignment_id: assignment.id) }
+
+      it 'returns success true' do
+        allow(assignment).to receive(:user_on_team?).with(user).and_return(false)
+        allow(AssignmentParticipant).to receive(:find_by).with(user_id: user.id, assignment_id: assignment.id).and_return(participant)
+        result = assignment.valid_team_participant?(user, assignment.id)
+        expect(result).to eq({ success: true })
+      end
+    end
+  end
+
+
 end

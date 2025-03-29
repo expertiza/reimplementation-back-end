@@ -22,36 +22,47 @@ class Api::V1::TeamsParticipantsController < ApplicationController
       render json: { error: "Couldn't find Team" }, status: 404 and return
     end
 
-    associated_assignment_or_course = Assignment.find_by(id: current_team.assignment_id)
-    if associated_assignment_or_course.nil?
-      render json: { error: "Couldn't find Assignment or Course for this team" }, status: 404 and return
+    associated_assignment = Assignment.find_by(id: current_team.assignment_id)
+    if associated_assignment.nil?
+      render json: { error: "Couldn't find Assignment for this team" }, status: 404 and return
     end
 
     team_participants = TeamParticipant.where(team_id: current_team.id)
     render json: {
       team_participants: team_participants,
       team: current_team,
-      assignment: associated_assignment_or_course
+      assignment: associated_assignment
     }, status: 200
   end
 
-  # Adds a new participant to a team after validation.
   def add_participant
-    find_participant = find_participant_by_name
+    find_participant = User.find_by(name: params[:user][:name].strip)
     unless find_participant
-      render json: { error: "Couldn't find User" }, status: :not_found and return
+      render json: { error: "Couldn't find Participant" }, status: :not_found and return
     end
 
     current_team = Team.find(params[:id])
-    if validate_participant_and_team(find_participant, current_team)
-      if current_team.add_participants_with_validation(find_participant, current_team.assignment_id)[:success]
-        undo_link("The participant \"#{find_participant.name}\" has been successfully added to \"#{current_team.name}\".")
-      else
-        flash[:error] = 'This team already has the maximum number of members.'
-      end
+
+    assignment = Assignment.find_by(id: current_team.assignment_id)
+    validation_result = assignment.valid_team_participant?(find_participant, assignment.id)
+
+    unless validation_result[:success]
+      Rails.logger.info "Validation error: #{validation_result[:error]}"
+      render json: { error: validation_result[:error] }, status: :unprocessable_entity and return
     end
-    redirect_to action: 'list_participants', id: params[:id]
+
+    result = current_team.add_participants_with_validation(find_participant)
+
+    if result[:success]
+      # undo_link("Participant added successfully.")
+      render json: { message: "Participant added successfully." }, status: :ok
+      # redirect_to action: 'list_participants', id: params[:id]
+    else
+      render json: { error: result[:error] }, status: :unprocessable_entity
+    end
   end
+
+
 
   # Removes a participant from a team.
   def delete_participant
@@ -81,32 +92,8 @@ class Api::V1::TeamsParticipantsController < ApplicationController
 
   private
 
-  def find_participant_by_name
-    User.find_by(name: params[:user][:name].strip)
-  end
-
-  def validate_participant_and_team(participant, team)
-    validation_result = if team.assignment_id.present?
-                          assignment = Assignment.find_by(id: team.assignment_id)
-                          if assignment
-                            assignment.valid_team_participant?(participant, team.assignment_id)
-                          else
-                            { success: false, error: "Assignment not found" }
-                          end
-                        else
-                          { success: false, error: "Invalid team assignment" }
-                        end
-
-    return false unless validation_result[:success]
-    true
-  end
-
-  def participant_not_found_error
-    nil
-  end
-
-  def non_participant_error(find_participant, parent_id, model)
-    urlParticipantList = url_for controller: 'participants', action: 'list', id: parent_id, model: model, authorization: 'participant'
-    "\"#{find_participant.name}\" is not a participant of the current assignment. Please <a href=\"#{urlParticipantList}\">add</a> this user before continuing."
-  end
+  # def find_participant_by_name
+  #   User.find_by(name: params[:user][:name].strip)
+  # end
+  
 end
