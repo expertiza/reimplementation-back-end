@@ -196,24 +196,25 @@ class Assignment < ApplicationRecord
 
 
   #E2479
-  #check if the user is on the team
-  def user_on_team?(user)
+  #Check if the participant is already part of a team for this assignment.
+  def participant_on_team?(participant)
     teams = self.teams
-    users = []
+    participants = []
     teams.each do |team|
-      users << team.users
+      participants << team.participants
     end
-    users.flatten.include? user
+    participants.flatten.include? participant
   end
+
   # Validates if a user is eligible to join a team for the current assignment.
-  def valid_team_participant?(user, assignment_id)
+  def can_participant_join_team_for_assignment?(participant, assignment_id)
     # Check if the user is already part of a team for this assignment.
-    if user_on_team?(user)
+    if participant_on_team?(participant)
       { success: false, error: "This user is already assigned to a team for this assignment" }
 
       # Check if the user is a registered participant in the assignment.
-    elsif AssignmentParticipant.find_by(user_id: user.id, assignment_id: assignment_id).nil?
-      { success: false, error: "#{user.name} is not a participant in this assignment" }
+    elsif AssignmentParticipant.find_by(user_id: participant.user_id, assignment_id: assignment_id).nil?
+      { success: false, error: "#{participant.user.name} is not a participant in this assignment" }
 
       # If both checks pass, the user is eligible to join the team.
     else

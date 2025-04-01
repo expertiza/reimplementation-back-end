@@ -1,6 +1,7 @@
 class Team < ApplicationRecord
   has_many :signed_up_teams, dependent: :destroy
   has_many :teams_users, dependent: :destroy
+  has_many :team_participants, dependent: :destroy
   has_many :users, through: :teams_users
   has_many :participants
   belongs_to :assignment
@@ -18,37 +19,32 @@ class Team < ApplicationRecord
     end
   end
 
-  def add_member(user, _assignment_id = nil)
-    raise "The user #{user.name} is already a member of the team #{name}" if user?(user)
-
-    can_add_member = false
-    unless full?
-      can_add_member = true
-      t_user = TeamsUser.create(user_id: user.id, team_id: id)
-      parent = TeamNode.find_by(node_object_id: id)
-      TeamUserNode.create(parent_id: parent.id, node_object_id: t_user.id)
-      add_participant(parent_id, user)
-      ExpertizaLogger.info LoggerMessage.new('Model:Team', user.name, "Added member to the team #{id}")
-    end
-    can_add_member
+  # Check if Participant already exists in the team
+  def participant?(participant)
+    participants.exists?(id: participant.id)
   end
 
+  # Add participant in the team
+  def add_member(participant)
+    raise "The participant #{participant.user.name} is already a member of this team" if participant?(participant)
+    return false if full?
 
-  def add_participants_with_validation(user, parent_id)
+    # Create a TeamParticipant record linking the participant to this team.
+    TeamParticipant.create(participant_id: participant.id, team_id: id)
+    true
+  end
+
+  def add_participants_with_validation(participant)
     begin
-      # Attempt to add the user to the team.
-      add_member(user, parent_id)
-      { success: true }
-      # addition_result
+      if add_member(participant)
+        { success: true }
+      else
+        { success: false, error: "Unable to add participant: team is at full capacity." }
+      end
     rescue StandardError => e
-      # Return a failure message if an error occurs (e.g., user already in the team).
-      { success: false, error: "The user #{user.name} is already a member of the team #{name}" }
+      { success: false, error: e.message }
     end
   end
-
-
-
-
 
 
 end
