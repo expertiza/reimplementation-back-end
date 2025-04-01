@@ -20,7 +20,7 @@ class Api::V1::TeamsParticipantsController < ApplicationController
     end
 
     # THEN, verify participant belongs to current user
-    unless team_participant.user_id == current_user.id
+    unless team_participant.participant.user_id == current_user.id
       render json: { error: 'You are not authorized to update duties for this participant' }, status: :forbidden and return
     end
 
@@ -49,8 +49,9 @@ class Api::V1::TeamsParticipantsController < ApplicationController
     }, status: 200
   end
 
+  # Add Participant to a team
   def add_participant
-    find_participant = User.find_by(name: params[:user][:name].strip)
+    find_participant = Participant.find_by_user_name(params[:user][:name])
     unless find_participant
       render json: { error: "Couldn't find Participant" }, status: :not_found and return
     end
@@ -68,15 +69,11 @@ class Api::V1::TeamsParticipantsController < ApplicationController
     result = current_team.add_participants_with_validation(find_participant)
 
     if result[:success]
-      # undo_link("Participant added successfully.")
       render json: { message: "Participant added successfully." }, status: :ok
-      # redirect_to action: 'list_participants', id: params[:id]
     else
       render json: { error: result[:error] }, status: :unprocessable_entity
     end
   end
-
-
 
   # Removes a participant from a team.
   def delete_participant

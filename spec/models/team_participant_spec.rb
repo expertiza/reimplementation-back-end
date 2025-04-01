@@ -1,22 +1,21 @@
 require 'rails_helper'
 
 describe TeamParticipant, type: :model do
-  # Create necessary roles
-  let(:instructor_role) { Role.create!(name: 'Instructor', parent_id: nil, default_page_id: nil) }
-  let(:student_role)    { Role.create!(name: 'Student', parent_id: nil, default_page_id: nil) }
+  let(:institution) { Institution.create!(name: 'Test University') }
+  let(:student_role) { Role.create!(name: 'Student') }
+  let(:instructor_role) { Role.create!(name: 'Instructor') }
 
-  # Create an instructor for the assignment
   let(:instructor) do
     User.create!(
       name: 'InstructorUser',
       email: 'instructor@example.com',
       full_name: 'Instructor Full Name',
       password_digest: 'password',
-      role: instructor_role
+      role: instructor_role,
+      institution: institution
     )
   end
 
-  # Create an assignment associated with the instructor
   let(:assignment) do
     Assignment.create!(
       name: 'Test Assignment',
@@ -24,98 +23,91 @@ describe TeamParticipant, type: :model do
     )
   end
 
-  # Create a team for the assignment
-  let(:team) do
-    Team.create!(
-      assignment: assignment
-    )
-  end
-
-  # Create valid team participant users with required attributes
-  let(:user1) do
+  let(:participant1_user) do
     User.create!(
       name: 'User One',
       email: 'user1@example.com',
       full_name: 'User One Full Name',
       password_digest: 'password',
-      role: student_role
+      role: student_role,
+      institution: institution
     )
   end
 
-  let(:user2) do
+  let(:participant2_user) do
     User.create!(
       name: 'User Two',
       email: 'user2@example.com',
       full_name: 'User Two Full Name',
       password_digest: 'password',
-      role: student_role
+      role: student_role,
+      institution: institution
     )
   end
 
-  # Create a TeamParticipant record for user1 (using let! to force creation)
+  let(:assignment_participant1) do
+    AssignmentParticipant.create!(
+      user: participant1_user,
+      assignment: assignment,
+      handle: 'user1handle'
+    )
+  end
+
+  let(:assignment_participant2) do
+    AssignmentParticipant.create!(
+      user: participant2_user,
+      assignment: assignment,
+      handle: 'user2handle'
+    )
+  end
+
+  let(:team) { Team.create!(assignment: assignment) }
+
   let!(:team_participant) do
     TeamParticipant.create!(
-      user: user1,
+      participant: assignment_participant1,
       team: team
     )
   end
 
   describe '#name' do
-    it 'returns the name of the associated user' do
-      expect(team_participant.name).to eq(user1.name)
-    end
-
-    it 'ignores an ip_address argument and returns the name of the associated user' do
-      # Even if an IP is passed, the method returns user.name
-      expect(team_participant.name("127.0.0.1")).to eq(user1.name)
+    it 'returns the name of the associated participant user' do
+      expect(team_participant.name).to eq(participant1_user.name)
     end
   end
 
   describe '.get_team_members' do
     before do
-      # Add a second team participant for the same team.
-      TeamParticipant.create!(user: user2, team: team)
+      TeamParticipant.create!(participant: assignment_participant2, team: team)
     end
 
     it 'returns the users associated with the given team id' do
-      # Ensure team_participant (for user1) is created by referencing it.
-      team_participant
       members = TeamParticipant.get_team_members(team.id)
-      expect(members).to match_array([user1, user2])
-      expect(members.count).to eq(2)
+      expect(members).to match_array([participant1_user, participant2_user])
     end
 
-    it 'returns an empty collection if no participants exist for a team' do
+    it 'returns empty array if no participants exist for a team' do
       new_team = Team.create!(assignment: assignment)
-      members = TeamParticipant.get_team_members(new_team.id)
-      expect(members).to be_empty
+      expect(TeamParticipant.get_team_members(new_team.id)).to be_empty
     end
   end
 
   describe '.remove_team' do
-    it 'removes the team participant record for a given user and team' do
-      # Ensure the record exists before removal.
-      expect(TeamParticipant.find_by(user: user1, team: team)).to be_present
-      TeamParticipant.remove_team(user1.id, team.id)
-      expect(TeamParticipant.find_by(user: user1, team: team)).to be_nil
+    it 'removes the team participant for the given participant and team' do
+      expect(TeamParticipant.find_by(participant: assignment_participant1, team: team)).to be_present
+      TeamParticipant.remove_team(assignment_participant1.id, team.id)
+      expect(TeamParticipant.find_by(participant: assignment_participant1, team: team)).to be_nil
     end
 
-    it 'returns nil when no matching team participant is found' do
-      new_user = User.create!(
-        name: 'New User',
-        email: 'newuser@example.com',
-        full_name: 'New User Full Name',
-        password_digest: 'password',
-        role: student_role
-      )
-      result = TeamParticipant.remove_team(new_user.id, team.id)
+    it 'returns nil when no matching team participant exists' do
+      result = TeamParticipant.remove_team(99999, team.id)
       expect(result).to be_nil
     end
   end
 
   describe 'associations' do
-    it 'belongs to a user' do
-      expect(team_participant.user).to eq(user1)
+    it 'belongs to a participant' do
+      expect(team_participant.participant).to eq(assignment_participant1)
     end
 
     it 'belongs to a team' do

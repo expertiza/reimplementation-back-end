@@ -15,4 +15,12 @@ class Participant < ApplicationRecord
   def fullname
     user.fullname
   end
+
+  # app/models/participant.rb
+  def self.find_by_user_name(name)
+    joins(:user).find_by(users: { name: name.strip })
+  end
+
+
+
 end

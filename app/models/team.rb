@@ -19,17 +19,18 @@ class Team < ApplicationRecord
     end
   end
 
+  # Check if Participant already exists in the team
   def participant?(participant)
     participants.exists?(id: participant.id)
   end
 
+  # Add participant in the team
   def add_member(participant)
     raise "The participant #{participant.user.name} is already a member of this team" if participant?(participant)
     return false if full?
 
     # Create a TeamParticipant record linking the participant to this team.
-    TeamParticipant.create(user_id: participant.id, team_id: id)
-    # ExpertizaLogger.info LoggerMessage.new('Model:Team', participant.name, "Added participant to the team #{id}")
+    TeamParticipant.create(participant_id: participant.id, team_id: id)
     true
   end
 
