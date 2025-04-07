@@ -1,0 +1,44 @@
+name: Comment on PR
+
+on:
+  workflow_run:
+    workflows: ["PR Test Workflow"]
+    types:
+      - completed
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - name: Download artifact from another workflow
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: TestPR.yml   # Replace with the workflow file name that did the upload
+          workflow_conclusion: success
+
+
+      - name: Read PR number and failed test report
+        id: read_files
+        run: |
+          PR_NUMBER=$(cat failed-tests/pr_number.txt)
+          echo "pr=$PR_NUMBER" >> $GITHUB_OUTPUT
+          TEST_OUTPUT=$(cat failed-tests/failed_tests.txt)
+          echo "test_output<<EOF" >> $GITHUB_OUTPUT
+          echo "$TEST_OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Post RSpec summary
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          pr-number: ${{ steps.read_files.outputs.pr }}  # This dynamically gets the PR number from the context
+          message: |
+            🚨 **RSpec Tests Report**
+            ```
+            ${{ steps.read_files.outputs.test_output }}
+            ```
+          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+
