@@ -19,6 +19,7 @@ jobs:
         with:
           workflow: TestPR.yml   # Replace with the workflow file name that did the upload
           workflow_conclusion: success
+          branch: workflow/pr-comment-bot
 
 
       - name: Read PR number and failed test report
@@ -40,5 +41,5 @@ jobs:
             ```
             ${{ steps.read_files.outputs.test_output }}
             ```
-          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+          GITHUB_TOKEN: ${{ secrets.DANGER_BOT_TOKEN_PLACEHOLDER }}
 
