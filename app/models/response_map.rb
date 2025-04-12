@@ -38,4 +38,9 @@ class ResponseMap < ApplicationRecord
     end
     responses
   end
+
+  # Check to see if this response map is a survey. Default is false, and some subclasses will overwrite to true.
+  def survey?
+    false
+  end
 end
