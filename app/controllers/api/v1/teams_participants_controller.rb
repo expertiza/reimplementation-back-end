@@ -2,7 +2,7 @@ class Api::V1::TeamsParticipantsController < ApplicationController
   # Allow duty updation for a team if current user is student, else require TA or above privileges.
   def action_allowed?
     case params[:action]
-    when 'update_duties'
+    when 'update_duty'
       has_privileges_of?('Student') # Only checks role here
     else
       has_privileges_of?('Teaching Assistant')
@@ -11,7 +11,7 @@ class Api::V1::TeamsParticipantsController < ApplicationController
 
 
   # Updates the duty (role) assigned to a participant in a team.
-  def update_duties
+  def update_duty
     team_participant = TeamParticipant.find_by(id: params[:team_participant_id])
 
     # FIRST, check existence
@@ -21,7 +21,7 @@ class Api::V1::TeamsParticipantsController < ApplicationController
 
     # THEN, verify participant belongs to current user
     unless team_participant.participant.user_id == current_user.id
-      render json: { error: 'You are not authorized to update duties for this participant' }, status: :forbidden and return
+      render json: { error: 'You are not authorized to update duty for this participant' }, status: :forbidden and return
     end
 
     team_participant.update(duty_id: params[:team_participant]['duty_id'])
@@ -51,14 +51,26 @@ class Api::V1::TeamsParticipantsController < ApplicationController
 
   # Add Participant to a team
   def add_participant
-    find_participant = Participant.find_by_user_name(params[:user][:name])
-    unless find_participant
+    # Check if Participant exists
+    participant = Participant.find_by_user_name(params[:name])
+    unless participant
       render json: { error: "Couldn't find Participant" }, status: :not_found and return
     end
 
+    # Check if Team exists
     current_team = Team.find(params[:id])
+    unless current_team
+      render json: { error: "Couldn't find Team" }, status: :not_found and return
+    end
 
+    # Check if team is an assignment team, if it is not an assignment team, it is a course team
     assignment = Assignment.find_by(id: current_team.assignment_id)
+    if(assignment is not null)
+
+    end
+    else
+
+
     validation_result = assignment.can_participant_join_team_for_assignment?(find_participant, assignment.id)
 
     unless validation_result[:success]

@@ -65,8 +65,8 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
   let(:token) { JsonWebToken.encode({ id: instructor.id }) }
   let(:Authorization) { "Bearer #{token}" }
 
-  path '/api/v1/teams_participants/update_duties' do
-    put('update participant duties') do
+  path '/api/v1/teams_participants/update_duty' do
+    put('update participant duty') do
       tags 'Teams Participants'
       consumes 'application/json'
       produces 'application/json'
@@ -201,17 +201,13 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
       parameter name: :payload, in: :body, schema: {
         type: :object,
         properties: {
-          user: {
-            type: :object,
-            properties: { name: { type: :string } },
-            required: ['name']
-          }
+          name: { type: :string }
         },
-        required: ['user']
+        required: ['name']
       }
 
       response(200, 'participant added successfully') do
-        let(:payload) { { user: { name: new_user.name } } }
+        let(:payload) { { name: new_user.name } }
         let(:id) { empty_team.id }
 
         before do
@@ -220,7 +216,7 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
           # Make sure this assignment is the one attached to the empty_team
           expect(empty_team.assignment_id).to eq(assignment1.id)
 
-          # Make sure participant is correctly created
+          # Ensure that the participant is created correctly
           Participant.create!(user: new_user, assignment: assignment1)
         end
 
@@ -231,10 +227,8 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
         end
       end
 
-
-
       response(404, 'participant not found') do
-        let(:payload) { { user: { name: 'Invalid User' } } }
+        let(:payload) { { name: 'Invalid User' } }
         let(:id) { empty_team.id }
 
         run_test! do |response|
@@ -243,6 +237,7 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
       end
     end
   end
+
 
   path '/api/v1/teams_participants/delete_participant/{id}' do
     parameter name: 'id', in: :path, type: :integer
