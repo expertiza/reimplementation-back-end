@@ -9,6 +9,7 @@ Rails.application.routes.draw do
   post '/login', to: 'authentication#login'
   namespace :api do
     namespace :v1 do
+      resources :password_resets, only: [:create, :update], controller: "passwords", param: :token
       resources :institutions
       resources :roles do
         collection do
@@ -120,6 +121,8 @@ Rails.application.routes.draw do
           delete '/:id', to: 'participants#destroy'
         end
       end
+
+      resources :password_resets, only: [:create, :update]
     end
   end
 end
