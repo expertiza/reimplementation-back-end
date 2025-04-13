@@ -63,28 +63,24 @@ class Api::V1::TeamsParticipantsController < ApplicationController
       render json: { error: "Couldn't find Team" }, status: :not_found and return
     end
 
-    # Check if team is an assignment team, if it is not an assignment team, it is a course team
-    assignment = Assignment.find_by(id: current_team.assignment_id)
-    if(assignment is not null)
+    # assignment = Assignment.find_by(id: current_team.assignment_id)
 
-    end
-    else
+    validation_result = current_team.can_participant_join_team?(participant)
 
-
-    validation_result = assignment.can_participant_join_team_for_assignment?(find_participant, assignment.id)
 
     unless validation_result[:success]
       Rails.logger.info "Validation error: #{validation_result[:error]}"
       render json: { error: validation_result[:error] }, status: :unprocessable_entity and return
     end
 
-    result = current_team.add_participants_with_validation(find_participant)
+    result = current_team.add_member(participant)
 
     if result[:success]
       render json: { message: "Participant added successfully." }, status: :ok
     else
       render json: { error: result[:error] }, status: :unprocessable_entity
     end
+
   end
 
   # Removes a participant from a team.
