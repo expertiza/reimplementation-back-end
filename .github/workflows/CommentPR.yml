@@ -39,5 +39,5 @@ jobs:
             ```
             ${{ steps.read_files.outputs.test_output }}
             ```
-          GITHUB_TOKEN: ${{ secrets.DANGER_BOT_TOKEN_PLACEHOLDER }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
