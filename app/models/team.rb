@@ -4,9 +4,16 @@ class Team < ApplicationRecord
   has_many :team_participants, dependent: :destroy
   has_many :users, through: :teams_users
   has_many :participants
-  belongs_to :assignment
-  belongs_to :course
+
+  # The team is either an AssignmentTeam or a CourseTeam
+  belongs_to :assignment, optional: true
+  belongs_to :course, optional: true
   attr_accessor :max_participants
+
+  # Custom validation to enforce presence of exactly one association for AssignmentTeam or CourseTeam
+  validate :exactly_one_association
+
+
 
   # TODO Team implementing Teams controller and model should implement this method better.
   # TODO partial implementation here just for the functionality needed for join_team_tequests controller
@@ -44,8 +51,8 @@ class Team < ApplicationRecord
     # Return an error hash if the team is at full capacity.
     return { success: false, error: "Unable to add participant: team is at full capacity." } if full?
 
-    # Create the TeamParticipant record linking the participant to the team.
-    team_participant = TeamParticipant.create(participant_id: participant.id, team_id: id)
+    # Create the TeamsParticipant record linking the participant to the team.
+    team_participant = TeamsParticipant.create(participant_id: participant.id, team_id: id)
 
     if team_participant.persisted?
       { success: true }
@@ -60,6 +67,7 @@ class Team < ApplicationRecord
 
   def can_participant_join_team?(participant)
 
+    # If the team is an assignment team
     if respond_to?(:assignment) && assignment.present?
       # Check if the user is already part of a team for this assignment.
       if participant_on_team?(participant)
@@ -90,6 +98,20 @@ class Team < ApplicationRecord
         { success: true }
       end
 
+    # Else, team is neither an assignment team nor a course team.
+    else
+      { success: false, error: "Team is neither an assignment team nor a course team" }
+    end
+
+  end
+
+  private
+
+  def exactly_one_association
+    if assignment_id.blank? && course_id.blank?
+      errors.add(:base, "Team must belong to either an assignment or a course")
+    elsif assignment_id.present? && course_id.present?
+      errors.add(:base, "Team cannot belong to both an assignment and a course")
     end
   end
 

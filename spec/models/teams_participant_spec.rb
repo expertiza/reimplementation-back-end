@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-describe TeamParticipant, type: :model do
+describe TeamsParticipant, type: :model do
   let(:institution) { Institution.create!(name: 'Test University') }
   let(:student_role) { Role.create!(name: 'Student') }
   let(:instructor_role) { Role.create!(name: 'Instructor') }
@@ -64,7 +64,7 @@ describe TeamParticipant, type: :model do
   let(:team) { Team.create!(assignment: assignment) }
 
   let!(:team_participant) do
-    TeamParticipant.create!(
+    TeamsParticipant.create!(
       participant: assignment_participant1,
       team: team
     )
@@ -78,29 +78,29 @@ describe TeamParticipant, type: :model do
 
   describe '.get_team_members' do
     before do
-      TeamParticipant.create!(participant: assignment_participant2, team: team)
+      TeamsParticipant.create!(participant: assignment_participant2, team: team)
     end
 
     it 'returns the users associated with the given team id' do
-      members = TeamParticipant.get_team_members(team.id)
+      members = TeamsParticipant.get_team_members(team.id)
       expect(members).to match_array([participant1_user, participant2_user])
     end
 
     it 'returns empty array if no participants exist for a team' do
       new_team = Team.create!(assignment: assignment)
-      expect(TeamParticipant.get_team_members(new_team.id)).to be_empty
+      expect(TeamsParticipant.get_team_members(new_team.id)).to be_empty
     end
   end
 
   describe '.remove_team' do
     it 'removes the team participant for the given participant and team' do
-      expect(TeamParticipant.find_by(participant: assignment_participant1, team: team)).to be_present
-      TeamParticipant.remove_team(assignment_participant1.id, team.id)
-      expect(TeamParticipant.find_by(participant: assignment_participant1, team: team)).to be_nil
+      expect(TeamsParticipant.find_by(participant: assignment_participant1, team: team)).to be_present
+      TeamsParticipant.remove_team(assignment_participant1.id, team.id)
+      expect(TeamsParticipant.find_by(participant: assignment_participant1, team: team)).to be_nil
     end
 
     it 'returns nil when no matching team participant exists' do
-      result = TeamParticipant.remove_team(99999, team.id)
+      result = TeamsParticipant.remove_team(99999, team.id)
       expect(result).to be_nil
     end
   end
