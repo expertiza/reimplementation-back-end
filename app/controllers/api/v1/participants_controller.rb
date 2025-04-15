@@ -58,14 +58,8 @@ class Api::V1::ParticipantsController < ApplicationController
     authorization = validate_authorization
     return unless authorization
 
-    permissions = retrieve_participant_permissions(authorization)
-
     participant = assignment.add_participant(user)
-    participant.authorization = authorization
-    participant.can_submit = permissions[:can_submit]
-    participant.can_review = permissions[:can_review]
-    participant.can_take_quiz = permissions[:can_take_quiz]
-    participant.can_mentor = permissions[:can_mentor]
+    assign_participant_permissions(authorization, participant)
 
     if participant.save
       render json: participant, status: :created
@@ -83,13 +77,7 @@ class Api::V1::ParticipantsController < ApplicationController
     authorization = validate_authorization
     return unless authorization
 
-    permissions = retrieve_participant_permissions(authorization)
-
-    participant.authorization = authorization
-    participant.can_submit = permissions[:can_submit]
-    participant.can_review = permissions[:can_review]
-    participant.can_take_quiz = permissions[:can_take_quiz]
-    participant.can_mentor = permissions[:can_mentor]
+    assign_participant_permissions(authorization, participant)
 
     if participant.save
       render json: participant, status: :created
@@ -169,6 +157,22 @@ class Api::V1::ParticipantsController < ApplicationController
     participant = Participant.find_by(id: participant_id)
     render json: { error: 'Participant not found' }, status: :not_found unless participant
     participant
+  end
+
+  # An authorization string containing the participant's role is taken and used to determine
+  # what permissions will be allocated to the participant. Each of these permissions will
+  # then be assigned to the Participant's database permission attributes.
+  def assign_participant_permissions(authorization, participant)
+    # Call helper method from participants_helper to retrieve a dictionary containing the
+    # appropriate permission boolean values for the role specified by the authorization string
+    permissions = retrieve_participant_permissions(authorization)
+
+    # Assigns each of the boolean permission values to their respective database counterparts
+    participant.authorization = authorization
+    participant.can_submit = permissions[:can_submit]
+    participant.can_review = permissions[:can_review]
+    participant.can_take_quiz = permissions[:can_take_quiz]
+    participant.can_mentor = permissions[:can_mentor]
   end
 
   # Validates that the authorization parameter is present and is one of the following valid authorizations: reader, reviewer, submitter, mentor
