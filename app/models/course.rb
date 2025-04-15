@@ -7,6 +7,7 @@ class Course < ApplicationRecord
   has_many :users, through: :course_participants, inverse_of: :course
   has_many :ta_mappings, dependent: :destroy
   has_many :tas, through: :ta_mappings, source: :ta
+  has_many :teams, dependent: :destroy
 
   # Returns the submission directory for the course
   def path

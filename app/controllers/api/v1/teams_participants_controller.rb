@@ -3,7 +3,7 @@ class Api::V1::TeamsParticipantsController < ApplicationController
   def action_allowed?
     case params[:action]
     when 'update_duty'
-      has_privileges_of?('Student') # Only checks role here
+      has_privileges_of?('Student')
     else
       has_privileges_of?('Teaching Assistant')
     end
@@ -74,9 +74,7 @@ class Api::V1::TeamsParticipantsController < ApplicationController
   # Adds Participant to a team
   def add_participant
     # First Check if Participant exists
-    #
     # Look up the User record based on the provided name parameter.
-    # The `strip` method removes any extra whitespace.
     user = User.find_by(name: params[:name].strip) || (render(json: { error: "User not found" }, status: :not_found) and return)
     # Find the Participant associated with the user, or return not found error
     participant = Participant.find_by(user_id: user.id) || (render(json: { error: "Couldn't find Participant" }, status: :not_found) and return)
@@ -111,31 +109,25 @@ class Api::V1::TeamsParticipantsController < ApplicationController
 
   # Removes one or more participants from a team.
   def delete_participants
-    # Retrieve the payload using string keys and convert each ID to an integer.
-    item_ids = if params["payload"] && params["payload"]["item"]
-                 Array(params["payload"]["item"]).map(&:to_i)
-               else
-                 []
-               end
+    # Check if Team exists first
+    current_team = Team.find_by(id: params[:id])
+    unless current_team
+      render json: { error: "Couldn't find Team" }, status: :not_found and return
+    end
 
-    # If no IDs were provided in the payload, return early.
+    # Extract participant IDs from payload
+    item_ids = params.dig(:payload, :item) || params.dig("payload", "item") || []
+
     if item_ids.blank?
       render json: { error: "No participants selected" }, status: :ok and return
     end
 
-    # Use delete_all to remove records directly (bypassing callbacks).
-    TeamsParticipant.where(id: item_ids).delete_all
+    # Ensure we only delete participants belonging to the specified team
+    TeamsParticipant.where(team_id: current_team.id, id: item_ids).delete_all
 
-    # Determine the appropriate message based on the number of deletions.
     message = item_ids.length == 1 ? "Participant removed successfully" : "Participants deleted successfully"
     render json: { message: message }, status: :ok
+
   end
-
-
-
-
-
-
-
 
 end
