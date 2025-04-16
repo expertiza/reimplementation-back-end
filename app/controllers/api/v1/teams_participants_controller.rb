@@ -2,8 +2,8 @@ class Api::V1::TeamsParticipantsController < ApplicationController
   # Allow duty updation for a team if current user is student, else require TA or above privileges.
   def action_allowed?
     case params[:action]
-    when 'update_duties'
-      has_privileges_of?('Student') # Only checks role here
+    when 'update_duty'
+      has_privileges_of?('Student')
     else
       has_privileges_of?('Teaching Assistant')
     end
@@ -11,94 +11,117 @@ class Api::V1::TeamsParticipantsController < ApplicationController
 
 
   # Updates the duty (role) assigned to a participant in a team.
-  def update_duties
-    team_participant = TeamParticipant.find_by(id: params[:team_participant_id])
+  def update_duty
+    team_participant = TeamsParticipant.find_by(id: params[:teams_participant_id])
 
     # FIRST, check existence
     unless team_participant
-      render json: { error: "Couldn't find TeamParticipant" }, status: :not_found and return
+      render json: { error: "Couldn't find TeamsParticipant" }, status: :not_found and return
     end
 
     # THEN, verify participant belongs to current user
     unless team_participant.participant.user_id == current_user.id
-      render json: { error: 'You are not authorized to update duties for this participant' }, status: :forbidden and return
+      render json: { error: 'You are not authorized to update duty for this participant' }, status: :forbidden and return
     end
 
-    team_participant.update(duty_id: params[:team_participant]['duty_id'])
+    duty_id = params.dig(:teams_participant, :duty_id) || params.dig("teams_participant", "duty_id")
+    team_participant.update(duty_id: duty_id)
     render json: { message: "Duty updated successfully" }, status: :ok
   end
 
 
   # Displays a list of all participants in a specific team.
   def list_participants
+    # Retrieve the team from the database using the provided ID parameter.
     current_team = Team.find_by(id: params[:id])
+
+    # If no team is found, return a 404 error with an appropriate error message.
     if current_team.nil?
-      render json: { error: "Couldn't find Team" }, status: 404 and return
+      render json: { error: "Couldn't find Team" }, status: :not_found and return
     end
 
-    associated_assignment = Assignment.find_by(id: current_team.assignment_id)
-    if associated_assignment.nil?
-      render json: { error: "Couldn't find Assignment for this team" }, status: 404 and return
+    # Fetch all team participant records associated with the current team.
+    team_participants = TeamsParticipant.where(team_id: current_team.id)
+
+    # Determine whether this team belongs to an assignment or a course
+    if current_team.respond_to?(:assignment) && current_team.assignment.present?
+      context_key = :assignment
+      context_value = current_team.assignment
+    elsif current_team.respond_to?(:course) && current_team.course.present?
+      context_key = :course
+      context_value = current_team.course
+    else
+      # If neither is present, the team is misconfigured
+      render json: { error: "Team is neither associated with an assignment nor a course" },
+             status: :not_found and return
     end
 
-    team_participants = TeamParticipant.where(team_id: current_team.id)
+    # Build and return a single JSON response with common structure
     render json: {
       team_participants: team_participants,
       team: current_team,
-      assignment: associated_assignment
-    }, status: 200
+      context_key => context_value
+    }, status: :ok
   end
 
-  # Add Participant to a team
+
+  # Adds Participant to a team
   def add_participant
-    find_participant = Participant.find_by_user_name(params[:user][:name])
-    unless find_participant
-      render json: { error: "Couldn't find Participant" }, status: :not_found and return
+    # First Check if Participant exists
+    # Look up the User record based on the provided name parameter.
+    user = User.find_by(name: params[:name].strip) || (render(json: { error: "User not found" }, status: :not_found) and return)
+    # Find the Participant associated with the user, or return not found error
+    participant = Participant.find_by(user_id: user.id) || (render(json: { error: "Couldn't find Participant" }, status: :not_found) and return)
+
+
+    # Check if Team exists
+    current_team = Team.find(params[:id])
+    unless current_team
+      render json: { error: "Couldn't find Team" }, status: :not_found and return
     end
 
-    current_team = Team.find(params[:id])
+    # Validate if participant can join a team
+    validation_result = current_team.can_participant_join_team?(participant)
 
-    assignment = Assignment.find_by(id: current_team.assignment_id)
-    validation_result = assignment.can_participant_join_team_for_assignment?(find_participant, assignment.id)
 
     unless validation_result[:success]
       Rails.logger.info "Validation error: #{validation_result[:error]}"
       render json: { error: validation_result[:error] }, status: :unprocessable_entity and return
     end
 
-    result = current_team.add_participants_with_validation(find_participant)
+    # This line adds a participant to the current team
+    result = current_team.add_member(participant)
 
     if result[:success]
       render json: { message: "Participant added successfully." }, status: :ok
     else
       render json: { error: result[:error] }, status: :unprocessable_entity
     end
+
   end
 
-  # Removes a participant from a team.
-  def delete_participant
-    team_participant = TeamParticipant.find_by(id: params[:id])
-    if team_participant.nil?
-      render json: { error: "Couldn't find TeamParticipant" }, status: 404 and return
+
+  # Removes one or more participants from a team.
+  def delete_participants
+    # Check if Team exists first
+    current_team = Team.find_by(id: params[:id])
+    unless current_team
+      render json: { error: "Couldn't find Team" }, status: :not_found and return
     end
-    team_participant.destroy
-    render json: { message: "Participant removed successfully" }, status: 200
-  end
 
-  # Deletes selected participants from a team.
-  def delete_selected_participants
-    item_ids = params.dig(:payload, :item) || params.dig("payload", "item") || params[:item]
+    # Extract participant IDs from payload
+    item_ids = params.dig(:payload, :item) || params.dig("payload", "item") || []
+
     if item_ids.blank?
-      render json: { error: "No participants selected" }, status: 200 and return
+      render json: { error: "No participants selected" }, status: :ok and return
     end
 
-    item_ids.each do |item_id|
-      team_participant = TeamParticipant.find_by(id: item_id)
-      team_participant&.destroy
-      Rails.logger.debug "Deleted TeamParticipant with id: #{item_id}"
-    end
+    # Ensure we only delete participants belonging to the specified team
+    TeamsParticipant.where(team_id: current_team.id, id: item_ids).delete_all
 
-    render json: { message: "Participants deleted successfully" }, status: 200
+    message = item_ids.length == 1 ? "Participant removed successfully" : "Participants deleted successfully"
+    render json: { message: message }, status: :ok
+
   end
 
 end

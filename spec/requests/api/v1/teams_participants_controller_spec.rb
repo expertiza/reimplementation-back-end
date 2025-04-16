@@ -2,16 +2,20 @@ require 'swagger_helper'
 require 'json_web_token'
 
 RSpec.describe 'api/v1/teams_participants', type: :request do
+  # Set up roles hierarchy for test users.
   before(:all) do
     @roles = create_roles_hierarchy
   end
 
+  # Create a sample institution.
   let(:institution) { Institution.create!(name: "NC State") }
 
+  # Define our roles.
   let(:instructor_role) { Role.find_or_create_by!(name: "Instructor") }
   let(:ta_role)         { Role.find_or_create_by!(name: "Teaching Assistant", parent_id: instructor_role.id) }
   let(:student_role)    { Role.find_or_create_by!(name: "Student", parent_id: ta_role.id) }
 
+  # Create common users used across tests.
   let(:instructor) do
     User.create!(
       name: "profa",
@@ -24,58 +28,71 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
     )
   end
 
-  let(:assignment) { Assignment.create!(name: "Sample Assignment", instructor_id: instructor.id) }
-  let(:assignment1) { Assignment.create!(name: "Sample Assignment1", instructor_id: instructor.id) }
-
-  let(:team) { Team.create!(assignment_id: assignment.id) }
-  let(:empty_team) { Team.create!(assignment_id: assignment1.id) }
-
+  # new_user is used when adding a new participant.
   let(:new_user) do
     User.create!(
       full_name: "New Participant",
       name: "NewParticipant",
       email: "newparticipant@example.com",
       password_digest: "password",
-      role_id: student_role.id
+      role_id: student_role.id,
+      institution_id: institution.id
     )
   end
 
-  let!(:new_participant) do
-    Participant.create!(user: new_user, assignment: assignment1)
-  end
-
-  let(:existing_user) do
+  # student_user is used in update_duty and other tests where the current user's ownership is needed.
+  let(:student_user) do
     User.create!(
-      full_name: "Test Participant",
-      name: "Test",
-      email: "participant@example.com",
+      full_name: "Student Member",
+      name: "student_member",
+      email: "studentmember@example.com",
       password_digest: "password",
-      role_id: student_role.id
+      role_id: student_role.id,
+      institution_id: institution.id
     )
   end
 
-  let!(:participant) do
-    Participant.create!(user: existing_user, assignment: assignment)
-  end
+  # Create assignments.
+  let(:assignment) { Assignment.create!(name: "Sample Assignment", instructor_id: instructor.id) }
+  let(:assignment2) { Assignment.create!(name: "Another Assignment", instructor_id: instructor.id) }
 
-  let(:team_participant) do
-    TeamParticipant.create!(participant_id: participant.id, team_id: team.id)
-  end
+  # Create a course.
+  let(:course) { Course.create!(name: "Sample Course", instructor_id: instructor.id, institution_id: institution.id, directory_path: "/some/path") }
 
+  # Create teams.
+  # For an assignment team, only an assignment is provided.
+  let(:team_with_assignment) { Team.create!(assignment_id: assignment.id) }
+  # For a course team, only a course is provided.
+  let(:team_with_course) { Team.create!(course_id: course.id) }
+
+  # Create a Participant for assignment context.
+  let!(:participant_for_assignment) { Participant.create!(user: student_user, assignment: assignment) }
+  # And one for course context.
+  let!(:participant_for_course) { Participant.create!(user: student_user, course: course) }
+
+  # Create a TeamsParticipant linking the assignment participant to the assignment team.
+  let(:teams_participant_assignment) { TeamsParticipant.create!(participant_id: participant_for_assignment.id, team_id: team_with_assignment.id, user_id: participant_for_assignment.user_id) }
+  # Create a TeamsParticipant linking the course participant to the course team.
+  let(:teams_participant_course) { TeamsParticipant.create!(participant_id: participant_for_course.id, team_id: team_with_course.id, user_id: participant_for_course.user_id) }
+
+  # By default, use the instructor's token for endpoints.
   let(:token) { JsonWebToken.encode({ id: instructor.id }) }
   let(:Authorization) { "Bearer #{token}" }
 
-  path '/api/v1/teams_participants/update_duties' do
-    put('update participant duties') do
+  ##########################################################################
+  # update_duty Endpoint Tests
+  # This endpoint updates the duty (role) for a TeamsParticipant.
+  ##########################################################################
+  path '/api/v1/teams_participants/update_duty' do
+    put('update participant duty') do
       tags 'Teams Participants'
       consumes 'application/json'
       produces 'application/json'
-
       parameter name: :payload, in: :body, schema: {
         type: :object,
         properties: {
-          team_participant_id: { type: :integer },
-          team_participant: {
+          teams_participant_id: { type: :integer },
+          teams_participant: {
             type: :object,
             properties: {
               duty_id: { type: :integer }
@@ -83,77 +100,45 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
             required: ['duty_id']
           }
         },
-        required: ['team_participant_id', 'team_participant']
+        required: ['teams_participant_id', 'teams_participant']
       }
 
-      response(200, 'duty updated successfully by a valid team member') do
-        let(:student_user) do
-          User.create!(
-            full_name: "Student Member",
-            name: "student_member",
-            email: "studentmember@example.com",
-            password_digest: "password",
-            role_id: student_role.id
-          )
-        end
-
-        let!(:participant) { Participant.create!(user: student_user, assignment: assignment) }
-
-        let(:team_participant) { TeamParticipant.create!(team_id: team.id, participant_id: participant.id) }
-
+      # SUCCESS: The current user (owner) updates duty successfully.
+      response(200, 'duty updated successfully') do
+        # Create a participant for the student_user in an assignment context.
+        let!(:participant_for_update) { Participant.create!(user: student_user, assignment: assignment) }
+        let(:teams_participant) { TeamsParticipant.create!(team_id: team_with_assignment.id, participant_id: participant_for_update.id, user_id: participant_for_update.user_id) }
+        # Use student_user's token for ownership.
         let(:token) { JsonWebToken.encode({ id: student_user.id }) }
         let(:Authorization) { "Bearer #{token}" }
-
-        let(:payload) do
-          {
-            team_participant_id: team_participant.id,
-            team_participant: { duty_id: 2 }
-          }
-        end
+        let(:payload) { { teams_participant_id: teams_participant.id, teams_participant: { duty_id: 2 } } }
 
         run_test! do |response|
           json = JSON.parse(response.body)
           expect(json['message']).to eq("Duty updated successfully")
-          expect(team_participant.reload.duty_id).to eq(2)
+          expect(teams_participant.reload.duty_id).to eq(2)
         end
       end
 
-      response(403, 'forbidden: student not on team tries to update duties') do
+      # FORBIDDEN: A user not owning the TeamsParticipant cannot update duty.
+      response(403, 'forbidden: user not authorized to update duty') do
         let(:other_user) do
           User.create!(
-            full_name: "Another Student",
-            name: "another_student",
-            email: "anotherstudent@example.com",
+            full_name: "Other Student",
+            name: "other_student",
+            email: "otherstudent@example.com",
             password_digest: "password",
-            role_id: student_role.id
+            role_id: student_role.id,
+            institution_id: institution.id
           )
         end
-
-        let!(:unauthorized_participant) { Participant.create!(user: other_user, assignment: assignment) }
-
-        let!(:authorized_user) do
-          User.create!(
-            full_name: "Authorized Student",
-            name: "auth_student",
-            email: "authstudent@example.com",
-            password_digest: "password",
-            role_id: student_role.id
-          )
-        end
-
-        let!(:participant_on_team) { Participant.create!(user: authorized_user, assignment: assignment) }
-
-        let!(:team_participant) { TeamParticipant.create!(team_id: team.id, participant_id: participant_on_team.id) }
-
+        # Create a participant for student_user (the rightful owner) in an assignment context.
+        let!(:authorized_participant) { Participant.create!(user: student_user, assignment: assignment) }
+        let!(:teams_participant) { TeamsParticipant.create!(team_id: team_with_assignment.id, participant_id: authorized_participant.id, user_id: authorized_participant.user_id) }
+        # Use other_user's token, who is not the owner.
         let(:token) { JsonWebToken.encode({ id: other_user.id }) }
         let(:Authorization) { "Bearer #{token}" }
-
-        let(:payload) do
-          {
-            team_participant_id: team_participant.id,
-            team_participant: { duty_id: 2 }
-          }
-        end
+        let(:payload) { { teams_participant_id: teams_participant.id, teams_participant: { duty_id: 2 } } }
 
         run_test! do |response|
           expect(response.status).to eq(403)
@@ -161,39 +146,66 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
         end
       end
 
-
-      response(404, 'team participant not found') do
-        let(:student_user) do
-          User.create!(
-            full_name: "Student Member",
-            name: "student_member",
-            email: "studentmember@example.com",
-            password_digest: "password",
-            role_id: student_role.id
-          )
-        end
-
-        let(:token) { JsonWebToken.encode({ id: student_user.id }) }
-        let(:Authorization) { "Bearer #{token}" }
-
-        let(:payload) do
-          {
-            team_participant_id: 99999,
-            team_participant: { duty_id: 2 }
-          }
-        end
-
+      # NOT FOUND: TeamsParticipant record does not exist.
+      response(404, 'teams participant not found') do
+        let(:payload) { { teams_participant_id: 99999, teams_participant: { duty_id: 2 } } }
         run_test! do |response|
           expect(response.status).to eq(404)
-          expect(response.body).to include("Couldn't find TeamParticipant")
+          expect(response.body).to include("Couldn't find TeamsParticipant")
         end
       end
     end
   end
 
-  path '/api/v1/teams_participants/add_participant/{id}' do
-    parameter name: 'id', in: :path, type: :integer
+  ##########################################################################
+  # list_participants Endpoint Tests
+  # This endpoint returns all participants for a given team.
+  ##########################################################################
+  path '/api/v1/teams_participants/{id}/list_participants' do
+    get('list participants') do
+      tags 'Teams Participants'
+      produces 'application/json'
+      parameter name: :id, in: :path, type: :integer, description: "Team ID"
 
+      # SUCCESS: List participants for a team associated with an assignment.
+      response(200, 'list participants for team associated with assignment') do
+        let(:id) { team_with_assignment.id }
+        run_test! do |response|
+          json = JSON.parse(response.body)
+          expect(json['team']).not_to be_nil
+          expect(json['assignment']).not_to be_nil
+          expect(json['team_participants']).to be_an(Array)
+        end
+      end
+
+      # SUCCESS: List participants for a team associated with a course.
+      response(200, 'list participants for team associated with course') do
+        let(:id) { team_with_course.id }
+        run_test! do |response|
+          json = JSON.parse(response.body)
+          expect(json['team']).not_to be_nil
+          expect(json['course']).not_to be_nil
+          expect(json['team_participants']).to be_an(Array)
+        end
+      end
+
+      # FAILURE: Team not found.
+      response(404, 'team not found') do
+        let(:id) { 0 }
+        run_test! do |response|
+          expect(response.status).to eq(404)
+          expect(response.body).to include("Couldn't find Team")
+        end
+      end
+    end
+  end
+
+  ##########################################################################
+  # add_participant Endpoint Tests
+  # This endpoint adds a participant to a team.
+  ##########################################################################
+  path '/api/v1/teams_participants/{id}/add_participant' do
+    parameter name: 'id', in: :path, type: :integer, description: "Team ID"
     post('add participant') do
       tags 'Teams Participants'
       consumes 'application/json'
@@ -201,82 +213,83 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
       parameter name: :payload, in: :body, schema: {
         type: :object,
         properties: {
-          user: {
-            type: :object,
-            properties: { name: { type: :string } },
-            required: ['name']
-          }
+          name: { type: :string }
         },
-        required: ['user']
+        required: ['name']
       }
 
-      response(200, 'participant added successfully') do
-        let(:payload) { { user: { name: new_user.name } } }
-        let(:id) { empty_team.id }
-
+      # SUCCESS: Participant added successfully to an assignment team.
+      response(200, 'participant added successfully to assignment team') do
+        let(:id) { team_with_assignment.id }
+        let(:payload) { { name: new_user.name } }
         before do
+          # Simulate that the team is not full.
           allow_any_instance_of(Team).to receive(:full?).and_return(false)
-
-          # Make sure this assignment is the one attached to the empty_team
-          expect(empty_team.assignment_id).to eq(assignment1.id)
-
-          # Make sure participant is correctly created
-          Participant.create!(user: new_user, assignment: assignment1)
+          # Create a Participant record for new_user in an assignment context.
+          Participant.create!(user: new_user, assignment: assignment)
         end
 
         run_test! do |response|
           expect(response.status).to eq(200)
-          tp = TeamParticipant.find_by(team_id: empty_team.id)
+          tp = TeamsParticipant.find_by(team_id: team_with_assignment.id)
           expect(tp).not_to be_nil
         end
       end
 
+      # SUCCESS: Participant added successfully to an course team.
+      response(200, 'participant added successfully to course team') do
+        let(:id) { team_with_course.id }
+        let(:payload) { { name: new_user.name } }
+        before do
+          # Simulate that the team is not full.
+          allow_any_instance_of(Team).to receive(:full?).and_return(false)
+          # Create a Participant record for new_user in an course context.
+          Participant.create!(user: new_user, course: course)
+        end
 
+        run_test! do |response|
+          expect(response.status).to eq(200)
+          tp = TeamsParticipant.find_by(team_id: team_with_course.id)
+          expect(tp).not_to be_nil
+        end
+      end
 
+      # FAILURE: Participant (or User) not found.
       response(404, 'participant not found') do
-        let(:payload) { { user: { name: 'Invalid User' } } }
-        let(:id) { empty_team.id }
+        let(:id) { team_with_assignment.id }  # Provide a valid team id
+        let!(:user_without_participant) do
+          User.create!(
+            full_name: "User Without Participant",
+            name: "user_without_participant",
+            email: "noparticipant@example.com",
+            password_digest: "password",
+            role_id: student_role.id,
+            institution_id: institution.id
+          )
+        end
+        let(:payload) { { name: user_without_participant.name } }
 
         run_test! do |response|
           expect(response.body).to include("Couldn't find Participant")
         end
       end
+
     end
   end
 
-  path '/api/v1/teams_participants/delete_participant/{id}' do
-    parameter name: 'id', in: :path, type: :integer
+  ##########################################################################
+  # delete_participants Endpoint Tests
+  # This endpoint deletes one or more TeamsParticipant from a team.
+  ##########################################################################
+  # spec/requests/api/v1/teams_participants_spec.rb
 
-    delete('delete participant') do
-      tags 'Teams Participants'
-      produces 'application/json'
-
-      response(200, 'participant deleted successfully') do
-        let(:id) { team_participant.id }
-
-        run_test! do
-          expect(TeamParticipant.exists?(team_participant.id)).to be_falsey
-        end
-      end
-
-      response(404, 'not found') do
-        let(:id) { 0 }
-
-        run_test! do |response|
-          expect(response.body).to include("Couldn't find TeamParticipant")
-        end
-      end
-    end
-  end
-
-  path '/api/v1/teams_participants/delete_selected_participants/{id}' do
-    parameter name: 'id', in: :path, type: :integer
-
-    delete('delete selected participants') do
+  path '/api/v1/teams_participants/{id}/delete_participants' do
+    delete('delete participants') do
       tags 'Teams Participants'
       consumes 'application/json'
       produces 'application/json'
 
+      parameter name: :id, in: :path, type: :integer, description: 'Team ID'
       parameter name: :payload, in: :body, schema: {
         type: :object,
         properties: {
@@ -285,30 +298,97 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
         required: ['item']
       }
 
-      response(200, 'participants deleted successfully') do
-        let(:id) { team.id }
+      # Setup for assignment team
+      let(:assignment_team) { Team.create!(assignment_id: assignment.id) }
+      let(:assignment_participant1) { Participant.create!(user: student_user, assignment: assignment) }
+      let(:assignment_participant2) { Participant.create!(user: new_user, assignment: assignment) }
+      let!(:assignment_tp1) { TeamsParticipant.create!(team_id: assignment_team.id, participant_id: assignment_participant1.id, user_id: assignment_participant1.user_id) }
+      let!(:assignment_tp2) { TeamsParticipant.create!(team_id: assignment_team.id, participant_id: assignment_participant2.id, user_id: assignment_participant2.user_id) }
 
-        let(:user1) do
-          User.create!(full_name: "User One", name: "User1", email: "user1@example.com", password_digest: "password", role_id: student_role.id)
-        end
+      # Setup for course team
+      let(:course_team) { Team.create!(course_id: course.id) }
+      let(:course_participant1) { Participant.create!(user: student_user, course: course) }
+      let(:course_participant2) { Participant.create!(user: new_user, course: course) }
+      let!(:course_tp1) { TeamsParticipant.create!(team_id: course_team.id, participant_id: course_participant1.id, user_id: course_participant1.user_id) }
+      let!(:course_tp2) { TeamsParticipant.create!(team_id: course_team.id, participant_id: course_participant2.id, user_id: course_participant2.user_id) }
 
-        let(:user2) do
-          User.create!(full_name: "User Two", name: "User2", email: "user2@example.com", password_digest: "password", role_id: student_role.id)
-        end
+      # SUCCESS: Delete multiple participants successfully (Assignment context)
+      response(200, 'participants deleted successfully (assignment)') do
+        let(:id) { assignment_team.id }
+        let(:payload) { { payload: { item: [assignment_tp1.id, assignment_tp2.id] } } }
 
-        let(:participant1) { Participant.create!(user: user1, assignment: assignment) }
-        let(:participant2) { Participant.create!(user: user2, assignment: assignment) }
-
-        let!(:team_participant1) { TeamParticipant.create!(team_id: team.id, participant_id: participant1.id) }
-        let!(:team_participant2) { TeamParticipant.create!(team_id: team.id, participant_id: participant2.id) }
-
-        let(:payload) { { item: [team_participant1.id, team_participant2.id] } }
-
-        run_test! do
-          expect(TeamParticipant.exists?(team_participant1.id)).to be_falsey
-          expect(TeamParticipant.exists?(team_participant2.id)).to be_falsey
+        run_test! do |response|
+          json = JSON.parse(response.body)
+          expect(json['message']).to eq('Participants deleted successfully')
+          expect(TeamsParticipant.exists?(assignment_tp1.id)).to be_falsey
+          expect(TeamsParticipant.exists?(assignment_tp2.id)).to be_falsey
         end
       end
+
+      # SUCCESS: Delete multiple participants successfully (Course context)
+      response(200, 'participants deleted successfully (course)') do
+        let(:id) { course_team.id }
+        let(:payload) { { payload: { item: [course_tp1.id, course_tp2.id] } } }
+
+        run_test! do |response|
+          json = JSON.parse(response.body)
+          expect(json['message']).to eq('Participants deleted successfully')
+          expect(TeamsParticipant.exists?(course_tp1.id)).to be_falsey
+          expect(TeamsParticipant.exists?(course_tp2.id)).to be_falsey
+        end
+      end
+
+      # SUCCESS: Delete a single participant successfully (Assignment context)
+      response(200, 'participant removed successfully (assignment)') do
+        let(:id) { assignment_team.id }
+        let(:payload) { { payload: { item: [assignment_tp1.id] } } }
+
+        run_test! do |response|
+          json = JSON.parse(response.body)
+          expect(json['message']).to eq('Participant removed successfully')
+          expect(TeamsParticipant.exists?(assignment_tp1.id)).to be_falsey
+          expect(TeamsParticipant.exists?(assignment_tp2.id)).to be_truthy
+        end
+      end
+
+      # SUCCESS: Delete a single participant successfully (Course context)
+      response(200, 'participant removed successfully (course)') do
+        let(:id) { course_team.id }
+        let(:payload) { { payload: { item: [course_tp1.id] } } }
+
+        run_test! do |response|
+          json = JSON.parse(response.body)
+          expect(json['message']).to eq('Participant removed successfully')
+          expect(TeamsParticipant.exists?(course_tp1.id)).to be_falsey
+          expect(TeamsParticipant.exists?(course_tp2.id)).to be_truthy
+        end
+      end
+
+      # FAILURE: No participants selected for deletion
+      response(200, 'no participants selected') do
+        let(:id) { assignment_team.id }
+        let(:payload) { { payload: { item: [] } } }
+
+        run_test! do |response|
+          json = JSON.parse(response.body)
+          expect(json['error']).to eq('No participants selected')
+        end
+      end
+
+      # NOT FOUND: Team not found
+      response(404, "team not found") do
+        let(:id) { 0 } # invalid ID
+        let(:payload) { { payload: { item: [999] } } }
+
+        run_test! do |response|
+          expect(response.status).to eq(404)
+          json = JSON.parse(response.body)
+          expect(json['error']).to eq("Couldn't find Team")
+        end
+      end
+
     end
   end
+
+
 end

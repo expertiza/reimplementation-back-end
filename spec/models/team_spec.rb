@@ -1,109 +1,198 @@
 require 'rails_helper'
 
 RSpec.describe Team, type: :model do
+  # ------------------------------------------------------------------------
+  # Global Setup: Create role hierarchy used across all test cases.
+  # ------------------------------------------------------------------------
+  before(:all) do
+    @instructor_role = Role.find_or_create_by!(name: "Instructor")
+    @ta_role = Role.find_or_create_by!(name: "Teaching Assistant", parent_id: @instructor_role.id)
+    @student_role = Role.find_or_create_by!(name: "Student", parent_id: @ta_role.id)
+  end
 
-  let(:instructor_role) { Role.create!(name: "Instructor") }
-
-  let(:student_role) { Role.create!(name: "Student") }
+  # ------------------------------------------------------------------------
+  # Shared data setup for institution, instructor, assignments, and courses
+  # ------------------------------------------------------------------------
+  let(:institution) { Institution.create!(name: "NC State") }
 
   let(:instructor) do
     User.create!(
-      name: "test_instructor",
+      name: "instructor",
+      full_name: "Instructor User",
+      email: "instructor@example.com",
       password_digest: "password",
-      role: instructor_role,
-      full_name: "Instructor Name",
-      email: "instructor@example.com"
+      role_id: @instructor_role.id,
+      institution_id: institution.id
     )
   end
 
-  let(:student_user) do
-    User.create!(
-      name: "student_user",
-      password_digest: "password",
-      role: student_role,
-      full_name: "Student User",
-      email: "student@example.com"
-    )
+  let(:assignment)  { Assignment.create!(name: "Assignment 1", instructor_id: instructor.id) }
+  let(:assignment2) { Assignment.create!(name: "Assignment 2", instructor_id: instructor.id) }
+
+  let(:course)  { Course.create!(name: "Course 1", instructor_id: instructor.id, institution_id: institution.id, directory_path: "/course1") }
+  let(:course2) { Course.create!(name: "Course 2", instructor_id: instructor.id, institution_id: institution.id, directory_path: "/course2") }
+
+  let(:team_for_assignment) { Team.create!(assignment: assignment) }
+  let(:team_for_course)     { Team.create!(course: course) }
+
+  # ------------------------------------------------------------------------
+  # Validation tests for assignment_id and course_id presence constraints.
+  # ------------------------------------------------------------------------
+  describe 'validations' do
+    it 'is invalid without assignment_id or course_id' do
+      team = Team.new
+      expect(team.valid?).to be false
+      expect(team.errors[:base]).to include("Team must belong to either an assignment or a course")
+    end
+
+    it 'is invalid with both assignment_id and course_id' do
+      team = Team.new(assignment: assignment, course: course)
+      expect(team.valid?).to be false
+      expect(team.errors[:base]).to include("Team cannot be both AssignmentTeam and a CourseTeam")
+    end
+
+    it 'is valid with only assignment_id' do
+      expect(team_for_assignment).to be_valid
+    end
+
+    it 'is valid with only course_id' do
+      expect(team_for_course).to be_valid
+    end
   end
 
-  let(:assignment) { Assignment.create!(name: "Test Assignment", instructor: instructor) }
-  let(:team) { Team.create!(assignment: assignment) }
-  let(:participant) { Participant.create!(user: student_user, assignment: assignment) }
-
-
+  # ------------------------------------------------------------------------
+  # Tests for the #full? method that checks participant capacity.
+  # ------------------------------------------------------------------------
   describe '#full?' do
-    it 'returns false when team has fewer participants than max allowed' do
-      allow(team).to receive(:max_participants).and_return(3)
-      allow(team.participants).to receive(:count).and_return(2)
+    # Scenario: Team is at full capacity (3 members), expect full? to return true
+    it 'returns true if participant count >= max_participants' do
+      team_for_assignment.max_participants = 3
 
-      expect(team.full?).to be_falsey
+      3.times do |i|
+        user = User.create!(
+          name: "student#{i}",
+          email: "student#{i}@example.com",
+          password_digest: "password",
+          role_id: @student_role.id,
+          full_name: "Student #{i}",
+          institution_id: institution.id
+        )
+        participant = Participant.create!(user: user, assignment: assignment)
+        TeamsParticipant.create!(participant_id: participant.id, team_id: team_for_assignment.id, user_id: user.id)
+      end
+
+      team_for_assignment.reload  # Ensure latest participant count from DB
+      expect(team_for_assignment.participants.count).to eq(3) # Sanity check
+      expect(team_for_assignment.full?).to be true
     end
 
-    it 'returns true when team has maximum participants allowed' do
-      allow(team).to receive(:max_participants).and_return(3)
-      allow(team.participants).to receive(:count).and_return(3)
-
-      expect(team.full?).to be_truthy
+    # Scenario: Team is not full yet (less than max participants)
+    it 'returns false if participant count < max_participants' do
+      team_for_assignment.max_participants = 5
+      expect(team_for_assignment.full?).to be false
     end
   end
 
-  describe '#participant?' do
-    it 'returns true if participant is part of the team' do
-      allow(team.participants).to receive(:exists?).with(id: participant.id).and_return(true)
+  # ------------------------------------------------------------------------
+  # Tests for #can_participant_join_team? method across both team types
+  # ------------------------------------------------------------------------
+  describe '#can_participant_join_team?' do
+    context 'AssignmentTeam with AssignmentParticipant' do
+      # Participant already in a team — should not be allowed again
+      it 'returns error if participant already in a team' do
+        user = User.create!(name: "student_team", email: "s1@example.com", full_name: "S1", password_digest: "password", role_id: @student_role.id, institution_id: institution.id)
+        participant = Participant.create!(user: user, assignment: assignment)
+        TeamsParticipant.create!(participant_id: participant.id, team_id: team_for_assignment.id, user_id: user.id)
+        assignment.reload
 
-      expect(team.participant?(participant)).to be_truthy
+        result = team_for_assignment.can_participant_join_team?(participant)
+        expect(result[:success]).to be false
+      end
+
+      # Participant belongs to a different assignment — should not be eligible
+      it 'returns error if participant not in correct assignment' do
+        user = User.create!(name: "wrong_assignment", email: "wrong@example.com", full_name: "Wrong", password_digest: "password", role_id: @student_role.id, institution_id: institution.id)
+        participant = Participant.create!(user: user, assignment: assignment2)
+
+        result = team_for_assignment.can_participant_join_team?(participant)
+        expect(result[:success]).to be false
+      end
     end
 
-    it 'returns false if participant is not part of the team' do
-      allow(team.participants).to receive(:exists?).with(id: participant.id).and_return(false)
+    context 'CourseTeam with CourseParticipant' do
+      # Participant already in a course team — should be rejected
+      it 'returns error if participant already in a team' do
+        user = User.create!(name: "course_user", email: "course@example.com", full_name: "Course User", password_digest: "password", role_id: @student_role.id, institution_id: institution.id)
+        participant = Participant.create!(user: user, course: course)
+        TeamsParticipant.create!(participant_id: participant.id, team_id: team_for_course.id, user_id: user.id)
+        course.reload
 
-      expect(team.participant?(participant)).to be_falsey
+        result = team_for_course.can_participant_join_team?(participant)
+        expect(result[:success]).to be false
+      end
+
+      # Participant belongs to a different course — should be ineligible
+      it 'returns error if participant not in correct course' do
+        user = User.create!(name: "wrong_course", email: "wrongc@example.com", full_name: "Wrong Course", password_digest: "password", role_id: @student_role.id, institution_id: institution.id)
+        participant = Participant.create!(user: user, course: course2)
+
+        result = team_for_course.can_participant_join_team?(participant)
+        expect(result[:success]).to be false
+      end
     end
   end
 
+  # ------------------------------------------------------------------------
+  # Tests for #add_member method for adding participants to teams
+  # ------------------------------------------------------------------------
   describe '#add_member' do
-    context 'when participant already exists on the team' do
-      it 'raises an error' do
-        team.participants << participant
+    context 'AssignmentTeam' do
+      # Successfully adds participant to assignment team
+      it 'adds the participant successfully' do
+        user = User.create!(name: "add_user", email: "add@example.com", full_name: "Add", password_digest: "password", role_id: @student_role.id, institution_id: institution.id)
+        participant = Participant.create!(user: user, assignment: assignment)
         expect {
-          team.add_member(participant)
-        }.to raise_error(
-               RuntimeError,
-               "The participant #{participant.user.name} is already a member of this team"
-             )
+          team_for_assignment.add_member(participant)
+        }.to change { TeamsParticipant.where(team_id: team_for_assignment.id).count }.by(1)
       end
-    end
-  end
 
+      # Prevents adding participant if team is at full capacity
+      it 'returns error if team is full' do
+        team_for_assignment.max_participants = 1
+        user1 = User.create!(name: "f1", email: "f1@example.com", full_name: "F1", password_digest: "password", role_id: @student_role.id, institution_id: institution.id)
+        p1 = Participant.create!(user: user1, assignment: assignment)
+        team_for_assignment.add_member(p1)
 
-  describe '#add_participants_with_validation' do
-    context 'when adding participant succeeds' do
-      it 'returns a success response' do
-        allow(team).to receive(:add_member).with(participant).and_return(true)
-
-        result = team.add_participants_with_validation(participant)
-
-        expect(result).to eq({ success: true })
-      end
-    end
-
-    context 'when adding participant fails because team is full' do
-      it 'returns a failure response with a team-full error message' do
-        allow(team).to receive(:add_member).with(participant).and_return(false)
-
-        result = team.add_participants_with_validation(participant)
-
-        expect(result).to eq({ success: false, error: "Unable to add participant: team is at full capacity." })
+        user2 = User.create!(name: "f2", email: "f2@example.com", full_name: "F2", password_digest: "password", role_id: @student_role.id, institution_id: institution.id)
+        p2 = Participant.create!(user: user2, assignment: assignment)
+        team_for_assignment.max_participants = 1  # Re-assign to avoid attr_accessor reset
+        result = team_for_assignment.add_member(p2)
+        expect(result[:error]).to include("team is at full capacity")
       end
     end
 
-    context 'when adding participant raises an exception' do
-      it 'returns a failure response with the exception message' do
-        allow(team).to receive(:add_member).with(participant).and_raise(StandardError.new('Some error'))
+    context 'CourseTeam' do
+      # Successfully adds participant to course team
+      it 'adds the participant successfully' do
+        user = User.create!(name: "cadd", email: "cadd@example.com", full_name: "C Add", password_digest: "password", role_id: @student_role.id, institution_id: institution.id)
+        participant = Participant.create!(user: user, course: course)
+        expect {
+          team_for_course.add_member(participant)
+        }.to change { TeamsParticipant.where(team_id: team_for_course.id).count }.by(1)
+      end
 
-        result = team.add_participants_with_validation(participant)
+      # Prevents addition if course team is full
+      it 'returns error if team is full' do
+        team_for_course.max_participants = 1
+        user1 = User.create!(name: "cf1", email: "cf1@example.com", full_name: "CF1", password_digest: "password", role_id: @student_role.id, institution_id: institution.id)
+        p1 = Participant.create!(user: user1, course: course)
+        team_for_course.add_member(p1)
 
-        expect(result).to eq({ success: false, error: 'Some error' })
+        user2 = User.create!(name: "cf2", email: "cf2@example.com", full_name: "CF2", password_digest: "password", role_id: @student_role.id, institution_id: institution.id)
+        p2 = Participant.create!(user: user2, course: course)
+        team_for_course.max_participants = 1  # Re-set to avoid accidental reset
+        result = team_for_course.add_member(p2)
+        expect(result[:error]).to include("team is at full capacity")
       end
     end
   end
