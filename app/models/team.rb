@@ -1,9 +1,9 @@
 class Team < ApplicationRecord
   has_many :signed_up_teams, dependent: :destroy
   has_many :teams_users, dependent: :destroy
-  has_many :team_participants, dependent: :destroy
+  has_many :teams_participants, dependent: :destroy
   has_many :users, through: :teams_users
-  has_many :participants
+  has_many :participants, through: :teams_participants
 
   # The team is either an AssignmentTeam or a CourseTeam
   belongs_to :assignment, optional: true
@@ -18,13 +18,7 @@ class Team < ApplicationRecord
   # TODO Team implementing Teams controller and model should implement this method better.
   # TODO partial implementation here just for the functionality needed for join_team_tequests controller
   def full?
-
-    max_participants ||= 3
-    if participants.count >= max_participants
-      true
-    else
-      false
-    end
+    (max_participants || 3) <= participants.count
   end
 
 

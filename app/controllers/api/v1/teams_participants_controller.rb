@@ -24,7 +24,6 @@ class Api::V1::TeamsParticipantsController < ApplicationController
       render json: { error: 'You are not authorized to update duty for this participant' }, status: :forbidden and return
     end
 
-    # team_participant.update(duty_id: params[:team_participant]['duty_id'])
     duty_id = params.dig(:teams_participant, :duty_id) || params.dig("teams_participant", "duty_id")
     team_participant.update(duty_id: duty_id)
     render json: { message: "Duty updated successfully" }, status: :ok
@@ -44,30 +43,25 @@ class Api::V1::TeamsParticipantsController < ApplicationController
     # Fetch all team participant records associated with the current team.
     team_participants = TeamsParticipant.where(team_id: current_team.id)
 
-    # Check if the current team is associated with an assignment.
-    # This applies to an AssignmentTeam.
+    # Determine whether this team belongs to an assignment or a course
     if current_team.respond_to?(:assignment) && current_team.assignment.present?
-      render json: {
-        team_participants: team_participants,    # List of team participants.
-        team: current_team,                        # The team information.
-        assignment: current_team.assignment        # The associated assignment.
-      }, status: :ok
-
-      # Otherwise, check if the team is associated with a course.
-      # This applies to a CourseTeam.
+      context_key = :assignment
+      context_value = current_team.assignment
     elsif current_team.respond_to?(:course) && current_team.course.present?
-      render json: {
-        team_participants: team_participants,    # List of team participants.
-        team: current_team,                        # The team information.
-        course: current_team.course                # The associated course.
-      }, status: :ok
-
-      # If the team is neither associated with an assignment nor a course,
-      # return an error message indicating the team is misconfigured.
+      context_key = :course
+      context_value = current_team.course
     else
+      # If neither is present, the team is misconfigured
       render json: { error: "Team is neither associated with an assignment nor a course" },
              status: :not_found and return
     end
+
+    # Build and return a single JSON response with common structure
+    render json: {
+      team_participants: team_participants,
+      team: current_team,
+      context_key => context_value
+    }, status: :ok
   end
 
 

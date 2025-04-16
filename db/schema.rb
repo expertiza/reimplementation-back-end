@@ -361,8 +361,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_14_052434) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "participant_id", null: false
+    t.integer "user_id", null: false
     t.index ["participant_id"], name: "index_teams_participants_on_participant_id"
     t.index ["team_id"], name: "index_teams_participants_on_team_id"
+    t.index ["user_id"], name: "index_teams_participants_on_user_id"
   end
 
   create_table "teams_users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
