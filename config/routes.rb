@@ -53,6 +53,10 @@ Rails.application.routes.draw do
         end
       end
 
+      #route added for review_mapping
+      resources :review_mappings
+
+
       resources :courses do
         collection do
           get ':id/add_ta/:ta_id', action: :add_ta
