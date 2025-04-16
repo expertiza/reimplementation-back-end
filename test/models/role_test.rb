@@ -85,4 +85,33 @@ class RoleTest < ActiveSupport::TestCase
     assert_includes other_roles, role3
     assert_not_includes other_roles, role1
   end
+
+  # Test for invalid role name length
+  test 'validates name length' do
+    role = Role.new(name: 'A' * 51) # assuming max length is 50
+    assert_not role.valid?
+    assert_equal ['is too long (maximum is 50 characters)'], role.errors[:name]
+
+    role.name = 'A' * 2 # assuming min length is 3
+    assert_not role.valid?
+    assert_equal ['is too short (minimum is 3 characters)'], role.errors[:name]
+  end
+
+  # Test for role parent-child relationships
+  test 'parent-child relationship' do
+    parent_role = Role.create!(name: 'Parent Role')
+    child_role = Role.create!(name: 'Child Role', parent: parent_role)
+
+    assert_equal parent_role, child_role.parent
+    assert_includes parent_role.subordinate_roles, child_role
+  end
+
+  # Test for role deletion behavior
+  test 'role deletion cascade' do
+    parent_role = Role.create!(name: 'Parent Role')
+    child_role = Role.create!(name: 'Child Role', parent: parent_role)
+
+    parent_role.destroy
+    assert_raises(ActiveRecord::RecordNotFound) { child_role.reload }
+  end
 end
