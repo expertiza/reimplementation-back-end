@@ -42,6 +42,28 @@ module Api
           head :no_content
         end
   
+        # POST /api/v1/review_mappings/add_calibration
+        def add_calibration
+          result = ReviewMapping.create_calibration_review(
+            assignment_id: calibration_params[:assignment_id],
+            team_id: calibration_params[:team_id],
+            user_id: current_user.id
+          )
+  
+          if result.success?
+            render json: {
+              message: 'Calibration review mapping created successfully',
+              review_mapping: result.review_mapping,
+              response_url: new_api_v1_response_path(
+                review_mapping_id: result.review_mapping.id,
+                assignment_id: calibration_params[:assignment_id]
+              )
+            }, status: :created
+          else
+            render json: { error: result.error }, status: :unprocessable_entity
+          end
+        end
+  
         private
   
         def set_review_mapping
@@ -52,6 +74,10 @@ module Api
   
         def review_mapping_params
           params.require(:review_mapping).permit(:reviewer_id, :reviewee_id, :review_type)
+        end
+  
+        def calibration_params
+          params.require(:calibration).permit(:assignment_id, :team_id)
         end
       end
     end

@@ -54,7 +54,11 @@ Rails.application.routes.draw do
       end
 
       #route added for review_mapping
-      resources :review_mappings
+      resources :review_mappings do
+        collection do
+          post :add_calibration
+        end
+      end
 
 
       resources :courses do
