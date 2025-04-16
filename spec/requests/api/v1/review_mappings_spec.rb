@@ -2,11 +2,16 @@ require 'rails_helper'
 require 'swagger_helper'
 require 'json_web_token'
 
+# This spec file tests the ReviewMappingsController API endpoints
+# It includes tests for both calibration review creation and reviewer selection
 RSpec.describe "Api::V1::ReviewMappings", type: :request do
+  # Create role hierarchy before all tests to ensure proper authorization
   before(:all) do
     @roles = create_roles_hierarchy
   end
 
+  # Create an instructor user for authentication
+  # This user will be used to test endpoints that require instructor privileges
   let(:instructor) do
     User.create!(
       name: "instructor",
@@ -17,20 +22,26 @@ RSpec.describe "Api::V1::ReviewMappings", type: :request do
     )
   end
 
+  # Generate JWT token for authentication
+  # This token will be included in the Authorization header for authenticated requests
   let(:token) { JsonWebToken.encode({id: instructor.id}) }
   let(:Authorization) { "Bearer #{token}" }
 
+  # Test the index endpoint (placeholder for future implementation)
   describe "GET /index" do
     pending "add some examples (or delete) #{__FILE__}"
   end
 
+  # Tests for the add_calibration endpoint
+  # This endpoint creates a calibration review mapping between a team and an assignment
   path '/api/v1/review_mappings/add_calibration' do
     post 'Creates a calibration review mapping' do
       tags 'Review Mappings'
-      security [bearerAuth: []]
+      security [bearerAuth: []] # Requires JWT authentication
       consumes 'application/json'
       produces 'application/json'
       
+      # Define the expected request parameters in Swagger format
       parameter name: :calibration, in: :body, schema: {
         type: :object,
         properties: {
@@ -45,7 +56,9 @@ RSpec.describe "Api::V1::ReviewMappings", type: :request do
         }
       }
 
+      # Test successful calibration review creation
       response '201', 'calibration review mapping created' do
+        # Create test data
         let(:assignment) { Assignment.create!(name: 'Test Assignment', instructor_id: instructor.id) }
         let(:team) { Team.create!(name: 'Test Team', assignment_id: assignment.id) }
         let(:calibration) do
@@ -57,6 +70,7 @@ RSpec.describe "Api::V1::ReviewMappings", type: :request do
           }
         end
 
+        # Verify the response contains expected data
         run_test! do |response|
           data = JSON.parse(response.body)
           expect(data['message']).to eq('Calibration review mapping created successfully')
@@ -65,6 +79,7 @@ RSpec.describe "Api::V1::ReviewMappings", type: :request do
         end
       end
 
+      # Test unauthorized access (missing/invalid token)
       response '401', 'unauthorized' do
         let(:calibration) do
           {
@@ -81,6 +96,7 @@ RSpec.describe "Api::V1::ReviewMappings", type: :request do
         end
       end
 
+      # Test invalid request parameters
       response '422', 'invalid request' do
         let(:calibration) do
           {
@@ -97,5 +113,56 @@ RSpec.describe "Api::V1::ReviewMappings", type: :request do
         end
       end
     end
+  end
+
+  # Tests for the select_reviewer endpoint
+  # This endpoint selects a contributor for review mapping and stores it in the session
+  path '/api/v1/review_mappings/select_reviewer' do
+    get 'Select a reviewer' do
+      tags 'Review Mappings'
+      description 'Select a contributor for review mapping'
+      produces 'application/json'
+      # Define the query parameter for contributor selection
+      parameter name: :contributor_id, in: :query, type: :integer, required: true
+
+      # Test successful contributor selection
+      response '200', 'Contributor selected successfully' do
+        let(:contributor_id) { assignment_team.id }
+
+        run_test! do
+          # Verify the response status and session storage
+          expect(response).to have_http_status(:ok)
+          expect(session[:contributor]).to eq(assignment_team)
+        end
+      end
+
+      # Test missing contributor_id parameter
+      response '400', 'Bad Request - Missing contributor_id' do
+        let(:contributor_id) { nil }
+
+        run_test! do
+          # Verify error response
+          expect(response).to have_http_status(:bad_request)
+          expect(json_response['error']).to eq('Contributor ID is required')
+        end
+      end
+
+      # Test non-existent contributor
+      response '404', 'Contributor not found' do
+        let(:contributor_id) { 99999 }
+
+        run_test! do
+          # Verify not found response
+          expect(response).to have_http_status(:not_found)
+        end
+      end
+    end
+  end
+
+  private
+
+  # Helper method to parse JSON response body
+  def json_response
+    JSON.parse(response.body)
   end
 end

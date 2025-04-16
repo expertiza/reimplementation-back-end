@@ -3,7 +3,9 @@
 module Api
     module V1
       class ReviewMappingsController < ApplicationController
+        # Set up before actions for common operations
         before_action :set_review_mapping, only: [:show, :update, :destroy]
+        before_action :validate_contributor_id, only: [:select_reviewer]
   
         # GET /api/v1/review_mappings
         def index
@@ -43,41 +45,53 @@ module Api
         end
   
         # POST /api/v1/review_mappings/add_calibration
+        # Creates a calibration review mapping between a team and an assignment
+        # This is used for calibration reviews where instructors review team submissions
+        # to establish grading standards
         def add_calibration
           result = ReviewMapping.create_calibration_review(
-            assignment_id: calibration_params[:assignment_id],
-            team_id: calibration_params[:team_id],
+            assignment_id: params.dig(:calibration, :assignment_id),
+            team_id: params.dig(:calibration, :team_id),
             user_id: current_user.id
           )
   
           if result.success?
-            render json: {
-              message: 'Calibration review mapping created successfully',
-              review_mapping: result.review_mapping,
-              response_url: new_api_v1_response_path(
-                review_mapping_id: result.review_mapping.id,
-                assignment_id: calibration_params[:assignment_id]
-              )
-            }, status: :created
+            render json: result.review_mapping, status: :created
           else
             render json: { error: result.error }, status: :unprocessable_entity
           end
         end
   
+        # GET /api/v1/review_mappings/select_reviewer
+        # Selects a contributor for review mapping and stores it in the session
+        # This is used in the review assignment process to track the selected contributor
+        def select_reviewer
+          @contributor = AssignmentTeam.find(params[:contributor_id])
+          session[:contributor] = @contributor
+        end
+  
         private
   
+        # Sets the review mapping instance variable based on the ID parameter
+        # Used by show, update, and destroy actions
         def set_review_mapping
           @review_mapping = ReviewMapping.find(params[:id])
         rescue ActiveRecord::RecordNotFound
           render json: { error: "ReviewMapping not found" }, status: :not_found
         end
   
-        def review_mapping_params
-          params.require(:review_mapping).permit(:reviewer_id, :reviewee_id, :review_type)
+        # Validates that a contributor_id parameter is present in the request
+        # Used by the select_reviewer action
+        def validate_contributor_id
+          unless params[:contributor_id].present?
+            render json: { error: 'Contributor ID is required' }, status: :bad_request
+          end
         end
   
-        def calibration_params
-          params.require(:calibration).permit(:assignment_id, :team_id)
+        # Strong parameters for review mapping creation and updates
+        # Ensures only permitted attributes can be mass-assigned
+        def review_mapping_params
+          params.require(:review_mapping).permit(:reviewer_id, :reviewee_id, :review_type)
         end
       end
     end
