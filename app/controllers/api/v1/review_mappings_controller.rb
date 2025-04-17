@@ -121,6 +121,23 @@ module Api
           end
         end
   
+        # GET /api/v1/review_mappings/check_outstanding_reviews
+        # Checks if a reviewer has exceeded the maximum number of outstanding reviews
+        def check_outstanding_reviews
+          result = ReviewMapping.check_outstanding_reviews?(
+            Assignment.find(params[:assignment_id]),
+            User.find(params[:reviewer_id])
+          )
+
+          if result.success
+            render plain: result.allowed.to_s
+          else
+            render json: { error: result.error }, status: :unprocessable_entity
+          end
+        rescue ActiveRecord::RecordNotFound
+          render json: { error: "Assignment or Reviewer not found" }, status: :unprocessable_entity
+        end
+  
         private
   
         # Sets the review mapping instance variable based on the ID parameter

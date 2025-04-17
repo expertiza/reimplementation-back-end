@@ -132,6 +132,45 @@ class ReviewMapping < ApplicationRecord
     end
   end
 
+  # Checks if a reviewer has exceeded the maximum number of outstanding (incomplete) reviews
+  # for a given assignment.
+  #
+  # @param assignment [Assignment] The assignment to check reviews for
+  # @param reviewer [User] The reviewer to check
+  # @return [OpenStruct] An object containing:
+  #   - success [Boolean] Whether the check was successful
+  #   - allowed [Boolean] Whether the reviewer can perform more reviews
+  #   - error [String] Error message if any
+  def self.check_outstanding_reviews?(assignment, reviewer)
+    # Find all review mappings for this assignment and reviewer
+    review_mappings = where(reviewed_object_id: assignment.id, reviewer_id: reviewer.id)
+    
+    # Count completed reviews (where response exists)
+    completed_reviews = review_mappings.joins(:response).count
+    
+    # Count total assigned reviews
+    total_reviews = review_mappings.count
+    
+    # Calculate outstanding reviews
+    outstanding_reviews = total_reviews - completed_reviews
+    
+    # Get the maximum allowed outstanding reviews from assignment policy
+    max_outstanding = assignment.max_outstanding_reviews || 2
+    
+    OpenStruct.new(
+      success: true,
+      allowed: outstanding_reviews < max_outstanding,
+      error: outstanding_reviews >= max_outstanding ? 
+        "You cannot do more reviews when you have #{outstanding_reviews} reviews to do" : nil
+    )
+  rescue StandardError => e
+    OpenStruct.new(
+      success: false,
+      allowed: false,
+      error: "Error checking outstanding reviews: #{e.message}"
+    )
+  end
+
   private_class_method
 
   # Checks if the reviewer can perform more reviews based on assignment policy
