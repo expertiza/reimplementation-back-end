@@ -46,6 +46,7 @@ module Api
           @review_mapping.destroy
           head :no_content
         end
+
   
         # POST /api/v1/review_mappings/add_calibration
         # Creates a calibration review mapping between a team and an assignment
@@ -103,6 +104,18 @@ module Api
   
           if result.success?
             render json: result.review_mapping, status: :created
+          else
+            render json: { error: result.error }, status: :unprocessable_entity
+          end
+        end
+          
+        # GET /api/v1/review_mappings/review_allowed
+        # Checks if a reviewer can perform more reviews for an assignment
+        def review_allowed
+          result = ReviewResponseMap.review_allowed?(params[:assignment_id], params[:reviewer_id])
+
+          if result.success
+            render plain: result.allowed.to_s
           else
             render json: { error: result.error }, status: :unprocessable_entity
           end

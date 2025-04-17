@@ -1534,6 +1534,65 @@ paths:
                   error:
                     type: string
 
+  "/api/v1/review_mappings/review_allowed":
+    get:
+      tags:
+        - Review Mappings
+      summary: Checks if a reviewer can perform more reviews
+      description: |
+        Checks if a reviewer can perform more reviews for a given assignment.
+        Returns a boolean value indicating whether the reviewer is allowed to perform more reviews.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: assignment_id
+          in: query
+          description: ID of the assignment
+          required: true
+          schema:
+            type: integer
+        - name: reviewer_id
+          in: query
+          description: ID of the reviewer
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success response with boolean value
+          content:
+            text/plain:
+              schema:
+                type: string
+                enum: ['true', 'false']
+                example: 'true'
+        '401':
+          description: Unauthorized - Invalid or missing authentication token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Unprocessable Entity - Invalid parameters or resources not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X GET "http://localhost:3000/api/v1/review_mappings/review_allowed?assignment_id=1&reviewer_id=2" \
+              -H "Authorization: Bearer YOUR_JWT_TOKEN"
+        - lang: JavaScript
+          source: |
+            fetch('http://localhost:3000/api/v1/review_mappings/review_allowed?assignment_id=1&reviewer_id=2', {
+              headers: {
+                'Authorization': 'Bearer YOUR_JWT_TOKEN'
+              }
+            })
+            .then(response => response.text())
+            .then(result => console.log(result)); // 'true' or 'false'
+
 servers:
 - url: http://{defaultHost}
   variables:

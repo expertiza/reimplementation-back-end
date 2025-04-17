@@ -60,6 +60,7 @@ Rails.application.routes.draw do
           get :select_reviewer
           post :add_reviewer
           post :assign_reviewer_dynamically
+          get :review_allowed
           # Additional routes for review mapping operations
           get 'valid_reviewers', action: :valid_reviewers
           get 'review_mappings_count', action: :review_mappings_count

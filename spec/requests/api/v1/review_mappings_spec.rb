@@ -421,6 +421,103 @@ RSpec.describe "Api::V1::ReviewMappings", type: :request do
     end
   end
 
+  # Tests for the review_allowed endpoint
+  path '/api/v1/review_mappings/review_allowed' do
+    get 'Checks if a reviewer can perform more reviews' do
+      tags 'Review Mappings'
+      security [bearerAuth: []] # Requires JWT authentication
+      produces 'application/json'
+      
+      # Define the expected query parameters in Swagger format
+      parameter name: :assignment_id, in: :query, type: :integer, required: true, description: 'ID of the assignment'
+      parameter name: :reviewer_id, in: :query, type: :integer, required: true, description: 'ID of the reviewer'
+
+      # Test successful check when reviewer can perform more reviews
+      response '200', 'review allowed' do
+        let(:assignment_id) { assignment.id }
+        let(:reviewer_id) { reviewer.id }
+
+        before do
+          # Create 2 reviews for the reviewer (below the limit of 3)
+          2.times do
+            create(:review_response_map,
+                   reviewer_id: reviewer.id,
+                   reviewed_object_id: assignment.id,
+                   reviewee_id: team.id)
+          end
+        end
+
+        run_test! do |response|
+          expect(response.body).to eq('true')
+        end
+      end
+
+      # Test when reviewer has reached review limit
+      response '200', 'review not allowed' do
+        let(:assignment_id) { assignment.id }
+        let(:reviewer_id) { reviewer.id }
+
+        before do
+          # Create 3 reviews for the reviewer (at the limit)
+          3.times do
+            create(:review_response_map,
+                   reviewer_id: reviewer.id,
+                   reviewed_object_id: assignment.id,
+                   reviewee_id: team.id)
+          end
+        end
+
+        run_test! do |response|
+          expect(response.body).to eq('false')
+        end
+      end
+
+      # Test missing parameters
+      response '422', 'unprocessable entity' do
+        let(:assignment_id) { nil }
+        let(:reviewer_id) { nil }
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['error']).to eq('Assignment ID and Reviewer ID are required')
+        end
+      end
+
+      # Test when assignment not found
+      response '422', 'unprocessable entity' do
+        let(:assignment_id) { 99999 }
+        let(:reviewer_id) { reviewer.id }
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['error']).to eq('Assignment or Reviewer not found')
+        end
+      end
+
+      # Test when reviewer not found
+      response '422', 'unprocessable entity' do
+        let(:assignment_id) { assignment.id }
+        let(:reviewer_id) { 99999 }
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['error']).to eq('Assignment or Reviewer not found')
+        end
+      end
+
+      # Test unauthorized access
+      response '401', 'unauthorized' do
+        let(:assignment_id) { assignment.id }
+        let(:reviewer_id) { reviewer.id }
+        let(:Authorization) { nil }
+
+        run_test! do |response|
+          expect(response.status).to eq(401)
+        end
+      end
+    end
+  end
+
   private
 
   # Helper method to parse JSON response body
