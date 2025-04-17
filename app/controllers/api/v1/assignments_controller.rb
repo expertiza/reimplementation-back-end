@@ -172,6 +172,42 @@ class Api::V1::AssignmentsController < ApplicationController
     end
   end
 
+  def teams
+    assignment = Assignment.find_by(id: params[:assignment_id])
+  
+    if assignment.nil?
+      render json: { error: "Assignment not found" }, status: :not_found
+      return
+    end
+  
+    submissions = if assignment.has_teams?
+      assignment.teams.includes(:teams_users => :user).map do |team|
+        signed_up_team = team.signed_up_teams.first
+        topic = signed_up_team&.sign_up_topic&.topic_name
+  
+        {
+          id: team.id,
+          name: team.name,
+          team_id: team.id,
+          topic: topic,
+          members: team.teams_users.map { |tu| { id: tu.user.id, name: tu.user.name } }
+        }
+      end
+    else
+      assignment.participants.includes(:user).map do |participant|
+        {
+          id: participant.id,
+          name: participant.user.name,
+          team_id: nil,
+          topic: nil,
+          members: [{ id: participant.user.id, name: participant.user.name }]
+        }
+      end
+    end
+  
+    render json: submissions, status: :ok
+  end 
+
   # check if assignment has valid number of reviews
   # greater than required reviews for a valid review type
   def valid_num_review
