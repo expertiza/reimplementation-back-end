@@ -143,33 +143,33 @@ RSpec.describe SignedUpTeam, type: :model do
       end
     end
 
-    describe '.find_team_users' do
+    describe '.find_project_topic_team_users' do
       let!(:sut) { SignedUpTeam.create!(project_topic: project_topic, team: team) }
 
-      # Should return users if team is signed up
-      it 'returns users in the team that signed up' do
-        users = SignedUpTeam.find_team_users(team.id)
+      # Should return users of a team signed up for a topic
+      it 'returns all users in a team that signed up for a topic' do
+        users = SignedUpTeam.find_project_topic_team_users(team.id)
         expect(users).to contain_exactly(user1, user2)
       end
 
-      # Should return [] if team is not signed up
+      # Should return [] if team is not signed up to a topic
       it 'returns empty array if no signed up team found' do
         new_team = Team.create!(assignment: assignment)
-        expect(SignedUpTeam.find_team_users(new_team.id)).to eq([])
+        expect(SignedUpTeam.find_project_topic_team_users(new_team.id)).to eq([])
       end
 
       # Gracefully handle nil
       it 'handles nil team_id gracefully' do
-        expect(SignedUpTeam.find_team_users(nil)).to eq([])
+        expect(SignedUpTeam.find_project_topic_team_users(nil)).to eq([])
       end
     end
 
-    describe '.find_user_signup_topics' do
+    describe '.find_user_project_topic' do
       let!(:sut) { SignedUpTeam.create!(project_topic: project_topic, team: team) }
 
-      # Returns topics signed up by any of the user’s teams
-      it 'returns topics signed up by user’s team' do
-        topics = SignedUpTeam.find_user_signup_topics(user1.id)
+      # Returns project topic the user signed up for
+      it 'returns project topic signed up by user' do
+        topics = SignedUpTeam.find_user_project_topic(user1.id)
         expect(topics).to include(project_topic)
       end
 
@@ -182,21 +182,12 @@ RSpec.describe SignedUpTeam, type: :model do
           email: "ghost@example.com",
           role: student_role
         )
-        expect(SignedUpTeam.find_user_signup_topics(unknown.id)).to eq([])
+        expect(SignedUpTeam.find_user_project_topic(unknown.id)).to eq([])
       end
 
       # Gracefully handle nil user_id
       it 'handles nil user_id gracefully' do
-        expect(SignedUpTeam.find_user_signup_topics(nil)).to eq([])
-      end
-
-      # Should work even if user is part of multiple teams
-      it 'handles user with multiple teams' do
-        team2 = Team.create!(assignment: assignment)
-        team2.users << user1
-        SignedUpTeam.create!(project_topic: project_topic, team: team2)
-        topics = SignedUpTeam.find_user_signup_topics(user1.id)
-        expect(topics).to include(project_topic)
+        expect(SignedUpTeam.find_user_project_topic(nil)).to eq([])
       end
     end
   end

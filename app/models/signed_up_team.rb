@@ -33,16 +33,16 @@ class SignedUpTeam < ApplicationRecord
     team.users.to_a
   end
 
-  # Returns users only if the team has signed up for a topic
-  def self.find_team_users(team_id)
+  # Returns all users in a given team that's signed up for a topic
+  def self.find_project_topic_team_users(team_id)
     signed_up_team = SignedUpTeam.find_by(team_id: team_id)
     return [] unless signed_up_team
 
     signed_up_team.team.try(:users).to_a
   end
 
-  # Returns all project topics that any of the user's teams have signed up for
-  def self.find_user_signup_topics(user_id)
+  # Returns project topic the given user signed up for
+  def self.find_user_project_topic(user_id)
     user = User.find_by(id: user_id)
     return [] unless user
 
