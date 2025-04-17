@@ -1326,10 +1326,149 @@ paths:
       responses:
         '200':
           description: A specific student task
+  "/api/v1/review_mappings/add_reviewer":
+    post:
+      tags:
+        - Review Mappings
+      summary: Add a reviewer to a review mapping
+      description: Assigns a reviewer to a team for review purposes
+      operationId: addReviewer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - contributor_id
+                - user
+              properties:
+                id:
+                  type: integer
+                  description: ID of the assignment
+                contributor_id:
+                  type: integer
+                  description: ID of the team to be reviewed
+                user:
+                  type: object
+                  required:
+                    - name
+                  properties:
+                    name:
+                      type: string
+                      description: Name of the user to assign as reviewer
+                topic_id:
+                  type: integer
+                  description: ID of the topic (optional)
+      responses:
+        '201':
+          description: Review mapping created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reviewer_id:
+                    type: integer
+                  reviewee_id:
+                    type: integer
+                  assignment_id:
+                    type: integer
+                  review_type:
+                    type: string
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
 
+  "/api/v1/review_mappings/add_calibration":
+    post:
+      tags:
+        - Review Mappings
+      summary: Add a calibration review
+      description: Creates a calibration review mapping between a team and an assignment
+      operationId: addCalibration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - calibration
+              properties:
+                calibration:
+                  type: object
+                  required:
+                    - assignment_id
+                    - team_id
+                  properties:
+                    assignment_id:
+                      type: integer
+                      description: ID of the assignment
+                    team_id:
+                      type: integer
+                      description: ID of the team
+      responses:
+        '201':
+          description: Calibration review mapping created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  review_mapping:
+                    type: object
+                  response_url:
+                    type: string
+        '401':
+          description: Unauthorized
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
 
-
-
+  "/api/v1/review_mappings/select_reviewer":
+    get:
+      tags:
+        - Review Mappings
+      summary: Select a reviewer
+      description: Selects a contributor for review mapping and stores it in the session
+      operationId: selectReviewer
+      parameters:
+        - name: contributor_id
+          in: query
+          required: true
+          schema:
+            type: integer
+            description: ID of the contributor team
+      responses:
+        '200':
+          description: Contributor selected successfully
+        '400':
+          description: Bad Request - Missing contributor_id
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Contributor not found
 
 servers:
 - url: http://{defaultHost}

@@ -159,6 +159,75 @@ RSpec.describe "Api::V1::ReviewMappings", type: :request do
     end
   end
 
+  # Test suite for POST /api/v1/review_mappings/add_reviewer
+  describe 'POST /api/v1/review_mappings/add_reviewer' do
+    context 'when the request is valid' do
+      before { post '/api/v1/review_mappings/add_reviewer', params: valid_params }
+
+      it 'creates a new review mapping' do
+        expect(response).to have_http_status(:created)
+        expect(json['reviewer_id']).to eq(user.id)
+        expect(json['reviewee_id']).to eq(team.id)
+        expect(json['assignment_id']).to eq(assignment.id)
+      end
+    end
+
+    context 'when the user does not exist' do
+      before do
+        invalid_params = valid_params.merge(user: { name: 'nonexistent_user' })
+        post '/api/v1/review_mappings/add_reviewer', params: invalid_params
+      end
+
+      it 'returns an error message' do
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json['error']).to match(/User 'nonexistent_user' not found/)
+      end
+    end
+
+    context 'when attempting self-review' do
+      before do
+        # Add user to the team to create self-review scenario
+        create(:teams_user, team: team, user: user)
+        post '/api/v1/review_mappings/add_reviewer', params: valid_params
+      end
+
+      it 'returns an error message' do
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json['error']).to match(/You cannot assign this student to review their own artifact/)
+      end
+    end
+
+    context 'when reviewer is already assigned' do
+      before do
+        # Create an existing review mapping
+        create(:review_mapping, 
+               reviewer: user, 
+               reviewee: team, 
+               assignment: assignment)
+        post '/api/v1/review_mappings/add_reviewer', params: valid_params
+      end
+
+      it 'returns an error message' do
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json['error']).to match(/The reviewer, '#{user.name}', is already assigned to this contributor/)
+      end
+    end
+
+    context 'when topic_id is provided' do
+      let(:topic) { create(:topic, assignment: assignment) }
+      
+      before do
+        params_with_topic = valid_params.merge(topic_id: topic.id)
+        post '/api/v1/review_mappings/add_reviewer', params: params_with_topic
+      end
+
+      it 'creates a review mapping and signs up for topic' do
+        expect(response).to have_http_status(:created)
+        expect(SignedUpTeam.exists?(team_id: team.id, topic_id: topic.id)).to be true
+      end
+    end
+  end
+
   private
 
   # Helper method to parse JSON response body

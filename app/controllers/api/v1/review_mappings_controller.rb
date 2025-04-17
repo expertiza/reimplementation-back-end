@@ -8,17 +8,20 @@ module Api
         before_action :validate_contributor_id, only: [:select_reviewer]
   
         # GET /api/v1/review_mappings
+        # Returns a list of all review mappings
         def index
           @review_mappings = ReviewMapping.all
           render json: @review_mappings
         end
   
         # GET /api/v1/review_mappings/:id
+        # Returns a specific review mapping by ID
         def show
           render json: @review_mapping
         end
   
         # POST /api/v1/review_mappings
+        # Creates a new review mapping
         def create
           @review_mapping = ReviewMapping.new(review_mapping_params)
   
@@ -30,6 +33,7 @@ module Api
         end
   
         # PATCH/PUT /api/v1/review_mappings/:id
+        # Updates an existing review mapping
         def update
           if @review_mapping.update(review_mapping_params)
             render json: @review_mapping
@@ -39,6 +43,7 @@ module Api
         end
   
         # DELETE /api/v1/review_mappings/:id
+        # Deletes a review mapping
         def destroy
           @review_mapping.destroy
           head :no_content
@@ -68,6 +73,24 @@ module Api
         def select_reviewer
           @contributor = AssignmentTeam.find(params[:contributor_id])
           session[:contributor] = @contributor
+        end
+  
+        # POST /api/v1/review_mappings/add_reviewer
+        # Adds a reviewer to a review mapping
+        # This endpoint handles the assignment of reviewers to teams for review purposes
+        def add_reviewer
+          result = ReviewMapping.add_reviewer(
+            assignment_id: params[:id],
+            team_id: params[:contributor_id],
+            user_name: params.dig(:user, :name),
+            topic_id: params[:topic_id]
+          )
+  
+          if result.success?
+            render json: result.review_mapping, status: :created
+          else
+            render json: { error: result.error }, status: :unprocessable_entity
+          end
         end
   
         private

@@ -58,6 +58,7 @@ Rails.application.routes.draw do
         collection do
           post :add_calibration
           get :select_reviewer
+          post :add_reviewer
         end
       end
 
