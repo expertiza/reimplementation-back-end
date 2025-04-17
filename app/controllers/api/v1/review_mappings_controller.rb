@@ -33,7 +33,6 @@ module Api
         end
   
         # PATCH/PUT /api/v1/review_mappings/:id
-        # Updates an existing review mapping
         def update
           if @review_mapping.update(review_mapping_params)
             render json: @review_mapping
@@ -43,7 +42,6 @@ module Api
         end
   
         # DELETE /api/v1/review_mappings/:id
-        # Deletes a review mapping
         def destroy
           @review_mapping.destroy
           head :no_content
@@ -84,6 +82,23 @@ module Api
             team_id: params[:contributor_id],
             user_name: params.dig(:user, :name),
             topic_id: params[:topic_id]
+          )
+  
+          if result.success?
+            render json: result.review_mapping, status: :created
+          else
+            render json: { error: result.error }, status: :unprocessable_entity
+          end
+        end
+  
+        # POST /api/v1/review_mappings/assign_reviewer_dynamically
+        # Assigns a reviewer dynamically to a team or topic
+        def assign_reviewer_dynamically
+          result = ReviewMapping.assign_reviewer_dynamically(
+            assignment_id: params[:assignment_id],
+            reviewer_id: params[:reviewer_id],
+            topic_id: params[:topic_id],
+            i_dont_care: params[:i_dont_care].present?
           )
   
           if result.success?

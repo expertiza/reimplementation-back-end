@@ -1470,6 +1470,70 @@ paths:
         '404':
           description: Contributor not found
 
+  "/api/v1/review_mappings/assign_reviewer_dynamically":
+    post:
+      tags:
+        - Review Mappings
+      summary: Assign a reviewer dynamically
+      description: Dynamically assigns a reviewer to a team or topic based on assignment configuration
+      operationId: assignReviewerDynamically
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - assignment_id
+                - reviewer_id
+              properties:
+                assignment_id:
+                  type: integer
+                  description: ID of the assignment
+                reviewer_id:
+                  type: integer
+                  description: ID of the reviewer
+                topic_id:
+                  type: integer
+                  description: ID of the topic (optional for topic-based assignments)
+                i_dont_care:
+                  type: boolean
+                  description: Whether the reviewer doesn't care about topic selection
+      responses:
+        '201':
+          description: Review mapping created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reviewer_id:
+                    type: integer
+                  reviewee_id:
+                    type: integer
+                  assignment_id:
+                    type: integer
+                  review_type:
+                    type: string
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
 servers:
 - url: http://{defaultHost}
   variables:

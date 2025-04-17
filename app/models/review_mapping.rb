@@ -99,4 +99,105 @@ class ReviewMapping < ApplicationRecord
       OpenStruct.new(success?: false, error: review_mapping.errors.full_messages.join(', '))
     end
   end
+
+  # Assigns a reviewer dynamically to a team or topic
+  #
+  # @param assignment_id [Integer] The ID of the assignment
+  # @param reviewer_id [Integer] The ID of the reviewer
+  # @param topic_id [Integer] The ID of the topic (optional)
+  # @param i_dont_care [Boolean] Whether the reviewer doesn't care about topic selection
+  # @return [OpenStruct] An object containing success status and either the review mapping or error message
+  def self.assign_reviewer_dynamically(assignment_id:, reviewer_id:, topic_id: nil, i_dont_care: false)
+    assignment = Assignment.find(assignment_id)
+    participant = AssignmentParticipant.find_by(user_id: reviewer_id, parent_id: assignment.id)
+    reviewer = participant&.get_reviewer
+
+    return OpenStruct.new(success?: false, error: 'Reviewer not found') unless reviewer
+
+    # Validate review limits
+    unless can_review?(assignment, reviewer)
+      return OpenStruct.new(success?: false, error: "You cannot do more than #{assignment.num_reviews_allowed} reviews based on assignment policy")
+    end
+
+    # Check outstanding reviews
+    if has_outstanding_reviews?(assignment, reviewer)
+      return OpenStruct.new(success?: false, error: "You cannot do more reviews when you have #{Assignment.max_outstanding_reviews} reviews to do")
+    end
+
+    # Handle topic-based assignments
+    if assignment.topics?
+      return handle_topic_based_assignment(assignment, reviewer, topic_id, i_dont_care)
+    else
+      return handle_non_topic_assignment(assignment, reviewer)
+    end
+  end
+
+  private_class_method
+
+  # Checks if the reviewer can perform more reviews based on assignment policy
+  def self.can_review?(assignment, reviewer)
+    current_reviews = where(reviewer_id: reviewer.id, assignment_id: assignment.id).count
+    current_reviews < assignment.num_reviews_allowed
+  end
+
+  # Checks if the reviewer has outstanding reviews
+  def self.has_outstanding_reviews?(assignment, reviewer)
+    outstanding_reviews = where(
+      reviewer_id: reviewer.id,
+      assignment_id: assignment.id,
+      status: 'pending'
+    ).count
+    outstanding_reviews >= Assignment.max_outstanding_reviews
+  end
+
+  # Handles assignment with topics
+  def self.handle_topic_based_assignment(assignment, reviewer, topic_id, i_dont_care)
+    unless i_dont_care || topic_id || !assignment.can_choose_topic_to_review?
+      return OpenStruct.new(success?: false, error: 'No topic is selected. Please go back and select a topic.')
+    end
+
+    topic = if topic_id
+              SignUpTopic.find(topic_id)
+            else
+              assignment.candidate_topics_to_review(reviewer).to_a.sample
+            end
+
+    if topic.nil?
+      OpenStruct.new(success?: false, error: 'No topics are available to review at this time. Please try later.')
+    else
+      create_review_mapping(assignment, reviewer, topic)
+    end
+  end
+
+  # Handles assignment without topics
+  def self.handle_non_topic_assignment(assignment, reviewer)
+    assignment_teams = assignment.candidate_assignment_teams_to_review(reviewer)
+    assignment_team = assignment_teams.to_a.sample
+
+    if assignment_team.nil?
+      OpenStruct.new(success?: false, error: 'No artifacts are available to review at this time. Please try later.')
+    else
+      create_review_mapping_no_topic(assignment, reviewer, assignment_team)
+    end
+  end
+
+  # Creates a review mapping for topic-based assignments
+  def self.create_review_mapping(assignment, reviewer, topic)
+    review_mapping = assignment.assign_reviewer_dynamically(reviewer, topic)
+    if review_mapping
+      OpenStruct.new(success?: true, review_mapping: review_mapping)
+    else
+      OpenStruct.new(success?: false, error: 'Failed to create review mapping')
+    end
+  end
+
+  # Creates a review mapping for non-topic assignments
+  def self.create_review_mapping_no_topic(assignment, reviewer, assignment_team)
+    review_mapping = assignment.assign_reviewer_dynamically_no_topic(reviewer, assignment_team)
+    if review_mapping
+      OpenStruct.new(success?: true, review_mapping: review_mapping)
+    else
+      OpenStruct.new(success?: false, error: 'Failed to create review mapping')
+    end
+  end
 end 

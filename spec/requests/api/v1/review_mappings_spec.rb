@@ -27,6 +27,13 @@ RSpec.describe "Api::V1::ReviewMappings", type: :request do
   let(:token) { JsonWebToken.encode({id: instructor.id}) }
   let(:Authorization) { "Bearer #{token}" }
 
+  # Test data setup
+  let(:assignment) { create(:assignment) }
+  let(:reviewer) { create(:user) }
+  let(:participant) { create(:assignment_participant, user: reviewer, assignment: assignment) }
+  let(:team) { create(:assignment_team, assignment: assignment) }
+  let(:topic) { create(:topic, assignment: assignment) }
+
   # Test the index endpoint (placeholder for future implementation)
   describe "GET /index" do
     pending "add some examples (or delete) #{__FILE__}"
@@ -224,6 +231,192 @@ RSpec.describe "Api::V1::ReviewMappings", type: :request do
       it 'creates a review mapping and signs up for topic' do
         expect(response).to have_http_status(:created)
         expect(SignedUpTeam.exists?(team_id: team.id, topic_id: topic.id)).to be true
+      end
+    end
+  end
+
+  # Tests for the assign_reviewer_dynamically endpoint
+  path '/api/v1/review_mappings/assign_reviewer_dynamically' do
+    post 'Assigns a reviewer dynamically' do
+      tags 'Review Mappings'
+      security [bearerAuth: []] # Requires JWT authentication
+      consumes 'application/json'
+      produces 'application/json'
+      
+      # Define the expected request parameters in Swagger format
+      parameter name: :review_params, in: :body, schema: {
+        type: :object,
+        properties: {
+          assignment_id: { type: :integer, description: 'ID of the assignment' },
+          reviewer_id: { type: :integer, description: 'ID of the reviewer' },
+          topic_id: { type: :integer, description: 'ID of the topic (optional)' },
+          i_dont_care: { type: :boolean, description: 'Whether the reviewer doesn\'t care about topic selection' }
+        },
+        required: ['assignment_id', 'reviewer_id']
+      }
+
+      # Test successful reviewer assignment without topic
+      response '201', 'reviewer assigned successfully' do
+        let(:review_params) do
+          {
+            assignment_id: assignment.id,
+            reviewer_id: reviewer.id
+          }
+        end
+
+        before do
+          allow(Assignment).to receive(:find).with(assignment.id).and_return(assignment)
+          allow(AssignmentParticipant).to receive(:find_by).and_return(participant)
+          allow(participant).to receive(:get_reviewer).and_return(reviewer)
+          allow(assignment).to receive(:topics?).and_return(false)
+          allow(assignment).to receive(:candidate_assignment_teams_to_review).and_return([team])
+          allow(assignment).to receive(:assign_reviewer_dynamically_no_topic).and_return(create(:review_mapping))
+        end
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['reviewer_id']).to eq(reviewer.id)
+          expect(data['assignment_id']).to eq(assignment.id)
+        end
+      end
+
+      # Test successful reviewer assignment with topic
+      response '201', 'reviewer assigned successfully with topic' do
+        let(:review_params) do
+          {
+            assignment_id: assignment.id,
+            reviewer_id: reviewer.id,
+            topic_id: topic.id
+          }
+        end
+
+        before do
+          allow(Assignment).to receive(:find).with(assignment.id).and_return(assignment)
+          allow(AssignmentParticipant).to receive(:find_by).and_return(participant)
+          allow(participant).to receive(:get_reviewer).and_return(reviewer)
+          allow(assignment).to receive(:topics?).and_return(true)
+          allow(SignUpTopic).to receive(:find).with(topic.id).and_return(topic)
+          allow(assignment).to receive(:assign_reviewer_dynamically).and_return(create(:review_mapping))
+        end
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['reviewer_id']).to eq(reviewer.id)
+          expect(data['assignment_id']).to eq(assignment.id)
+        end
+      end
+
+      # Test reviewer not found
+      response '422', 'reviewer not found' do
+        let(:review_params) do
+          {
+            assignment_id: assignment.id,
+            reviewer_id: 99999
+          }
+        end
+
+        before do
+          allow(Assignment).to receive(:find).with(assignment.id).and_return(assignment)
+          allow(AssignmentParticipant).to receive(:find_by).and_return(nil)
+        end
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['error']).to eq('Reviewer not found')
+        end
+      end
+
+      # Test review limit exceeded
+      response '422', 'review limit exceeded' do
+        let(:review_params) do
+          {
+            assignment_id: assignment.id,
+            reviewer_id: reviewer.id
+          }
+        end
+
+        before do
+          allow(Assignment).to receive(:find).with(assignment.id).and_return(assignment)
+          allow(AssignmentParticipant).to receive(:find_by).and_return(participant)
+          allow(participant).to receive(:get_reviewer).and_return(reviewer)
+          allow(ReviewMapping).to receive(:where).and_return(double(count: 10))
+          allow(assignment).to receive(:num_reviews_allowed).and_return(5)
+        end
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['error']).to match(/You cannot do more than 5 reviews based on assignment policy/)
+        end
+      end
+
+      # Test outstanding reviews limit
+      response '422', 'outstanding reviews limit exceeded' do
+        let(:review_params) do
+          {
+            assignment_id: assignment.id,
+            reviewer_id: reviewer.id
+          }
+        end
+
+        before do
+          allow(Assignment).to receive(:find).with(assignment.id).and_return(assignment)
+          allow(AssignmentParticipant).to receive(:find_by).and_return(participant)
+          allow(participant).to receive(:get_reviewer).and_return(reviewer)
+          allow(ReviewMapping).to receive(:where).and_return(double(count: 3))
+          allow(Assignment).to receive(:max_outstanding_reviews).and_return(3)
+        end
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['error']).to match(/You cannot do more reviews when you have 3 reviews to do/)
+        end
+      end
+
+      # Test no topics available
+      response '422', 'no topics available' do
+        let(:review_params) do
+          {
+            assignment_id: assignment.id,
+            reviewer_id: reviewer.id
+          }
+        end
+
+        before do
+          allow(Assignment).to receive(:find).with(assignment.id).and_return(assignment)
+          allow(AssignmentParticipant).to receive(:find_by).and_return(participant)
+          allow(participant).to receive(:get_reviewer).and_return(reviewer)
+          allow(assignment).to receive(:topics?).and_return(true)
+          allow(assignment).to receive(:can_choose_topic_to_review?).and_return(true)
+          allow(assignment).to receive(:candidate_topics_to_review).and_return([])
+        end
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['error']).to eq('No topics are available to review at this time. Please try later.')
+        end
+      end
+
+      # Test no artifacts available
+      response '422', 'no artifacts available' do
+        let(:review_params) do
+          {
+            assignment_id: assignment.id,
+            reviewer_id: reviewer.id
+          }
+        end
+
+        before do
+          allow(Assignment).to receive(:find).with(assignment.id).and_return(assignment)
+          allow(AssignmentParticipant).to receive(:find_by).and_return(participant)
+          allow(participant).to receive(:get_reviewer).and_return(reviewer)
+          allow(assignment).to receive(:topics?).and_return(false)
+          allow(assignment).to receive(:candidate_assignment_teams_to_review).and_return([])
+        end
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['error']).to eq('No artifacts are available to review at this time. Please try later.')
+        end
       end
     end
   end

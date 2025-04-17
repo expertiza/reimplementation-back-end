@@ -59,6 +59,17 @@ Rails.application.routes.draw do
           post :add_calibration
           get :select_reviewer
           post :add_reviewer
+          post :assign_reviewer_dynamically
+          # Additional routes for review mapping operations
+          get 'valid_reviewers', action: :valid_reviewers
+          get 'review_mappings_count', action: :review_mappings_count
+          get 'reviewer/:reviewer_id', action: :reviewer_mappings
+          get 'reviewee/:reviewee_id', action: :reviewee_mappings
+          post 'assign_meta_reviewer', action: :assign_meta_reviewer
+          delete 'remove_reviewer/:reviewer_id', action: :remove_reviewer
+          get 'review_mapping_types', action: :review_mapping_types
+          get 'review_mapping_strategy', action: :review_mapping_strategy
+          post 'update_review_mapping_strategy', action: :update_review_mapping_strategy
         end
       end
 
