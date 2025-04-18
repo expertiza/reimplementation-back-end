@@ -53,7 +53,7 @@ class Api::V1::CoursesController < ApplicationController
     user = User.find_by(id: params[:ta_id])
     result = @course.add_ta(user)
     if result[:success]
-      render json: { message: result[:message] || "TA added" }, status: :created
+      render json: result[:data], status: :created
     else
       render json: { status: "error", message: result[:message] }, status: :bad_request
     end
