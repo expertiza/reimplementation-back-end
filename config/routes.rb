@@ -72,6 +72,7 @@ Rails.application.routes.draw do
           get 'review_mapping_strategy', action: :review_mapping_strategy
           post 'update_review_mapping_strategy', action: :update_review_mapping_strategy
           get :check_outstanding_reviews
+          post :assign_quiz_dynamically
         end
       end
 

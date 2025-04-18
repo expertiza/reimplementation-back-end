@@ -138,6 +138,22 @@ module Api
           render json: { error: "Assignment or Reviewer not found" }, status: :unprocessable_entity
         end
   
+        # POST /api/v1/review_mappings/assign_quiz_dynamically
+        # Assigns a quiz to a participant for a specific assignment
+        def assign_quiz_dynamically
+          result = QuizResponseMap.assign_quiz(
+            assignment_id: params[:assignment_id],
+            reviewer_id: params[:reviewer_id],
+            questionnaire_id: params[:questionnaire_id]
+          )
+
+          if result.success
+            render json: result.quiz_response_map, status: :created
+          else
+            render json: { error: result.error }, status: :unprocessable_entity
+          end
+        end
+  
         private
   
         # Sets the review mapping instance variable based on the ID parameter

@@ -613,6 +613,100 @@ RSpec.describe "Api::V1::ReviewMappings", type: :request do
     end
   end
 
+  describe 'POST /api/v1/review_mappings/assign_quiz_dynamically' do
+    let(:assignment) { create(:assignment) }
+    let(:participant) { create(:participant, assignment: assignment) }
+    let(:questionnaire) { create(:questionnaire) }
+    let(:valid_params) do
+      {
+        assignment_id: assignment.id,
+        reviewer_id: participant.user_id,
+        questionnaire_id: questionnaire.id
+      }
+    end
+
+    context 'when the request is valid' do
+      it 'creates a new quiz response mapping' do
+        post '/api/v1/review_mappings/assign_quiz_dynamically', params: valid_params
+
+        expect(response).to have_http_status(:created)
+        expect(json_response).to include(
+          'reviewee_id' => questionnaire.instructor_id,
+          'reviewer_id' => participant.id,
+          'reviewed_object_id' => questionnaire.id
+        )
+      end
+    end
+
+    context 'when the participant is not registered for the assignment' do
+      it 'returns an error' do
+        invalid_params = valid_params.merge(reviewer_id: 999)
+        post '/api/v1/review_mappings/assign_quiz_dynamically', params: invalid_params
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['error']).to eq('Participant not registered for this assignment')
+      end
+    end
+
+    context 'when the quiz has already been taken' do
+      before do
+        create(:quiz_response_map,
+               reviewer_id: participant.id,
+               reviewed_object_id: questionnaire.id)
+      end
+
+      it 'returns an error' do
+        post '/api/v1/review_mappings/assign_quiz_dynamically', params: valid_params
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['error']).to eq('You have already taken this quiz')
+      end
+    end
+
+    context 'when the questionnaire does not exist' do
+      it 'returns an error' do
+        invalid_params = valid_params.merge(questionnaire_id: 999)
+        post '/api/v1/review_mappings/assign_quiz_dynamically', params: invalid_params
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['error']).to eq('Questionnaire not found')
+      end
+    end
+
+    context 'when required parameters are missing' do
+      it 'returns an error when assignment_id is missing' do
+        invalid_params = valid_params.except(:assignment_id)
+        post '/api/v1/review_mappings/assign_quiz_dynamically', params: invalid_params
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['error']).to include('assignment_id')
+      end
+
+      it 'returns an error when reviewer_id is missing' do
+        invalid_params = valid_params.except(:reviewer_id)
+        post '/api/v1/review_mappings/assign_quiz_dynamically', params: invalid_params
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['error']).to include('reviewer_id')
+      end
+
+      it 'returns an error when questionnaire_id is missing' do
+        invalid_params = valid_params.except(:questionnaire_id)
+        post '/api/v1/review_mappings/assign_quiz_dynamically', params: invalid_params
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['error']).to include('questionnaire_id')
+      end
+    end
+
+    context 'when not authenticated' do
+      it 'returns unauthorized' do
+        post '/api/v1/review_mappings/assign_quiz_dynamically', params: valid_params
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
+
   private
 
   # Helper method to parse JSON response body
