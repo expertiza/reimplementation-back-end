@@ -54,9 +54,10 @@ RSpec.describe 'StudentTasks API', type: :request do
 
           # 2) Create N Participants for our student, each with different data
           5.times do |i|
-            Participant.create!(
+            AssignmentParticipant.create!(
               user_id: studenta.id,
-              assignment_id: assignment.id,
+              parent_id: assignment.id,
+              handle: studenta.name,
               permission_granted: [true, false].sample,
               # store “stage” and “deadline” fields as your Participant model expects
               # e.g. might be:
@@ -111,9 +112,10 @@ RSpec.describe 'StudentTasks API', type: :request do
 
         # Create *one* participant for the student
         let!(:participant) do
-          Participant.create!(
+          AssignmentParticipant.create!(
             user_id: studenta.id,
-            assignment_id: assignment.id,
+            parent_id: assignment.id,
+            handle: studenta.name,
             current_stage: "Review",
             stage_deadline: (Time.now + 7.days).to_s,
             topic: "Topic XYZ",
