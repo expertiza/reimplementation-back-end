@@ -148,6 +148,42 @@ module Api
         end
       end
 
+      # POST /api/v1/assignments/:assignment_id/assign_reviewers_for_team
+      # This endpoint assigns a fixed number of reviewers to a specific team within an assignment.
+      # It supports both team-based and individual assignments.
+      def assign_reviewers_for_team
+        # Allow only permitted parameters from the request
+        params.permit(:assignment_id, :team_id, :num_reviewers)
+
+        # Locate the assignment using the provided ID
+        assignment = Assignment.find_by(id: params[:assignment_id])
+        if assignment.nil?
+          # Return 404 if the assignment does not exist
+          render json: { error: 'Assignment not found' }, status: :not_found
+          return
+        end
+
+        # Locate the target team using the provided ID
+        team = Team.find_by(id: params[:team_id])
+        if team.nil?
+          # Return 404 if the team is not found
+          render json: { error: 'Team not found' }, status: :not_found
+          return
+        end
+
+        # Set the number of reviewers, defaulting to 3 if not specified
+        num_reviewers = params[:num_reviewers]&.to_i || 3
+
+        # Delegate logic to helper method to perform the assignment
+        result = assign_reviewers_for_team_logic(assignment, team, num_reviewers)
+
+        # Return the outcome based on the helper result
+        if result[:success]
+          render json: { message: result[:message] }, status: :ok
+        else
+          render json: { error: result[:message] }, status: :unprocessable_entity
+        end
+      end
 
 
       private

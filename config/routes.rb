@@ -41,6 +41,8 @@ Rails.application.routes.draw do
           post '/:assignment_id/automatic_review_mapping_strategy', to: 'review_mappings#automatic_review_mapping_strategy'
           # Defines a POST route for triggering staggered automatic review mappings
           post '/:assignment_id/automatic_review_mapping_staggered', to: 'review_mappings#automatic_review_mapping_staggered'
+          # Route to assign reviewers for a specific team within an assignment
+          post '/:assignment_id/assign_reviewers_for_team', to: 'review_mappings#assign_reviewers_for_team'
 
 
         end

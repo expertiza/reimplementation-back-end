@@ -244,6 +244,69 @@ module ReviewMappingsHelper
     end
 
 
+    # Helper method to assign reviewers to a given team for an assignment
+    # Supports both team-based and individual assignments
+    def assign_reviewers_for_team_logic(assignment, team, num_reviewers)
+        # Fetch all participants in the assignment
+        participants = assignment.participants.to_a
+    
+        # Determine the list of eligible reviewers based on whether the assignment has teams
+        eligible_reviewers = if assignment.has_teams
+        # Select teams excluding the current one, then collect their participants
+        other_teams = assignment.teams.where.not(id: team.id)
+        other_teams.flat_map(&:participants)
+        else
+        # For individual assignments, select participants not in the target team
+        participants.reject { |p| p.team_id == team.id }
+        end.shuffle
+    
+        # Return error if not enough reviewers
+        if eligible_reviewers.size < num_reviewers
+        return {
+            success: false,
+            message: "Not enough eligible reviewers (found #{eligible_reviewers.size}, need #{num_reviewers})."
+        }
+        end
+    
+        # Randomly select reviewers
+        selected_reviewers = eligible_reviewers.first(num_reviewers)
+    
+        # Determine mapping type (STI)
+        mapping_type = "ResponseMap" # This can be extended to TeamReviewResponseMap later if needed
+    
+        # Track number of mappings created
+        created_count = 0
+    
+        # Assign selected reviewers to the team
+        selected_reviewers.each do |reviewer|
+        # Prevent duplicate mappings
+        exists = ResponseMap.exists?(
+            reviewed_object_id: assignment.id,
+            reviewer_id: reviewer.id,
+            reviewee_id: team.id,
+            type: mapping_type
+        )
+    
+        next if exists
+    
+        # Create the mapping
+        ResponseMap.create!(
+            reviewed_object_id: assignment.id,
+            reviewer_id: reviewer.id,
+            reviewee_id: team.id,
+            type: mapping_type
+        )
+        created_count += 1
+        end
+    
+        # Return success message
+        {
+        success: true,
+        message: "Assigned #{created_count} reviewers to team ##{team.id}."
+        }
+    end
+    
+
   
   end
   

@@ -1500,6 +1500,69 @@ paths:
           description: Invalid input or insufficient participants
         '404':
           description: Assignment not found
+  /api/v1/assignments/{assignment_id}/assign_reviewers_for_team:
+    post:
+      summary: Assign reviewers for a specific team
+      description: >
+        Automatically assigns a specified number of reviewers to a given team within an assignment. 
+        Supports both team-based and individual assignments.
+      tags:
+        - Review Mappings
+      parameters:
+        - in: path
+          name: assignment_id
+          required: true
+          schema:
+            type: integer
+          description: ID of the assignment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - team_id
+                - num_reviewers
+              properties:
+                team_id:
+                  type: integer
+                  description: ID of the team to assign reviewers to
+                num_reviewers:
+                  type: integer
+                  description: Number of reviewers to assign
+      responses:
+        '200':
+          description: Reviewers successfully assigned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Assigned 3 reviewers to team 45"
+        '400':
+          description: Invalid input or insufficient participants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Assignment or team not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
 
 
 

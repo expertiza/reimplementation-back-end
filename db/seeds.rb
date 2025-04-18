@@ -205,5 +205,41 @@ end
 
 puts "✅ Created staggered mapping assignment with 6 teams"
 
+# Assignment for testing assign_reviewers_for_team
+assign_team_reviewers_assignment = Assignment.create!(
+  name: "Team Reviewer Assignment Test",
+  instructor_id: instructors.first.id,
+  course_id: courses.first.id,
+  has_teams: true,
+  has_topics: false,
+  private: false
+)
+
+# Create 3 reviewee teams with 2 members each
+reviewee_teams = 3.times.map do
+  team = Team.create!(assignment_id: assign_team_reviewers_assignment.id)
+  user1, user2 = students.sample(2)
+
+  TeamsUser.create!(team_id: team.id, user_id: user1.id)
+  TeamsUser.create!(team_id: team.id, user_id: user2.id)
+
+  Participant.create!(user_id: user1.id, assignment_id: assign_team_reviewers_assignment.id, team_id: team.id)
+  Participant.create!(user_id: user2.id, assignment_id: assign_team_reviewers_assignment.id, team_id: team.id)
+
+  team
+end
+
+# Create 5 standalone students as potential reviewers
+5.times do
+  reviewer = students.reject { |s| Participant.exists?(user_id: s.id, assignment_id: assign_team_reviewers_assignment.id) }.sample
+
+  Participant.create!(
+    user_id: reviewer.id,
+    assignment_id: assign_team_reviewers_assignment.id,
+    team_id: nil  # Not part of a team
+  )
+end
+
+puts "✅ Created assignment for assign_reviewers_for_team with 3 teams and 5 reviewers"
 
 puts "🎉 Seeding Complete!"
