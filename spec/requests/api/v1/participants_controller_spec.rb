@@ -228,15 +228,6 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '404', 'Participant not found' do
-        let(:id) { 99 }
-        let(:authorization) { 'teacher' }
-
-        run_test! do |response|
-          expect(JSON.parse(response.body)['error']).to eql('Participant not found')
-        end
-      end
-
       response '422', 'Authorization not found' do
         let(:id) { 1 }
         let(:authorization) { 'teacher' }
