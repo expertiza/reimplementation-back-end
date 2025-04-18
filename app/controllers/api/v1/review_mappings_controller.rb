@@ -98,6 +98,33 @@ module Api
         end
       end
 
+      # POST /api/v1/assignments/:assignment_id/automatic_review_mapping_strategy
+      def automatic_review_mapping_strategy
+        # Allow only the permitted parameters from the incoming request.
+        # These include the assignment ID (from the URL), number of reviews per student, and the desired strategy.
+        params.permit(:assignment_id, :num_reviews_per_student, :strategy)
+
+        # Attempt to find the Assignment record based on the provided assignment_id.
+        # If no such assignment exists, respond with a 404 Not Found error.
+        assignment = Assignment.find_by(id: params[:assignment_id])
+        if assignment.nil?
+          render json: { error: 'Assignment not found' }, status: :not_found
+          return
+        end
+
+        # Pass control to the helper method responsible for generating review mappings
+        # using the specified strategy. The helper handles logic variations based on the strategy value.
+        result = generate_review_mappings_with_strategy(assignment, params)
+
+        # Check the result returned by the helper method.
+        # If successful, return a success message with HTTP 200 OK.
+        if result[:success]
+          render json: { message: result[:message] }, status: :ok
+        else
+          render json: { error: result[:message] }, status: :unprocessable_entity
+        end
+      end
+
 
       private
 

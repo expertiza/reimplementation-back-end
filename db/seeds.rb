@@ -160,4 +160,25 @@ end
 
 puts "✅ Created Review Mappings"
 
+# Add a clean assignment for testing automatic_review_mapping_strategy
+test_assignment = Assignment.create!(
+  name: "GSoC Strategy Test",
+  instructor_id: instructors.first.id,
+  course_id: courses.first.id,
+  has_teams: false,
+  has_topics: false,
+  private: false
+)
+
+# Add 10 participants to this assignment
+10.times do |i|
+  Participant.create!(
+    user_id: students[i].id,
+    assignment_id: test_assignment.id,
+    team_id: nil
+  )
+end
+
+puts "✅ Created test assignment with 10 participants for strategy testing"
+
 puts "🎉 Seeding Complete!"

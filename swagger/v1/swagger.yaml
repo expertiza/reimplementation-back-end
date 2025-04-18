@@ -1330,6 +1330,8 @@ paths:
     get:
       summary: "List review mappings for an assignment"
       description: "Retrieves all review mappings (reviewer-reviewee assignments) for a given assignment. Optional query parameters can filter by reviewer, reviewee, or mapping type."
+      tags:
+        - Review Mappings
       security:
         - bearerAuth: []  
       parameters:
@@ -1401,6 +1403,57 @@ paths:
           description: Assignment not found
         '400':
           description: Invalid input or insufficient participants
+
+  /api/v1/assignments/{assignment_id}/automatic_review_mapping_strategy:
+    post:
+      summary: Automatically generate review mappings using a specified strategy
+      description: |
+        Automatically assigns reviewers to reviewees for the given assignment using the specified strategy.  
+        Strategies can include "default", "round_robin", etc.
+      tags:
+        - Review Mappings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: assignment_id
+          in: path
+          required: true
+          description: ID of the assignment
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                strategy:
+                  type: string
+                  example: "round_robin"
+                  description: Strategy for assigning reviewers
+                num_reviews_per_student:
+                  type: integer
+                  example: 2
+                  description: Number of reviews each student should perform
+              required:
+                - strategy
+      responses:
+        '200':
+          description: Mappings created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          description: Assignment not found
+        '422':
+          description: Strategy not supported or invalid input
 
 
 

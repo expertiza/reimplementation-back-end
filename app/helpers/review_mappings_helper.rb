@@ -91,6 +91,86 @@ module ReviewMappingsHelper
         message: "Successfully created #{created_count} review mappings using strategy '#{strategy}'."
         }
     end
+
+    # Generates automatic review mappings for a given assignment based on the selected strategy.
+    # Supports multiple strategies like "default", "round_robin", etc.
+    def generate_review_mappings_with_strategy(assignment, options = {})
+    # Extract the number of reviews per student from options, defaulting to 3 if not provided
+    num_reviews = options[:num_reviews_per_student]&.to_i || 3
+
+    # Extract the chosen strategy, defaulting to "default"
+    strategy = options[:strategy] || "default"
+
+    # Retrieve and shuffle all participants to randomize assignment
+    participants = assignment.participants.to_a.shuffle
+
+    # Ensure there are at least two participants for mapping
+    return { success: false, message: "Not enough participants." } if participants.size < 2
+
+    created_count = 0
+
+    case strategy
+    when "default"
+    # Default strategy: randomly assign `num_reviews` reviewees to each reviewer,
+    # ensuring no self-review and avoiding duplicate mappings
+    participants.each do |reviewer|
+        potential_reviewees = participants.reject { |p| p.id == reviewer.id }
+        reviewees = potential_reviewees.sample(num_reviews)
+
+        reviewees.each do |reviewee|
+        # Create a review mapping only if one doesn't already exist
+        unless ResponseMap.exists?(reviewed_object_id: assignment.id, reviewer_id: reviewer.id, reviewee_id: reviewee.id)
+            ResponseMap.create!(
+            reviewed_object_id: assignment.id,
+            reviewer_id: reviewer.id,
+            reviewee_id: reviewee.id,
+            type: "ResponseMap"
+            )
+            created_count += 1
+        end
+        end
+    end
+
+    when "round_robin"
+    # Round-robin strategy: Assigns reviewees in a circular fashion,
+    # skipping self-reviews and wrapping around the list
+    participants.each_with_index do |reviewer, i|
+        reviewees = []
+        offset = 1
+
+        # Select the next `num_reviews` participants after the reviewer in circular order
+        while reviewees.size < num_reviews
+        reviewee = participants[(i + offset) % participants.size]
+        reviewees << reviewee unless reviewee.id == reviewer.id
+        offset += 1
+        end
+
+        reviewees.each do |reviewee|
+        # Avoid creating duplicate mappings
+        unless ResponseMap.exists?(reviewed_object_id: assignment.id, reviewer_id: reviewer.id, reviewee_id: reviewee.id)
+            ResponseMap.create!(
+            reviewed_object_id: assignment.id,
+            reviewer_id: reviewer.id,
+            reviewee_id: reviewee.id,
+            type: "ResponseMap"
+            )
+            created_count += 1
+        end
+        end
+    end
+
+    else
+    # Return an error if the strategy is not recognized
+    return { success: false, message: "Unsupported strategy: #{strategy}" }
+    end
+
+    # Return a success message with the number of mappings created
+    {
+    success: true,
+    message: "Created #{created_count} review mappings using strategy '#{strategy}'."
+    }
+    end
+
   
   end
   

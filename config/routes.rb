@@ -37,9 +37,12 @@ Rails.application.routes.draw do
           get '/:assignment_id/valid_num_review/:review_type', action: :valid_num_review
           get '/:assignment_id/varying_rubrics_by_round', action: :varying_rubrics_by_round?
           post '/:assignment_id/create_node',action: :create_node
+          # Route to trigger strategy-based review mapping for an assignment
+          post '/:assignment_id/automatic_review_mapping_strategy', to: 'review_mappings#automatic_review_mapping_strategy'
+
         end
       end
-      
+
       # Route for triggering automatic review mapping for a given assignment.
       # Accepts POST requests with assignment_id in the path and options in the JSON body
       post 'assignments/:assignment_id/automatic_review_mapping', to: 'review_mappings#automatic_review_mapping'
