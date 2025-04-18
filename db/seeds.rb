@@ -242,4 +242,26 @@ end
 
 puts "✅ Created assignment for assign_reviewers_for_team with 3 teams and 5 reviewers"
 
+# Assignment for testing peer_review_strategy
+peer_review_assignment = Assignment.create!(
+  name: "Peer Review Strategy Test",
+  instructor_id: instructors.first.id,
+  course_id: courses.first.id,
+  has_teams: false,  # Set to true if you want to test team-based mapping
+  has_topics: false,
+  private: false
+)
+
+# Add 8 participants (individuals) for the peer review strategy test
+8.times do |i|
+  Participant.create!(
+    user_id: students[i + 20].id,
+    assignment_id: peer_review_assignment.id,
+    team_id: nil  # No team assignment needed for individual
+  )
+end
+
+puts "✅ Created peer_review_strategy test assignment with 8 participants"
+
+
 puts "🎉 Seeding Complete!"

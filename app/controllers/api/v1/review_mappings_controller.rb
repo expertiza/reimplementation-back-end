@@ -185,6 +185,28 @@ module Api
         end
       end
 
+      # POST /api/v1/assignments/:assignment_id/peer_review_strategy
+      def peer_review_strategy
+        # Permit and extract required parameters
+        params.permit(:assignment_id, :num_reviews_per_student, :strategy)
+
+        # Find the assignment by ID
+        assignment = Assignment.find_by(id: params[:assignment_id])
+        if assignment.nil?
+          render json: { error: 'Assignment not found' }, status: :not_found
+          return
+        end
+
+        # Delegate core peer review logic to helper
+        result = generate_peer_review_strategy(assignment, params)
+
+        if result[:success]
+          render json: { message: result[:message] }, status: :ok
+        else
+          render json: { error: result[:message] }, status: :unprocessable_entity
+        end
+      end
+
 
       private
 

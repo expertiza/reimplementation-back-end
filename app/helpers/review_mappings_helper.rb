@@ -306,7 +306,91 @@ module ReviewMappingsHelper
         }
     end
     
+    # Generates peer review mappings in a circular staggered fashion for both individual and team-based assignments
+    def generate_peer_review_strategy(assignment, options = {})
+        # Retrieve the number of reviews each student/team should perform (default: 3)
+        num_reviews = options[:num_reviews_per_student]&.to_i || 3
 
-  
+        # Optional strategy param, useful for logging or response messages
+        strategy = options[:strategy] || 'peer_review'
+
+        # Choose reviewer pool and mapping type based on assignment configuration
+        if assignment.has_teams
+            # If the assignment uses teams, fetch all teams as reviewers
+            reviewers = assignment.teams.to_a.shuffle
+
+            # Use STI type for team-based reviews
+            mapping_type = 'ResponseMap'
+        else
+            # If the assignment is individual, fetch all participants as reviewers
+            reviewers = assignment.participants.to_a.shuffle
+
+            # Use base mapping type for individual review mappings
+            mapping_type = 'ResponseMap'
+        end
+
+        # Prevent mapping generation if there are fewer than 2 reviewers
+        return { success: false, message: 'Not enough reviewers to generate peer review mappings.' } if reviewers.size < 2
+
+        # Counter to track how many review mappings were created
+        created_count = 0
+
+        # Core peer review logic: circular staggered assignment
+        # For each reviewer (team or participant), assign the next N peers as reviewees
+        reviewers.each_with_index do |reviewer, index|
+            assigned_reviewees = []  # Tracks reviewees assigned to this reviewer
+            offset = 1               # Start from the next element in the circle
+
+            while assigned_reviewees.size < num_reviews
+            # Use modular arithmetic to wrap around the list circularly
+            reviewee = reviewers[(index + offset) % reviewers.size]
+            offset += 1
+
+            # Skip self-review scenarios:
+            # - For teams: ensure a team does not review itself
+            # - For individuals: ensure a student doesn't review their own work
+            if assignment.has_teams
+                next if reviewer.id == reviewee.id
+            else
+                next if reviewer.user_id == reviewee.user_id
+            end
+
+            # Avoid assigning the same reviewee twice to the same reviewer
+            next if assigned_reviewees.include?(reviewee)
+
+            # Add to current list of reviewees
+            assigned_reviewees << reviewee
+            end
+
+            # Create review mappings for each valid reviewer-reviewee pair
+            assigned_reviewees.each do |reviewee|
+            # Check if the mapping already exists to prevent duplicates
+            already_exists = ResponseMap.exists?(
+                reviewed_object_id: assignment.id,
+                reviewer_id: reviewer.id,
+                reviewee_id: reviewee.id,
+                type: mapping_type
+            )
+
+            # Create new mapping if it does not already exist
+            unless already_exists
+                ResponseMap.create!(
+                reviewed_object_id: assignment.id,
+                reviewer_id: reviewer.id,
+                reviewee_id: reviewee.id,
+                type: mapping_type
+                )
+                created_count += 1
+            end
+            end
+        end
+
+        # Return a success message along with the count of mappings created
+        {
+            success: true,
+            message: "Created #{created_count} peer review mappings using strategy '#{strategy}'."
+        }
+        end
+        
   end
   

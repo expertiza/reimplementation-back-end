@@ -1563,6 +1563,64 @@ paths:
                 properties:
                   error:
                     type: string
+  /api/v1/assignments/{assignment_id}/peer_review_strategy:
+    post:
+      summary: Automatically assign peer review mappings in a circular staggered manner
+      tags:
+        - Review Mappings
+      description: >
+        Assigns each participant (or team) to review a fixed number of peers using a staggered peer-review strategy.
+        Avoids self-reviews and supports both individual and team-based assignments.
+      parameters:
+        - in: path
+          name: assignment_id
+          schema:
+            type: integer
+          required: true
+          description: ID of the assignment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                num_reviews_per_student:
+                  type: integer
+                  example: 3
+      responses:
+        '200':
+          description: Peer review mappings created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid input or not enough reviewers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          description: Assignment not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
 
 
 
