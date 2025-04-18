@@ -140,7 +140,7 @@ RSpec.describe 'Participants API', type: :request do
 
       parameter name: :id, in: :path, type: :integer, description: 'ID of the participant'
 
-      response '201', 'Returns a participant' do
+      response '200', 'Returns a participant' do
         let(:id) { participant2.id }
 
         run_test! do |response|

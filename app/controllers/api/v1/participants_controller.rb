@@ -42,7 +42,7 @@ class Api::V1::ParticipantsController < ApplicationController
     if participant.nil?
       render json: participant.errors, status: :unprocessable_entity
     else
-      render json: participant, status: :created
+      render json: participant, status: :ok
     end
   end
 
