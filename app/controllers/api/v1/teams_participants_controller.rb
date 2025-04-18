@@ -9,7 +9,6 @@ class Api::V1::TeamsParticipantsController < ApplicationController
     end
   end
 
-
   # Updates the duty (role) assigned to a participant in a team.
   def update_duty
     team_participant = TeamsParticipant.find_by(id: params[:teams_participant_id])
@@ -29,7 +28,6 @@ class Api::V1::TeamsParticipantsController < ApplicationController
     render json: { message: "Duty updated successfully" }, status: :ok
   end
 
-
   # Displays a list of all participants in a specific team.
   def list_participants
     # Retrieve the team from the database using the provided ID parameter.
@@ -44,16 +42,15 @@ class Api::V1::TeamsParticipantsController < ApplicationController
     team_participants = TeamsParticipant.where(team_id: current_team.id)
 
     # Determine whether this team belongs to an assignment or a course
-    if current_team.respond_to?(:assignment) && current_team.assignment.present?
+    # Determine context based on type column
+    if current_team.type == "AssignmentTeam"
       context_key = :assignment
       context_value = current_team.assignment
-    elsif current_team.respond_to?(:course) && current_team.course.present?
+    elsif current_team.type == "CourseTeam"
       context_key = :course
       context_value = current_team.course
     else
-      # If neither is present, the team is misconfigured
-      render json: { error: "Team is neither associated with an assignment nor a course" },
-             status: :not_found and return
+      render json: { error: "Invalid team type" }, status: :unprocessable_entity and return
     end
 
     # Build and return a single JSON response with common structure
@@ -64,7 +61,6 @@ class Api::V1::TeamsParticipantsController < ApplicationController
     }, status: :ok
   end
 
-
   # Adds Participant to a team
   def add_participant
     # First Check if Participant exists
@@ -72,7 +68,6 @@ class Api::V1::TeamsParticipantsController < ApplicationController
     user = User.find_by(name: params[:name].strip) || (render(json: { error: "User not found" }, status: :not_found) and return)
     # Find the Participant associated with the user, or return not found error
     participant = Participant.find_by(user_id: user.id) || (render(json: { error: "Couldn't find Participant" }, status: :not_found) and return)
-
 
     # Check if Team exists
     current_team = Team.find(params[:id])
@@ -82,7 +77,6 @@ class Api::V1::TeamsParticipantsController < ApplicationController
 
     # Validate if participant can join a team
     validation_result = current_team.can_participant_join_team?(participant)
-
 
     unless validation_result[:success]
       Rails.logger.info "Validation error: #{validation_result[:error]}"
@@ -100,7 +94,6 @@ class Api::V1::TeamsParticipantsController < ApplicationController
 
   end
 
-
   # Removes one or more participants from a team.
   def delete_participants
     # Check if Team exists first
@@ -110,16 +103,16 @@ class Api::V1::TeamsParticipantsController < ApplicationController
     end
 
     # Extract participant IDs from payload
-    item_ids = params.dig(:payload, :item) || params.dig("payload", "item") || []
+    participant_record_ids = params.dig(:payload, :item) || params.dig("payload", "item") || []
 
-    if item_ids.blank?
+    if participant_record_ids.blank?
       render json: { error: "No participants selected" }, status: :ok and return
     end
 
     # Ensure we only delete participants belonging to the specified team
-    TeamsParticipant.where(team_id: current_team.id, id: item_ids).delete_all
+    TeamsParticipant.where(team_id: current_team.id, id: participant_record_ids).delete_all
 
-    message = item_ids.length == 1 ? "Participant removed successfully" : "Participants deleted successfully"
+    message = participant_record_ids.length == 1 ? "Participant removed successfully" : "Participants deleted successfully"
     render json: { message: message }, status: :ok
 
   end

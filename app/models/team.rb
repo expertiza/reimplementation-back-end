@@ -6,34 +6,40 @@ class Team < ApplicationRecord
   has_many :participants, through: :teams_participants
 
   # The team is either an AssignmentTeam or a CourseTeam
-  belongs_to :assignment, optional: true
-  belongs_to :course, optional: true
+  belongs_to :assignment, class_name: 'Assignment', foreign_key: 'parent_id', optional: true
+  belongs_to :course, class_name: 'Course', foreign_key: 'parent_id', optional: true
   attr_accessor :max_participants
+  validates :parent_id, presence: true
+  validates :type, presence: true, inclusion: { in: %w[AssignmentTeam CourseTeam], message: "must be 'Assignment' or 'Course'" }
 
-  # Custom validation to enforce presence of exactly one association for AssignmentTeam or CourseTeam
-  validate :exactly_one_association
-
-
-
-  # TODO Team implementing Teams controller and model should implement this method better.
-  # TODO partial implementation here just for the functionality needed for join_team_tequests controller
   def full?
-    (max_participants || 3) <= participants.count
-  end
+    current_size = participants.count
 
+    # assignment teams use the column max_team_size
+    if is_a?(AssignmentTeam) && assignment&.max_team_size
+      return current_size >= assignment.max_team_size
+    end
+
+    # course teams never fill up by default
+    false
+  end
 
   # Checks if the given participant is already on any team for the associated assignment or course.
   def participant_on_team?(participant)
-    if respond_to?(:assignment) && assignment.present?
-      # For an assignment team, check all teams of the assignment.
-      assignment.teams.flat_map(&:participants).include?(participant)
-    elsif respond_to?(:course) && course.present?
-      # For a course team, check all teams of the course.
-      course.teams.flat_map(&:participants).include?(participant)
-    end
+    # pick the correct “scope” (assignment or course) based on this team’s class
+    scope =
+      if is_a?(AssignmentTeam)
+        assignment
+      elsif is_a?(CourseTeam)
+        course
+      end
+
+    return false unless scope
+
+    # “scope.teams” includes this team itself plus any sibling teams;
+    # check whether any of those teams already has this participant
+    scope.teams.any? { |team| team.participants.include?(participant) }
   end
-
-
 
   # Adds participant in the team
   def add_member(participant)
@@ -61,39 +67,35 @@ class Team < ApplicationRecord
     { success: false, error: e.message }
   end
 
-
   # Determines whether a given participant is eligible to join the team.
   def can_participant_join_team?(participant)
-    # Determine the team context (assignment or course), or return failure if undefined
-    context = if respond_to?(:assignment) && assignment.present?
-                { scope: assignment, participant_model: AssignmentParticipant, label: "assignment" }
-              elsif respond_to?(:course) && course.present?
-                { scope: course, participant_model: CourseParticipant, label: "course" }
-              else
-                return { success: false, error: "Team is neither an assignment team nor a course team" }
-              end
+    # figure out whether we’re in an Assignment or a Course context
+    scope, participant_type, label =
+      if is_a?(AssignmentTeam)
+        [assignment, AssignmentParticipant, "assignment"]
+      elsif is_a?(CourseTeam)
+        [course, CourseParticipant, "course"]
+      else
+        return { success: false, error: "Team must belong to Assignment or Course" }
+      end
 
     # Check if the user is already part of any team for this assignment or course
-    return { success: false, error: "This user is already assigned to a team for this #{context[:label]}" } if participant_on_team?(participant)
+    if participant_on_team?(participant)
+      return { success: false, error: "This user is already assigned to a team for this #{label}" }
+    end
 
     # Check if the user is a registered participant for this assignment or course
-    registered = context[:participant_model].find_by(user_id: participant.user_id, "#{context[:label]}_id": context[:scope].id)
-    return { success: false, error: "#{participant.user.name} is not a participant in this #{context[:label]}" } if registered.nil?
+    registered = participant_type.find_by(
+      user_id: participant.user_id,
+      parent_id: scope.id
+    )
+
+    unless registered
+      return { success: false, error: "#{participant.user.name} is not a participant in this #{label}" }
+    end
 
     # All checks passed; participant is eligible to join the team
     { success: true }
 
   end
-
-  private
-
-  def exactly_one_association
-    if assignment_id.blank? && course_id.blank?
-      errors.add(:base, "Team must belong to either an assignment or a course")
-    elsif assignment_id.present? && course_id.present?
-      errors.add(:base, "Team cannot be both AssignmentTeam and a CourseTeam")
-    end
-  end
-
-
 end

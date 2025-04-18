@@ -3,11 +3,11 @@ class Course < ApplicationRecord
   belongs_to :institution, foreign_key: 'institution_id'
   validates :name, presence: true
   validates :directory_path, presence: true
-  has_many :course_participants, class_name: 'CourseParticipant', foreign_key: 'course_id', dependent: :destroy
+  has_many :participants, class_name: 'CourseParticipant', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :course
   has_many :users, through: :course_participants, inverse_of: :course
   has_many :ta_mappings, dependent: :destroy
   has_many :tas, through: :ta_mappings, source: :ta
-  has_many :teams, dependent: :destroy
+  has_many :teams, class_name: 'CourseTeam', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :course
 
   # Returns the submission directory for the course
   def path

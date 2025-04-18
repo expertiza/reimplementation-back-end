@@ -2,7 +2,7 @@ class Assignment < ApplicationRecord
   include MetricHelper
   has_many :participants, class_name: 'AssignmentParticipant', foreign_key: 'assignment_id', dependent: :destroy
   has_many :users, through: :participants, inverse_of: :assignment
-  has_many :teams, class_name: 'Team', foreign_key: 'assignment_id', dependent: :destroy, inverse_of: :assignment
+  has_many :teams, class_name: 'AssignmentTeam', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :assignment
   has_many :invitations, class_name: 'Invitation', foreign_key: 'assignment_id', dependent: :destroy # , inverse_of: :assignment
   has_many :assignment_questionnaires, dependent: :destroy
   has_many :questionnaires, through: :assignment_questionnaires
