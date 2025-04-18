@@ -328,6 +328,27 @@ RSpec.describe 'Participants API', type: :request do
           expect(JSON.parse(response.body)['error']).to include('authorization not valid')
         end
       end
+
+      response '400', 'Missing user_id in request body' do
+        let(:authorization) { 'mentor' }
+        let(:participant) { { assignment_id: assignment1.id } }
+
+        run_test! do |response|
+          expect(response.status).to eq(400)
+          expect(JSON.parse(response.body)['error']).to include('user_id')
+        end
+      end
+
+      response '400', 'Missing assignment_id in request body' do
+        let(:authorization) { 'mentor' }
+        let(:participant) { { user_id: studentb.id } }
+
+        run_test! do |response|
+          expect(response.status).to eq(400)
+          expect(JSON.parse(response.body)['error']).to include('assignment_id')
+        end
+      end
+      
     end
   end
 end
