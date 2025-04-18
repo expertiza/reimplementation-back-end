@@ -54,7 +54,8 @@ Rails.application.routes.draw do
       end
 
       #route added for review_mapping
-      resources :review_mappings
+      resources :review_mappings, only: [:index, :show, :create, :update, :destroy]
+      get 'assignments/:assignment_id/review_mappings', to: 'review_mappings#list_mappings'
 
 
       resources :courses do

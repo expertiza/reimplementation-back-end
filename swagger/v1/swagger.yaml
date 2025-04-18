@@ -1325,9 +1325,36 @@ paths:
           description: The ID of the student task to retrieve
       responses:
         '200':
-          description: A specific student task
-
-
+          description: A specific student task  
+  "/api/v1/assignments/{assignment_id}/review_mappings":
+    get:
+      summary: "List review mappings for an assignment"
+      description: "Retrieves all review mappings (reviewer-reviewee assignments) for a given assignment. Optional query parameters can filter by reviewer, reviewee, or mapping type."
+      security:
+        - bearerAuth: []  
+      parameters:
+        - name: assignment_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: reviewer_id
+          in: query
+          schema:
+            type: integer
+        - name: reviewee_id
+          in: query
+          schema:
+            type: integer
+        - name: type
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Assignment not found
 
 
 

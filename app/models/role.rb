@@ -3,36 +3,26 @@ class Role < ApplicationRecord
   belongs_to :parent, class_name: 'Role', optional: true
   has_many :users, dependent: :nullify
 
-  if Role.table_exists?
-    STUDENT = find_by_name('Student')
-    INSTRUCTOR = find_by_name('Instructor')
-    ADMINISTRATOR = find_by_name('Administrator')
-    TEACHING_ASSISTANT = find_by_name('Teaching Assistant')
-    SUPER_ADMINISTRATOR = find_by_name('Super Administrator')
-  end
-
-
   def super_administrator?
-    name['Super Administrator']
+    name == 'Super Administrator'
   end
 
   def administrator?
-    name['Administrator'] || super_administrator?
+    name == 'Administrator' || super_administrator?
   end
 
   def instructor?
-    name['Instructor']
+    name == 'Instructor'
   end
 
   def ta?
-    name['Teaching Assistant']
+    name == 'Teaching Assistant'
   end
 
   def student?
-    name['Student']
+    name == 'Student'
   end
 
-  # returns an array of ids of all roles that are below the current role
   def subordinate_roles
     role = Role.find_by(parent_id: id)
     return [] unless role
@@ -40,13 +30,13 @@ class Role < ApplicationRecord
     [role] + role.subordinate_roles
   end
 
-  # returns an array of ids of all roles that are below the current role and includes the current role
   def subordinate_roles_and_self
     [self] + subordinate_roles
   end
 
-  # checks if the current role has all the privileges of the target role
   def all_privileges_of?(target_role)
+    return false if target_role.nil?
+
     privileges = {
       'Student' => 1,
       'Teaching Assistant' => 2,
@@ -55,16 +45,20 @@ class Role < ApplicationRecord
       'Super Administrator' => 5
     }
 
-    privileges[name] >= privileges[target_role.name]
+    current_level = privileges[name]
+    target_level = privileges[target_role.name]
+
+    return false if current_level.nil? || target_level.nil?
+
+    current_level >= target_level
   end
 
-  # return list of all roles other than the current role
   def other_roles
-    Role.where.not(id:)
+    Role.where.not(id: id)
   end
 
   def as_json(options = nil)
-    options = options || {} # Ensure options is a hash
+    options ||= {}
     super(options.merge({ only: %i[id name parent_id] }))
   end
 end
