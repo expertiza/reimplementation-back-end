@@ -194,6 +194,18 @@ class Assignment < ApplicationRecord
     rubric_with_round.present?
   end
 
+  def current_stage(topic_id = nil)
+    return 'Unknown' if staggered_and_no_topic?(topic_id)
 
+    due_date = find_current_stage(topic_id)
+    due_date.nil? || due_date == 'Finished' ? 'Finished' : DeadlineType.find(due_date.deadline_type_id).name
+  end
+
+  def find_current_stage(topic_id = nil)
+    next_due_date = DueDate.get_next_due_date(id, topic_id)
+    return 'Finished' if next_due_date.nil?
+
+    next_due_date
+  end
 
 end

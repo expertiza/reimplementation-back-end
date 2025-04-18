@@ -1,4 +1,4 @@
-class CreateQuestions < ActiveRecord::Migration[7.0]
+class CreateQuestions < ActiveRecord::Migration[8.0]
   def change
     create_table :questions do |t|
       t.text :txt
@@ -15,5 +15,7 @@ class CreateQuestions < ActiveRecord::Migration[7.0]
     end
     add_reference :questions, :questionnaire, null: false, foreign_key: true
     add_index :questions, :questionnaire_id, name: :fk_question_questionnaires
+
   end
 end
+

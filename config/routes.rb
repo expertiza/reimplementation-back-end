@@ -120,6 +120,19 @@ Rails.application.routes.draw do
           delete '/:id', to: 'participants#destroy'
         end
       end
+
+      resources :grades do
+        collection do
+          get 'action_allowed'
+          get 'view_grading_report'
+          get 'instructor_review'
+          post 'update_team'
+          post 'update_participant_grade'
+          get 'edit_participant_scores'
+          get 'view_team'
+          get 'view_my_scores'
+        end
+      end
     end
   end
 end

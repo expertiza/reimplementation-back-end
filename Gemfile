@@ -47,6 +47,7 @@ group :development, :test do
   gem 'simplecov', require: false, group: :test
   gem 'coveralls'
   gem 'simplecov_json_formatter'
+  gem 'rails-controller-testing'
 end
 
 group :development do

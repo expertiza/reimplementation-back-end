@@ -1,4 +1,8 @@
 FactoryBot.define do
+  factory :self_review_response_map do
+    
+  end
+
   factory :student_task do
     assignment { nil }
     current_stage { "MyString" }

@@ -10,6 +10,7 @@ class Participant < ApplicationRecord
   # Validations
   validates :user_id, presence: true
   validates :assignment_id, presence: true
+  validates :grade, numericality: { allow_nil: true }
 
   # Methods
   def fullname
