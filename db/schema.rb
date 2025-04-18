@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_02_16_020117) do
+ActiveRecord::Schema[8.0].define(version: 2025_03_24_184409) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -162,6 +162,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_16_020117) do
     t.index ["parent_type", "parent_id"], name: "index_due_dates_on_parent"
   end
 
+  create_table "feedback_response_maps", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "institutions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -295,6 +300,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_16_020117) do
     t.boolean "is_submitted", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "round"
     t.index ["map_id"], name: "fk_response_response_map"
   end
 
