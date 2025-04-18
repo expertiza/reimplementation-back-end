@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_03_23_040421) do
+ActiveRecord::Schema[8.0].define(version: 2025_04_18_052239) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -43,6 +43,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_23_040421) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "used_in_round"
+    t.integer "questionnaire_weight"
     t.index ["assignment_id"], name: "fk_aq_assignments_id"
     t.index ["questionnaire_id"], name: "fk_aq_questionnaire_id"
   end
@@ -304,6 +305,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_23_040421) do
     t.integer "reviewee_id", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "type"
     t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 
@@ -313,6 +315,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_23_040421) do
     t.boolean "is_submitted", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "round"
+    t.integer "version_num"
     t.index ["map_id"], name: "fk_response_response_map"
   end
 
@@ -323,6 +327,30 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_23_040421) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
+  end
+
+  create_table "score_views", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "question_weight"
+    t.string "type"
+    t.integer "q1_id"
+    t.string "q1_name"
+    t.integer "q1_instructor_id"
+    t.boolean "q1_private", default: false
+    t.integer "q1_min_question_score"
+    t.integer "q1_max_question_score"
+    t.datetime "q1_created_at"
+    t.datetime "q1_updated_at"
+    t.string "q1_type"
+    t.string "q1_display_type"
+    t.integer "ques_id"
+    t.integer "ques_questionnaire_id"
+    t.integer "s_id"
+    t.integer "s_question_id"
+    t.integer "s_score"
+    t.text "s_comments"
+    t.integer "s_response_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "sign_up_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -362,10 +390,32 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_23_040421) do
     t.index ["user_id"], name: "index_ta_mappings_on_user_id"
   end
 
+  create_table "tag_prompt_deployments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "tag_prompt_id", null: false
+    t.integer "assignment_id", null: false
+    t.integer "questionnaire_id", null: false
+    t.string "question_type"
+    t.integer "answer_length_threshold"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "index_tag_prompt_deployments_on_assignment_id"
+    t.index ["questionnaire_id"], name: "index_tag_prompt_deployments_on_questionnaire_id"
+    t.index ["tag_prompt_id"], name: "index_tag_prompt_deployments_on_tag_prompt_id"
+  end
+
+  create_table "tag_prompts", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "prompt"
+    t.string "desc"
+    t.string "control_type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "assignment_id", null: false
+    t.string "name"
     t.index ["assignment_id"], name: "index_teams_on_assignment_id"
   end
 

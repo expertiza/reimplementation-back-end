@@ -11,9 +11,10 @@ class Api::V1::GradesController < ApplicationController
   # Additionally, it provides a final score, which is the average of all reviews, and highlights the greatest
   # difference in scores among the reviews.
   def view_grading_report
-    get_data_for_heat_map(params[:id].to_i)
-    update_penalties
-    @show_reputation = false
+    assignment_id = params[:id].to_i
+    data = get_data_for_heat_map(assignment_id)
+    
+    render json: data, status: :ok
   end
     
   # The view_my_scores method provides participants with a detailed overview of their performance in an assignment.
@@ -21,39 +22,65 @@ class Api::V1::GradesController < ApplicationController
   # Additionally, it applies any penalties and determines the current stage of the assignment.
   # This method ensures participants have a comprehensive understanding of their scores and feedback
   def view_my_scores
-    @participant = AssignmentParticipant.find(params[:id].to_i)
-    @assignment = @participant.assignment
-    @team_id = TeamsUser.team_id(@participant.assignment_id, @participant.user_id)
-    return if redirect_when_disallowed
+    participant = AssignmentParticipant.find(params[:id].to_i)
+    assignment = participant.assignment
+    team_id = TeamsUser.team_id(participant.assignment_id, participant.user_id)
 
-    fetch_questionnaires_and_questions
-    fetch_participant_scores
+    # return if redirect_when_disallowed(participant)
   
-    @topic_id = SignedUpTeam.topic_id(@participant.assignment.id, @participant.user_id)
-    @stage = @participant.assignment.current_stage(@topic_id)
-    update_penalties
-    
-    # prepare feedback summaries
-    fetch_feedback_summary
+    questions = fetch_questionnaires_and_questions(assignment)
+  
+    pscore = fetch_participant_scores(participant, questions)
+  
+    topic_id = SignedUpTeam.find_topic_id_for_user(participant.assignment.id, participant.user_id)
+    stage = participant.assignment.current_stage(topic_id)
+  
+    # all_penalties = update_penalties(assignment)
+  
+    # Feedback Summary needs to be checked once
+    # summary_ws_url = WEBSERVICE_CONFIG['summary_webservice_url']
+    sum = SummaryHelper::Summary.new.summarize_reviews_by_reviewee(questions, assignment, team_id, 'http://peerlogic.csc.ncsu.edu/sum/v1.0/summary/8/lsa', session)
+  
+    render json: {
+      participant: participant,
+      assignment: assignment,
+      team_id: team_id,
+      topic_id: topic_id,
+      stage: stage,
+      questions: questions,
+      pscore: pscore,
+      summary: sum.summary,
+      avg_scores_by_round: sum.avg_scores_by_round,
+      avg_scores_by_criterion: sum.avg_scores_by_criterion
+    }
   end
 
   # The view_team method provides an alternative view for participants, focusing on team performance.
   # It retrieves the participant, assignment, and team information, and calculated scores and penalties.
   # Additionally, it prepares the necessary data for displaying team-related information.
   # This method ensures participants have a clear understanding of their team's performance and any associated penalties.
+
+
   def view_team
-    @participant = AssignmentParticipant.find(params[:id])
-    @assignment = @participant.assignment
-    @team = @participant.team
-    @team_id = @team.id
-
-    questionnaires = AssignmentQuestionnaire.where(assignment_id: @assignment.id, topic_id: nil).map(&:questionnaire)
-    @questions = retrieve_questions(questionnaires, @assignment.id)
-    @pscore = Response.participant_scores(@participant, @questions)
-    @penalties = get_penalty(@participant.id)
-    @vmlist = process_questionare_for_team(@assignment, @team_id)
-
-    @current_role_name = current_role_name
+    participant = AssignmentParticipant.find(params[:id])
+    assignment = participant.assignment
+    team = participant.team
+    team_id = team.id
+  
+    questionnaires = AssignmentQuestionnaire.where(assignment_id: assignment.id).map(&:questionnaire)
+    questions = retrieve_questions(questionnaires, assignment.id)
+    pscore = Response.participant_scores(participant, questions)
+    vmlist = process_questionare_for_team(assignment, team_id,questionnaires, team, participant)
+  
+    render json: {
+      participant: participant,
+      assignment: assignment,
+      team: team,
+      team_id: team_id,
+      questions: questions,
+      pscore: pscore,
+      vmlist: vmlist
+    }
   end
 
 

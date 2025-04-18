@@ -55,4 +55,25 @@ class DueDate < ApplicationRecord
     new_due_date.parent_id = new_assignment_id
     new_due_date.save
   end
+
+  def self.get_next_due_date(assignment_id, topic_id = nil)
+    if Assignment.find(assignment_id).staggered_deadline?
+      next_due_date = TopicDueDate.find_by(['parent_id = ? and due_at >= ?', topic_id, Time.zone.now])
+      if next_due_date.nil?
+        topic_due_date_size = TopicDueDate.where(parent_id: topic_id).size
+        following_assignment_due_dates = AssignmentDueDate.where(parent_id: assignment_id)[topic_due_date_size..-1]
+        unless following_assignment_due_dates.nil?
+          following_assignment_due_dates.each do |assignment_due_date|
+            if assignment_due_date.due_at >= Time.zone.now
+              next_due_date = assignment_due_date
+              break
+            end
+          end
+        end
+      end
+    else
+      next_due_date = AssignmentDueDate.find_by(['parent_id = ? && due_at >= ?', assignment_id, Time.zone.now])
+    end
+    next_due_date
+  end
 end

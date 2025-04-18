@@ -57,7 +57,7 @@ class Response < ApplicationRecord
     sum
   end
 
-  def aggregate_assessment_scores(assessments, questions)
+  def self.aggregate_assessment_scores(assessments, questions)
     scores = {}
     if assessments.present?
       scores[:max] = -999_999_999
@@ -95,7 +95,7 @@ class Response < ApplicationRecord
   #  assessment - specifies the assessment for which the total score is being calculated
   #  questions  - specifies the list of questions being evaluated in the assessment
   # Called in: bookmarks_controller.rb (specific_average_score), grades_helper.rb (score_vector), response.rb (self.score), scoring.rb
-  def assessment_score(params)
+  def self.assessment_score(params)
     @response = params[:response].last
     return -1.0 if @response.nil?
 
@@ -107,7 +107,6 @@ class Response < ApplicationRecord
       sum_of_weights = 0
       @questionnaire = Questionnaire.find(questions.first.questionnaire_id)
 
-      # Retrieve data for questionnaire (max score, sum of scores, weighted scores, etc.)
       questionnaire_data = ScoreView.questionnaire_data(questions[0].questionnaire_id, @response.id)
       weighted_score = questionnaire_data.weighted_score.to_f unless questionnaire_data.weighted_score.nil?
       sum_of_weights = questionnaire_data.sum_of_weights.to_f
@@ -130,33 +129,12 @@ class Response < ApplicationRecord
   # Compute total score for this assignment by summing the scores given on all questionnaires.
   # Only scores passed in are included in this sum.
   # Called in: scoring.rb
-  def compute_total_score(assignment, scores)
+  def self.compute_total_score(assignment, scores)
     total = 0
     assignment.questionnaires.each { |questionnaire| total += questionnaire.get_weighted_score(assignment, scores) }
     total
   end
 
-  # Computes and returns the scores of assignment for participants and teams
-  # Returns data in the format of
-  # {
-  # :particpant => {
-  #   :<participant_id> => participant_scores(participant, questions),
-  #   :<participant_id> => participant_scores(participant, questions)
-  #   },
-  # :teams => {
-  #    :0 => {:team => team,
-  #           :scores => assignment.vary_by_round? ?
-  #             merge_grades_by_rounds(assignment, grades_by_rounds, total_num_of_assessments, total_score)
-  #             : aggregate_assessment_scores(assessments, questions[:review])
-  #          } ,
-  #    :1 => {:team => team,
-  #           :scores => assignment.vary_by_round? ?
-  #             merge_grades_by_rounds(assignment, grades_by_rounds, total_num_of_assessments, total_score)
-  #             : aggregate_assessment_scores(assessments, questions[:review])
-  #          } ,
-  #   }
-  # }
-  # Called in: grades_controller.rb (view), assignment.rb (self.export)
   def self.review_grades(assignment, questions)
     scores = { participants: {}, teams: {} }
     assignment.participants.each do |participant|
@@ -166,14 +144,13 @@ class Response < ApplicationRecord
       scores[:teams][index.to_s.to_sym] = { team: team, scores: {} }
       if assignment.varying_rubrics_by_round?
         grades_by_rounds, total_num_of_assessments, total_score = compute_grades_by_rounds(assignment, questions, team)
-        # merge the grades from multiple rounds
         scores[:teams][index.to_s.to_sym][:scores] = merge_grades_by_rounds(assignment, grades_by_rounds, total_num_of_assessments, total_score)
       else
         assessments = ReviewResponseMap.assessments_for(team)
         scores[:teams][index.to_s.to_sym][:scores] = aggregate_assessment_scores(assessments, questions[:review])
       end
     end
-    scores
+    return scores
   end
 
  
@@ -214,7 +191,7 @@ class Response < ApplicationRecord
   # returns all the associated reviews with a participant, indexed under :assessments
   # returns the score assigned for the TOTAL body of responses associated with the user
   # Called in: scoring.rb
-  def compute_assignment_score(participant, questions, scores)
+  def self.compute_assignment_score(participant, questions, scores)
     participant.assignment.questionnaires.each do |questionnaire|
       round = AssignmentQuestionnaire.find_by(assignment_id: participant.assignment.id, questionnaire_id: questionnaire.id).used_in_round
       # create symbol for "varying rubrics" feature -Yang
@@ -239,7 +216,7 @@ class Response < ApplicationRecord
   # this will be called when the assignment has various rounds, so we need to aggregate the scores across rounds
   # achieves this by returning all the reviews, no longer delineated by round, and by returning the max, min and average
   # Called in: scoring.rb
-  def merge_scores(participant, scores)
+  def self.merge_scores(participant, scores)
     review_sym = 'review'.to_sym
     scores[review_sym] = {}
     scores[review_sym][:assessments] = []
@@ -270,7 +247,7 @@ class Response < ApplicationRecord
   end
 
   # Called in: scoring.rb
-  def update_max_or_min(scores, round_sym, review_sym, symbol)
+  def self.update_max_or_min(scores, round_sym, review_sym, symbol)
     op = :< if symbol == :max
     op = :> if symbol == :min
     # check if there is a max/min score for this particular round
@@ -324,8 +301,11 @@ class Response < ApplicationRecord
   end
 
   def self.extract_team_averages(scores)
-    scores[:teams].reject! { |_k, v| v[:scores][:avg].nil? }
-    scores[:teams].map { |_k, v| v[:scores][:avg].to_i }
+    # puts scores
+    # scores[:teams].reject! { |_k, v| v[:scores][:avg].nil? }
+    # scores[:teams].map { |_k, v| v[:scores][:avg].to_i }
+    scores.reject! { |_k, v| v[:scores][:avg].nil? }
+    scores.map { |_k, v| v[:scores][:avg].to_i }
   end
   
   def self.average_team_scores(array)
@@ -394,7 +374,7 @@ end
 # Below private methods are extracted and added as part of refactoring project E2009 - Spring 2020
 # This method computes and returns grades by rounds, total_num_of_assessments and total_score
 # when the assignment has varying rubrics by round
-def compute_grades_by_rounds(assignment, questions, team)
+def self.compute_grades_by_rounds(assignment, questions, team)
   grades_by_rounds = {}
   total_score = 0
   total_num_of_assessments = 0 # calculate grades for each rounds
@@ -409,7 +389,7 @@ def compute_grades_by_rounds(assignment, questions, team)
 end
 
 # merge the grades from multiple rounds
-def merge_grades_by_rounds(assignment, grades_by_rounds, num_of_assessments, total_score)
+def self.merge_grades_by_rounds(assignment, grades_by_rounds, num_of_assessments, total_score)
   team_scores = { max: 0, min: 0, avg: nil }
   return team_scores if num_of_assessments.zero?
 

@@ -29,7 +29,7 @@ class TeamsUser < ApplicationRecord
         next
       end
       team = Team.find(teams_user.team_id)
-      if team.parent_id == assignment_id
+      if team.assignment_id == assignment_id
         team_id = teams_user.team_id
         break
       end
