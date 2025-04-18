@@ -3,7 +3,7 @@ FactoryBot.define do
   factory :role do
     sequence(:name) { |n| "Role #{n}" }
 
-    # initialize_with { Role.find_or_create_by(id: id) }
+    initialize_with { Role.find_or_create_by(id: id) }
 
     trait :student do
       id { Role::STUDENT }
