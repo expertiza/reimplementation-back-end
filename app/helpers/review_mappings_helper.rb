@@ -72,7 +72,6 @@ module ReviewMappingsHelper
             )
     
             # Create a new review mapping. Here, the 'type' is explicitly specified for STI compatibility.
-            # In future, this could be changed to something like 'TeamReviewResponseMap' if needed.
             ResponseMap.create!(
             reviewed_object_id: assignment.id,
             reviewer_id: reviewer.id,
@@ -170,6 +169,80 @@ module ReviewMappingsHelper
     message: "Created #{created_count} review mappings using strategy '#{strategy}'."
     }
     end
+
+    # Generates staggered reviewer-reviewee mappings for an assignment.
+    # Supports both team-based and individual participant assignments.
+    # Returns a success message or an error if conditions aren't met.
+    def generate_staggered_review_mappings(assignment, options = {})
+    # Extract configuration options from input or assign defaults
+    num_reviews = options[:num_reviews_per_student]&.to_i || 3
+    strategy = options[:strategy] || "default"
+
+    # Select reviewers based on assignment type (teams or individuals)
+    if assignment.has_teams
+    reviewers = assignment.teams.to_a.shuffle              # Randomize teams as reviewers
+    mapping_type = "ResponseMap"                           # Type used in STI (can be customized)
+    else
+    reviewers = assignment.participants.to_a.shuffle       # Randomize individual participants
+    mapping_type = "ResponseMap"
+    end
+
+    # Fail fast if there are not enough reviewers to proceed
+    return { success: false, message: "Not enough reviewers to create mappings." } if reviewers.size < 2
+
+    created_count = 0
+
+    # Loop over each reviewer and assign them staggered reviewees
+    reviewers.each_with_index do |reviewer, index|
+    reviewees = []
+    offset = 1
+
+    # Select num_reviews unique reviewees in staggered (offset-based) order
+    while reviewees.size < num_reviews
+        reviewee = reviewers[(index + offset) % reviewers.size]
+        offset += 1
+
+        # Skip self-review and duplicates
+        next if reviewer == reviewee || reviewees.include?(reviewee)
+
+        # Prevent self-assignment based on team or individual context
+        if assignment.has_teams
+        next if reviewer.id == reviewee.id
+        else
+        next if reviewer.user_id == reviewee.user_id
+        end
+
+        reviewees << reviewee
+    end
+
+    # Create response mapping records if they don't already exist
+    reviewees.each do |reviewee|
+        exists = ResponseMap.exists?(
+        reviewed_object_id: assignment.id,
+        reviewer_id: reviewer.id,
+        reviewee_id: reviewee.id,
+        type: mapping_type
+        )
+
+        unless exists
+        ResponseMap.create!(
+            reviewed_object_id: assignment.id,
+            reviewer_id: reviewer.id,
+            reviewee_id: reviewee.id,
+            type: mapping_type
+        )
+        created_count += 1
+        end
+    end
+    end
+
+    # Return a success response with mapping count
+    {
+    success: true,
+    message: "Successfully created #{created_count} staggered review mappings using strategy '#{strategy}'."
+    }
+    end
+
 
   
   end

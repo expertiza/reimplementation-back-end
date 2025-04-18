@@ -1454,6 +1454,52 @@ paths:
           description: Assignment not found
         '422':
           description: Strategy not supported or invalid input
+  /api/v1/assignments/{assignment_id}/automatic_review_mapping_staggered:
+    post:
+      summary: Automatically assign reviewers in a staggered manner
+      description: |
+        Generates reviewer-reviewee mappings using a staggered algorithm.
+        Works for both team-based and individual assignments.
+      tags:
+        - Review Mappings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: assignment_id
+          in: path
+          required: true
+          description: ID of the assignment
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                num_reviews_per_student:
+                  type: integer
+                  example: 2
+                  description: Number of reviews each student or team should perform
+              required:
+                - num_reviews_per_student
+      responses:
+        '200':
+          description: Review mappings created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid input or insufficient participants
+        '404':
+          description: Assignment not found
 
 
 

@@ -125,6 +125,30 @@ module Api
         end
       end
 
+      # POST /api/v1/assignments/:assignment_id/automatic_review_mapping_staggered
+      def automatic_review_mapping_staggered
+        # Permit only the required params for safety
+        params.permit(:assignment_id, :num_reviews_per_student, :strategy)
+
+        # Find the assignment by ID
+        assignment = Assignment.find_by(id: params[:assignment_id])
+        if assignment.nil?
+          render json: { error: 'Assignment not found' }, status: :not_found
+          return
+        end
+
+        # Delegate to helper that supports both individual and team-based strategies
+        result = generate_staggered_review_mappings(assignment, params)
+
+        # Render based on success/failure
+        if result[:success]
+          render json: { message: result[:message] }, status: :ok
+        else
+          render json: { error: result[:message] }, status: :unprocessable_entity
+        end
+      end
+
+
 
       private
 

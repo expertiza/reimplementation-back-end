@@ -181,4 +181,29 @@ end
 
 puts "✅ Created test assignment with 10 participants for strategy testing"
 
+staggered_assignment = Assignment.create!(
+  name: "Staggered Mapping Test",
+  instructor_id: instructors.last.id,
+  course_id: courses.last.id,
+  has_teams: true,
+  has_topics: false,
+  private: false
+)
+
+# Create 6 teams and assign each 2 students
+6.times do |t|
+  team = Team.create!(assignment_id: staggered_assignment.id)
+  user1 = students.sample
+  user2 = students.reject { |u| u == user1 }.sample
+
+  TeamsUser.create!(team_id: team.id, user_id: user1.id)
+  TeamsUser.create!(team_id: team.id, user_id: user2.id)
+
+  Participant.create!(user_id: user1.id, assignment_id: staggered_assignment.id, team_id: team.id)
+  Participant.create!(user_id: user2.id, assignment_id: staggered_assignment.id, team_id: team.id)
+end
+
+puts "✅ Created staggered mapping assignment with 6 teams"
+
+
 puts "🎉 Seeding Complete!"

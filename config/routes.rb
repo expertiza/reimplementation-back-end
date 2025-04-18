@@ -39,6 +39,9 @@ Rails.application.routes.draw do
           post '/:assignment_id/create_node',action: :create_node
           # Route to trigger strategy-based review mapping for an assignment
           post '/:assignment_id/automatic_review_mapping_strategy', to: 'review_mappings#automatic_review_mapping_strategy'
+          # Defines a POST route for triggering staggered automatic review mappings
+          post '/:assignment_id/automatic_review_mapping_staggered', to: 'review_mappings#automatic_review_mapping_staggered'
+
 
         end
       end
