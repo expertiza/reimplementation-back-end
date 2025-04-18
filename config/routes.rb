@@ -39,6 +39,11 @@ Rails.application.routes.draw do
           post '/:assignment_id/create_node',action: :create_node
         end
       end
+      
+      # Route for triggering automatic review mapping for a given assignment.
+      # Accepts POST requests with assignment_id in the path and options in the JSON body
+      post 'assignments/:assignment_id/automatic_review_mapping', to: 'review_mappings#automatic_review_mapping'
+
 
       resources :bookmarks, except: [:new, :edit] do
         member do

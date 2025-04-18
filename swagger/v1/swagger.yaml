@@ -1355,6 +1355,52 @@ paths:
           description: OK
         '404':
           description: Assignment not found
+  "/api/v1/assignments/{assignment_id}/automatic_review_mapping":
+    post:
+      summary: "Automatically assign reviewers for an assignment"
+      description: "Generates review mappings for the specified assignment based on the provided strategy and number of reviews per student."
+      tags:
+        - Review Mappings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: assignment_id
+          in: path
+          required: true
+          description: ID of the assignment
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                num_reviews_per_student:
+                  type: integer
+                  description: Number of reviews each student should perform
+                  example: 3
+                strategy:
+                  type: string
+                  description: Strategy to use for mapping (e.g., "default")
+                  example: default
+      responses:
+        '200':
+          description: Review mappings successfully generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          description: Assignment not found
+        '400':
+          description: Invalid input or insufficient participants
 
 
 

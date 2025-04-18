@@ -32,5 +32,65 @@ module ReviewMappingsHelper
         }
       end
     end
+
+    def generate_automatic_review_mappings(assignment, options = {})
+        # Extract the number of reviews each student should perform. Default is 3 if not provided.
+        num_reviews_per_student = options[:num_reviews_per_student]&.to_i || 3
+    
+        # Optional parameter: number of reviewers to consider — currently not used in the logic.
+        num_of_reviewers = options[:num_of_reviewers]&.to_i
+    
+        # Strategy for assignment (e.g., 'default', 'topic-based', etc.). Currently only 'default' is implemented.
+        strategy = options[:strategy] || "default"
+    
+        # Get all participants in the assignment and shuffle them to ensure random reviewer-reviewee combinations.
+        participants = assignment.participants.to_a.shuffle
+    
+        # Check if there are at least 2 participants. Otherwise, review mappings cannot be generated.
+        if participants.size < 2
+        return { success: false, message: "Not enough participants to assign reviews." }
+        end
+    
+        # Counter to keep track of how many new mappings are created
+        created_count = 0
+    
+        # Loop through each participant to assign them as a reviewer
+        participants.each do |reviewer|
+        # Exclude the reviewer from the list of potential reviewees to avoid self-review
+        potential_reviewees = participants.reject { |p| p.id == reviewer.id }
+    
+        # Randomly select N reviewees (as per num_reviews_per_student) from the list of potential reviewees
+        reviewees_to_assign = potential_reviewees.sample(num_reviews_per_student)
+    
+        # For each selected reviewee, attempt to create a review mapping
+        reviewees_to_assign.each do |reviewee|
+            # Skip creation if this reviewer-reviewee mapping already exists to avoid duplicates
+            next if ResponseMap.exists?(
+            reviewed_object_id: assignment.id,
+            reviewer_id: reviewer.id,
+            reviewee_id: reviewee.id
+            )
+    
+            # Create a new review mapping. Here, the 'type' is explicitly specified for STI compatibility.
+            # In future, this could be changed to something like 'TeamReviewResponseMap' if needed.
+            ResponseMap.create!(
+            reviewed_object_id: assignment.id,
+            reviewer_id: reviewer.id,
+            reviewee_id: reviewee.id,
+            type: "ResponseMap"
+            )
+    
+            # Increment the number of mappings created
+            created_count += 1
+        end
+        end
+    
+        # Return success along with a message indicating how many mappings were created and which strategy was used
+        {
+        success: true,
+        message: "Successfully created #{created_count} review mappings using strategy '#{strategy}'."
+        }
+    end
+  
   end
   

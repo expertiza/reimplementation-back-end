@@ -71,6 +71,34 @@ module Api
         head :no_content
       end
 
+      # POST /api/v1/assignments/:assignment_id/automatic_review_mapping
+      # Automatically generates reviewer-reviewee mappings for a given assignment.
+      def automatic_review_mapping
+        # Permit only the expected parameters from the request
+        params.permit(:assignment_id, :num_reviews_per_student, :num_of_reviewers, :strategy)
+
+        # Find the assignment using the provided assignment_id
+        assignment = Assignment.find_by(id: params[:assignment_id])
+
+        # Return a 404 error if the assignment does not exist
+        if assignment.nil?
+          render json: { error: 'Assignment not found' }, status: :not_found
+          return
+        end
+
+        # Delegate the mapping generation logic to the helper function
+        result = generate_automatic_review_mappings(assignment, params)
+
+        # If successful, return a success message with status 200
+        if result[:success]
+          render json: { message: result[:message] }, status: :ok
+        else
+          # If mapping fails, return an error message with status 422
+          render json: { error: result[:message] }, status: :unprocessable_entity
+        end
+      end
+
+
       private
 
       def set_review_mapping
