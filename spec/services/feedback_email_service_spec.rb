@@ -1,4 +1,3 @@
-# spec/services/feedback_email_service_spec.rb
 require 'rails_helper'
 
 RSpec.describe FeedbackEmailService, type: :service do
