@@ -1,0 +1,26 @@
+<h1>Submission History</h1>
+
+<% if @submission_records.any? %>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Submission ID</th>
+        <th>Submitted By</th>
+        <th>Submission Time</th>
+        <th>Content</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @submission_records.each do |record| %>
+        <tr>
+          <td><%= record.id %></td>
+          <td><%= record.user.try(:name) || "Unknown" %></td>
+          <td><%= record.created_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+          <td><%= truncate(record.content, length: 50) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p>No submission records found for this team.</p>
+<% end %>
