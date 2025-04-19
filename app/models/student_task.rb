@@ -1,9 +1,10 @@
 class StudentTask
-    attr_accessor :assignment, :current_stage, :participant, :stage_deadline, :topic, :permission_granted, :deadlines, :review_grade
+    attr_accessor :assignment, :course, :current_stage, :participant, :stage_deadline, :topic, :permission_granted, :deadlines, :review_grade
 
     # Initializes a new instance of the StudentTask class
     def initialize(args)
       @assignment = args[:assignment]
+      @course = args[:course]
       @current_stage = args[:current_stage]
       @participant = args[:participant]
       @stage_deadline = args[:stage_deadline]
@@ -18,6 +19,7 @@ class StudentTask
     def self.create_from_participant(participant)
       new(
         assignment: participant.assignment.name,                          # Name of the assignment associated with the student task
+        course: participant.assignment.course.name,
         topic: participant.topic,                                         # Current stage of the assignment process
         current_stage: participant.current_stage,                         # Participant object
         stage_deadline: parse_stage_deadline(participant.stage_deadline), # Deadline for the current stage of the assignment
@@ -50,27 +52,26 @@ class StudentTask
       Time.now + 1.year
     end
 
+    # Generates a sample list of assignment deadlines relative to today's date.
+    # This is likely used for testing or placeholder UI data.
     def self.sample_deadlines
       today = Date.today
       [
-        { id: 1, date: (today + 3).to_s, description: "Submit Assignment Round 1" },
-        { id: 2, date: (today + 8).to_s, description: "Review Assignment Round 1" },
-        { id: 3, date: (today + 16).to_s, description: "Submit Assignment Round 2" },
-        { id: 4, date: (today + 19).to_s, description: "Review Assignment Round 2" }
+        { id: 1, date: (today - 15).to_s, description: "Submission deadline" },
+        { id: 2, date: (today - 3).to_s, description: "Round 1 peer review" },
+        { id: 2, date: (today - 3).to_s, description: "Round 2 peer review" },
+        { id: 2, date: (today + 7).to_s, description: "Review deadline" },
       ]
     end
     
+    # Generates a simulated review grade for a participant.
+    # This is likely placeholder logic for demonstration or testing purposes.
     def self.generate_review_grade(participant)
-      # if participant.try(:reviews_given)&.any?
-      #   "Score: 30/100 \nComment: 4 reviews x 10 pts/review x 75% = 30 points \nA few explanationtion were given for the scores. The explanations (-25%)"
-      # else
-      #   "N/A"
-      # end
+      # Randomly decide whether the participant has reviews or not
       if [true, false].sample
         reviews = rand(1..6)
         base_score_per_review = 10
         penalty_percent = [0, 10, 25, 50].sample
-    
         raw_score = reviews * base_score_per_review
         final_score = (raw_score * (1 - penalty_percent / 100.0)).round
     

@@ -1,11 +1,11 @@
 class Api::V1::StudentTasksController < ApplicationController
-
   # List retrieves all student tasks associated with the current logged-in user.
   def action_allowed?
     has_privileges_of?('Student')
   end
+
+  # Retrieves all tasks that belong to the current user.
   def list
-    # Retrieves all tasks that belong to the current user.
     @student_tasks = StudentTask.from_user(current_user)
     # Render the list of student tasks as JSON.
     render json: @student_tasks, status: :ok
@@ -24,5 +24,4 @@ class Api::V1::StudentTasksController < ApplicationController
     # Render the found student task as JSON.
     render json: @student_task, status: :ok
   end
-
 end

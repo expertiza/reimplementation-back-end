@@ -21,6 +21,7 @@ begin
   num_courses = 2
   num_instructors = 2
 
+  # Generate Random Instructors
   puts "creating instructors"
   instructor_user_ids = []
   num_instructors.times do
@@ -34,6 +35,7 @@ begin
     ).id
   end
 
+  # Generate Random Courses
   puts "creating courses"
   course_ids = []
   num_courses.times do |i|
@@ -47,6 +49,7 @@ begin
     ).id
   end
 
+  # Generate Specific Assignments names
   puts "Creating assignments with specific names"
   assignment_names = [
     "Program 1",
@@ -59,6 +62,7 @@ begin
     "Program 7"
   ]
 
+  # Generate Random Assignments
   puts "creating assignments"
   assignment_ids = []
   num_assignments.times do |i|
@@ -72,7 +76,7 @@ begin
 
     assignment_ids << assignment.id
 
-    # Create DueDates for the assignment
+    # Create DueDates for the assignment for StudentTask
     puts "Creating due_dates for assignment #{assignment.name}"
     [
       2.days.from_now,
@@ -90,17 +94,8 @@ begin
       )
     end
   end
-  # assignment_ids = []
-  # num_assignments.times do |i|
-  #   assignment_ids << Assignment.create(
-  #     name: assignment_names[i],
-  #     instructor_id: instructor_user_ids[i % num_instructors],
-  #     course_id: course_ids[i % num_courses],
-  #     has_teams: true,
-  #     private: false
-  #   ).id
-  # end
 
+  # Generate Random Teams
   puts "creating teams"
   team_ids = []
   num_teams.times do |i|
@@ -109,6 +104,7 @@ begin
     ).id
   end
 
+  # Generate Some Students
   puts "creating students"
   student_user_ids = []
   # num_students.times do
@@ -144,6 +140,7 @@ begin
     ).id
   end
 
+  # Assign Students to Teams
   puts "assigning students to teams"
   teams_users_ids = []
   # num_students.times do |i|
@@ -167,28 +164,16 @@ begin
     end
   end
 
-  # puts "assigning participant to students, teams, courses, and assignments"
-  # participant_ids = []
-  # num_students.times do |i|
-  #   participant_ids << Participant.create(
-  #     user_id: student_user_ids[i],
-  #     assignment_id: assignment_ids[i%num_assignments],
-  #     team_id: team_ids[i%num_teams],
-  #   ).id
-  # end
-  #
   puts "assigning participants to all students for all assignments"
   participant_ids = []
-
   # Array of possible stages
   stages = ["Not started", "In progress", "Submitted", "Reviewed", "Finished"]
-
   student_user_ids.each do |student_id|
     assignment_ids.each do |assignment_id|
       team_id = team_ids.sample # randomly assign a team for the assignment
       participant = Participant.create(
         user_id: student_id,
-        stage_deadline: Time.now + rand(1..10).days,
+        stage_deadline: Date.today + rand(1..10).days,
         topic: "Topic #{rand(1..5)}",
         permission_granted: true,
         current_stage: stages.sample,
