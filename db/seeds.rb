@@ -263,5 +263,68 @@ end
 
 puts "✅ Created peer_review_strategy test assignment with 8 participants"
 
+puts "✅ Creating Questionnaires and linking to Assignments"
+
+assignments.each do |assignment|
+  questionnaire = Questionnaire.create!(
+    name: "#{assignment.name} Review Questionnaire",
+    instructor_id: assignment.instructor_id,
+    min_question_score: 0,
+    max_question_score: 10
+  )
+
+  AssignmentQuestionnaire.create!(
+    assignment_id: assignment.id,
+    questionnaire_id: questionnaire.id
+  )
+end
+
+puts "✅ Created Questionnaires and linked to Assignments"
+
+assignments.each do |assignment|
+  questionnaire = assignment.questionnaires.first
+  next unless questionnaire.present?
+
+  Item.create!(
+    questionnaire_id: questionnaire.id,
+    question_type: 'Grade',
+    txt: 'Overall grade',
+    weight: 1,
+    seq: 1,
+    break_before: false == false,
+    max_label: '10',
+    min_label: '0'
+  )
+
+  Item.create!(
+    questionnaire_id: questionnaire.id,
+    question_type: 'Comment',
+    txt: 'Feedback comments',
+    weight: 0,
+    seq: 2,
+    break_before: false == false
+  )
+end
+
+puts "✅ Created Grade and Comment Items for all Assignments"
+
+
+test_assignment_id = assignments.first.id
+test_participants = Participant.where(assignment_id: test_assignment_id).limit(2)
+
+if test_participants.size == 2 && test_participants.first.id != test_participants.last.id
+  reviewee = test_participants.first
+  reviewer = test_participants.last
+
+  ResponseMap.find_or_create_by!(
+    reviewed_object_id: test_assignment_id,
+    reviewer_id: reviewer.id,
+    reviewee_id: reviewee.id,
+    type: "ResponseMap"
+  )
+
+  puts "✅ Created test ResponseMap: reviewer_id=#{reviewer.id}, reviewee_id=#{reviewee.id}, assignment_id=#{test_assignment_id}"
+end
+
 
 puts "🎉 Seeding Complete!"

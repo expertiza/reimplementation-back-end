@@ -53,6 +53,8 @@ Rails.application.routes.draw do
       # Route for triggering automatic review mapping for a given assignment.
       # Accepts POST requests with assignment_id in the path and options in the JSON body
       post 'assignments/:assignment_id/automatic_review_mapping', to: 'review_mappings#automatic_review_mapping'
+      post 'review_mappings/save_grade_and_comment', to: 'review_mappings#save_grade_and_comment_for_reviewer'
+
 
 
       resources :bookmarks, except: [:new, :edit] do

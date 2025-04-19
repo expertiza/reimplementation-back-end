@@ -206,6 +206,42 @@ module Api
           render json: { error: result[:message] }, status: :unprocessable_entity
         end
       end
+      
+      # Controller action to save or update a review grade and comment from a reviewer to a reviewee
+      def save_grade_and_comment_for_reviewer
+        # Step 1: Fetch the assignment using the assignment_id passed in params
+        assignment = Assignment.find_by(id: params[:assignment_id])
+
+        # If the assignment doesn't exist, return a 404 error
+        return render json: { error: "Assignment not found." }, status: :not_found unless assignment
+
+        # Step 2: Get the currently logged-in user (the reviewer)
+        reviewer = current_user
+
+        # Step 3: Extract the necessary parameters from the request body
+        reviewee_id     = params[:reviewee_id]        # ID of the participant (or team) being reviewed
+        answers         = params[:answers]            # Array of answer hashes with item_id, score, and optional comment
+        overall_comment = params[:overall_comment]    # General comment for the review
+        is_submitted    = params[:is_submitted]       # Boolean flag indicating if review is finalized
+
+        # Step 4: Delegate the business logic to a helper method that handles validation and saving
+        result = ReviewMappingsHelper.save_review_data(
+          reviewer: reviewer,
+          assignment: assignment,
+          reviewee_id: reviewee_id,
+          answers: answers,
+          overall_comment: overall_comment,
+          is_submitted: is_submitted
+        )
+
+        # Step 5: Render appropriate JSON response based on success or failure
+        if result[:success]
+          render json: { message: result[:message] }, status: :ok
+        else
+          render json: { error: result[:error] }, status: :unprocessable_entity
+        end
+      end
+
 
 
       private

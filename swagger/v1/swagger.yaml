@@ -1620,8 +1620,75 @@ paths:
                 properties:
                   error:
                     type: string
-
-
+  /api/v1/review_mappings/save_grade_and_comment:
+    post:
+      summary: Save grade and comment for reviewer
+      description: Saves or updates a review grade and comment for a reviewer evaluating a participant.
+      tags:
+        - Review Mappings
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                participant_id:
+                  type: integer
+                  description: ID of the participant being reviewed
+                  example: 1
+                assignment_id:
+                  type: integer
+                  description: ID of the assignment for which the review is being graded
+                  example: 2
+                grade:
+                  type: number
+                  format: float
+                  description: Numeric grade given to the participant
+                  example: 9.5
+                comment:
+                  type: string
+                  description: Reviewer’s written feedback
+                  example: "Excellent work and teamwork."
+              required:
+                - participant_id
+                - assignment_id
+                - grade
+      responses:
+        '200':
+          description: Grade and comment saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Grade and comment saved successfully.
+                  review_grade:
+                    type: object
+                    properties:
+                      grade:
+                        type: string
+                        example: "9.5"
+                      comment:
+                        type: string
+                        example: "Excellent work and teamwork."
+                      response_id:
+                        type: integer
+                        example: 12
+        '422':
+          description: Validation failed or record could not be saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: No question item found for assignment
 
 
 servers:
