@@ -62,14 +62,44 @@ begin
   puts "creating assignments"
   assignment_ids = []
   num_assignments.times do |i|
-    assignment_ids << Assignment.create(
+    assignment = Assignment.create(
       name: assignment_names[i],
       instructor_id: instructor_user_ids[i % num_instructors],
       course_id: course_ids[i % num_courses],
       has_teams: true,
       private: false
-    ).id
+    )
+
+    assignment_ids << assignment.id
+
+    # Create DueDates for the assignment
+    puts "Creating due_dates for assignment #{assignment.name}"
+    [
+      2.days.from_now,
+      3.days.from_now,
+      4.days.from_now,
+      2.days.ago,
+      3.days.ago
+    ].each do |due_at|
+      DueDate.create!(
+        parent: assignment,
+        due_at:,
+        submission_allowed_id: 3,
+        review_allowed_id: 3,
+        deadline_type_id: 3
+      )
+    end
   end
+  # assignment_ids = []
+  # num_assignments.times do |i|
+  #   assignment_ids << Assignment.create(
+  #     name: assignment_names[i],
+  #     instructor_id: instructor_user_ids[i % num_instructors],
+  #     course_id: course_ids[i % num_courses],
+  #     has_teams: true,
+  #     private: false
+  #   ).id
+  # end
 
   puts "creating teams"
   team_ids = []

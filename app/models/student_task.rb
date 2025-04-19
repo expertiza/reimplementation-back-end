@@ -1,5 +1,5 @@
 class StudentTask
-    attr_accessor :assignment, :current_stage, :participant, :stage_deadline, :topic, :permission_granted
+    attr_accessor :assignment, :current_stage, :participant, :stage_deadline, :topic, :permission_granted, :deadlines, :review_grade
 
     # Initializes a new instance of the StudentTask class
     def initialize(args)
@@ -9,6 +9,9 @@ class StudentTask
       @stage_deadline = args[:stage_deadline]
       @topic = args[:topic]
       @permission_granted = args[:permission_granted]
+      @team_name = args[:team_name]
+      @deadlines = args[:deadlines]
+      @review_grade = args[:review_grade]
     end
 
     # create a new StudentTask instance from a Participant object.cccccccc
@@ -19,6 +22,8 @@ class StudentTask
         current_stage: participant.current_stage,                         # Participant object
         stage_deadline: parse_stage_deadline(participant.stage_deadline), # Deadline for the current stage of the assignment
         permission_granted: participant.permission_granted,               # Topic of the assignment
+        deadlines: sample_deadlines,
+        review_grade: generate_review_grade(participant),
         participant: participant                                          # Boolean indicating if Publishing Rights is enabled
       )
     end
@@ -43,6 +48,38 @@ class StudentTask
       Time.parse(date_string)
     rescue StandardError
       Time.now + 1.year
+    end
+
+    def self.sample_deadlines
+      today = Date.today
+      [
+        { id: 1, date: (today + 3).to_s, description: "Submit Assignment Round 1" },
+        { id: 2, date: (today + 8).to_s, description: "Review Assignment Round 1" },
+        { id: 3, date: (today + 16).to_s, description: "Submit Assignment Round 2" },
+        { id: 4, date: (today + 19).to_s, description: "Review Assignment Round 2" }
+      ]
+    end
+    
+    def self.generate_review_grade(participant)
+      # if participant.try(:reviews_given)&.any?
+      #   "Score: 30/100 \nComment: 4 reviews x 10 pts/review x 75% = 30 points \nA few explanationtion were given for the scores. The explanations (-25%)"
+      # else
+      #   "N/A"
+      # end
+      if [true, false].sample
+        reviews = rand(1..6)
+        base_score_per_review = 10
+        penalty_percent = [0, 10, 25, 50].sample
+    
+        raw_score = reviews * base_score_per_review
+        final_score = (raw_score * (1 - penalty_percent / 100.0)).round
+    
+        "Score: #{final_score}/100 \n" \
+        "Comment: #{reviews} reviews x #{base_score_per_review} pts/review x #{100 - penalty_percent}% = #{final_score} points \n" \
+        "Explanation penalty (-#{penalty_percent}%)"
+      else
+        "N/A"
+      end
     end
   
 end
