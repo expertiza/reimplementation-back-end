@@ -112,6 +112,11 @@ begin
         user_id: student_user_ids[i],
         assignment_id: assignment_ids[i%num_assignments],
         team_id: team_ids[i%num_teams],
+        authorization: :participant,
+        can_review: true,
+        can_submit: true,
+        can_take_quiz: true,
+        can_mentor: false,
       ).id
     end
 

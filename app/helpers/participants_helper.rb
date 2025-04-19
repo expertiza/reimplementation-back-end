@@ -17,6 +17,7 @@ module ParticipantsHelper
     }
 
     permissions_map = {
+      'participant' => {},
       'reader' => { can_submit: false },
       'reviewer' => { can_submit: false, can_take_quiz: false },
       'submitter' => { can_review: false, can_take_quiz: false },

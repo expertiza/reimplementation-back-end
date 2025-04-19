@@ -174,7 +174,7 @@ class Api::V1::ParticipantsController < ApplicationController
   # Validates that the authorization parameter is present and is one of the following valid authorizations: reader, reviewer, submitter, mentor
   # Returns the authorization if valid
   def validate_authorization
-    valid_authorizations = %w[reader reviewer submitter mentor]
+    valid_authorizations = %w[participant reader reviewer submitter mentor]
     authorization = params[:authorization]
     authorization = authorization.downcase if authorization.present?
 
