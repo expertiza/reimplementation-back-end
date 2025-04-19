@@ -1,13 +1,14 @@
 class Api::V1::ParticipantsController < ApplicationController
   include ParticipantsHelper
 
-  # GET /participants/user/:user_id
-  # Fetch all participants associated with a specific user.
+   # GET /participants/user/:user_id
+  # Fetches all participants associated with the specified user.
   # Params:
-  # user_id: ID of the user whose participants are to be retrieved
+  # - user_id [Integer]: ID of the user
   # Returns:
-  # - 200 OK with a list of participant objects if successful
-  # - 422 Unprocessable Entity if retrieval fails
+  # - 200 OK: A JSON array of participant objects
+  # - 404 Not Found: If the user does not exist
+  # - 422 Unprocessable Entity: If the query fails unexpectedly
 
   def get_participants_by_user
     user = find_user if params[:user_id].present?
@@ -22,9 +23,14 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
-  # Return a list of participants for a given assignment
-  # params - assignment_id
   # GET /participants/assignment/:assignment_id
+  # Retrieves all participants enrolled in a given assignment.
+  # Params:
+  # - assignment_id [Integer]: ID of the assignment
+  # Returns:
+  # - 200 OK: A JSON array of participant objects
+  # - 404 Not Found: If the assignment does not exist
+  # - 422 Unprocessable Entity: If the query fails unexpectedly
   def get_participants_by_assignment
     assignment = find_assignment if params[:assignment_id].present?
     return if params[:assignment_id].present? && assignment.nil?
@@ -38,9 +44,13 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
-  # Return a specified participant
-  # params - id
   # GET /participants/:id
+  # Fetches a single participant by their unique ID.
+  # Params:
+  # - id [Integer]: ID of the participant
+  # Returns:
+  # - 200 OK: JSON representation of the participant
+  # - 422 Unprocessable Entity: If the participant lookup fails
   def show
     participant = Participant.find(params[:id])
 
