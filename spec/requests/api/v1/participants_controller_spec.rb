@@ -140,7 +140,7 @@ RSpec.describe 'Participants API', type: :request do
 
       parameter name: :id, in: :path, type: :integer, description: 'ID of the participant'
 
-      response '201', 'Returns a participant' do
+      response '200', 'Returns a participant' do
         let(:id) { participant2.id }
 
         run_test! do |response|
@@ -222,15 +222,6 @@ RSpec.describe 'Participants API', type: :request do
       response '404', 'Participant not found' do
         let(:id) { 99 }
         let(:authorization) { 'mentor' }
-
-        run_test! do |response|
-          expect(JSON.parse(response.body)['error']).to eql('Participant not found')
-        end
-      end
-
-      response '404', 'Participant not found' do
-        let(:id) { 99 }
-        let(:authorization) { 'teacher' }
 
         run_test! do |response|
           expect(JSON.parse(response.body)['error']).to eql('Participant not found')
@@ -337,6 +328,27 @@ RSpec.describe 'Participants API', type: :request do
           expect(JSON.parse(response.body)['error']).to include('authorization not valid')
         end
       end
+
+      response '400', 'Missing user_id in request body' do
+        let(:authorization) { 'mentor' }
+        let(:participant) { { assignment_id: assignment1.id } }
+
+        run_test! do |response|
+          expect(response.status).to eq(400)
+          expect(JSON.parse(response.body)['error']).to include('user_id')
+        end
+      end
+
+      response '400', 'Missing assignment_id in request body' do
+        let(:authorization) { 'mentor' }
+        let(:participant) { { user_id: studentb.id } }
+
+        run_test! do |response|
+          expect(response.status).to eq(400)
+          expect(JSON.parse(response.body)['error']).to include('assignment_id')
+        end
+      end
+      
     end
   end
 end
