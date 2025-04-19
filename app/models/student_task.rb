@@ -49,7 +49,7 @@ class StudentTask
     def self.parse_stage_deadline(date_string)
       Time.parse(date_string)
     rescue StandardError
-      Time.now + 1.year
+      Time.now
     end
 
     # Generates a sample list of assignment deadlines relative to today's date.
