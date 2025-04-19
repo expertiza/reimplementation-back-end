@@ -1,9 +1,14 @@
 class Api::V1::ParticipantsController < ApplicationController
   include ParticipantsHelper
 
-  # Return a list of participants for a given user
-  # params - user_id
   # GET /participants/user/:user_id
+  # Fetch all participants associated with a specific user.
+  # Params:
+  # user_id: ID of the user whose participants are to be retrieved
+  # Returns:
+  # - 200 OK with a list of participant objects if successful
+  # - 422 Unprocessable Entity if retrieval fails
+
   def get_participants_by_user
     user = find_user if params[:user_id].present?
     return if params[:user_id].present? && user.nil?
