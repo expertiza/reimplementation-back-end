@@ -7,9 +7,9 @@ class Api::V1::ParticipantsController < ApplicationController
   # - user_id [Integer]: ID of the user
   # Returns:
   # - 200 OK: A JSON array of participant objects
+  # - 401 Unauthorized: If the user is not authorized for the action
   # - 404 Not Found: If the user does not exist
   # - 422 Unprocessable Entity: If the query fails unexpectedly
-
   def get_participants_by_user
     user = find_user if params[:user_id].present?
     return if params[:user_id].present? && user.nil?
@@ -29,6 +29,7 @@ class Api::V1::ParticipantsController < ApplicationController
   # - assignment_id [Integer]: ID of the assignment
   # Returns:
   # - 200 OK: A JSON array of participant objects
+  # - 401 Unauthorized: If the user is not authorized for the action
   # - 404 Not Found: If the assignment does not exist
   # - 422 Unprocessable Entity: If the query fails unexpectedly
   def get_participants_by_assignment
@@ -44,13 +45,9 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
+  # Return a specified participant
+  # params - id
   # GET /participants/:id
-  # Fetches a single participant by their unique ID.
-  # Params:
-  # - id [Integer]: ID of the participant
-  # Returns:
-  # - 200 OK: JSON representation of the participant
-  # - 422 Unprocessable Entity: If the participant lookup fails
   def show
     participant = Participant.find(params[:id])
 
