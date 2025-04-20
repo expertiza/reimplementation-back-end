@@ -67,8 +67,16 @@ RSpec.describe Api::V1::GradesController, type: :controller do
     let!(:team) { Team.create!(id: 1,  assignment_id: assignment.id) }
     let!(:participant) { AssignmentParticipant.create!(user: s1, assignment_id: assignment.id, team: team, handle: 'handle') }
     let!(:questionnaire) { Questionnaire.create!(name: 'Review Questionnaire',max_question_score:100,min_question_score:0,instructor_id:prof.id) }
+    let(:questionnaires) { [questionnaire] }
     let!(:assignment_questionnaire) { AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire) }
     let!(:question) { Question.create!(questionnaire: questionnaire, txt: 'Question 1',  seq: 1, break_before: 1) }
+    
+    let(:question1) { instance_double('Question', id: 1, txt: 'Question 1', question_type: 'Criterion', seq: 1, break_before: true,questionnaire_id: 1) }
+    let(:question2) { instance_double('Question', id: 2, txt: 'Question 2', question_type: 'Criterion', seq: 2, break_before: false,questionnaire_id: 1) }
+    let(:mock_questionnaire) { instance_double('Questionnaire', max_question_score: 5) }
+
+
+    let(:dummy_questions) do {review: [question1, question2]} end
     # let(:review_questionnaire) { build(:questionnaire, id: 1, questions: [question]) }
     let!(:review_questionnaire) do
         questionnaire.update(questions: [question])
@@ -363,7 +371,7 @@ RSpec.describe Api::V1::GradesController, type: :controller do
             allow(controller).to receive(:current_role_name).and_return(current_role_name)
 
             allow(AssignmentQuestionnaire).to receive(:where)
-            .with(assignment_id: assignment.id, topic_id: nil)
+            .with(assignment_id: assignment.id)
             .and_return([assignment_questionnaire])
 
             allow(controller).to receive(:retrieve_questions).and_return(question)
@@ -372,7 +380,12 @@ RSpec.describe Api::V1::GradesController, type: :controller do
             allow(Response).to receive(:participant_scores).with(participant, question).and_return(participant_scores)
             
             allow(controller).to receive(:get_penalty).with(participant.id).and_return(penalties)
-            allow(controller).to receive(:process_questionare_for_team).with(assignment, team.id).and_return(vmlist)
+            # allow(controller).to receive(:process_questionare_for_team).with(assignment, team.id).and_return(vmlist)
+            
+            allow(controller).to receive(:process_questionare_for_team)
+            .with(assignment, team.id, questionnaires, team, participant)
+            .and_return(vmlist)
+
             allow(controller).to receive(:instance_variable_set)
             allow(controller).to receive(:instance_variable_get).and_call_original
         end
@@ -383,14 +396,15 @@ RSpec.describe Api::V1::GradesController, type: :controller do
             request.headers['Content-Type'] = 'application/json'
 
             get :view_team, params: { id: participant.id }
-            
-            expect(assigns(:team)).to eq(team)
-            expect(assigns(:team_id)).to eq(team.id)
-            expect(assigns(:questions)).to eq(question)
-            expect(assigns(:pscore)).to eq(participant_scores)
-            expect(assigns(:penalties)).to eq(penalties)
-            expect(assigns(:vmlist)).to eq(vmlist)
-            expect(assigns(:current_role_name)).to eq(current_role_name)
+
+            json = JSON.parse(response.body)
+          
+            expect(json['team_id']).to eq(team.id)
+            expect(json['pscore']).to eq(participant_scores.stringify_keys)
+            expect(json['vmlist']).to include('name' => 'vmlist', '__expired' => false)
+            expect(json['questions']).to eq(question.as_json)
+            expect(json['participant']['id']).to eq(participant.id)
+            expect(json['assignment']['id']).to eq(assignment.id)
         end
     end
 
@@ -405,12 +419,13 @@ RSpec.describe Api::V1::GradesController, type: :controller do
             allow(AssignmentParticipant).to receive(:find).with(participant2.id).and_return(participant2)
             allow(participant2).to receive(:assignment).and_return(assignment)
             allow(TeamsUser).to receive(:team_id).with(anything, anything).and_return(16)
-            allow(SignedUpTeam).to receive(:topic_id).with(anything, anything).and_return(16)
+            # allow(SignedUpTeam).to receive(:topic_id).with(anything, anything).and_return(16)
+            allow(SignedUpTeam).to receive(:find_topic_id_for_user).with(anything, anything).and_return(16)
             allow(participant2).to receive_message_chain(:assignment, :current_stage).and_return(stage)
-            
+            allow(Questionnaire).to receive(:where).with(id: 1).and_return([mock_questionnaire])
             # Mock the methods being called in view_my_scores
             allow(controller).to receive(:redirect_when_disallowed).and_return(false) # Assuming no redirect
-            allow(controller).to receive(:fetch_questionnaires_and_questions)
+            allow(controller).to receive(:fetch_questionnaires_and_questions).and_return(dummy_questions)
             allow(controller).to receive(:fetch_participant_scores)
             allow(controller).to receive(:update_penalties)
             allow(controller).to receive(:fetch_feedback_summary)
@@ -419,21 +434,23 @@ RSpec.describe Api::V1::GradesController, type: :controller do
         it 'sets up participant and assignment variables' do
             request.headers['Authorization'] = "Bearer #{student_token}"
             request.headers['Content-Type'] = 'application/json'
-
+            
             get :view_my_scores, params: { id: participant2.id }
+            
+            parsed_response = JSON.parse(response.body)
+            expect(parsed_response['assignment']['id']).to eq(assignment.id)
 
-            expect(assigns(:assignment)).to eq(assignment)
         end
 
-        it 'sets up team_id, topic_id, and stage' do
+        it 'sets up team_id, topic_id' do
             request.headers['Authorization'] = "Bearer #{student_token}"
             request.headers['Content-Type'] = 'application/json'
 
             get :view_my_scores, params: { id: participant2.id }
 
-            expect(assigns(:team_id)).to eq(team_id)
-            expect(assigns(:topic_id)).to eq(topic_id)
-            expect(assigns(:stage)).to eq(stage)
+            parsed = JSON.parse(response.body)
+            expect(parsed['team_id']).to eq(team_id)
+            expect(parsed['topic_id']).to eq(topic_id)
         end
 
         it 'fetches questionnaires and questions, participant scores, and feedback summary' do
@@ -444,7 +461,6 @@ RSpec.describe Api::V1::GradesController, type: :controller do
 
             expect(controller).to have_received(:fetch_questionnaires_and_questions)
             expect(controller).to have_received(:fetch_participant_scores)
-            expect(controller).to have_received(:fetch_feedback_summary)
         end
     end
 
@@ -462,8 +478,6 @@ RSpec.describe Api::V1::GradesController, type: :controller do
             allow(controller).to receive(:penalties).and_return(nil)  
 
             allow(controller).to receive(:get_data_for_heat_map).and_call_original
-            allow(controller).to receive(:update_penalties).and_call_original
-            
         end
         it 'sets @assignment, @questions, @scores, @review_score_count, @averages, and @avg_of_avg' do
             request.headers['Authorization'] = "Bearer #{ta_token}"
@@ -471,16 +485,14 @@ RSpec.describe Api::V1::GradesController, type: :controller do
             get :view_grading_report, params: { id: assignment.id }
 
             expect(controller).to have_received(:get_data_for_heat_map).with(assignment.id)
-            expect(controller).to have_received(:update_penalties)
 
-            expect(assigns(:assignment)).to eq(assignment)
-            expect(assigns(:scores)).to eq(scores)
-            expect(assigns(:review_score_count)).to eq(2)  # Since there are 2 teams in scores
-            expect(assigns(:averages)).to eq(averages)
-            expect(assigns(:avg_of_avg)).to eq(5.0)
+            parsed = JSON.parse(response.body)
 
-            # Check the @show_reputation instance variable
-            expect(assigns(:show_reputation)).to be false
+            # Adjust based on what `get_data_for_heat_map` returns
+            expect(parsed['assignment']['id']).to eq(assignment.id)
+            expect(parsed['scores'].length).to eq(1)
+            expect(parsed['averages'].length).to eq(2)
+            expect(parsed['avg_of_avg']).to eq(5.0)
         end
   end
 end

@@ -25,8 +25,6 @@ class Api::V1::GradesController < ApplicationController
     participant = AssignmentParticipant.find(params[:id].to_i)
     assignment = participant.assignment
     team_id = TeamsUser.team_id(participant.assignment_id, participant.user_id)
-
-    # return if redirect_when_disallowed(participant)
   
     questions = fetch_questionnaires_and_questions(assignment)
   
@@ -34,8 +32,6 @@ class Api::V1::GradesController < ApplicationController
   
     topic_id = SignedUpTeam.find_topic_id_for_user(participant.assignment.id, participant.user_id)
     stage = participant.assignment.current_stage(topic_id)
-  
-    # all_penalties = update_penalties(assignment)
   
     # Feedback Summary needs to be checked once
     # summary_ws_url = WEBSERVICE_CONFIG['summary_webservice_url']
