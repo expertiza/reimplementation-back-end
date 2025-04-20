@@ -6,13 +6,13 @@ require 'rails_helper'
 #  - The can_participant_join_team? method, which enforces eligibility rules
 #  - The add_member method, which creates TeamsParticipant records
 RSpec.describe Team, type: :model do
-  # ------------------------------------------------------------------------
-  # Global Setup: Define a standard role hierarchy that all tests share.
-  # ------------------------------------------------------------------------
+  include RolesHelper
+  # --------------------------------------------------------------------------
+  # Global Setup
+  # --------------------------------------------------------------------------
+  # Create the full roles hierarchy once, to be shared by all examples.
   before(:all) do
-    @instructor_role = Role.find_or_create_by!(name: "Instructor")
-    @ta_role         = Role.find_or_create_by!(name: "Teaching Assistant", parent_id: @instructor_role.id)
-    @student_role    = Role.find_or_create_by!(name: "Student", parent_id: @ta_role.id)
+    @roles = create_roles_hierarchy
   end
 
   # ------------------------------------------------------------------------
@@ -24,7 +24,7 @@ RSpec.describe Team, type: :model do
       email:           "#{suffix}@example.com",
       full_name:       suffix.split('_').map(&:capitalize).join(' '),
       password_digest: "password",
-      role_id:         @student_role.id,
+      role_id:          @roles[:student].id,
       institution_id:  institution.id
     )
   end
@@ -44,7 +44,7 @@ RSpec.describe Team, type: :model do
       full_name:       "Instructor User",
       email:           "instructor@example.com",
       password_digest: "password",
-      role_id:         @instructor_role.id,
+      role_id:          @roles[:instructor].id,
       institution_id:  institution.id
     )
   end
