@@ -85,6 +85,7 @@ class Api::V1::ResponseMapsController < ApplicationController
 
   def persist_and_respond(record, success_status)
     if record.save
+      handle_submission(record) if record.is_submitted?
       render json: record, status: success_status
     else
       render json: record.errors, status: :unprocessable_entity
