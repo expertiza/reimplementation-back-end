@@ -69,6 +69,7 @@ class Api::V1::ResponseMapsController < ApplicationController
     params.require(:response).permit(
       :additional_comment,
       :round,
+      :is_submitted,
       scores_attributes: [:answer, :comments, :question_id]
     )
   end
