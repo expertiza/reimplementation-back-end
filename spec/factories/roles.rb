@@ -64,3 +64,9 @@ FactoryBot.define do
     sequence(:name) { |n| "Team #{n}" }
   end
 end
+
+FactoryBot.define do
+  factory :instructor, parent: :user do
+    instructor
+  end
+end

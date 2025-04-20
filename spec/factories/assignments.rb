@@ -1,8 +1,11 @@
-# spec/factories/assignments.rb
 FactoryBot.define do
   factory :assignment do
-    sequence(:name) { |n| "Assignment #{n}" }
-    directory_path { "assignment_#{name.downcase.gsub(/\s+/, '_')}" }
+    transient do
+      assignment_number { Faker::Number.unique.number(digits: 2) }
+    end
+
+    name { "Assignment #{assignment_number}" }
+    directory_path { "assignment_#{assignment_number}" }
 
     # Required associations
     association :instructor, factory: [:user, :instructor]
@@ -13,9 +16,9 @@ FactoryBot.define do
     num_reviews_allowed { 3 }
     num_metareviews_required { 3 }
     num_metareviews_allowed { 3 }
-    rounds_of_reviews { 1 }  # This is the correct attribute name
+    rounds_of_reviews { 1 }
 
-    # Boolean flags with default values
+    # Boolean flags
     is_calibrated { false }
     has_badge { false }
     enable_pair_programming { false }
