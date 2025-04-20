@@ -23,7 +23,8 @@ class Course < ApplicationRecord
       return { success: false, message: "The user with id #{user.id} is already a TA for this course." }
     else
       ta_mapping = TaMapping.create(user_id: user.id, course_id: id)
-      user.update(role: Role::TEACHING_ASSISTANT)
+      ta_role = Role.find_by(name: 'Teaching Assistant')
+      user.update(role: ta_role) if ta_role
       if ta_mapping.save
         return { success: true, data: ta_mapping.slice(:course_id, :user_id) }
       else
