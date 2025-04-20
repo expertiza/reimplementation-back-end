@@ -41,10 +41,19 @@ class Api::V1::ResponseMapsController < ApplicationController
       # send feedback email now that it’s marked submitted
       FeedbackEmailService.new(@response_map, @response_map.assignment).call
       render json: { message: 'Response submitted successfully, email sent' }, status: :ok
+      handle_submission(@response_map)
     else
       render json: { errors: @response.errors }, status: :unprocessable_entity
     end
   end
+
+  def handle_submission(map)
+    FeedbackEmailService.new(map, map.assignment).call
+    render json: { message: 'Response submitted successfully, email sent' }, status: :ok
+    rescue StandardError => e
+    Rails.logger.error "FeedbackEmail failed: #{e.message}"
+    render json: { message: 'Response submitted, but email failed' }, status: :ok
+    end
 
   # GET /api/v1/response_maps/response_report/:assignment_id
   def response_report
@@ -69,12 +78,14 @@ class Api::V1::ResponseMapsController < ApplicationController
     params.require(:response).permit(
       :additional_comment,
       :round,
+      :is_submitted,
       scores_attributes: [:answer, :comments, :question_id]
     )
   end
 
   def persist_and_respond(record, success_status)
     if record.save
+      handle_submission(record) if record.is_submitted?
       render json: record, status: success_status
     else
       render json: record.errors, status: :unprocessable_entity
