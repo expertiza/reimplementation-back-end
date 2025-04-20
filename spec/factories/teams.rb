@@ -60,7 +60,10 @@ FactoryBot.define do
     after(:build) do |team, evaluator|
       team.course = team.assignment.course || evaluator.course
       mentor_role = create(:role, :mentor)
-      team.mentor = create(:user, role: mentor_role)
+      mentor = create(:user)
+      mentor.role = mentor_role
+      mentor.save!
+      team.mentor = mentor
     end
   end
 
