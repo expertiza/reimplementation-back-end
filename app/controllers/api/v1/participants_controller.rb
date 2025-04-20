@@ -131,16 +131,14 @@ class Api::V1::ParticipantsController < ApplicationController
   # Filters participants based on the provided user
   # Returns participants ordered by their IDs
   def filter_participants_by_user(user)
-    participants = Participant.all
-    participants = participants.where(user_id: user.id) if user
+    participants = Participant.where(user_id: user.id) if user
     participants.order(:id)
   end
 
   # Filters participants based on the provided assignment
   # Returns participants ordered by their IDs
   def filter_participants_by_assignments(assignment)
-    participants = Participant.all
-    participants = participants.where(assignment_id: assignment.id) if assignment
+    participants = Participant.where(assignment_id: assignment.id) if assignment
     participants.order(:id)
   end
 
