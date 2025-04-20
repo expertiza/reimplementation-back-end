@@ -16,17 +16,12 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
   # A single institution to house all users.
   let(:institution) { Institution.create!(name: "NC State") }
 
-  # Define the three user roles used throughout the tests.
-  let(:instructor_role) { Role.find_or_create_by!(name: "Instructor") }
-  let(:ta_role)         { Role.find_or_create_by!(name: "Teaching Assistant", parent_id: instructor_role.id) }
-  let(:student_role)    { Role.find_or_create_by!(name: "Student", parent_id: ta_role.id) }
-
   # An instructor user who will own assignments and courses.
   let(:instructor) do
     User.create!(
       name:                "profa",
       password_digest:     "password",
-      role_id:             instructor_role.id,
+      role_id:              @roles[:instructor].id,
       full_name:           "Prof A",
       email:               "testuser@example.com",
       mru_directory_path:  "/home/testuser",
@@ -41,7 +36,7 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
       name:            "NewParticipant",
       email:           "newparticipant@example.com",
       password_digest: "password",
-      role_id:         student_role.id,
+      role_id:          @roles[:student].id,
       institution_id:  institution.id
     )
   end
@@ -53,7 +48,7 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
       name:            "student_member",
       email:           "studentmember@example.com",
       password_digest: "password",
-      role_id:         student_role.id,
+      role_id:          @roles[:student].id,
       institution_id:  institution.id
     )
   end
@@ -173,7 +168,7 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
             name:            "other",
             email:           "other@example.com",
             password_digest: "pw",
-            role_id:         student_role.id,
+            role_id:          @roles[:student].id,
             institution_id:  institution.id
           )
         end
@@ -306,7 +301,7 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
       # -- NOT FOUND: Participant record missing for given name --
       response(404, 'participant not found') do
         let(:id)                                     { team_with_assignment.id }
-        let!(:user_without_participant)              { User.create!(full_name: "User Without Participant", name: "no_part", email: "no@example.com", password_digest: "pw", role_id: student_role.id, institution_id: institution.id) }
+        let!(:user_without_participant)              { User.create!(full_name: "User Without Participant", name: "no_part", email: "no@example.com", password_digest: "pw", role_id: @roles[:student].id, institution_id: institution.id) }
         let(:payload)                                { { name: user_without_participant.name } }
 
         run_test! do
