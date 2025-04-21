@@ -1,5 +1,8 @@
 class Api::V1::StudentReviewController < ApplicationController
-  before_action :authorize_user, only: [:list]
+  LIST_ACTION     = 'list'.freeze
+  SUBMITTER_ROLE  = 'submitter'.freeze
+
+  before_action :authorize_user, only: [LIST_ACTION.to_sym]
   before_action :load_service, only: [:list]
 
   def list
@@ -29,11 +32,15 @@ class Api::V1::StudentReviewController < ApplicationController
     end
   end
 
+  # Quick-exit unless they're a student.
+  # Then, only allow the LIST_ACTION for users who also have the SUBMITTER_ROLE on this resource.
   def action_allowed?
-    (current_user_has_student_privileges? &&
-      (%w[list].include? action_name) &&
-      are_needed_authorizations_present?(params[:id], 'submitter')) ||
-    current_user_has_student_privileges?
+    # guard clause: must be a student at all
+    return false unless current_user_has_student_privileges?  # early return
+
+    # only permit “list” for submitters
+    action_name == LIST_ACTION &&
+      are_needed_authorizations_present?(params[:id], SUBMITTER_ROLE)
   end
 
   def load_service
