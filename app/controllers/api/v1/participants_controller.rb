@@ -200,8 +200,10 @@ class Api::V1::ParticipantsController < ApplicationController
     assignment
   end
 
-  # Finds a participant based on the id parameter
-  # Returns the participant if found
+  # Finds a participant by id param.
+  # Returns:
+  # - Participant object if found
+  # - Renders 404 if not found
   def find_participant
     participant_id = params[:id]
     participant = Participant.find_by(id: participant_id)
@@ -229,7 +231,9 @@ class Api::V1::ParticipantsController < ApplicationController
   end
 
   # Validates that the authorization parameter is present and is one of the following valid authorizations: reader, reviewer, submitter, mentor
-  # Returns the authorization if valid
+  # Returns:
+  # - authorization [String] if valid
+  # - Renders 422 if missing or invalid
   def validate_authorization
     valid_authorizations = %w[reader reviewer submitter mentor]
     authorization = params[:authorization]
