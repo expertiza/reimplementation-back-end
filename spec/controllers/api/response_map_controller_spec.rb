@@ -102,4 +102,31 @@ RSpec.describe "Api::V1::ResponseMaps", type: :request do
       end
     end
   end
+  describe "POST /api/v1/response_maps" do
+    it "creates a new response map and returns it" do
+      ResponseMap.class_eval { def is_submitted?; false; end }
+      allow_any_instance_of(ResponseMap).to receive(:assignment).and_return(assignment)
+  
+      post "/api/v1/response_maps", params: {
+        response_map: {
+          reviewer_id: reviewer.id,
+          reviewee_id: reviewee.id,
+          assignment_id: assignment.id
+        }
+      }, as: :json
+  
+      expect(response).to have_http_status(:created)
+  
+      json = JSON.parse(response.body)
+      expect(json["reviewer_id"]).to eq(reviewer.id)
+      expect(json["reviewee_id"]).to eq(reviewee.id)
+  
+      # This is safe
+      created_map = ResponseMap.last
+      expect(created_map.reviewer_id).to eq(reviewer.id)
+      expect(created_map.reviewee_id).to eq(reviewee.id)
+      expect(created_map.assignment).to eq(assignment)
+    end
+  end
+  
 end
