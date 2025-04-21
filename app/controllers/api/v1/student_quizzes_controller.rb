@@ -20,8 +20,9 @@ class Api::V1::StudentQuizzesController < ApplicationController
   #POST /student_quizzes
   def create
     questionnaire = ActiveRecord::Base.transaction do
-      questionnaire = create_questionnaire(questionnaire_params.except(:questions_attributes))
-      create_questions_and_answers(questionnaire, questionnaire_params[:questions_attributes])
+      q_params = questionnaire_params
+      questionnaire = create_questionnaire(q_params.except(:items_attributes))
+      create_items_and_answers(questionnaire, q_params[:items_attributes])
       questionnaire
     end
     render_success(questionnaire, :created)
@@ -114,11 +115,11 @@ class Api::V1::StudentQuizzesController < ApplicationController
   end
 
   # Create questions and their respective answers for a questionnaire
-  def create_questions_and_answers(questionnaire, questions_attributes)
-    questions_attributes.each do |question_attr|
-      question = questionnaire.questions.create!(question_attr.except(:answers_attributes))
-      question_attr[:answers_attributes]&.each do |answer_attr|
-        question.answers.create!(answer_attr)
+  def create_items_and_answers(questionnaire, items_attributes)
+    items_attributes.each do |item_attr|
+      item = questionnaire.items.create!(item_attr.except(:answers_attributes))
+      item_attr[:answers_attributes]&.each do |answer_attr|
+        item.answers.create!(answer_attr)
       end
     end
   end
@@ -133,14 +134,14 @@ class Api::V1::StudentQuizzesController < ApplicationController
       :assignment_id,
       :questionnaire_type,
       :private,
-      questions_attributes: [
+      items_attributes: [
         :id,
         :txt,
         :question_type,
         :break_before,
         :correct_answer,
         :score_value,
-        :skippable
+        :skippable,
         { answers_attributes: %i[id answer_text correct] }
       ]
     )
