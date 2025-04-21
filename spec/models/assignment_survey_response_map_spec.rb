@@ -16,4 +16,11 @@ RSpec.describe AssignmentSurveyResponseMap, type: :model do
         expect(assignment_survey_response_map.survey_parent).to eq(assignment)
       end
     end
+    
+    describe '#get_title' do
+      it 'returns the correct title constant' do
+        assignment_survey_response_map = AssignmentSurveyResponseMap.new
+        expect(assignment_survey_response_map.get_title).to eq(ResponseMapSubclassTitles::ASSIGNMENT_SURVEY_RESPONSE_MAP_TITLE)
+      end
+    end
   end

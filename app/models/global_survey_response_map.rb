@@ -7,4 +7,7 @@ class GlobalSurveyResponseMap < SurveyResponseMap
     def survey_parent
         questionnaire
     end
+    def get_title
+        GLOBAL_SURVEY_RESPONSE_MAP_TITLE
+    end
 end
