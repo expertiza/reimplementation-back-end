@@ -24,7 +24,7 @@ class ResponseMap < ApplicationRecord
       submitted_answer = answer[:answer_value]
       skipped = answer[:skipped] || false
 
-      
+      # Ensure the question can be skipped if marked as skipped
       if skipped && !question.skippable
         raise ActiveRecord::RecordInvalid.new("Question #{question.id} cannot be skipped.")
       end
@@ -35,6 +35,7 @@ class ResponseMap < ApplicationRecord
       response.skipped = skipped
       response.save!
 
+      # Award zero points if skipped; otherwise, calculate based on correctness
       skipped ? 0 : (question.correct_answer == submitted_answer ? question.score_value : 0)
     end
   end

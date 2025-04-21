@@ -140,6 +140,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
         :break_before,
         :correct_answer,
         :score_value,
+        :skippable
         { answers_attributes: %i[id answer_text correct] }
       ]
     )
