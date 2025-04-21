@@ -1,10 +1,6 @@
 require 'rails_helper'
 
 RSpec.describe ApplicationController, type: :controller do
-<<<<<<< Updated upstream
-  # Define a dummy controller inside which we can invoke set_locale
-=======
->>>>>>> Stashed changes
   controller(ActionController::API) do
     before_action :set_locale
     def index; head :ok; end
