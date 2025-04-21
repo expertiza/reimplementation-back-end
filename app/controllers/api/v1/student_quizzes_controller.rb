@@ -85,11 +85,13 @@ class Api::V1::StudentQuizzesController < ApplicationController
 
   private
 
-  #To get quiz from db
-  def fetch_quiz
-    @student_quiz = FindResourceService.call(Questionnaire, params[:id])
-  end
   
+  def set_student_quiz
+    @student_quiz = FindResourceService.call(Questionnaire, params[:id])
+    return if @student_quiz
+    render_error('Record does not exist', :not_found) and return
+  end
+
   # Check if a quiz has already been assigned to a participant
   def quiz_assigned?(participant, questionnaire)
     ResponseMap.exists?(
