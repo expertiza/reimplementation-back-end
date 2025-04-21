@@ -45,9 +45,15 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
-  # Return a specified participant
-  # params - id
   # GET /participants/:id
+  # Fetches a single participant by their unique ID.
+  # Params:
+  # - id [Integer]: ID of the participant
+  # Returns:
+  # - 200 OK: JSON representation of the participant
+  # - 401 Unauthorized: If the user is not authorized for the action
+  # - 404 Not Found: If the participant does not exist
+  # - 422 Unprocessable Entity: If the participant lookup fails
   def show
     participant = Participant.find(params[:id])
 
@@ -58,8 +64,21 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
-  # Assign the specified authorization to the participant and add them to an assignment
   # POST /participants/:authorization
+  # Creates a new participant for a given user and assignment, and assigns
+  # permissions based on the specified role (authorization).
+  # Params:
+  # - authorization [String]: Role to assign (reader, reviewer, submitter, mentor)
+  # - participant[user_id] [Integer]: ID of the user
+  # - participant[assignment_id] [Integer]: ID of the assignment
+  # Returns:
+  # - 201 Created: Participant successfully created
+  # - 404 Not Found: If the user or assignment is not found
+  # - 404 Not Found: If the assignment is not found
+  # - 404 Not Found: If the user_id is missing in response body
+  # - 404 Not Found: If the assignment_id is missing in response body
+  # - 500 Already Exists: If the participant already exists
+  # - 422 Unprocessable Entity: If the role is invalid or saving fails
   def add_participant_to_assignment
     user = find_user
     return unless user
@@ -80,8 +99,16 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
-  # Update the specified participant to the specified authorization
   # PATCH /participants/:id/:authorization
+  # Updates the role/authorization of an existing participant.
+  # Params:
+  # - id [Integer]: ID of the participant
+  # - authorization [String]: New role to assign (reader, reviewer, submitter, mentor)
+  # Returns:
+  # - 201 Created: Participant successfully updated
+  # - 401 Unauthorized: If the user is not authorized for the action
+  # - 404 Not Found: If participant is not found
+  # - 422 Unprocessable Entity: If the authorization is invalid or update fails
   def update_authorization
     participant = find_participant
     return unless participant
@@ -98,9 +125,18 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
-  # Delete a participant
-  # params - id
   # DELETE /participants/:id
+  # Deletes a participant from the system.
+  # Optionally includes assignment_id and team_id for context in the response.
+  # Params:
+  # - id [Integer]: ID of the participant to delete
+  # - assignment_id [Integer, optional]
+  # - team_id [Integer, optional]
+  # Returns:
+  # - 200 OK: Success message indicating deletion
+  # - 401 Unauthorized: If the user is not authorized for the action
+  # - 404 Not Found: If participant does not exist
+  # - 422 Unprocessable Entity: If deletion fails
   def destroy
     participant = Participant.find_by(id: params[:id])
   
@@ -142,8 +178,10 @@ class Api::V1::ParticipantsController < ApplicationController
     participants.order(:id)
   end
 
-  # Finds a user based on the user_id parameter
-  # Returns the user if found
+  ## Finds a user by user_id param.
+  # Returns:
+  # - User object if found
+  # - Renders 404 if not found
   def find_user
     user_id = params[:user_id]
     user = User.find_by(id: user_id)
@@ -151,8 +189,10 @@ class Api::V1::ParticipantsController < ApplicationController
     user
   end
 
-  # Finds an assignment based on the assignment_id parameter
-  # Returns the assignment if found
+  # Finds an assignment by assignment_id param.
+  # Returns:
+  # - Assignment object if found
+  # - Renders 404 if not found
   def find_assignment
     assignment_id = params[:assignment_id]
     assignment = Assignment.find_by(id: assignment_id)
