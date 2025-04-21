@@ -25,4 +25,9 @@ module ParticipantsHelper
 
     default_permissions.merge(permissions_map[authorization])
   end
+
+
+#   def generate()
+#     raise NotImplementedError("Participant Factory not running yet.")
+#   end
 end
