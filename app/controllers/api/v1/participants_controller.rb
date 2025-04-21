@@ -1,14 +1,20 @@
 class Api::V1::ParticipantsController < ApplicationController
   include ParticipantsHelper
 
-  # Return a list of participants for a given user
-  # params - user_id
   # GET /participants/user/:user_id
-  def list_user_participants
+  # Fetches all participants associated with the specified user.
+  # Params:
+  # - user_id [Integer]: ID of the user
+  # Returns:
+  # - 200 OK: A JSON array of participant objects
+  # - 401 Unauthorized: If the user is not authorized for the action
+  # - 404 Not Found: If the user does not exist
+  # - 422 Unprocessable Entity: If the query fails unexpectedly
+  def get_participants_by_user
     user = find_user if params[:user_id].present?
     return if params[:user_id].present? && user.nil?
 
-    participants = filter_user_participants(user)
+    participants = filter_participants_by_user(user)
 
     if participants.nil?
       render json: participants.errors, status: :unprocessable_entity
@@ -17,14 +23,20 @@ class Api::V1::ParticipantsController < ApplicationController
     end
   end
 
-  # Return a list of participants for a given assignment
-  # params - assignment_id
   # GET /participants/assignment/:assignment_id
-  def list_assignment_participants
+  # Retrieves all participants enrolled in a given assignment.
+  # Params:
+  # - assignment_id [Integer]: ID of the assignment
+  # Returns:
+  # - 200 OK: A JSON array of participant objects
+  # - 401 Unauthorized: If the user is not authorized for the action
+  # - 404 Not Found: If the assignment does not exist
+  # - 422 Unprocessable Entity: If the query fails unexpectedly
+  def get_participants_by_assignment
     assignment = find_assignment if params[:assignment_id].present?
     return if params[:assignment_id].present? && assignment.nil?
 
-    participants = filter_assignment_participants(assignment)
+    participants = filter_participants_by_assignments(assignment)
 
     if participants.nil?
       render json: participants.errors, status: :unprocessable_entity
@@ -42,13 +54,13 @@ class Api::V1::ParticipantsController < ApplicationController
     if participant.nil?
       render json: participant.errors, status: :unprocessable_entity
     else
-      render json: participant, status: :created
+      render json: participant, status: :ok
     end
   end
 
   # Assign the specified authorization to the participant and add them to an assignment
   # POST /participants/:authorization
-  def add
+  def add_participant_to_assignment
     user = find_user
     return unless user
 
@@ -58,14 +70,8 @@ class Api::V1::ParticipantsController < ApplicationController
     authorization = validate_authorization
     return unless authorization
 
-    permissions = retrieve_participant_permissions(authorization)
-
     participant = assignment.add_participant(user)
-    participant.authorization = authorization
-    participant.can_submit = permissions[:can_submit]
-    participant.can_review = permissions[:can_review]
-    participant.can_take_quiz = permissions[:can_take_quiz]
-    participant.can_mentor = permissions[:can_mentor]
+    assign_participant_permissions(authorization, participant)
 
     if participant.save
       render json: participant, status: :created
@@ -83,13 +89,7 @@ class Api::V1::ParticipantsController < ApplicationController
     authorization = validate_authorization
     return unless authorization
 
-    permissions = retrieve_participant_permissions(authorization)
-
-    participant.authorization = authorization
-    participant.can_submit = permissions[:can_submit]
-    participant.can_review = permissions[:can_review]
-    participant.can_take_quiz = permissions[:can_take_quiz]
-    participant.can_mentor = permissions[:can_mentor]
+    assign_participant_permissions(authorization, participant)
 
     if participant.save
       render json: participant, status: :created
@@ -130,17 +130,15 @@ class Api::V1::ParticipantsController < ApplicationController
 
   # Filters participants based on the provided user
   # Returns participants ordered by their IDs
-  def filter_user_participants(user)
-    participants = Participant.all
-    participants = participants.where(user_id: user.id) if user
+  def filter_participants_by_user(user)
+    participants = Participant.where(user_id: user.id) if user
     participants.order(:id)
   end
 
   # Filters participants based on the provided assignment
   # Returns participants ordered by their IDs
-  def filter_assignment_participants(assignment)
-    participants = Participant.all
-    participants = participants.where(assignment_id: assignment.id) if assignment
+  def filter_participants_by_assignments(assignment)
+    participants = Participant.where(assignment_id: assignment.id) if assignment
     participants.order(:id)
   end
 
@@ -169,6 +167,25 @@ class Api::V1::ParticipantsController < ApplicationController
     participant = Participant.find_by(id: participant_id)
     render json: { error: 'Participant not found' }, status: :not_found unless participant
     participant
+  end
+
+  # An authorization string containing the participant's role is taken and used to determine
+  # what permissions will be allocated to the participant. Each of these permissions will
+  # then be assigned to the Participant's database permission attributes.
+  #
+  # @param [String] authorization: An authorization string that represents the participant's role
+  # @param [Participant] participant: The participant whose authorization permissions are being updated
+  def assign_participant_permissions(authorization, participant)
+    # Call helper method from participants_helper to retrieve a dictionary containing the
+    # appropriate permission boolean values for the role specified by the authorization string
+    permissions = retrieve_participant_permissions(authorization)
+
+    # Assigns each of the boolean permission values to their respective database counterparts
+    participant.authorization = authorization
+    participant.can_submit = permissions[:can_submit]
+    participant.can_review = permissions[:can_review]
+    participant.can_take_quiz = permissions[:can_take_quiz]
+    participant.can_mentor = permissions[:can_mentor]
   end
 
   # Validates that the authorization parameter is present and is one of the following valid authorizations: reader, reviewer, submitter, mentor
