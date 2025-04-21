@@ -10,4 +10,8 @@ class QuizResponseMap < ResponseMap
   def self.mappings_for_reviewer(participant_id)
     QuizResponseMap.where(reviewer_id: participant_id)
   end
+
+  def get_title
+    QUIZ_RESPONSE_MAP_TITLE
+  end
 end
