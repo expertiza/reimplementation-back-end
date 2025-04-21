@@ -32,4 +32,11 @@ RSpec.describe QuizResponseMap, type: :model do
         expect(mappings).to eq([quiz_response_map])
       end
     end
+
+    describe '#get_title' do
+      it 'returns the correct title constant' do
+        quiz_response_map = QuizResponseMap.new
+        expect(quiz_response_map.get_title).to eq(ResponseMapSubclassTitles::QUIZ_RESPONSE_MAP_TITLE)
+      end
+    end
   end

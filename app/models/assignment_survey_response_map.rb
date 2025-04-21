@@ -7,4 +7,8 @@ class AssignmentSurveyResponseMap < SurveyResponseMap
     def survey_parent
         assignment
     end
+
+    def get_title
+        ASSIGNMENT_SURVEY_RESPONSE_MAP_TITLE
+    end
 end

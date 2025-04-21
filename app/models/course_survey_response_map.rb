@@ -8,4 +8,8 @@ class CourseSurveyResponseMap < SurveyResponseMap
     def survey_parent
         course
     end
+
+    def get_title
+        COURSE_SURVEY_RESPONSE_MAP_TITLE
+    end
 end
