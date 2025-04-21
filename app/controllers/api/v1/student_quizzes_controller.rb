@@ -20,8 +20,8 @@ class Api::V1::StudentQuizzesController < ApplicationController
   #POST /student_quizzes
   def create
     questionnaire = ActiveRecord::Base.transaction do
-      questionnaire = create_questionnaire(questionnaire_params.except(:questions_attributes))
-      create_questions_and_answers(questionnaire, questionnaire_params[:questions_attributes])
+      questionnaire = create_questionnaire(questionnaire_params.except(:items_attributes))
+      create_items_and_choices(questionnaire, questionnaire_params[:items_attributes])
       questionnaire
     end
     render_success(questionnaire, :created)
@@ -113,12 +113,12 @@ class Api::V1::StudentQuizzesController < ApplicationController
     Questionnaire.create!(params)
   end
 
-  # Create questions and their respective answers for a questionnaire
-  def create_questions_and_answers(questionnaire, questions_attributes)
-    questions_attributes.each do |question_attr|
-      question = questionnaire.questions.create!(question_attr.except(:answers_attributes))
-      question_attr[:answers_attributes]&.each do |answer_attr|
-        question.answers.create!(answer_attr)
+  # Create items and their respective choices for a questionnaire
+  def create_items_and_choices(questionnaire, items_attributes)
+    items_attributes.each do |item_attr|
+      item = questionnaire.items.create!(item_attr.except(:quiz_question_choices_attributes))
+      item_attr[:quiz_question_choices_attributes]&.each do |choice_attr|
+        item.quiz_question_choices.create!(choice_attr)
       end
     end
   end
@@ -126,22 +126,21 @@ class Api::V1::StudentQuizzesController < ApplicationController
   # Permit and require the necessary parameters for creating/updating a questionnaire
   def questionnaire_params
     params.require(:questionnaire).permit(
-      :name,
+      :name, 
       :instructor_id,
       :min_question_score,
       :max_question_score,
-      :assignment_id,
       :questionnaire_type,
       :private,
       items_attributes: [
-        :id,
         :txt,
         :question_type,
         :break_before,
-        :correct_answer,
-        :score_value,
+        :weight,
         :skippable,
-        { quiz_question_choices_attributes: %i[txt is_correct] }
+        :seq,
+        :break_before,
+        { quiz_question_choices_attributes: %i[txt iscorrect] }
       ]
     )
   end
