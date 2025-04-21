@@ -9,12 +9,7 @@ class ResponseMap < ApplicationRecord
 
   # Gets the score from this response map
   def calculate_score
-    responses.sum do |response|
-      question = response.question
-      skipped = response.skipped
-      next 0 if skipped
-      question.correct_answer == response.submitted_answer ? question.score_value : 0
-    end
+    responses.sum(&:calculate_score)
   end
   
 
