@@ -114,4 +114,10 @@ class User < ApplicationRecord
     self.etc_icons_on_homepage ||= true
   end
 
+  # Check if user can create calibration reviews
+  def can_create_calibration_review?(assignment)
+    # Only instructors and TAs can create calibration reviews
+    role.name == 'Instructor' || role.name == 'Teaching Assistant'
+  end
+
 end

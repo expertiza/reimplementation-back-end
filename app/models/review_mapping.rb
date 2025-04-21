@@ -20,9 +20,8 @@ class ReviewMapping < ApplicationRecord
   # @param assignment_id [Integer] The ID of the assignment
   # @param team_id [Integer] The ID of the team to be reviewed
   # @param user_name [String] The name of the user to assign as reviewer
-  # @param topic_id [Integer] The ID of the topic (optional)
   # @return [OpenStruct] An object containing success status and either the review mapping or error message
-  def self.add_reviewer(assignment_id:, team_id:, user_name:, topic_id: nil)
+  def self.add_reviewer(assignment_id:, team_id:, user_name:)
     # Find the required records
     assignment = Assignment.find(assignment_id)
     team = Team.find(team_id)
@@ -33,37 +32,38 @@ class ReviewMapping < ApplicationRecord
       return OpenStruct.new(success?: false, error: "User '#{user_name}' not found")
     end
 
-    # Check for self-review
-    if TeamsUser.exists?(team_id: team_id, user_id: user.id)
-      return OpenStruct.new(success?: false, error: 'You cannot assign this student to review their own artifact')
+    # Validate user is a participant in the assignment
+    participant = Participant.find_by(user_id: user.id, assignment_id: assignment.id)
+    unless participant
+      return OpenStruct.new(success?: false, error: "User '#{user_name}' is not a participant in this assignment")
     end
 
-    # Sign up the user for the topic if provided
-    if topic_id
-      SignUpSheet.signup_team(assignment_id, user.id, topic_id)
+    # Validate user can review
+    unless participant.can_review?
+      return OpenStruct.new(success?: false, error: "User '#{user_name}' cannot review in this assignment")
     end
 
-    # Get or create the reviewer participant
-    reviewer = assignment.participants.find_or_create_by(user_id: user.id)
+    # Find a user from the team to be the reviewee
+    team_user = TeamsUser.find_by(team_id: team.id)
+    unless team_user
+      return OpenStruct.new(success?: false, error: "No users found in team #{team_id}")
+    end
+    reviewee = User.find(team_user.user_id)
 
-    # Check for existing review mapping
-    if ReviewMapping.exists?(reviewee_id: team_id, reviewer_id: reviewer.id, assignment_id: assignment_id)
-      return OpenStruct.new(success?: false, error: "The reviewer, '#{user.name}', is already assigned to this contributor")
+    # Check if user is already assigned to review this team
+    if ReviewMapping.exists?(reviewer_id: user.id, reviewee_id: reviewee.id, assignment_id: assignment.id)
+      return OpenStruct.new(success?: false, error: "User '#{user_name}' is already assigned to review this team")
     end
 
     # Create the review mapping
-    review_mapping = ReviewMapping.new(
-      reviewer_id: reviewer.id,
-      reviewee_id: team_id,
-      assignment_id: assignment_id,
+    review_mapping = ReviewMapping.create!(
+      reviewer_id: user.id,
+      reviewee_id: reviewee.id,
+      assignment_id: assignment.id,
       review_type: 'Review'
     )
 
-    if review_mapping.save
-      OpenStruct.new(success?: true, review_mapping: review_mapping)
-    else
-      OpenStruct.new(success?: false, error: review_mapping.errors.full_messages.join(', '))
-    end
+    OpenStruct.new(success?: true, review_mapping: review_mapping)
   end
 
   # Creates a calibration review mapping between a team and an assignment
@@ -82,13 +82,21 @@ class ReviewMapping < ApplicationRecord
       return OpenStruct.new(success?: false, error: 'User does not have permission to create calibration reviews')
     end
 
-    if ReviewMapping.exists?(assignment_id: assignment_id, reviewee_id: team.id, review_type: 'Calibration')
+    # Find a user from the team to be the reviewee
+    team_user = TeamsUser.find_by(team_id: team.id)
+    unless team_user
+      return OpenStruct.new(success?: false, error: "No users found in team #{team_id}")
+    end
+    reviewee = User.find(team_user.user_id)
+
+    # Check if a calibration review already exists for this team
+    if ReviewMapping.exists?(assignment_id: assignment_id, reviewee_id: reviewee.id, review_type: 'Calibration')
       return OpenStruct.new(success?: false, error: 'Team has already been assigned for calibration')
     end
 
     review_mapping = ReviewMapping.new(
       reviewer_id: user_id,
-      reviewee_id: team.id,
+      reviewee_id: reviewee.id,
       assignment_id: assignment_id,
       review_type: 'Calibration'
     )
@@ -109,8 +117,8 @@ class ReviewMapping < ApplicationRecord
   # @return [OpenStruct] An object containing success status and either the review mapping or error message
   def self.assign_reviewer_dynamically(assignment_id:, reviewer_id:, topic_id: nil, i_dont_care: false)
     assignment = Assignment.find(assignment_id)
-    participant = AssignmentParticipant.find_by(user_id: reviewer_id, parent_id: assignment.id)
-    reviewer = participant&.get_reviewer
+    participant = Participant.find_by(user_id: reviewer_id, assignment_id: assignment.id)
+    reviewer = User.find(reviewer_id)
 
     return OpenStruct.new(success?: false, error: 'Reviewer not found') unless reviewer
 
@@ -121,7 +129,7 @@ class ReviewMapping < ApplicationRecord
 
     # Check outstanding reviews
     if has_outstanding_reviews?(assignment, reviewer)
-      return OpenStruct.new(success?: false, error: "You cannot do more reviews when you have #{Assignment.max_outstanding_reviews} reviews to do")
+      return OpenStruct.new(success?: false, error: "You cannot do more reviews when you have #{Assignment::MAX_OUTSTANDING_REVIEWS} reviews to do")
     end
 
     # Handle topic-based assignments
@@ -142,8 +150,8 @@ class ReviewMapping < ApplicationRecord
   #   - allowed [Boolean] Whether the reviewer can perform more reviews
   #   - error [String] Error message if any
   def self.check_outstanding_reviews?(assignment, reviewer)
-    # Find all review mappings for this assignment and reviewer
-    review_mappings = where(reviewed_object_id: assignment.id, reviewer_id: reviewer.id)
+    # Find all review response maps for this assignment and reviewer
+    review_mappings = ReviewResponseMap.where(reviewed_object_id: assignment.id, reviewer_id: reviewer.id)
     
     # Count completed reviews (where response exists)
     completed_reviews = review_mappings.joins(:response).count
@@ -154,8 +162,8 @@ class ReviewMapping < ApplicationRecord
     # Calculate outstanding reviews
     outstanding_reviews = total_reviews - completed_reviews
     
-    # Get the maximum allowed outstanding reviews from assignment policy
-    max_outstanding = assignment.max_outstanding_reviews || 2
+    # Get the maximum allowed outstanding reviews (default to 2 if not set)
+    max_outstanding = 2
     
     OpenStruct.new(
       success: true,
@@ -176,17 +184,30 @@ class ReviewMapping < ApplicationRecord
   # Checks if the reviewer can perform more reviews based on assignment policy
   def self.can_review?(assignment, reviewer)
     current_reviews = where(reviewer_id: reviewer.id, assignment_id: assignment.id).count
-    current_reviews < assignment.num_reviews_allowed
+    # If num_reviews_allowed is nil, use the default value from the Assignment model
+    max_reviews = assignment.num_reviews_allowed || 3
+    current_reviews < max_reviews
   end
 
   # Checks if the reviewer has outstanding reviews
   def self.has_outstanding_reviews?(assignment, reviewer)
-    outstanding_reviews = where(
-      reviewer_id: reviewer.id,
-      assignment_id: assignment.id,
-      status: 'pending'
-    ).count
-    outstanding_reviews >= Assignment.max_outstanding_reviews
+    return false if assignment.nil?
+    return false if reviewer.nil?
+
+    # Find all review mappings for this assignment and reviewer
+    review_mappings = where(reviewer_id: reviewer.id, assignment_id: assignment.id)
+    return false if review_mappings.empty?
+
+    # Count completed reviews (where response exists)
+    completed_reviews = review_mappings.joins(:response).count
+    
+    # Count total reviews
+    total_reviews = review_mappings.count
+    
+    # Calculate outstanding reviews
+    outstanding_reviews = total_reviews - completed_reviews
+
+    outstanding_reviews >= Assignment::MAX_OUTSTANDING_REVIEWS
   end
 
   # Handles assignment with topics
@@ -222,21 +243,43 @@ class ReviewMapping < ApplicationRecord
 
   # Creates a review mapping for topic-based assignments
   def self.create_review_mapping(assignment, reviewer, topic)
-    review_mapping = assignment.assign_reviewer_dynamically(reviewer, topic)
-    if review_mapping
-      OpenStruct.new(success?: true, review_mapping: review_mapping)
-    else
-      OpenStruct.new(success?: false, error: 'Failed to create review mapping')
-    end
+    # Find the team signed up for this topic
+    signed_up_team = SignedUpTeam.find_by(sign_up_topic_id: topic.id)
+    return OpenStruct.new(success?: false, error: 'No team signed up for this topic') unless signed_up_team
+
+    # Find a user from the team
+    team_user = TeamsUser.find_by(team_id: signed_up_team.team_id)
+    return OpenStruct.new(success?: false, error: 'No users found in team') unless team_user
+
+    reviewee = User.find(team_user.user_id)
+
+    review_mapping = ReviewMapping.create!(
+      reviewer_id: reviewer.id,
+      reviewee_id: reviewee.id,
+      assignment_id: assignment.id,
+      review_type: 'Review'
+    )
+    OpenStruct.new(success?: true, review_mapping: review_mapping)
+  rescue StandardError => e
+    OpenStruct.new(success?: false, error: e.message)
   end
 
   # Creates a review mapping for non-topic assignments
   def self.create_review_mapping_no_topic(assignment, reviewer, assignment_team)
-    review_mapping = assignment.assign_reviewer_dynamically_no_topic(reviewer, assignment_team)
-    if review_mapping
-      OpenStruct.new(success?: true, review_mapping: review_mapping)
-    else
-      OpenStruct.new(success?: false, error: 'Failed to create review mapping')
-    end
+    # Find a user from the team
+    team_user = TeamsUser.find_by(team_id: assignment_team.id)
+    return OpenStruct.new(success?: false, error: 'No users found in team') unless team_user
+
+    reviewee = User.find(team_user.user_id)
+
+    review_mapping = ReviewMapping.create!(
+      reviewer_id: reviewer.id,
+      reviewee_id: reviewee.id,
+      assignment_id: assignment.id,
+      review_type: 'Review'
+    )
+    OpenStruct.new(success?: true, review_mapping: review_mapping)
+  rescue StandardError => e
+    OpenStruct.new(success?: false, error: e.message)
   end
 end 

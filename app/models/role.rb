@@ -47,6 +47,8 @@ class Role < ApplicationRecord
 
   # checks if the current role has all the privileges of the target role
   def all_privileges_of?(target_role)
+    return false unless target_role && name && target_role.name
+
     privileges = {
       'Student' => 1,
       'Teaching Assistant' => 2,
@@ -55,7 +57,12 @@ class Role < ApplicationRecord
       'Super Administrator' => 5
     }
 
-    privileges[name] >= privileges[target_role.name]
+    current_privilege = privileges[name]
+    target_privilege = privileges[target_role.name]
+
+    return false unless current_privilege && target_privilege
+
+    current_privilege >= target_privilege
   end
 
   # return list of all roles other than the current role

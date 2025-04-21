@@ -707,6 +707,106 @@ RSpec.describe "Api::V1::ReviewMappings", type: :request do
     end
   end
 
+  describe 'POST /api/v1/review_mappings/start_self_review' do
+    let(:assignment) { create(:assignment) }
+    let(:user) { create(:user) }
+    let(:participant) { create(:participant, user: user, assignment: assignment) }
+    let(:team) { create(:team, assignment: assignment) }
+    let(:valid_params) do
+      {
+        assignment_id: assignment.id,
+        reviewer_id: participant.id,
+        reviewer_userid: user.id
+      }
+    end
+
+    before do
+      create(:teams_user, team: team, user: user)
+    end
+
+    context 'when the request is valid' do
+      it 'creates a new self-review mapping' do
+        post '/api/v1/review_mappings/start_self_review', params: valid_params
+
+        expect(response).to have_http_status(:created)
+        expect(json_response).to include(
+          'reviewee_id' => team.id,
+          'reviewer_id' => participant.id,
+          'reviewed_object_id' => assignment.id
+        )
+      end
+    end
+
+    context 'when the assignment does not exist' do
+      it 'returns an error' do
+        invalid_params = valid_params.merge(assignment_id: 999)
+        post '/api/v1/review_mappings/start_self_review', params: invalid_params
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['error']).to eq('Assignment not found')
+      end
+    end
+
+    context 'when no team is found for the user' do
+      it 'returns an error' do
+        invalid_params = valid_params.merge(reviewer_userid: 999)
+        post '/api/v1/review_mappings/start_self_review', params: invalid_params
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['error']).to eq('No team found for this user')
+      end
+    end
+
+    context 'when self-review already exists' do
+      before do
+        create(:self_review_response_map,
+               reviewee_id: team.id,
+               reviewer_id: participant.id,
+               reviewed_object_id: assignment.id)
+      end
+
+      it 'returns an error' do
+        post '/api/v1/review_mappings/start_self_review', params: valid_params
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['error']).to eq('Self review already assigned')
+      end
+    end
+
+    context 'when required parameters are missing' do
+      it 'returns an error when assignment_id is missing' do
+        invalid_params = valid_params.except(:assignment_id)
+        post '/api/v1/review_mappings/start_self_review', params: invalid_params
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['error']).to include('assignment_id')
+      end
+
+      it 'returns an error when reviewer_id is missing' do
+        invalid_params = valid_params.except(:reviewer_id)
+        post '/api/v1/review_mappings/start_self_review', params: invalid_params
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['error']).to include('reviewer_id')
+      end
+
+      it 'returns an error when reviewer_userid is missing' do
+        invalid_params = valid_params.except(:reviewer_userid)
+        post '/api/v1/review_mappings/start_self_review', params: invalid_params
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json_response['error']).to include('reviewer_userid')
+      end
+    end
+
+    context 'when not authenticated' do
+      it 'returns unauthorized' do
+        post '/api/v1/review_mappings/start_self_review', params: valid_params
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
+
   private
 
   # Helper method to parse JSON response body

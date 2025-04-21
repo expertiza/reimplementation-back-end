@@ -9,6 +9,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\""
 security:
 - bearerAuth: []
 paths:
@@ -1358,9 +1359,6 @@ paths:
                     name:
                       type: string
                       description: Name of the user to assign as reviewer
-                topic_id:
-                  type: integer
-                  description: ID of the topic (optional)
       responses:
         '201':
           description: Review mapping created successfully
@@ -1475,8 +1473,9 @@ paths:
       tags:
         - Review Mappings
       summary: Assign a reviewer dynamically
-      description: Dynamically assigns a reviewer to a team or topic based on assignment configuration
-      operationId: assignReviewerDynamically
+      description: Assigns a reviewer to a topic dynamically
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -1486,35 +1485,67 @@ paths:
               required:
                 - assignment_id
                 - reviewer_id
+                - topic_id
               properties:
                 assignment_id:
                   type: integer
                   description: ID of the assignment
                 reviewer_id:
                   type: integer
-                  description: ID of the reviewer
+                  description: ID of the reviewer/participant
                 topic_id:
                   type: integer
-                  description: ID of the topic (optional for topic-based assignments)
+                  description: ID of the topic
                 i_dont_care:
                   type: boolean
-                  description: Whether the reviewer doesn't care about topic selection
+                  description: Whether to ignore existing assignments
       responses:
         '201':
-          description: Review mapping created successfully
+          description: Reviewer assigned successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  reviewer_id:
-                    type: integer
-                  reviewee_id:
-                    type: integer
-                  assignment_id:
-                    type: integer
-                  review_type:
-                    type: string
+                $ref: '#/components/schemas/ReviewMapping'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  "/api/v1/review_mappings/review_allowed":
+    get:
+      tags:
+        - Review Mappings
+      summary: Check if review is allowed
+      description: Checks if a reviewer is allowed to review
+      parameters:
+        - name: assignment_id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: ID of the assignment
+        - name: reviewer_id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: ID of the reviewer
+      responses:
+        '200':
+          description: Review permission status retrieved successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Whether review is allowed ('true' or 'false')
         '422':
           description: Unprocessable Entity
           content:
@@ -1524,107 +1555,36 @@ paths:
                 properties:
                   error:
                     type: string
-        '404':
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-
-  "/api/v1/review_mappings/review_allowed":
-    get:
-      tags:
-        - Review Mappings
-      summary: Checks if a reviewer can perform more reviews
-      description: |
-        Checks if a reviewer can perform more reviews for a given assignment.
-        Returns a boolean value indicating whether the reviewer is allowed to perform more reviews.
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: assignment_id
-          in: query
-          description: ID of the assignment
-          required: true
-          schema:
-            type: integer
-        - name: reviewer_id
-          in: query
-          description: ID of the reviewer
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Success response with boolean value
-          content:
-            text/plain:
-              schema:
-                type: string
-                enum: ['true', 'false']
-                example: 'true'
-        '401':
-          description: Unauthorized - Invalid or missing authentication token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Unprocessable Entity - Invalid parameters or resources not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
 
   "/api/v1/review_mappings/check_outstanding_reviews":
     get:
       tags:
         - Review Mappings
-      summary: Checks if a reviewer has exceeded outstanding reviews limit
-      description: |
-        Checks if a reviewer has exceeded the maximum number of outstanding (incomplete) reviews
-        for a given assignment. Returns a boolean value indicating whether the reviewer can
-        perform more reviews based on the assignment's policy.
-      operationId: checkOutstandingReviews
-      security:
-        - bearerAuth: []
+      summary: Check outstanding reviews
+      description: Checks for outstanding reviews for a reviewer
       parameters:
         - name: assignment_id
           in: query
-          description: ID of the assignment
           required: true
           schema:
             type: integer
+          description: ID of the assignment
         - name: reviewer_id
           in: query
-          description: ID of the reviewer
           required: true
           schema:
             type: integer
+          description: ID of the reviewer
       responses:
         '200':
-          description: Success response with boolean value
+          description: Outstanding reviews retrieved successfully
           content:
             text/plain:
               schema:
                 type: string
-                enum: ['true', 'false']
-                example: 'true'
-        '401':
-          description: Unauthorized - Invalid or missing authentication token
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "Invalid or missing authentication token"
+                description: Whether the reviewer has outstanding reviews ('true' or 'false')
         '422':
-          description: Unprocessable Entity - Invalid parameters or resources not found
+          description: Unprocessable Entity
           content:
             application/json:
               schema:
@@ -1632,43 +1592,90 @@ paths:
                 properties:
                   error:
                     type: string
-                    example: "Assignment or Reviewer not found"
 
   "/api/v1/review_mappings/assign_quiz_dynamically":
     post:
       tags:
         - Review Mappings
-      summary: Assigns a quiz to a participant for a specific assignment
-      description: Creates a new quiz response mapping for a participant to take a quiz for an assignment
-      operationId: assignQuizDynamically
+      summary: Assign a quiz dynamically
+      description: Assigns a quiz to a reviewer dynamically
       security:
-        - JWT: []
-      parameters:
-        - name: assignment_id
-          in: query
-          description: ID of the assignment
-          required: true
-          schema:
-            type: integer
-        - name: reviewer_id
-          in: query
-          description: ID of the reviewer/participant
-          required: true
-          schema:
-            type: integer
-        - name: questionnaire_id
-          in: query
-          description: ID of the questionnaire to be assigned
-          required: true
-          schema:
-            type: integer
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - assignment_id
+                - reviewer_id
+                - questionnaire_id
+              properties:
+                assignment_id:
+                  type: integer
+                  description: ID of the assignment
+                reviewer_id:
+                  type: integer
+                  description: ID of the reviewer/participant
+                questionnaire_id:
+                  type: integer
+                  description: ID of the questionnaire to be assigned
       responses:
         '201':
-          description: Quiz response mapping created successfully
+          description: Quiz assigned successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/QuizResponseMap'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  "/api/v1/review_mappings/start_self_review":
+    post:
+      tags:
+        - Review Mappings
+      summary: Start a self-review
+      description: Initiates a self-review process for a participant
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - assignment_id
+                - reviewer_id
+                - reviewer_userid
+              properties:
+                assignment_id:
+                  type: integer
+                  description: ID of the assignment
+                reviewer_id:
+                  type: integer
+                  description: ID of the reviewer (participant)
+                reviewer_userid:
+                  type: integer
+                  description: User ID of the reviewer
+      responses:
+        '201':
+          description: Self-review started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SelfReviewResponseMap'
         '401':
           description: Unauthorized
           content:

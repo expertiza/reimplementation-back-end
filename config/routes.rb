@@ -61,6 +61,9 @@ Rails.application.routes.draw do
           post :add_reviewer
           post :assign_reviewer_dynamically
           get :review_allowed
+          get :check_outstanding_reviews
+          post :assign_quiz_dynamically
+          post :start_self_review
           # Additional routes for review mapping operations
           get 'valid_reviewers', action: :valid_reviewers
           get 'review_mappings_count', action: :review_mappings_count
@@ -71,8 +74,6 @@ Rails.application.routes.draw do
           get 'review_mapping_types', action: :review_mapping_types
           get 'review_mapping_strategy', action: :review_mapping_strategy
           post 'update_review_mapping_strategy', action: :update_review_mapping_strategy
-          get :check_outstanding_reviews
-          post :assign_quiz_dynamically
         end
       end
 
