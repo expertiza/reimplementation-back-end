@@ -6,6 +6,10 @@ class ResponseMap < ApplicationRecord
 
   alias map_id id
 
+  def questionnaire
+    Questionnaire.find_by(id: reviewed_object_id)
+  end
+
   # returns the assignment related to the response map
   def response_assignment
     return Participant.find(self.reviewer_id).assignment
