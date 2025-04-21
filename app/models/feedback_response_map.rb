@@ -8,6 +8,6 @@ class FeedbackResponseMap < ResponseMap
 
     def questionnaire 
         Questionnaire.find_by(id: reviewed_object_id)
-        #assignment.questionnaires.find_by(type: 'AuthorFeedbackQuestionnaire')
     end 
+end
 
