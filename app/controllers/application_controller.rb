@@ -1,7 +1,7 @@
 class ApplicationController < ActionController::API
-  # include Authorization
-  # include JwtToken
+  include Authorization
+  include JwtToken
   
-  # before_action :authorize
+  before_action :authorize
 
 end
