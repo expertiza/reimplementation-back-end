@@ -115,7 +115,7 @@ Rails.application.routes.draw do
           get '/user/:user_id', to: 'participants#get_participants_by_user'
           get '/assignment/:assignment_id', to: 'participants#get_participants_by_assignment'
           get '/:id', to: 'participants#show'
-          post '/:authorization', to: 'participants#create_participant_with_authorization'
+          post '/:authorization', to: 'participants#add_participant_to_assignment'
           patch '/:id/:authorization', to: 'participants#update_authorization'
           delete '/:id', to: 'participants#destroy'
         end

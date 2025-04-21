@@ -1,7 +1,7 @@
 class Api::V1::ParticipantsController < ApplicationController
   include ParticipantsHelper
 
-   # GET /participants/user/:user_id
+  # GET /participants/user/:user_id
   # Fetches all participants associated with the specified user.
   # Params:
   # - user_id [Integer]: ID of the user
@@ -60,7 +60,7 @@ class Api::V1::ParticipantsController < ApplicationController
 
   # Assign the specified authorization to the participant and add them to an assignment
   # POST /participants/:authorization
-  def create_participant_with_authorization
+  def add_participant_to_assignment
     user = find_user
     return unless user
 
@@ -172,6 +172,9 @@ class Api::V1::ParticipantsController < ApplicationController
   # An authorization string containing the participant's role is taken and used to determine
   # what permissions will be allocated to the participant. Each of these permissions will
   # then be assigned to the Participant's database permission attributes.
+  #
+  # @param [String] authorization: An authorization string that represents the participant's role
+  # @param [Participant] participant: The participant whose authorization permissions are being updated
   def assign_participant_permissions(authorization, participant)
     # Call helper method from participants_helper to retrieve a dictionary containing the
     # appropriate permission boolean values for the role specified by the authorization string
