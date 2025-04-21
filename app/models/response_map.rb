@@ -24,8 +24,7 @@ class ResponseMap < ApplicationRecord
       submitted_answer = answer[:answer_value]
       skipped = answer[:skipped] || false
 
-      puts "#{skipped}"
-      puts "#{question.skippable}"
+      
       if skipped && !question.skippable
         raise ActiveRecord::RecordInvalid.new("Question #{question.id} cannot be skipped.")
       end
