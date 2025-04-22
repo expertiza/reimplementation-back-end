@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_22_214327) do
+ActiveRecord::Schema[8.0].define(version: 2025_04_22_221322) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -385,6 +385,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_22_214327) do
     t.string "reset_password_token"
     t.datetime "reset_password_sent_at"
     t.string "jwt_version"
+    t.string "time_zone"
+    t.string "language"
+    t.boolean "can_show_actions"
     t.index ["institution_id"], name: "index_users_on_institution_id"
     t.index ["parent_id"], name: "index_users_on_parent_id"
     t.index ["role_id"], name: "index_users_on_role_id"
