@@ -130,6 +130,190 @@ paths:
       responses:
         '204':
           description: successful
+    /api/v1/assignments:
+    get:
+      summary: List all Assignments
+      tags:
+        - Assignments
+      responses:
+        '200':
+          description: List all assignments
+    post:
+      summary: Create a new Assignment
+      tags:
+        - Assignments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+              required:
+                - title
+                - description
+      responses:
+        '201':
+          description: Assignment created successfully
+        '422':
+          description: Invalid request
+
+  /api/v1/assignments/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Show an Assignment
+      tags:
+        - Assignments
+      responses:
+        '200':
+          description: Assignment found
+        '404':
+          description: Assignment not found
+    patch:
+      summary: Update an Assignment
+      tags:
+        - Assignments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Assignment updated successfully
+        '422':
+          description: Invalid update request
+    put:
+      summary: Update an Assignment (Full)
+      tags:
+        - Assignments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Assignment updated successfully
+        '422':
+          description: Invalid update request
+    delete:
+      summary: Delete an Assignment
+      tags:
+        - Assignments
+      responses:
+        '200':
+          description: Assignment deleted successfully
+        '404':
+          description: Assignment not found
+  /api/v1/assignments/{assignment_id}/teams:
+    get:
+      summary: Get all Teams for an Assignment
+      tags:
+        - Assignments
+      parameters:
+        - name: assignment_id
+          in: path
+          required: true
+          description: ID of the assignment
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of teams with members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    team_id:
+                      type: integer
+                    members:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          name:
+                            type: string
+        '404':
+          description: Assignment not found
+  "/api/v1/assignments/{assignment_id}/reviews":
+    get:
+      tags:
+        - Assignments
+      summary: Retrieve all reviews for an assignment
+      description: >
+        Returns teammate and author feedback reviews for a given assignment,
+        including reviewer, reviewee, comments, score, date, and whether the review was team-based.
+      parameters:
+        - in: path
+          name: assignment_id
+          schema:
+            type: integer
+          required: true
+          description: ID of the assignment
+        - in: query
+          name: team_id
+          schema:
+            type: integer
+          required: true
+          description: ID of the team whose members' reviews should be considered as teammate reviews
+      responses:
+        '200':
+          description: Successfully retrieved reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  author_feedback_reviews:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReviewEntry'
+                  teammate_reviews:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReviewEntry'
+        '400':
+          description: Team ID required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Assignment not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
   "/api/v1/bookmarks":
     get:
       summary: list bookmarks
