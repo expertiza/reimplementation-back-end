@@ -15,7 +15,9 @@ require 'simplecov'
 require 'coveralls'
 
 # Define a custom formatter to ensure the json is properly saved
-class SimpleCovJson < SimpleCov::Formatter
+class SimpleCovJson 
+  include SimpleCov::Formatter
+
   def format(result)
     data = {}
     data[:timestamp] = Time.now.to_i
