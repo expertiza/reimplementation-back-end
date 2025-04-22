@@ -1,7 +1,11 @@
 class AssignmentTeam < Team
+  # Each AssignmentTeam must belong to a specific assignment
   belongs_to :assignment
 
+  # Validates that an assignment is associated
   validates :assignment, presence: true
+  
+  # Custom validation to ensure the team type is either AssignmentTeam or MentoredTeam
   validate :type_must_be_assignment_or_mentored_team
 
   def copy_to_course_team(course)
