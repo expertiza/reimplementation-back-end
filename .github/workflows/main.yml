@@ -77,8 +77,8 @@ jobs:
       - name: Format code coverage report
         run: |
           mkdir -p coverage
-          if [ -f "coverage/coverage.json" ]; then
-            ./cc-test-reporter format-coverage -t simplecov -o "coverage/codeclimate.models.json" coverage/coverage.json
+          if [ -f "coverage/codeclimate.json" ]; then
+            ./cc-test-reporter format-coverage -t simplecov -o "coverage/codeclimate.models.json" coverage/codeclimate.json
           else
             echo "coverage.json not found, looking for .resultset.json"
             if [ -f "coverage/.resultset.json" ]; then
