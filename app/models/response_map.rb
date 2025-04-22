@@ -39,7 +39,7 @@ class ResponseMap < ApplicationRecord
     responses
   end
 
-  def self_review_pending?(participant_id)
+  def self.self_review_pending?(participant_id)
     self_review = latest_self_review(participant_id)
     return true if self_review.nil?
   
@@ -48,7 +48,7 @@ class ResponseMap < ApplicationRecord
   
   private
   
-  def latest_self_review(participant_id)
+  def self.latest_self_review(participant_id)
     SelfReviewResponseMap.where(reviewer_id: participant_id)
                          .first
                          &.response

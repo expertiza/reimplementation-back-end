@@ -169,8 +169,8 @@ module GradesHelper
   # Checks if the student has the necessary permissions and authorizations to proceed.
   def student_with_permissions?
     has_role?('Student') &&
-      self_review_finished? &&
-      are_needed_authorizations_present?(params[:id], 'reader', 'reviewer')
+      self_review_finished?(current_user.id) &&
+      are_needed_authorizations_present?(current_user.id, 'reader', 'reviewer')
   end
 
   # Checks if the user is either a student viewing their own team or has Teaching Assistant privileges.
@@ -187,11 +187,12 @@ module GradesHelper
   end
 
   # Check if the self-review for the participant is finished based on assignment settings and submission status.
-  def self_review_finished?
-    participant = Participant.find(params[:id])
+  def self_review_finished?(id)
+    participant = Participant.find(id)
     assignment = participant.try(:assignment)
     self_review_enabled = assignment.try(:is_selfreview_enabled)
     not_submitted = ResponseMap.self_review_pending?(participant.try(:id))
+    puts self_review_enabled
     if self_review_enabled
       !not_submitted
     else
