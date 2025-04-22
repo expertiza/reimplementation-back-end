@@ -1,20 +1,82 @@
 # Add these lines at the very top, before any other requires
 require 'simplecov'
+require 'coveralls'
 
+# Define a custom formatter to ensure the json is properly saved
+class SimpleCovJson < SimpleCov::Formatter
+  def format(result)
+    data = {}
+    data[:timestamp] = Time.now.to_i
+    data[:command_name] = SimpleCov.command_name
+    data[:metrics] = {
+      covered_percent: result.covered_percent,
+      covered_lines: result.covered_lines.count,
+      total_lines: result.total_lines
+    }
+    data[:files] = result.files.map do |file|
+      {
+        name: file.filename,
+        covered_percent: file.covered_percent,
+        covered_lines: file.covered_lines.count,
+        total_lines: file.total_lines,
+        line_counts: {
+          total: file.total_lines,
+          covered: file.covered_lines.count,
+          missed: file.missed_lines.count
+        }
+      }
+    end
+
+    # Ensure the coverage directory exists
+    FileUtils.mkdir_p('coverage')
+    
+    # Write standard resultset.json that CodeClimate expects
+    File.open(File.join(SimpleCov.coverage_dir, '.resultset.json'), 'w+') do |f|
+      f.write(JSON.pretty_generate({
+        "RSpec" => {
+          "coverage" => result.original_result,
+          "timestamp" => Time.now.to_i
+        }
+      }))
+    end
+    
+    # Also write a coverage.json file as a backup
+    File.open(File.join(SimpleCov.coverage_dir, 'coverage.json'), 'w+') do |f|
+      f.write(JSON.pretty_generate(data))
+    end
+  end
+end
+
+# Use multiple formatters including our custom JSON formatter
+SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
+  SimpleCov::Formatter::HTMLFormatter,
+  Coveralls::SimpleCov::Formatter,
+  SimpleCovJson.new
+])
+
+# Set a consistent coverage directory
+SimpleCov.coverage_dir 'coverage'
+
+# Start SimpleCov with a consistent configuration
 SimpleCov.start 'rails' do
   add_group "Controllers", "app/controllers"
   add_group "Models", "app/models"
   add_group "Services", "app/services"
   add_group "Helpers", "app/helpers"
   
-  # Set the output directory
-  coverage_dir 'coverage'
-  
-  # Track files by their absolute paths
+  # Track all Ruby files in these directories
   track_files "{app,lib,config}/**/*.rb"
   
-  # Don't filter anything out
+  # Clear any default filters and add our own
   filters.clear
+  add_filter '/bin/'
+  add_filter '/db/'
+  add_filter '/spec/'
+  add_filter '/config/'
+  add_filter '/vendor/'
+  
+  # Enable branch coverage
+  enable_coverage :branch
   
   # For debugging: print all tracked files
   at_exit do
@@ -22,10 +84,15 @@ SimpleCov.start 'rails' do
     SimpleCov.result.files.each do |file|
       puts "- #{file.filename} (#{file.covered_percent.round(2)}%)"
     end
+    
+    # Debug the location of coverage files
+    puts "\nCoverage files location:"
+    puts "Coverage dir: #{SimpleCov.coverage_dir}"
+    resultset_path = File.join(SimpleCov.coverage_dir, '.resultset.json')
+    coverage_path = File.join(SimpleCov.coverage_dir, 'coverage.json')
+    puts "Resultset exists: #{File.exist?(resultset_path)}"
+    puts "Coverage exists: #{File.exist?(coverage_path)}"
   end
-  
-  # Enable branch coverage
-  enable_coverage :branch
 end
 
 ENV['RAILS_ENV'] ||= 'test'
