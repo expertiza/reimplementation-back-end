@@ -264,7 +264,7 @@ RSpec.describe 'Participants API', type: :request do
       consumes 'application/json'
       produces 'application/json'
 
-      parameter name: :authorization, in: :path, type: :string, description: 'Authorization level (Reader, Reviewer, Submitter, Mentor)'
+      parameter name: :authorization, in: :path, type: :string, description: 'Authorization level (Participant, Reader, Reviewer, Submitter, Mentor)'
       parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
       parameter name: :participant, in: :body, schema: {
         type: :object,
@@ -325,7 +325,7 @@ RSpec.describe 'Participants API', type: :request do
         let(:participant) { { user_id: studentb.id, assignment_id: assignment1.id } }
 
         run_test! do |response|
-          expect(JSON.parse(response.body)['error']).to eql('authorization not valid. Valid authorizations are: Reader, Reviewer, Submitter, Mentor')
+          expect(JSON.parse(response.body)['error']).to eql('authorization not valid. Valid authorizations are: Participant, Reader, Reviewer, Submitter, Mentor')
         end
       end
 

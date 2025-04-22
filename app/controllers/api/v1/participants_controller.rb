@@ -184,7 +184,7 @@ class Api::V1::ParticipantsController < ApplicationController
     end
 
     unless valid_authorizations.include?(authorization)
-      render json: { error: 'authorization not valid. Valid authorizations are: Reader, Reviewer, Submitter, Mentor' },
+      render json: { error: 'authorization not valid. Valid authorizations are: Participant, Reader, Reviewer, Submitter, Mentor' },
              status: :unprocessable_entity
       return
     end
