@@ -13,81 +13,13 @@ require 'spec_helper'
 # Then set up code coverage (before Rails loads)
 require 'simplecov'
 require 'coveralls'
+require 'simplecov_json_formatter'  # Add this line to require the JSON formatter
 
-# Define a custom formatter to ensure the json is properly saved
-class SimpleCovJson 
-  include SimpleCov::Formatter
-
-  def format(result)
-    # Ensure the coverage directory exists
-    FileUtils.mkdir_p(SimpleCov.coverage_dir)
-    
-    # Create the result hash with ARRAYS (not objects) for line coverage
-    # This is critical for CodeClimate
-    resultset_data = {}
-    
-    result.files.each do |file|
-      file_path = file.filename
-      
-      # Create an array of coverage counts - this is what CodeClimate expects
-      # Each element is nil (not covered), 0 (not relevant) or a positive number (covered)
-      max_line = file.lines.map(&:line_number).max || 0
-      coverage_array = Array.new(max_line, nil)
-      
-      file.lines.each do |line|
-        coverage_array[line.line_number - 1] = 
-          if line.skipped?
-            nil  # Skip this line (comments, etc.)
-          elsif line.missed?
-            0    # Not covered
-          else
-            1    # Covered at least once
-          end
-      end
-      
-      # Store the array directly
-      resultset_data[file_path] = coverage_array
-    end
-    
-    # Final structure - RSpec must contain coverage as arrays, not objects
-    final_resultset = {
-      "RSpec" => {
-        "coverage" => resultset_data,
-        "timestamp" => Time.now.to_i
-      }
-    }
-    
-    # Write the resultset file
-    File.open(File.join(SimpleCov.coverage_dir, '.resultset.json'), 'w+') do |f|
-      f.write(JSON.pretty_generate(final_resultset))
-    end
-    
-    # Also write a regular coverage report for humans
-    coverage_summary = {
-      "timestamp": Time.now.to_i,
-      "command_name": SimpleCov.command_name,
-      "files": result.files.map do |file|
-        {
-          "name": file.filename,
-          "coverage": file.covered_percent.round(2),
-          "covered_lines": file.covered_lines.count,
-          "total_lines": file.lines_of_code,
-          "missed_lines": file.missed_lines.count
-        }
-      end
-    }
-    
-    File.open(File.join(SimpleCov.coverage_dir, 'coverage.json'), 'w+') do |f|
-      f.write(JSON.pretty_generate(coverage_summary))
-    end
-  end
-end
-
-# Use multiple formatters including our custom JSON formatter
+# Set up formatters for SimpleCov
 SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
   SimpleCov::Formatter::HTMLFormatter,
-  Coveralls::SimpleCov::Formatter,
-  SimpleCovJson.new
+  SimpleCov::Formatter::JSONFormatter,  # Use the built-in JSON formatter
+  Coveralls::SimpleCov::Formatter
 ])
 
 # Set a consistent coverage directory

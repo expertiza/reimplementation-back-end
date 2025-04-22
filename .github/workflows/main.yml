@@ -75,7 +75,19 @@ jobs:
         run: bundle exec rspec spec/requests/
 
       - name: Format code coverage report
-        run: ./cc-test-reporter format-coverage -t simplecov -o "coverage/codeclimate.models.json" --debug
+        run: |
+          mkdir -p coverage
+          if [ -f "coverage/coverage.json" ]; then
+            ./cc-test-reporter format-coverage -t simplecov -o "coverage/codeclimate.models.json" coverage/coverage.json
+          else
+            echo "coverage.json not found, looking for .resultset.json"
+            if [ -f "coverage/.resultset.json" ]; then
+              ./cc-test-reporter format-coverage -t simplecov -o "coverage/codeclimate.models.json"
+            else
+              echo "No coverage files found!"
+              find coverage -type f
+            fi
+          fi
 
       - name: Upload coverage artifacts
         uses: actions/upload-artifact@v4
