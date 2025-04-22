@@ -23,16 +23,9 @@ Rails.application.routes.draw do
           get 'role/:name', action: :role_users
         end
 
-        # Using 'member' here instead of 'collection' since these actions operate on a specific user resource
         member do
-          # GET retrieve user profile
-          get 'profile'
-
-          # PUT - update user profile info 
-          put 'profile', action: :update_profile
-
-          # PUT - change password 
-          put 'password', action: :change_password
+          patch :update_profile           # PATCH /api/v1/users/:id/update_profile
+          post  :update_password          # POST  /api/v1/users/:id/update_password
         end
       end
       resources :assignments do

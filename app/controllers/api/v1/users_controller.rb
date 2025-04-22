@@ -8,9 +8,16 @@ class Api::V1::UsersController < ApplicationController
   end
 
   # GET /users/:id
+  # def show
+  #   user = User.find(params[:id])
+  #   render json: user, status: :ok
+  # end
+
   def show
     user = User.find(params[:id])
-    render json: user, status: :ok
+    render json: user.as_json(except: [:password_digest]), status: :ok
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: 'User not found' }, status: :not_found
   end
 
   # POST /users
@@ -76,44 +83,38 @@ class Api::V1::UsersController < ApplicationController
     render json: { error: e.message }, status: :not_found
   end
   
-  # GET /api/v1/users/:id/profile : Returns basic user profile information and email preferences
-  def profile
-    user = User.find(params[:id])
-    render json: user.slice(:id, :name, :email, :full_name,
-                            :email_on_review, :email_on_submission, :email_on_review_of_review),
-           status: :ok
-  end
-
-  # PUT /api/v1/users/:id/profile : Allows updating profile details like full_name, email, and email preferences
+  # PATCH /users/:id
   def update_profile
     user = User.find(params[:id])
-    if user.update(user_profile_params)
-      render json: { message: 'Profile updated successfully' }, status: :ok
+  
+    if user.update(user_params)
+      render json: {
+        message: 'Profile updated successfully.',
+        user: user.as_json(except: [:password_digest])
+      }, status: :ok
+    else
+      render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
+    end
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: 'User not found' }, status: :not_found
+  end
+
+  # POST /users/:id/update_password
+  def update_password
+    user = User.find(params[:id])
+  
+    unless user.authenticate(params[:current_password])
+      return render json: { error: 'Current password is incorrect' }, status: :unauthorized
+    end
+  
+    if user.update(password: params[:new_password], password_confirmation: params[:new_password_confirmation])
+      # TODO: Invalidate sessions or issue new token here
+      render json: { message: 'Password updated successfully' }, status: :ok
     else
       render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
     end
   end
-
-  # PUT /api/v1/users/:id/password : Allows changing the user's password securely. 
-  def change_password
-    user = User.find(params[:id])
   
-    # Ensure both current and new passwords are provided
-    unless params[:current_password].present? && params[:new_password].present?
-      return render json: { error: 'Both current_password and new_password are required' }, status: :bad_request
-    end
-  
-    if user.authenticate(params[:current_password])
-      if user.update(password: params[:new_password])
-        
-        render json: { message: 'Password changed successfully' }, status: :ok
-      else
-        render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
-      end
-    else
-      render json: { error: 'Current password is incorrect' }, status: :unauthorized
-    end
-  end
 
   private
 
