@@ -1,5 +1,4 @@
 Rails.application.routes.draw do
-
   mount Rswag::Api::Engine => 'api-docs'
   mount Rswag::Ui::Engine => 'api-docs'
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
@@ -25,28 +24,28 @@ Rails.application.routes.draw do
       end
       resources :assignments do
         collection do
-          post '/:assignment_id/add_participant/:user_id',action: :add_participant
-          delete '/:assignment_id/remove_participant/:user_id',action: :remove_participant
-          patch '/:assignment_id/remove_assignment_from_course',action: :remove_assignment_from_course
-          patch '/:assignment_id/assign_course/:course_id',action: :assign_course
+          post '/:assignment_id/add_participant/:user_id', action: :add_participant
+          delete '/:assignment_id/remove_participant/:user_id', action: :remove_participant
+          patch '/:assignment_id/remove_assignment_from_course', action: :remove_assignment_from_course
+          patch '/:assignment_id/assign_course/:course_id', action: :assign_course
           post '/:assignment_id/copy_assignment', action: :copy_assignment
-          get '/:assignment_id/has_topics',action: :has_topics
-          get '/:assignment_id/show_assignment_details',action: :show_assignment_details
+          get '/:assignment_id/has_topics', action: :has_topics
+          get '/:assignment_id/show_assignment_details', action: :show_assignment_details
           get '/:assignment_id/team_assignment', action: :team_assignment
           get '/:assignment_id/has_teams', action: :has_teams
           get '/:assignment_id/valid_num_review/:review_type', action: :valid_num_review
           get '/:assignment_id/varying_rubrics_by_round', action: :varying_rubrics_by_round?
-          post '/:assignment_id/create_node',action: :create_node
+          post '/:assignment_id/create_node', action: :create_node
           # Route to trigger strategy-based review mapping for an assignment
-          post '/:assignment_id/automatic_review_mapping_strategy', to: 'review_mappings#automatic_review_mapping_strategy'
+          post '/:assignment_id/automatic_review_mapping_strategy',
+               to: 'review_mappings#automatic_review_mapping_strategy'
           # Defines a POST route for triggering staggered automatic review mappings
-          post '/:assignment_id/automatic_review_mapping_staggered', to: 'review_mappings#automatic_review_mapping_staggered'
+          post '/:assignment_id/automatic_review_mapping_staggered',
+               to: 'review_mappings#automatic_review_mapping_staggered'
           # Route to assign reviewers for a specific team within an assignment
           post '/:assignment_id/assign_reviewers_for_team', to: 'review_mappings#assign_reviewers_for_team'
           # Route to trigger peer review mapping logic
           post '/:assignment_id/peer_review_strategy', to: 'review_mappings#peer_review_strategy'
-
-
         end
       end
 
@@ -55,9 +54,9 @@ Rails.application.routes.draw do
       post 'assignments/:assignment_id/automatic_review_mapping', to: 'review_mappings#automatic_review_mapping'
       post 'review_mappings/save_grade_and_comment', to: 'review_mappings#save_grade_and_comment_for_reviewer'
 
+      post 'review_mappings/:id/select_metareviewer', to: 'review_mappings#select_metareviewer'
 
-
-      resources :bookmarks, except: [:new, :edit] do
+      resources :bookmarks, except: %i[new edit] do
         member do
           get 'bookmarkratings', to: 'bookmarks#get_bookmark_rating_score'
           post 'bookmarkratings', to: 'bookmarks#save_bookmark_rating_score'
@@ -70,7 +69,7 @@ Rails.application.routes.draw do
         end
       end
 
-      #route added for review_mapping
+      # route added for review_mapping
       resources :review_mappings do
         collection do
           post :add_calibration
@@ -93,9 +92,19 @@ Rails.application.routes.draw do
           post 'update_review_mapping_strategy', action: :update_review_mapping_strategy
         end
       end
-      resources :review_mappings, only: [:index, :show, :create, :update, :destroy]
+      resources :review_mappings, only: %i[index show create update destroy]
+      # route added for review_mapping
+      resources :review_mappings, only: %i[index show create update destroy]
       get 'assignments/:assignment_id/review_mappings', to: 'review_mappings#list_mappings'
-
+      post 'review_mappings/:id/add_metareviewer', to: 'review_mappings#add_metareviewer'
+      post 'review_mappings/:id/assign_metareviewer_dynamically', to: 'review_mappings#assign_metareviewer_dynamically'
+      delete '/review_mappings/delete_outstanding_reviewers/:assignment_id',
+             to: 'review_mappings#delete_outstanding_reviewers'
+      delete '/review_mappings/delete_all_metareviewers/:assignment_id', to: 'review_mappings#delete_all_metareviewers'
+      delete '/review_mappings/:id/delete_reviewer', to: 'review_mappings#delete_reviewer'
+      delete 'review_mappings/:id/delete_metareviewer', to: 'review_mappings#delete_metareviewer'
+      delete '/review_mappings/:id/delete_metareview', to: 'review_mappings#delete_metareview'
+      delete '/review_mappings/:id/unsubmit_review', to: 'review_mappings#unsubmit_review'
 
       resources :courses do
         collection do
@@ -116,8 +125,8 @@ Rails.application.routes.draw do
       resources :questions do
         collection do
           get :types
-          get 'show_all/questionnaire/:id', to:'questions#show_all#questionnaire', as: 'show_all'
-          delete 'delete_all/questionnaire/:id', to:'questions#delete_all#questionnaire', as: 'delete_all'
+          get 'show_all/questionnaire/:id', to: 'questions#show_all#questionnaire', as: 'show_all'
+          delete 'delete_all/questionnaire/:id', to: 'questions#delete_all#questionnaire', as: 'delete_all'
         end
       end
 
@@ -130,11 +139,9 @@ Rails.application.routes.draw do
 
       resources :join_team_requests do
         collection do
-          post 'decline/:id', to:'join_team_requests#decline'
+          post 'decline/:id', to: 'join_team_requests#decline'
         end
       end
-
-
 
       resources :sign_up_topics do
         collection do

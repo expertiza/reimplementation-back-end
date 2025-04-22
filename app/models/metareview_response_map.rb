@@ -1,0 +1,2 @@
+class MetareviewResponseMap < ResponseMap
+end

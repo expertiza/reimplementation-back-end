@@ -473,5 +473,21 @@ module ReviewMappingsHelper
 
       
         
+
+        def self.find_available_metareviewer(review_mapping, assignment_id)
+            assignment = Assignment.find(review_mapping.reviewed_object_id)
+            all_participants = Participant.where(assignment_id: assignment.id)
+        
+            all_participants.find do |participant|
+              # Avoid self-review and already assigned metareview
+              participant.id != review_mapping.reviewer_id &&
+                !MetareviewResponseMap.exists?(
+                  reviewed_object_id: review_mapping.id,
+                  reviewer_id: participant.id
+                )
+            end
+          end
+              
+        
   end
   

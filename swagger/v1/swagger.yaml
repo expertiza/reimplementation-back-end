@@ -2051,6 +2051,318 @@ paths:
                   error:
                     type: string
                     example: No question item found for assignment
+  /api/v1/review_mappings/{id}/select_metareviewer:
+    post:
+      summary: Select a metareviewer for the specified review mapping
+      tags:
+        - Review Mappings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the review mapping to assign a metareviewer to
+        - name: metareviewer_id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: ID of the metareviewer (Participant)
+      responses:
+        '200':
+          description: Metareviewer selected successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          description: Review mapping not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '422':
+          description: Failed to assign metareviewer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /api/v1/review_mappings/{id}/add_metareviewer:
+    post:
+      summary: Add a metareviewer to a review mapping
+      tags:
+        - Review Mappings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the review mapping
+        - name: metareviewer_id       
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: The ID of the participant to assign as metareviewer
+      responses:
+        '200':
+          description: Metareviewer added successfully
+        '404':
+          description: Review mapping not found
+  /api/v1/review_mappings/{id}/assign_metareviewer_dynamically:
+    post:
+      summary: Dynamically assign an available metareviewer to the review mapping
+      tags:
+        - Review Mappings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the review mapping
+      responses:
+        '200':
+          description: Metareviewer dynamically assigned successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  metareviewer_id:
+                    type: integer
+        '404':
+          description: Review mapping or assignment not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '422':
+          description: No available metareviewer found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /api/v1/review_mappings/delete_outstanding_reviewers/{assignment_id}:
+    delete:
+      summary: Delete all outstanding reviewers (those who haven't submitted reviews) for an assignment
+      tags:
+        - Review Mappings
+      parameters:
+        - in: path
+          name: assignment_id
+          required: true
+          schema:
+            type: integer
+          description: ID of the assignment
+      responses:
+        '200':
+          description: Review mappings deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Assignment not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /api/v1/review_mappings/delete_all_metareviewers/{assignment_id}:
+    delete:
+      summary: Delete all metareviewers for the specified assignment
+      tags:
+        - Review Mappings
+      parameters:
+        - name: assignment_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the assignment
+      responses:
+        '200':
+          description: Metareviewers deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Assignment not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /api/v1/review_mappings/{id}/delete_reviewer:
+    delete:
+      summary: Delete a reviewer from the specified review mapping
+      tags:
+        - Review Mappings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the review mapping to delete
+      responses:
+        '200':
+          description: Reviewer mapping deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Review mapping not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /api/v1/review_mappings/{id}/delete_metareviewer:
+    delete:
+      summary: Delete a metareviewer mapping by ID
+      tags:
+        - Review Mappings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the metareview mapping
+      responses:
+        '200':
+          description: Metareviewer mapping deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Mapping not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /api/v1/review_mappings/{id}/delete_metareview:
+    delete:
+      summary: Delete a specific metareview mapping
+      tags:
+        - Review Mappings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the metareview mapping to delete
+      responses:
+        '200':
+          description: Metareview mapping deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Metareview mapping not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /api/v1/review_mappings/{id}/unsubmit_review:
+    delete:
+      summary: Unsubmit a review response by ID
+      tags:
+        - Review Mappings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the review mapping
+      responses:
+        '200':
+          description: Review unsubmitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Review mapping or response not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '422':
+          description: Update failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
 
 
 servers:
