@@ -236,26 +236,37 @@ module Api
 
       # POST /api/v1/review_mappings/:id/assign_metareviewer
       def add_metareviewer
+        review_mapping = ResponseMap.find(params[:id])
+        result = ReviewMappingsHelper.add_metareviewer(review_mapping)
+      
+        if result[:success]
+          render json: { success: true, message: result[:message] }, status: :ok
+        else
+          render json: { success: false, message: result[:message] }, status: :unprocessable_entity
+        end
+      end
+      
+      # POST /api/v1/review_mappings/:id/assign_metareviewer_dynamically
+      def assign_metareviewer_dynamically
         review_mapping = ResponseMap.find_by(id: params[:id])
         return render json: { error: 'Review mapping not found' }, status: :not_found unless review_mapping
-      
-        metareviewer_id = params[:metareviewer_id]
-        metareviewer = Participant.find_by(id: metareviewer_id)
-        return render json: { error: 'Metareviewer not found' }, status: :not_found unless metareviewer
-      
-        metareview_map = MetareviewResponseMap.create!(
+
+        assignment = Assignment.find_by(id: review_mapping.reviewed_object_id)
+        return render json: { error: 'Assignment not found' }, status: :not_found unless assignment
+
+        metareviewer = ReviewMappingsHelper.find_available_metareviewer(review_mapping, assignment.id)
+        return render json: { error: 'No available metareviewer found' }, status: :unprocessable_entity unless metareviewer
+
+        MetareviewResponseMap.create!(
           reviewed_object_id: review_mapping.id,
           reviewer_id: metareviewer.id,
           reviewee_id: review_mapping.reviewer_id
         )
-      
-        render json: { message: 'Metareviewer added', metareview_map_id: metareview_map.id }, status: :created
+
+        render json: { message: 'Metareviewer dynamically assigned successfully', metareviewer_id: metareviewer.id }, status: :ok
       rescue ActiveRecord::RecordInvalid => e
         render json: { error: e.message }, status: :unprocessable_entity
       end
-      
-      
-
 
       private
 

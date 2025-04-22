@@ -71,6 +71,7 @@ Rails.application.routes.draw do
       resources :review_mappings, only: %i[index show create update destroy]
       get 'assignments/:assignment_id/review_mappings', to: 'review_mappings#list_mappings'
       post 'review_mappings/:id/add_metareviewer', to: 'review_mappings#add_metareviewer'
+      post 'review_mappings/:id/assign_metareviewer_dynamically', to: 'review_mappings#assign_metareviewer_dynamically'
 
       resources :courses do
         collection do
