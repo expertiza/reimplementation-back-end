@@ -181,7 +181,7 @@ class Api::V1::ParticipantsController < ApplicationController
   ## Finds a user by user_id param.
   # Returns:
   # - User object if found
-  # - Renders 404 if not found
+  # - Renders 404 if not found.
   def find_user
     user_id = params[:user_id]
     user = User.find_by(id: user_id)
