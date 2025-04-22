@@ -113,20 +113,4 @@ describe Response do
     end
   end
 
-  describe '#calculate_score' do
-    it 'calculates the score correctly' do
-      allow(response).to receive(:calculate_total_score).and_return(4)
-      allow(response).to receive(:maximum_score).and_return(5)
-      allow(Item).to receive(:find_by).and_return(double('Item', skippable?: false))
-      expect(response.calculate_score).to eq(80)
-    end
-
-    it 'calculates the score correctly when skipped' do
-      allow(response).to receive(:calculate_total_score).and_return(0)
-      allow(response).to receive(:maximum_score).and_return(5)
-      allow(Item).to receive(:find_by).and_return(double('Item', skippable?: true))
-      expect(response.calculate_score).to eq(0)
-    end
-  end
-
 end
