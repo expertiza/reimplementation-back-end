@@ -8,15 +8,30 @@ SimpleCov.start 'rails' do
   add_group "Helpers", "app/helpers"
   
   # Set the output directory
-  coverage_dir 'coverage/simplecov'
+  coverage_dir 'coverage'
+  
+  # Track files by their absolute paths
+  track_files "{app,lib,config}/**/*.rb"
+  
+  # Don't filter anything out
+  filters.clear
+  
+  # For debugging: print all tracked files
+  at_exit do
+    puts "\nSimpleCov tracked files:"
+    SimpleCov.result.files.each do |file|
+      puts "- #{file.filename} (#{file.covered_percent.round(2)}%)"
+    end
+  end
+  
+  # Enable branch coverage
+  enable_coverage :branch
 end
 
-# Add this at the very top of the file
-require 'support/simplecov_config'
+ENV['RAILS_ENV'] ||= 'test'
 
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 require 'spec_helper'
-ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'
 # Prevent database truncation if the environment is production
 abort("The Rails environment is running in production mode!") if Rails.env.production?
