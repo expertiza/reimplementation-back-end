@@ -62,7 +62,10 @@ class Api::V1::GradesController < ApplicationController
     assignment = participant.assignment
     team = participant.team
     team_id = team.id
-  
+
+    user_ids = TeamsUser.where(team_id: team_id).pluck(:user_id)
+    users = User.where(id: user_ids)
+
     questionnaires = AssignmentQuestionnaire.where(assignment_id: assignment.id).map(&:questionnaire)
     questions = retrieve_questions(questionnaires, assignment.id)
     pscore = Response.participant_scores(participant, questions)
@@ -75,7 +78,8 @@ class Api::V1::GradesController < ApplicationController
       team_id: team_id,
       questions: questions,
       pscore: pscore,
-      vmlist: vmlist
+      vmlist: vmlist,
+      users: users
     }
   end
 
