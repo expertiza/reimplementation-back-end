@@ -20,14 +20,16 @@ class AssignmentTeam < Team
     )
     if course_team.save
       team_members.each do |member|
-        course_team.add_member(member.user)
+        course_team.add_member(member.user)  # Copies each member to the new course team
       end
     end
-    course_team
+    course_team   # Returns the newly created course team object
   end
 
   protected
 
+    # Validates if a user is eligible to join the team
+  # - Checks whether the user is a participant of the associated assignment
   def validate_membership(user)
     # Ensure user is enrolled in the assignment by checking AssignmentParticipant
     assignment.participants.exists?(user: user)
@@ -35,6 +37,9 @@ class AssignmentTeam < Team
 
   private
 
+  
+  # Custom validation method for team type
+  # - Ensures the type is either 'AssignmentTeam' or 'MentoredTeam'
   def type_must_be_assignment_or_mentored_team
     errors.add(:type, 'must be AssignmentTeam or MentoredTeam') unless %w[AssignmentTeam MentoredTeam].include?(type)
   end
