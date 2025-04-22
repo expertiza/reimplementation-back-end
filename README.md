@@ -5,7 +5,7 @@ application up and running.
 
 Things you may want to cover:
 
-* Ruby version - 3.2.1
+* Ruby version - 3.2.
 
 ## Development Environment
 
@@ -26,7 +26,7 @@ alt="IMAGE ALT TEXT HERE" width="560" height="315" border="10" /></a>
 
 ### Database Credentials
 - username: root
-- password: expertiza 
+- password: expertiza
 
 
 
