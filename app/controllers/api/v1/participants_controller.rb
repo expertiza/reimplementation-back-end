@@ -46,7 +46,7 @@ class Api::V1::ParticipantsController < ApplicationController
   end
 
   # GET /participants/:id
-  # Fetches a single participant by their unique ID.
+  # Fetches a single participant by their unique ID
   # Params:
   # - id [Integer]: ID of the participant
   # Returns:
