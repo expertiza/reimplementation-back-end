@@ -97,24 +97,32 @@ jobs:
 
 
   publish_code_coverage:
-    needs: test  # Ensures this job runs after the test job
+    needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && ${{ secrets.CC_TEST_REPORTER_ID}} != ''   # Only run when there's a push to main branch
-
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # No secret check here!
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions/download-artifact@v4
         with:
           name: code-coverage-artifacts
           path: coverage/
 
-      - name: Upload code-coverage report to code-climate
+      - name: Upload code-coverage report to Code Climate
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
         run: |
+          if [ -z "$CC_TEST_REPORTER_ID" ]; then
+            echo "Secret CC_TEST_REPORTER_ID not set. Skipping code coverage upload."
+            exit 0
+          fi
+
           export GIT_BRANCH="${GITHUB_REF/refs\/heads\//}"
           curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
           chmod +x ./cc-test-reporter
-          ./cc-test-reporter sum-coverage coverage/codeclimate.*.json 
-          ./cc-test-reporter after-build -t simplecov -r ${{ secrets.CC_TEST_REPORTER_ID }}
+          ./cc-test-reporter sum-coverage coverage/codeclimate.*.json
+          ./cc-test-reporter after-build -t simplecov -r "$CC_TEST_REPORTER_ID"
+
 
   docker:
     needs: test
