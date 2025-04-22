@@ -6,7 +6,7 @@ class TeammateReviewResponseMap < ReviewResponseMap
   end
 
   def questionnaire_by_duty(duty_id)
-    duty_questionnaire = assignment.questionnaires.find(assignment_id: assignment.id, duty_id: duty_id).first
+    duty_questionnaire = assignment.questionnaires.find(assignment_id: assignment.assignment_id, duty_id: duty_id).first
     if duty_questionnaire.nil?
       questionnaire
     else

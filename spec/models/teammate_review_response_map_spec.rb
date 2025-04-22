@@ -18,8 +18,8 @@ RSpec.describe TeammateReviewResponseMap, type: :model do
       teammate_review_response_map = TeammateReviewResponseMap.new
       allow(teammate_review_response_map).to receive(:assignment).and_return(assignment)
       allow(assignment).to receive_message_chain(:questionnaires, :find_by).with(type: 'TeammateReviewQuestionnaire').and_return(questionnaire)
-      allow(AssignmentQuestionnaire).to receive(:find).with(assignment_id: 1, duty_id: 1).and_return(assignment_questionnaire)
-      expect(teammate_review_response_map.questionnaire_by_duty(duty_id)).to eq(assignment_questionnaire)
+      allow(AssignmentQuestionnaire).to receive(:find).with(assignment_id: 1, duty_id: 1).and_return(questionnaire)
+      expect(teammate_review_response_map.questionnaire_by_duty(1)).to eq(questionnaire)
     end
 
     it 'returns questionnaire method if questionnaire is not found' do
@@ -30,7 +30,7 @@ RSpec.describe TeammateReviewResponseMap, type: :model do
       allow(assignment).to receive_message_chain(:questionnaires, :find_by).with(type: 'TeammateReviewQuestionnaire').and_return(questionnaire)
       allow(AssignmentQuestionnaire).to receive(:find).with(assignment_id: 1, duty_id: 1).and_return(nil)
       allow(AssignmentQuestionnaire).to receive(:find_by).with(type: 'TeammateReviewQuestionnaire').and_return(questionnaire)
-      expect(teammate_review_response_map.questionnaire_by_duty(duty_id)).to eq(questionnaire)
+      expect(teammate_review_response_map.questionnaire_by_duty(1)).to eq(questionnaire)
     end
   end
 end
