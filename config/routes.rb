@@ -124,6 +124,9 @@ Rails.application.routes.draw do
       resources :feedback_response_maps do
         collection do
           get 'response_report/:assignment_id', action: :response_report
+          get 'assignment/:assignment_id', action: :assignment_feedback
+          get 'reviewer/:reviewer_id', action: :reviewer_feedback
+          get 'response_rate/:assignment_id', action: :feedback_response_rate
         end
       end
     end
