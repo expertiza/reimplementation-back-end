@@ -56,4 +56,10 @@ class Response < ApplicationRecord
     end
     sum
   end
+  
+  def calculate_score
+    return 0 if skipped
+    question = self.question
+    question.correct_answer == submitted_answer ? question.score_value : 0
+  end
 end

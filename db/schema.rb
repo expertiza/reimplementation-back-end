@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_02_16_020117) do
+ActiveRecord::Schema[8.0].define(version: 2025_04_21_082256) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -193,6 +193,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_16_020117) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "questionnaire_id", null: false
+    t.boolean "skippable", default: false, null: false
     t.index ["questionnaire_id"], name: "fk_question_questionnaires"
     t.index ["questionnaire_id"], name: "index_items_on_questionnaire_id"
   end
@@ -273,7 +274,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_16_020117) do
   end
 
   create_table "quiz_question_choices", id: :integer, charset: "latin1", force: :cascade do |t|
-    t.integer "question_id"
+    t.integer "item_id"
     t.text "txt"
     t.boolean "iscorrect", default: false
     t.datetime "created_at", null: false

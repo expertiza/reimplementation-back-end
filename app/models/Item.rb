@@ -2,6 +2,7 @@ class Item < ApplicationRecord
   before_create :set_seq
   belongs_to :questionnaire # each item belongs to a specific questionnaire
   has_many :answers, dependent: :destroy, foreign_key: 'question_id'
+  has_many :quiz_question_choices, class_name: 'QuizQuestionChoice', foreign_key: 'item_id', dependent: :destroy  
   attr_accessor :choice_strategy
   
   validates :seq, presence: true, numericality: true # sequence must be numeric
