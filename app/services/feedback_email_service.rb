@@ -1,10 +1,11 @@
 class FeedbackEmailService
+  # Initialize the service with a ResponseMap and an Assignment
   def initialize(response_map, assignment)
     @response_map = response_map
     @assignment   = assignment
   end
 
-  # public API
+  # Public API method to trigger the email send
   def call
     Mailer.sync_message(build_defn).deliver
   end

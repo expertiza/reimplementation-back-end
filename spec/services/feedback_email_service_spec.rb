@@ -2,6 +2,8 @@ require 'rails_helper'
 
 RSpec.describe FeedbackEmailService, type: :service do
   describe '#call' do
+
+    # Test doubles for models and their IDs
     let(:assignment)   { double('Assignment', name: 'Cool Project') }
     let(:feedback_map) { double('FeedbackResponseMap', reviewed_object_id: response_id) }
     let(:response_id)  { 77 }
@@ -14,13 +16,13 @@ RSpec.describe FeedbackEmailService, type: :service do
     let(:user)         { double('User', email: 'rev@example.com', fullname: 'Reviewer') }
 
     before do
-      # Stub all the ActiveRecord lookups
+      # Stub ActiveRecord finds to return our doubles
       allow(Response).to             receive(:find).with(response_id).and_return(response)
       allow(ResponseMap).to          receive(:find).with(map_id).and_return(response_map)
       allow(AssignmentParticipant).to receive(:find).with(participant_id).and_return(participant)
       allow(User).to                 receive(:find).with(user_id).and_return(user)
 
-      # Create a dummy Mailer class that implements .sync_message
+      # Stub Mailer to intercept sync_message
       mailer_klass = Class.new do
         def self.sync_message(_defn)
           double(deliver: true)
@@ -32,7 +34,9 @@ RSpec.describe FeedbackEmailService, type: :service do
     it 'builds the correct definition and tells the mailer to deliver it' do
       service = described_class.new(feedback_map, assignment)
 
+      
       expect(Mailer).to receive(:sync_message) do |defn|
+        # Verify key fields in the message definition
         expect(defn[:to]).to eq 'rev@example.com'
         expect(defn[:body][:type]).to eq 'Author Feedback'
         expect(defn[:body][:first_name]).to eq 'Reviewer'
