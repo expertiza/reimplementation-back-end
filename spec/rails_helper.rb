@@ -19,60 +19,37 @@ class SimpleCovJson
   include SimpleCov::Formatter
 
   def format(result)
-    data = {}
-    data[:timestamp] = Time.now.to_i
-    data[:command_name] = SimpleCov.command_name
-    data[:metrics] = {
-      covered_percent: result.covered_percent,
-      covered_lines: result.covered_lines.count,
-      total_lines: result.total_lines
-    }
-    data[:files] = result.files.map do |file|
-      {
-        name: file.filename,
-        covered_percent: file.covered_percent,
-        covered_lines: file.covered_lines.count,
-        total_lines: file.total_lines,
-        line_counts: {
-          total: file.total_lines,
-          covered: file.covered_lines.count,
-          missed: file.missed_lines.count
-        }
-      }
-    end
-
     # Ensure the coverage directory exists
     FileUtils.mkdir_p(SimpleCov.coverage_dir)
     
-    # Write standard resultset.json that CodeClimate expects in the EXACT format it needs
-    # This is the key fix - format the coverage data differently
+    # Create the result hash with ARRAYS (not objects) for line coverage
+    # This is critical for CodeClimate
     resultset_data = {}
     
     result.files.each do |file|
-      # Initialize the file coverage data
       file_path = file.filename
-      coverage_array = []
       
-      # Convert to array format that CodeClimate expects
-      lines = file.lines.sort_by { |line| line.line_number }
+      # Create an array of coverage counts - this is what CodeClimate expects
+      # Each element is nil (not covered), 0 (not relevant) or a positive number (covered)
+      max_line = file.lines.map(&:line_number).max || 0
+      coverage_array = Array.new(max_line, nil)
       
-      # Get the maximum line number to create an array of proper size
-      max_line_number = lines.last&.line_number || 0
-      
-      # Initialize array with nulls
-      (0..max_line_number).each { coverage_array << nil }
-      
-      # Fill in actual coverage data
-      lines.each do |line|
-        # Line numbers are 1-based but arrays are 0-based
-        coverage_array[line.line_number - 1] = line.coverage
+      file.lines.each do |line|
+        coverage_array[line.line_number - 1] = 
+          if line.skipped?
+            nil  # Skip this line (comments, etc.)
+          elsif line.missed?
+            0    # Not covered
+          else
+            1    # Covered at least once
+          end
       end
       
-      # Set the file data in the result
-      resultset_data[file_path] = { "lines" => coverage_array }
+      # Store the array directly
+      resultset_data[file_path] = coverage_array
     end
     
-    # Create the final structure
+    # Final structure - RSpec must contain coverage as arrays, not objects
     final_resultset = {
       "RSpec" => {
         "coverage" => resultset_data,
@@ -85,17 +62,23 @@ class SimpleCovJson
       f.write(JSON.pretty_generate(final_resultset))
     end
     
-    # Also write a coverage.json file as a backup
-    File.open(File.join(SimpleCov.coverage_dir, 'coverage.json'), 'w+') do |f|
-      f.write(JSON.pretty_generate(data))
-    end
-
-    # Write a debug file to check the structure
-    if ENV['CI'] || ENV['GITHUB_ACTIONS']
-      File.open(File.join(SimpleCov.coverage_dir, 'debug_resultset.json'), 'w+') do |f|
-        f.write(JSON.pretty_generate(final_resultset))
+    # Also write a regular coverage report for humans
+    coverage_summary = {
+      "timestamp": Time.now.to_i,
+      "command_name": SimpleCov.command_name,
+      "files": result.files.map do |file|
+        {
+          "name": file.filename,
+          "coverage": file.covered_percent.round(2),
+          "covered_lines": file.covered_lines.count,
+          "total_lines": file.lines_of_code,
+          "missed_lines": file.missed_lines.count
+        }
       end
-      puts "Created debug file at #{File.join(SimpleCov.coverage_dir, 'debug_resultset.json')}"
+    }
+    
+    File.open(File.join(SimpleCov.coverage_dir, 'coverage.json'), 'w+') do |f|
+      f.write(JSON.pretty_generate(coverage_summary))
     end
   end
 end
