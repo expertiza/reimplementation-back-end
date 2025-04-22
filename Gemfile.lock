@@ -125,7 +125,7 @@ GEM
       pp (>= 0.6.0)
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
-    json (2.9.1)
+    json (2.6.3)
     json-schema (3.0.0)
       addressable (>= 2.8)
     jwt (2.7.1)
@@ -146,7 +146,6 @@ GEM
       mime-types-data (~> 3.2015)
     mime-types-data (3.2025.0204)
     mini_mime (1.1.5)
-    mini_portile2 (2.8.8)
     minitest (5.19.0)
     msgpack (1.8.0)
     multi_json (1.15.0)
@@ -162,8 +161,13 @@ GEM
       net-protocol
     netrc (0.11.0)
     nio4r (2.5.9)
-    nokogiri (1.15.2)
-      mini_portile2 (~> 2.8.2)
+    nokogiri (1.15.2-aarch64-linux)
+      racc (~> 1.4)
+    nokogiri (1.15.2-arm64-darwin)
+      racc (~> 1.4)
+    nokogiri (1.15.2-x64-mingw-ucrt)
+      racc (~> 1.4)
+    nokogiri (1.15.2-x86_64-linux)
       racc (~> 1.4)
     parallel (1.23.0)
     parser (3.2.2.3)
@@ -320,7 +324,6 @@ DEPENDENCIES
   factory_bot_rails
   faker
   find_with_order
-  json (= 2.9.1)
   jwt (~> 2.7, >= 2.7.1)
   lingua
   mysql2 (~> 0.5.5)
@@ -338,7 +341,7 @@ DEPENDENCIES
   tzinfo-data
 
 RUBY VERSION
-   ruby 3.3.7p123
+   ruby 3.2.7p253
 
 BUNDLED WITH
    2.4.14
