@@ -75,6 +75,7 @@ Rails.application.routes.draw do
       delete '/review_mappings/delete_outstanding_reviewers/:assignment_id',
              to: 'review_mappings#delete_outstanding_reviewers'
       delete '/review_mappings/delete_all_metareviewers/:assignment_id', to: 'review_mappings#delete_all_metareviewers'
+      delete '/review_mappings/:id/delete_reviewer', to: 'review_mappings#delete_reviewer'
 
       resources :courses do
         collection do

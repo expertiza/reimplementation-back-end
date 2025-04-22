@@ -1798,6 +1798,37 @@ paths:
                 properties:
                   error:
                     type: string
+  /api/v1/review_mappings/{id}/delete_reviewer:
+    delete:
+      summary: Delete a reviewer from the specified review mapping
+      tags:
+        - Review Mappings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the review mapping to delete
+      responses:
+        '200':
+          description: Reviewer mapping deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Review mapping not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
 
 
 servers:

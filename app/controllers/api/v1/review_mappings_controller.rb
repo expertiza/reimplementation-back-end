@@ -294,7 +294,17 @@ module Api
         deleted_count = MetareviewResponseMap.where('reviewee_id IN (?)', Participant.where(assignment_id: assignment.id).pluck(:id)).delete_all
 
         render json: { message: "#{deleted_count} metareviewers deleted." }, status: :ok
-      end 
+      end
+      
+      # DELETE /api/v1/review_mappings/:id/delete_reviewer
+      def delete_reviewer
+        review_mapping = ResponseMap.find_by(id: params[:id])
+        return render json: { error: 'Review mapping not found' }, status: :not_found unless review_mapping
+      
+        review_mapping.destroy
+        render json: { message: 'Reviewer mapping deleted successfully' }, status: :ok
+      end
+      
 
       private
 
