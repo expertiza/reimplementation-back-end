@@ -219,10 +219,10 @@ class Api::V1::AssignmentsController < ApplicationController
   # Helper method to determine staggered_and_no_topic for the assignment
   def get_staggered_and_no_topic(assignment)
     topic_id = SignedUpTeam
-               .joins(team: :teams_users)
-               .where(teams_users: { user_id: current_user.id, team_id: Team.where(assignment_id: assignment.id).pluck(:id) })
-               .pluck(:sign_up_topic_id)
-               .first
+                 .joins(team: { participants: :user })
+                 .where(users: { id: current_user.id }, team_id: Team.where(assignment_id: assignment.id).pluck(:id))
+                 .pluck(:sign_up_topic_id)
+                 .first
 
     assignment.staggered_and_no_topic?(topic_id)
   end

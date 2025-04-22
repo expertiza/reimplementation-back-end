@@ -33,6 +33,8 @@ gem 'rack-cors'
 
 gem 'lingua'
 
+gem 'paper_trail'
+
 # This is a really small gem that can be used to retrieve objects from the database in the order of the list given
 gem 'find_with_order'
 

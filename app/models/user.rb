@@ -31,6 +31,8 @@ class User < ApplicationRecord
   delegate :administrator?, to: :role
   delegate :super_administrator?, to: :role
 
+  alias_attribute :fullname, :full_name
+
   def self.instantiate(record)
     case record.role
     when Role::TEACHING_ASSISTANT
@@ -60,11 +62,22 @@ class User < ApplicationRecord
     user
   end
 
+  def self.anonymized_view?(ip_address = nil)
+    return false if ip_address.blank?
+
+    begin
+      raw = $redis.get('anonymized_view_starter_ips') || ''
+      raw.split(',').include?(ip_address)
+    rescue => _any_error
+      false
+    end
+  end
+
   # Reset the password for the user
   def reset_password
     random_password = SecureRandom.alphanumeric(10)
-    user.password_digest = BCrypt::Password.create(random_password)
-    user.save
+    self.password_digest = BCrypt::Password.create(random_password)
+    save
   end
 
   # Get instructor_id of the user, if the user is TA,
@@ -85,6 +98,10 @@ class User < ApplicationRecord
     raise "User #{params[:user_id] || params[:user][:name]} not found" if user.nil?
 
     user
+  end
+
+  def fullname(ip_address = nil)
+    User.anonymized_view?(ip_address) ? role.name + ', ' + id.to_s : self[:full_name]
   end
 
   # This will override the default as_json method in the ApplicationRecord class and specify

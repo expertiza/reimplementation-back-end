@@ -28,4 +28,14 @@ FactoryBot.define do
     institution factory: :institution
   end
 
+  factory :response_map do
+    reviewer       { association :participant }
+    reviewee       { association :participant }
+    reviewed_object_id { reviewer.assignment_id || reviewer.course_id }
+  end
+
+  factory :review_response_map, parent: :response_map, class: 'ReviewResponseMap' do
+  end
+
+
 end

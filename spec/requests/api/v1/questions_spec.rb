@@ -33,10 +33,10 @@ RSpec.describe 'api/v1/questions', type: :request do
     let(:question1) do
       questionnaire
       Item.create(
-        seq: 1, 
+        seq: 1,
         txt: "test item 1",
-        question_type: "multiple_choice", 
-        break_before: true, 
+        question_type: "multiple_choice",
+        break_before: true,
         weight: 5,
         questionnaire: questionnaire
       )
@@ -45,10 +45,10 @@ RSpec.describe 'api/v1/questions', type: :request do
     let(:question2) do
       questionnaire
       Item.create(
-        seq: 2, 
+        seq: 2,
         txt: "test item 2",
-        question_type: "multiple_choice", 
-        break_before: false, 
+        question_type: "multiple_choice",
+        break_before: false,
         weight: 10,
         questionnaire: questionnaire
       )
@@ -69,12 +69,12 @@ RSpec.describe 'api/v1/questions', type: :request do
       tags 'Questions'
       consumes 'application/json'
       produces 'application/json'
-      
+
       let(:valid_question_params) do
         {
           questionnaire_id: questionnaire.id,
           txt: "test item",
-          question_type: "multiple_choice", 
+          question_type: "multiple_choice",
           break_before: false,
           seq: 1,
           weight: 10
@@ -85,7 +85,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         {
           questionnaire_id: nil ,
           txt: "test item",
-          question_type: "multiple_choice", 
+          question_type: "multiple_choice",
           break_before: false,
           weight: 10
         }
@@ -95,7 +95,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         {
           questionnaire_id: questionnaire.id ,
           txt: "test item",
-          question_type: nil, 
+          question_type: nil,
           break_before: false,
           weight: 10
         }
@@ -147,10 +147,10 @@ RSpec.describe 'api/v1/questions', type: :request do
     let(:question1) do
       questionnaire
       Item.create(
-        seq: 1, 
+        seq: 1,
         txt: "test item 1",
-        question_type: "Scale", 
-        break_before: true, 
+        question_type: "Scale",
+        break_before: true,
         weight: 5,
         questionnaire: questionnaire
       )
@@ -159,20 +159,20 @@ RSpec.describe 'api/v1/questions', type: :request do
     let(:question2) do
       questionnaire
       Item.create(
-        seq: 2, 
+        seq: 2,
         txt: "test item 2",
-        question_type: "Scale", 
-        break_before: false, 
+        question_type: "Scale",
+        break_before: false,
         weight: 10,
         questionnaire: questionnaire
       )
     end
 
-    
+
     let(:id) do
       questionnaire
       question1
-      question1.id 
+      question1.id
     end
 
 
@@ -209,7 +209,7 @@ RSpec.describe 'api/v1/questions', type: :request do
           seq: { type: :integer }
         }
       }
-      
+
       # put request on /api/v1/questions/{id} returns 200 successful response and updates parameters of item with given item id
       response(200, 'successful') do
         let(:body_params) do
@@ -246,7 +246,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         run_test! do
           expect(response.body).to_not include('"seq":"Dfsd"')
         end
-      end  
+      end
 
 
     end
@@ -263,7 +263,7 @@ RSpec.describe 'api/v1/questions', type: :request do
           seq: { type: :integer }
         }
       }
-      
+
       # patch request on /api/v1/questions/{id} returns 200 successful response and updates parameters of item with given item id
       response(200, 'successful') do
         let(:body_params) do
@@ -345,10 +345,10 @@ RSpec.describe 'api/v1/questions', type: :request do
     let(:question1) do
       questionnaire
       Item.create(
-        seq: 1, 
+        seq: 1,
         txt: "test item 1",
-        question_type: "multiple_choice", 
-        break_before: true, 
+        question_type: "multiple_choice",
+        break_before: true,
         weight: 5,
         questionnaire: questionnaire
       )
@@ -357,21 +357,21 @@ RSpec.describe 'api/v1/questions', type: :request do
     let(:question2) do
       questionnaire
       Item.create(
-        seq: 2, 
+        seq: 2,
         txt: "test item 2",
-        question_type: "multiple_choice", 
-        break_before: false, 
+        question_type: "multiple_choice",
+        break_before: false,
         weight: 10,
         questionnaire: questionnaire
       )
     end
 
-    
+
     let(:id) do
       questionnaire
       question1
       question2
-      questionnaire.id 
+      questionnaire.id
     end
 
     delete('delete all questions') do
@@ -413,10 +413,10 @@ RSpec.describe 'api/v1/questions', type: :request do
     let(:question1) do
       questionnaire
       Item.create(
-        seq: 1, 
+        seq: 1,
         txt: "test item 1",
-        question_type: "multiple_choice", 
-        break_before: true, 
+        question_type: "multiple_choice",
+        break_before: true,
         weight: 5,
         questionnaire: questionnaire
       )
@@ -437,10 +437,10 @@ RSpec.describe 'api/v1/questions', type: :request do
     let(:question2) do
       questionnaire2
       Item.create(
-        seq: 2, 
+        seq: 2,
         txt: "test item 2",
-        question_type: "multiple_choice", 
-        break_before: true, 
+        question_type: "multiple_choice",
+        break_before: true,
         weight: 5,
         questionnaire: questionnaire2
       )
@@ -449,23 +449,23 @@ RSpec.describe 'api/v1/questions', type: :request do
     let(:question3) do
       questionnaire2
       Item.create(
-        seq: 3, 
+        seq: 3,
         txt: "test item 3",
-        question_type: "multiple_choice", 
-        break_before: false, 
+        question_type: "multiple_choice",
+        break_before: false,
         weight: 10,
         questionnaire: questionnaire2
       )
     end
 
-    
+
     let(:id) do
       questionnaire
       questionnaire2
       question1
       question2
       question3
-      questionnaire.id 
+      questionnaire.id
     end
 
     get('show all questions') do
@@ -507,10 +507,10 @@ RSpec.describe 'api/v1/questions', type: :request do
     let(:question1) do
       questionnaire
       Item.create(
-        seq: 1, 
+        seq: 1,
         txt: "test item 1",
-        question_type: "multiple_choice", 
-        break_before: true, 
+        question_type: "multiple_choice",
+        break_before: true,
         weight: 5,
         questionnaire: questionnaire
       )
@@ -519,10 +519,10 @@ RSpec.describe 'api/v1/questions', type: :request do
     let(:question2) do
       questionnaire
       Item.create(
-        seq: 2, 
+        seq: 2,
         txt: "test item 2",
-        question_type: "multiple_choice", 
-        break_before: false, 
+        question_type: "multiple_choice",
+        break_before: false,
         weight: 10,
         questionnaire: questionnaire
       )
@@ -538,6 +538,6 @@ RSpec.describe 'api/v1/questions', type: :request do
         end
       end
     end
-  
+
   end
 end

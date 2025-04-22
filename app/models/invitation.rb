@@ -39,7 +39,7 @@ class Invitation < ApplicationRecord
   # Expected functionality: First the users previous team is deleted if they were the only member of that
   # team and topics that the old team signed up for will be deleted.
   # Then invites the user that accepted the invite sent will be removed.
-  # Lastly the users team entry will be added to the TeamsUser table and their assigned topic is updated.
+  # Lastly the users team entry will be added to the TeamsParticipant table and their assigned topic is updated.
   # NOTE: For now this method simply updates the invitation's reply_status.
   def accept_invitation(_logged_in_user)
     update(reply_status: InvitationValidator::ACCEPT_STATUS)

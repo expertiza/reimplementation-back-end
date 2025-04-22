@@ -124,7 +124,7 @@ class Api::V1::QuestionsController < ApplicationController
       Strategies::DropdownStrategy.new
     when 'Scale'
       Strategies::ScaleStrategy.new
-    # You can add more strategies as needed
+      # You can add more strategies as needed
     else
       raise "Strategy for this item type not defined"
     end

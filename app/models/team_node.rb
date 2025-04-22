@@ -1,0 +1,2 @@
+class TeamNode < Node
+end
