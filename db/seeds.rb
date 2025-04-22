@@ -139,4 +139,86 @@ teams.each_with_index do |team, idx|
 end
 puts "✅ Created SignedUpTeams"
 
+
+puts "🌱 Seeding Reviews..."
+
+assignments.each do |assignment|
+  # 1. Create a Review Questionnaire
+  questionnaire = Questionnaire.create!(
+    name: "#{assignment.name} Review Questionnaire",
+    instructor_id: assignment.instructor_id,
+    private: false,
+    min_question_score: 0,
+    max_question_score: 5,
+    questionnaire_type: 'ReviewQuestionnaire',
+    display_type: 'Review'
+  )
+
+  # 2. Create Items for the Questionnaire
+  items = [
+    {
+      txt: 'Code Quality',
+      weight: 1,
+      question_type: 'Criterion',
+      break_before: true
+    },
+    {
+      txt: 'Feedback',
+      weight: 1,
+      question_type: 'TextArea',
+      break_before: true
+    }
+  ]
+
+  created_items = items.map.with_index(1) do |item, i|
+    Item.create!(
+      txt: item[:txt],
+      weight: item[:weight],
+      questionnaire_id: questionnaire.id,
+      question_type: item[:question_type],
+      break_before: item[:break_before],
+      seq: i
+    )
+  end
+
+  # 3. Link questionnaire to assignment
+  AssignmentQuestionnaire.create!(
+    assignment: assignment,
+    questionnaire: questionnaire,
+    used_in_round: 1
+  )
+
+  # 4. Generate dummy reviews
+  assignment.teams.each do |team|
+    reviewer = team.teams_users.sample.user
+    reviewer_participant = Participant.find_by(user_id: reviewer.id, assignment_id: assignment.id)
+    next if reviewer_participant.nil?
+
+    map = ResponseMap.create!(
+      reviewer_id: reviewer_participant.id,
+      reviewee_id: team.id,
+      reviewed_object_id: assignment.id,
+      type: 'ReviewResponseMap'
+    )
+
+    response = Response.create!(
+      map_id: map.id,
+      is_submitted: true,
+      additional_comment: Faker::Lorem.sentence
+    )
+
+    created_items.each do |item|
+      Answer.create!(
+        question_id: item.id,       # foreign key pointing to items table
+        response_id: response.id,
+        answer: item.question_type == 'Criterion' ? rand(0..5) : Faker::Lorem.paragraph,
+        comments: Faker::Lorem.sentence
+      )
+    end    
+  end
+end
+
+puts "✅ Seeded Reviews, Responses, and Answers"
+
+
 puts "🎉 Seeding Complete!"

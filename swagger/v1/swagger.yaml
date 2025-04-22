@@ -259,6 +259,61 @@ paths:
                             type: string
         '404':
           description: Assignment not found
+  "/api/v1/assignments/{assignment_id}/reviews":
+    get:
+      tags:
+        - Assignments
+      summary: Retrieve all reviews for an assignment
+      description: >
+        Returns teammate and author feedback reviews for a given assignment,
+        including reviewer, reviewee, comments, score, date, and whether the review was team-based.
+      parameters:
+        - in: path
+          name: assignment_id
+          schema:
+            type: integer
+          required: true
+          description: ID of the assignment
+        - in: query
+          name: team_id
+          schema:
+            type: integer
+          required: true
+          description: ID of the team whose members' reviews should be considered as teammate reviews
+      responses:
+        '200':
+          description: Successfully retrieved reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  author_feedback_reviews:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReviewEntry'
+                  teammate_reviews:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReviewEntry'
+        '400':
+          description: Team ID required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Assignment not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
   "/api/v1/bookmarks":
     get:
       summary: list bookmarks

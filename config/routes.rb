@@ -38,6 +38,7 @@ Rails.application.routes.draw do
           get '/:assignment_id/varying_rubrics_by_round', action: :varying_rubrics_by_round?
           post '/:assignment_id/create_node',action: :create_node
           get '/:assignment_id/teams', action: :teams
+          get '/:assignment_id/reviews', action: :reviews
         end
       end
 
