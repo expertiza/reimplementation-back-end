@@ -1860,6 +1860,37 @@ paths:
                 properties:
                   error:
                     type: string
+  /api/v1/review_mappings/{id}/delete_metareview:
+    delete:
+      summary: Delete a specific metareview mapping
+      tags:
+        - Review Mappings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the metareview mapping to delete
+      responses:
+        '200':
+          description: Metareview mapping deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Metareview mapping not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
 
 
 servers:

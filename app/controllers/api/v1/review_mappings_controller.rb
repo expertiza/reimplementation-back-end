@@ -314,6 +314,15 @@ module Api
         render json: { message: 'Metareviewer mapping deleted successfully' }, status: :ok
       end
 
+      # DELETE /review_mappings/:id/delete_metareview
+      def delete_metareview
+        metareview = MetareviewResponseMap.find_by(id: params[:id])
+        return render json: { error: 'Metareview mapping not found' }, status: :not_found unless metareview
+      
+        metareview.destroy
+        render json: { message: 'Metareview mapping deleted successfully' }, status: :ok
+      end
+      
 
       private
 
