@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_17_230518) do
+ActiveRecord::Schema[8.0].define(version: 2025_04_20_183550) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -43,6 +43,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_17_230518) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "used_in_round"
+    t.integer "sign_up_topic_id"
+    t.integer "topic_id"
     t.index ["assignment_id"], name: "fk_aq_assignments_id"
     t.index ["questionnaire_id"], name: "fk_aq_questionnaire_id"
   end
@@ -122,6 +124,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_17_230518) do
     t.integer "topic_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "calibration_mappings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "assignment_id", null: false
+    t.bigint "team_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "index_calibration_mappings_on_assignment_id"
+    t.index ["team_id"], name: "index_calibration_mappings_on_team_id"
   end
 
   create_table "courses", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -231,8 +242,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_17_230518) do
     t.boolean "can_take_quiz"
     t.boolean "can_mentor"
     t.string "authorization"
+    t.integer "parent_id"
     t.index ["assignment_id"], name: "index_participants_on_assignment_id"
     t.index ["join_team_request_id"], name: "index_participants_on_join_team_request_id"
+    t.index ["parent_id"], name: "index_participants_on_parent_id"
     t.index ["team_id"], name: "index_participants_on_team_id"
     t.index ["user_id"], name: "fk_participant_users"
     t.index ["user_id"], name: "index_participants_on_user_id"
@@ -297,6 +310,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_17_230518) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["map_id"], name: "fk_response_response_map"
+  end
+
+  create_table "review_mappings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "reviewer_id"
+    t.bigint "reviewee_id"
+    t.bigint "assignment_id"
+    t.string "review_type"
+    t.string "status"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "index_review_mappings_on_assignment_id"
+    t.index ["reviewee_id"], name: "index_review_mappings_on_reviewee_id"
+    t.index ["reviewer_id"], name: "index_review_mappings_on_reviewer_id"
   end
 
   create_table "roles", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -392,6 +418,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_17_230518) do
   add_foreign_key "account_requests", "roles"
   add_foreign_key "assignments", "courses"
   add_foreign_key "assignments", "users", column: "instructor_id"
+  add_foreign_key "calibration_mappings", "assignments"
+  add_foreign_key "calibration_mappings", "teams"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
   add_foreign_key "items", "questionnaires"
@@ -400,6 +428,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_17_230518) do
   add_foreign_key "participants", "teams"
   add_foreign_key "participants", "users"
   add_foreign_key "question_advices", "items", column: "question_id"
+  add_foreign_key "review_mappings", "assignments"
+  add_foreign_key "review_mappings", "users", column: "reviewee_id"
+  add_foreign_key "review_mappings", "users", column: "reviewer_id"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
   add_foreign_key "sign_up_topics", "assignments"
   add_foreign_key "signed_up_teams", "sign_up_topics"

@@ -392,6 +392,88 @@ module ReviewMappingsHelper
         }
         end
 
+
+   def self.save_review_data(reviewer:, assignment:, reviewee_id:, answers:, overall_comment:, is_submitted:)
+    # Step 1: Validate reviewer
+    # Ensure the reviewer is actually a participant in the assignment.
+    reviewer_participant = Participant.find_by(user_id: reviewer.id, assignment_id: assignment.id)
+    return { success: false, error: "Reviewer not a participant in the assignment." } unless reviewer_participant
+
+    # Step 2: Identify the reviewee
+    # Depending on whether the assignment is team-based or individual, locate the appropriate entity.
+    reviewee = assignment.has_teams ? Team.find_by(id: reviewee_id) : Participant.find_by(id: reviewee_id)
+
+    # Handle missing reviewee
+    return { success: false, error: "Reviewee not found." } unless reviewee
+
+    # For individual assignments, make sure the reviewee belongs to the given assignment.
+    if !assignment.has_teams && reviewee.assignment_id != assignment.id
+        return { success: false, error: "Reviewee not part of the assignment." }
+    end
+
+    # Step 3: Create or find a ResponseMap linking the reviewer and reviewee
+    # This establishes the mapping record needed for tracking the review.
+    map = ResponseMap.find_or_create_by!(
+        reviewer_id: reviewer_participant.id,
+        reviewee_id: reviewee.id,
+        reviewed_object_id: assignment.id,
+        type: 'ReviewResponseMap'
+    )
+
+    # Step 4: Create or update the associated Response
+    # This represents the overall review entry, which includes additional comments.
+    response = Response.find_or_initialize_by(map_id: map.id)
+    response.additional_comment = overall_comment if overall_comment.present?
+    response.is_submitted = is_submitted == true
+
+    # Save the response if it is new or modified
+    response.save!
+
+    # Step 5: Process each answer provided by the reviewer
+    # This is where each individual rubric item or comment is saved.
+    Answer.transaction do
+        answers.each do |ans|
+        # Find the corresponding item (rubric/question)
+        item = Item.find_by(id: ans[:item_id])
+
+        # Ensure the item exists and is associated with the assignment's questionnaire
+        unless item && assignment.questionnaires.exists?(id: item.questionnaire_id)
+            raise ActiveRecord::RecordInvalid.new(Answer.new), "Invalid item #{ans[:item_id]}"
+        end
+
+        # Find or create an Answer for the item within the current response
+        answer = Answer.find_or_initialize_by(response_id: response.id, question_id: item.id)
+
+        # Populate score and comments if provided
+        answer.answer = ans[:score].to_i if ans[:score]
+        answer.comments = ans[:comment] if ans[:comment]
+
+        # Validate score range if applicable
+        if item.questionnaire&.max_question_score && answer.answer
+            max = item.questionnaire.max_question_score
+            min = item.questionnaire.min_question_score || 0
+            unless (min..max).include?(answer.answer)
+            return { success: false, error: "Score must be between #{min} and #{max}" }
+            end
+        end
+
+        # Save the individual answer
+        answer.save!
+        end
+    end
+
+    # If all saves were successful, return success message
+    { success: true, message: "Grade and comment saved successfully." }
+
+    rescue => e
+    # Catch any exceptions and return the error message for debugging or display
+    { success: false, error: e.message }
+    end
+
+
+      
+        
+
         def self.find_available_metareviewer(review_mapping, assignment_id)
             assignment = Assignment.find(review_mapping.reviewed_object_id)
             all_participants = Participant.where(assignment_id: assignment.id)

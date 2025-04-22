@@ -1,5 +1,11 @@
 class Assignment < ApplicationRecord
   include MetricHelper
+  # Maximum number of outstanding reviews allowed per reviewer
+  MAX_OUTSTANDING_REVIEWS = 2
+
+  # Set default value for num_reviews_allowed
+  attribute :num_reviews_allowed, :integer, default: 3
+
   has_many :participants, class_name: 'AssignmentParticipant', foreign_key: 'assignment_id', dependent: :destroy
   has_many :users, through: :participants, inverse_of: :assignment
   has_many :teams, class_name: 'Team', foreign_key: 'assignment_id', dependent: :destroy, inverse_of: :assignment

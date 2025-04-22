@@ -17,4 +17,8 @@ class ApplicationController < ActionController::API
   rescue
     nil
   end
+
+  def current_user
+    @current_user
+  end
 end

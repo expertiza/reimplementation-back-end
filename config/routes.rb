@@ -52,6 +52,8 @@ Rails.application.routes.draw do
       # Route for triggering automatic review mapping for a given assignment.
       # Accepts POST requests with assignment_id in the path and options in the JSON body
       post 'assignments/:assignment_id/automatic_review_mapping', to: 'review_mappings#automatic_review_mapping'
+      post 'review_mappings/save_grade_and_comment', to: 'review_mappings#save_grade_and_comment_for_reviewer'
+
       post 'review_mappings/:id/select_metareviewer', to: 'review_mappings#select_metareviewer'
 
       resources :bookmarks, except: %i[new edit] do
@@ -67,6 +69,30 @@ Rails.application.routes.draw do
         end
       end
 
+      # route added for review_mapping
+      resources :review_mappings do
+        collection do
+          post :add_calibration
+          get :select_reviewer
+          post :add_reviewer
+          post :assign_reviewer_dynamically
+          get :review_allowed
+          get :check_outstanding_reviews
+          post :assign_quiz_dynamically
+          post :start_self_review
+          # Additional routes for review mapping operations
+          get 'valid_reviewers', action: :valid_reviewers
+          get 'review_mappings_count', action: :review_mappings_count
+          get 'reviewer/:reviewer_id', action: :reviewer_mappings
+          get 'reviewee/:reviewee_id', action: :reviewee_mappings
+          post 'assign_meta_reviewer', action: :assign_meta_reviewer
+          delete 'remove_reviewer/:reviewer_id', action: :remove_reviewer
+          get 'review_mapping_types', action: :review_mapping_types
+          get 'review_mapping_strategy', action: :review_mapping_strategy
+          post 'update_review_mapping_strategy', action: :update_review_mapping_strategy
+        end
+      end
+      resources :review_mappings, only: %i[index show create update destroy]
       # route added for review_mapping
       resources :review_mappings, only: %i[index show create update destroy]
       get 'assignments/:assignment_id/review_mappings', to: 'review_mappings#list_mappings'
