@@ -38,4 +38,21 @@ class ResponseMap < ApplicationRecord
     end
     responses
   end
+
+  def self.self_review_pending?(participant_id)
+    self_review = latest_self_review(participant_id)
+    return true if self_review.nil?
+  
+    !self_review.is_submitted
+  end
+  
+  private
+  
+  def self.latest_self_review(participant_id)
+    SelfReviewResponseMap.where(reviewer_id: participant_id)
+                         .first
+                         &.response
+                         &.last
+  end
+  
 end

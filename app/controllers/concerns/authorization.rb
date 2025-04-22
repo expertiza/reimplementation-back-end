@@ -47,4 +47,17 @@ module Authorization
     required_role = required_role.name if required_role.is_a?(Role)
     current_user&.role&.name == required_role
   end
+
+  def are_needed_authorizations_present?(id, *authorizations)
+    authorization = Participant.find_by(id: id)&.authorization
+    authorization.present? && !authorizations.include?(authorization)
+  end
+
+  # Check if the currently logged-in user is a participant in an assignment
+  def current_user_is_assignment_participant?(assignment_id)
+    return false unless session[:user]
+
+    AssignmentParticipant.exists?(parent_id: assignment_id, user_id: session[:user].id)
+  end
 end
+
