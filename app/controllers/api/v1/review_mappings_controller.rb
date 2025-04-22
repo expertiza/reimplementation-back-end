@@ -268,6 +268,25 @@ module Api
         render json: { error: e.message }, status: :unprocessable_entity
       end
 
+      # DELETE /api/v1/review_mappings/delete_outstanding_reviewers/:assignment_id
+      def delete_outstanding_reviewers
+        assignment = Assignment.find_by(id: params[:assignment_id])
+        return render json: { error: 'Assignment not found' }, status: :not_found unless assignment
+
+        mappings = ReviewResponseMap.where(reviewed_object_id: assignment.id)
+        deleted_count = 0
+
+        mappings.each do |map|
+          unless Response.exists?(map_id: map.id)
+            map.destroy
+            deleted_count += 1
+          end
+        end
+
+        render json: { message: "#{deleted_count} outstanding reviewers deleted." }, status: :ok
+      end
+
+
       private
 
       def set_review_mapping

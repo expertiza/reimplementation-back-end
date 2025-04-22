@@ -1736,6 +1736,37 @@ paths:
                 properties:
                   error:
                     type: string
+  /api/v1/review_mappings/delete_outstanding_reviewers/{assignment_id}:
+    delete:
+      summary: Delete all outstanding reviewers (those who haven't submitted reviews) for an assignment
+      tags:
+        - Review Mappings
+      parameters:
+        - in: path
+          name: assignment_id
+          required: true
+          schema:
+            type: integer
+          description: ID of the assignment
+      responses:
+        '200':
+          description: Review mappings deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Assignment not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
 
 
 
