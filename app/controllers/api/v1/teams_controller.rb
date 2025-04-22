@@ -101,24 +101,29 @@ module Api
 
       private
 
+      # Finds the team by ID and assigns to @team, else renders not found
       def set_team
         @team = Team.find(params[:id])
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Team not found' }, status: :not_found
       end
 
+      # Whitelists the parameters allowed for team creation/updation
       def team_params
         params.require(:team).permit(:name, :max_team_size, :type, :assignment_id)
       end
 
+      # Whitelists parameters required to add a team member
       def team_member_params
         params.require(:team_member).permit(:user_id)
       end
 
+      # Whitelists parameters required to create or update join request
       def team_join_request_params
         params.require(:team_join_request).permit(:user_id, :status)
       end
 
+      # Validates the team type before team creation to ensure it's among allowed types
       def validate_team_type
         return unless params[:team] && params[:team][:type]
         valid_types = ['CourseTeam', 'AssignmentTeam', 'MentoredTeam']
