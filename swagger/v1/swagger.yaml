@@ -1688,7 +1688,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-   "/api/v1/assignments/{assignment_id}/review_mappings":
+  "/api/v1/assignments/{assignment_id}/review_mappings":
     get:
       summary: "List review mappings for an assignment"
       description: "Retrieves all review mappings (reviewer-reviewee assignments) for a given assignment. Optional query parameters can filter by reviewer, reviewee, or mapping type."
