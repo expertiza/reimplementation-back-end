@@ -1,9 +1,10 @@
 # Start with environment and database URL configuration
 ENV['RAILS_ENV'] ||= 'test'
 
-# Override DATABASE_URL for tests to prevent remote DB errors
+# Override DATABASE_URL for tests to match CI configuration
 if ENV['RAILS_ENV'] == 'test'
-  ENV['DATABASE_URL'] = 'mysql2://root:expertiza@127.0.0.1/reimplementation_test'
+  # Use the environment variable if already set (by CI), otherwise use local default
+  ENV['DATABASE_URL'] ||= 'mysql2://root:expertiza@127.0.0.1:3306/expertiza_test'
 end
 
 # Require spec_helper first - it has minimal dependencies
