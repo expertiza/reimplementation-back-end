@@ -139,4 +139,45 @@ RSpec.describe StudentReviewService do
       expect(service.num_reviews_in_progress).to eq(0)
     end
   end
+
+  describe 'when loading response IDs' do
+    before do
+      # Create a proper stub for SampleReview with a where class method
+      sample_reviews_class = Class.new do
+        def self.where(*)
+          # This will be overridden by the stub, but needs to exist
+        end
+      end
+      
+      # Replace the real SampleReview with our implementation
+      stub_const("SampleReview", sample_reviews_class)
+      
+      # Create a double for the result of SampleReview.where
+      sample_reviews = double('SampleReviews')
+      
+      # Now we can stub the where method
+      allow(SampleReview).to receive(:where).with(assignment_id: assignment.id).and_return(sample_reviews)
+      
+      # Stub sample_reviews.pluck to return some IDs
+      allow(sample_reviews).to receive(:pluck).with(:response_id).and_return([101, 102, 103])
+      
+      # Allow the real load_response_ids method to run
+      allow_any_instance_of(StudentReviewService).to receive(:load_response_ids).and_call_original
+    end
+    
+    it 'loads response IDs correctly for the assignment' do
+      service = StudentReviewService.new(participant.id.to_s)
+      expect(service.response_ids).to eq([101, 102, 103])
+    end
+    
+    it 'handles empty response lists' do
+      # Different test setup with empty response list
+      empty_sample_reviews = double('EmptySampleReviews')
+      allow(SampleReview).to receive(:where).with(assignment_id: assignment.id).and_return(empty_sample_reviews)
+      allow(empty_sample_reviews).to receive(:pluck).with(:response_id).and_return([])
+      
+      service = StudentReviewService.new(participant.id.to_s)
+      expect(service.response_ids).to eq([])
+    end
+  end
 end
