@@ -1,4 +1,15 @@
-# Add these lines at the very top, before any other requires
+# Start with environment and database URL configuration
+ENV['RAILS_ENV'] ||= 'test'
+
+# Override DATABASE_URL for tests to prevent remote DB errors
+if ENV['RAILS_ENV'] == 'test'
+  ENV['DATABASE_URL'] = 'mysql2://root:expertiza@127.0.0.1/reimplementation_test'
+end
+
+# Require spec_helper first - it has minimal dependencies
+require 'spec_helper'
+
+# Then set up code coverage (before Rails loads)
 require 'simplecov'
 require 'coveralls'
 
@@ -74,49 +85,43 @@ SimpleCov.start 'rails' do
   add_filter '/spec/'
   add_filter '/config/'
   add_filter '/vendor/'
-  
-  # Enable branch coverage
-  enable_coverage :branch
-  
-  # For debugging: print all tracked files
-  at_exit do
-    puts "\nSimpleCov tracked files:"
-    SimpleCov.result.files.each do |file|
-      puts "- #{file.filename} (#{file.covered_percent.round(2)}%)"
-    end
-    
-    # Debug the location of coverage files
-    puts "\nCoverage files location:"
-    puts "Coverage dir: #{SimpleCov.coverage_dir}"
-    resultset_path = File.join(SimpleCov.coverage_dir, '.resultset.json')
-    coverage_path = File.join(SimpleCov.coverage_dir, 'coverage.json')
-    puts "Resultset exists: #{File.exist?(resultset_path)}"
-    puts "Coverage exists: #{File.exist?(coverage_path)}"
-  end
 end
 
-ENV['RAILS_ENV'] ||= 'test'
+# Now load Rails environment after SimpleCov setup
+begin
+  require_relative '../config/environment'
+rescue => e
+  puts "Error loading Rails environment: #{e.message}"
+  puts e.backtrace.join("\n")
+  raise
+end
 
-# This file is copied to spec/ when you run 'rails generate rspec:install'
-require 'spec_helper'
-require_relative '../config/environment'
 # Prevent database truncation if the environment is production
 abort("The Rails environment is running in production mode!") if Rails.env.production?
 require 'rspec/rails'
 
+# Add additional testing libraries
 require 'factory_bot_rails'
 require 'database_cleaner/active_record'
 
-# Override DATABASE_URL for tests to prevent remote DB errors
-if Rails.env.test?
-  ENV['DATABASE_URL'] = 'mysql2://root:expertiza@127.0.0.1/reimplementation_test'
-end
-
+# RSpec configuration
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
+  
+  # Database cleaner setup
   config.before(:suite) do
     FactoryBot.factories.clear
     FactoryBot.find_definitions
+    
+    # Explicitly check that the database is accessible
+    begin
+      ActiveRecord::Base.connection
+      puts "✅ Database connection successful"
+    rescue => e
+      puts "❌ Database connection failed: #{e.message}"
+      abort("Database connection error. Please check database configuration.")
+    end
+    
     # Allow DatabaseCleaner to run even if DATABASE_URL is set
     DatabaseCleaner.allow_remote_database_url = true
 
@@ -127,6 +132,7 @@ RSpec.configure do |config|
       DatabaseCleaner.clean_with(:truncation)
     end
   end
+
   config.before(:each) do
     DatabaseCleaner.strategy = :transaction
     DatabaseCleaner.start
@@ -142,64 +148,31 @@ RSpec.configure do |config|
       example.run
     end
   end
-end
 
-# Load support files
-Dir[Rails.root.join('spec/support/**/*.rb')].each { |f| require f }
-
-# Add additional requires below this line. Rails is not loaded until this point!
-
-# Requires supporting ruby files with custom matchers and macros, etc, in
-# spec/support/ and its subdirectories. Files matching `spec/**/*_spec.rb` are
-# run as spec files by default. This means that files in spec/support that end
-# in _spec.rb will both be required and run as specs, causing the specs to be
-# run twice. It is recommended that you do not name files matching this glob to
-# end with _spec.rb. You can configure this pattern with the --pattern
-# option on the command line or in ~/.rspec, .rspec or `.rspec-local`.
-#
-# The following line is provided for convenience purposes. It has the downside
-# of increasing the boot-up time by auto-requiring all files in the support
-# directory. Alternatively, in the individual `*_spec.rb` files, manually
-# require only the support files necessary.
-#
-# Rails.root.glob('spec/support/**/*.rb').sort.each { |f| require f }
-
-# Checks for pending migrations and applies them before tests are run.
-# If you are not using ActiveRecord, you can remove these lines.
-begin
-  ActiveRecord::Migration.maintain_test_schema!
-rescue ActiveRecord::PendingMigrationError => e
-  abort e.to_s.strip
-end
-RSpec.configure do |config|
-  # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
+  # Rest of your RSpec configuration remains unchanged
   config.fixture_path = Rails.root.join('spec/fixtures')
-
-  # If you're not using ActiveRecord, or you'd prefer not to run each of your
-  # examples within a transaction, remove the following line or assign false
-  # instead of true.
   config.use_transactional_fixtures = true
-
-  # You can uncomment this line to turn off ActiveRecord support entirely.
-  # config.use_active_record = false
-
-  # RSpec Rails can automatically mix in different behaviours to your tests
-  # based on their file location, for example enabling you to call `get` and
-  # `post` in specs under `spec/controllers`.
-  #
-  # You can disable this behaviour by removing the line below, and instead
-  # explicitly tag your specs with their type, e.g.:
-  #
-  #     RSpec.describe UsersController, type: :controller do
-  #       # ...
-  #     end
-  #
-  # The different available types are documented in the features, such as in
-  # https://rspec.info/features/6-0/rspec-rails
   config.infer_spec_type_from_file_location!
-
-  # Filter lines from Rails gems in backtraces.
   config.filter_rails_from_backtrace!
-  # arbitrary gems may also be filtered via:
-  # config.filter_gems_from_backtrace("gem name")
+end
+
+# Debugging at end of file to ensure all imports worked
+at_exit do
+  # SimpleCov debug information
+  if defined?(SimpleCov) && SimpleCov.result
+    puts "\nSimpleCov tracked files:"
+    SimpleCov.result.files.each do |file|
+      puts "- #{file.filename} (#{file.covered_percent.round(2)}%)"
+    end
+    
+    # Debug the location of coverage files
+    puts "\nCoverage files location:"
+    puts "Coverage dir: #{SimpleCov.coverage_dir}"
+    resultset_path = File.join(SimpleCov.coverage_dir, '.resultset.json')
+    coverage_path = File.join(SimpleCov.coverage_dir, 'coverage.json')
+    puts "Resultset exists: #{File.exist?(resultset_path)}"
+    puts "Coverage exists: #{File.exist?(coverage_path)}"
+  else
+    puts "⚠️ SimpleCov result not available"
+  end
 end
