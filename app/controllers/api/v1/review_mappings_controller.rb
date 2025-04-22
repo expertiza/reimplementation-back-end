@@ -286,6 +286,15 @@ module Api
         render json: { message: "#{deleted_count} outstanding reviewers deleted." }, status: :ok
       end
 
+      # app/controllers/api/v1/review_mappings_controller.rb
+      def delete_all_metareviewers
+        assignment = Assignment.find_by(id: params[:assignment_id])
+        return render json: { error: 'Assignment not found' }, status: :not_found unless assignment
+
+        deleted_count = MetareviewResponseMap.where('reviewee_id IN (?)', Participant.where(assignment_id: assignment.id).pluck(:id)).delete_all
+
+        render json: { message: "#{deleted_count} metareviewers deleted." }, status: :ok
+      end 
 
       private
 

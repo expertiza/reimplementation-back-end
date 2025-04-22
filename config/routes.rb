@@ -74,6 +74,7 @@ Rails.application.routes.draw do
       post 'review_mappings/:id/assign_metareviewer_dynamically', to: 'review_mappings#assign_metareviewer_dynamically'
       delete '/review_mappings/delete_outstanding_reviewers/:assignment_id',
              to: 'review_mappings#delete_outstanding_reviewers'
+      delete '/review_mappings/delete_all_metareviewers/:assignment_id', to: 'review_mappings#delete_all_metareviewers'
 
       resources :courses do
         collection do

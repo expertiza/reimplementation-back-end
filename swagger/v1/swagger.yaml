@@ -1767,7 +1767,37 @@ paths:
                 properties:
                   error:
                     type: string
-
+  /api/v1/review_mappings/delete_all_metareviewers/{assignment_id}:
+    delete:
+      summary: Delete all metareviewers for the specified assignment
+      tags:
+        - Review Mappings
+      parameters:
+        - name: assignment_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the assignment
+      responses:
+        '200':
+          description: Metareviewers deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Assignment not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
 
 
 servers:
