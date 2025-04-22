@@ -27,13 +27,24 @@ class Api::V1::StudentReviewController < ApplicationController
     end
   end
 
-  # Verifies that:
-  # 1. The current user has student privileges
-  # 2. The action being accessed is the list action
-  # 3. The user has submitter role for the given resource
-  def action_allowed?
-    return false unless current_user_has_student_privileges?
+  # Add this method to handle locale
+  def controller_locale
+    # Use the user's locale preference if available
+    if current_user && current_user.locale.present?
+      I18n.locale = current_user.locale
+    else
+      # Fall back to default locale
+      I18n.locale = I18n.default_locale
+    end
+  end
 
+  # Quick-exit unless they're a student.
+  # Then, only allow the LIST_ACTION for users who also have the SUBMITTER_ROLE on this resource.
+  def action_allowed?
+    # guard clause: must be a student at all
+    return false unless current_user_has_student_privileges?  # early return
+
+    # only permit “list” for submitters
     action_name == LIST_ACTION &&
       are_needed_authorizations_present?(params[:id], SUBMITTER_ROLE)
   end

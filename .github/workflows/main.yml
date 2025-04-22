@@ -49,6 +49,14 @@ jobs:
           gem install bundler:2.4.7
           bundle install
           
+      - name: Wait for MySQL to be ready
+        run: |
+          while ! nc -z localhost 3306; do
+            echo "Waiting for MySQL..."
+            sleep 3
+          done
+          echo "MySQL is ready."
+          
       - name: Setup database
         run: |
           bundle exec rails db:create RAILS_ENV=test
@@ -67,7 +75,19 @@ jobs:
         run: bundle exec rspec spec/requests/
 
       - name: Format code coverage report
-        run: ./cc-test-reporter format-coverage -t simplecov -o "coverage/codeclimate.models.json" --debug
+        run: |
+          mkdir -p coverage
+          if [ -f "coverage/codeclimate.json" ]; then
+            ./cc-test-reporter format-coverage -t simplecov -o "coverage/codeclimate.models.json" coverage/codeclimate.json
+          else
+            echo "coverage.json not found, looking for .resultset.json"
+            if [ -f "coverage/.resultset.json" ]; then
+              ./cc-test-reporter format-coverage -t simplecov -o "coverage/codeclimate.models.json"
+            else
+              echo "No coverage files found!"
+              find coverage -type f
+            fi
+          fi
 
       - name: Upload coverage artifacts
         uses: actions/upload-artifact@v4
@@ -79,7 +99,7 @@ jobs:
   publish_code_coverage:
     needs: test  # Ensures this job runs after the test job
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # Only run when there's a push to main branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && ${{ secrets.CC_TEST_REPORTER_ID}} != ''   # Only run when there's a push to main branch
 
     steps:
       - uses: actions/checkout@v3
