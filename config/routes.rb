@@ -22,6 +22,17 @@ Rails.application.routes.draw do
           get ':id/managed', action: :managed_users
           get 'role/:name', action: :role_users
         end
+
+        # Using 'member' here instead of 'collection' since these actions operate on a specific user resource
+        member do
+          # GET retrieve user profile
+          get 'profile'
+
+          # PUT - update user profile info 
+          put 'profile', action: :update_profile
+
+          # PUT - change password 
+          put 'password', action: :change_password
       end
       resources :assignments do
         collection do
