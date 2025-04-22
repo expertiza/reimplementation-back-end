@@ -1620,6 +1620,86 @@ paths:
                 properties:
                   error:
                     type: string
+  /api/v1/review_mappings/{id}/select_metareviewer:
+    post:
+      summary: Select a metareviewer for the specified review mapping
+      tags:
+        - Review Mappings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the review mapping to assign a metareviewer to
+        - name: metareviewer_id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: ID of the metareviewer (Participant)
+      responses:
+        '200':
+          description: Metareviewer selected successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          description: Review mapping not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '422':
+          description: Failed to assign metareviewer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /api/v1/review_mappings/{id}/add_metareviewer:
+    post:
+      summary: Add a metareviewer to a review mapping
+      tags:
+        - Review Mappings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the review mapping
+        - name: metareviewer_id       
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: The ID of the participant to assign as metareviewer
+      responses:
+        '200':
+          description: Metareviewer added successfully
+        '404':
+          description: Review mapping not found
+
+
+
+
+
+
 
 
 

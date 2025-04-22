@@ -207,6 +207,55 @@ module Api
         end
       end
 
+      # POST /api/v1/review_mappings/:id/select_metareviewer
+      # This action assigns a metareviewer to a specific review mapping.
+      def select_metareviewer
+        review_mapping = ResponseMap.find_by(id: params[:id])
+        return render json: { error: 'Review mapping not found' }, status: :not_found unless review_mapping
+      
+        metareviewer_id = params[:metareviewer_id]
+        metareviewer = Participant.find_by(id: metareviewer_id)
+        return render json: { error: 'Metareviewer not found' }, status: :not_found unless metareviewer
+      
+        # Check if metareview already exists
+        existing_map = MetareviewResponseMap.find_by(reviewed_object_id: review_mapping.id, reviewer_id: metareviewer.id)
+        if existing_map
+          return render json: { message: 'Metareviewer already assigned' }, status: :ok
+        end
+      
+        MetareviewResponseMap.create!(
+          reviewed_object_id: review_mapping.id,
+          reviewer_id: metareviewer.id,
+          reviewee_id: review_mapping.reviewer_id
+        )
+      
+        render json: { message: 'Metareviewer assigned successfully' }, status: :created
+      rescue ActiveRecord::RecordInvalid => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      end
+
+      # POST /api/v1/review_mappings/:id/assign_metareviewer
+      def add_metareviewer
+        review_mapping = ResponseMap.find_by(id: params[:id])
+        return render json: { error: 'Review mapping not found' }, status: :not_found unless review_mapping
+      
+        metareviewer_id = params[:metareviewer_id]
+        metareviewer = Participant.find_by(id: metareviewer_id)
+        return render json: { error: 'Metareviewer not found' }, status: :not_found unless metareviewer
+      
+        metareview_map = MetareviewResponseMap.create!(
+          reviewed_object_id: review_mapping.id,
+          reviewer_id: metareviewer.id,
+          reviewee_id: review_mapping.reviewer_id
+        )
+      
+        render json: { message: 'Metareviewer added', metareview_map_id: metareview_map.id }, status: :created
+      rescue ActiveRecord::RecordInvalid => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      end
+      
+      
+
 
       private
 
