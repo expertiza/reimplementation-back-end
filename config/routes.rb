@@ -37,8 +37,25 @@ Rails.application.routes.draw do
           get '/:assignment_id/valid_num_review/:review_type', action: :valid_num_review
           get '/:assignment_id/varying_rubrics_by_round', action: :varying_rubrics_by_round?
           post '/:assignment_id/create_node',action: :create_node
+          # Route to trigger strategy-based review mapping for an assignment
+          post '/:assignment_id/automatic_review_mapping_strategy', to: 'review_mappings#automatic_review_mapping_strategy'
+          # Defines a POST route for triggering staggered automatic review mappings
+          post '/:assignment_id/automatic_review_mapping_staggered', to: 'review_mappings#automatic_review_mapping_staggered'
+          # Route to assign reviewers for a specific team within an assignment
+          post '/:assignment_id/assign_reviewers_for_team', to: 'review_mappings#assign_reviewers_for_team'
+          # Route to trigger peer review mapping logic
+          post '/:assignment_id/peer_review_strategy', to: 'review_mappings#peer_review_strategy'
+
+
         end
       end
+
+      # Route for triggering automatic review mapping for a given assignment.
+      # Accepts POST requests with assignment_id in the path and options in the JSON body
+      post 'assignments/:assignment_id/automatic_review_mapping', to: 'review_mappings#automatic_review_mapping'
+      post 'review_mappings/save_grade_and_comment', to: 'review_mappings#save_grade_and_comment_for_reviewer'
+
+
 
       resources :bookmarks, except: [:new, :edit] do
         member do
@@ -76,6 +93,8 @@ Rails.application.routes.draw do
           post 'update_review_mapping_strategy', action: :update_review_mapping_strategy
         end
       end
+      resources :review_mappings, only: [:index, :show, :create, :update, :destroy]
+      get 'assignments/:assignment_id/review_mappings', to: 'review_mappings#list_mappings'
 
 
       resources :courses do

@@ -1688,6 +1688,370 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+   "/api/v1/assignments/{assignment_id}/review_mappings":
+    get:
+      summary: "List review mappings for an assignment"
+      description: "Retrieves all review mappings (reviewer-reviewee assignments) for a given assignment. Optional query parameters can filter by reviewer, reviewee, or mapping type."
+      tags:
+        - Review Mappings
+      security:
+        - bearerAuth: []  
+      parameters:
+        - name: assignment_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: reviewer_id
+          in: query
+          schema:
+            type: integer
+        - name: reviewee_id
+          in: query
+          schema:
+            type: integer
+        - name: type
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Assignment not found
+  "/api/v1/assignments/{assignment_id}/automatic_review_mapping":
+    post:
+      summary: "Automatically assign reviewers for an assignment"
+      description: "Generates review mappings for the specified assignment based on the provided strategy and number of reviews per student."
+      tags:
+        - Review Mappings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: assignment_id
+          in: path
+          required: true
+          description: ID of the assignment
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                num_reviews_per_student:
+                  type: integer
+                  description: Number of reviews each student should perform
+                  example: 3
+                strategy:
+                  type: string
+                  description: Strategy to use for mapping (e.g., "default")
+                  example: default
+      responses:
+        '200':
+          description: Review mappings successfully generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          description: Assignment not found
+        '400':
+          description: Invalid input or insufficient participants
+
+  /api/v1/assignments/{assignment_id}/automatic_review_mapping_strategy:
+    post:
+      summary: Automatically generate review mappings using a specified strategy
+      description: |
+        Automatically assigns reviewers to reviewees for the given assignment using the specified strategy.  
+        Strategies can include "default", "round_robin", etc.
+      tags:
+        - Review Mappings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: assignment_id
+          in: path
+          required: true
+          description: ID of the assignment
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                strategy:
+                  type: string
+                  example: "round_robin"
+                  description: Strategy for assigning reviewers
+                num_reviews_per_student:
+                  type: integer
+                  example: 2
+                  description: Number of reviews each student should perform
+              required:
+                - strategy
+      responses:
+        '200':
+          description: Mappings created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          description: Assignment not found
+        '422':
+          description: Strategy not supported or invalid input
+  /api/v1/assignments/{assignment_id}/automatic_review_mapping_staggered:
+    post:
+      summary: Automatically assign reviewers in a staggered manner
+      description: |
+        Generates reviewer-reviewee mappings using a staggered algorithm.
+        Works for both team-based and individual assignments.
+      tags:
+        - Review Mappings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: assignment_id
+          in: path
+          required: true
+          description: ID of the assignment
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                num_reviews_per_student:
+                  type: integer
+                  example: 2
+                  description: Number of reviews each student or team should perform
+              required:
+                - num_reviews_per_student
+      responses:
+        '200':
+          description: Review mappings created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid input or insufficient participants
+        '404':
+          description: Assignment not found
+  /api/v1/assignments/{assignment_id}/assign_reviewers_for_team:
+    post:
+      summary: Assign reviewers for a specific team
+      description: >
+        Automatically assigns a specified number of reviewers to a given team within an assignment. 
+        Supports both team-based and individual assignments.
+      tags:
+        - Review Mappings
+      parameters:
+        - in: path
+          name: assignment_id
+          required: true
+          schema:
+            type: integer
+          description: ID of the assignment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - team_id
+                - num_reviewers
+              properties:
+                team_id:
+                  type: integer
+                  description: ID of the team to assign reviewers to
+                num_reviewers:
+                  type: integer
+                  description: Number of reviewers to assign
+      responses:
+        '200':
+          description: Reviewers successfully assigned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Assigned 3 reviewers to team 45"
+        '400':
+          description: Invalid input or insufficient participants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Assignment or team not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /api/v1/assignments/{assignment_id}/peer_review_strategy:
+    post:
+      summary: Automatically assign peer review mappings in a circular staggered manner
+      tags:
+        - Review Mappings
+      description: >
+        Assigns each participant (or team) to review a fixed number of peers using a staggered peer-review strategy.
+        Avoids self-reviews and supports both individual and team-based assignments.
+      parameters:
+        - in: path
+          name: assignment_id
+          schema:
+            type: integer
+          required: true
+          description: ID of the assignment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                num_reviews_per_student:
+                  type: integer
+                  example: 3
+      responses:
+        '200':
+          description: Peer review mappings created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid input or not enough reviewers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          description: Assignment not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /api/v1/review_mappings/save_grade_and_comment:
+    post:
+      summary: Save grade and comment for reviewer
+      description: Saves or updates a review grade and comment for a reviewer evaluating a participant.
+      tags:
+        - Review Mappings
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                participant_id:
+                  type: integer
+                  description: ID of the participant being reviewed
+                  example: 1
+                assignment_id:
+                  type: integer
+                  description: ID of the assignment for which the review is being graded
+                  example: 2
+                grade:
+                  type: number
+                  format: float
+                  description: Numeric grade given to the participant
+                  example: 9.5
+                comment:
+                  type: string
+                  description: Reviewer’s written feedback
+                  example: "Excellent work and teamwork."
+              required:
+                - participant_id
+                - assignment_id
+                - grade
+      responses:
+        '200':
+          description: Grade and comment saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Grade and comment saved successfully.
+                  review_grade:
+                    type: object
+                    properties:
+                      grade:
+                        type: string
+                        example: "9.5"
+                      comment:
+                        type: string
+                        example: "Excellent work and teamwork."
+                      response_id:
+                        type: integer
+                        example: 12
+        '422':
+          description: Validation failed or record could not be saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: No question item found for assignment
+
 
 servers:
 - url: http://{defaultHost}
