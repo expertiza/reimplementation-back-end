@@ -23,6 +23,12 @@ class Api::V1::QuestionnairesController < ApplicationController
   # Instructor Id statically defined since implementation of Instructor model is out of scope of E2345.
   def create
     begin
+
+      if params[:questionnaire][:instructor_id].blank?
+        params[:questionnaire][:instructor_id] = current_user.id
+      end
+
+      # puts questionnaire_params
       @questionnaire = Questionnaire.new(questionnaire_params)
       @questionnaire.display_type = sanitize_display_type(@questionnaire.questionnaire_type)
       @questionnaire.save!
@@ -45,9 +51,9 @@ class Api::V1::QuestionnairesController < ApplicationController
 
   # Update method updates the questionnaire object with id - {:id} and returns the updated questionnaire JSON object
   # PUT on /questionnaires/:id
-
   def update
     @questionnaire = Questionnaire.find(params[:id])
+    puts "success"
     if @questionnaire.update(questionnaire_params)
       render json: @questionnaire, status: :ok
     else
@@ -87,7 +93,27 @@ class Api::V1::QuestionnairesController < ApplicationController
   private
 
   def questionnaire_params
-    params.require(:questionnaire).permit(:name, :questionnaire_type, :private, :min_question_score, :max_question_score, :instructor_id)
+    params.require(:questionnaire).permit(
+      :name,
+      :questionnaire_type,
+      :private,
+      :min_question_score,
+      :max_question_score,
+      :instructor_id,
+      items_attributes: [
+        :id,
+        :txt,
+        :weight,
+        :seq,
+        :question_type,
+        :size,
+        :alternatives,
+        :break_before,
+        :min_label,
+        :max_label,
+        :_destroy
+      ]
+    )
   end
 
   def sanitize_display_type(type)

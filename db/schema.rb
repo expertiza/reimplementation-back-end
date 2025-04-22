@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_02_16_020117) do
+ActiveRecord::Schema[8.0].define(version: 2025_03_23_223202) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -26,13 +26,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_16_020117) do
   end
 
   create_table "answers", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.integer "question_id", default: 0, null: false
+    t.integer "item_id", default: 0, null: false
     t.integer "response_id"
     t.integer "answer"
     t.text "comments"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["question_id"], name: "fk_score_questions"
+    t.index ["item_id"], name: "fk_score_questions"
     t.index ["response_id"], name: "fk_score_response"
   end
 
@@ -348,6 +348,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_16_020117) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "assignment_id", null: false
+    t.string "name"
     t.index ["assignment_id"], name: "index_teams_on_assignment_id"
   end
 

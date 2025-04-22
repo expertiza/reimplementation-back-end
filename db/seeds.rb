@@ -1,9 +1,27 @@
 begin
+
+    # Create roles
+    admin_role = Role.create!(name: 'Administrator')
+    super_admin_role = Role.create!(name: 'Super Administrator')
+    instructor_role = Role.create!(name: 'Instructor')
+    student_role = Role.create!(name: 'Student')
+    ta_role = Role.create!(name: 'Teaching Assistant')
+
     #Create an instritution
     inst_id = Institution.create!(
       name: 'North Carolina State University',
     ).id
-    
+
+    # Create a superadmin user
+    User.create!(
+      name: 'superadmin',
+      email: 'superadmin@example.com',
+      password: 'password',
+      full_name: 'super admin',
+      institution_id: 1,
+      role_id: super_admin_role.id
+    )
+
     # Create an admin user
     User.create!(
       name: 'admin',
@@ -11,7 +29,7 @@ begin
       password: 'password123',
       full_name: 'admin admin',
       institution_id: 1,
-      role_id: 1
+      role_id: admin_role.id
     )
     
 
@@ -31,7 +49,7 @@ begin
         password: "password",
         full_name: Faker::Name.name,
         institution_id: 1,
-        role_id: 3,
+        role_id: instructor_role.id
       ).id
     end
 
@@ -78,7 +96,7 @@ begin
         password: "password",
         full_name: Faker::Name.name,
         institution_id: 1,
-        role_id: 5,
+        role_id: student_role.id
       ).id
     end
 
@@ -122,6 +140,11 @@ begin
 
 
 
+# rescue ActiveRecord::RecordInvalid => e
+#     puts 'The db has already been seeded'
+# end
+
 rescue ActiveRecord::RecordInvalid => e
-    puts 'The db has already been seeded'
+  puts "Error during seeding: #{e.message}"
+  puts "Validation errors: #{e.record.errors.full_messages.join(', ')}"
 end

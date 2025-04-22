@@ -1,6 +1,7 @@
 class Questionnaire < ApplicationRecord
   belongs_to :instructor
   has_many :items, class_name: "Item", foreign_key: "questionnaire_id", dependent: :destroy # the collection of questions associated with this Questionnaire
+  accepts_nested_attributes_for :items, allow_destroy: true
   before_destroy :check_for_question_associations
 
   validate :validate_questionnaire
@@ -40,15 +41,16 @@ class Questionnaire < ApplicationRecord
     end
   end
 
-  def as_json(options = {})
-      super(options.merge({
-                            only: %i[id name private min_question_score max_question_score created_at updated_at questionnaire_type instructor_id],
-                            include: {
-                              instructor: { only: %i[name email fullname password role]
-                            }
-                            }
-                          })).tap do |hash|
-        hash['instructor'] ||= { id: nil, name: nil }
-      end
+
+  def as_json(_options = {})
+    super(
+      only: %i[id name private min_question_score max_question_score created_at updated_at questionnaire_type instructor_id],
+      include: {
+        instructor: { only: %i[name email fullname password role] },
+        items: {}
+      }
+    ).tap do |hash|
+      hash['instructor'] ||= { id: nil, name: nil }
+    end
   end
 end

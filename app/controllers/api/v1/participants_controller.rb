@@ -2,6 +2,13 @@ class Api::V1::ParticipantsController < ApplicationController
   include ParticipantsHelper
 
   # Returns true if the user has TA privileges; otherwise, denies access by returning false.
+  def has_required_role?(i)
+    # code here
+    puts "current user id: #{current_user.role_id}" if current_user
+    return true
+  end
+
+  # Returns true if the user has TA privileges; otherwise, denies access by returning false.
   def action_allowed?
     has_required_role?('Teaching Assistant')
   end
@@ -42,12 +49,12 @@ class Api::V1::ParticipantsController < ApplicationController
   # params - id
   # GET /participants/:id
   def show
-    participant = Participant.find(params[:id])
+    participant = Participant.includes(team: :participants).find_by(id: params[:id])
 
     if participant.nil?
-      render json: participant.errors, status: :unprocessable_entity
+      render json: { error: "Participant not found" }, status: :not_found
     else
-      render json: participant, status: :created
+      render json: participant, status: :ok
     end
   end
 
@@ -131,6 +138,143 @@ class Api::V1::ParticipantsController < ApplicationController
                                         :topic, :current_stage, :stage_deadline)
   end
 
+
+  def save_grade
+    puts "id: #{params[:id]}"
+    puts "grade: #{params[:grade]}"
+    puts "comment: #{params[:comment]}"
+    puts "Grade"
+  end
+
+
+
+  def peer_reviews
+    # participant = Participant.find_by(id: params[:id])
+    participant = find_participant
+    questionnaire = AssignmentQuestionnaire.includes(:questionnaire).find_by(id: participant.assignment_id)
+
+    # If there are no questionnaires associated with this participant's assignment.
+    if questionnaire.nil?
+      render json: questionnaire, status: :ok
+    end
+
+    quest = questionnaire.questionnaire
+    questions = quest.items
+
+    response_maps = ResponseMap.includes(response: :scores).where(reviewee_id: params[:id])
+    puts response_maps.inspect
+
+    maps = ResponseMap.where(reviewee_id: params[:id])
+    puts maps.first.response
+    puts "GETTING REVIEWS"
+    # render json: questionnaire.to_json, status: :ok
+
+    output = {
+      questionnaire: {
+        id: quest.id,
+        name: quest.name,
+        questions: questions.map do |question|
+          {
+            id: question.id,
+            text: question.txt,
+            weight: question.weight,
+            seq: question.seq,
+            question_type: question.question_type,
+            size: question.size,
+            alternatives: question.alternatives,
+            max_label: question.max_label,
+            min_label: question.min_label
+          }
+        end
+      },
+      responses: maps.map do |map|
+        {
+          reviewer_id: map.reviewer_id,
+          map_id: map.id,
+          responses: map.response.map do |response|
+            {
+              id: response.id,
+              additional_comment: response.additional_comment,
+              answers: response.scores.map do |score|
+                {
+                  question_id: score.item_id,
+                  answer: score.answer,
+                  comments: score.comments
+                }
+              end
+            }
+          end
+        }
+      end
+    }
+
+    render json: output, status: :ok
+  end
+
+
+  def peer_reviews
+    participant = find_participant
+    questionnaire = AssignmentQuestionnaire.includes(:questionnaire).find_by(id: participant.assignment_id)
+
+    # If there are no questionnaires associated with this participant's assignment.
+    if questionnaire.nil?
+      render json: questionnaire, status: :ok
+    end
+
+    quest = questionnaire.questionnaire
+    questions = quest.items
+
+    response_maps = ResponseMap.includes(response: :scores).where(reviewee_id: params[:id])
+    puts response_maps.inspect
+
+    maps = ResponseMap.where(reviewee_id: params[:id])
+    puts maps.first.response
+    puts "GETTING REVIEWS"
+    # render json: questionnaire.to_json, status: :ok
+
+    output = {
+      questionnaire: {
+        id: quest.id,
+        name: quest.name,
+        questions: questions.map do |question|
+          {
+            id: question.id,
+            text: question.txt,
+            weight: question.weight,
+            seq: question.seq,
+            question_type: question.question_type,
+            size: question.size,
+            alternatives: question.alternatives,
+            max_label: question.max_label,
+            min_label: question.min_label
+          }
+        end
+      },
+      responses: maps.map do |map|
+        {
+          reviewer_id: map.reviewer_id,
+          map_id: map.id,
+          responses: map.response.map do |response|
+            {
+              id: response.id,
+              additional_comment: response.additional_comment,
+              answers: response.scores.map do |score|
+                {
+                  question_id: score.item_id,
+                  answer: score.answer,
+                  comments: score.comments
+                }
+              end
+            }
+          end
+        }
+      end
+    }
+
+    render json: output, status: :ok
+  end
+
+
   private
 
   # Filters participants based on the provided user
@@ -196,4 +340,23 @@ class Api::V1::ParticipantsController < ApplicationController
 
     authorization
   end
+
+
+  def participant_with_team(participant)
+    user = User.find_by(id: participant.user_id)
+    {
+      id: participant.id,
+      name: user.full_name,
+      team: participant.team ? {
+        id: participant.team.id,
+        name: participant.team.name,
+        participants: participant.team.participants.map do |p|
+          {
+            id: p.id,
+            name: User.find_by(id: p.user_id).name,
+          }
+        end
+      } : nil
+    }
+    end
 end

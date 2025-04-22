@@ -209,7 +209,67 @@ class Api::V1::AssignmentsController < ApplicationController
       end
     end
   end
-  
+
+
+  def list_submissions
+    assignment = Assignment.includes(:teams, :participants).find(params[:id])
+
+    submissions = if assignment.team_assignment?
+                    assignment.teams.includes(:users).map do |team|
+                      signed_up_team = team.signed_up_teams.first
+                      topic = signed_up_team&.sign_up_topic&.topic_name
+                      {
+                        id: team.participants.first.id,
+                        name: team.name,
+                        participants: team.users,
+                        team_id: team.id,
+                        topic: topic,
+                      }
+                    end
+                  else
+                    assignment.participants.includes(:user).map do |participant|
+                      {
+                        id: participant.id,
+                        name: participant.user.name,
+                        participants: [participant.user]
+                      }
+                    end
+                  end
+
+    render json: submissions, status: :ok
+  end
+
+
+  def get_team
+    team = Team.includes(:users).find_by(id: params[:team_id])
+
+    if team.nil?
+      render json: { error: "Team not found" }, status: :not_found
+    else
+      # render json: team.to_json(include: :participants), status: :ok
+      # render json: team.to_json(
+      #   include: {
+      #     participants: {
+      #       include: {
+      #         user: { only: [:name, :full_name] }
+      #       }
+      #     }
+      #   }
+      # ), status: :ok
+      render json: {
+        id: team.id,
+        name: team.name,
+        participants: team.participants.map do |participant|
+          participant.as_json.merge(
+            name: participant.user.name,
+            full_name: participant.user.full_name
+          )
+        end
+      }, status: :ok
+    end
+  end
+
+
   private
   # Only allow a list of trusted parameters through.
   def assignment_params

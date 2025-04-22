@@ -1,6 +1,6 @@
 class Item < ApplicationRecord
   before_create :set_seq
-  belongs_to :questionnaire # each item belongs to a specific questionnaire
+  belongs_to :questionnaire, optional: true
   has_many :answers, dependent: :destroy
   has_many :choices, dependent: :destroy
   attr_accessor :choice_strategy
