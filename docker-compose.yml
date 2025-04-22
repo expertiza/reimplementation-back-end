@@ -20,7 +20,7 @@ services:
     image: mysql:8.0
     restart: always
     environment:
-      MYSQL_USER: dev
+      MYSQL_USER: root
       MYSQL_PASSWORD: expertiza
       MYSQL_ROOT_PASSWORD: expertiza
     ports:

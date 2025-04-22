@@ -1,3 +1,19 @@
+# Add these lines at the very top, before any other requires
+require 'simplecov'
+
+SimpleCov.start 'rails' do
+  add_group "Controllers", "app/controllers"
+  add_group "Models", "app/models"
+  add_group "Services", "app/services"
+  add_group "Helpers", "app/helpers"
+  
+  # Set the output directory
+  coverage_dir 'coverage/simplecov'
+end
+
+# Add this at the very top of the file
+require 'support/simplecov_config'
+
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 require 'spec_helper'
 ENV['RAILS_ENV'] ||= 'test'

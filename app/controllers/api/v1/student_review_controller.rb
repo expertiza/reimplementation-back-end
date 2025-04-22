@@ -32,6 +32,17 @@ class Api::V1::StudentReviewController < ApplicationController
     end
   end
 
+  # Add this method to handle locale
+  def controller_locale
+    # Use the user's locale preference if available
+    if current_user && current_user.locale.present?
+      I18n.locale = current_user.locale
+    else
+      # Fall back to default locale
+      I18n.locale = I18n.default_locale
+    end
+  end
+
   # Quick-exit unless they're a student.
   # Then, only allow the LIST_ACTION for users who also have the SUBMITTER_ROLE on this resource.
   def action_allowed?
