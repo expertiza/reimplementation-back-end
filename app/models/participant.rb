@@ -15,4 +15,12 @@ class Participant < ApplicationRecord
   def fullname
     user.fullname
   end
+
+  # Check if the participant can review in this assignment
+  # @return [Boolean] true if the participant can review, false otherwise
+  def can_review?
+    # For now, all participants can review
+    # This can be extended with more complex logic if needed
+    true
+  end
 end
