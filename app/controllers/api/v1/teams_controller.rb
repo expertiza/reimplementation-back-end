@@ -132,6 +132,7 @@ module Api
         end
       end
 
+      # Placeholder method to get current user (can be replaced by actual auth logic)
       def current_user
         @current_user
       end
