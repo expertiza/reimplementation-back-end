@@ -44,19 +44,58 @@ class SimpleCovJson
     # Ensure the coverage directory exists
     FileUtils.mkdir_p(SimpleCov.coverage_dir)
     
-    # Write standard resultset.json that CodeClimate expects
+    # Write standard resultset.json that CodeClimate expects in the EXACT format it needs
+    # This is the key fix - format the coverage data differently
+    resultset_data = {}
+    
+    result.files.each do |file|
+      # Initialize the file coverage data
+      file_path = file.filename
+      coverage_array = []
+      
+      # Convert to array format that CodeClimate expects
+      lines = file.lines.sort_by { |line| line.line_number }
+      
+      # Get the maximum line number to create an array of proper size
+      max_line_number = lines.last&.line_number || 0
+      
+      # Initialize array with nulls
+      (0..max_line_number).each { coverage_array << nil }
+      
+      # Fill in actual coverage data
+      lines.each do |line|
+        # Line numbers are 1-based but arrays are 0-based
+        coverage_array[line.line_number - 1] = line.coverage
+      end
+      
+      # Set the file data in the result
+      resultset_data[file_path] = { "lines" => coverage_array }
+    end
+    
+    # Create the final structure
+    final_resultset = {
+      "RSpec" => {
+        "coverage" => resultset_data,
+        "timestamp" => Time.now.to_i
+      }
+    }
+    
+    # Write the resultset file
     File.open(File.join(SimpleCov.coverage_dir, '.resultset.json'), 'w+') do |f|
-      f.write(JSON.pretty_generate({
-        "RSpec" => {
-          "coverage" => result.original_result,
-          "timestamp" => Time.now.to_i
-        }
-      }))
+      f.write(JSON.pretty_generate(final_resultset))
     end
     
     # Also write a coverage.json file as a backup
     File.open(File.join(SimpleCov.coverage_dir, 'coverage.json'), 'w+') do |f|
       f.write(JSON.pretty_generate(data))
+    end
+
+    # Write a debug file to check the structure
+    if ENV['CI'] || ENV['GITHUB_ACTIONS']
+      File.open(File.join(SimpleCov.coverage_dir, 'debug_resultset.json'), 'w+') do |f|
+        f.write(JSON.pretty_generate(final_resultset))
+      end
+      puts "Created debug file at #{File.join(SimpleCov.coverage_dir, 'debug_resultset.json')}"
     end
   end
 end
