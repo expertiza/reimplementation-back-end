@@ -13,6 +13,8 @@ class User < ApplicationRecord
   # profile fields for editing
   validates :full_name, presence: true, length: { maximum: 50 }
 
+  before_create :set_jwt_version
+
   belongs_to :role
   belongs_to :institution, optional: true
   belongs_to :parent, class_name: 'User', optional: true
@@ -116,6 +118,12 @@ class User < ApplicationRecord
     self.email_on_submission ||= false
     self.email_on_review_of_review ||= false
     self.etc_icons_on_homepage ||= true
+  end
+
+  private
+
+  def set_jwt_version
+    self.jwt_version ||= SecureRandom.uuid 
   end
 
 end

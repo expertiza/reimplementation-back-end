@@ -100,16 +100,51 @@ class Api::V1::UsersController < ApplicationController
   end
 
   # POST /users/:id/update_password
+  # def update_password
+  #   user = User.find(params[:id])
+  
+  #   unless user.authenticate(params[:current_password])
+  #     return render json: { error: 'Current password is incorrect' }, status: :unauthorized
+  #   end
+  
+  #   if user.update(password: params[:new_password], password_confirmation: params[:new_password_confirmation])
+  #     # TODO: Invalidate sessions or issue new token here
+  #     render json: { message: 'Password updated successfully' }, status: :ok
+  #   else
+  #     render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
+  #   end
+  # end
+
   def update_password
     user = User.find(params[:id])
   
-    unless user.authenticate(params[:current_password])
-      return render json: { error: 'Current password is incorrect' }, status: :unauthorized
+    password = params[:password]
+    confirm_password = params[:confirmPassword]
+  
+    if password.blank? || confirm_password.blank?
+      return render json: { error: 'Both password and confirmPassword are required' }, status: :bad_request
     end
   
-    if user.update(password: params[:new_password], password_confirmation: params[:new_password_confirmation])
-      # TODO: Invalidate sessions or issue new token here
-      render json: { message: 'Password updated successfully' }, status: :ok
+    if password != confirm_password
+      return render json: { error: 'Passwords do not match' }, status: :unprocessable_entity
+    end
+  
+    if user.update(password: password, password_confirmation: confirm_password)
+      # update jwt_version and issue new token
+      user.update(jwt_version: SecureRandom.uuid)
+  
+      payload = {
+        id: user.id,
+        name: user.name,
+        full_name: user.full_name,
+        role: user.role.name,
+        institution_id: user.institution.id,
+        jwt_version: user.jwt_version
+      }
+  
+      token = JsonWebToken.encode(payload, 24.hours.from_now)
+  
+      render json: { message: 'Password updated successfully', token: token }, status: :ok
     else
       render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
     end
