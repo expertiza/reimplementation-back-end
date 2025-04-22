@@ -1,16 +1,21 @@
 module Api
   module V1
     class TeamsController < ApplicationController
+      # Set the @team instance variable before executing actions except index and create
       before_action :set_team, except: [:index, :create]
+
+      # Validate team type only during team creation
       before_action :validate_team_type, only: [:create]
 
       # GET /api/v1/teams
+      # Fetches all teams and renders them using TeamSerializer
       def index
         @teams = Team.all
         render json: @teams, each_serializer: TeamSerializer
       end
 
       # GET /api/v1/teams/:id
+      # Shows a specific team based on ID
       def show
         render json: @team, serializer: TeamSerializer
       rescue ActiveRecord::RecordNotFound
@@ -18,6 +23,7 @@ module Api
       end
 
       # POST /api/v1/teams
+      # Creates a new team associated with the current user
       def create
         @team = Team.new(team_params)
         @team.user = current_user
@@ -29,11 +35,13 @@ module Api
       end
 
       # GET /api/v1/teams/:id/members
+      # Lists all members of a specific team
       def members
         render json: @team.team_members, each_serializer: TeamMemberSerializer
       end
 
       # POST /api/v1/teams/:id/members
+      # Adds a new member to the team unless it's already full
       def add_member
         return render json: { errors: ['Team is full'] }, status: :unprocessable_entity if @team.full?
 
@@ -50,6 +58,7 @@ module Api
       end
 
       # DELETE /api/v1/teams/:id/members/:user_id
+      # Removes a member from the team based on user ID
       def remove_member
         team_member = @team.team_members.find_by(user_id: params[:user_id])
         if team_member
@@ -61,11 +70,13 @@ module Api
       end
 
       # GET /api/v1/teams/:id/join_requests
+      # Lists all join requests for the team
       def join_requests
         render json: @team.team_join_requests, each_serializer: TeamJoinRequestSerializer
       end
 
       # POST /api/v1/teams/:id/join_requests
+      # Creates a new join request for a team
       def create_join_request
         join_request = @team.team_join_requests.build(team_join_request_params)
         if join_request.save
@@ -76,6 +87,7 @@ module Api
       end
 
       # PUT /api/v1/teams/:id/join_requests/:id
+      # Updates the status or details of a specific join request
       def update_join_request
         join_request = @team.team_join_requests.find(params[:join_request_id])
         if join_request.update(team_join_request_params)
