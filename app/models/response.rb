@@ -58,8 +58,17 @@ class Response < ApplicationRecord
   end
   
   def calculate_score
-    return 0 if skipped
-    question = self.question
-    question.correct_answer == submitted_answer ? question.score_value : 0
+    total_score = calculate_total_score
+    max_score = maximum_score
+
+    # Check if any associated items are skippable
+    skippable_items = scores.map { |score| score.question_id }.any? do |question_id|
+      item = Item.find_by(id: question_id)
+      item&.skippable?
+    end
+
+    return 0 if skippable_items && max_score.zero?
+
+    (total_score.to_f / max_score * 100).round(2)
   end
 end
