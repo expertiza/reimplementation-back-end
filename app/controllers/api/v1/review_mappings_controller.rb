@@ -322,6 +322,21 @@ module Api
         metareview.destroy
         render json: { message: 'Metareview mapping deleted successfully' }, status: :ok
       end
+
+      # DELETE /api/v1/review_mappings/:id/unsubmit_review
+      def unsubmit_review
+        review_mapping = ResponseMap.find_by(id: params[:id])
+        return render json: { error: 'Review mapping not found' }, status: :not_found unless review_mapping
+
+        response = Response.where(map_id: review_mapping.id).order(created_at: :desc).first
+        return render json: { error: 'Response not found' }, status: :not_found unless response
+
+        response.update!(is_submitted: false)
+        render json: { message: 'Review unsubmitted successfully' }, status: :ok
+      rescue ActiveRecord::RecordInvalid => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      end
+
       
 
       private

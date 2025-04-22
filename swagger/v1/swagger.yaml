@@ -1891,6 +1891,47 @@ paths:
                 properties:
                   error:
                     type: string
+  /api/v1/review_mappings/{id}/unsubmit_review:
+    delete:
+      summary: Unsubmit a review response by ID
+      tags:
+        - Review Mappings
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the review mapping
+      responses:
+        '200':
+          description: Review unsubmitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Review mapping or response not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '422':
+          description: Update failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
 
 
 servers:

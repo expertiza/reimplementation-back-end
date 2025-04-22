@@ -78,6 +78,7 @@ Rails.application.routes.draw do
       delete '/review_mappings/:id/delete_reviewer', to: 'review_mappings#delete_reviewer'
       delete 'review_mappings/:id/delete_metareviewer', to: 'review_mappings#delete_metareviewer'
       delete '/review_mappings/:id/delete_metareview', to: 'review_mappings#delete_metareview'
+      delete '/review_mappings/:id/unsubmit_review', to: 'review_mappings#unsubmit_review'
 
       resources :courses do
         collection do
