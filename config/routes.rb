@@ -33,6 +33,7 @@ Rails.application.routes.draw do
 
           # PUT - change password 
           put 'password', action: :change_password
+        end
       end
       resources :assignments do
         collection do

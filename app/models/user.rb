@@ -6,7 +6,11 @@ class User < ApplicationRecord
   validates :name, presence: true, uniqueness: true, allow_blank: false
                    # format: { with: /\A[a-z]+\z/, message: 'must be in lowercase' }
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
-  validates :password, length: { minimum: 6 }, presence: true, allow_nil: true
+
+  # password length min 8
+  validates :password, length: { minimum: 8 }, presence: true, allow_nil: true
+  
+  # profile fields for editing
   validates :full_name, presence: true, length: { maximum: 50 }
 
   belongs_to :role
