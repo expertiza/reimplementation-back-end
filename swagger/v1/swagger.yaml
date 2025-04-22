@@ -1360,7 +1360,7 @@ paths:
                       type: string
                       description: Name of the user to assign as reviewer
       responses:
-        '201':
+        '200':
           description: Review mapping created successfully
           content:
             application/json:
@@ -1414,7 +1414,7 @@ paths:
                       type: integer
                       description: ID of the team
       responses:
-        '201':
+        '200':
           description: Calibration review mapping created successfully
           content:
             application/json:
@@ -1500,7 +1500,7 @@ paths:
                   type: boolean
                   description: Whether to ignore existing assignments
       responses:
-        '201':
+        '200':
           description: Reviewer assigned successfully
           content:
             application/json:
@@ -1622,7 +1622,7 @@ paths:
                   type: integer
                   description: ID of the questionnaire to be assigned
       responses:
-        '201':
+        '200':
           description: Quiz assigned successfully
           content:
             application/json:
@@ -1670,7 +1670,7 @@ paths:
                   type: integer
                   description: User ID of the reviewer
       responses:
-        '201':
+        '200':
           description: Self-review started successfully
           content:
             application/json:

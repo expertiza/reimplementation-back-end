@@ -36,6 +36,4 @@ class QuizResponseMap < ResponseMap
   rescue StandardError => e
     OpenStruct.new(success: false, error: e.message)
   end
-
-  # ... existing code ... 
 end 
