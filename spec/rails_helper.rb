@@ -40,7 +40,7 @@ class SimpleCovJson < SimpleCov::Formatter
     end
 
     # Ensure the coverage directory exists
-    FileUtils.mkdir_p('coverage')
+    FileUtils.mkdir_p(SimpleCov.coverage_dir)
     
     # Write standard resultset.json that CodeClimate expects
     File.open(File.join(SimpleCov.coverage_dir, '.resultset.json'), 'w+') do |f|
@@ -114,13 +114,23 @@ RSpec.configure do |config|
     FactoryBot.factories.clear
     FactoryBot.find_definitions
     
-    # Explicitly check that the database is accessible
+    # Explicitly check that the database is accessible with retry mechanism
+    retry_count = 0
+    max_retries = 5
     begin
       ActiveRecord::Base.connection
       puts "✅ Database connection successful"
     rescue => e
-      puts "❌ Database connection failed: #{e.message}"
-      abort("Database connection error. Please check database configuration.")
+      retry_count += 1
+      if retry_count <= max_retries
+        puts "❌ Database connection failed (attempt #{retry_count}/#{max_retries}): #{e.message}"
+        puts "Waiting 3 seconds before retry..."
+        sleep 3
+        retry
+      else
+        puts "❌ Database connection failed after #{max_retries} attempts: #{e.message}"
+        abort("Database connection error. Please check database configuration.")
+      end
     end
     
     # Allow DatabaseCleaner to run even if DATABASE_URL is set
