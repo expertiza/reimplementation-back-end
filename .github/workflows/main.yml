@@ -49,6 +49,14 @@ jobs:
           gem install bundler:2.4.7
           bundle install
           
+      - name: Wait for MySQL to be ready
+        run: |
+          while ! nc -z localhost 3306; do
+            echo "Waiting for MySQL..."
+            sleep 3
+          done
+          echo "MySQL is ready."
+          
       - name: Setup database
         run: |
           bundle exec rails db:create RAILS_ENV=test
