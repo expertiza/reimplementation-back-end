@@ -142,9 +142,13 @@ class Api::V1::UsersController < ApplicationController
         jwt_version: user.jwt_version
       }
   
-      token = JsonWebToken.encode(payload, 24.hours.from_now)
+      new_token = JsonWebToken.encode(payload, 24.hours.from_now)
   
-      render json: { message: 'Password updated successfully', token: token }, status: :ok
+      render json: { 
+        message: 'Password updated successfully',
+        token: token,
+        user: user.as_json(except: [:password_digest]) 
+        }, status: :ok
     else
       render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
     end
