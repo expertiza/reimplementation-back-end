@@ -349,6 +349,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_16_020117) do
     t.datetime "updated_at", null: false
     t.bigint "assignment_id", null: false
     t.index ["assignment_id"], name: "index_teams_on_assignment_id"
+    t.integer "parent_id"
   end
 
   create_table "teams_users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
