@@ -12,6 +12,137 @@ components:
 security:
 - bearerAuth: []
 paths:
+  "/api/v1/teams_users":
+    get:
+      summary: Get all team-user mappings
+      tags:
+      - TeamsUser
+      responses:
+        '200':
+          description: List of TeamsUser mappings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    team_id:
+                      type: integer
+                    user_id:
+                      type: integer
+
+    post:
+      summary: Create a new team-user mapping
+      tags:
+      - TeamsUser
+      parameters: []
+      responses:
+        '201':
+          description: Successfully created a TeamsUser mapping
+        '422':
+          description: Unprocessable Entity – validation failed
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                team_id:
+                  type: integer
+                user_id:
+                  type: integer
+              required:
+              - team_id
+              - user_id
+
+  "/api/v1/teams_users/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: ID of the TeamsUser mapping
+      required: true
+      schema:
+        type: integer
+
+    get:
+      summary: Get a specific team-user mapping
+      tags:
+      - TeamsUser
+      responses:
+        '200':
+          description: A TeamsUser mapping
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  team_id:
+                    type: integer
+                  user_id:
+                    type: integer
+        '404':
+          description: TeamsUser not found
+
+    put:
+      summary: Update a team-user mapping
+      tags:
+      - TeamsUser
+      parameters: []
+      responses:
+        '200':
+          description: Updated TeamsUser mapping successfully
+        '422':
+          description: Unprocessable Entity – validation failed
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                team_id:
+                  type: integer
+                user_id:
+                  type: integer
+              required:
+              - team_id
+              - user_id
+
+    delete:
+      summary: Delete a team-user mapping
+      tags:
+      - TeamsUser
+      responses:
+        '204':
+          description: Deleted successfully
+        '404':
+          description: TeamsUser not found
+  "/api/v1/teams/{id}/add_member":
+    post:
+      summary: Add a member to a team
+      tags:
+      - Teams
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Member added successfully
+        '422':
+          description: Failed to add member
+
   "/api/v1/account_requests/pending":
     get:
       summary: List all Pending Account Requests
