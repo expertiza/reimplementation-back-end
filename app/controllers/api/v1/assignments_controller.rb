@@ -220,7 +220,7 @@ class Api::V1::AssignmentsController < ApplicationController
   def get_staggered_and_no_topic(assignment)
     topic_id = SignedUpTeam
                .joins(team: :teams_users)
-               .where(teams_users: { user_id: current_user.id, team_id: Team.where(assignment_id: assignment.id).pluck(:id) })
+               .where(teams_users: { user_id: current_user.id, team_id: Team.where(parent_id: assignment.id).pluck(:id) })
                .pluck(:sign_up_topic_id)
                .first
 
