@@ -36,6 +36,7 @@ gem 'lingua'
 # This is a really small gem that can be used to retrieve objects from the database in the order of the list given
 gem 'find_with_order'
 
+
 group :development, :test do
   gem 'debug', platforms: %i[mri mingw x64_mingw]
   gem 'factory_bot_rails'
