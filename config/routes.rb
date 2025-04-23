@@ -24,7 +24,7 @@ Rails.application.routes.draw do
         end
 
         member do
-          get :get_profile           # PATCH /api/v1/users/:id/get_profile
+          get :get_profile           # GET /api/v1/users/:id/get_profile
           patch :update_profile           # PATCH /api/v1/users/:id/update_profile
           post  :update_password          # POST  /api/v1/users/:id/update_password
         end

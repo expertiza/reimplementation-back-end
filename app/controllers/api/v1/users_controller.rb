@@ -120,20 +120,6 @@ class Api::V1::UsersController < ApplicationController
   end
 
   # POST /users/:id/update_password
-  # def update_password
-  #   user = User.find(params[:id])
-  
-  #   unless user.authenticate(params[:current_password])
-  #     return render json: { error: 'Current password is incorrect' }, status: :unauthorized
-  #   end
-  
-  #   if user.update(password: params[:new_password], password_confirmation: params[:new_password_confirmation])
-  #     # TODO: Invalidate sessions or issue new token here
-  #     render json: { message: 'Password updated successfully' }, status: :ok
-  #   else
-  #     render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
-  #   end
-  # end
 
   def update_password
     user = User.find(params[:id])
