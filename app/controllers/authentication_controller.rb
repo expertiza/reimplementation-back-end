@@ -49,7 +49,8 @@ class AuthenticationController < ApplicationController
         name: user.name, 
         full_name: user.full_name, 
         role: user.role.name,
-        institution_id: user.institution.id 
+        institution_id: user.institution.id, 
+        jwt_version: user.jwt_version
       }
       token = JsonWebToken.encode(payload, 24.hours.from_now)
       render json: { token: }, status: :ok
