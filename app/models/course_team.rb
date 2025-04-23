@@ -1,9 +1,15 @@
 class CourseTeam < Team
+  #Each course team must belong to a course
   belongs_to :course
 
+  # Validates that the course is present
   validates :course, presence: true
+
+  #Custom validation to ensure the team type CourseTeam
   validate :type_must_be_course_team
 
+
+  #adds members to the course team post validation
   def add_member(user)
     return false unless validate_membership(user)
     super(user)
@@ -35,6 +41,8 @@ class CourseTeam < Team
 
   private
 
+  # Custom validation method for team type
+  # - Ensures the type is 'CourseTeam'
   def type_must_be_course_team
     errors.add(:type, 'must be CourseTeam') unless type == 'CourseTeam'
   end
