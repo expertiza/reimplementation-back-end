@@ -120,7 +120,7 @@ class Api::V1::UsersController < ApplicationController
   
     password = params[:password]
     confirm_password = params[:confirmPassword]
-  
+
     if password.blank? || confirm_password.blank?
       return render json: { error: 'Both password and confirmPassword are required' }, status: :bad_request
     end
@@ -128,7 +128,7 @@ class Api::V1::UsersController < ApplicationController
     if password != confirm_password
       return render json: { error: 'Passwords do not match' }, status: :unprocessable_entity
     end
-  
+
     if user.update(password: password, password_confirmation: confirm_password)
       # update jwt_version and issue new token
       user.update(jwt_version: SecureRandom.uuid)
@@ -141,13 +141,13 @@ class Api::V1::UsersController < ApplicationController
         institution_id: user.institution.id,
         jwt_version: user.jwt_version
       }
-  
+
       new_token = JsonWebToken.encode(payload, 24.hours.from_now)
-  
+
       render json: { 
         message: 'Password updated successfully',
-        token: token,
-        user: user.as_json(except: [:password_digest]) 
+        token: new_token,
+        user: user.as_json(except: [:password_digest])
         }, status: :ok
     else
       render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
