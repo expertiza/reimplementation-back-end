@@ -35,4 +35,22 @@ class Rack::Attack
       req.path == '/login' && req.post? && req.params['user_name'].present?
     end
   end
+
+  # Return rate limit info in response headers
+  Rack::Attack.throttled_responder = lambda do |env|
+    match_data = env['rack.attack.match_data']
+    if match_data[:request].path == '/login'
+      [
+        429, # status
+        { 'Content-Type' => 'application/json' }, # headers
+        [{ error: 'Rate limit exceeded. Try again later.' }.to_json] # body
+      ]
+    else
+      [
+        429, # status
+        { 'Content-Type' => 'application/json' }, # headers
+        [{ error: 'Rate limit exceeded. Try again later.' }.to_json] # body
+      ]
+    end
+  end
 end 
