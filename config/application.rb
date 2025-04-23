@@ -31,5 +31,8 @@ module Reimplementation
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
     config.cache_store = :redis_store, ENV['CACHE_STORE'], { expires_in: 3.days, raise_errors: false }
+
+    # Enable rack-attack
+    config.middleware.use Rack::Attack
   end
 end

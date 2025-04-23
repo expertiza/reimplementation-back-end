@@ -6,8 +6,14 @@ class User < ApplicationRecord
   validates :name, presence: true, uniqueness: true, allow_blank: false
                    # format: { with: /\A[a-z]+\z/, message: 'must be in lowercase' }
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
-  validates :password, length: { minimum: 6 }, presence: true, allow_nil: true
+
+  # password length min 8
+  validates :password, length: { minimum: 8 }, presence: true, allow_nil: true
+  
+  # profile fields for editing
   validates :full_name, presence: true, length: { maximum: 50 }
+
+  before_create :set_jwt_version
 
   belongs_to :role
   belongs_to :institution, optional: true
@@ -112,6 +118,12 @@ class User < ApplicationRecord
     self.email_on_submission ||= false
     self.email_on_review_of_review ||= false
     self.etc_icons_on_homepage ||= true
+  end
+
+  private
+
+  def set_jwt_version
+    self.jwt_version ||= SecureRandom.uuid 
   end
 
 end
