@@ -7,6 +7,6 @@ class BookmarkRatingResponseMap < ReviewResponseMap
   end
 
   def self.bookmark_response_report(assignment_id)
-    where(reviewed_object_id: assignment_id).distinct.pluck(:reviewer_id)
+    where(reviewed_object_id: assignment_id).distinct.pluck(:reviewed_object_id)
   end
 end
