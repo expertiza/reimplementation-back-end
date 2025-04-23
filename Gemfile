@@ -8,6 +8,7 @@ gem 'puma', '~> 5.0'
 gem 'rails', '~> 8.0', '>= 8.0.1'
 gem 'rswag-api'
 gem 'rswag-ui'
+gem 'active_model_serializers', '~> 0.10.0'
 
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 # gem "jbuilder"
@@ -47,6 +48,7 @@ group :development, :test do
   gem 'simplecov', require: false, group: :test
   gem 'coveralls'
   gem 'simplecov_json_formatter'
+  gem 'shoulda-matchers'
 end
 
 group :development do
