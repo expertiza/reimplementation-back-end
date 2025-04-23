@@ -8,14 +8,26 @@ class Api::V1::UsersController < ApplicationController
   end
 
   # GET /users/:id
-  # def show
-  #   user = User.find(params[:id])
-  #   render json: user, status: :ok
-  # end
 
   def show
-    user = User.find(params[:id])
-    render json: user.as_json(except: [:password_digest]), status: :ok
+    user = User.includes(:institution).find(params[:id])
+  
+    render json: {
+      id: user.id,
+      full_name: user.full_name,
+      email: user.email,
+      handle: user.handle || '',
+      can_show_actions: user.can_show_actions,
+      time_zone: user.time_zone || 'GMT-05:00',
+      language: user.language || 'No Preference',
+      email_on_review: user.email_on_review.nil? ? true : user.email_on_review,
+      email_on_submission: user.email_on_submission.nil? ? true : user.email_on_submission,
+      email_on_review_of_review: user.email_on_review_of_review.nil? ? true : user.email_on_review_of_review,
+      institution: {
+        id: user.institution&.id || 0,
+        name: user.institution&.name || 'Other'
+      }
+    }, status: :ok
   rescue ActiveRecord::RecordNotFound
     render json: { error: 'User not found' }, status: :not_found
   end
