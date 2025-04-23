@@ -51,7 +51,8 @@ RSpec.describe 'Participants API', type: :request do
 
       parameter name: :user_id, in: :path, type: :integer, description: 'ID of the user'
 
-      response '200', 'Returns participants' do
+      # Test ID 1
+      response '200', 'Test ID 1: Returns participants with user ID' do
         let(:user_id) { studenta.id }
 
         run_test! do |response|
@@ -64,7 +65,8 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '200', 'Participant not found with user_id' do
+      # Test ID 2
+      response '200', 'Test ID 2: Participant not found with user_id' do
         let(:user_id) { instructor.id }
 
         run_test! do |response|
@@ -74,7 +76,8 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '404', 'User Not Found' do
+      # Test ID 3
+      response '404', 'Test ID 3: Get participants with invalid user' do
         let(:user_id) { 99 }
 
         run_test! do |response|
@@ -82,7 +85,8 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '401', 'Unauthorized' do
+      # Test ID 4
+      response '401', 'Test ID 4: Get participant with user ID with invalid token' do
         let(:user_id) { 1 }
         let(:'Authorization') { 'Bearer invalid_token' }
 
@@ -100,7 +104,8 @@ RSpec.describe 'Participants API', type: :request do
 
       parameter name: :assignment_id, in: :path, type: :integer, description: 'ID of the assignment'
 
-      response '200', 'Returns participants' do
+      # Test ID 5
+      response '200', 'Test ID 5: Returns participants with assignment ID' do
         let(:assignment_id) { assignment1.id }
 
         run_test! do |response|
@@ -113,7 +118,8 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '404', 'Assignment Not Found' do
+      # Test ID 6
+      response '404', 'Test ID 6: Get participant with invalid assignment' do
         let(:assignment_id) { 99 }
         # let(:'Authorization') { "Bearer #{@token}" }
 
@@ -122,7 +128,8 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '401', 'Unauthorized' do
+      # Test ID 7
+      response '401', 'Test ID 7: Get participant with assignment ID with invalid token' do
         let(:assignment_id) { 2 }
         let(:'Authorization') { 'Bearer invalid_token' }
 
@@ -140,7 +147,8 @@ RSpec.describe 'Participants API', type: :request do
 
       parameter name: :id, in: :path, type: :integer, description: 'ID of the participant'
 
-      response '200', 'Returns a participant' do
+      # Test ID 8
+      response '200', 'Test ID 8: Gets participant with participant ID' do
         let(:id) { participant2.id }
 
         run_test! do |response|
@@ -150,7 +158,8 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '404', 'Participant not found' do
+      # Test ID 9
+      response '404', 'Test ID 9: Get participant with invalid id' do
         let(:id) { 99 }
 
         run_test! do |response|
@@ -158,7 +167,8 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '401', 'Unauthorized' do
+      # Test ID 10
+      response '401', 'Test ID 10: Get participant with invalid token' do
         let(:id) { 2 }
         let(:'Authorization') { 'Bearer invalid_token' }
 
@@ -172,7 +182,8 @@ RSpec.describe 'Participants API', type: :request do
       tags 'Participants'
       parameter name: :id, in: :path, type: :integer, description: 'ID of the participant'
 
-      response '200', 'Participant deleted' do
+      # Test ID 11
+      response '200', 'Test ID 11: Delete participant' do
         let(:id) { participant2.id }
 
         run_test! do |response|
@@ -180,7 +191,8 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '404', 'Participant not found' do
+      # Test ID 12
+      response '404', 'Test ID 12: Delete participant with invalid particiant ID' do
         let(:id) { 99 }
 
         run_test! do |response|
@@ -188,7 +200,8 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '401', 'Unauthorized' do
+      # Test ID 13
+      response '401', 'Test ID 13: Delete participant with invalid token' do
         let(:id) { 2 }
         let(:'Authorization') { 'Bearer invalid_token' }
 
@@ -209,7 +222,8 @@ RSpec.describe 'Participants API', type: :request do
       parameter name: :authorization, in: :path, type: :string, description: 'New authorization'
       parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
 
-      response '201', 'Participant updated' do
+      # Test ID 14
+      response '201', 'Test ID 14: Update participant' do
         let(:id) { 2 }
         let(:authorization) { 'mentor' }
 
@@ -219,7 +233,8 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '404', 'Participant not found' do
+      # Test ID 15
+      response '404', 'Test ID 15: Update participant with invalid participant ID' do
         let(:id) { 99 }
         let(:authorization) { 'mentor' }
 
@@ -228,7 +243,8 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '422', 'Authorization not found' do
+      # Test ID 16
+      response '422', 'Test ID 16: Update participant with invalid role' do
         let(:id) { 1 }
         let(:authorization) { 'teacher' }
 
@@ -237,7 +253,8 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '401', 'Unauthorized' do
+      # Test ID 17
+      response '401', 'Test ID 17: Update participant with invalid token' do
         let(:id) { 2 }
         let(:authorization) { 'mentor' }
         let(:'Authorization') { 'Bearer invalid_token' }
@@ -266,7 +283,8 @@ RSpec.describe 'Participants API', type: :request do
         required: %w[user_id assignment_id]
       }
 
-      response '201', 'Participant successfully added' do
+      # Test ID 18
+      response '201', 'Test ID 18: Participant successfully added' do
         let(:authorization) { 'mentor' }
         let(:participant) { { user_id: studentb.id, assignment_id: assignment2.id } }
 
@@ -282,7 +300,8 @@ RSpec.describe 'Participants API', type: :request do
         User.find(user_id).name
       end
 
-      response '500', 'Participant already exist' do
+      # Test ID 19
+      response '500', 'Test ID 19: Add participant that already exist' do
         let(:authorization) { 'mentor' }
         let(:participant) { { user_id: studenta.id, assignment_id: assignment1.id } }
         let(:name) { User.find(participant[:user_id]).name }
@@ -293,7 +312,8 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '404', 'User not found' do
+      # Test ID 20
+      response '404', 'Test ID 20: Add participant with invalid user ID' do
         let(:authorization) { 'mentor' }
         let(:participant) { { user_id: 99, assignment_id: 1 } }
 
@@ -302,7 +322,8 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '404', 'Assignment not found' do
+      # Test ID 21
+      response '404', 'Test ID 21: Add participant with invalid assignment ID' do
         let(:authorization) { 'mentor' }
         let(:participant) { { user_id: studenta.id, assignment_id: 99 } }
 
@@ -311,7 +332,8 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '422', 'Authorization not found' do
+      # Test ID 22
+      response '422', 'Test ID 22: Add participant with invalid authorization' do
         let(:authorization) { 'teacher' }
         let(:participant) { { user_id: studentb.id, assignment_id: assignment1.id } }
 
@@ -320,7 +342,8 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '422', 'Invalid authorization' do
+      # Test ID 23
+      response '422', 'Test ID 23: Add participant with invalid authorization format' do
         let(:authorization) { 'invalid_auth' }
         let(:participant) { { user_id: studentb.id, assignment_id: assignment1.id } }
 
@@ -329,7 +352,8 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '404', 'Missing user_id in request body' do
+      # Test ID 24
+      response '404', 'Test ID 24: Missing user_id in request body' do
         let(:authorization) { 'mentor' }
         let(:participant) { { assignment_id: assignment1.id } }
 
@@ -339,7 +363,8 @@ RSpec.describe 'Participants API', type: :request do
         end
       end
 
-      response '404', 'Missing assignment_id in request body' do
+      # Test ID 25
+      response '404', 'Test ID 25: Missing assignment_id in request body' do
         let(:authorization) { 'mentor' }
         let(:participant) { { user_id: studentb.id } }
 
