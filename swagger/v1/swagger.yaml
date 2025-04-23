@@ -12,6 +12,123 @@ components:
 security:
 - bearerAuth: []
 paths:
+
+  /api/v1/participants/user/{user_id}:
+    get:
+      summary: List all participants for a specific user
+      tags:
+        - Participants
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A list of participants
+        '404':
+          description: User not found
+
+  /api/v1/participants/assignment/{assignment_id}:
+    get:
+      summary: List all participants for a specific assignment
+      tags:
+        - Participants
+      parameters:
+        - name: assignment_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A list of participants
+        '404':
+          description: Assignment not found
+
+  /api/v1/participants/{id}:
+    get:
+      summary: Show a specific participant
+      tags:
+        - Participants
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: The participant
+        '404':
+          description: Participant not found
+
+    delete:
+      summary: Delete a specific participant
+      tags:
+        - Participants
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Participant deleted
+        '404':
+          description: Participant not found
+
+  /api/v1/participants/{authorization}:
+    post:
+      summary: Add a new participant with authorization
+      tags:
+        - Participants
+      parameters:
+        - name: authorization
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [reader, reviewer, submitter, mentor]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Participant'
+      responses:
+        '201':
+          description: Participant created
+        '422':
+          description: Unprocessable Entity
+
+  /api/v1/participants/{id}/{authorization}:
+    patch:
+      summary: Update a participant's authorization
+      tags:
+        - Participants
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: authorization
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [reader, reviewer, submitter, mentor]
+      responses:
+        '201':
+          description: Participant updated
+        '422':
+          description: Unprocessable Entity
+
+# **************************************
+
   "/api/v1/account_requests/pending":
     get:
       summary: List all Pending Account Requests
@@ -1326,6 +1443,7 @@ paths:
       responses:
         '200':
           description: A specific student task
+
 
 
 
