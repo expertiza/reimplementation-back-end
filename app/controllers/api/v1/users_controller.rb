@@ -10,24 +10,8 @@ class Api::V1::UsersController < ApplicationController
   # GET /users/:id
 
   def show
-    user = User.includes(:institution).find(params[:id])
-  
-    render json: {
-      id: user.id,
-      full_name: user.full_name,
-      email: user.email,
-      handle: user.handle || '',
-      can_show_actions: user.can_show_actions,
-      time_zone: user.time_zone || 'GMT-05:00',
-      language: user.language || 'No Preference',
-      email_on_review: user.email_on_review.nil? ? true : user.email_on_review,
-      email_on_submission: user.email_on_submission.nil? ? true : user.email_on_submission,
-      email_on_review_of_review: user.email_on_review_of_review.nil? ? true : user.email_on_review_of_review,
-      institution: {
-        id: user.institution&.id || 0,
-        name: user.institution&.name || 'Other'
-      }
-    }, status: :ok
+    user = User.find(params[:id])
+    render json: user.as_json(except: [:password_digest]), status: :ok
   rescue ActiveRecord::RecordNotFound
     render json: { error: 'User not found' }, status: :not_found
   end
@@ -94,7 +78,31 @@ class Api::V1::UsersController < ApplicationController
   rescue ActiveRecord::RecordNotFound => e
     render json: { error: e.message }, status: :not_found
   end
-  
+
+  # GET /api/v1/users/:id/get_profile : Returns basic user profile information and email preferences
+  def get_profile
+    user = User.includes(:institution).find(params[:id])
+
+    render json: {
+      id: user.id,
+      full_name: user.full_name,
+      email: user.email,
+      handle: user.handle || '',
+      can_show_actions: user.can_show_actions,
+      time_zone: user.time_zone || 'GMT-05:00',
+      language: user.language || 'No Preference',
+      email_on_review: user.email_on_review.nil? ? true : user.email_on_review,
+      email_on_submission: user.email_on_submission.nil? ? true : user.email_on_submission,
+      email_on_review_of_review: user.email_on_review_of_review.nil? ? true : user.email_on_review_of_review,
+      institution: {
+        id: user.institution&.id || 0,
+        name: user.institution&.name || 'Other'
+      }
+    }, status: :ok
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: 'User not found' }, status: :not_found
+  end
+
   # PATCH /users/:id
   def update_profile
     user = User.find(params[:id])
