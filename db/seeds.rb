@@ -10,7 +10,7 @@ begin
       email: 'admin2@example.com',
       password: 'password123',
       full_name: 'admin admin',
-      institution_id: 1,
+      institution_id: inst_id,
       role_id: 1
     )
     
