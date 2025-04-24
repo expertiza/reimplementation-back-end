@@ -41,12 +41,13 @@ class ResponseMap < ApplicationRecord
   end
 
   # Build a new ResponseMap instance for assigning a quiz to a student
-  def self.build_response_map(student_id, questionnaire)
+  def self.build_quiz_response_map(student_id, questionnaire)
     instructor_id = questionnaire.assignment.instructor_id
     ResponseMap.new(
       reviewee_id: student_id,
       reviewer_id: instructor_id,
-      reviewed_object_id: questionnaire.id
+      reviewed_object_id: questionnaire.id,
+      type: 'QuizResponseMap'
     )
   end
 

@@ -40,7 +40,7 @@ class Api::V1::StudentQuizzesController < ApplicationController
       return
     end
 
-    response_map = build_response_map(participant.user_id, questionnaire)
+    response_map = build_quiz_response_map(participant.user_id, questionnaire)
     if response_map.save
       render_success(response_map, :created)
     else
@@ -100,15 +100,6 @@ class Api::V1::StudentQuizzesController < ApplicationController
     )
   end
 
-  # Build a new ResponseMap instance for assigning a quiz to a student
-  def build_response_map(student_id, questionnaire)
-    instructor_id = questionnaire.assignment.instructor_id
-    ResponseMap.new(
-      reviewee_id: student_id,
-      reviewer_id: instructor_id,
-      reviewed_object_id: questionnaire.id
-    )
-  end
 
   # Create a new questionnaire along with its questions and answers
   def create_questionnaire(params)
