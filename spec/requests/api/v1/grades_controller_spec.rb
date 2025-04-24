@@ -340,22 +340,26 @@ RSpec.describe Api::V1::GradesController, type: :controller do
         before do
             allow(controller).to receive(:find_participant).with(participant.id.to_s).and_return(participant)
             allow(controller).to receive(:list_questions).with(assignment).and_return(question)
-            allow(Response).to receive(:review_grades).with(participant, question).and_return([95, 90, 85])  # Example scores
+            allow(Response).to receive(:review_grades).with(participant, question).and_return([95, 90, 85])
         end
 
         describe 'GET #edit_participant_scores' do
-            it 'renders the edit page and sets instance variables' do
-                request.headers['Authorization'] = "Bearer #{instructor_token}"
-                request.headers['Content-Type'] = 'application/json'
+            it 'returns a successful response with expected JSON structure' do
+            request.headers['Authorization'] = "Bearer #{instructor_token}"
+            request.headers['Content-Type'] = 'application/json'
 
-                get :edit_participant_scores, params: { id: participant.id }
+            get :edit_participant_scores, params: { id: participant.id }
 
-                expect(assigns(:participant)).to eq(participant)
-                expect(assigns(:assignment)).to eq(assignment)
-                expect(assigns(:scores)).to eq([95, 90, 85])
+            expect(response).to have_http_status(:ok)
+
+            json = JSON.parse(response.body)
+
+            expect(json['participant']['id']).to eq(participant.id)
+            expect(json['assignment']['id']).to eq(assignment.id)
+            expect(json['scores']).to eq([95, 90, 85])
             end
         end
-    end
+        end
 
     describe '#view_team' do
         let(:penalties) { { submission: 0, review: 0, meta_review: 0 } }

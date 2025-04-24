@@ -95,6 +95,12 @@ class Api::V1::GradesController < ApplicationController
     @assignment = @participant.assignment
     @questions = list_questions(@assignment)
     @scores = Response.review_grades(@participant, @questions)
+
+    render json: {
+    participant: { id: @participant.id },
+    assignment: { id: @assignment.id },
+    scores: @scores
+  }
   end
 
   
