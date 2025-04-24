@@ -57,6 +57,7 @@ class Response < ApplicationRecord
     sum
   end
   
+  # Calculate the maximum possible score for this response
   def calculate_score
     return 0 if skipped
     question = self.question

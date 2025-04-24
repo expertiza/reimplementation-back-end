@@ -17,7 +17,13 @@ class ResponseMap < ApplicationRecord
     self.score
   end
 
-  # Save the submitted answers and check if that answer is correct
+  # This method processes the answers submitted by the student for a quiz.
+  # It iterates through each answer, finds or initializes a response for the question,
+  # and saves the submitted answer. It also checks if the question is skippable and
+  # awards points based on correctness.
+  #
+  # @param answers [Array<Hash>] An array of hashes containing question_id, answer_value, and skipped status.
+  # @return [Integer] The total score awarded for the submitted answers.
   def process_answers(answers)
     answers.sum do |answer|
       question = Question.find(answer[:question_id])
