@@ -31,12 +31,12 @@ class Api::V1::StudentQuizzesController < ApplicationController
 
   #POST /student_quizzes/assign
   def assign_quiz
-    participant = FindResourceService.call(Participant, params[:participant_id])
-    questionnaire = FindResourceService.call(Questionnaire, params[:questionnaire_id])
+    participant = Participant.find(params[:participant_id])
+    questionnaire = Questionnaire.find(params[:questionnaire_id])
     return unless participant && questionnaire
 
     if quiz_assigned?(participant, questionnaire)
-      render_error("This student is already assigned to the quiz.", :unprocessable_entity)
+      render_error("The quiz is already assigned to the student", :unprocessable_entity)
       return
     end
 
@@ -85,9 +85,9 @@ class Api::V1::StudentQuizzesController < ApplicationController
 
   private
 
-  
+  # Set the student quiz based on the ID provided in the params
   def set_student_quiz
-    @student_quiz = FindResourceService.call(Questionnaire, params[:id])
+    @student_quiz = Questionnaire.find(params[:id])
     return if @student_quiz
     render_error('Record does not exist', :not_found) and return
   end
