@@ -120,7 +120,6 @@ class Api::V1::UsersController < ApplicationController
   end
 
   # POST /users/:id/update_password
-
   def update_password
     user = User.find(params[:id])
   
