@@ -1,5 +1,7 @@
 require 'rails_helper'
 
+# Tests for the StudentReviewService class which handles review data retrieval
+# and processing for student participants in assignments
 RSpec.describe StudentReviewService do
   # Use doubles instead of factory objects to avoid database dependencies
   let(:user) { double('User', id: 1, name: 'Test User') }
@@ -31,39 +33,52 @@ RSpec.describe StudentReviewService do
     allow(AssignmentParticipant).to receive(:find).with('999').and_raise(ActiveRecord::RecordNotFound)
   end
 
+  # Tests for the initialization process and error handling
   describe '#initialize' do
+    # Verifies that participant and assignment objects are properly loaded from DB
     it 'loads participant and assignment' do
       service = StudentReviewService.new(participant.id.to_s)
       expect(service.participant).to eq(participant)
       expect(service.assignment).to eq(assignment)
     end
     
+    # Confirms that topic_id and review_phase are set during initialization
+    # These are critical for determining which reviews are relevant
     it 'sets topic_id and review_phase' do
       service = StudentReviewService.new(participant.id.to_s)
       expect(service.topic_id).to eq(topic_id)
       expect(service.review_phase).to eq('review')
     end
     
-    it 'raises RecordNotFound error when participant does not exist' do
-      # Remove the override that intercepts lookup errors
+    # Tests the error handling when a participant ID doesn't exist
+    # The service should wrap ActiveRecord errors in a more descriptive RuntimeError
+    it 'raises a wrapped error when participant does not exist' do
       allow_any_instance_of(StudentReviewService).to receive(:load_participant_and_assignment).and_call_original
       
-      expect { StudentReviewService.new('999') }.to raise_error(ActiveRecord::RecordNotFound)
+      expect { StudentReviewService.new('999') }.to raise_error(
+        RuntimeError, 
+        /Failed to load participant data: ActiveRecord::RecordNotFound/
+      )
     end
   end
 
+  # Tests for the bidding feature availability detection
   describe '#bidding_enabled?' do
     before do
       # Since initialization is handled, just need to stub this one method
       allow_any_instance_of(StudentReviewService).to receive(:bidding_enabled?).and_call_original
     end
     
+    # Verifies that the service correctly reports when bidding is enabled
+    # This is important for UI flows that need to redirect to bidding pages
     it 'returns true when bidding is enabled for the assignment' do
       allow(assignment).to receive(:bidding_for_reviews_enabled).and_return(true)
       service = StudentReviewService.new(participant.id.to_s)
       expect(service.bidding_enabled?).to be true
     end
 
+    # Ensures the service reports disabled bidding correctly
+    # This affects whether students can bid for specific reviews
     it 'returns false when bidding is disabled for the assignment' do
       allow(assignment).to receive(:bidding_for_reviews_enabled).and_return(false)
       service = StudentReviewService.new(participant.id.to_s)
@@ -71,6 +86,8 @@ RSpec.describe StudentReviewService do
     end
   end
 
+  # Tests for special handling of calibrated assignments which use a specific
+  # review mapping sorting algorithm to present reviews in a defined order
   describe 'when assignment is calibrated' do
     before do
       # Create test review mappings with specific IDs
@@ -95,6 +112,8 @@ RSpec.describe StudentReviewService do
       allow(participant).to receive(:get_reviewer).and_return(reviewer)
     end
     
+    # Tests the specialized sorting algorithm for calibrated assignments
+    # This algorithm ensures specific review mappings appear first to calibrate reviewers
     it 'sorts review mappings correctly by id % 5' do
       service = StudentReviewService.new(participant.id.to_s)
       
@@ -111,6 +130,8 @@ RSpec.describe StudentReviewService do
     end
   end
 
+  # Tests behavior when a participant doesn't have a reviewer role assigned
+  # This is important since some students may not be assigned as reviewers
   describe 'when participant has no reviewer' do
     before do
       # Stop stubbing load_review_mappings in the parent context
@@ -120,6 +141,8 @@ RSpec.describe StudentReviewService do
       allow(participant).to receive(:get_reviewer).and_return(nil)
     end
     
+    # Verifies that review_mappings is initialized as empty when no reviewer exists
+    # This prevents null pointer exceptions when processing mappings
     it 'sets review_mappings to empty array' do
       # Create a new service instance - this will call the real load_review_mappings
       service = StudentReviewService.new(participant.id.to_s)
@@ -128,6 +151,8 @@ RSpec.describe StudentReviewService do
       expect(service.review_mappings).to eq([])
     end
     
+    # Ensures all review counters are properly zeroed when no reviewer exists
+    # This is important for UI elements that display progress indicators
     it 'sets review progress counters to zero' do
       # This will test calculate_review_progress with no mappings
       allow_any_instance_of(StudentReviewService).to receive(:calculate_review_progress).and_call_original
@@ -140,6 +165,8 @@ RSpec.describe StudentReviewService do
     end
   end
 
+  # Tests for the loading of sample review response IDs
+  # These are used to provide example reviews to students
   describe 'when loading response IDs' do
     before do
       # Create a proper stub for SampleReview with a where class method
@@ -165,11 +192,15 @@ RSpec.describe StudentReviewService do
       allow_any_instance_of(StudentReviewService).to receive(:load_response_ids).and_call_original
     end
     
+    # Verifies that sample review response IDs are correctly loaded from the database
+    # These IDs are used to display example reviews to students
     it 'loads response IDs correctly for the assignment' do
       service = StudentReviewService.new(participant.id.to_s)
       expect(service.response_ids).to eq([101, 102, 103])
     end
     
+    # Tests graceful handling of the case where no sample reviews exist
+    # This prevents errors when displaying the reviews UI with no examples
     it 'handles empty response lists' do
       # Different test setup with empty response list
       empty_sample_reviews = double('EmptySampleReviews')
