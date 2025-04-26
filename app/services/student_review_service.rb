@@ -17,6 +17,11 @@ class StudentReviewService
     initialize_review_data
   end
 
+  # Add this public method to your StudentReviewService class
+  def bidding_enabled?
+    @assignment&.bidding_for_reviews_enabled
+  end
+
   private
 
   def initialize_review_data

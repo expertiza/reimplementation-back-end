@@ -44,11 +44,13 @@ RSpec.describe StudentReviewService do
       expect(service.review_phase).to eq('review')
     end
     
-    it 'raises RecordNotFound error when participant does not exist' do
-      # Remove the override that intercepts lookup errors
+    it 'raises a wrapped error when participant does not exist' do
       allow_any_instance_of(StudentReviewService).to receive(:load_participant_and_assignment).and_call_original
       
-      expect { StudentReviewService.new('999') }.to raise_error(ActiveRecord::RecordNotFound)
+      expect { StudentReviewService.new('999') }.to raise_error(
+        RuntimeError, 
+        /Failed to load participant data: ActiveRecord::RecordNotFound/
+      )
     end
   end
 
