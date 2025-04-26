@@ -17,18 +17,6 @@ class StudentReviewService
     initialize_review_data
   end
 
-  # Determines if bidding for reviews is enabled for this assignment
-  # Used to decide whether to redirect users to bidding interface
-  def bidding_enabled?
-    @assignment&.bidding_for_reviews_enabled
-  end
-
-  # Returns true if the participant has a reviewer role assigned
-  # Used to determine if review functionality should be displayed
-  def has_reviewer?
-    @participant.get_reviewer.present?
-  end
-
   private
 
   def initialize_review_data
@@ -46,43 +34,36 @@ class StudentReviewService
   rescue ActiveRecord::RecordNotFound => e
     handle_not_found_error(e)
   end
-
-  # Fetches participant record from database using the participant ID
+  # The participant is the core entity for which reviews are being managed.
   def load_participant
     @participant = AssignmentParticipant.find(@participant_id)
   end
 
-  # Gets the assignment associated with the participant
   def load_assignment
     @assignment = @participant.assignment
   end
-
-  # Sets topic ID and review phase based on participant and assignment
+  # The topic ID identifies the specific topic the participant is working on, and the review phase determines the current stage of the review process
   def set_topic_and_phase
     @topic_id = fetch_topic_id
     @review_phase = fetch_review_phase
   end
 
-  # Retrieves the topic ID for this participant in the assignment
-  # Returns nil if the participant is not signed up for any topic
   def fetch_topic_id
     SignedUpTeam.topic_id(@assignment.id, @participant.user_id)
   end
 
-  # Gets the current review phase/stage for this assignment and topic
   def fetch_review_phase
     @assignment.current_stage(@topic_id)
   end
 
-  # Load review mappings for the participant
+  # Review mappings link the participant to the reviews they are responsible for.
+  # This method ensures that all relevant mappings are fetched and sorted if the assignment is calibrated.
   def load_review_mappings
     reviewer = @participant.get_reviewer
     @review_mappings = fetch_review_mappings(reviewer)
     sort_mappings_if_calibrated
   end
-
-  # Retrieves review mappings for the given reviewer
-  # Returns an empty array if no reviewer exists
+    # It ensures that only mappings relevant to the participant's assignment are fetched.
   def fetch_review_mappings(reviewer)
     return [] unless reviewer
 
@@ -91,9 +72,8 @@ class StudentReviewService
       team_reviewing_enabled: @assignment.team_reviewing_enabled
     )
   end
-
-  # Sorts review mappings with a special algorithm for calibrated assignments
-  # This ensures certain calibration reviews appear first to improve review consistency
+  # Sorts review mappings if the assignment is calibrated
+  # Calibrated assignments require specific ordering of review mappings to prioritize certain reviews.
   def sort_mappings_if_calibrated
     @review_mappings = @review_mappings.sort_by { |m| m.id % 5 } if @assignment.is_calibrated
   end
@@ -105,23 +85,19 @@ class StudentReviewService
     @num_reviews_in_progress = calculate_in_progress_reviews
   end
 
-  # Counts the total number of review mappings
   def calculate_total_reviews
     @review_mappings.size
   end
 
-  # Counts how many reviews have been completed (submitted)
   def calculate_completed_reviews
     @review_mappings.count { |map| review_completed?(map) }
   end
-
-  # Determines if a review is completed based on response submission status
-  # A review is complete if it has at least one response that is submitted
+  # Checks if a review is completed
+  # This method ensures that the review has responses and the last response is submitted.
   def review_completed?(map)
     !map.response.empty? && map.response.last.is_submitted
   end
 
-  # Calculates reviews that are assigned but not yet completed
   def calculate_in_progress_reviews
     @num_reviews_total - @num_reviews_completed
   end
@@ -131,13 +107,10 @@ class StudentReviewService
     @response_ids = fetch_response_ids
   end
 
-  # Fetches sample review response IDs for this assignment
-  # These are used to display example reviews to students
   def fetch_response_ids
     SampleReview.where(assignment_id: @assignment.id).pluck(:response_id)
   end
 
-  # Handles RecordNotFound errors with a more descriptive error message
   def handle_not_found_error(error)
     raise "Failed to load participant data: #{error.message}"
   end
