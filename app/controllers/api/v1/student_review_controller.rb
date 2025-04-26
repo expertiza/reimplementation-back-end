@@ -2,6 +2,7 @@ class Api::V1::StudentReviewController < ApplicationController
   # Constants for action names and roles to avoid magic strings
   LIST_ACTION     = 'list'.freeze
   SUBMITTER_ROLE  = 'submitter'.freeze
+  
 
   # Ensure proper authorization and service initialization before actions
   before_action :authorize_user, only: [LIST_ACTION.to_sym]
@@ -16,6 +17,14 @@ class Api::V1::StudentReviewController < ApplicationController
 
     render json: build_review_response
   end
+
+  protected
+
+      def check_bidding_redirect
+        if @service&.bidding_enabled?
+          redirect_to controller: 'review_bids', action: 'index', assignment_id: params[:assignment_id], id: params[:id]
+        end
+      end
 
   private
 
