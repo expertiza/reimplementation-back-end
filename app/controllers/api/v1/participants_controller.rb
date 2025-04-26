@@ -1,11 +1,6 @@
 class Api::V1::ParticipantsController < ApplicationController
   include ParticipantsHelper
 
-  # Returns true if the user has TA privileges; otherwise, denies access by returning false.
-  def action_allowed?
-    has_required_role?('Teaching Assistant')
-  end
-
   # Return a list of participants for a given user
   # params - user_id
   # GET /participants/user/:user_id
@@ -145,7 +140,7 @@ class Api::V1::ParticipantsController < ApplicationController
   # Returns participants ordered by their IDs
   def filter_assignment_participants(assignment)
     participants = Participant.all
-    participants = participants.where(assignment_id: assignment.id) if assignment
+    participants = participants.where(parent_id: assignment.id, type: 'AssignmentParticipant') if assignment
     participants.order(:id)
   end
 
