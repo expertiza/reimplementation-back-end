@@ -10,7 +10,7 @@ class Api::V1::ParticipantsController < ApplicationController
   # - 401 Unauthorized: If the user is not authorized for the action
   # - 404 Not Found: If the user does not exist
   # - 422 Unprocessable Entity: If the query fails unexpectedly
-  def get_participants_by_user
+  def render_participants_by_user_id
     user = find_user if params[:user_id].present?
     return if params[:user_id].present? && user.nil?
 
@@ -32,11 +32,11 @@ class Api::V1::ParticipantsController < ApplicationController
   # - 401 Unauthorized: If the user is not authorized for the action
   # - 404 Not Found: If the assignment does not exist
   # - 422 Unprocessable Entity: If the query fails unexpectedly
-  def get_participants_by_assignment
+  def render_participants_by_assignment_id
     assignment = find_assignment if params[:assignment_id].present?
     return if params[:assignment_id].present? && assignment.nil?
 
-    participants = filter_participants_by_assignments(assignment)
+    participants = filter_participants_by_assignment(assignment)
 
     if participants.nil?
       render json: participants.errors, status: :unprocessable_entity
@@ -173,7 +173,7 @@ class Api::V1::ParticipantsController < ApplicationController
 
   # Filters participants based on the provided assignment
   # Returns participants ordered by their IDs
-  def filter_participants_by_assignments(assignment)
+  def filter_participants_by_assignment(assignment)
     participants = Participant.where(assignment_id: assignment.id) if assignment
     participants.order(:id)
   end
