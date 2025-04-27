@@ -1,7 +1,21 @@
 require 'swagger_helper'
-
+require 'json_web_token'
 RSpec.describe 'Institutions API', type: :request do
+    before(:all) do
+      @roles = create_roles_hierarchy
+    end
 
+    let(:prof) { User.create(
+      name: "profa",
+      password_digest: "password",
+      role_id: @roles[:instructor].id,
+      full_name: "Prof A",
+      email: "testuser@example.com",
+      mru_directory_path: "/home/testuser",
+      ) }
+
+    let(:token) { JsonWebToken.encode({id: prof.id}) }
+    let(:Authorization) { "Bearer #{token}" }
   path '/api/v1/institutions' do
     get('list institutions') do
       tags 'Institutions'

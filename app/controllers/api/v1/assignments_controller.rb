@@ -1,4 +1,5 @@
 class Api::V1::AssignmentsController < ApplicationController
+  rescue_from ActiveRecord::RecordNotFound, with: :not_found
 
   # GET /api/v1/assignments
   def index
@@ -30,6 +31,10 @@ class Api::V1::AssignmentsController < ApplicationController
     else
       render json: assignment.errors, status: :unprocessable_entity
     end
+  end
+
+  def not_found
+    render json: { error: "Assignment not found" }, status: :not_found
   end
 
   # DELETE /api/v1/assignments/:id
@@ -215,7 +220,7 @@ class Api::V1::AssignmentsController < ApplicationController
   def get_staggered_and_no_topic(assignment)
     topic_id = SignedUpTeam
                .joins(team: :teams_users)
-               .where(teams_users: { user_id: current_user.id, team_id: Team.where(assignment_id: assignment.id).pluck(:id) })
+               .where(teams_users: { user_id: current_user.id, team_id: Team.where(parent_id: assignment.id).pluck(:id) })
                .pluck(:sign_up_topic_id)
                .first
 

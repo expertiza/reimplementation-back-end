@@ -1,5 +1,8 @@
 class Api::V1::InstitutionsController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :institution_not_found
+  def action_allowed?
+    has_role?('Instructor')
+  end
   # GET /institutions
   def index
     @institutions = Institution.all
