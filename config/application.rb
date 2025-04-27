@@ -31,5 +31,7 @@ module Reimplementation
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
     config.cache_store = :redis_store, ENV['CACHE_STORE'], { expires_in: 3.days, raise_errors: false }
+    config.load_defaults 8.0
+    config.active_support.to_time_preserves_timezone = :zone
   end
 end
