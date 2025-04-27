@@ -3,8 +3,11 @@ class Course < ApplicationRecord
   belongs_to :institution, foreign_key: 'institution_id'
   validates :name, presence: true
   validates :directory_path, presence: true
+  has_many :participants, class_name: 'CourseParticipant', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :course
+  has_many :users, through: :course_participants, inverse_of: :course
   has_many :ta_mappings, dependent: :destroy
-  has_many :tas, through: :ta_mappings
+  has_many :tas, through: :ta_mappings, source: :ta
+  has_many :teams, class_name: 'CourseTeam', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :course
 
   # Returns the submission directory for the course
   def path
@@ -31,11 +34,11 @@ class Course < ApplicationRecord
   end
 
   # Removes Teaching Assistant from the course
-  def remove_ta(ta_id)
-    ta_mapping = ta_mappings.find_by(ta_id: ta_id, course_id: :id)
+  def remove_ta(user_id)
+    ta_mapping = ta_mappings.find_by(user_id: user_id, course_id: :id)
     return { success: false, message: "No TA mapping found for the specified course and TA" } if ta_mapping.nil?
-    ta = User.find(ta_mapping.ta_id)
-    ta_count = TaMapping.where(ta_id: ta_id).size - 1
+    ta = User.find(ta_mapping.user_id)
+    ta_count = TaMapping.where(user_id: user_id).size - 1
     if ta_count.zero?
       ta.update(role: Role::STUDENT)
     end
