@@ -75,7 +75,7 @@ class FeedbackResponseMap < ResponseMap
   end
 
   def send_feedback_email(assignment)
-    FeedbackEmailService.new(self, assignment).call
+    FeedbackEmailMailer.new(self, assignment).call
   end
 
 end

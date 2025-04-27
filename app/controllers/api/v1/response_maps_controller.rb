@@ -48,7 +48,7 @@ class Api::V1::ResponseMapsController < ApplicationController
 
     if @response.save
       # send feedback email now that it’s marked submitted
-      FeedbackEmailService.new(@response_map, @response_map.assignment).call
+      FeedbackEmailMailer.new(@response_map, @response_map.assignment).call
       render json: { message: 'Response submitted successfully, email sent' }, status: :ok
       handle_submission(@response_map)
     else
@@ -59,7 +59,7 @@ class Api::V1::ResponseMapsController < ApplicationController
   # Processes the actual submission and handles email notifications
   # @param map [ResponseMap] The response map being submitted
   def handle_submission(map)
-    FeedbackEmailService.new(map, map.assignment).call
+    FeedbackEmailMailer.new(map, map.assignment).call
     render json: { message: 'Response submitted successfully, email sent' }, status: :ok
     rescue StandardError => e
     Rails.logger.error "FeedbackEmail failed: #{e.message}"

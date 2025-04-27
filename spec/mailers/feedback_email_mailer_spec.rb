@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe FeedbackEmailService, type: :service do
+RSpec.describe FeedbackEmailMailer, type: :mailer do
   describe '#call' do
 
     # Test doubles for models and their IDs

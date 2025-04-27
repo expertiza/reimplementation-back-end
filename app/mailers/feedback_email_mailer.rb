@@ -1,5 +1,5 @@
-class FeedbackEmailService
-  # Initialize the service with a ResponseMap and an Assignment
+class FeedbackEmailMailer < ApplicationMailer
+  # Initialize the mailer with a ResponseMap and an Assignment
   def initialize(response_map, assignment)
     @response_map = response_map
     @assignment   = assignment

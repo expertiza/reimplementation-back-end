@@ -91,7 +91,7 @@ class Response < ApplicationRecord
     return unless map.assignment.present?
     
     if map.is_a?(FeedbackResponseMap)
-      FeedbackEmailService.new(map, map.assignment).call
+      FeedbackEmailMailer.new(map, map.assignment).call
     end
     # Add other response map type email services as needed
   end
