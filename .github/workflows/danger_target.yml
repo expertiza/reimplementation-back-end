@@ -25,5 +25,5 @@ jobs:
 
       - name: Run Danger
         env:
-          DANGER_GITHUB_API_TOKEN: ${{ secrets.DANGER_BOT_TOKEN_PLACEHOLDER }}
+          DANGER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bundle exec danger --verbose
