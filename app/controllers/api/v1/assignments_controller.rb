@@ -2,10 +2,30 @@ class Api::V1::AssignmentsController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :not_found
 
   # GET /api/v1/assignments
+  # def index
+  #   assignments = Assignment.all
+  #   render json: assignments
+  # end
+
   def index
-    assignments = Assignment.all
+    if params[:course_id]
+      assignments = Assignment.where(course_id: params[:course_id])
+    else
+      assignments = Assignment.all
+    end
     render json: assignments
   end
+
+  def index_by_course
+    course = Course.find_by(id: params[:course_id])
+    if course
+      assignments = course.assignments.select(:id, :name, :created_at, :updated_at)
+      render json: { data: assignments }, status: :ok
+    else
+      render json: { error: "Course not found" }, status: :not_found
+    end
+  end
+  
 
   # GET /api/v1/assignments/:id
   def show
@@ -213,8 +233,9 @@ class Api::V1::AssignmentsController < ApplicationController
   private
   # Only allow a list of trusted parameters through.
   def assignment_params
-    params.require(:assignment).permit(:title, :description)
+    params.require(:assignment).permit(:title, :description, :instructor_id, :course_id)
   end
+  
 
   # Helper method to determine staggered_and_no_topic for the assignment
   def get_staggered_and_no_topic(assignment)
