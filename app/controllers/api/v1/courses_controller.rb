@@ -45,7 +45,7 @@ class Api::V1::CoursesController < ApplicationController
   # Delete a course
   def destroy
     @course.destroy
-    render json: { message: "Course with id #{params[:id]}, deleted" }, status: :no_content
+    render json: { message: I18n.t('course.deleted', id: params[:id]) }, status: :no_content
   end
 
   # Adds a Teaching Assistant to the course
@@ -80,7 +80,7 @@ class Api::V1::CoursesController < ApplicationController
   def remove_ta
     result = @course.remove_ta(params[:ta_id])
     if result[:success]
-      render json: { message: "The TA #{result[:ta_name]} has been removed." }, status: :ok
+      render json: { message: I18n.t('course.ta_removed', ta_name: result[:ta_name]) }, status: :ok
     else
       render json: { status: "error", message: result[:message] }, status: :not_found
     end
@@ -91,9 +91,9 @@ class Api::V1::CoursesController < ApplicationController
     # existing_course = Course.find(params[:id])
     success = @course.copy_course
     if success
-      render json: { message: "The course #{@course.name} has been successfully copied" }, status: :ok
+      render json: { message: I18n.t('course.copy_success', name: @course.name) }, status: :ok
     else
-      render json: { message: "The course was not able to be copied" }, status: :unprocessable_entity
+      render json: { message: I18n.t('course.copy_failure') }, status: :unprocessable_entity
     end
   end
 
@@ -110,10 +110,10 @@ class Api::V1::CoursesController < ApplicationController
   end
 
   def course_not_found
-    render json: { error: "Course with id #{params[:id]} not found" }, status: :not_found
+    render json: { error: I18n.t('course.not_found', id: params[:id]) }, status: :not_found
   end
 
   def parameter_missing
-    render json: { error: "Parameter missing" }, status: :unprocessable_entity
+    render json: { error: I18n.t('course.parameter_missing') }, status: :unprocessable_entity
   end
 end
