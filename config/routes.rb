@@ -7,6 +7,7 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "articles#index"
   post '/login', to: 'authentication#login'
+  root 'home#index'
   namespace :api do
     namespace :v1 do
       resources :institutions
@@ -62,6 +63,8 @@ Rails.application.routes.draw do
         end
       end
 
+      
+
       resources :questionnaires do
         collection do
           post 'copy/:id', to: 'questionnaires#copy', as: 'copy'
@@ -112,6 +115,7 @@ Rails.application.routes.draw do
 
       resources :participants do
         collection do
+          get '/student_tasks', to: 'participants#student_tasks'
           get '/user/:user_id', to: 'participants#list_user_participants'
           get '/assignment/:assignment_id', to: 'participants#list_assignment_participants'
           get '/:id', to: 'participants#show'
