@@ -46,7 +46,8 @@ group :development, :test do
   gem 'rubocop'
   gem 'simplecov', require: false, group: :test
   gem 'coveralls'
-  gem 'simplecov_json_formatter', require: false
+  gem 'simplecov_json_formatter'
+  gem 'danger'
 end
 
 group :development do
