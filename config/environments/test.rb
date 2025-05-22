@@ -60,4 +60,7 @@ Rails.application.configure do
   # config.action_view.annotate_rendered_view_with_filenames = true
   config.hosts << 'localhost'
   config.hosts << "www.example.com"
+
+  # Add this line to your test.rb
+  config.require_master_key = false
 end
