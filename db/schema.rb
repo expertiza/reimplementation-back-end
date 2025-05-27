@@ -193,6 +193,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "questionnaire_id", null: false
+    t.boolean "skippable", default: false, null: false
     t.index ["questionnaire_id"], name: "fk_question_questionnaires"
     t.index ["questionnaire_id"], name: "index_items_on_questionnaire_id"
   end
@@ -273,7 +274,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   end
 
   create_table "quiz_question_choices", id: :integer, charset: "latin1", force: :cascade do |t|
-    t.integer "question_id"
+    t.integer "item_id"
     t.text "txt"
     t.boolean "iscorrect", default: false
     t.datetime "created_at", null: false

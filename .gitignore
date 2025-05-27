@@ -31,3 +31,6 @@
 /config/master.key
 coverage/
 rsa_keys.yml
+
+# Ignore database config
+/config/database.yml

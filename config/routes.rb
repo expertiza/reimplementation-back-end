@@ -109,6 +109,7 @@ Rails.application.routes.draw do
           get :processed, action: :processed_requests
         end
       end
+      
 
       resources :participants do
         collection do
@@ -120,6 +121,14 @@ Rails.application.routes.draw do
           delete '/:id', to: 'participants#destroy'
         end
       end
+
+      resources :student_quizzes, only: [:index, :create, :show, :update, :destroy] do
+        collection do
+          post 'assign', to: 'student_quizzes#assign_quiz'
+          post 'submit_answers', to: 'student_quizzes#submit_quiz'
+        end
+      end
+        
       resources :teams_participants, only: [] do
         collection do
           put :update_duty
