@@ -126,6 +126,9 @@ Rails.application.routes.draw do
         collection do
           post 'assign', to: 'student_quizzes#assign_quiz'
           post 'submit_answers', to: 'student_quizzes#submit_quiz'
+        end
+      end
+        
       resources :teams_participants, only: [] do
         collection do
           put :update_duty
