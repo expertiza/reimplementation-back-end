@@ -38,8 +38,8 @@ RSpec.describe 'Participants API', type: :request do
 
   let!(:assignment1) { Assignment.create!(name: 'Test Assignment 1', instructor_id: instructor.id) }
   let!(:assignment2) { Assignment.create!(name: 'Test Assignment 2', instructor_id: instructor.id) }
-  let!(:participant1) { Participant.create!(id: 1, user_id: studenta.id, assignment_id: assignment1.id) }
-  let!(:participant2) { Participant.create!(id: 2, user_id: studenta.id, assignment_id: assignment2.id) }
+  let!(:participant1) { AssignmentParticipant.create!(id: 1, user_id: studenta.id, parent_id: assignment1.id, handle: studenta.name) }
+  let!(:participant2) { AssignmentParticipant.create!(id: 2, user_id: studenta.id, parent_id: assignment2.id, handle: studenta.name) }
 
   let(:token) { JsonWebToken.encode({id: studenta.id}) }
   let(:Authorization) { "Bearer #{token}" }
@@ -60,7 +60,7 @@ RSpec.describe 'Participants API', type: :request do
           expect(participant).to be_a(Hash)
           expect(participant['id']).to eq(participant1.id) 
           expect(participant['user_id']).to eq(studenta.id)
-          expect(participant['assignment_id']).to eq(assignment1.id)
+          expect(participant['parent_id']).to eq(assignment1.id)
         end
       end
 
@@ -109,7 +109,7 @@ RSpec.describe 'Participants API', type: :request do
           expect(participant).to be_a(Hash)
           expect(participant['id']).to eq(participant1.id)
           expect(participant['user_id']).to eq(studenta.id)
-          expect(participant['assignment_id']).to eq(assignment1.id)
+          expect(participant['parent_id']).to eq(assignment1.id)
         end
       end
 
@@ -146,7 +146,7 @@ RSpec.describe 'Participants API', type: :request do
         run_test! do |response|
           data = JSON.parse(response.body)
           expect(data['user_id']).to eq(studenta.id)
-          expect(data['assignment_id']).to eq(assignment2.id)
+          expect(data['parent_id']).to eq(assignment2.id)
         end
       end
 
@@ -282,7 +282,7 @@ RSpec.describe 'Participants API', type: :request do
         run_test! do |response|
           data = JSON.parse(response.body)
           expect(data['user_id']).to eq(studentb.id)
-          expect(data['assignment_id']).to eq(assignment2.id)
+          expect(data['parent_id']).to eq(assignment2.id)
           expect(data['authorization']).to eq('mentor')
         end
       end

@@ -1,0 +1,2 @@
+class CourseTeam < Team
+end
