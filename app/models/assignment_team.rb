@@ -1,0 +1,2 @@
+class AssignmentTeam < Team
+end
