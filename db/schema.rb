@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_21_180851) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -26,13 +26,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   end
 
   create_table "answers", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.integer "question_id", default: 0, null: false
+    t.integer "item_id", default: 0, null: false
     t.integer "response_id"
     t.integer "answer"
     t.text "comments"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["question_id"], name: "fk_score_questions"
+    t.index ["item_id"], name: "fk_score_items"
     t.index ["response_id"], name: "fk_score_response"
   end
 
@@ -286,6 +286,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
     t.integer "reviewee_id", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "type"
     t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 
@@ -295,6 +296,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
     t.boolean "is_submitted", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "round"
+    t.integer "version_num"
     t.index ["map_id"], name: "fk_response_response_map"
   end
 

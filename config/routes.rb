@@ -130,6 +130,18 @@ Rails.application.routes.draw do
           delete :delete_participants
         end
       end
+      resources :grades do
+        collection do
+          get 'action_allowed'
+          get 'view_grading_report'
+          get '/:assignment_id/view_scores', to: 'grades#view_scores'
+          post 'update_team'
+          post 'update_participant_grade'
+          get 'edit_participant_scores'
+          get 'view_team'
+          get 'view_my_scores'
+        end
+      end
     end
   end
 end

@@ -1,9 +1,16 @@
 begin
-    #Create an instritution
+    #Create an institution
     inst_id = Institution.create!(
       name: 'North Carolina State University',
     ).id
     
+    roles = {
+      admin: Role.find_or_create_by!(name: 'Super Administrator'),
+      instructor: Role.find_or_create_by!(name: 'Instructor'),
+      student: Role.find_or_create_by!(name: 'Student')
+    }
+    
+
     # Create an admin user
     User.create!(
       name: 'admin',
@@ -11,12 +18,12 @@ begin
       password: 'password123',
       full_name: 'admin admin',
       institution_id: 1,
-      role_id: 1
+      role_id:  roles[:admin].id,
     )
     
 
     #Generate Random Users
-    num_students = 48
+    num_students = 46
     num_assignments = 8
     num_teams = 16
     num_courses = 2
@@ -31,7 +38,7 @@ begin
         password: "password",
         full_name: Faker::Name.name,
         institution_id: 1,
-        role_id: 3,
+        role_id:  roles[:instructor].id,
       ).id
     end
 
@@ -54,74 +61,236 @@ begin
       assignment_ids << Assignment.create(
         name: Faker::Verb.base,
         instructor_id: instructor_user_ids[i%num_instructors],
-        course_id: course_ids[i%num_courses],
+        course_id: 2,
         has_teams: true,
         private: false
       ).id
     end
 
 
-    puts "creating teams"
+    puts "creating assignment teams"
     team_ids = []
-    num_teams.times do |i|
-      team_ids << AssignmentTeam.create(
-        parent_id: assignment_ids[i%num_assignments]
-      ).id
+    (num_teams/2).times do |i|
+      # assignment_id = assignment_ids[i % num_assignments]
+      team = AssignmentTeam.create(
+        parent_id: 1,
+        type: 'AssignmentTeam'
+      )
+
+      if team.persisted?
+        team_ids << team.id
+        puts "Created AssignmentTeam with ID: #{team.id} for assignment_id: 1"
+      else
+        puts "Failed to create AssignmentTeam: #{team.errors.full_messages.join(', ')}"
+      end
+    end
+
+    puts "creating course teams"
+    (num_teams/2).times do |i|
+      # course_id = course_ids[i % num_courses]
+      team = CourseTeam.create(
+        parent_id: 2,
+        type: 'CourseTeam'
+      )
+
+      if team.persisted?
+        team_ids << team.id
+        puts "Created CourseTeam with ID: #{team.id} for course_id: 1"
+      else
+        puts "Failed to create CourseTeam: #{team.errors.full_messages.join(', ')}"
+      end
     end
 
     puts "creating students"
     student_user_ids = []
     num_students.times do
       student_user_ids << User.create(
-        name: Faker::Internet.unique.username,
+        name: Faker::Internet.unique.username(separators: ['_']),
         email: Faker::Internet.unique.email,
         password: "password",
         full_name: Faker::Name.name,
         institution_id: 1,
-        role_id: 5,
+        role_id:  roles[:student].id,
+        handle: Faker::Internet.unique.username(separators: ['-'])
       ).id
     end
 
-    puts "assigning students to teams"
-    teams_users_ids = []
-    #num_students.times do |i|
+    # puts "assigning students to teams"
+    # teams_users_ids = []
+    # num_students.times do |i|
     #  teams_users_ids << TeamsUser.create(
     #    team_id: team_ids[i%num_teams],
     #    user_id: student_user_ids[i]
     #  ).id
-    #end
-
-    num_students.times do |i|
-      puts "Creating TeamsUser with team_id: #{team_ids[i % num_teams]}, user_id: #{student_user_ids[i]}"
-      teams_user = TeamsUser.create(
-        team_id: team_ids[i % num_teams],
-        user_id: student_user_ids[i]
-      )
-      if teams_user.persisted?
-        teams_users_ids << teams_user.id
-        puts "Created TeamsUser with ID: #{teams_user.id}"
-      else
-        puts "Failed to create TeamsUser: #{teams_user.errors.full_messages.join(', ')}"
-      end
-    end
+    # end
 
     puts "assigning participant to students, teams, courses, and assignments"
     participant_ids = []
-    num_students.times do |i|
-      participant_ids << AssignmentParticipant.create(
-        user_id: student_user_ids[i],
-        parent_id: assignment_ids[i%num_assignments],
+    teams_participant_ids = []
+    (num_students/2).times do |i|
+      user_id = student_user_ids[i]
+      handle = User.find(user_id).handle
+      participant = Participant.create(
+        user_id: user_id,
+        parent_id: 1,
         team_id: team_ids[i%num_teams],
-      ).id
+        type: 'AssignmentParticipant',
+        handle: handle
+      )
+
+      if participant.persisted?
+        participant_ids << participant.id
+        puts "Created assignment participant #{participant.id}"
+
+        teams_participant = TeamsParticipant.create(
+          participant_id: participant.id,
+          team_id: participant.team_id,
+          user_id: participant.user_id          
+        )
+        if teams_participant.persisted?
+          teams_participant_ids << teams_participant.id
+          puts "Created TeamsParticipant ID: #{teams_participant.id}"
+        else
+          puts "Failed to create TeamsParticipant: #{teams_participant.errors.full_messages.join(', ')}"
+        end        
+      else
+        puts "Failed to create assignment participant: #{participant.errors.full_messages.join(', ')}"
+      end
+    end
+
+    ((num_students / 2)..num_students-1).each do |i|
+      user_id = student_user_ids[i]
+      handle = User.find(user_id).handle
+      participant = Participant.create(
+        user_id: user_id,
+        parent_id: course_ids[i%num_courses],
+        team_id: team_ids[i%num_teams],
+        type: 'CourseParticipant',
+        handle: handle
+      )
+
+      if participant.persisted?
+        participant_ids << participant.id
+        puts "Created course participant #{participant.id}"
+      else
+        puts "Failed to create course participant: #{participant.errors.full_messages.join(', ')}"
+      end
+    end
+
+    puts "creating questionnaires"
+    questionnaire_count = 4
+    items_per_questionnaire = 10
+    questionnaire_ids = []
+    questionnaire_count.times do
+        questionnaire_ids << Questionnaire.create!(
+        name: "#{Faker::Lorem.words(number: 5).join(' ').titleize}",
+        instructor_id: rand(1..5), # assuming some instructor IDs exist in range 1–5
+        private: false,
+        min_question_score: 0,
+        max_question_score: 5,
+        questionnaire_type: "ReviewQuestionnaire",
+        display_type: "Review",
+        created_at: Time.now,
+        updated_at: Time.now
+        ).id
+
+    end
+
+    questionnaires = Questionnaire.all
+
+    puts  "creating items for each questionnaire"
+    questionnaires.each do |questionnaire|
+        items_per_questionnaire.times do |i|
+        Item.create!(
+            txt: Faker::Lorem.sentence(word_count: 8),
+            weight: rand(1..5),
+            seq: i + 1,
+            question_type: ['Criterion', 'Scale', 'TextArea', 'Dropdown'].sample,
+            size: ['50x3', '60x4', '40x2'].sample,
+            alternatives: ['Yes|No', 'Strongly Agree|Agree|Neutral|Disagree|Strongly Disagree'],
+            break_before: true,
+            max_label: Faker::Lorem.word.capitalize,
+            min_label: Faker::Lorem.word.capitalize,
+            questionnaire_id: questionnaire.id,
+            created_at: Time.now,
+            updated_at: Time.now
+        )
+        end
     end
 
 
+    assignment_ids = [1, 2]
+    used_in_rounds = [1, 2]
+    questionnaire_id = 1
 
+    assignment_ids.each do |assignment_id|
+      used_in_rounds.each do |round|
+        AssignmentQuestionnaire.create!(
+          assignment_id: assignment_id,
+          questionnaire_id: questionnaire_id,
+          used_in_round: round
+        )
+        questionnaire_id += 1
+      end
+    end
 
+  # Fetch all reviewee teams (assuming AssignmentTeam model)
+  reviewee_teams = AssignmentTeam.limit(5)
+  reviewer_ids = Participant.pluck(:id)
 
+  reviewee_teams.each do |team|
+    available_reviewers = reviewer_ids.sample(8)  # Pick 8 distinct reviewers
 
+    available_reviewers.each do |reviewer_id|
+      ResponseMap.create!(
+        reviewed_object_id: 1,
+        reviewer_id: reviewer_id,
+        reviewee_id: team.id,
+        type: 'ReviewResponseMap',
+        created_at: Time.now,
+        updated_at: Time.now,
+      )
+    end
+  end
 
+  puts "Seeded response_maps for #{reviewee_teams.count} teams, total: #{reviewee_teams.count * 8} records."
+
+  (1..40).each do |map_id|
+  round = map_id <= 20 ? 1 : 2
+
+  is_submitted = case map_id
+                 when 1..10, 21..30 then true
+                 else false
+                 end
+
+  Response.create!(
+    map_id: map_id,
+    round: round,
+    is_submitted: is_submitted,
+    version_num: 1,
+    created_at: Time.now,
+    updated_at: Time.now
+  )
+  end
+
+  puts "Seeded 40 responses with rounds and submission flags"
+
+item_ids = Item.pluck(:id)
+response_ids = Response.pluck(:id).shuffle
+
+item_ids.each do |id|
+  5.times do
+    Answer.create!(
+      item_id: id,
+      response_id: response_ids.pop,
+      answer: rand(0..5),
+      comments: Faker::Lorem.sentence
+    )
+  end
+end
+
+puts "Seeded answers"
 
 rescue ActiveRecord::RecordInvalid => e
-    puts 'The db has already been seeded'
+  puts "Seeding failed or the db is already seeded: #{e.message}"
 end
