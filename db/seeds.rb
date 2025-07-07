@@ -64,8 +64,8 @@ begin
     puts "creating teams"
     team_ids = []
     num_teams.times do |i|
-      team_ids << Team.create(
-        assignment_id: assignment_ids[i%num_assignments]
+      team_ids << AssignmentTeam.create(
+        parent_id: assignment_ids[i%num_assignments]
       ).id
     end
 
@@ -108,9 +108,9 @@ begin
     puts "assigning participant to students, teams, courses, and assignments"
     participant_ids = []
     num_students.times do |i|
-      participant_ids << Participant.create(
+      participant_ids << AssignmentParticipant.create(
         user_id: student_user_ids[i],
-        assignment_id: assignment_ids[i%num_assignments],
+        parent_id: assignment_ids[i%num_assignments],
         team_id: team_ids[i%num_teams],
       ).id
     end

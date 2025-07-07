@@ -1,8 +1,8 @@
 class Assignment < ApplicationRecord
   include MetricHelper
-  has_many :participants, class_name: 'AssignmentParticipant', foreign_key: 'assignment_id', dependent: :destroy
+  has_many :participants, class_name: 'AssignmentParticipant', foreign_key: 'parent_id', dependent: :destroy
   has_many :users, through: :participants, inverse_of: :assignment
-  has_many :teams, class_name: 'Team', foreign_key: 'assignment_id', dependent: :destroy, inverse_of: :assignment
+  has_many :teams, class_name: 'AssignmentTeam', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :assignment
   has_many :invitations, class_name: 'Invitation', foreign_key: 'assignment_id', dependent: :destroy # , inverse_of: :assignment
   has_many :assignment_questionnaires, dependent: :destroy
   has_many :questionnaires, through: :assignment_questionnaires
@@ -42,13 +42,13 @@ class Assignment < ApplicationRecord
       raise "The user account does not exist"
     end
     # Check if the user is already a participant in the assignment
-    participant = Participant.find_by(assignment_id:id, user_id:user.id)
+    participant = AssignmentParticipant.find_by(parent_id:id, user_id:user.id)
     if participant
       # Raises error if the user is already a participant
       raise "The user #{user.name} is already a participant."
     end
     # Create a new AssignmentParticipant associated with the assignment and user
-    new_part = AssignmentParticipant.create(assignment_id: self.id,
+    new_part = AssignmentParticipant.create(parent_id: self.id,
                                             user_id: user.id)
     # Set the participant's handle
     new_part.set_handle
@@ -63,7 +63,7 @@ class Assignment < ApplicationRecord
   # No return value; the participant is removed from the assignment.
   def remove_participant(user_id)
     # Find the AssignmentParticipant associated with this assignment and user
-    assignment_participant = AssignmentParticipant.where(assignment_id: self.id, user_id: user_id).first
+    assignment_participant = AssignmentParticipant.where(parent_id: self.id, user_id: user_id).first
     # Delete the AssignmentParticipant record
     if assignment_participant
       assignment_participant.destroy
@@ -193,7 +193,6 @@ class Assignment < ApplicationRecord
     # Check if any rubric has a specified round
     rubric_with_round.present?
   end
-
 
 
 end
