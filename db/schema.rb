@@ -394,6 +394,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
     t.bigint "institution_id"
     t.bigint "role_id", null: false
     t.bigint "parent_id"
+    t.string "reset_password_token"
+    t.datetime "reset_password_sent_at"
+    t.string "jwt_version"
+    t.string "time_zone"
+    t.string "language"
+    t.boolean "can_show_actions"
     t.index ["institution_id"], name: "index_users_on_institution_id"
     t.index ["parent_id"], name: "index_users_on_parent_id"
     t.index ["role_id"], name: "index_users_on_role_id"

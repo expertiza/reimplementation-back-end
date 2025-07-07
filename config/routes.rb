@@ -22,6 +22,12 @@ Rails.application.routes.draw do
           get ':id/managed', action: :managed_users
           get 'role/:name', action: :role_users
         end
+
+        member do
+          get :get_profile           # GET /api/v1/users/:id/get_profile
+          patch :update_profile           # PATCH /api/v1/users/:id/update_profile
+          post  :update_password          # POST  /api/v1/users/:id/update_password
+        end
       end
       resources :assignments do
         collection do
