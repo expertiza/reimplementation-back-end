@@ -4,8 +4,11 @@ class Course < ApplicationRecord
   has_many :assignments, dependent: :destroy
   validates :name, presence: true
   validates :directory_path, presence: true
+  has_many :participants, class_name: 'CourseParticipant', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :course
+  has_many :users, through: :course_participants, inverse_of: :course
   has_many :ta_mappings, dependent: :destroy
   has_many :tas, through: :ta_mappings, source: :ta
+  has_many :teams, class_name: 'CourseTeam', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :course
 
   # Returns the submission directory for the course
   def path
@@ -21,7 +24,8 @@ class Course < ApplicationRecord
       return { success: false, message: "The user with id #{user.id} is already a TA for this course." }
     else
       ta_mapping = TaMapping.create(user_id: user.id, course_id: id)
-      user.update(role: Role::TEACHING_ASSISTANT)
+      ta_role = Role.find_by(name: 'Teaching Assistant')
+      user.update(role: ta_role) if ta_role
       if ta_mapping.save
         return { success: true, data: ta_mapping.slice(:course_id, :user_id) }
       else
