@@ -14,7 +14,7 @@ class TeamJoinRequest < ApplicationRecord
   def accept!
     transaction do
       update!(status: :accepted)
-      team.team_members.create!(user: user)
+      team.participants.includes(:user)
     end
   end
 

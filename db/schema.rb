@@ -360,33 +360,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
     t.index ["user_id"], name: "index_team_join_requests_on_user_id"
   end
 
-  create_table "team_members", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.bigint "team_id", null: false
-    t.bigint "user_id", null: false
-    t.string "role", default: "member", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["team_id", "user_id"], name: "index_team_members_on_team_id_and_user_id", unique: true
-    t.index ["team_id"], name: "index_team_members_on_team_id"
-    t.index ["user_id"], name: "index_team_members_on_user_id"
-  end
-
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "assignment_id"
     t.string "name", null: false
     t.bigint "user_id", null: false
     t.integer "max_team_size", default: 4, null: false
     t.string "type"
     t.bigint "mentor_id"
-    t.bigint "course_id", null: false
-    t.index ["assignment_id"], name: "index_teams_on_assignment_id"
-    t.index ["course_id"], name: "index_teams_on_course_id"
+    t.integer "parent_id", null: false
     t.index ["mentor_id"], name: "index_teams_on_mentor_id"
     t.index ["user_id"], name: "fk_rails_45096701b6"
-    t.integer "parent_id", null: false
-    t.string "type", null: false
   end
 
   create_table "teams_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -454,19 +438,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   add_foreign_key "signed_up_teams", "teams"
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
-## <<<<<<< main
   add_foreign_key "team_join_requests", "teams"
   add_foreign_key "team_join_requests", "users"
-  add_foreign_key "team_members", "teams"
-  add_foreign_key "team_members", "users"
-  add_foreign_key "teams", "assignments"
-  add_foreign_key "teams", "courses"
   add_foreign_key "teams", "users"
   add_foreign_key "teams", "users", column: "mentor_id"
-## =======
   add_foreign_key "teams_participants", "participants"
   add_foreign_key "teams_participants", "teams"
-## >>>>>>> main
   add_foreign_key "teams_users", "teams"
   add_foreign_key "teams_users", "users"
   add_foreign_key "users", "institutions"

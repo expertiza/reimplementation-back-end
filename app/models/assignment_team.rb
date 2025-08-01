@@ -1,12 +1,6 @@
 class AssignmentTeam < Team
   # Each AssignmentTeam must belong to a specific assignment
-  belongs_to :assignment
-
-  # Validates that an assignment is associated
-  validates :assignment, presence: true
-  
-  # Custom validation to ensure the team type is either AssignmentTeam or MentoredTeam
-  validate :type_must_be_assignment_or_mentored_team
+  belongs_to :assignment, class_name: 'Assignment', foreign_key: 'parent_id'
 
 
   # Copies the current assignment team to a course team

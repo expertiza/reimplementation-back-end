@@ -1,17 +1,10 @@
 class CourseTeam < Team
   #Each course team must belong to a course
-  belongs_to :course
-
-  # Validates that the course is present
-  validates :course, presence: true
-
-  #Custom validation to ensure the team type CourseTeam
-  validate :type_must_be_course_team
-
+  belongs_to :course, class_name: 'Course', foreign_key: 'parent_id'
 
   #adds members to the course team post validation
   def add_member(user)
-    return false unless validate_membership(user)
+    # return false unless validate_membership(user)
     super(user)
   end
 

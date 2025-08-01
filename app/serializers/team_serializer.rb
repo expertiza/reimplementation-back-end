@@ -3,6 +3,6 @@ class TeamSerializer < ActiveModel::Serializer
   has_many :users, serializer: UserSerializer
 
   def team_size
-    object.team_members.count
+    object.teams_participants.count
   end
 end 

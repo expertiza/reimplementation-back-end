@@ -1,20 +1,14 @@
 module TeamOperationsHelper
-   # Validates whether the given user can be part of the specified team based on its type
+  # Validates whether the given user can be part of the specified team based on parent context
   def self.validate_team_membership(team, user)
-    case team.type
-    when 'CourseTeam'
-      team.course.has_member?(user)
-    when 'AssignmentTeam', 'MentoredTeam'
-      team.assignment.has_member?(user)
-    else
-      false
-    end
+    return false unless team.parent.respond_to?(:has_member?)
+
+    team.parent.has_member?(user)
   end
 
   # Validates if the given user can be assigned as a mentor to the team
   def self.validate_mentor_assignment(team, user)
-    return false unless team.is_a?(MentoredTeam)
-    user.mentor?
+    team.is_a?(MentoredTeam) && user.mentor?
   end
 
   # Copies all members from the source team to the target team
@@ -24,17 +18,13 @@ module TeamOperationsHelper
     end
   end
 
-  # Returns a hash of basic statistics about the given team:
-  # - Current team size
-  # - Maximum allowed size
-  # - Whether the team is full
-  # - Whether the team is empty
+  # Returns a hash of basic statistics about the given team
   def self.team_stats(team)
     {
-      size: team.team_size,
+      size: team.participants.size,
       max_size: team.max_team_size,
-      is_full: team.team_full?,
-      is_empty: team.empty?
+      is_full: team.full?,
+      is_empty: team.participants.empty?
     }
   end
-end 
+end

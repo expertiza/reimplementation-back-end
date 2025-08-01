@@ -37,7 +37,8 @@ module Api
       # GET /api/v1/teams/:id/members
       # Lists all members of a specific team
       def members
-        render json: @team.team_members, each_serializer: TeamMemberSerializer
+        participants = @team.participants.includes(:user)
+        render json: participants.map(&:user), each_serializer: UserSerializer
       end
 
       # POST /api/v1/teams/:id/members
@@ -45,13 +46,19 @@ module Api
       def add_member
         return render json: { errors: ['Team is full'] }, status: :unprocessable_entity if @team.full?
 
-        user = User.find(team_member_params[:user_id])
-        team_member = @team.team_members.build(user: user)
-        
-        if team_member.save
-          render json: team_member, serializer: TeamMemberSerializer, status: :created
+        user = User.find(team_participant_params[:user_id])
+        participant = Participant.find_by(user: user, parent_id: @team.parent_id)
+
+        unless participant
+          return render json: { error: 'Participant not found for this team context' }, status: :not_found
+        end
+
+        teams_participants = @team.teams_participants.build(participant: participant, user: participant.user)
+
+        if teams_participants.save
+          render json: participant.user, serializer: UserSerializer, status: :created
         else
-          render json: { errors: team_member.errors.full_messages }, status: :unprocessable_entity
+          render json: { errors: teams_participants.errors.full_messages }, status: :unprocessable_entity
         end
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'User not found' }, status: :not_found
@@ -60,13 +67,18 @@ module Api
       # DELETE /api/v1/teams/:id/members/:user_id
       # Removes a member from the team based on user ID
       def remove_member
-        team_member = @team.team_members.find_by(user_id: params[:user_id])
-        if team_member
-          team_member.destroy
+        user = User.find(params[:user_id])
+        participant = Participant.find_by(user: user, parent_id: @team.parent_id)
+        tp = @team.teams_participants.find_by(participant: participant)
+
+        if tp
+          tp.destroy
           head :no_content
         else
           render json: { error: 'Member not found' }, status: :not_found
         end
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'User not found' }, status: :not_found
       end
 
       # GET /api/v1/teams/:id/join_requests
@@ -99,6 +111,11 @@ module Api
         render json: { error: 'Join request not found' }, status: :not_found
       end
 
+      # Placeholder method to get current user (can be replaced by actual auth logic)
+      def current_user
+        @current_user
+      end
+
       private
 
       # Finds the team by ID and assigns to @team, else renders not found
@@ -114,8 +131,8 @@ module Api
       end
 
       # Whitelists parameters required to add a team member
-      def team_member_params
-        params.require(:team_member).permit(:user_id)
+      def team_participant_params
+        params.require(:team_participant).permit(:user_id)
       end
 
       # Whitelists parameters required to create or update join request
@@ -132,10 +149,7 @@ module Api
         end
       end
 
-      # Placeholder method to get current user (can be replaced by actual auth logic)
-      def current_user
-        @current_user
-      end
+      
     end
   end
 end 

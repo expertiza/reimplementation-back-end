@@ -67,9 +67,10 @@ FactoryBot.define do
     end
   end
 
-  factory :team_member do
-    association :team
-    association :user
+  factory :teams_participant, class: 'TeamsParticipant' do
+    team
+    participant
+    user { participant.user }
   end
 
   factory :team_join_request do

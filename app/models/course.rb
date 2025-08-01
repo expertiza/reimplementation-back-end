@@ -54,4 +54,8 @@ class Course < ApplicationRecord
     new_course.name += '_copy'
     new_course.save
   end
+
+  def has_member?(user)
+    participants.exists?(user_id: user.id)
+  end
 end
