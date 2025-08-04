@@ -17,6 +17,10 @@ class Team < ApplicationRecord
   validates :parent_id, presence: true
   validates :type, presence: true, inclusion: { in: %w[AssignmentTeam CourseTeam], message: "must be 'Assignment' or 'Course'" }
 
+  def member?(user)
+    participants.exists?(user_id: user.id)
+  end
+  
   def full?
     current_size = participants.count
 

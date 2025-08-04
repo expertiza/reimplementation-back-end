@@ -11,13 +11,6 @@ RSpec.describe AssignmentTeam, type: :model do
     @roles = create_roles_hierarchy
   end
 
-  
-  # let(:user) { create(:user) }
-  # let(:course) { create(:course) }
-  # let(:assignment) { create(:assignment, course: course) }
-  # let(:assignment_team) { create(:assignment_team, :with_assignment, assignment: assignment) }
-
-
   # ------------------------------------------------------------------------
   # Helper: DRY-up creation of student users with a predictable pattern.
   # ------------------------------------------------------------------------
@@ -66,9 +59,6 @@ RSpec.describe AssignmentTeam, type: :model do
   let(:assignment)  { Assignment.create!(name: "Assignment 1", instructor_id: instructor.id, max_team_size: 3) }
   let(:course)  { Course.create!(name: "Course 1", instructor_id: instructor.id, institution_id: institution.id, directory_path: "/course1") }
 
-  # ------------------------------------------------------------------------
-  # Create one team per context using STI subclasses
-  # ------------------------------------------------------------------------
   let(:assignment_team) do
     AssignmentTeam.create!(
       parent_id:      assignment.id,
@@ -130,13 +120,9 @@ RSpec.describe AssignmentTeam, type: :model do
 
     before do
       @participant = create(:assignment_participant, user: enrolled_user, assignment: assignment)
-      puts "Created participant: #{@participant.inspect}"
-      puts "Assignment participants: #{assignment.participants.to_a.inspect}"
     end
 
     it 'cannot add unenrolled user' do
-      unenrolled_user = create(:user)
-      # Do NOT create an AssignmentParticipant → this simulates unenrolled user
       result = assignment_team.add_member(unenrolled_user)
 
       expect(result[:success]).to be false
