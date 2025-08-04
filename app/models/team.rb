@@ -5,7 +5,7 @@ class Team < ApplicationRecord
   has_many :signed_up_teams, dependent: :destroy
   has_many :teams_users, dependent: :destroy  
   has_many :teams_participants, dependent: :destroy
-  has_many :users, through: :teams_users
+  has_many :users, through: :teams_participants
   has_many :participants, through: :teams_participants
 
   # The team is either an AssignmentTeam or a CourseTeam
@@ -47,26 +47,33 @@ class Team < ApplicationRecord
   end
 
   # Adds participant in the team
-  def add_member(participant)
-    # Check if the participant is already added to the team.
-    if participants.exists?(id: participant.id)
-      raise "The participant #{participant.user.name} is already a member of this team"
-    end
+  def add_member(participant_or_user)
+    participant =
+      if participant_or_user.is_a?(AssignmentParticipant) || participant_or_user.is_a?(CourseParticipant)
+        participant_or_user
+      elsif participant_or_user.is_a?(User)
+        participant_type = is_a?(AssignmentTeam) ? AssignmentParticipant : CourseParticipant
+        participant_type.find_by(user_id: participant_or_user.id, parent_id: parent_id)
+      else
+        nil
+      end
 
-    # Return an error hash if the team is at full capacity.
+    # If participant wasn't found or built correctly
+    return { success: false, error: "#{participant_or_user.name} is not a participant in this #{is_a?(AssignmentTeam) ? 'assignment' : 'course'}" } if participant.nil?
+
+    return { success: false, error: "Participant already on the team" } if participants.exists?(id: participant.id)
     return { success: false, error: "Unable to add participant: team is at full capacity." } if full?
 
-    # Create the TeamsParticipant record linking the participant to the team.
     team_participant = TeamsParticipant.create(
       participant_id: participant.id,
       team_id: id,
       user_id: participant.user_id
     )
-    
+
     if team_participant.persisted?
       { success: true }
     else
-      { success: false, error: team_participant.errors.to_a.join(', ') }
+      { success: false, error: team_participant.errors.full_messages.join(', ') }
     end
   rescue StandardError => e
     { success: false, error: e.message }
