@@ -1,11 +1,6 @@
 require 'rails_helper'
 
 RSpec.describe CourseTeam, type: :model do
-  # let(:user) { create(:user, role: create(:role)) }
-  # let(:course) { create(:course) }
-  # let(:assignment) { create(:assignment, course: course) }
-  # let(:course_team) { create(:course_team, course: course) }
-
 
   include RolesHelper
   # --------------------------------------------------------------------------
@@ -88,7 +83,7 @@ RSpec.describe CourseTeam, type: :model do
       team = build(:course_team)
       team.type = 'WrongType'
       expect(team).not_to be_valid
-      expect(team.errors[:type]).to include("must be 'Assignment' or 'Course'")
+      expect(team.errors[:type]).to include("must be 'Assignment' or 'Course' or 'Mentor'")
     end
   end
 

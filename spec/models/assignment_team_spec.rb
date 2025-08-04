@@ -83,7 +83,7 @@ RSpec.describe AssignmentTeam, type: :model do
       team = build(:assignment_team)
       team.type = 'WrongType'
       expect(team).not_to be_valid
-      expect(team.errors[:type]).to include("must be 'Assignment' or 'Course'")
+      expect(team.errors[:type]).to include("must be 'Assignment' or 'Course' or 'Mentor'")
     end
   end
 

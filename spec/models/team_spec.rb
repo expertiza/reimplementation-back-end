@@ -111,7 +111,7 @@ RSpec.describe Team, type: :model do
       # An unsupported value for type should trigger an inclusion error.
       team = Team.new(parent_id: assignment.id, type: 'Team')
       expect(team).not_to be_valid
-      expect(team.errors[:type]).to include("must be 'Assignment' or 'Course'")
+      expect(team.errors[:type]).to include("must be 'Assignment' or 'Course' or 'Mentor'")
     end
 
     it 'is valid as AssignmentTeam' do

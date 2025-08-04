@@ -15,7 +15,7 @@ class Team < ApplicationRecord
   
   attr_accessor :max_participants
   validates :parent_id, presence: true
-  validates :type, presence: true, inclusion: { in: %w[AssignmentTeam CourseTeam], message: "must be 'Assignment' or 'Course'" }
+  validates :type, presence: true, inclusion: { in: %w[AssignmentTeam CourseTeam MentoredTeam], message: "must be 'Assignment' or 'Course' or 'Mentor'" }
 
   def member?(user)
     participants.exists?(user_id: user.id)
