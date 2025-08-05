@@ -25,6 +25,10 @@ class Scale < ScoredItem
         { message: 'Item not answered.' }.to_json
       end
     end
+
+    def max_score
+      questionnaire.max_question_score * weight
+    end
   
     private
   

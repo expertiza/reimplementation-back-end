@@ -1,4 +1,5 @@
 class Ta < User
+  
   # Get all users whose parent is the TA
   # @return [Array<User>] all users that belongs to courses that is mapped to the TA
   def managed_users
@@ -7,5 +8,10 @@ class Ta < User
 
   def my_instructor
     # code here
+  end
+
+  def courses_assisted_with
+    courses = TaMapping.where(ta_id: id)
+    courses.map { |c| Course.find(c.course_id) }
   end
 end

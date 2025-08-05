@@ -74,7 +74,8 @@ begin
       # assignment_id = assignment_ids[i % num_assignments]
       team = AssignmentTeam.create(
         parent_id: 1,
-        type: 'AssignmentTeam'
+        type: 'AssignmentTeam',
+        name: Faker::Internet.unique.username(separators: [' ']),
       )
 
       if team.persisted?
@@ -90,7 +91,8 @@ begin
       # course_id = course_ids[i % num_courses]
       team = CourseTeam.create(
         parent_id: 2,
-        type: 'CourseTeam'
+        type: 'CourseTeam',
+        name: Faker::Internet.unique.username(separators: [' ']),
       )
 
       if team.persisted?
@@ -203,7 +205,7 @@ begin
         items_per_questionnaire.times do |i|
         Item.create!(
             txt: Faker::Lorem.sentence(word_count: 8),
-            weight: rand(1..5),
+            weight: rand(1..2),
             seq: i + 1,
             question_type: ['Criterion', 'Scale', 'TextArea', 'Dropdown'].sample,
             size: ['50x3', '60x4', '40x2'].sample,
@@ -235,61 +237,209 @@ begin
     end
 
   # Fetch all reviewee teams (assuming AssignmentTeam model)
-  reviewee_teams = AssignmentTeam.limit(5)
-  reviewer_ids = Participant.pluck(:id)
+  # reviewee_teams = AssignmentTeam.limit(5)
+  # reviewer_ids = Participant.pluck(:id).sample(10)
 
-  reviewee_teams.each do |team|
-    available_reviewers = reviewer_ids.sample(8)  # Pick 8 distinct reviewers
+  # 5.times do |i|
+  #   ReviewResponseMap.create!(
+  #     reviewed_object_id: 1,
+  #     reviewer_id: reviewer_ids[i],
+  #     reviewee_id: 1,
+  #     created_at: Time.now,
+  #     updated_at: Time.now,
+  #   )                                                                        
+  # end
 
-    available_reviewers.each do |reviewer_id|
-      ResponseMap.create!(
-        reviewed_object_id: 1,
-        reviewer_id: reviewer_id,
-        reviewee_id: team.id,
-        type: 'ReviewResponseMap',
-        created_at: Time.now,
-        updated_at: Time.now,
+  # 5.times do |i|
+  #   ReviewResponseMap.create!(
+  #     reviewed_object_id: 1,
+  #     reviewer_id: reviewer_ids[i],
+  #     reviewee_id: 1,
+  #     created_at: Time.now,
+  #     updated_at: Time.now,
+  #   )                                                                        
+  # end
+
+  # puts "Seeded review_response_maps and teammate_review_response_maps for 1 team, total: 10 records."
+
+  # item_ids = Item.pluck(:id).sort  # 40 items total
+  # response_records = []
+  # items = Item.all
+
+  # response_maps_count = ResponseMap.all.size*2
+  # response_maps_count.times do |i|
+  #   # item_id = item_ids[i / 5]            # Each item_id appears in 5 responses
+  #   round = case i
+  #           when 0...50 then 1
+  #           when 50...100 then 2
+  #           when 100...150 then 1
+  #           else 2
+  #           end
+
+  #   map_id = if i < 100
+  #             (i % 5) + 1              # map_id from 1 to 5
+  #           else
+  #             ((i - 100) % 5) + 6      # map_id from 6 to 10
+  #           end
+
+  #   response = Response.create!(
+  #     map_id: map_id,
+  #     round: round,
+  #     is_submitted: true,
+  #     version_num: 1,
+  #     created_at: Time.now,
+  #     updated_at: Time.now
+  #   )
+
+  #    items.each do |item|
+  #     Answer.create(
+  #       response: response,
+  #       item: item,
+  #       score: rand(0..5),
+  #       comments: "Seeded answer"
+  #     )
+
+  #   # response_records << { item_id: item_id, response_id: response.id }
+  # end
+
+  # puts "✅ Seeded #{response_records.size} responses."
+
+  # # Create answers
+  # response_records.each do |rec|
+  #   item = Item.find(rec[:item_id])
+  #   answer = item.question_type=="Criterion" ? rand(0..5) : rand(0..1)
+  #   Answer.create!(
+  #     item_id: rec[:item_id],
+  #     response_id: rec[:response_id],
+  #     answer: answer,
+  #     comments: Faker::Lorem.sentence
+  #   )
+  # end
+
+  # puts "✅ Seeded #{response_records.size} answers."
+
+  # Setup sample questions
+  # questionnaire = Questionnaire.create!(name: "Sample Review Rubric", max_question_score: 5, min_question_score: 0, questionnaire_type: "ReviewQuestionnaire" ,display_type: "Review", instructor_id: 2, private: false)
+  # items = []
+  # 5.times do |i|
+  #   items << Item.create!(
+  #     txt: Faker::Lorem.sentence(word_count: 8),
+  #     weight: rand(1..2),
+  #     seq: i + 1,
+  #     question_type: ['Criterion', 'Scale', 'TextArea', 'Dropdown'].sample,
+  #     size: ['50x3', '60x4', '40x2'].sample,
+  #     alternatives: ['Yes|No', 'Strongly Agree|Agree|Neutral|Disagree|Strongly Disagree'],
+  #     break_before: true,
+  #     max_label: Faker::Lorem.word.capitalize,
+  #     min_label: Faker::Lorem.word.capitalize,
+  #     questionnaire_id: questionnaire.id,
+  #     created_at: Time.now,
+  #     updated_at: Time.now
+  # )
+  # end
+
+  # # Create 3 participants and 1 reviewee team
+  # team = AssignmentTeam.find(1)
+  # 3.times do |i|
+  #   reviewer = AssignmentParticipant.find(i+1)
+
+  #   # Create ResponseMap (reviewer -> team)
+  #   map = ReviewResponseMap.create(
+  #     reviewer_id: reviewer.id,
+  #     reviewee_id: team.id,
+  #     reviewed_object_id: 1,
+  #     created_at: Time.now,
+  #     updated_at: Time.now
+  #   )
+
+  #   # Create 2 Responses per map (one per round)
+  #   [1, 2].each do |round|
+  #     response = Response.create(
+  #       map_id: map.id,
+  #       round: round,
+  #       is_submitted: true,
+  #       created_at: Time.now,
+  #       updated_at: Time.now,
+  #     )
+
+  #     # Create Answers for each question
+  #     items.each do |item|
+  #       Answer.create(
+  #         response_id: response.id,
+  #         item_id: item.id,
+  #         answer: rand(1..5),
+  #         comments: "Seeded answer"
+  #       )
+  #     end
+  #   end
+  # end
+
+  questionnaires = {}
+
+  (1..2).each do |round|
+    questionnaire = Questionnaire.create!(
+      name: "Review Rubric - Round #{round}",
+      max_question_score: 5,
+      min_question_score: 0,
+      questionnaire_type: "ReviewQuestionnaire",
+      display_type: "Review",
+      instructor_id: 2,
+      private: false
+    )
+
+    # Save questionnaire and its items
+    questionnaires[round] = {
+      q: questionnaire,
+      items: []
+    }
+
+    5.times do |i|
+      item = Item.create!(
+        txt: Faker::Lorem.sentence(word_count: 8),
+        weight: rand(1..2),
+        seq: i + 1,
+        question_type: ['Criterion', 'Scale', 'TextArea', 'Dropdown'].sample,
+        size: ['50x3', '60x4', '40x2'].sample,
+        alternatives: 'Yes|No',
+        break_before: true,
+        max_label: Faker::Lorem.word.capitalize,
+        min_label: Faker::Lorem.word.capitalize,
+        questionnaire_id: questionnaire.id
       )
+      questionnaires[round][:items] << item
     end
   end
 
-  puts "Seeded response_maps for #{reviewee_teams.count} teams, total: #{reviewee_teams.count * 8} records."
+  # Create team and reviewers
+  team = AssignmentTeam.find(1)
 
-  (1..40).each do |map_id|
-  round = map_id <= 20 ? 1 : 2
+  3.times do |i|
+    reviewer = AssignmentParticipant.find(i + 1)
 
-  is_submitted = case map_id
-                 when 1..10, 21..30 then true
-                 else false
-                 end
-
-  Response.create!(
-    map_id: map_id,
-    round: round,
-    is_submitted: is_submitted,
-    version_num: 1,
-    created_at: Time.now,
-    updated_at: Time.now
-  )
-  end
-
-  puts "Seeded 40 responses with rounds and submission flags"
-
-item_ids = Item.pluck(:id)
-response_ids = Response.pluck(:id).shuffle
-
-item_ids.each do |id|
-  5.times do
-    Answer.create!(
-      item_id: id,
-      response_id: response_ids.pop,
-      answer: rand(0..5),
-      comments: Faker::Lorem.sentence
+    map = ReviewResponseMap.create!(
+      reviewer_id: reviewer.id,
+      reviewee_id: team.id,
+      reviewed_object_id: 1 # optional if used for navigation only
     )
-  end
-end
 
-puts "Seeded answers"
+    [1, 2].each do |round|
+      response = Response.create!(
+        map_id: map.id,
+        round: round,
+        is_submitted: true
+      )
+
+      # Get the correct items for this round
+      questionnaires[round][:items].each do |item|
+        Answer.create!(
+          response_id: response.id,
+          item_id: item.id,
+          answer: rand(1..5),
+          comments: "Seeded answer"
+        )
+      end
+    end
+  end
 
 rescue ActiveRecord::RecordInvalid => e
   puts "Seeding failed or the db is already seeded: #{e.message}"

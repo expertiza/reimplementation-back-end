@@ -1,5 +1,9 @@
 class Criterion < ScoredItem
     validates :size, presence: true
+
+    def max_score
+      questionnaire.max_question_score * weight
+    end
   
     def edit
       {

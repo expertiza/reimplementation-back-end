@@ -27,39 +27,7 @@
       def get_assessments_for(participant)
         participant.reviews
       end
-    
-      # return the responses for specified round, for varying rubric feature -Yang
-      # reviewee depends on which type of response it is. For a ReviewResponseMap, the team (AssignmentTeam) is receiving the response. For a TeammateReviewResponseMap, the AssignmentParticipant is being reviewed.
-      def get_assessments_round_for(reviewee, round, type)
-        return nil unless reviewee
-        puts reviewee.attributes
-        scores = []
-        if reviewee
-          maps = ResponseMap.where(reviewee_id: reviewee.id, type: type)
-          maps.each do |map|
-            next if map.responses.empty?
-            map.responses.each do |response|
-              if response.round == round && response.is_submitted
-                score = response.score
-                reviewer_name = score.response.map.reviewer.fullname
-                scores << {
-                    id: score.id,
-                    item_id: score.item_id,
-                    response_id: score.response_id,
-                    answer: score.answer,
-                    comments: score.comments,
-                    created_at: score.created_at,
-                    updated_at: score.updated_at,
-                    reviewer_name: reviewer_name
-                  }
-              end
-            end
-          end
-          scores.sort_by! { |s| s[:reviewer_name] }
-        end
-        scores
-      end
-
+      
     # validate the entries for this questionnaire
     def validate_questionnaire
       errors.add(:max_question_score, 'The maximum item score must be a positive integer.') if max_question_score < 1

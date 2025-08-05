@@ -1,15 +1,6 @@
 module GradesHelper
   include PenaltyHelper
 
-  # Defines permissions for different actions based on user roles.
-  # 'view_my_scores' is allowed for students with specific permissions.
-  # 'view_team' is allowed for both students and TAs.
-  # 'view_grading_report' is allowed TAs and higher roles. 
-  ACTION_PERMISSIONS = {
-    'view_my_scores' => :student_with_permissions?,
-    'view_team' => :student_or_ta?
-  }.freeze
-
   # Calculates and applies penalties for participants of a given assignment.
   def penalties(assignment_id)
     assignment = Assignment.find(assignment_id)
@@ -48,6 +39,7 @@ module GradesHelper
     items = {}
     questionnaires.each do |questionnaire|
       round = AssignmentQuestionnaire.where(assignment_id: assignment_id, questionnaire_id: questionnaire.id).first.used_in_round
+      #can accomodate other types of questionnaires too such as TeammateReviewQuestionnaire, AuthorFeedbackQuestionnaire
       questionnaire_symbol = if round.nil?
                                questionnaire.display_type
                              else
@@ -160,14 +152,6 @@ module GradesHelper
     nil
   end
 
-  # Method associated with action_allowed?: 
-  # Checks if the user has permission for the given action and executes the corresponding method.
-  def check_permission(action)
-    return has_privileges_of?('Teaching Assistant') unless ACTION_PERMISSIONS.key?(action)
-
-    send(ACTION_PERMISSIONS[action])
-  end
-
   # Checks if the student has the necessary permissions and authorizations to proceed.
   def student_with_permissions?
     has_role?('Student') &&
@@ -218,53 +202,7 @@ module GradesHelper
     end
   end
 
-  # Generates data for visualizing heat maps in the view statements.
-  def get_data_for_heat_map(assignment)
-    items = filter_questionnaires(assignment)
-    scores = Response.review_grades(assignment, items)
-    # participant = Participant.find_by(parent_id: assignment.id, user_id: current_user.id);
-    # team = AssignmentTeam.find(participant.team_id)
-
-    # puts team.attributes
-
-    # response_maps = ReviewResponseMap.where(reviewee_id: team.id, reviewed_object_id: assignment.id);
-    # map_ids = response_maps.pluck(:id)
-    # responses = Response.where(map_id: map_ids, is_submitted:true)
-
-    # # puts responses
-
-    # answers = {}
-    # items[:"Review-Round-1"].each do |item|
-    #   answers[item.id] = item.answers
-    # end
-
-    # print answers
-
-
-
-
-    # response_map = ReviewResponseMap.where(reviewee_id: team.id, reviewed_object_id: assignment.id).first;
-    # responses2 = response_map.responses
-    # puts responses2
-
-    # review_score_count = scores[:teams].length # After rejecting nil scores need original length to iterate over hash
-    # averages = Response.extract_team_averages(scores[:teams])
-    # avg_of_avg = Response.average_team_scores(averages)
-    
-    # # Construct the data as a JSON object
-    {
-      # assignment: assignment,
-      items: items,
-      scores: scores,
-      # review_score_count: review_score_count,
-      averages: 15,
-      # answers: answers,
-      # avg_of_avg: avg_of_avg,
-      # show_reputation: false
-    }
-  end
   
-  # Method associated with edit_participant_scores:
   # This method retrieves all items from relevant questionnaires associated with this assignment. 
   def list_items(assignment)
     assignment.questionnaires.each_with_object({}) do |questionnaire, items|

@@ -7,4 +7,8 @@ class ReviewResponseMap < ResponseMap
   def response_assignment
     return assignment
   end
+
+  def questionnaire_type
+    'Review'
+  end
 end

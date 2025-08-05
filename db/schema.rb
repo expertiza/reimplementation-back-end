@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_21_180851) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_27_170825) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -43,6 +43,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_21_180851) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "used_in_round"
+    t.integer "questionnaire_weight"
     t.index ["assignment_id"], name: "fk_aq_assignments_id"
     t.index ["questionnaire_id"], name: "fk_aq_questionnaire_id"
   end
@@ -232,6 +233,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_21_180851) do
     t.string "authorization"
     t.integer "parent_id", null: false
     t.string "type", null: false
+    t.float "grade"
     t.index ["join_team_request_id"], name: "index_participants_on_join_team_request_id"
     t.index ["team_id"], name: "index_participants_on_team_id"
     t.index ["user_id"], name: "fk_participant_users"
@@ -352,6 +354,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_21_180851) do
     t.datetime "updated_at", null: false
     t.integer "parent_id", null: false
     t.string "type", null: false
+    t.string "name"
+    t.integer "grade_for_submission"
+    t.string "comment_for_submission"
   end
 
   create_table "teams_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|

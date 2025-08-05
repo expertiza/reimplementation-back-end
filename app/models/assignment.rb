@@ -9,7 +9,7 @@ class Assignment < ApplicationRecord
   has_many :response_maps, foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :sign_up_topics , class_name: 'SignUpTopic', foreign_key: 'assignment_id', dependent: :destroy
-  has_many :due_dates,as: :parent, class_name: 'DueDate',  dependent: :destroy, as: :parent
+  has_many :due_dates,as: :parent, class_name: 'DueDate',  dependent: :destroy
   belongs_to :course, optional: true
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments
 
@@ -194,5 +194,15 @@ class Assignment < ApplicationRecord
     rubric_with_round.present?
   end
 
+  def review_rounds(questionnaireType)
+    review_rounds = []
+    if varying_rubrics_by_round?
+      all_questionnaires = AssignmentQuestionnaire.where(assignment_id: id).where.not(used_in_round: nil).all
+      all_questionnaires.each do |q|
+        review_rounds << q.used_in_round if q.questionnaire.questionnaire_type == "#{questionnaireType}Questionnaire"
+      end
+    end
+    review_rounds
+  end
 
 end

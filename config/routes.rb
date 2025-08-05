@@ -131,15 +131,13 @@ Rails.application.routes.draw do
         end
       end
       resources :grades do
-        collection do
-          get 'action_allowed'
-          get 'view_grading_report'
-          get '/:assignment_id/view_scores', to: 'grades#view_scores'
-          post 'update_team'
-          post 'update_participant_grade'
-          get 'edit_participant_scores'
-          get 'view_team'
-          get 'view_my_scores'
+        collection do        
+          get '/:assignment_id/view_all_scores', to: 'grades#view_all_scores'
+          post '/:participant_id/update', to: 'grades#update'
+          get '/:participant_id/edit', to: 'grades#edit'
+          get '/:assignment_id/view_our_scores', to: 'grades#view_our_scores'
+          get '/:assignment_id/view_my_scores', to: 'grades#view_my_scores'
+          get '/:participant_id/instructor_review', to: 'grades#instructor_review'
         end
       end
     end
