@@ -81,36 +81,6 @@ module Api
         render json: { error: 'User not found' }, status: :not_found
       end
 
-      # GET /api/v1/teams/:id/join_requests
-      # Lists all join requests for the team
-      def join_requests
-        render json: @team.team_join_requests, each_serializer: TeamJoinRequestSerializer
-      end
-
-      # POST /api/v1/teams/:id/join_requests
-      # Creates a new join request for a team
-      def create_join_request
-        join_request = @team.team_join_requests.build(team_join_request_params)
-        if join_request.save
-          render json: join_request, serializer: TeamJoinRequestSerializer, status: :created
-        else
-          render json: { errors: join_request.errors.full_messages }, status: :unprocessable_entity
-        end
-      end
-
-      # PUT /api/v1/teams/:id/join_requests/:id
-      # Updates the status or details of a specific join request
-      def update_join_request
-        join_request = @team.team_join_requests.find(params[:join_request_id])
-        if join_request.update(team_join_request_params)
-          render json: join_request, serializer: TeamJoinRequestSerializer
-        else
-          render json: { errors: join_request.errors.full_messages }, status: :unprocessable_entity
-        end
-      rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Join request not found' }, status: :not_found
-      end
-
       # Placeholder method to get current user (can be replaced by actual auth logic)
       def current_user
         @current_user
@@ -133,11 +103,6 @@ module Api
       # Whitelists parameters required to add a team member
       def team_participant_params
         params.require(:team_participant).permit(:user_id)
-      end
-
-      # Whitelists parameters required to create or update join request
-      def team_join_request_params
-        params.require(:team_join_request).permit(:user_id, :status)
       end
 
       # Validates the team type before team creation to ensure it's among allowed types

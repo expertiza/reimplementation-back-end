@@ -11,15 +11,5 @@ class CreateTeams < ActiveRecord::Migration[8.0]
     end
 
     add_index :teams, :type
-
-    create_table :team_join_requests do |t|
-      t.references :team, null: false, foreign_key: true
-      t.references :user, null: false, foreign_key: true
-      t.string :status, null: false, default: 'pending'
-
-      t.timestamps
-
-      t.index [:team_id, :user_id], unique: true
-    end
   end
 end 

@@ -51,18 +51,16 @@ FactoryBot.define do
     type { 'MentoredTeam' }
     max_team_size { 5 }
     association :user, factory: :user
-    association :assignment, factory: :assignment
-    
+
     transient do
       course { create(:course) }
     end
 
+    assignment { create(:assignment, course: course) }
+
     after(:build) do |team, evaluator|
-      team.course = team.assignment.course || evaluator.course
       mentor_role = create(:role, :mentor)
-      mentor = create(:user)
-      mentor.role = mentor_role
-      mentor.save!
+      mentor = create(:user, role: mentor_role)
       team.mentor = mentor
     end
   end
@@ -73,9 +71,4 @@ FactoryBot.define do
     user { participant.user }
   end
 
-  factory :team_join_request do
-    association :team
-    association :user
-    status { "pending" }
-  end
 end 

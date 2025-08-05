@@ -1,7 +1,6 @@
 class Team < ApplicationRecord
 
   # Core associations
-  has_many :team_join_requests, dependent: :destroy
   has_many :signed_up_teams, dependent: :destroy
   has_many :teams_users, dependent: :destroy  
   has_many :teams_participants, dependent: :destroy

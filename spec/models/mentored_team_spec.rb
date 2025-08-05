@@ -7,9 +7,7 @@ RSpec.describe MentoredTeam, type: :model do
   # Global Setup
   # --------------------------------------------------------------------------
   # Create the full roles hierarchy once, to be shared by all examples.
-  before(:all) do
-    @roles = create_roles_hierarchy
-  end
+  let!(:roles) { create_roles_hierarchy }
 
   # ------------------------------------------------------------------------
   # Helper: DRY-up creation of student users with a predictable pattern.
@@ -20,7 +18,7 @@ RSpec.describe MentoredTeam, type: :model do
       email:           "#{suffix}@example.com",
       full_name:       suffix.split('_').map(&:capitalize).join(' '),
       password_digest: "password",
-      role_id:          @roles[:student].id,
+      role_id:          roles[:student].id,
       institution_id:  institution.id
     )
   end
@@ -40,7 +38,7 @@ RSpec.describe MentoredTeam, type: :model do
       full_name:       "Instructor User",
       email:           "instructor@example.com",
       password_digest: "password",
-      role_id:          @roles[:instructor].id,
+      role_id:          roles[:instructor].id,
       institution_id:  institution.id
     )
   end
@@ -51,13 +49,13 @@ RSpec.describe MentoredTeam, type: :model do
       full_name:       "Team Owner",
       email:           "team_owner@example.com",
       password_digest: "password",
-      role_id:          @roles[:student].id,
+      role_id:          roles[:student].id,
       institution_id:  institution.id
     )
   end
 
-  let(:assignment)  { Assignment.create!(name: "Assignment 1", instructor_id: instructor.id, max_team_size: 3) }
-  let(:course)  { Course.create!(name: "Course 1", instructor_id: instructor.id, institution_id: institution.id, directory_path: "/course1") }
+  let!(:assignment)  { Assignment.create!(name: "Assignment 1", instructor_id: instructor.id, max_team_size: 3) }
+  let!(:course)  { Course.create!(name: "Course 1", instructor_id: instructor.id, institution_id: institution.id, directory_path: "/course1") }
 
   let(:mentor_role) { create(:role, :mentor) }
 
@@ -88,12 +86,12 @@ RSpec.describe MentoredTeam, type: :model do
       full_name: "Student User",
       email: "student@example.com",
       password_digest: "password",
-      role_id: @roles[:student].id,
+      role_id: roles[:student].id,
       institution_id: institution.id
     )
   end
 
-  let(:team) { create(:mentored_team, user: user, assignment: assignment) }
+  let!(:team) { create(:mentored_team, user: user, assignment: assignment) }
 
 
   describe 'validations' do

@@ -349,17 +349,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
     t.index ["user_id"], name: "index_ta_mappings_on_user_id"
   end
 
-  create_table "team_join_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.bigint "team_id", null: false
-    t.bigint "user_id", null: false
-    t.string "status", default: "pending", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["team_id", "user_id"], name: "index_team_join_requests_on_team_id_and_user_id", unique: true
-    t.index ["team_id"], name: "index_team_join_requests_on_team_id"
-    t.index ["user_id"], name: "index_team_join_requests_on_user_id"
-  end
-
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -438,8 +427,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   add_foreign_key "signed_up_teams", "teams"
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
-  add_foreign_key "team_join_requests", "teams"
-  add_foreign_key "team_join_requests", "users"
   add_foreign_key "teams", "users"
   add_foreign_key "teams", "users", column: "mentor_id"
   add_foreign_key "teams_participants", "participants"
