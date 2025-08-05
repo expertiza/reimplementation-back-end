@@ -5,7 +5,7 @@ class Response < ApplicationRecord
   include MetricHelper
 
   belongs_to :response_map, class_name: 'ResponseMap', foreign_key: 'map_id', inverse_of: false
-  has_one :score, class_name: 'Answer', foreign_key: 'response_id', dependent: :destroy, inverse_of: false
+  has_many :scores, class_name: 'Answer', foreign_key: 'response_id', dependent: :destroy, inverse_of: false
 
   alias map response_map
   delegate :response_assignment, :reviewee, :reviewer, to: :map
@@ -69,8 +69,4 @@ class Response < ApplicationRecord
     total_weight = 0
     scores.each do |s|
       total_weight += s.item.weight unless s.answer.nil? #|| !s.item.is_a(ScoredItem)?
-    end
     # puts "total: #{total_weight * questionnaire.max_question_score} "
-    total_weight * questionnaire.max_question_score
-  end
-end
