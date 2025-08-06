@@ -193,9 +193,4 @@ class Assignment < ApplicationRecord
     # Check if any rubric has a specified round
     rubric_with_round.present?
   end
-
-  def has_member?(user)
-    participants.exists?(user_id: user.id)
-  end
-
 end
