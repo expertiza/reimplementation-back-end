@@ -16,6 +16,4 @@ class Participant < ApplicationRecord
     user.fullname
   end
 
-
-
 end

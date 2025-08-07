@@ -193,6 +193,4 @@ class Assignment < ApplicationRecord
     # Check if any rubric has a specified round
     rubric_with_round.present?
   end
-
-
 end
