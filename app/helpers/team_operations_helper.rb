@@ -1,7 +1,7 @@
 module TeamOperationsHelper
   # Validates whether the given user can be part of the specified team based on parent context
   def self.validate_team_membership(team, user)
-    team.member?(user)
+    team.has_member?(user)
   end
 
   # Validates if the given user can be assigned as a mentor to the team

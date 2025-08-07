@@ -129,12 +129,12 @@ RSpec.describe MentoredTeam, type: :model do
 
     it 'can add enrolled user' do
       expect(team.add_member(enrolled_user)).to be_truthy
-      expect(team.member?(enrolled_user)).to be_truthy
+      expect(team.has_member?(enrolled_user)).to be_truthy
     end
 
     it 'cannot add mentor as member' do
       expect(team.add_member(team.mentor)).to be_falsey
-      expect(team.member?(team.mentor)).to be_falsey
+      expect(team.has_member?(team.mentor)).to be_falsey
     end
 
     it 'can assign new mentor' do

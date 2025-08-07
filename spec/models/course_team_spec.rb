@@ -118,7 +118,7 @@ RSpec.describe CourseTeam, type: :model do
       result = course_team.add_member(enrolled_user)
       
       expect(result[:success]).to be true
-      expect(course_team.member?(enrolled_user)).to be true
+      expect(course_team.has_member?(enrolled_user)).to be true
     end
 
     it 'cannot add unenrolled user' do

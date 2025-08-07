@@ -37,6 +37,8 @@ class CourseTeam < Team
   # Custom validation method for team type
   # - Ensures the type is 'CourseTeam'
   def type_must_be_course_team
-    errors.add(:type, 'must be CourseTeam') unless type == 'CourseTeam'
+    unless self.kind_of?(CourseTeam)
+      errors.add(:type, 'must be CourseTeam')
+    end
   end
 end 

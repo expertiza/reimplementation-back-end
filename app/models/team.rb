@@ -16,7 +16,7 @@ class Team < ApplicationRecord
   validates :parent_id, presence: true
   validates :type, presence: true, inclusion: { in: %w[AssignmentTeam CourseTeam MentoredTeam], message: "must be 'Assignment' or 'Course' or 'Mentor'" }
 
-  def member?(user)
+  def has_member?(user)
     participants.exists?(user_id: user.id)
   end
   
