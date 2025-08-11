@@ -1,10 +1,16 @@
 class ResponseMap < ApplicationRecord
+  include ResponseMapSubclassTitles
+
   has_many :responses, foreign_key: 'map_id', dependent: :destroy, inverse_of: false
   belongs_to :reviewer, class_name: 'Participant', foreign_key: 'reviewer_id', inverse_of: false
   belongs_to :reviewee, class_name: 'Participant', foreign_key: 'reviewee_id', inverse_of: false
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'reviewed_object_id', inverse_of: false
 
   alias map_id id
+
+  def questionnaire
+    Questionnaire.find_by(id: reviewed_object_id)
+  end
 
   # returns the assignment related to the response map
   def response_assignment
@@ -37,6 +43,11 @@ class ResponseMap < ApplicationRecord
       responses = responses.sort { |a, b| a.map.reviewer.fullname <=> b.map.reviewer.fullname }
     end
     responses
+  end
+
+  # Check to see if this response map is a survey. Default is false, and some subclasses will overwrite to true.
+  def survey?
+    false
   end
 
   # Computes the average score (as a fraction between 0 and 1) across the latest submitted responses

@@ -125,6 +125,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_27_170825) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "cakes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "courses", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -352,9 +357,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_27_170825) do
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "name", null: false
+    t.bigint "user_id", null: false
+    t.integer "max_team_size", default: 4, null: false
+    t.string "type"
+    t.bigint "mentor_id"
     t.integer "parent_id", null: false
-    t.string "type", null: false
-    t.string "name"
+    t.index ["mentor_id"], name: "index_teams_on_mentor_id"
+    t.index ["user_id"], name: "fk_rails_45096701b6"
     t.integer "grade_for_submission"
     t.string "comment_for_submission"
   end
@@ -424,6 +434,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_27_170825) do
   add_foreign_key "signed_up_teams", "teams"
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
+  add_foreign_key "teams", "users"
+  add_foreign_key "teams", "users", column: "mentor_id"
   add_foreign_key "teams_participants", "participants"
   add_foreign_key "teams_participants", "teams"
   add_foreign_key "teams_users", "teams"

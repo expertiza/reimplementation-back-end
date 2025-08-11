@@ -120,6 +120,17 @@ Rails.application.routes.draw do
           delete '/:id', to: 'participants#destroy'
         end
       end
+      resources :teams do
+        member do
+          get 'members'
+          post 'members', to: 'teams#add_member'
+          delete 'members/:user_id', to: 'teams#remove_member'
+
+          get 'join_requests'
+          post 'join_requests', to: 'teams#create_join_request'
+          put 'join_requests/:join_request_id', to: 'teams#update_join_request'
+        end
+      end
       resources :teams_participants, only: [] do
         collection do
           put :update_duty

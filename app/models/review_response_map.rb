@@ -11,4 +11,8 @@ class ReviewResponseMap < ResponseMap
   def questionnaire_type
     'Review'
   end
+
+  def get_title
+    REVIEW_RESPONSE_MAP_TITLE
+  end
 end

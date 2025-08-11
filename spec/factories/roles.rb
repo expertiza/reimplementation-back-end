@@ -3,31 +3,28 @@ FactoryBot.define do
   factory :role do
     sequence(:name) { |n| "Role #{n}" }
 
-    initialize_with { Role.find_or_create_by(id: id) }
-
     trait :student do
-      id { Role::STUDENT }
-      name { 'Student' }
+      sequence(:name) { |n| "Student #{n}" }
     end
 
     trait :ta do
-      id { Role::TEACHING_ASSISTANT }
-      name { 'Teaching Assistant' }
+      sequence(:name) { |n| "Teaching Assistant #{n}" }
     end
 
     trait :instructor do
-      id { Role::INSTRUCTOR }
-      name { 'Instructor' }
+      sequence(:name) { |n| "Instructor #{n}" }
     end
 
     trait :administrator do
-      id { Role::ADMINISTRATOR }
-      name { 'Administrator' }
+      sequence(:name) { |n| "Administrator #{n}" }
     end
 
     trait :super_administrator do
-      id { Role::SUPER_ADMINISTRATOR }
-      name { 'Super Administrator' }
+      sequence(:name) { |n| "Super Administrator #{n}" }
+    end
+
+    trait :mentor do
+      sequence(:name) { |n| "Mentor #{n}" }
     end
 
     # Add a trait to create roles with a parent
@@ -55,12 +52,5 @@ FactoryBot.define do
   factory :teams_user do
     association :user
     association :team
-  end
-end
-
-# spec/factories/teams.rb
-FactoryBot.define do
-  factory :team do
-    sequence(:name) { |n| "Team #{n}" }
   end
 end

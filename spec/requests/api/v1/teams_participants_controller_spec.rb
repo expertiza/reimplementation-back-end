@@ -57,8 +57,8 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
   # Primary Resources
   # --------------------------------------------------------------------------
   # Two assignments: one main and one alternate, both owned by the instructor.
-  let!(:assignment)  { Assignment.create!(name: "Sample Assignment", instructor_id: instructor.id) }
-  let(:assignment2)  { Assignment.create!(name: "Another Assignment", instructor_id: instructor.id) }
+  let(:assignment)  { Assignment.create!(name: "Assignment 1", instructor_id: instructor.id, max_team_size: 3) }
+  let(:assignment2) { Assignment.create!(name: "Assignment 2", instructor_id: instructor.id, max_team_size: 2) }
 
   # A single course, also owned by the instructor.
   let(:course) do
@@ -70,12 +70,35 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
     )
   end
 
+  let(:team_owner) do
+    User.create!(
+      name:            "team_owner",
+      full_name:       "Team Owner",
+      email:           "team_owner@example.com",
+      password_digest: "password",
+      role_id:          @roles[:student].id,
+      institution_id:  institution.id
+    )
+  end
+
   # --------------------------------------------------------------------------
   # Team & Participant Setup
   # --------------------------------------------------------------------------
   # Create one team per context (assignment vs. course) via STI subclasses:
-  let(:team_with_assignment) { AssignmentTeam.create!(parent_id: assignment.id) }
-  let(:team_with_course)     { CourseTeam.create!(parent_id: course.id)     }
+  let(:team_with_assignment) do
+    AssignmentTeam.create!(
+      parent_id:      assignment.id,
+      name:           'team 1',
+      user_id:        team_owner.id
+    )
+  end
+  let(:team_with_course) do
+    CourseTeam.create!(
+      parent_id:      course.id,
+      name:           'team 2',
+      user_id:        team_owner.id
+    )
+  end
 
   # Create one participant record per context for a baseline student_user:
   let!(:participant_for_assignment) do
@@ -327,14 +350,26 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
       }
 
       # -- SETUP: Two participants linked to an AssignmentTeam --
-      let(:assignment_team)         { AssignmentTeam.create!(parent_id: assignment.id) }
+      let(:assignment_team) do
+        AssignmentTeam.create!(
+          parent_id:      assignment.id,
+          name:           'team 1',
+          user_id:        team_owner.id
+        )
+      end
       let(:assignment_participant1) { AssignmentParticipant.create!(parent_id: assignment.id, user: student_user, handle: student_user.name) }
       let(:assignment_participant2) { AssignmentParticipant.create!(parent_id: assignment.id, user: new_user,       handle: new_user.name) }
       let!(:assignment_tp1)         { TeamsParticipant.create!(team_id: assignment_team.id, participant_id: assignment_participant1.id, user_id: assignment_participant1.user_id) }
       let!(:assignment_tp2)         { TeamsParticipant.create!(team_id: assignment_team.id, participant_id: assignment_participant2.id, user_id: assignment_participant2.user_id) }
 
       # -- SETUP: Two participants linked to a CourseTeam --
-      let(:course_team)         { CourseTeam.create!(parent_id: course.id) }
+      let(:course_team) do
+        CourseTeam.create!(
+          parent_id:      course.id,
+          name:           'team 2',
+          user_id:        team_owner.id
+        )
+      end
       let(:course_participant1) { CourseParticipant.create!(parent_id: course.id, user: student_user, handle: student_user.name) }
       let(:course_participant2) { CourseParticipant.create!(parent_id: course.id, user: new_user,       handle: new_user.name) }
       let!(:course_tp1)         { TeamsParticipant.create!(team_id: course_team.id, participant_id: course_participant1.id, user_id: course_participant1.user_id) }
