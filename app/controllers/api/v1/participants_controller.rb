@@ -108,9 +108,9 @@ class Api::V1::ParticipantsController < ApplicationController
       render json: { error: 'Not Found' }, status: :not_found
     elsif participant.destroy
       successful_deletion_message = if params[:team_id].nil?
-                                      "Participant #{params[:id]} in Assignment #{params[:assignment_id]} has been deleted successfully!"
+                                      I18n.t('participants.destroy.success_assignment', id: params[:id], assignment_id: params[:assignment_id])
                                     else
-                                      "Participant #{params[:id]} in Team #{params[:team_id]} of Assignment #{params[:assignment_id]} has been deleted successfully!"
+                                      I18n.t('participants.destroy.success_team', id: params[:id], team_id: params[:team_id], assignment_id: params[:assignment_id])
                                     end
       render json: { message: successful_deletion_message }, status: :ok
     else
@@ -149,7 +149,7 @@ class Api::V1::ParticipantsController < ApplicationController
   def find_user
     user_id = params[:user_id]
     user = User.find_by(id: user_id)
-    render json: { error: 'User not found' }, status: :not_found unless user
+    render json: { error: I18n.t('participants.user_not_found') }, status: :not_found unless user
     user
   end
 
@@ -158,7 +158,7 @@ class Api::V1::ParticipantsController < ApplicationController
   def find_assignment
     assignment_id = params[:assignment_id]
     assignment = Assignment.find_by(id: assignment_id)
-    render json: { error: 'Assignment not found' }, status: :not_found unless assignment
+    render json: { error: I18n.t('participants.assignment_not_found') }, status: :not_found unless assignment
     assignment
   end
 
@@ -167,7 +167,7 @@ class Api::V1::ParticipantsController < ApplicationController
   def find_participant
     participant_id = params[:id]
     participant = Participant.find_by(id: participant_id)
-    render json: { error: 'Participant not found' }, status: :not_found unless participant
+    render json: { error: I18n.t('participants.not_found') }, status: :not_found unless participant
     participant
   end
 
@@ -179,12 +179,12 @@ class Api::V1::ParticipantsController < ApplicationController
     authorization = authorization.downcase if authorization.present?
 
     unless authorization
-      render json: { error: 'authorization is required' }, status: :unprocessable_entity
+      render json: { error: I18n.t('participants.authorization_required') }, status: :unprocessable_entity
       return
     end
 
     unless valid_authorizations.include?(authorization)
-      render json: { error: 'authorization not valid. Valid authorizations are: Reader, Reviewer, Submitter, Mentor' },
+      render json: { error: I18n.t('participants.authorization_invalid') },
              status: :unprocessable_entity
       return
     end

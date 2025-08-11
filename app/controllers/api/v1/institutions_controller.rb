@@ -41,7 +41,7 @@ class Api::V1::InstitutionsController < ApplicationController
   def destroy
     @institution = Institution.find(params[:id])
     @institution.destroy
-    render json: { message: 'Institution deleted' }, status: :ok
+    render json: { message: I18n.t('institution.deleted') }, status: :ok
   end
 
   private
@@ -52,6 +52,6 @@ class Api::V1::InstitutionsController < ApplicationController
   end
 
   def institution_not_found
-    render json: { error: 'Institution not found' }, status: :not_found
+    render json: { error: I18n.t('institution.not_found') }, status: :not_found
   end
 end

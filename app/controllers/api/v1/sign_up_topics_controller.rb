@@ -5,7 +5,7 @@ class Api::V1::SignUpTopicsController < ApplicationController
   # Retrieve SignUpTopics by two query parameters - assignment_id (compulsory) and an array of topic_ids (optional)
   def index
     if params[:assignment_id].nil?
-      render json: { message: 'Assignment ID is required!' }, status: :unprocessable_entity
+      render json: { message: I18n.t('sign_up_topics.assignment_id_required') }, status: :unprocessable_entity
     elsif params[:topic_ids].nil?
       @sign_up_topics = SignUpTopic.where(assignment_id: params[:assignment_id])
       render json: @sign_up_topics, status: :ok
@@ -25,8 +25,7 @@ class Api::V1::SignUpTopicsController < ApplicationController
     @assignment = Assignment.find(params[:sign_up_topic][:assignment_id])
     @sign_up_topic.micropayment = params[:micropayment] if @assignment.microtask?
     if @sign_up_topic.save
-      # undo_link "The topic: \"#{@sign_up_topic.topic_name}\" has been created successfully. "
-      render json: { message: "The topic: \"#{@sign_up_topic.topic_name}\" has been created successfully. " }, status: :created
+      render json: { message: I18n.t('sign_up_topics.create_success', topic_name: @sign_up_topic.topic_name) }, status: :created
     else
       render json: { message: @sign_up_topic.errors }, status: :unprocessable_entity
     end
@@ -36,7 +35,7 @@ class Api::V1::SignUpTopicsController < ApplicationController
   # updates parameters present in sign_up_topic_params.
   def update
     if @sign_up_topic.update(sign_up_topic_params)
-      render json: { message: "The topic: \"#{@sign_up_topic.topic_name}\" has been updated successfully. " }, status: 200
+      render json: { message: I18n.t('sign_up_topics.update_success', topic_name: @sign_up_topic.topic_name) }, status: :ok
     else
       render json: @sign_up_topic.errors, status: :unprocessable_entity
     end
@@ -54,7 +53,7 @@ class Api::V1::SignUpTopicsController < ApplicationController
     # render json: {message: @sign_up_topic}
     # filters topics based on assignment id (required) and topic identifiers (optional)
     if params[:assignment_id].nil?
-      render json: { message: 'Assignment ID is required!' }, status: :unprocessable_entity
+      render json: { message: I18n.t('sign_up_topics.assignment_id_required') }, status: :unprocessable_entity
     elsif params[:topic_ids].nil?
       @sign_up_topics = SignUpTopic.where(assignment_id: params[:assignment_id])
       # render json: @sign_up_topics, status: :ok
@@ -64,7 +63,7 @@ class Api::V1::SignUpTopicsController < ApplicationController
     end
 
     if @sign_up_topics.each(&:delete)
-      render json: { message: "The topic has been deleted successfully. " }, status: :no_content
+      render json: { message: I18n.t('sign_up_topics.delete_success') }, status: :no_content
     else
       render json: @sign_up_topic.errors, status: :unprocessable_entity
     end
