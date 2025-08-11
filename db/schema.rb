@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
+ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -42,6 +42,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.integer "notification_limit", default: 15, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "used_in_round"
     t.index ["assignment_id"], name: "fk_aq_assignments_id"
     t.index ["questionnaire_id"], name: "fk_aq_questionnaire_id"
   end
@@ -50,8 +51,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.string "name"
     t.string "directory_path"
     t.integer "submitter_count"
-    t.integer "course_id"
-    t.integer "instructor_id"
     t.boolean "private"
     t.integer "num_reviews"
     t.integer "num_review_of_reviews"
@@ -98,6 +97,36 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.integer "sample_assignment_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "instructor_id", null: false
+    t.bigint "course_id"
+    t.boolean "enable_pair_programming", default: false
+    t.boolean "has_teams", default: false
+    t.boolean "has_topics", default: false
+    t.index ["course_id"], name: "index_assignments_on_course_id"
+    t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
+  end
+
+  create_table "bookmark_ratings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "bookmark_id"
+    t.integer "user_id"
+    t.integer "rating"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "bookmarks", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.text "url"
+    t.text "title"
+    t.text "description"
+    t.integer "user_id"
+    t.integer "topic_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "cakes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "courses", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -112,6 +141,30 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.index ["institution_id"], name: "index_courses_on_institution_id"
     t.index ["instructor_id"], name: "fk_course_users"
     t.index ["instructor_id"], name: "index_courses_on_instructor_id"
+  end
+
+  create_table "due_dates", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "due_at", null: false
+    t.integer "deadline_type_id", null: false
+    t.string "parent_type", null: false
+    t.bigint "parent_id", null: false
+    t.integer "submission_allowed_id", null: false
+    t.integer "review_allowed_id", null: false
+    t.integer "round"
+    t.boolean "flag", default: false
+    t.integer "threshold", default: 1
+    t.string "delayed_job_id"
+    t.string "deadline_name"
+    t.string "description_url"
+    t.integer "quiz_allowed_id", default: 1
+    t.integer "teammate_review_allowed_id", default: 3
+    t.string "type", default: "AssignmentDueDate"
+    t.integer "resubmission_allowed_id"
+    t.integer "rereview_allowed_id"
+    t.integer "review_of_review_allowed_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_type", "parent_id"], name: "index_due_dates_on_parent"
   end
 
   create_table "institutions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -132,14 +185,83 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.index ["to_id"], name: "fk_invitationto_users"
   end
 
-  create_table "participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.bigint "user_id"
-    t.bigint "assignment_id"
+  create_table "items", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.text "txt"
+    t.integer "weight"
+    t.decimal "seq", precision: 10
+    t.string "question_type"
+    t.string "size"
+    t.string "alternatives"
+    t.boolean "break_before"
+    t.string "max_label"
+    t.string "min_label"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["assignment_id"], name: "index_participants_on_assignment_id"
+    t.bigint "questionnaire_id", null: false
+    t.index ["questionnaire_id"], name: "fk_question_questionnaires"
+    t.index ["questionnaire_id"], name: "index_items_on_questionnaire_id"
+  end
+
+  create_table "join_team_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "participant_id"
+    t.integer "team_id"
+    t.text "comments"
+    t.string "status"
+  end
+
+  create_table "nodes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "parent_id"
+    t.integer "node_object_id"
+    t.string "type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.boolean "can_submit", default: true
+    t.boolean "can_review", default: true
+    t.string "handle"
+    t.boolean "permission_granted", default: false
+    t.bigint "join_team_request_id"
+    t.bigint "team_id"
+    t.string "topic"
+    t.string "current_stage"
+    t.datetime "stage_deadline"
+    t.boolean "can_take_quiz"
+    t.boolean "can_mentor"
+    t.string "authorization"
+    t.integer "parent_id", null: false
+    t.string "type", null: false
+    t.index ["join_team_request_id"], name: "index_participants_on_join_team_request_id"
+    t.index ["team_id"], name: "index_participants_on_team_id"
     t.index ["user_id"], name: "fk_participant_users"
     t.index ["user_id"], name: "index_participants_on_user_id"
+  end
+
+  create_table "question_advices", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "question_id", null: false
+    t.integer "score"
+    t.text "advice"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["question_id"], name: "index_question_advices_on_question_id"
+  end
+
+  create_table "question_types", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "questionnaire_types", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "questionnaires", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -155,20 +277,12 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "questions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "quiz_question_choices", id: :integer, charset: "latin1", force: :cascade do |t|
+    t.integer "question_id"
     t.text "txt"
-    t.integer "weight"
-    t.decimal "seq", precision: 10
-    t.string "question_type"
-    t.string "size"
-    t.string "alternatives"
-    t.boolean "break_before"
-    t.string "max_label"
-    t.string "min_label"
-    t.integer "questionnaire_id"
+    t.boolean "iscorrect", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["questionnaire_id"], name: "fk_question_questionnaires"
   end
 
   create_table "response_maps", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -198,6 +312,33 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
   end
 
+  create_table "sign_up_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.text "topic_name", null: false
+    t.bigint "assignment_id", null: false
+    t.integer "max_choosers", default: 0, null: false
+    t.text "category"
+    t.string "topic_identifier", limit: 10
+    t.integer "micropayment", default: 0
+    t.integer "private_to"
+    t.text "description"
+    t.string "link"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "fk_sign_up_categories_sign_up_topics"
+    t.index ["assignment_id"], name: "index_sign_up_topics_on_assignment_id"
+  end
+
+  create_table "signed_up_teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "sign_up_topic_id", null: false
+    t.bigint "team_id", null: false
+    t.boolean "is_waitlisted"
+    t.integer "preference_priority_number"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["sign_up_topic_id"], name: "index_signed_up_teams_on_sign_up_topic_id"
+    t.index ["team_id"], name: "index_signed_up_teams_on_team_id"
+  end
+
   create_table "ta_mappings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "course_id", null: false
     t.bigint "user_id", null: false
@@ -213,8 +354,35 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
     t.datetime "updated_at", null: false
     t.text "submitted_hyperlinks"
     t.integer "directory_num"
-    t.bigint "assignment_id"
-    t.index ["assignment_id"], name: "index_teams_on_assignment_id"
+    t.string "name", null: false
+    t.bigint "user_id", null: false
+    t.integer "max_team_size", default: 4, null: false
+    t.string "type"
+    t.bigint "mentor_id"
+    t.integer "parent_id", null: false
+    t.index ["mentor_id"], name: "index_teams_on_mentor_id"
+    t.index ["user_id"], name: "fk_rails_45096701b6"
+  end
+
+  create_table "teams_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "team_id", null: false
+    t.integer "duty_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "participant_id", null: false
+    t.integer "user_id", null: false
+    t.index ["participant_id"], name: "index_teams_participants_on_participant_id"
+    t.index ["team_id"], name: "index_teams_participants_on_team_id"
+    t.index ["user_id"], name: "index_teams_participants_on_user_id"
+  end
+
+  create_table "teams_users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "team_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["team_id"], name: "index_teams_users_on_team_id"
+    t.index ["user_id"], name: "index_teams_users_on_user_id"
   end
 
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -246,18 +414,29 @@ ActiveRecord::Schema[7.0].define(version: 2023_04_27_171632) do
 
   add_foreign_key "account_requests", "institutions"
   add_foreign_key "account_requests", "roles"
+  add_foreign_key "assignments", "courses"
+  add_foreign_key "assignments", "users", column: "instructor_id"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
-  add_foreign_key "participants", "assignments"
+  add_foreign_key "items", "questionnaires"
+  add_foreign_key "participants", "join_team_requests"
+  add_foreign_key "participants", "teams"
   add_foreign_key "participants", "users"
+  add_foreign_key "question_advices", "items", column: "question_id"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
+  add_foreign_key "sign_up_topics", "assignments"
+  add_foreign_key "signed_up_teams", "sign_up_topics"
+  add_foreign_key "signed_up_teams", "teams"
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
-  add_foreign_key "teams", "assignments"
   add_foreign_key "teams_users", "duties"
   add_foreign_key "teams_users", "participants", column: "participants_id"
-  add_foreign_key "teams_users", "teams", column: "teams_id"
-  add_foreign_key "teams_users", "users", column: "users_id"
+  add_foreign_key "teams", "users"
+  add_foreign_key "teams", "users", column: "mentor_id"
+  add_foreign_key "teams_participants", "participants"
+  add_foreign_key "teams_participants", "teams"
+  add_foreign_key "teams_users", "teams"
+  add_foreign_key "teams_users", "users"
   add_foreign_key "users", "institutions"
   add_foreign_key "users", "roles"
   add_foreign_key "users", "users", column: "parent_id"

@@ -4,8 +4,11 @@ class Course < ApplicationRecord
   has_many :assignments, dependent: :destroy
   validates :name, presence: true
   validates :directory_path, presence: true
+  has_many :participants, class_name: 'CourseParticipant', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :course
+  has_many :users, through: :course_participants, inverse_of: :course
   has_many :ta_mappings, dependent: :destroy
-  has_many :tas, through: :ta_mappings
+  has_many :tas, through: :ta_mappings, source: :ta
+  has_many :teams, class_name: 'CourseTeam', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :course
 
   # Returns the submission directory for the course
   def path
@@ -17,13 +20,14 @@ class Course < ApplicationRecord
   def add_ta(user)
     if user.nil?
       return { success: false, message: "The user with id #{user.id} does not exist" }
-    elsif TaMapping.exists?(ta_id: user.id, course_id: id)
+    elsif TaMapping.exists?(user_id: user.id, course_id: id)
       return { success: false, message: "The user with id #{user.id} is already a TA for this course." }
     else
-      ta_mapping = TaMapping.create(ta_id: user.id, course_id: id)
-      user.update(role: Role::TEACHING_ASSISTANT)
+      ta_mapping = TaMapping.create(user_id: user.id, course_id: id)
+      ta_role = Role.find_by(name: 'Teaching Assistant')
+      user.update(role: ta_role) if ta_role
       if ta_mapping.save
-        return { success: true, data: ta_mapping.slice(:course_id, :ta_id) }
+        return { success: true, data: ta_mapping.slice(:course_id, :user_id) }
       else
         return { success: false, message: ta_mapping.errors }
       end
@@ -31,11 +35,11 @@ class Course < ApplicationRecord
   end
 
   # Removes Teaching Assistant from the course
-  def remove_ta(ta_id)
-    ta_mapping = ta_mappings.find_by(ta_id: ta_id, course_id: :id)
+  def remove_ta(user_id)
+    ta_mapping = ta_mappings.find_by(user_id: user_id, course_id: :id)
     return { success: false, message: "No TA mapping found for the specified course and TA" } if ta_mapping.nil?
-    ta = User.find(ta_mapping.ta_id)
-    ta_count = TaMapping.where(ta_id: ta_id).size - 1
+    ta = User.find(ta_mapping.user_id)
+    ta_count = TaMapping.where(user_id: user_id).size - 1
     if ta_count.zero?
       ta.update(role: Role::STUDENT)
     end

@@ -1,14 +1,15 @@
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby '3.2.1'
+ruby '3.2.7'
 
 gem 'mysql2', '~> 0.5.5'
 gem 'puma', '~> 5.0'
-gem 'rails', '~> 7.0.4', '>= 7.0.4.2'
+gem 'rails', '~> 8.0', '>= 8.0.1'
 gem 'rswag-api'
 gem 'rswag-ui'
 gem 'rubyzip'
+gem 'active_model_serializers', '~> 0.10.0'
 
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 # gem "jbuilder"
@@ -27,7 +28,7 @@ gem 'bcrypt', '~> 3.1.7'
 gem 'tzinfo-data', platforms: %i[mingw mswin x64_mingw jruby]
 
 # Reduces boot times through caching; required in config/boot.rb
-gem 'bootsnap', require: false
+gem 'bootsnap', '>= 1.18.4', require: false
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 gem 'rack-cors'
@@ -37,14 +38,20 @@ gem 'lingua'
 # This is a really small gem that can be used to retrieve objects from the database in the order of the list given
 gem 'find_with_order'
 
+
 group :development, :test do
   gem 'debug', platforms: %i[mri mingw x64_mingw]
   gem 'factory_bot_rails'
+  gem 'database_cleaner-active_record'
   gem 'faker'
   gem 'rspec-rails'
   gem 'rswag-specs'
   gem 'rubocop'
   gem 'simplecov', require: false, group: :test
+  gem 'coveralls'
+  gem 'simplecov_json_formatter'
+  gem 'shoulda-matchers'
+  gem 'danger'
 end
 
 group :development do

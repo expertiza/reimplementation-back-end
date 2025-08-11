@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+
   mount Rswag::Api::Engine => 'api-docs'
   mount Rswag::Ui::Engine => 'api-docs'
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
@@ -22,7 +23,35 @@ Rails.application.routes.draw do
           get 'role/:name', action: :role_users
         end
       end
-      resources :assignments
+      resources :assignments do
+        collection do
+          post '/:assignment_id/add_participant/:user_id',action: :add_participant
+          delete '/:assignment_id/remove_participant/:user_id',action: :remove_participant
+          patch '/:assignment_id/remove_assignment_from_course',action: :remove_assignment_from_course
+          patch '/:assignment_id/assign_course/:course_id',action: :assign_course
+          post '/:assignment_id/copy_assignment', action: :copy_assignment
+          get '/:assignment_id/has_topics',action: :has_topics
+          get '/:assignment_id/show_assignment_details',action: :show_assignment_details
+          get '/:assignment_id/team_assignment', action: :team_assignment
+          get '/:assignment_id/has_teams', action: :has_teams
+          get '/:assignment_id/valid_num_review/:review_type', action: :valid_num_review
+          get '/:assignment_id/varying_rubrics_by_round', action: :varying_rubrics_by_round?
+          post '/:assignment_id/create_node',action: :create_node
+        end
+      end
+
+      resources :bookmarks, except: [:new, :edit] do
+        member do
+          get 'bookmarkratings', to: 'bookmarks#get_bookmark_rating_score'
+          post 'bookmarkratings', to: 'bookmarks#save_bookmark_rating_score'
+        end
+      end
+      resources :student_tasks do
+        collection do
+          get :list, action: :list
+          get :view
+        end
+      end
 
       resources :courses do
         collection do
@@ -54,6 +83,15 @@ Rails.application.routes.draw do
           post '/sign_up_student', to: 'signed_up_teams#sign_up_student'
         end
       end
+
+      resources :join_team_requests do
+        collection do
+          post 'decline/:id', to:'join_team_requests#decline'
+        end
+      end
+
+
+
       resources :sign_up_topics do
         collection do
           get :filter
@@ -83,6 +121,38 @@ Rails.application.routes.draw do
         collection do
           get :pending, action: :pending_requests
           get :processed, action: :processed_requests
+        end
+      end
+
+      resources :participants do
+        collection do
+          get '/user/:user_id', to: 'participants#list_user_participants'
+          get '/assignment/:assignment_id', to: 'participants#list_assignment_participants'
+          get '/:id', to: 'participants#show'
+          post '/:authorization', to: 'participants#add'
+          patch '/:id/:authorization', to: 'participants#update_authorization'
+          delete '/:id', to: 'participants#destroy'
+        end
+      end
+      resources :teams do
+        member do
+          get 'members'
+          post 'members', to: 'teams#add_member'
+          delete 'members/:user_id', to: 'teams#remove_member'
+
+          get 'join_requests'
+          post 'join_requests', to: 'teams#create_join_request'
+          put 'join_requests/:join_request_id', to: 'teams#update_join_request'
+        end
+      end
+      resources :teams_participants, only: [] do
+        collection do
+          put :update_duty
+        end
+        member do
+          get :list_participants
+          post :add_participant
+          delete :delete_participants
         end
       end
     end

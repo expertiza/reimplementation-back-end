@@ -1,4 +1,6 @@
 class SignedUpTeam < ApplicationRecord
+  belongs_to :sign_up_topic
+  belongs_to :team
   validates :topic_id, :team_id, presence: true
   scope :by_team_id, ->(team_id) { where('team_id = ?', team_id) }
 

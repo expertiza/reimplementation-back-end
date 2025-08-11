@@ -1,15 +1,22 @@
 require_relative 'boot'
-
 require 'rails/all'
-
+if Gem::Version.new(Rails::VERSION::STRING) >= Gem::Version.new('8.0.0')
+  class ActionMailer::Base
+    def self.preview_path=(_)
+      # no-op: This method is intentionally left blank for compatibility with Rails 8.
+    end
+  end
+end
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
+
 
 module Reimplementation
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 7.0
+    config.active_record.schema_format = :ruby
 
     # Configuration for the application, engines, and railties goes here.
     #
