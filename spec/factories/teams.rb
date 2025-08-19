@@ -4,8 +4,6 @@ FactoryBot.define do
   factory :team do
     name { Faker::Team.name }
     type { 'CourseTeam' }
-    max_team_size { 5 }
-    association :user, factory: :user
 
     trait :with_assignment do
       association :assignment, factory: :assignment
@@ -15,35 +13,31 @@ FactoryBot.define do
   factory :course_team, class: 'CourseTeam' do
     name { Faker::Team.name }
     type { 'CourseTeam' }
-    max_team_size { 5 }
-    association :user, factory: :user
     association :course, factory: :course
   end
 
   factory :assignment_team, class: 'AssignmentTeam' do
     name { Faker::Team.name }
     type { 'AssignmentTeam' }
-    max_team_size { 5 }
-    association :user, factory: :user
     
     transient do
       course { create(:course) }
+      max_size { 5 } # Now passed to the assignment, not the team
+    end
+
+    assignment do
+      create(:assignment, course: course, max_team_size: max_size)
     end
 
     after(:build) do |team, evaluator|
-      if team.assignment.nil?
-        team.course = evaluator.course
-      else
-        team.course = team.assignment.course
+      unless team.assignment.nil?
+        team.assignment.update(max_team_size: evaluator.max_size) if evaluator.max_size
       end
-      team.user ||= create(:user)
     end
 
     trait :with_assignment do
       after(:build) do |team, evaluator|
-        team.assignment = create(:assignment, course: evaluator.course)
-        team.course = team.assignment.course
-        team.user ||= create(:user)
+        team.assignment ||= create(:assignment, course: evaluator.course, max_team_size: evaluator.max_size)
       end
     end
   end
@@ -51,19 +45,13 @@ FactoryBot.define do
   factory :mentored_team, class: 'MentoredTeam' do
     name { Faker::Team.name }
     type { 'MentoredTeam' }
-    max_team_size { 5 }
-    association :user, factory: :user
+    association :assignment, factory: :assignment
 
-    transient do
-      course { create(:course) }
-    end
-
-    assignment { create(:assignment, course: course) }
-
-    after(:build) do |team, evaluator|
-      mentor_role = create(:role, :mentor)
+    after(:build) do |team, _evaluator|
+      mentor_role = Role.find_by(name: 'Mentor') || create(:role, :mentor)
       mentor = create(:user, role: mentor_role)
-      team.mentor = mentor
+      team.mentor ||= mentor
+      team.parent_id ||= team.assignment.id
     end
   end
 
@@ -72,5 +60,4 @@ FactoryBot.define do
     participant
     user { participant.user }
   end
-
-end 
+end

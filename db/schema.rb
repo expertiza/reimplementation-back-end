@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_19_160547) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -345,17 +345,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   end
 
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.string "name", null: false
-    t.string "type", null: false
-    t.integer "max_team_size", default: 5, null: false
-    t.bigint "user_id"
-    t.bigint "mentor_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "name", null: false
+    t.string "type", null: false
     t.integer "parent_id", null: false
-    t.index ["mentor_id"], name: "index_teams_on_mentor_id"
-    t.index ["type"], name: "index_teams_on_type"
-    t.index ["user_id"], name: "index_teams_on_user_id"
   end
 
   create_table "teams_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -423,8 +417,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   add_foreign_key "signed_up_teams", "teams"
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
-  add_foreign_key "teams", "users"
-  add_foreign_key "teams", "users", column: "mentor_id"
   add_foreign_key "teams_participants", "participants"
   add_foreign_key "teams_participants", "teams"
   add_foreign_key "teams_users", "teams"

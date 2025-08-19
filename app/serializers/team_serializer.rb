@@ -5,7 +5,6 @@ class TeamSerializer < ActiveModel::Serializer
   has_many :users, serializer: UserSerializer
 
   def users
-    # Use teams_participants association to get users
     object.teams_participants.includes(:user).map(&:user)
   end
 
@@ -13,8 +12,12 @@ class TeamSerializer < ActiveModel::Serializer
     object.teams_participants.count
   end
 
+  def max_team_size
+    # Only AssignmentTeams have a max size, from the assignment
+    object.is_a?(AssignmentTeam) ? object.assignment&.max_team_size : nil
+  end
+
   def assignment_id
-    # Return parent_id for AssignmentTeam, nil for CourseTeam
     object.is_a?(AssignmentTeam) ? object.parent_id : nil
   end
-end 
+end

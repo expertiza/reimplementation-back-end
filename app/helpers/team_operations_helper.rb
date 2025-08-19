@@ -22,7 +22,7 @@ module TeamOperationsHelper
   def self.team_stats(team)
     {
       size: team.participants.size,
-      max_size: team.max_team_size,
+      max_size: (team.is_a?(AssignmentTeam) ? team.assignment&.max_team_size : nil),
       is_full: team.full?,
       is_empty: team.participants.empty?
     }

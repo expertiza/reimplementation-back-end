@@ -63,12 +63,15 @@ RSpec.describe AssignmentTeam, type: :model do
 
   let(:assignment_team) do
     AssignmentTeam.create!(
-      parent_id:      assignment.id,
-      name:           'team 1',
-      user_id:        team_owner.id
+      parent_id: assignment.id,
+      name:      'team 1'
     )
   end
 
+  before do
+    participant = create(:assignment_participant, user: team_owner, assignment: assignment)
+    assignment_team.add_member(team_owner)
+  end
 
   describe 'validations' do
     it 'is valid with valid attributes' do
@@ -111,7 +114,6 @@ RSpec.describe AssignmentTeam, type: :model do
 
   describe 'associations' do
     it { should belong_to(:assignment) }
-    it { should belong_to(:user).optional }
     it { should have_many(:teams_participants).dependent(:destroy) }
     it { should have_many(:users).through(:teams_participants) }
   end

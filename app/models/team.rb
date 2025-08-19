@@ -17,21 +17,15 @@ class Team < ApplicationRecord
   attr_accessor :max_participants
   validates :parent_id, presence: true
   validates :type, presence: true, inclusion: { in: %w[AssignmentTeam CourseTeam MentoredTeam], message: "must be 'Assignment' or 'Course' or 'Mentor'" }
-
+  
   def has_member?(user)
     participants.exists?(user_id: user.id)
   end
   
   def full?
-    current_size = participants.count
+    return false unless is_a?(AssignmentTeam) && assignment&.max_team_size
 
-    # assignment teams use the column max_team_size
-    if is_a?(AssignmentTeam) && assignment&.max_team_size
-      return current_size >= assignment.max_team_size
-    end
-
-    # course teams never fill up by default
-    false
+    participants.count >= assignment.max_team_size
   end
 
   # Checks if the given participant is already on any team for the associated assignment or course.
@@ -54,18 +48,17 @@ class Team < ApplicationRecord
   # Adds participant in the team
   def add_member(participant_or_user)
     participant =
-      if participant_or_user.is_a?(AssignmentParticipant) || participant_or_user.is_a?(CourseParticipant)
+      case participant_or_user
+      when AssignmentParticipant, CourseParticipant
         participant_or_user
-      elsif participant_or_user.is_a?(User)
+      when User
         participant_type = is_a?(AssignmentTeam) ? AssignmentParticipant : CourseParticipant
         participant_type.find_by(user_id: participant_or_user.id, parent_id: parent_id)
       else
         nil
       end
 
-    # If participant wasn't found or built correctly
     return { success: false, error: "#{participant_or_user.name} is not a participant in this #{is_a?(AssignmentTeam) ? 'assignment' : 'course'}" } if participant.nil?
-
     return { success: false, error: "Participant already on the team" } if participants.exists?(id: participant.id)
     return { success: false, error: "Unable to add participant: team is at full capacity." } if full?
 
