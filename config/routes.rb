@@ -96,6 +96,8 @@ Rails.application.routes.draw do
         end
       end
 
+
+
       resources :sign_up_topics do
         collection do
           get :filter
