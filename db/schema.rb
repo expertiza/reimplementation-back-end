@@ -366,6 +366,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
     t.integer "parent_id", null: false
     t.integer "grade_for_submission"
     t.string "comment_for_submission"
+    t.index ["mentor_id"], name: "index_teams_on_mentor_id"
+    t.index ["user_id"], name: "fk_rails_45096701b6"
   end
 
   create_table "teams_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|

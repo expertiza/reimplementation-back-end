@@ -3,8 +3,8 @@
 class Invitation < ApplicationRecord
   after_initialize :set_defaults
 
-  belongs_to :to_user, class_name: 'User', foreign_key: 'to_id', inverse_of: false
-  belongs_to :from_user, class_name: 'User', foreign_key: 'from_id', inverse_of: false
+  belongs_to :to_participant, class_name: 'Participant', foreign_key: 'to_id', inverse_of: false
+  belongs_to :from_participant, class_name: 'Participant', foreign_key: 'from_id', inverse_of: false
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'assignment_id'
 
   validates_with InvitationValidator
@@ -15,7 +15,7 @@ class Invitation < ApplicationRecord
     Invitation.new(params)
   end
 
-  # check if the user is invited
+  # check if the participant is invited
   def self.invited?(from_id, to_id, assignment_id)
     conditions = {
       to_id:,
@@ -33,9 +33,8 @@ class Invitation < ApplicationRecord
                         .deliver_later
   end
 
-  # After a users accepts an invite, the teams_users table needs to be updated.
-  # NOTE: Depends on TeamUser model, which is not implemented yet.
-  def update_users_topic_after_invite_accept(_inviter_user_id, _invited_user_id, _assignment_id); end
+  # After a participant accepts an invite, the teams_participant table needs to be updated.
+  def update_users_topic_after_invite_accept(_inviter_participant_id, _invited_participant_id, _assignment_id); end
 
   # This method handles all that needs to be done upon a user accepting an invitation.
   # Expected functionality: First the users previous team is deleted if they were the only member of that
@@ -63,8 +62,8 @@ class Invitation < ApplicationRecord
                           only: %i[id reply_status created_at updated_at],
                           include: {
                             assignment: { only: %i[id name] },
-                            from_user: { only: %i[id name fullname email] },
-                            to_user: { only: %i[id name fullname email] }
+                            from_participant: { only: %i[id name fullname email] },
+                            to_uto_participantser: { only: %i[id name fullname email] }
                           }
                         })).tap do |hash|
     end
