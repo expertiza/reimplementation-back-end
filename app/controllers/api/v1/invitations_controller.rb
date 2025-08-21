@@ -38,7 +38,6 @@ class Api::V1::InvitationsController < ApplicationController
     else
       render json: @invitation.errors, status: :unprocessable_entity
     end
-
   end
 
   # DELETE /api/v1/invitations/:id
@@ -69,10 +68,6 @@ class Api::V1::InvitationsController < ApplicationController
   end
 
   private
-
-  # This method will check if the invited user is a participant in the assignment.
-  # Currently there is no association between assignment and users therefore this method is not implemented yet.
-  def check_participant_before_invitation; end
 
   # only allow a list of valid invite params
   def invite_params

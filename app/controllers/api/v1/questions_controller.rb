@@ -3,7 +3,7 @@ class Api::V1::QuestionsController < ApplicationController
 
   # GET /questions
   def action_allowed?
-    has_role?('Instructor')
+    current_user_has_role?('Instructor')
   end
   # Index method returns the list of questions JSON object
   # GET on /questions

@@ -81,11 +81,6 @@ module Api
         render json: { error: 'User not found' }, status: :not_found
       end
 
-      # Placeholder method to get current user (can be replaced by actual auth logic)
-      def current_user
-        @current_user
-      end
-
       private
 
       # Finds the team by ID and assigns to @team, else renders not found

@@ -120,6 +120,16 @@ Rails.application.routes.draw do
           delete '/:id', to: 'participants#destroy'
         end
       end
+
+      resources :student_teams, only: %i[create edit update] do
+        collection do
+          get :view          
+          get :mentor
+          get :remove_participant
+          get :auto_complete_for_user_name        
+        end
+      end
+
       resources :teams do
         member do
           get 'members'

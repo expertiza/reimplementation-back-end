@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_27_170825) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_12_052225) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -176,14 +176,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_27_170825) do
 
   create_table "invitations", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.integer "assignment_id"
-    t.integer "from_id"
-    t.integer "to_id"
     t.string "reply_status", limit: 1
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "from_id", null: false
+    t.bigint "to_id", null: false
     t.index ["assignment_id"], name: "fk_invitation_assignments"
-    t.index ["from_id"], name: "fk_invitationfrom_users"
-    t.index ["to_id"], name: "fk_invitationto_users"
+    t.index ["from_id"], name: "index_invitations_on_from_id"
+    t.index ["to_id"], name: "index_invitations_on_to_id"
   end
 
   create_table "items", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -209,7 +209,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_27_170825) do
     t.integer "participant_id"
     t.integer "team_id"
     t.text "comments"
-    t.string "status"
+    t.string "reply_status"
   end
 
   create_table "nodes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -363,10 +363,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_27_170825) do
     t.string "type"
     t.bigint "mentor_id"
     t.integer "parent_id", null: false
-    t.index ["mentor_id"], name: "index_teams_on_mentor_id"
-    t.index ["user_id"], name: "fk_rails_45096701b6"
     t.integer "grade_for_submission"
     t.string "comment_for_submission"
+    t.index ["mentor_id"], name: "index_teams_on_mentor_id"
+    t.index ["user_id"], name: "fk_rails_45096701b6"
   end
 
   create_table "teams_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -423,6 +423,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_27_170825) do
   add_foreign_key "assignments", "users", column: "instructor_id"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
+  add_foreign_key "invitations", "participants", column: "from_id"
+  add_foreign_key "invitations", "participants", column: "to_id"
   add_foreign_key "items", "questionnaires"
   add_foreign_key "participants", "join_team_requests"
   add_foreign_key "participants", "teams"

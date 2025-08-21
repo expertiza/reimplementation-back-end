@@ -5,7 +5,7 @@ class InvitationValidator < ActiveModel::Validator
   WAITING_STATUS = 'W'.freeze
 
   DUPLICATE_INVITATION_ERROR_MSG = 'You cannot have duplicate invitations'.freeze
-  TO_FROM_SAME_ERROR_MSG = 'to and from users should be different'.freeze
+  TO_FROM_SAME_ERROR_MSG = 'to and from participants should be different'.freeze
   REPLY_STATUS_ERROR_MSG = 'must be present and have a maximum length of 1'.freeze
   REPLY_STATUS_INCLUSION_ERROR_MSG = "must be one of #{[ACCEPT_STATUS, REJECT_STATUS, WAITING_STATUS].to_sentence}".freeze
 

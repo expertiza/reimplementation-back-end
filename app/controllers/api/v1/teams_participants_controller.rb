@@ -3,9 +3,9 @@ class Api::V1::TeamsParticipantsController < ApplicationController
   def action_allowed?
     case params[:action]
     when 'update_duty'
-      has_privileges_of?('Student')
+      current_user_has_student_privileges?
     else
-      has_privileges_of?('Teaching Assistant')
+      current_user_has_ta_privileges?
     end
   end
 

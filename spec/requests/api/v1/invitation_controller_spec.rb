@@ -35,6 +35,8 @@ RSpec.describe 'Invitations API', type: :request do
   let(:user2) { create :user, name: 'superman', role_id: @roles[:student].id }
   let(:invalid_user) { build :user, name: 'INVALID', role_id: nil }
   let(:assignment) { Assignment.create!(id: 1, name: 'Test Assignment', instructor_id: prof.id) }
+  let(:participant1) { create :participant, user: user1, parent_id: assignment.id  }
+  let(:participant2) { create :participant, user: user2, parent_id: assignment.id   }
   let(:invitation) { Invitation.create!(from_user: user1, to_user: user2, assignment: assignment) }
 
   path '/api/v1/invitations' do
@@ -69,7 +71,7 @@ RSpec.describe 'Invitations API', type: :request do
       }
 
       response(201, 'Create successful') do
-        let(:invitation) { { to_id: user1.id, from_id: user2.id, assignment_id: assignment.id } }
+        let(:invitation) { { to_id: participant1.id, from_id: participant2.id, assignment_id: assignment.id } }
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
