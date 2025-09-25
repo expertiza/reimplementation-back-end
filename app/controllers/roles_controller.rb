@@ -1,4 +1,4 @@
-class Api::V1::RolesController < ApplicationController
+class RolesController < ApplicationController
   # rescue_from ActiveRecord::RecordNotFound, with: :role_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 

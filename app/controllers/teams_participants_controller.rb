@@ -1,4 +1,4 @@
-class Api::V1::TeamsParticipantsController < ApplicationController
+class TeamsParticipantsController < ApplicationController
   # Allow duty updation for a team if current user is student, else require TA or above privileges.
   def action_allowed?
     case params[:action]

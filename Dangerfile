@@ -14,7 +14,7 @@ warn("Pull request has duplicated commit messages.") if duplicated_commits.any?
 
 # --- TODO/FIXME Checks ---
 todo_fixme = (git.modified_files + git.added_files).any? do |file|
-  File.read(file).match?(/\b(TODO|FIXME)\b/i)
+  File.exist?(file) && File.read(file).match?(/\b(TODO|FIXME)\b/i)
 end
 warn("Pull request contains TODO or FIXME comments.") if todo_fixme
 
@@ -54,6 +54,6 @@ warn("Pull request modifies config or setup files: #{changed_config_files.join('
 # (Rules 37-41 — Shallow tests — assuming you want them included)
 shallow_test_files = git.modified_files.select { |file| file.include?('spec/') }
 shallow_test_warning = shallow_test_files.any? do |file|
-  File.read(file).match?(/\bit\b|\bspecify\b/)
+  File.exist?(file) && File.read(file).match?(/\bit\b|\bspecify\b/)
 end
 warn("RSpec tests seem shallow (single `it` blocks or no context). Consider improving test structure.") if shallow_test_warning

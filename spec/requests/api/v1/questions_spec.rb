@@ -1,7 +1,7 @@
 require 'swagger_helper'
 require 'json_web_token'
 # Rspec tests for questions controller
-RSpec.describe 'api/v1/questions', type: :request do
+RSpec.describe 'questions', type: :request do
   before(:all) do
     @roles = create_roles_hierarchy
   end
@@ -29,7 +29,7 @@ RSpec.describe 'api/v1/questions', type: :request do
 
   let(:token) { JsonWebToken.encode({id: instructor.id}) }
   let(:Authorization) { "Bearer #{token}" }
-  path '/api/v1/questions' do
+  path '/questions' do
     let(:question1) do
       questionnaire
       Item.create(
@@ -54,7 +54,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       )
     end
 
-    # get request on /api/v1/questions returns 200 successful response when it returns list of questions present in the database
+    # get request on /questions returns 200 successful response when it returns list of questions present in the database
     get('list questions') do
       tags 'Questions'
       produces 'application/json'
@@ -113,7 +113,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         required: %w[weight questionnaire_id break_before txt question_type]
       }
 
-      # post request on /api/v1/questions returns 201 created response and creates a item with given valid parameters
+      # post request on /questions returns 201 created response and creates a item with given valid parameters
       response(201, 'created') do
         let(:item) { valid_question_params }
         run_test! do
@@ -121,7 +121,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         end
       end
 
-      # post request on /api/v1/questions returns 404 not found when questionnaire id for the given item is not present in the database
+      # post request on /questions returns 404 not found when questionnaire id for the given item is not present in the database
       response(404, 'questionnaire id not found') do
         let(:item) do
           instructor
@@ -130,7 +130,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         run_test!
       end
 
-      # post request on /api/v1/questions returns 422 unprocessable entity when incorrect parameters are passed to create a item
+      # post request on /questions returns 422 unprocessable entity when incorrect parameters are passed to create a item
       response(422, 'unprocessable entity') do
         let(:item) { invalid_question_params2 }   # <--- pass invalid params directly to the request
         run_test!
@@ -140,7 +140,7 @@ RSpec.describe 'api/v1/questions', type: :request do
 
   end
 
-  path '/api/v1/questions/{id}' do
+  path '/questions/{id}' do
 
     parameter name: 'id', in: :path, type: :integer
 
@@ -181,14 +181,14 @@ RSpec.describe 'api/v1/questions', type: :request do
       tags 'Questions'
       produces 'application/json'
 
-      # get request on /api/v1/questions/{id} returns 200 successful response and returns item with given item id
+      # get request on /questions/{id} returns 200 successful response and returns item with given item id
       response(200, 'successful') do
         run_test! do
           expect(response.body).to include('"txt":"test item 1"')
         end
       end
 
-      # get request on /api/v1/questions/{id} returns 404 not found response when item id is not present in the database
+      # get request on /questions/{id} returns 404 not found response when item id is not present in the database
       response(404, 'not_found') do
         let(:id) { 'invalid' }
           run_test! do
@@ -210,7 +210,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         }
       }
       
-      # put request on /api/v1/questions/{id} returns 200 successful response and updates parameters of item with given item id
+      # put request on /questions/{id} returns 200 successful response and updates parameters of item with given item id
       response(200, 'successful') do
         let(:body_params) do
           {
@@ -222,7 +222,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         end
       end
 
-      # put request on /api/v1/questions/{id} returns 404 not found response when item with given id is not present in the database
+      # put request on /questions/{id} returns 404 not found response when item with given id is not present in the database
       response(404, 'not found') do
         let(:id) { 0 }
         let(:body_params) do
@@ -235,7 +235,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         end
       end
 
-      # put request on /api/v1/questions/{id} returns 422 unprocessable entity when incorrect parameters are passed for item with given item id
+      # put request on /questions/{id} returns 422 unprocessable entity when incorrect parameters are passed for item with given item id
       response(422, 'unprocessable entity') do
         let(:body_params) do
           {
@@ -264,7 +264,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         }
       }
       
-      # patch request on /api/v1/questions/{id} returns 200 successful response and updates parameters of item with given item id
+      # patch request on /questions/{id} returns 200 successful response and updates parameters of item with given item id
       response(200, 'successful') do
         let(:body_params) do
           {
@@ -276,7 +276,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         end
       end
 
-      # patch request on /api/v1/questions/{id} returns 404 not found response when item with given id is not present in the database
+      # patch request on /questions/{id} returns 404 not found response when item with given id is not present in the database
       response(404, 'not found') do
         let(:id) { 0 }
         let(:body_params) do
@@ -289,7 +289,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         end
       end
 
-      # patch request on /api/v1/questions/{id} returns 422 unprocessable entity when incorrect parameters are passed for item with given item id
+      # patch request on /questions/{id} returns 422 unprocessable entity when incorrect parameters are passed for item with given item id
       response(422, 'unprocessable entity') do
         let(:body_params) do
           {
@@ -309,14 +309,14 @@ RSpec.describe 'api/v1/questions', type: :request do
       tags 'Questions'
       produces 'application/json'
 
-      # delete request on /api/v1/questions/{id} returns 204 successful response when it deletes item with given item id present in the database
+      # delete request on /questions/{id} returns 204 successful response when it deletes item with given item id present in the database
       response(204, 'successful') do
         run_test! do
           expect(Item.exists?(id)).to eq(false)
         end
       end
 
-      # delete request on /api/v1/questions/{id} returns 404 not found response when item with given item id is not present in the database
+      # delete request on /questions/{id} returns 404 not found response when item with given item id is not present in the database
       response(404, 'not found') do
         let(:id) { 0 }
         run_test! do
@@ -327,7 +327,7 @@ RSpec.describe 'api/v1/questions', type: :request do
 
   end
 
-  path '/api/v1/questions/delete_all/questionnaire/{id}' do
+  path '/questions/delete_all/questionnaire/{id}' do
     parameter name: 'id', in: :path, type: :integer
 
     let(:questionnaire) do
@@ -378,14 +378,14 @@ RSpec.describe 'api/v1/questions', type: :request do
       tags 'Questions'
       produces 'application/json'
 
-      # delete method on /api/v1/questions/delete_all/questionnaire/{id} returns 200 successful response when all questions with given questionnaire id are deleted
+      # delete method on /questions/delete_all/questionnaire/{id} returns 200 successful response when all questions with given questionnaire id are deleted
       response(200, 'successful') do
         run_test! do
           expect(Item.where(questionnaire_id: id).count).to eq(0)
         end
       end
 
-      # delete request on /api/v1/questions/delete_all/questionnaire/{id} returns 404 not found response when questionnaire id is not found in the database
+      # delete request on /questions/delete_all/questionnaire/{id} returns 404 not found response when questionnaire id is not found in the database
       response(404, 'not found') do
         let(:id) { 0 }
         run_test! do
@@ -395,7 +395,7 @@ RSpec.describe 'api/v1/questions', type: :request do
     end
   end
 
-  path '/api/v1/questions/show_all/questionnaire/{id}' do
+  path '/questions/show_all/questionnaire/{id}' do
     parameter name: 'id', in: :path, type: :integer
 
     let(:questionnaire) do
@@ -472,7 +472,7 @@ RSpec.describe 'api/v1/questions', type: :request do
       tags 'Questions'
       produces 'application/json'
 
-      # get method on /api/v1/questions/show_all/questionnaire/{id} returns 200 successful response when all questions with given questionnaire id are shown
+      # get method on /questions/show_all/questionnaire/{id} returns 200 successful response when all questions with given questionnaire id are shown
       response(200, 'successful') do
         run_test! do
           expect(Item.where(questionnaire_id: id).count).to eq(1)
@@ -480,7 +480,7 @@ RSpec.describe 'api/v1/questions', type: :request do
         end
       end
 
-      # get request on /api/v1/questions/delete_all/questionnaire/{id} returns 404 not found response when questionnaire id is not found in the database
+      # get request on /questions/delete_all/questionnaire/{id} returns 404 not found response when questionnaire id is not found in the database
       response(404, 'not found') do
         let(:id) { 0 }
         run_test! do
@@ -490,7 +490,7 @@ RSpec.describe 'api/v1/questions', type: :request do
     end
   end
 
-  path '/api/v1/questions/types' do
+  path '/questions/types' do
 
     let(:questionnaire) do
       instructor
@@ -531,7 +531,7 @@ RSpec.describe 'api/v1/questions', type: :request do
     get('item types') do
       tags 'Questions'
       produces 'application/json'
-      # get request on /api/v1/questions/types returns types of questions present in the database
+      # get request on /questions/types returns types of questions present in the database
       response(200, 'successful') do
         run_test! do
           expect(response.body.size).to eq(2)
