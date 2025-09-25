@@ -1,7 +1,7 @@
 require 'swagger_helper'
 require 'json_web_token'
 
-RSpec.describe 'api/v1/teams_participants', type: :request do
+RSpec.describe 'teams_participants', type: :request do
   # --------------------------------------------------------------------------
   # Global Setup
   # --------------------------------------------------------------------------
@@ -142,7 +142,7 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
   ##########################################################################
   # update_duty Endpoint Tests
   ##########################################################################
-  path '/api/v1/teams_participants/update_duty' do
+  path '/teams_participants/update_duty' do
     put('update participant duty') do
       tags 'Teams Participants'
       consumes 'application/json'
@@ -234,7 +234,7 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
   ##########################################################################
   # list_participants Endpoint Tests
   ##########################################################################
-  path '/api/v1/teams_participants/{id}/list_participants' do
+  path '/teams_participants/{id}/list_participants' do
     get('list participants') do
       tags 'Teams Participants'
       produces 'application/json'
@@ -279,7 +279,7 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
   ##########################################################################
   # add_participant Endpoint Tests
   ##########################################################################
-  path '/api/v1/teams_participants/{id}/add_participant' do
+  path '/teams_participants/{id}/add_participant' do
     post('add participant') do
       tags 'Teams Participants'
       consumes 'application/json'
@@ -337,7 +337,7 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
   ##########################################################################
   # delete_participants Endpoint Tests
   ##########################################################################
-  path '/api/v1/teams_participants/{id}/delete_participants' do
+  path '/teams_participants/{id}/delete_participants' do
     delete('delete participants') do
       tags 'Teams Participants'
       consumes 'application/json'

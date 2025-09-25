@@ -1,4 +1,4 @@
-class Api::V1::InstitutionsController < ApplicationController
+class InstitutionsController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :institution_not_found
   def action_allowed?
     has_role?('Instructor')
