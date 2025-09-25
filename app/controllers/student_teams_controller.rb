@@ -1,4 +1,4 @@
-class Api::V1::StudentTeamsController < ApplicationController
+class StudentTeamsController < ApplicationController
 
     #  team is gaining or losing a member
     def team

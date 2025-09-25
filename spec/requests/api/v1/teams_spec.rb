@@ -2,7 +2,7 @@ require 'rails_helper'
 require 'swagger_helper'
 require 'json_web_token'
 
-RSpec.describe Api::V1::TeamsController, type: :request do
+RSpec.describe TeamsController, type: :request do
   before(:all) do
     @roles = create_roles_hierarchy
   end
@@ -126,49 +126,49 @@ RSpec.describe Api::V1::TeamsController, type: :request do
   let(:token) { JsonWebToken.encode(id: instructor.id) }
   let(:auth_headers) { { Authorization: "Bearer #{token}" } }
 
-  describe 'GET /api/v1/teams' do
+  describe 'GET /teams' do
     it 'returns all teams' do
       team_with_course
-      get '/api/v1/teams', headers: auth_headers
+      get '/teams', headers: auth_headers
       expect(response).to have_http_status(:success)
       expect(json_response.size).to eq(1)
       expect(json_response.first['id']).to eq(team_with_course.id)
     end
   end
 
-  describe 'GET /api/v1/teams/:id' do
+  describe 'GET /teams/:id' do
     it 'returns a specific team' do
-      get "/api/v1/teams/#{team_with_course.id}", headers: auth_headers
+      get "/teams/#{team_with_course.id}", headers: auth_headers
       expect(response).to have_http_status(:success)
       expect(json_response['id']).to eq(team_with_course.id)
     end
 
     it 'returns 404 for non-existent team' do
-      get '/api/v1/teams/0', headers: auth_headers
+      get '/teams/0', headers: auth_headers
       expect(response).to have_http_status(:not_found)
     end
   end
 
-  describe 'POST /api/v1/teams' do
+  describe 'POST /teams' do
     it 'returns error for invalid params' do
-      post '/api/v1/teams', params: { team: { name: '' } }, headers: auth_headers
+      post '/teams', params: { team: { name: '' } }, headers: auth_headers
       expect(response).to have_http_status(:unprocessable_entity)
       expect(json_response).to have_key('errors')
     end
   end
 
   describe 'Team Members' do
-    describe 'GET /api/v1/teams/:id/members' do
+    describe 'GET /teams/:id/members' do
       it 'returns all team members' do
         teams_participant_course
-        get "/api/v1/teams/#{team_with_course.id}/members", headers: auth_headers
+        get "/teams/#{team_with_course.id}/members", headers: auth_headers
         expect(response).to have_http_status(:success)
         expect(json_response.size).to eq(1)
         expect(json_response.first['id']).to eq(other_user.id)
       end
     end
 
-    describe 'POST /api/v1/teams/:id/members' do
+    describe 'POST /teams/:id/members' do
       let(:new_user) { create(:user) }
       let!(:new_participant) { create(:course_participant, user: new_user, parent_id: course.id) }
 
@@ -182,7 +182,7 @@ RSpec.describe Api::V1::TeamsController, type: :request do
 
       it 'adds a new team member' do
         expect {
-          post "/api/v1/teams/#{team_with_course.id}/members", params: valid_participant_params, headers: auth_headers
+          post "/teams/#{team_with_course.id}/members", params: valid_participant_params, headers: auth_headers
         }.to change(TeamsParticipant, :count).by(1)
         expect(response).to have_http_status(:created)
         expect(json_response['id']).to eq(new_user.id)
@@ -202,23 +202,23 @@ RSpec.describe Api::V1::TeamsController, type: :request do
           }
         }
         
-        post "/api/v1/teams/#{team_with_assignment.id}/members", params: assignment_params, headers: auth_headers
+        post "/teams/#{team_with_assignment.id}/members", params: assignment_params, headers: auth_headers
         expect(response).to have_http_status(:unprocessable_entity)
         expect(json_response).to have_key('errors')
       end
     end
 
-    describe 'DELETE /api/v1/teams/:id/members/:user_id' do
+    describe 'DELETE /teams/:id/members/:user_id' do
       it 'removes a team member' do
         teams_participant_course
         expect {
-          delete "/api/v1/teams/#{team_with_course.id}/members/#{other_user.id}", headers: auth_headers
+          delete "/teams/#{team_with_course.id}/members/#{other_user.id}", headers: auth_headers
         }.to change(TeamsParticipant, :count).by(-1)
         expect(response).to have_http_status(:no_content)
       end
 
       it 'returns 404 for non-existent member' do
-        delete "/api/v1/teams/#{team_with_course.id}/members/0", headers: auth_headers
+        delete "/teams/#{team_with_course.id}/members/0", headers: auth_headers
         expect(response).to have_http_status(:not_found)
       end
     end

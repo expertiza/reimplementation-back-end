@@ -1,4 +1,4 @@
-class Api::V1::GradesController < ApplicationController
+class GradesController < ApplicationController
     include GradesHelper
     before_action :action_allowed
     before_action :set_team_and_assignment_via_participant, only: [:edit, :update, :instructor_review]

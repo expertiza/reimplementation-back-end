@@ -16,7 +16,7 @@ RSpec.describe 'Institutions API', type: :request do
 
     let(:token) { JsonWebToken.encode({id: prof.id}) }
     let(:Authorization) { "Bearer #{token}" }
-  path '/api/v1/institutions' do
+  path '/institutions' do
     get('list institutions') do
       tags 'Institutions'
       produces 'application/json'
@@ -73,7 +73,7 @@ RSpec.describe 'Institutions API', type: :request do
     end
   end
 
-  path '/api/v1/institutions/{id}' do
+  path '/institutions/{id}' do
     parameter name: 'id', in: :path, type: :integer, description: 'id of the institution'
 
     let(:institution) { Institution.create(name: 'Test institution') }
@@ -94,44 +94,6 @@ RSpec.describe 'Institutions API', type: :request do
       end
     end
 
-    patch('update institution') do
-      tags 'Institutions'
-      consumes 'application/json'
-      parameter name: :institution, in: :body, schema: {
-        type: :object,
-        properties: {
-          name: { type: :string }
-        },
-        required: [ 'name' ]
-      }
-      
-      response(200, 'successful') do
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
-        run_test!
-      end
-
-      response(422, 'invalid request') do
-        let(:institution) { { name: '' } }
-        let(:id) { Institution.create(name: 'Test institution').id }
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
-        run_test!
-      end
-    end
-
     put('update institution') do 
       tags 'Institutions'
       consumes 'application/json'
@@ -140,10 +102,12 @@ RSpec.describe 'Institutions API', type: :request do
         properties: {
           name: { type: :string }
         },
-        required: [ 'name' ]
+        required: ['name']
       }
 
       response(200, 'successful') do
+        let(:institution) { { name: 'Updated Institution' } }
+        let(:id) { Institution.create(name: 'Old Institution').id }
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -170,9 +134,35 @@ RSpec.describe 'Institutions API', type: :request do
       end
     end
 
-    delete('delete institution') do
+
+    patch('update institution') do
       tags 'Institutions'
+      consumes 'application/json'
+      parameter name: :institution, in: :body, schema: {
+        type: :object,
+        properties: {
+          name: { type: :string }
+        },
+        required: ['name']
+      }
+
       response(200, 'successful') do
+        let(:institution) { { name: 'Updated Institution' } }
+        let(:id) { Institution.create(name: 'Old Institution').id }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+
+      response(422, 'invalid request') do
+        let(:institution) { { name: '' } }
+        let(:id) { Institution.create(name: 'Test institution').id }
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -184,5 +174,24 @@ RSpec.describe 'Institutions API', type: :request do
         run_test!
       end
     end
+
+
+    delete('delete institution') do
+      tags 'Institutions'
+
+      response(200, 'successful') do
+        let(:id) { Institution.create(name: 'Institution to delete').id }
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+    end
+
   end
 end

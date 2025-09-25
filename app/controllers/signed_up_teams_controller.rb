@@ -1,4 +1,4 @@
-class Api::V1::SignedUpTeamsController < ApplicationController
+class SignedUpTeamsController < ApplicationController
 
   # Returns signed up teams
   # Can query by topic_id or assignment_id

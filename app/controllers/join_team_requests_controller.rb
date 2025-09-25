@@ -1,4 +1,4 @@
-class Api::V1::JoinTeamRequestsController < ApplicationController
+class JoinTeamRequestsController < ApplicationController
   # Constants used to indicate status for the request
   PENDING = 'PENDING'
   DECLINED = 'DECLINED'
