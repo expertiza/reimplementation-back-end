@@ -352,6 +352,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "submitted_hyperlinks"
+    t.integer "directory_num"
     t.string "name", null: false
     t.bigint "user_id", null: false
     t.integer "max_team_size", default: 4, null: false
@@ -427,6 +429,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   add_foreign_key "signed_up_teams", "teams"
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
+  add_foreign_key "teams_users", "duties"
+  add_foreign_key "teams_users", "participants", column: "participants_id"
   add_foreign_key "teams", "users"
   add_foreign_key "teams", "users", column: "mentor_id"
   add_foreign_key "teams_participants", "participants"

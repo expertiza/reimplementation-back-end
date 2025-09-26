@@ -4,4 +4,9 @@ class SignUpTopic < ApplicationRecord
   has_many :assignment_questionnaires, class_name: 'AssignmentQuestionnaire', foreign_key: 'topic_id', dependent: :destroy
   has_many :due_dates, as: :parent,class_name: 'DueDate', dependent: :destroy
   belongs_to :assignment
+
+  # the below relations have been added to make it consistent with the database schema
+  validates :topic_name, :assignment_id, :max_choosers, presence: true
+  validates :topic_identifier, length: { maximum: 10 }
+
 end

@@ -1,5 +1,12 @@
+###
+####
+#### We have spent a lot of time on refactoring this file, PLEASE consult with Expertiza development team before putting code in.
+###
+###
+
 class Assignment < ApplicationRecord
   include MetricHelper
+
   has_many :participants, class_name: 'AssignmentParticipant', foreign_key: 'parent_id', dependent: :destroy
   has_many :users, through: :participants, inverse_of: :assignment
   has_many :teams, class_name: 'AssignmentTeam', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :assignment
@@ -26,6 +33,19 @@ class Assignment < ApplicationRecord
   def num_review_rounds
     rounds_of_reviews
   end
+
+  # Initializes the directory path for 
+  def path
+    if course_id.nil? && instructor_id.nil?
+      raise 'The path cannot be created. The assignment must be associated with either a course or an instructor.'
+    end
+
+    path_text = if !course_id.nil? && course_id > 0
+                  "#{Rails.root}/pg_data/#{FileHelper.clean_path(instructor[:name])}/#{FileHelper.clean_path(course.directory_path)}/"
+                else
+                  "#{Rails.root}/pg_data/#{FileHelper.clean_path(instructor[:name])}/"
+                end
+    path_text + FileHelper.clean_path(directory_path)
 
   # Add a participant to the assignment based on the provided user_id.
   # This method first finds the User with the given user_id. If the user does not exist, it raises an error.
@@ -183,7 +203,6 @@ class Assignment < ApplicationRecord
       {success: false, message: 'Please enter a valid review type.'}
     end
   end
-
 
   #This method check if for the given assignment,different type of rubrics are used in different round.
   # Checks if for the given assignment any questionnaire is present with used_in_round field not nil.

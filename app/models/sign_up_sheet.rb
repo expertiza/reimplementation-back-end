@@ -1,0 +1,3 @@
+class SignUpSheet < ApplicationRecord
+
+end
