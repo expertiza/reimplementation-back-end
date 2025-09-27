@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 begin
     #Create an instritution
     inst_id = Institution.create!(
@@ -65,6 +67,7 @@ begin
     team_ids = []
     num_teams.times do |i|
       team_ids << AssignmentTeam.create(
+        name: "Team #{i + 1}",
         parent_id: assignment_ids[i%num_assignments]
       ).id
     end

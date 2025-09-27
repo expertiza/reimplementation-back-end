@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Intermediary model in the ResponseMap hierarchy. Has subclasses of:
 #   AssignmentSurveyResponseMap
 #   CourseSurveyResponseMap

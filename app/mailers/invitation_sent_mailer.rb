@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class InvitationSentMailer < ApplicationMailer
   default from: 'from@example.com'
   def send_invitation_email

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'swagger_helper'
 require 'json_web_token'
 RSpec.describe 'Institutions API', type: :request do

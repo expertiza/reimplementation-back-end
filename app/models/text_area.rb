@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class TextArea < Item
     def complete(count,answer = nil)
       {

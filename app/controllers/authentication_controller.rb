@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/controllers/api/v1/authentication_controller.rb
 require 'json_web_token'
 

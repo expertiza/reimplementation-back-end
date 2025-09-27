@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Api::V1::SignUpTopicsController < ApplicationController
   before_action :set_sign_up_topic, only: %i[ show update ]
 

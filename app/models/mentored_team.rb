@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class MentoredTeam < AssignmentTeam
   belongs_to :mentor, class_name: 'User'
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 RSpec.describe FeedbackResponseMap, type: :model do 
     describe '#assignment' do
       it 'returns the assignment associated with this FeedbackResponseMap' do

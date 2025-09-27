@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 RSpec.describe TeammateReviewResponseMap, type: :model do
   describe '#questionnaire' do
     it 'returns associated questionnaire' do

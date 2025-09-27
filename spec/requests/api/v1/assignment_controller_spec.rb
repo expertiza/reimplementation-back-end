@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # spec/requests/api/v1/assignment_controller_spec.rb
 
 require 'swagger_helper'

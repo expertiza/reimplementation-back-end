@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module ResponseMapSubclassTitles
     ASSIGNMENT_SURVEY_RESPONSE_MAP_TITLE = 'Assignment Survey'
     BOOKMARK_RATING_RESPONSE_MAP_TITLE = 'Bookmark Review'

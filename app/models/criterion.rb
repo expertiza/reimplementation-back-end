@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Criterion < ScoredItem
     validates :size, presence: true
   

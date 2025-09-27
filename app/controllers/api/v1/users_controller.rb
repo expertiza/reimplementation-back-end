@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Api::V1::UsersController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :user_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing

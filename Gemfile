@@ -1,10 +1,10 @@
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby '3.2.7'
+ruby '3.4.6'
 
 gem 'mysql2', '~> 0.5.5'
-gem 'puma', '~> 5.0'
+gem 'puma', '~> 6.0'
 gem 'rails', '~> 8.0', '>= 8.0.1'
 gem 'rswag-api'
 gem 'rswag-ui'
@@ -36,6 +36,9 @@ gem 'lingua'
 
 # This is a really small gem that can be used to retrieve objects from the database in the order of the list given
 gem 'find_with_order'
+
+# Observer library for Ruby 3.4+ (removed from standard library)
+gem 'observer'
 
 
 group :development, :test do

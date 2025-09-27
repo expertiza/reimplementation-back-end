@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Api::V1::QuestionnairesController < ApplicationController
   
   # Index method returns the list of JSON objects of the questionnaire

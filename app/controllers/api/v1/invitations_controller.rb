@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Api::V1::InvitationsController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :invite_not_found
 

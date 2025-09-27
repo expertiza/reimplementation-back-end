@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateResponseMaps < ActiveRecord::Migration[7.0]
   def change
     create_table :response_maps do |t|

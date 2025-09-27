@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class TextField < Item
     validates :size, presence: true
   

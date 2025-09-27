@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Api::V1::StudentTasksController < ApplicationController
 
   # List retrieves all student tasks associated with the current logged-in user.
