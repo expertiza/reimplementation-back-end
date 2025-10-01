@@ -47,6 +47,14 @@ class Api::V1::InvitationsController < ApplicationController
     render nothing: true, status: :no_content
   end
 
+  def invitations_sent_to_participant
+    print "hello"
+  end
+
+  def invitations_sent_by_participant
+  
+  end
+
   # GET /invitations/:user_id/:assignment_id
   def invitations_for_user_assignment
     begin

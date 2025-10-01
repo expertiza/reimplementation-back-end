@@ -100,6 +100,7 @@ Rails.application.routes.draw do
       end
 
       resources :invitations do
+        get '/sent_by/:participant_id', to: 'invitations_sent_by_participant'
         get 'user/:user_id/assignment/:assignment_id/', on: :collection, action: :invitations_for_user_assignment
       end
 

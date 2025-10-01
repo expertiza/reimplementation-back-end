@@ -2,7 +2,7 @@ class Invitation < ApplicationRecord
   after_initialize :set_defaults
 
   belongs_to :to_participant, class_name: 'Participant', foreign_key: 'to_id', inverse_of: false
-  belongs_to :from_participant, class_name: 'Participant', foreign_key: 'from_id', inverse_of: false
+  belongs_to :from_team, class_name: 'AssignmentTeam', foreign_key: 'from_id', inverse_of: false
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'assignment_id'
 
   validates_with InvitationValidator
@@ -31,17 +31,27 @@ class Invitation < ApplicationRecord
                         .deliver_later
   end
 
-  # After a participant accepts an invite, the teams_participant table needs to be updated.
-  def update_users_topic_after_invite_accept(_inviter_participant_id, _invited_participant_id, _assignment_id); end
-
   # This method handles all that needs to be done upon a user accepting an invitation.
-  # Expected functionality: First the users previous team is deleted if they were the only member of that
-  # team and topics that the old team signed up for will be deleted.
-  # Then invites the user that accepted the invite sent will be removed.
-  # Lastly the users team entry will be added to the TeamsUser table and their assigned topic is updated.
-  # NOTE: For now this method simply updates the invitation's reply_status.
-  def accept_invitation(_logged_in_user)
-    update(reply_status: InvitationValidator::ACCEPT_STATUS)
+  def accept_invitation
+    inviter_team = from_team                  # Team that sent the invitation
+    invitee_team = to_participant.team        # Team of the invited participant
+
+    # 1. Update the participant’s and team's assigned topic
+    inviter_signed_up_team = SignedUpTeam.find_by(team_id: invitee_team.id)
+    invitee_signed_up_team = SignedUpTeam.find_by(team_id: inviter_team.id)
+    SignedUpTeam.update_topic_after_invite_accept(
+      inviter_signed_up_team,
+      invitee_signed_up_team
+    )
+
+    # 2. Remove participant from their old team
+    invitee_team.remove_participant(to_participant)
+
+    # 3. Add the invitee to the inviter's team
+    inviter_team.add_participant(to_participant)
+
+    # 4. Mark this invitation as accepted
+    update!(reply_status: InvitationValidator::ACCEPT_STATUS)
   end
 
   # This method handles all that needs to be done upon an user declining an invitation.
@@ -60,8 +70,8 @@ class Invitation < ApplicationRecord
                           only: %i[id reply_status created_at updated_at],
                           include: {
                             assignment: { only: %i[id name] },
-                            from_participant: { only: %i[id name fullname email] },
-                            to_uto_participantser: { only: %i[id name fullname email] }
+                            from_team: { only: %i[id name] },
+                            to_participant: { only: %i[id name fullname email] }
                           }
                         })).tap do |hash|
     end
