@@ -57,7 +57,7 @@ class AssignmentTeam < Team
 
   protected
 
-    # Validates if a user is eligible to join the team
+  # Validates if a user is eligible to join the team
   # - Checks whether the user is a participant of the associated assignment
   def validate_membership(user)
     # Ensure user is enrolled in the assignment by checking AssignmentParticipant
