@@ -27,6 +27,32 @@ class AssignmentTeam < Team
     course_team   # Returns the newly created course team object
   end  
 
+  # Adds a participant to this team.
+  # - Update the participant's team_id (so their direct reference is consistent)
+  # - Ensure there is a TeamsParticipant join record connecting the participant and this team
+  def add_participant(participant)
+    # Update the participant's team_id column
+    participant.update!(team_id: id)
+
+    # Create or reuse the join record to maintain the association
+    TeamsParticipant.find_or_create_by!(
+      participant_id: participant.id,
+      team_id: id
+    )
+  end
+
+  # Removes a participant from this team.
+  # - Delete the TeamsParticipant join record
+  # - If the team has no remaining members, destroy the team itself
+  def remove_participant(participant)
+    # Remove the join record if it exists
+    tp = TeamsParticipant.find_by(team_id: id, participant_id: participant.id)
+    tp&.destroy
+
+    # If no participants remain after removal, delete the team
+    destroy if participants.empty?
+  end
+
   # Get the review response map
   def review_map_type
     'ReviewResponseMap'
