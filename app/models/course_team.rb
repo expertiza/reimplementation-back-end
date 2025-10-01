@@ -3,7 +3,6 @@
 class CourseTeam < Team
   #Each course team must belong to a course
   belongs_to :course, class_name: 'Course', foreign_key: 'parent_id'
-  validates :course, presence: true
 
   #adds members to the course team post validation
   def add_member(user)

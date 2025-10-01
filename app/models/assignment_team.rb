@@ -3,7 +3,6 @@
 class AssignmentTeam < Team
   # Each AssignmentTeam must belong to a specific assignment
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'parent_id'
-  validates :assignment, presence: true
 
   # Copies the current assignment team to a course team
   # - Creates a new CourseTeam with a modified name

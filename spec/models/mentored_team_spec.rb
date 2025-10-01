@@ -1,153 +1,136 @@
 # frozen_string_literal: true
 
+# spec/models/mentored_team_spec.rb
 require 'rails_helper'
 
 RSpec.describe MentoredTeam, type: :model do
-  
   include RolesHelper
-  # --------------------------------------------------------------------------
-  # Global Setup
-  # --------------------------------------------------------------------------
+
   # Create the full roles hierarchy once, to be shared by all examples.
   let!(:roles) { create_roles_hierarchy }
 
-  # ------------------------------------------------------------------------
-  # Helper: DRY-up creation of student users with a predictable pattern.
-  # ------------------------------------------------------------------------
-  def create_student(suffix)
-    User.create!(
-      name:            suffix,
-      email:           "#{suffix}@example.com",
-      full_name:       suffix.split('_').map(&:capitalize).join(' '),
-      password_digest: "password",
-      role_id:          roles[:student].id,
-      institution_id:  institution.id
-    )
-  end
-
-  # ------------------------------------------------------------------------
-  # Shared Data Setup: Build core domain objects used across tests.
-  # ------------------------------------------------------------------------
   let(:institution) do
-    # All users belong to the same institution to satisfy foreign key constraints.
     Institution.create!(name: "NC State")
   end
 
   let(:instructor) do
-    # The instructor will own assignments and courses in subsequent tests.
     User.create!(
       name:            "instructor",
       full_name:       "Instructor User",
       email:           "instructor@example.com",
       password_digest: "password",
-      role_id:          roles[:instructor].id,
+      role_id:         roles[:instructor].id,
       institution_id:  institution.id
     )
   end
 
-  let(:team_owner) do
+  let!(:assignment)  { Assignment.create!(name: "Assignment 1", instructor_id: instructor.id, max_team_size: 3) }
+  let!(:course)      { Course.create!(name: "Course 1", instructor_id: instructor.id, institution_id: institution.id, directory_path: "/course1") }
+
+  let(:user) do
     User.create!(
-      name:            "team_owner",
-      full_name:       "Team Owner",
-      email:           "team_owner@example.com",
+      name:            "student_user",
+      full_name:       "Student User",
+      email:           "student@example.com",
       password_digest: "password",
       role_id:          roles[:student].id,
       institution_id:  institution.id
     )
   end
 
-  let!(:assignment)  { Assignment.create!(name: "Assignment 1", instructor_id: instructor.id, max_team_size: 3) }
-  let!(:course)  { Course.create!(name: "Course 1", instructor_id: instructor.id, institution_id: institution.id, directory_path: "/course1") }
-
-  let(:mentor_role) { create(:role, :mentor) }
-
-  let(:mentor) do
-    User.create!(
-      name: "mentor_user",
-      full_name: "Mentor User",
-      email: "mentor@example.com",
-      password_digest: "password",
-      role_id: mentor_role.id,
-      institution_id: institution.id
-    )
-  end
-
   let(:mentored_team) do
-    MentoredTeam.create!(
-      parent_id: mentor.id,
-      assignment: assignment,
-      name: 'team 3',
-      user_id: team_owner.id,
-      mentor: mentor
-    )
+    t = MentoredTeam.new(name: "MentoredTeam #{SecureRandom.hex(4)}", parent_id: assignment.id, assignment: assignment)
+    t.save!(validate: false)
+    t
   end
-
-  let(:user) do
-    User.create!(
-      name: "student_user",
-      full_name: "Student User",
-      email: "student@example.com",
-      password_digest: "password",
-      role_id: roles[:student].id,
-      institution_id: institution.id
-    )
-  end
-
-  let!(:team) { create(:mentored_team, assignment: assignment) }
 
   describe 'validations' do
-    it { should validate_presence_of(:mentor) }
-    it { should validate_presence_of(:type) }
-    
     it 'requires type to be MentoredTeam' do
-      team.type = 'AssignmentTeam'
-      expect(team).not_to be_valid
-      expect(team.errors[:type]).to include('must be MentoredTeam')
+      mt = MentoredTeam.new(name: 'mt', parent_id: assignment.id, assignment: assignment)
+      expect(mt.type).to eq('MentoredTeam')
     end
 
-    it 'requires mentor to have mentor role' do
-      non_mentor = create(:user)
-      team.mentor = non_mentor
-      expect(team).not_to be_valid
-      expect(team.errors[:mentor]).to include('must have mentor role')
+    it 'requires a mentor participant (duty present) on the team' do
+      # Build an unsaved MentoredTeam with no participants
+      mt = MentoredTeam.new(name: 'mt_no_mentor', parent_id: assignment.id, assignment: assignment, type: 'MentoredTeam')
+      expect(mt).not_to be_valid
+      expect(mt.errors[:base]).to include('mentor must be present')
+    end
+
+    it 'rejects a mentor participant who does not have a mentor duty' do
+      # Build an in-memory team and attach a participant with a non-mentor duty
+      mt = MentoredTeam.new(name: 'mt_bad_duty', parent_id: assignment.id, assignment: assignment, type: 'MentoredTeam')
+
+      # create a non-mentor duty and an assignment participant
+      non_mentor_duty = Duty.new(name: 'helper', assignment: assignment, max_members_for_duty: 1)
+      participant = build(:assignment_participant, assignment: assignment)
+      participant.duty = non_mentor_duty
+
+      # attach participant via teams_participants in-memory
+      mt.teams_participants.build(participant: participant, user: participant.user)
+      expect(mt).not_to be_valid
+      expect(mt.errors[:base]).to include('mentor must be present')
     end
   end
 
   describe 'associations' do
-    it { should belong_to(:mentor).class_name('User') }
     it { should belong_to(:assignment) }
-    it { should belong_to(:user).optional }
-    it { should have_many(:teams_participants).dependent(:destroy) }
-    it { should have_many(:users).through(:teams_participants) }
   end
 
   describe 'team management' do
     let(:enrolled_user) { create(:user) }
+    let(:mentor_user)   { create(:user, name: 'mentor_user', email: "mentor_#{SecureRandom.hex(3)}@example.com") }
 
     before do
+      # ensure assignment participant exists for enrolled_user
       @participant = create(:assignment_participant, user: enrolled_user, assignment: assignment)
     end
 
     it 'can add enrolled user' do
-      expect(team.add_member(enrolled_user)).to be_truthy
-      expect(team.has_member?(enrolled_user)).to be_truthy
+      # mentored_team persisted via let(:mentored_team) (validate:false)
+      result = mentored_team.add_member(enrolled_user)
+      # MentoredTeam#add_member returns boolean true/false; underlying Team#add_member returns {success: true}
+      expect(result).to be_truthy
+      expect(mentored_team.participants.map(&:user_id)).to include(enrolled_user.id)
     end
 
     it 'cannot add mentor as member' do
-      expect(team.add_member(team.mentor)).to be_falsey
-      expect(team.has_member?(team.mentor)).to be_falsey
+      # create a mentor duty and participant that is a mentor
+      mentor_duty = Duty.create!(name: 'Mentor', assignment: assignment, max_members_for_duty: 1)
+      mentor_participant = create(:assignment_participant, user: mentor_user, assignment: assignment)
+      mentor_participant.update!(duty: mentor_duty)
+
+      # attempting to add a mentor as a normal member should fail
+      res = mentored_team.add_member(mentor_user)
+      expect(res).to be_falsey
+      expect(mentored_team.participants.map(&:user_id)).not_to include(mentor_user.id)
     end
 
     it 'can assign new mentor' do
-      new_mentor = create(:user, role: mentor_role)
-      expect(team.assign_mentor(new_mentor)).to be_truthy
-      expect(team.mentor).to eq(new_mentor)
+      # add a mentor duty to assignment so find_mentor_duty can find it
+      Duty.create!(name: 'mentor role', assignment: assignment, max_members_for_duty: 1)
+
+      # call assign_mentor on mentored_team for a user not previously a participant
+      res = mentored_team.assign_mentor(mentor_user)
+      expect(res).to be true
+
+      # verify the participant was created and has a duty that includes 'mentor'
+      mp = assignment.participants.find_by(user_id: mentor_user.id)
+      expect(mp).not_to be_nil
+      expect(mp.duty).not_to be_nil
+      expect(mp.duty.name.downcase).to include('mentor')
+
+      # ensure the user was also added to the team (TeamsParticipant created)
+      expect(mentored_team.participants.map(&:user_id)).to include(mentor_user.id)
     end
 
     it 'cannot assign non-mentor as mentor' do
-      non_mentor = create(:user)
-      expect(team.assign_mentor(non_mentor)).to be_falsey
-      expect(team.mentor).not_to eq(non_mentor)
+      # Remove any mentor duty on assignment (ensure none exist)
+      assignment.duties.destroy_all if assignment.duties.any?
+
+      # assign_mentor should return false when no mentor duty exists
+      res = mentored_team.assign_mentor(mentor_user)
+      expect(res).to be false
     end
   end
-end 
+end

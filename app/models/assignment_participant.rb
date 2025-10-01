@@ -8,7 +8,7 @@ class AssignmentParticipant < Participant
   def set_handle
     self.handle = if user.handle.nil? || (user.handle == '')
                     user.name
-                  elsif Participant.exists?(assignment_id: assignment.id, handle: user.handle)
+                  elsif Participant.exists?(parent_id: assignment.id, handle: user.handle, type: 'AssignmentParticipant')
                     user.name
                   else
                     user.handle

@@ -46,18 +46,8 @@ FactoryBot.define do
     name { Faker::Team.name }
     type { 'MentoredTeam' }
     association :assignment, factory: :assignment
-
-    after(:build) do |team, _evaluator|
-      mentor_role = Role.find_by(name: 'Mentor') || create(:role, :mentor)
-      mentor = create(:user, role: mentor_role)
-      team.mentor ||= mentor
-      team.parent_id ||= team.assignment.id
+    after(:build) do |t|
+      t.parent_id ||= t.assignment&.id
     end
-  end
-
-  factory :teams_participant, class: 'TeamsParticipant' do
-    team
-    participant
-    user { participant.user }
   end
 end
