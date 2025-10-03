@@ -6,9 +6,11 @@ ruby '3.4.5'
 gem 'mysql2', '~> 0.5.5'
 gem 'puma', '~> 5.0'
 gem 'rails', '~> 8.0', '>= 8.0.1'
+gem 'observer'  # Required for Ruby 3.4.5 compatibility with Rails 8.0
 gem 'rswag-api'
 gem 'rswag-ui'
 gem 'active_model_serializers', '~> 0.10.0'
+gem 'psych', '~> 5.2'  # Ensure compatible psych version for Ruby 3.4.5
 
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 # gem "jbuilder"
