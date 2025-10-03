@@ -62,9 +62,8 @@ jobs:
           
       - name: Set up code climate test-reporter
         run: |
-          wget -qO ./cc-test-reporter https://github.com/codeclimate/test-reporter/releases/download/0.10.4/cc-test-reporter-linux-amd64
-          chmod +x ./cc-test-reporter
-          ./cc-test-reporter before-build
+          gem install codeclimate-test-reporter
+          cc-test-reporter before-build
 
       - name: Run model tests
         run: bundle exec rspec spec/models
@@ -97,10 +96,9 @@ jobs:
       - name: Upload code-coverage report to code-climate
         run: |
           export GIT_BRANCH="${GITHUB_REF/refs\/heads\//}"
-          wget -qO ./cc-test-reporter https://github.com/codeclimate/test-reporter/releases/download/0.10.4/cc-test-reporter-linux-amd64
-          chmod +x ./cc-test-reporter
-          ./cc-test-reporter sum-coverage coverage/codeclimate.*.json 
-          ./cc-test-reporter after-build -t simplecov -r ${{ secrets.CC_TEST_REPORTER_ID }}
+          gem install codeclimate-test-reporter
+          cc-test-reporter sum-coverage coverage/codeclimate.*.json 
+          cc-test-reporter after-build -t simplecov -r ${{ secrets.CC_TEST_REPORTER_ID }}
 
   docker:
     needs: test
