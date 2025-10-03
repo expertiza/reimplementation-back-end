@@ -31,7 +31,10 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.4.5
-          bundler-cache: true
+          bundler-cache: false
+
+      - name: Check Ruby Version
+        run: ruby -v
           
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -47,6 +50,8 @@ jobs:
         run: |
           gem update --system
           gem install bundler:2.4.7
+          bundle config set --local deployment 'false'
+          bundle config set --local without ''
           bundle install
           
       - name: Setup database

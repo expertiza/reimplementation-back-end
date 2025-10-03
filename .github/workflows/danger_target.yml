@@ -20,6 +20,9 @@ jobs:
           ruby-version: '3.4.5'
           bundler-cache: false
 
+      - name: Check Ruby Version
+        run: ruby -v
+
       - name: Install dependencies
         run: |
           gem update --system
