@@ -16,9 +16,13 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.4.5'
+          bundler-cache: false
 
       - name: Install dependencies
-        run: bundle install
+        run: |
+          gem update --system
+          gem install bundler:2.4.7
+          bundle install
 
       - name: Run Danger
         env:
