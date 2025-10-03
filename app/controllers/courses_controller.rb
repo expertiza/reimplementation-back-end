@@ -1,6 +1,4 @@
-# frozen_string_literal: true
-
-class Api::V1::CoursesController < ApplicationController
+class CoursesController < ApplicationController
   before_action :set_course, only: %i[ show update destroy add_ta view_tas remove_ta copy ]
   rescue_from ActiveRecord::RecordNotFound, with: :course_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing

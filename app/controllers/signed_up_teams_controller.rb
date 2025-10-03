@@ -1,6 +1,4 @@
-# frozen_string_literal: true
-
-class Api::V1::SignedUpTeamsController < ApplicationController
+class SignedUpTeamsController < ApplicationController
 
   # Returns signed up topics using sign_up_topic assignment id
   # Retrieves sign_up_topic using topic_id as a parameter

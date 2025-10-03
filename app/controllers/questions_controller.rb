@@ -1,6 +1,4 @@
-# frozen_string_literal: true
-
-class Api::V1::QuestionsController < ApplicationController
+class QuestionsController < ApplicationController
   before_action :set_question, only: [:show, :update]
 
   # GET /questions
@@ -31,7 +29,7 @@ class Api::V1::QuestionsController < ApplicationController
     end
   end
 
-  # GET /api/v1/questions/show_all/questionnaire/:id
+  # GET /questions/show_all/questionnaire/:id
   def show_all
     questionnaire = Questionnaire.find(params[:id])
     items = questionnaire.items.order(:id)
@@ -92,7 +90,7 @@ class Api::V1::QuestionsController < ApplicationController
     render json: { error: "Couldn't find Item" }, status: :not_found
   end
 
-  # DELETE /api/v1/questions/delete_all/questionnaire/:id
+  # DELETE /questions/delete_all/questionnaire/:id
   def delete_all
     questionnaire = Questionnaire.find(params[:id])
     if questionnaire.items.delete_all

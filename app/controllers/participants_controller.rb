@@ -1,6 +1,4 @@
-# frozen_string_literal: true
-
-class Api::V1::ParticipantsController < ApplicationController
+class ParticipantsController < ApplicationController
   include ParticipantsHelper
 
   # Return a list of participants for a given user

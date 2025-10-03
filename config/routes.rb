@@ -9,8 +9,6 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "articles#index"
   post '/login', to: 'authentication#login'
-  namespace :api do
-    namespace :v1 do
       resources :institutions
       resources :roles do
         collection do
@@ -143,6 +141,4 @@ Rails.application.routes.draw do
           delete :delete_participants
         end
       end
-    end
-  end
 end

@@ -1,6 +1,4 @@
-# frozen_string_literal: true
-
-class Api::V1::AccountRequestsController < ApplicationController
+class AccountRequestsController < ApplicationController
 
   # GET /account_requests/pending
   def pending_requests

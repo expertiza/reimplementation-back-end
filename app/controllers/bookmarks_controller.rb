@@ -1,6 +1,4 @@
-# frozen_string_literal: true
-
-class Api::V1::BookmarksController < ApplicationController
+class BookmarksController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :not_found
   
   def action_allowed?

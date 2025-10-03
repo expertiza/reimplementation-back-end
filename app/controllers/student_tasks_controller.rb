@@ -1,6 +1,4 @@
-# frozen_string_literal: true
-
-class Api::V1::StudentTasksController < ApplicationController
+class StudentTasksController < ApplicationController
 
   # List retrieves all student tasks associated with the current logged-in user.
   def action_allowed?

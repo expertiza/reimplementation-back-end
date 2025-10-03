@@ -32,9 +32,9 @@ RSpec.describe 'StudentTasks API', type: :request do
   let(:Authorization) { "Bearer #{token}" }
 
   # -------------------------------------------------------------------------
-  # /api/v1/student_tasks/list
+  # /student_tasks/list
   # -------------------------------------------------------------------------
-  path '/api/v1/student_tasks/list' do
+  path '/student_tasks/list' do
     get 'student tasks list' do
       tags 'StudentTasks'
       produces 'application/json'
@@ -97,9 +97,9 @@ RSpec.describe 'StudentTasks API', type: :request do
   end
 
   # -------------------------------------------------------------------------
-  # /api/v1/student_tasks/view
+  # /student_tasks/view
   # -------------------------------------------------------------------------
-  path '/api/v1/student_tasks/view' do
+  path '/student_tasks/view' do
     get 'Retrieve a specific student task by ID' do
       tags 'StudentTasks'
       produces 'application/json'

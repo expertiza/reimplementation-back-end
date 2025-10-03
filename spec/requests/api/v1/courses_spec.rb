@@ -3,7 +3,7 @@
 require 'swagger_helper'
 require 'json_web_token'
 
-RSpec.describe 'api/v1/courses', type: :request do
+RSpec.describe 'courses', type: :request do
   before(:all) do
     @roles = create_roles_hierarchy
   end
@@ -23,7 +23,7 @@ RSpec.describe 'api/v1/courses', type: :request do
   let(:Authorization) { "Bearer #{token}" }
 
   # GET /courses/{id}/add_ta/{ta_id}
-  path '/api/v1/courses/{id}/add_ta/{ta_id}' do
+  path '/courses/{id}/add_ta/{ta_id}' do
     parameter name: :id, in: :path, type: :integer, required: true
     parameter name: :ta_id, in: :path, type: :integer, required: true
     let(:institution) { Institution.create(name: "NC State") }
@@ -74,7 +74,7 @@ RSpec.describe 'api/v1/courses', type: :request do
   end
 
   # GET /courses/{id}/tas
-  path '/api/v1/courses/{id}/tas' do
+  path '/courses/{id}/tas' do
     parameter name: 'id', in: :path, type: :string, description: 'id'
     let(:institution) { Institution.create(name: "NC State") }
     let(:course) {
@@ -98,7 +98,7 @@ RSpec.describe 'api/v1/courses', type: :request do
   end
 
   # GET /courses/{id}/remove_ta/{ta_id}
-  path '/api/v1/courses/{id}/remove_ta/{ta_id}' do
+  path '/courses/{id}/remove_ta/{ta_id}' do
     parameter name: 'id', in: :path, type: :string, description: 'id'
     parameter name: 'ta_id', in: :path, type: :string, description: 'ta_id'
     let(:institution) { Institution.create(name: "NC State") }
@@ -140,7 +140,7 @@ RSpec.describe 'api/v1/courses', type: :request do
   end
 
   # GET /courses/{id}/copy
-  path '/api/v1/courses/{id}/copy' do
+  path '/courses/{id}/copy' do
     parameter name: 'id', in: :path, type: :string, description: 'id'
     let(:institution) { Institution.create(name: "NC State") }
     let(:course) {
@@ -164,7 +164,7 @@ RSpec.describe 'api/v1/courses', type: :request do
   end
 
   # GET /courses/
-  path '/api/v1/courses' do
+  path '/courses' do
     get('list courses') do
       tags 'Courses'
       response(200, 'successful') do
@@ -213,7 +213,7 @@ RSpec.describe 'api/v1/courses', type: :request do
   end
 
   # GET /courses/{id}
-  path '/api/v1/courses/{id}' do
+  path '/courses/{id}' do
     parameter name: 'id', in: :path, type: :string, description: 'id'
     let(:institution) { Institution.create(name: "NC State") }
     let(:course) {

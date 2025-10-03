@@ -22,7 +22,7 @@ RSpec.describe 'Roles API', type: :request do
   let(:token) { JsonWebToken.encode({id: adm.id}) }
   let(:Authorization) { "Bearer #{token}" }
 
-  path '/api/v1/roles' do
+  path '/roles' do
     get('list roles') do
       tags 'Roles'
       produces 'application/json'
@@ -84,7 +84,7 @@ RSpec.describe 'Roles API', type: :request do
     end
   end
 
-  path '/api/v1/roles/{id}' do
+  path '/roles/{id}' do
     parameter name: 'id', in: :path, type: :integer, description: 'id of the role'
 
     let(:role) { Role.create(name: 'Test Role') }

@@ -1,6 +1,4 @@
-# frozen_string_literal: true
-
-class Api::V1::UsersController < ApplicationController
+class UsersController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :user_not_found
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
@@ -44,7 +42,7 @@ class Api::V1::UsersController < ApplicationController
     render json: { message: "User #{user.name} with id #{params[:id]} deleted successfully!" }, status: :no_content
   end
 
-  # GET /api/v1/users/institution/:id
+  # GET /users/institution/:id
   # Get all users for an institution
   def institution_users
     institution = Institution.find(params[:id])
@@ -54,7 +52,7 @@ class Api::V1::UsersController < ApplicationController
     render json: { error: e.message }, status: :not_found
   end
 
-  # GET /api/v1/users/:id/managed
+  # GET /users/:id/managed
   # Get all users that are managed by a user
   def managed_users
     parent = User.find(params[:id])
@@ -68,7 +66,7 @@ class Api::V1::UsersController < ApplicationController
   end
 
   # Get role based users
-  # GET /api/v1/users/role/:name
+  # GET /users/role/:name
   def role_users
     name = params[:name].split('_').map(&:capitalize).join(' ')
     role = Role.find_by(name:)
