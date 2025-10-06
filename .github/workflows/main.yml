@@ -60,10 +60,9 @@ jobs:
           bundle exec rails db:create RAILS_ENV=test
           bundle exec rails db:schema:load RAILS_ENV=test
           
-      - name: Set up code climate test-reporter
+      - name: Set up code coverage
         run: |
-          gem install codeclimate-test-reporter
-          cc-test-reporter before-build
+          echo "SimpleCov coverage reporting is configured in spec_helper.rb"
 
       - name: Run model tests
         run: bundle exec rspec spec/models
@@ -71,14 +70,66 @@ jobs:
       - name: Run controller tests
         run: bundle exec rspec spec/requests/
 
-      - name: Format code coverage report
-        run: ./cc-test-reporter format-coverage -t simplecov -o "coverage/codeclimate.models.json" --debug
+      - name: Generate coverage report
+        run: |
+          echo "Coverage report generated in coverage/index.html"
+          ls -la coverage/ || echo "No coverage directory found"
+          if [ -f coverage/index.html ]; then
+            echo "✅ Coverage report generated successfully"
+            echo "📊 Coverage percentage:"
+            grep -o '[0-9]\+\.[0-9]\+%' coverage/index.html | head -1 || echo "Coverage percentage not found"
+          else
+            echo "❌ Coverage report not generated"
+          fi
 
       - name: Upload coverage artifacts
         uses: actions/upload-artifact@v4
         with:
           name: code-coverage-artifacts
           path: coverage/
+          
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            try {
+              // Read coverage data
+              const coveragePath = 'coverage/coverage.json';
+              if (fs.existsSync(coveragePath)) {
+                const coverage = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
+                const percentage = coverage.metrics.covered_percent.toFixed(2);
+                
+                const comment = `## 📊 Code Coverage Report
+                
+                **Coverage: ${percentage}%**
+                
+                - **Lines covered:** ${coverage.metrics.covered_lines}/${coverage.metrics.total_lines}
+                - **Branches covered:** ${coverage.metrics.covered_branches}/${coverage.metrics.total_branches}
+                
+                📈 Coverage report generated with SimpleCov and Ruby 3.4.5
+                
+                <details>
+                <summary>View detailed coverage report</summary>
+                
+                Coverage artifacts are available in the workflow run.
+                </details>`;
+                
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: comment
+                });
+              } else {
+                console.log('Coverage file not found');
+              }
+            } catch (error) {
+              console.log('Error creating coverage comment:', error.message);
+            }
 
 
   publish_code_coverage:
