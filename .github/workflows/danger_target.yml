@@ -14,6 +14,14 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
+      - name: Clear Ruby cache
+        run: |
+          rm -rf ~/.ruby-version
+          rm -rf ~/.rbenv
+          rm -rf ~/.rvm
+          rm -rf /usr/local/rvm
+          rm -rf /opt/ruby
+
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -21,7 +29,10 @@ jobs:
           bundler-cache: false
 
       - name: Check Ruby Version
-        run: ruby -v
+        run: |
+          ruby -v
+          which ruby
+          gem env
 
       - name: Install dependencies
         run: |
