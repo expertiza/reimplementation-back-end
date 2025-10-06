@@ -198,6 +198,27 @@ module Authorization
     end
   end
 
+  def current_user_has_all_heatgrid_data_privileges?(assignment)
+    return false unless user_logged_in?
+
+    # 1. Super Admin
+    return true if current_user_is_a?('Super Administrator')
+
+    # 2. Admin who created the instructor of the assignment
+    if current_user_is_a?('Administrator')
+      instructor = find_assignment_instructor(assignment)
+      return true if instructor && instructor.parent_id == current_user.id
+    end
+
+    # 3. Instructor of the assignment
+    return true if current_user_is_a?('Instructor') && current_user_instructs_assignment?(assignment)
+
+    # 4. TA mapped to the course of the assignment
+    return true if current_user_is_a?('Teaching Assistant') && current_user_has_ta_mapping_for_assignment?(assignment)
+
+    false
+  end
+
   # PRIVATE METHODS
   private
 
@@ -227,26 +248,5 @@ module Authorization
 
   def current_user_and_role_exist?
     user_logged_in? && !current_user.role.nil?
-  end
-
-  def current_user_has_all_heatgrid_data_privileges?(assignment)
-    return false unless user_logged_in?
-
-    # 1. Super Admin
-    return true if current_user_is_a?('Super Administrator')
-
-    # 2. Admin who created the instructor of the assignment
-    if current_user_is_a?('Administrator')
-      instructor = find_assignment_instructor(assignment)
-      return true if instructor && instructor.parent_id == current_user.id
-    end
-
-    # 3. Instructor of the assignment
-    return true if current_user_is_a?('Instructor') && current_user_instructs_assignment?(assignment)
-
-    # 4. TA mapped to the course of the assignment
-    return true if current_user_is_a?('Teaching Assistant') && current_user_has_ta_mapping_for_assignment?(assignment)
-
-    false
   end
 end

@@ -100,8 +100,10 @@ Rails.application.routes.draw do
       end
 
       resources :invitations do
-        get '/sent_by/:participant_id', to: 'invitations_sent_by_participant'
-        get 'user/:user_id/assignment/:assignment_id/', on: :collection, action: :invitations_for_user_assignment
+        collection do
+          get '/sent_by/:team_id', to: 'invitations_sent_by_team'
+          get '/sent_to/:participant_id', to: 'invitations_sent_to_participant'
+        end
       end
 
       resources :account_requests do
@@ -126,8 +128,7 @@ Rails.application.routes.draw do
         collection do
           get :view          
           get :mentor
-          get :remove_participant
-          get :auto_complete_for_user_name        
+          get :remove_participant        
         end
       end
 
