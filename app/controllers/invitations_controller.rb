@@ -15,7 +15,7 @@ class InvitationsController < ApplicationController
       @invitation.send_invite_email
       render json: @invitation, status: :created
     else
-      render json: { error: @invitation.errors }, status: :unprocessable_entity
+      render json: { message: @invitation.errors , success: false}, status: :unprocessable_entity
     end
   end
 
@@ -47,25 +47,30 @@ class InvitationsController < ApplicationController
     render nothing: true, status: :no_content
   end
 
-  # GET /invitations/:user_id/:assignment_id
-  def invitations_for_user_assignment
+  def invitations_sent_to_participant
     begin
-      @user = User.find(params[:user_id])
+      @participant = AssignmentParticipant.find(params[:participant_id])
     rescue ActiveRecord::RecordNotFound => e
-      render json: { error: e.message }, status: :not_found
+      render json: { message: e.message, success:false }, status: :not_found
       return
     end
 
-    begin
-      @assignment = Assignment.find(params[:assignment_id])
-    rescue ActiveRecord::RecordNotFound => e
-      render json: { error: e.message }, status: :not_found
-      return
-    end
-
-    @invitations = Invitation.where(to_id: @user.id).where(assignment_id: @assignment.id)
+    @invitations = Invitation.where(to_id: @participant.id, assignment_id: @participant.parent_id)
     render json: @invitations, status: :ok
   end
+
+  def invitations_sent_by_team
+    begin
+      @team = AssignmentTeam.find(params[:team_id])
+    rescue ActiveRecord::RecordNotFound => e
+      render json: { message: e.message, success: false }, status: :not_found
+      return
+    end
+
+    @invitations = Invitation.where(from_id: @team.id, assignment_id: @team.parent_id)
+    render json: @invitations, status: :ok
+  end
+
 
   private
 

@@ -62,8 +62,13 @@ class Invitation < ApplicationRecord
                           only: %i[id reply_status created_at updated_at],
                           include: {
                             assignment: { only: %i[id name] },
-                            from_participant: { only: %i[id name fullname email] },
-                            to_uto_participantser: { only: %i[id name fullname email] }
+                            from_team: { only: %i[id name] },
+                            to_participant: {    
+                              only: [:id],
+                              methods: [:fullname],
+                              include: {
+                                user: { only: %i[id name full_name email] }
+                              }}
                           }
                         })).tap do |hash|
     end
