@@ -14,36 +14,43 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.4.5'
-          bundler-cache: false
-        env:
-          RUBY_VERSION: '3.4.5'
+      - name: Set up Ruby using rbenv
+        run: |
+          curl -fsSL https://github.com/rbenv/rbenv-installer/raw/HEAD/bin/rbenv-installer | bash
+          echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+          echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+          export PATH="$HOME/.rbenv/bin:$PATH"
+          eval "$(rbenv init -)"
+          rbenv install 3.4.5
+          rbenv global 3.4.5
+          rbenv rehash
 
       - name: Check Ruby Version
         run: |
+          export PATH="$HOME/.rbenv/bin:$PATH"
+          eval "$(rbenv init -)"
           ruby -v
           which ruby
           gem env
           echo "RUBY_VERSION=$(ruby -v | cut -d' ' -f2)" >> $GITHUB_ENV
 
       - name: Install dependencies
-        env:
-          RUBY_VERSION: '3.4.5'
         run: |
+          export PATH="$HOME/.rbenv/bin:$PATH"
+          eval "$(rbenv init -)"
           gem update --system
           gem install bundler:2.4.7
           bundle config set --local deployment 'false'
           bundle config set --local without ''
           bundle config set --local force_ruby_platform true
           bundle config set --local path 'vendor/bundle'
-          bundle config set --local ruby_version '3.4.5'
           bundle install --verbose
 
 
       - name: Run Danger
         env:
           DANGER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: bundle exec danger --verbose
+        run: |
+          export PATH="$HOME/.rbenv/bin:$PATH"
+          eval "$(rbenv init -)"
+          bundle exec danger --verbose
