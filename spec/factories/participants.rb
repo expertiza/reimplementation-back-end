@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-FactoryBot.define do  
+FactoryBot.define do
   factory :assignment_participant, class: 'AssignmentParticipant' do
     association :user
     association :assignment, factory: :assignment
