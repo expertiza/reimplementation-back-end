@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module ParticipantsHelper
   # ===========================================================
   # A participant can be one of the following authorizations:

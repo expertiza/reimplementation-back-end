@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/validators/invitation_validator.rb
 class InvitationValidator < ActiveModel::Validator
   ACCEPT_STATUS = 'A'.freeze

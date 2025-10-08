@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 RSpec.describe SurveyResponseMap, type: :model do
     describe '#survey?' do
         it 'returns true' do

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 
 class FeedbackResponseMap < ResponseMap 
     belongs_to :review, class_name: 'Response', foreign_key: 'reviewed_object_id'

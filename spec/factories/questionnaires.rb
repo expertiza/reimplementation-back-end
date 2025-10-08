@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # spec/factories/questionnaires.rb
 FactoryBot.define do
   factory :questionnaire do

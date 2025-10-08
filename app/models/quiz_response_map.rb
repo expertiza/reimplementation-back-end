@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class QuizResponseMap < ResponseMap
   belongs_to :quiz_questionnaire, foreign_key: 'reviewed_object_id', inverse_of: false
   belongs_to :assignment, inverse_of: false
