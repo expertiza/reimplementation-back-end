@@ -2,6 +2,7 @@
 
 class AssignmentParticipant < Participant
   belongs_to :user
+  belongs_to :duty, optional: true
   validates :handle, presence: true
 
 
@@ -15,5 +16,4 @@ class AssignmentParticipant < Participant
                   end
     self.save
   end
-
 end

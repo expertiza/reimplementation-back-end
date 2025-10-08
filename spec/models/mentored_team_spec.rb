@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# spec/models/mentored_team_spec.rb
 require 'rails_helper'
 
 RSpec.describe MentoredTeam, type: :model do
@@ -14,6 +13,7 @@ RSpec.describe MentoredTeam, type: :model do
   end
 
   let(:instructor) do
+    # This user will serve as the instructor for the assignment and duties
     User.create!(
       name:            "instructor",
       full_name:       "Instructor User",
@@ -24,8 +24,8 @@ RSpec.describe MentoredTeam, type: :model do
     )
   end
 
-  let!(:assignment)  { Assignment.create!(name: "Assignment 1", instructor_id: instructor.id, max_team_size: 3) }
-  let!(:course)      { Course.create!(name: "Course 1", instructor_id: instructor.id, institution_id: institution.id, directory_path: "/course1") }
+  let!(:assignment) { Assignment.create!(name: "Assignment 1", instructor_id: instructor.id, max_team_size: 3) }
+  let!(:course) { Course.create!(name: "Course 1", instructor_id: instructor.id, institution_id: institution.id, directory_path: "/course1") }
 
   let(:user) do
     User.create!(
@@ -33,12 +33,13 @@ RSpec.describe MentoredTeam, type: :model do
       full_name:       "Student User",
       email:           "student@example.com",
       password_digest: "password",
-      role_id:          roles[:student].id,
+      role_id:         roles[:student].id,
       institution_id:  institution.id
     )
   end
 
   let(:mentored_team) do
+    # Create the team with validation disabled, so we can test validation separately
     t = MentoredTeam.new(name: "MentoredTeam #{SecureRandom.hex(4)}", parent_id: assignment.id, assignment: assignment)
     t.save!(validate: false)
     t
@@ -54,22 +55,24 @@ RSpec.describe MentoredTeam, type: :model do
       # Build an unsaved MentoredTeam with no participants
       mt = MentoredTeam.new(name: 'mt_no_mentor', parent_id: assignment.id, assignment: assignment, type: 'MentoredTeam')
       expect(mt).not_to be_valid
-      expect(mt.errors[:base]).to include('mentor must be present')
+      expect(mt.errors[:base]).to include('a mentor must be present')
     end
 
     it 'rejects a mentor participant who does not have a mentor duty' do
       # Build an in-memory team and attach a participant with a non-mentor duty
       mt = MentoredTeam.new(name: 'mt_bad_duty', parent_id: assignment.id, assignment: assignment, type: 'MentoredTeam')
 
-      # create a non-mentor duty and an assignment participant
-      non_mentor_duty = Duty.new(name: 'helper', assignment: assignment, max_members_for_duty: 1)
+      # Create a Duty and associate it with the assignment through the join table
+      non_mentor_duty = Duty.create!(name: 'helper', instructor: instructor)
+      assignment.duties << non_mentor_duty # This creates the AssignmentsDuty record
+
       participant = build(:assignment_participant, assignment: assignment)
       participant.duty = non_mentor_duty
 
-      # attach participant via teams_participants in-memory
+      # Attach participant via teams_participants in-memory
       mt.teams_participants.build(participant: participant, user: participant.user)
       expect(mt).not_to be_valid
-      expect(mt.errors[:base]).to include('mentor must be present')
+      expect(mt.errors[:base]).to include('a mentor must be present')
     end
   end
 
@@ -79,56 +82,59 @@ RSpec.describe MentoredTeam, type: :model do
 
   describe 'team management' do
     let(:enrolled_user) { create(:user) }
-    let(:mentor_user)   { create(:user, name: 'mentor_user', email: "mentor_#{SecureRandom.hex(3)}@example.com") }
+    let(:mentor_user) { create(:user, name: 'mentor_user', email: "mentor_#{SecureRandom.hex(3)}@example.com") }
 
     before do
-      # ensure assignment participant exists for enrolled_user
+      # Ensure an assignment participant exists for the enrolled_user
       @participant = create(:assignment_participant, user: enrolled_user, assignment: assignment)
     end
 
     it 'can add enrolled user' do
-      # mentored_team persisted via let(:mentored_team) (validate:false)
       result = mentored_team.add_member(enrolled_user)
-      # MentoredTeam#add_member returns boolean true/false; underlying Team#add_member returns {success: true}
       expect(result).to be_truthy
       expect(mentored_team.participants.map(&:user_id)).to include(enrolled_user.id)
     end
 
     it 'cannot add mentor as member' do
-      # create a mentor duty and participant that is a mentor
-      mentor_duty = Duty.create!(name: 'Mentor', assignment: assignment, max_members_for_duty: 1)
+      # SCHEMA CHANGE: Create a mentor duty and associate it with the instructor
+      mentor_duty = Duty.create!(name: 'Mentor', instructor: instructor)
+      # Link the duty to the assignment
+      assignment.duties << mentor_duty
+
       mentor_participant = create(:assignment_participant, user: mentor_user, assignment: assignment)
       mentor_participant.update!(duty: mentor_duty)
 
-      # attempting to add a mentor as a normal member should fail
+      # Attempting to add a mentor as a normal member should fail
       res = mentored_team.add_member(mentor_user)
       expect(res).to be_falsey
       expect(mentored_team.participants.map(&:user_id)).not_to include(mentor_user.id)
     end
 
     it 'can assign new mentor' do
-      # add a mentor duty to assignment so find_mentor_duty can find it
-      Duty.create!(name: 'mentor role', assignment: assignment, max_members_for_duty: 1)
+      # Create a mentor duty and associate it with the assignment
+      mentor_duty = Duty.create!(name: 'mentor role', instructor: instructor)
+      assignment.duties << mentor_duty
 
-      # call assign_mentor on mentored_team for a user not previously a participant
+      # Call assign_mentor on the team for a user not previously a participant
       res = mentored_team.assign_mentor(mentor_user)
       expect(res).to be true
 
-      # verify the participant was created and has a duty that includes 'mentor'
+      # Verify the participant was created and has a duty that includes 'mentor'
       mp = assignment.participants.find_by(user_id: mentor_user.id)
       expect(mp).not_to be_nil
       expect(mp.duty).not_to be_nil
       expect(mp.duty.name.downcase).to include('mentor')
 
-      # ensure the user was also added to the team (TeamsParticipant created)
+      # Ensure the user was also added to the team (TeamsParticipant created)
       expect(mentored_team.participants.map(&:user_id)).to include(mentor_user.id)
     end
 
-    it 'cannot assign non-mentor as mentor' do
-      # Remove any mentor duty on assignment (ensure none exist)
+    it 'cannot assign mentor when no mentor duty is available' do
+      # This test remains valid. `assignment.duties` is now an association through
+      # the join table, and destroying it will correctly remove the associations.
       assignment.duties.destroy_all if assignment.duties.any?
 
-      # assign_mentor should return false when no mentor duty exists
+      # assign_mentor should return false when no mentor duty exists on the assignment
       res = mentored_team.assign_mentor(mentor_user)
       expect(res).to be false
     end

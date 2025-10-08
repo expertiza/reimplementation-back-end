@@ -9,6 +9,10 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "articles#index"
   post '/login', to: 'authentication#login'
+      resources :duties
+      resources :assignments do
+        resources :duties, controller: 'assignments_duties', only: [:create, :destroy]
+      end
       resources :institutions
       resources :roles do
         collection do

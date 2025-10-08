@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_27_171132) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_19_160547) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -106,6 +106,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_171132) do
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
 
+  create_table "assignments_duties", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "assignment_id", null: false
+    t.bigint "duty_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "index_assignments_duties_on_assignment_id"
+    t.index ["duty_id"], name: "index_assignments_duties_on_duty_id"
+  end
+
   create_table "bookmark_ratings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.integer "bookmark_id"
     t.integer "user_id"
@@ -164,11 +173,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_171132) do
 
   create_table "duties", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
-    t.integer "max_members_for_duty"
-    t.integer "assignment_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["assignment_id"], name: "index_duties_on_assignment_id"
+    t.bigint "instructor_id"
+    t.boolean "private", default: false
+    t.index ["instructor_id"], name: "index_duties_on_instructor_id"
   end
 
   create_table "institutions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -415,8 +424,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_27_171132) do
   add_foreign_key "account_requests", "roles"
   add_foreign_key "assignments", "courses"
   add_foreign_key "assignments", "users", column: "instructor_id"
+  add_foreign_key "assignments_duties", "assignments"
+  add_foreign_key "assignments_duties", "duties"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
+  add_foreign_key "duties", "users", column: "instructor_id"
   add_foreign_key "items", "questionnaires"
   add_foreign_key "participants", "duties"
   add_foreign_key "participants", "join_team_requests"
