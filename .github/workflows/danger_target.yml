@@ -2,26 +2,40 @@ name: Danger
 on:
   pull_request_target:
     types: [opened, synchronize, reopened]
+
 jobs:
   danger:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
+      - name: Remove .ruby-version if exists
+        run: |
+          if [ -f .ruby-version ]; then
+            echo "Removing .ruby-version file"
+            rm .ruby-version
+          fi
+
       - name: Set up Ruby
-        uses: ruby/setup-ruby@v1.257.0
+        uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.4.5'
+          bundler-cache: true
 
-      - name: Install dependencies
-        run: bundle install
-
+      - name: Verify Ruby Version
+        run: |
+          echo "Ruby version:"
+          ruby -v
+          echo "Ruby path:"
+          which ruby
+          echo "Gem environment:"
+          gem env
 
       - name: Run Danger
         env:
