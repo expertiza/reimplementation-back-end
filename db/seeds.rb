@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 begin
     #Create an institution
     inst_id = Institution.create!(

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class GlobalSurveyResponseMap < SurveyResponseMap
     belongs_to :questionnaire, foreign_key: 'reviewed_object_id'
     def questionnaire

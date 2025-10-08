@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Item < ApplicationRecord
   before_create :set_seq
   belongs_to :questionnaire # each item belongs to a specific questionnaire

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class JoinTeamRequest < ApplicationRecord
   belongs_to :team
   belongs_to :participant

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddUserIdToTeamsParticipants < ActiveRecord::Migration[8.0]
   def change
     add_column :teams_participants, :user_id, :integer

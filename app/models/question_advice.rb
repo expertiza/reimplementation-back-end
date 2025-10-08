@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class QuestionAdvice < ApplicationRecord
     belongs_to :item
     def self.export_fields(_options)

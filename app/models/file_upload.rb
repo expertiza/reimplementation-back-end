@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/models/file_upload.rb
 class FileUpload < Item
     def edit(_count)
