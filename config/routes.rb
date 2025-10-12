@@ -128,7 +128,8 @@ Rails.application.routes.draw do
         collection do
           get :view          
           get :mentor
-          get :remove_participant        
+          get :remove_participant
+          put '/leave', to: 'student_teams#leave_team'        
         end
       end
 
