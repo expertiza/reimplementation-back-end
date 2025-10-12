@@ -124,7 +124,7 @@ Rails.application.routes.draw do
           get :view          
           get :mentor
           get :remove_participant
-          get :auto_complete_for_user_name        
+          put '/leave', to: 'student_teams#leave_team'        
         end
       end
 
