@@ -36,15 +36,14 @@ class AssignmentTeam < Team
   # - Update the participant's team_id (so their direct reference is consistent)
   # - Ensure there is a TeamsParticipant join record connecting the participant and this team
   def add_participant(participant)
-    # Update the participant's team_id column
-    participant.update!(team_id: id)
     # need to have a check if the team is full then it can not add participant to the team
+    raise TeamFullError, "Team is full." if full?
+
+    # Update the participant's team_id column - will remove the team reference inside participants table later. keeping it for now
+    participant.update!(team_id: id)
 
     # Create or reuse the join record to maintain the association
-    TeamsParticipant.find_or_create_by!(
-      participant_id: participant.id,
-      team_id: id
-    )
+    TeamsParticipant.find_or_create_by!(participant_id: participant.id, team_id: id, user_id: participant.user_id)
   end
 
   def fullname
@@ -86,6 +85,7 @@ class AssignmentTeam < Team
     unless self.kind_of?(AssignmentTeam)
       errors.add(:type, 'must be an AssignmentTeam or its subclass')
     end
-  end    
+  end
+end 
 
-end
+class TeamFullError < StandardError; end

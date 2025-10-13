@@ -1,5 +1,6 @@
 class InvitationsController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :invite_not_found
+  before_action :set_invitation, only: %i[show update destroy]
 
   # GET /invitations
   def index
@@ -15,26 +16,28 @@ class InvitationsController < ApplicationController
       @invitation.send_invite_email
       render json: @invitation, status: :created
     else
-      render json: { message: @invitation.errors , success: false}, status: :unprocessable_entity
+      render json: { error: @invitation.errors[:base]}, status: :unprocessable_entity
     end
   end
 
   # GET /invitations/:id
   def show
-    @invitation = Invitation.find(params[:id])
     render json: @invitation, status: :ok
   end
 
   # PATCH /invitations/:id
   def update
-    @invitation = Invitation.find(params[:id])
     case params[:reply_status]
     when InvitationValidator::ACCEPT_STATUS
-      @invitation.accept_invitation(nil)
-      render json: @invitation, status: :ok
+      result = @invitation.accept_invitation
+      if result[:success]
+        render json: { success: true, message: result[:message], invitation: @invitation}, status: :ok
+      else
+        render json: { error: result[:error] }, status: :unprocessable_entity
+      end
     when InvitationValidator::REJECT_STATUS
-      @invitation.decline_invitation(nil)
-      render json: @invitation, status: :ok
+      @invitation.decline_invitation
+      render json: { success: true, message: "Invitation rejected successfully", invitation: @invitation}, status: :ok
     else
       render json: @invitation.errors, status: :unprocessable_entity
     end
@@ -42,9 +45,16 @@ class InvitationsController < ApplicationController
 
   # DELETE /invitations/:id
   def destroy
-    @invitation = Invitation.find(params[:id])
-    @invitation.retract_invitation(nil)
-    render nothing: true, status: :no_content
+    @invitation.retract_invitation
+    render json: { message: "Invitation retracted successfully." }, status: :ok
+
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Invitation not found." }, status: :not_found
+  rescue ActiveRecord::RecordNotDestroyed => e
+    render json: { error: "Failed to retract invitation: #{e.record.errors.full_messages.to_sentence}" },
+          status: :unprocessable_entity
+  rescue => e
+    render json: { error: "Unexpected error: #{e.message}" }, status: :internal_server_error
   end
 
   def invitations_sent_to_participant
@@ -76,12 +86,29 @@ class InvitationsController < ApplicationController
 
   # only allow a list of valid invite params
   def invite_params
-    params.require(:invitation).permit(:id, :assignment_id, :from_id, :to_id, :reply_status)
+    params.require(:invitation).permit(:id, :assignment_id, :reply_status).merge(from_team: inviter_team, to_participant: invitee_participant)
   end
 
   # helper method used when invite is not found
   def invite_not_found
-    render json: { error: "Invitation with id #{params[:id]} not found" }, status: :not_found
+    render json: { error: "Invitation not found" }, status: :not_found
   end
 
+  # helper method used to fetch invitation from its id
+  def set_invitation
+    @invitation = Invitation.find(params[:id])
+  end
+
+  def inviter_team
+    inviter_participant = AssignmentParticipant.find_by(user: current_user)    
+    inviter_participant.team
+  end
+
+  def invitee_participant
+    invitee_user = User.find_by(name: params[:username])
+    unless invitee_user
+      render json: { error: "Participant with #{params[:username]} not found" }, status: :not_found
+    end
+    AssignmentParticipant.find_by(parent_id: params[:assignment_id], user: invitee_user)
+  end
 end
