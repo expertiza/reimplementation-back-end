@@ -18,13 +18,13 @@ class Api::V1::StudentTeamsController < ApplicationController
 
     attr_writer :student
 
-    before_action :team, only: %i[edit update]
+    before_action :team, only: %i[view edit update]
     before_action :student, only: %i[view update edit create leave]
 
     def action_allowed?
         # this can be accessed only by the student and so someone with atleast TA priviliges wont be able to access this controller
-        # also the current logged in user can view its relevant team and not other student teams.
-        if current_user_has_ta_privileges? || @student.nil? || !current_user_has_id?(student.user_id)
+        # also the current logged in user can view only its relevant team and not other student teams.      
+        if current_user_has_ta_privileges? || student.nil? || !current_user_has_id?(student.user_id)
             render json: { error: "You do not have permission to perform this action." }, status: :forbidden
         end
         return true
@@ -33,7 +33,7 @@ class Api::V1::StudentTeamsController < ApplicationController
     # GET /student_teams/view?student_id=${studentId}`
     # it will give the team details of which the student is a member 
     def view
-        render json: team, status: :ok
+        render json: @team, serializer: TeamSerializer, status: :ok
     end
 
     def update

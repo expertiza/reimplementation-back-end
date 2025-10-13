@@ -26,42 +26,50 @@ class Invitation < ApplicationRecord
 
   # send invite email
   def send_invite_email
-    InvitationSentMailer.with(invitation: self)
+    InvitationMailer.with(invitation: self)
                         .send_invitation_email
                         .deliver_later
   end
 
   # This method handles all that needs to be done upon a user accepting an invitation.
   def accept_invitation
-    inviter_team = from_team                  # Team that sent the invitation
-    invitee_team = to_participant.team        # Team of the invited participant
+    inviter_team = from_team
+    invitee_team = to_participant.team
 
-    # 1. Update the participant’s and team's assigned topic
-    inviter_signed_up_team = SignedUpTeam.find_by(team_id: invitee_team.id)
-    invitee_signed_up_team = SignedUpTeam.find_by(team_id: inviter_team.id)
-    SignedUpTeam.update_topic_after_invite_accept(
-      inviter_signed_up_team,
-      invitee_signed_up_team
-    )
+    print inviter_team.attributes
+    print invitee_team.attributes
 
-    # 2. Remove participant from their old team
-    invitee_team.remove_participant(to_participant)
+    # Wrap in transaction to prevent partial updates and concurrency
+    ActiveRecord::Base.transaction do
+      inviter_team.add_participant(to_participant)      
 
-    # 3. Add the invitee to the inviter's team
-    inviter_team.add_participant(to_participant)
+      inviter_signed_up_team = SignedUpTeam.find_by(team_id: invitee_team.id)
+      invitee_signed_up_team = SignedUpTeam.find_by(team_id: inviter_team.id)
 
-    # 4. Mark this invitation as accepted
-    update!(reply_status: InvitationValidator::ACCEPT_STATUS)
+      SignedUpTeam.update_topic_after_invite_accept(inviter_signed_up_team,invitee_signed_up_team)
+
+      invitee_team.remove_participant(to_participant)
+
+      update!(reply_status: InvitationValidator::ACCEPT_STATUS)
+    end
+
+    { success: true, message: "Invitation accepted successfully." }
+
+  rescue TeamFullError => e
+    { success: false, error: e.message }
+  rescue => e
+    { success: false, error: "Unexpected error: #{e.message}" }
   end
 
+
   # This method handles all that needs to be done upon an user declining an invitation.
-  def decline_invitation(_logged_in_user)
-    update(reply_status: InvitationValidator::REJECT_STATUS)
+  def decline_invitation
+    update(reply_status: InvitationValidator::REJECT_STATUS)  
   end
 
   # This method handles all that need to be done upon an invitation retraction.
-  def retract_invitation(_logged_in_user)
-    destroy
+  def retract_invitation
+    destroy!
   end
 
   # This will override the default as_json method in the ApplicationRecord class and specify

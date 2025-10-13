@@ -20,13 +20,13 @@ class InvitationValidator < ActiveModel::Validator
 
   def validate_reply_status(record)
     unless record.reply_status.present? && record.reply_status.length <= 1
-      record.errors.add(:reply_status, REPLY_STATUS_ERROR_MSG)
+      record.errors.add(:base, REPLY_STATUS_ERROR_MSG)
     end
   end
 
   def validate_reply_status_inclusion(record)
     unless [ACCEPT_STATUS, REJECT_STATUS, WAITING_STATUS].include?(record.reply_status)
-      record.errors.add(:reply_status, REPLY_STATUS_INCLUSION_ERROR_MSG)
+      record.errors.add(:base, REPLY_STATUS_INCLUSION_ERROR_MSG)
     end
   end
 
@@ -38,13 +38,13 @@ class InvitationValidator < ActiveModel::Validator
       reply_status: record.reply_status
     }
     if Invitation.where(conditions).exists?
-      record.errors[:base] << DUPLICATE_INVITATION_ERROR_MSG
+      record.errors.add(:base, DUPLICATE_INVITATION_ERROR_MSG)
     end
   end
 
   def validate_to_from_different(record)
     if record.from_id == record.to_id
-      record.errors.add(:from_id, TO_FROM_SAME_ERROR_MSG)
+      record.errors.add(:base, TO_FROM_SAME_ERROR_MSG)
     end
   end
 end
