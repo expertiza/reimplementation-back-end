@@ -45,36 +45,21 @@ class Team < ApplicationRecord
     scope.teams.any? { |team| team.participants.include?(participant) }
   end
 
-  # Adds participant in the team
-  def add_member(participant_or_user)
-    participant =
-      case participant_or_user
-      when AssignmentParticipant, CourseParticipant
-        participant_or_user
-      when User
-        participant_type = is_a?(AssignmentTeam) ? AssignmentParticipant : CourseParticipant
-        participant_type.find_by(user_id: participant_or_user.id, parent_id: parent_id)
-      else
-        nil
-      end
+  # Adds a participant to the team.
+  # This method now expects a Participant object directly.
+  def add_member(participant)
+    # Fail fast if the team is already full.
+    return { success: false, error: "Team is at full capacity." } if full?
 
-    return { success: false, error: "#{participant_or_user.name} is not a participant in this #{is_a?(AssignmentTeam) ? 'assignment' : 'course'}" } if participant.nil?
-    return { success: false, error: "Participant already on the team" } if participants.exists?(id: participant.id)
-    return { success: false, error: "Unable to add participant: team is at full capacity." } if full?
-
-    team_participant = TeamsParticipant.create(
-      participant_id: participant.id,
-      team_id: id,
-      user_id: participant.user_id
-    )
-
-    if team_participant.persisted?
-      { success: true }
-    else
-      { success: false, error: team_participant.errors.full_messages.join(', ') }
-    end
-  rescue StandardError => e
-    { success: false, error: e.message }
+    # Check if this participant is already on a team in this context.
+    return { success: false, error: "Participant is already on a team for this context." } if participant_on_team?(participant)
+    
+    # Use create! to add the participant to the team.
+    teams_participants.create!(participant: participant, user: participant.user)
+    { success: true }
+  rescue ActiveRecord::RecordInvalid => e
+    # Catch potential validation errors from TeamsParticipant.
+    { success: false, error: e.record.errors.full_messages.join(', ') }
   end
 
   # Determines whether a given participant is eligible to join the team.

@@ -14,16 +14,14 @@ class MentoredTeam < AssignmentTeam
   alias_method :mentor_user, :mentor
 
   # Adds members to the team who are not mentors
-  def add_member(user)
-    participant = assignment.participants.find_by(user_id: user.id)
-    return false if participant&.duty&.name&.downcase&.include?('mentor')
-
-    res = super(user)
-    if res.is_a?(Hash)
-      res[:success]
-    else
-      !!res
+  def add_member(participant)
+    # Fail fast if the participant's duty is 'mentor'.
+    if participant.duty&.name&.downcase&.include?('mentor')
+      return { success: false, error: 'Mentors cannot be added as regular members.' }
     end
+
+    # If not a mentor, proceed with the standard add_member logic.
+    super(participant)
   end
 
   # Assigning a user as mentor of the team
@@ -44,7 +42,7 @@ class MentoredTeam < AssignmentTeam
 
     participant.save!
 
-    if participant.duty != duty
+    unless participant.duty == duty
       participant.duty = duty
       participant.save!
     end

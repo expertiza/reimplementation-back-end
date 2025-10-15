@@ -40,26 +40,30 @@ class TeamsController < ApplicationController
   end
 
   # POST /teams/:id/members
-  # Adds a new member to the team unless it's already full
+  # Adds a new member to the team.
   def add_member
-    return render json: { errors: ['Team is full'] }, status: :unprocessable_entity if @team.full?
-
+    # Find the user specified in the request.
     user = User.find(team_participant_params[:user_id])
-    participant = Participant.find_by(user: user, parent_id: @team.parent_id)
 
+    # Determine the correct type of participant (Assignment or Course) based on the team type.
+    participant_class = @team.is_a?(AssignmentTeam) ? AssignmentParticipant : CourseParticipant
+    
+    # Find the specific participant record for this user in the team's context.
+    participant = participant_class.find_by(user_id: user.id, parent_id: @team.parent_id)
+
+    # If no participant record exists, the user isn't part of the assignment/course.
     unless participant
-      return render json: { error: 'Participant not found for this team context' }, status: :not_found
+      return render json: { errors: ["#{user.name} is not a participant in this context."] }, status: :unprocessable_entity
     end
 
-    teams_participants = @team.teams_participants.build(participant: participant, user: participant.user)
+    # Delegate the add operation to the Team model with the found participant.
+    result = @team.add_member(participant)
 
-    if teams_participants.save
-      render json: participant.user, serializer: UserSerializer, status: :created
+    if result[:success]
+      render json: user, serializer: UserSerializer, status: :created
     else
-      render json: { errors: teams_participants.errors.full_messages }, status: :unprocessable_entity
+      render json: { errors: [result[:error]] }, status: :unprocessable_entity
     end
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: 'User not found' }, status: :not_found
   end
 
   # DELETE /teams/:id/members/:user_id
