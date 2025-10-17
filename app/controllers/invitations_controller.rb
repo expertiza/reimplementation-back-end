@@ -81,7 +81,6 @@ class InvitationsController < ApplicationController
 
   def invitations_sent_to_participant
     begin
-      @participant = AssignmentParticipant.find(params[:participant_id])
     rescue ActiveRecord::RecordNotFound => e
       render json: { message: e.message, success:false }, status: :not_found
       return

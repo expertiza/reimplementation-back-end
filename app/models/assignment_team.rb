@@ -47,6 +47,9 @@ class AssignmentTeam < Team
     # Remove the join record if it exists
     tp = TeamsParticipant.find_by(team_id: id, participant_id: participant.id)
     tp&.destroy
+    
+    # Update the participant's team_id column - will remove the team reference inside participants table later. keeping it for now
+    participant.update!(team_id: nil)
 
     # If no participants remain after removal, delete the team
     destroy if participants.empty?
