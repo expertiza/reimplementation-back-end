@@ -124,7 +124,7 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :student_teams, only: %i[create edit update] do
+      resources :student_teams, only: %i[create update] do
         collection do
           get :view          
           get :mentor

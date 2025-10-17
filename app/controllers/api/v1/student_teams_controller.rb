@@ -4,7 +4,7 @@ class Api::V1::StudentTeamsController < ApplicationController
     def team
         @team ||= if params[:student_id].present? && student.present?
                     student.team 
-                  else
+                elsif params[:team_id].present?
                     AssignmentTeam.find_by(id:params[:team_id])
                   end
     end
@@ -18,48 +18,76 @@ class Api::V1::StudentTeamsController < ApplicationController
 
     attr_writer :student
 
-    before_action :team, only: %i[view edit update]
-    before_action :student, only: %i[view update edit create leave]
+    before_action :team, :student, only: %i[view update leave_team]
 
     def action_allowed?
         # this can be accessed only by the student and so someone with atleast TA priviliges wont be able to access this controller
         # also the current logged in user can view only its relevant team and not other student teams.      
         if current_user_has_ta_privileges? || student.nil? || !current_user_has_id?(student.user_id)
             render json: { error: "You do not have permission to perform this action." }, status: :forbidden
-        end
+        end        
         return true
     end
 
     # GET /student_teams/view?student_id=${studentId}`
-    # it will give the team details of which the student is a member 
+    # Returns details of the team that the current student belongs to. 
     def view
-        render json: @team, serializer: TeamSerializer, status: :ok
+        if @team.nil?
+            render json: { assignment: AssignmentSerializer.new(student.assignment), team: nil, message: "You are not part of any team currently."}, status: :ok
+        else
+            render json: {assignment: AssignmentSerializer.new(student.assignment), team: TeamSerializer.new(@team)}, status: :ok
+        end
     end
 
-    def update
-        matching_teams = AssignmentTeam.where(name: params[:team][:name], parent_id: team.parent_id)
+    # POST /student_teams/`
+    def create
+        # Checks for duplicate team names within the same assignment (by parent_id).
+        matching_teams = AssignmentTeam.where(name: params[:team][:name], parent_id: params[:assignment_id])
 
+        # no team with that name found - goes ahead and creates the team
         if matching_teams.empty?
-            if team.update(name: params[:team][:name])
-            render json: { message: "Team updated successfully", team: team, success: true }, status: :ok
+            team = AssignmentTeam.new({ name: params[:team][:name], parent_id: params[:assignment_id]})
+            if team.save
+                # adding the student as the participant for the student_team just created
+                team.add_participant(student)
+                serialized_team = ActiveModelSerializers::SerializableResource.new(team, serializer: TeamSerializer).as_json
+                render json: serialized_team.merge({ message: "Team created successfully", success: true }), status: :ok
             else
-            render json: { error: team.errors.full_messages }, status: :unprocessable_entity
+                render json: { error: team.errors.full_messages }, status: :unprocessable_entity
             end
 
         else
-            Rails.logger.info(
-            "[StudentTeamsController] User=#{current_user.name} tried to update team name to '#{params[:team][:name]}' but it already exists"
-            )
-            render json: { error: "That team name is already in use." }, status: :unprocessable_entity
+            # Returns an error if another team with the same name already exists.
+            render json: { error: "#{params[:team][:name]} is already in use." }, status: :unprocessable_entity
+        end
+    end
+
+    # Updates the name of the student's team.
+    def update
+        # Checks for duplicate team names within the same assignment (by parent_id).
+        matching_teams = AssignmentTeam.where(name: params[:team][:name], parent_id: team.parent_id)
+
+        # no team with that name found - goes ahead and saves the new name
+        if matching_teams.empty?
+            if team.update(name: params[:team][:name])
+                serialized_team = ActiveModelSerializers::SerializableResource.new(team, serializer: TeamSerializer).as_json
+                render json: serialized_team.merge({ message: "Team updated successfully", success: true }), status: :ok
+            else
+                render json: { error: team.errors.full_messages }, status: :unprocessable_entity
+            end
+
+        else
+            # Returns an error if another team with the same name already exists.
+            render json: { error: "#{params[:team][:name]} is already in use." }, status: :unprocessable_entity
         end
     end
 
     # method to remove the student from the current team. 
     # PUT /student_teams/leave?student_id=${studentId}
     def leave_team
-        print "leaving the current team #{params[:student_id]}"
+        @team.remove_participant(@student)
+        render json: { message: "Left the team successfully", success: true }, status: :ok
     end
-
 
     # used to check student team requirements
     def student_team_requirements_met?
@@ -67,8 +95,6 @@ class Api::V1::StudentTeamsController < ApplicationController
         return false if @student.team.nil?
         # checks that the student's team has a topic
         return false if @student.team.topic.nil?
-
-        # checks that the student has selected some topics
-        @student.assignment.topics?
+        true
     end
 end

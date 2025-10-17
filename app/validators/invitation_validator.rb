@@ -32,6 +32,7 @@ class InvitationValidator < ActiveModel::Validator
 
   def validate_duplicate_invitation(record)
     conditions = {
+      id: record&.id,
       to_id: record.to_id,
       from_id: record.from_id,
       assignment_id: record.assignment_id,

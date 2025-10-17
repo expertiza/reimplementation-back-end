@@ -1,6 +1,20 @@
 class Api::V1::InvitationsController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :invite_not_found
   before_action :set_invitation, only: %i[show update destroy]
+  before_action :invitee_participant, only: %i[create]
+
+  def action_allowed?
+    case params[:action]
+    when 'invitations_sent_to_participant'
+      @participant = AssignmentParticipant.find(params[:participant_id])
+      unless current_user_has_id?(@participant.user_id)
+        render json: { error: "You do not have permission to perform this action." }, status: :forbidden
+      end
+      return true 
+    else
+      return true
+    end
+  end
 
   # GET /api/v1/invitations
   def index
@@ -14,9 +28,9 @@ class Api::V1::InvitationsController < ApplicationController
     @invitation = Invitation.invitation_factory(invite_params)
     if @invitation.save
       @invitation.send_invite_email
-      render json: @invitation, status: :created
+      render json: { success: true, message: "Invitation successfully sent to #{params[:username]}", invitation: @invitation}, status: :created
     else
-      render json: { error: @invitation.errors[:base]}, status: :unprocessable_entity
+      render json: { error: @invitation.errors[:base].first}, status: :unprocessable_entity
     end
   end
 
@@ -46,7 +60,7 @@ class Api::V1::InvitationsController < ApplicationController
   # DELETE /api/v1/invitations/:id
   def destroy
     @invitation.retract_invitation
-    render json: { message: "Invitation retracted successfully." }, status: :ok
+    render json: { success:true, message: "Invitation retracted successfully." }, status: :ok
 
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Invitation not found." }, status: :not_found
@@ -59,7 +73,6 @@ class Api::V1::InvitationsController < ApplicationController
 
   def invitations_sent_to_participant
     begin
-      @participant = AssignmentParticipant.find(params[:participant_id])
     rescue ActiveRecord::RecordNotFound => e
       render json: { message: e.message, success:false }, status: :not_found
       return
@@ -107,7 +120,8 @@ class Api::V1::InvitationsController < ApplicationController
   def invitee_participant
     invitee_user = User.find_by(name: params[:username])
     unless invitee_user
-      render json: { error: "Participant with #{params[:username]} not found" }, status: :not_found
+      render json: { error: "Participant with username #{params[:username]} not found" }, status: :not_found
+      return
     end
     AssignmentParticipant.find_by(parent_id: params[:assignment_id], user: invitee_user)
   end
