@@ -45,10 +45,17 @@ class AssignmentTeam < Team
     # Create or reuse the join record to maintain the association
     TeamsParticipant.find_or_create_by!(participant_id: participant.id, team_id: id, user_id: participant.user_id)
   end
-
-  def fullname
-    name
-  end
+  
+  # Removes a participant from this team.
+  # - Delete the TeamsParticipant join record
+  # - If the team has no remaining members, destroy the team itself
+  def remove_participant(participant)
+    # Remove the join record if it exists
+    tp = TeamsParticipant.find_by(team_id: id, participant_id: participant.id)
+    tp&.destroy
+    
+    # Update the participant's team_id column - will remove the team reference inside participants table later. keeping it for now
+    participant.update!(team_id: nil)
 
   # Use current object (AssignmentTeam) as reviewee and create the ReviewResponseMap record
   def assign_reviewer(reviewer)

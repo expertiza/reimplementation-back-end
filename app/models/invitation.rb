@@ -41,20 +41,24 @@ class Invitation < ApplicationRecord
     inviter_team = from_team
     invitee_team = to_participant.team
 
-    print inviter_team.attributes
-    print invitee_team.attributes
-
     # Wrap in transaction to prevent partial updates and concurrency
     ActiveRecord::Base.transaction do
-      inviter_team.add_participant(to_participant)      
+      # 1. Add the invitee to the inviter's team
+      inviter_team.add_participant(to_participant)
+      
+      # if participant is member of an existing team then only step 2 and 3 makes sense. otherwise just need to add the participant to the inviter team
+      if invitee_team.present?
+        # 2. Update the participant’s and team's assigned topic
+        inviter_signed_up_team = SignedUpTeam.find_by(team_id: invitee_team.id)
+        invitee_signed_up_team = SignedUpTeam.find_by(team_id: inviter_team.id)
+  
+        SignedUpTeam.update_topic_after_invite_accept(inviter_signed_up_team,invitee_signed_up_team)
+  
+        # 3. Remove participant from their old team
+        invitee_team.remove_participant(to_participant)
+      end
 
-      inviter_signed_up_team = SignedUpTeam.find_by(team_id: invitee_team.id)
-      invitee_signed_up_team = SignedUpTeam.find_by(team_id: inviter_team.id)
-
-      SignedUpTeam.update_topic_after_invite_accept(inviter_signed_up_team,invitee_signed_up_team)
-
-      invitee_team.remove_participant(to_participant)
-
+      # 4. Mark this invitation as accepted
       update!(reply_status: InvitationValidator::ACCEPT_STATUS)
     end
 
@@ -86,7 +90,6 @@ class Invitation < ApplicationRecord
                             from_team: { only: %i[id name] },
                             to_participant: {    
                               only: [:id],
-                              methods: [:fullname],
                               include: {
                                 user: { only: %i[id name full_name email] }
                               }}
