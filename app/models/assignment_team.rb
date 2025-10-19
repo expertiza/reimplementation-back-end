@@ -1,6 +1,7 @@
 class AssignmentTeam < Team
     require File.dirname(__FILE__) + '/analytic/assignment_team_analytic'
     include AssignmentTeamAnalytic
+    include ReviewAggregator
     # include Scoring
   
     belongs_to :assignment, class_name: 'Assignment', foreign_key: 'parent_id'
@@ -289,20 +290,8 @@ class AssignmentTeam < Team
 
     # Computes the average review grade for an assignment team.
     # This method aggregates scores from all ReviewResponseMaps (i.e., all reviewers of the team).
-    def aggregate_review_grade 
-      obtained_score = 0
-
-      # Total number of reviewers for this team
-      total_reviewers = review_mappings.size
-
-      # Loop through each ReviewResponseMap (i.e., each reviewer)
-      review_mappings.each do |map|
-        # Add the review grade (normalized score between 0 and 1) to the total
-        obtained_score += map.review_grade
-      end
-
-      # Compute the average score across reviewers and convert it to a percentage
-      ((obtained_score / total_reviewers) * 100).round(2)
+    def aggregate_review_grade
+      compute_average_review_score(review_mappings)
     end
 
 end

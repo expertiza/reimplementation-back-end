@@ -182,10 +182,12 @@ class Api::V1::GradesController < ApplicationController
 
         # the maps that the authors I (the participant) reviewed used to give feedback on my reviews
         feedback_from_my_reviewees_maps = []
-           
-        my_reviews_of_other_teams_maps.each do |map|
-            feedback_from_my_reviewees_maps << FeedbackResponseMap.find_by(reviewed_object_id: map.id, reviewee_id: @participant.id)           
-        end
+
+        # Map each review to its corresponding FeedbackResponseMap, may return nil if not found
+        # Then remove all nil entries using .compact before adding them to the main array
+        feedback_from_my_reviewees_maps += my_reviews_of_other_teams_maps.map do |map|
+            FeedbackResponseMap.find_by(reviewed_object_id: map.id, reviewee_id: @participant.id)
+        end.compact
 
         feedback_scores_from_my_reviewees = get_heatgrid_data_for(feedback_from_my_reviewees_maps)
 
@@ -268,6 +270,7 @@ class Api::V1::GradesController < ApplicationController
         return {
             id: score.id,
             item_id:score.item_id,
+            txt: score.item.txt,
             answer:score.answer,
             comments:score.comments,
             reviewer_name: reviewer_name,
