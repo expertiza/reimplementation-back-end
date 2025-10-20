@@ -44,6 +44,8 @@ class Api::V1::GradesController < ApplicationController
         render json: get_our_scores_data
     end
 
+    # (GET /api/v1/grades/:assignment_id/view_my_scores)
+    # similar to view but scoped to the requesting student’s own scores given by its teammates and also .
     def view_my_scores
         render json: get_my_scores_data
     end
@@ -155,6 +157,7 @@ class Api::V1::GradesController < ApplicationController
         allowed_roles[action]&.include?(role)
     end
     
+    # returns the heatgrid data required for a team to view their scores and average score of their work for an assignment
     def get_our_scores_data
         reviews_of_our_work_maps = ReviewResponseMap.where(reviewed_object_id: @assignment.id, reviewee_id: @team.id).to_a
         reviews_of_our_work = get_heatgrid_data_for(reviews_of_our_work_maps)
@@ -166,6 +169,8 @@ class Api::V1::GradesController < ApplicationController
         }
     end
 
+    # returns the heatgrid data required for a participant to view their scores and average score of their work for an assignment
+    # the data includes the scores given by their teammates as well as the scores given by the authors the participant reviewed
     def get_my_scores_data
         # the set of review maps that my team members used to review me
         reviews_of_me_maps = TeammateReviewResponseMap.where(reviewed_object_id: @assignment.id, reviewee_id: @participant.id).to_a 
@@ -205,6 +210,7 @@ class Api::V1::GradesController < ApplicationController
         }
     end
 
+    # it returns the heatgrid data for a collection of maps (ReviewResponseMap/FeedbackResponseMap/TeammateReviewResponseMap)
     def get_heatgrid_data_for(maps)
         # Initialize a hash to store scores grouped by review rounds
         reviewee_scores = {}
