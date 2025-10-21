@@ -141,4 +141,22 @@ Rails.application.routes.draw do
           delete :delete_participants
         end
       end
+
+  namespace :api do
+    namespace :v1 do
+      resources :submitted_content do
+        collection do
+          get :download
+          get :folder_action
+          post :folder_action
+          get :remove_hyperlink
+          post :remove_hyperlink
+          get :submit_file
+          post :submit_file
+          get :submit_hyperlink
+          post :submit_hyperlink
+        end
+      end
+    end
+  end
 end

@@ -11,7 +11,7 @@ class Assignment < ApplicationRecord
   has_many :response_maps, foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :sign_up_topics , class_name: 'SignUpTopic', foreign_key: 'assignment_id', dependent: :destroy
-  has_many :due_dates,as: :parent, class_name: 'DueDate',  dependent: :destroy
+  has_many :due_dates, as: :parent, class_name: 'DueDate', dependent: :destroy
   belongs_to :course, optional: true
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments
 
@@ -27,6 +27,20 @@ class Assignment < ApplicationRecord
   end
   def num_review_rounds
     rounds_of_reviews
+  end
+
+  # Initializes the directory path for
+  def path
+    if course_id.nil? && instructor_id.nil?
+      raise 'The path cannot be created. The assignment must be associated with either a course or an instructor.'
+    end
+
+    path_text = if !course_id.nil? && course_id > 0
+                  "#{Rails.root}/pg_data/#{FileHelper.clean_path(instructor[:name])}/#{FileHelper.clean_path(course.directory_path)}/"
+                else
+                  "#{Rails.root}/pg_data/#{FileHelper.clean_path(instructor[:name])}/"
+                end
+    path_text + FileHelper.clean_path(directory_path)
   end
 
   # Add a participant to the assignment based on the provided user_id.

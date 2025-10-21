@@ -5,15 +5,28 @@ begin
     inst_id = Institution.create!(
       name: 'North Carolina State University',
     ).id
-    
+
+    roles = {}
+
+    roles[:super_admin] = Role.find_or_create_by!(name: "Super Administrator", parent_id: nil)
+
+    roles[:admin] = Role.find_or_create_by!(name: "Administrator", parent_id: roles[:super_admin].id)
+
+    roles[:instructor] = Role.find_or_create_by!(name: "Instructor", parent_id: roles[:admin].id)
+
+    roles[:ta] = Role.find_or_create_by!(name: "Teaching Assistant", parent_id: roles[:instructor].id)
+
+    roles[:student] = Role.find_or_create_by!(name: "Student", parent_id: roles[:ta].id)
+
+    puts "reached here"
     # Create an admin user
     User.create!(
       name: 'admin',
       email: 'admin2@example.com',
       password: 'password123',
       full_name: 'admin admin',
-      institution_id: 1,
-      role_id: 1
+      institution_id: inst_id,
+      role_id: roles[:admin].id
     )
     
 
@@ -57,6 +70,7 @@ begin
         name: Faker::Verb.base,
         instructor_id: instructor_user_ids[i%num_instructors],
         course_id: course_ids[i%num_courses],
+        directory_path: "assignment_#{i+1}",
         has_teams: true,
         private: false
       ).id
@@ -126,5 +140,6 @@ begin
 
 
 rescue ActiveRecord::RecordInvalid => e
+    puts e.message
     puts 'The db has already been seeded'
 end
