@@ -165,7 +165,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
 
         run_test! do
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
         end
       end
     end
@@ -265,7 +265,7 @@ RSpec.describe 'Submitted Content API', type: :request do
                params: { id: id, submission: submission },
                headers: auth_headers_student)
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           parsed = json
           expect(parsed['message']).to include('already submitted the same hyperlink')
         end
@@ -285,7 +285,7 @@ RSpec.describe 'Submitted Content API', type: :request do
                params: { id: id, submission: submission },
                headers: auth_headers_student)
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           parsed = json
           expect(parsed['error']).to include('The URL or URI is invalid')
         end
@@ -363,7 +363,7 @@ RSpec.describe 'Submitted Content API', type: :request do
                params: { id: id, chk_links: chk_links },
                headers: auth_headers_student)
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           parsed = json
           expect(parsed['error']).to include('There was an error deleting the hyperlink')
         end
@@ -440,17 +440,11 @@ RSpec.describe 'Submitted Content API', type: :request do
       context 'with invalid extension' do
         let(:id) { participant.id }
         let(:uploaded_file) do
-          temp_file = nil
-          Tempfile.create(['test', '.exe']) do |file|
-            file.write('test content')
-            file.rewind
-            temp_file = ActionDispatch::Http::UploadedFile.new(
-              tempfile: file,
-              filename: 'test.exe',
-              type: 'application/x-msdownload'
-            )
-          end
-          temp_file
+          Rack::Test::UploadedFile.new(
+            StringIO.new('test content'),
+            'application/x-msdownload',
+            original_filename: 'test.exe'
+          )
         end
 
         before do
@@ -465,7 +459,7 @@ RSpec.describe 'Submitted Content API', type: :request do
                params: { id: id, uploaded_file: uploaded_file },
                headers: auth_headers_student)
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           parsed = json
           expect(parsed['error']).to include('File extension does not match')
         end
@@ -474,17 +468,14 @@ RSpec.describe 'Submitted Content API', type: :request do
       context 'with valid file' do
         let(:id) { participant.id }
         let(:uploaded_file) do
-          temp_file = nil
-          Tempfile.create(['test', '.txt']) do |file|
-            file.write('test content')
-            file.rewind
-            temp_file = ActionDispatch::Http::UploadedFile.new(
-              tempfile: file,
-              filename: 'test.txt',
-              type: 'text/plain'
-            )
-          end
-          temp_file
+          file = Tempfile.new(['test', '.txt'])
+          file.write('test content')
+          file.rewind
+          ActionDispatch::Http::UploadedFile.new(
+            tempfile: file,
+            filename: 'test.txt',
+            type: 'text/plain'
+          )
         end
 
         before do
@@ -515,19 +506,16 @@ RSpec.describe 'Submitted Content API', type: :request do
       context 'with zip file and unzip flag' do
         let(:id) { participant.id }
         let(:uploaded_file) do
-          temp_file = nil
-          Tempfile.create(['test', '.zip']) do |file|
-            file.binmode  # Set binary mode for zip files
-            file.write('PK')  # Minimal zip file signature
-            file.write("\x03\x04" + "\x00" * 18)  # Basic zip header
-            file.rewind
-            temp_file = ActionDispatch::Http::UploadedFile.new(
-              tempfile: file,
-              filename: 'test.zip',
-              type: 'application/zip'
-            )
-          end
-          temp_file
+          file = Tempfile.new(['test', '.zip'])
+          file.binmode
+          file.write('PK')  # Minimal zip file signature
+          file.write("\x03\x04" + "\x00" * 18)  # Basic zip header
+          file.rewind
+          ActionDispatch::Http::UploadedFile.new(
+            tempfile: file,
+            filename: 'test.zip',
+            type: 'application/zip'
+          )
         end
 
         before do
@@ -695,6 +683,12 @@ RSpec.describe 'Submitted Content API', type: :request do
   end
 
   path '/api/v1/submitted_content/download' do
+    before(:all) do
+      require Rails.root.join('app/models/participant')
+      require Rails.root.join('app/models/assignment_participant')
+      require Rails.root.join('app/models/assignment_team')
+    end
+
     get('download file') do
       tags 'SubmittedContent'
       produces 'application/octet-stream'
@@ -703,8 +697,9 @@ RSpec.describe 'Submitted Content API', type: :request do
       parameter name: :id, in: :query, type: :string, required: true
 
       before do
-        allow(AssignmentParticipant).to receive(:find).and_return(participant)
-        allow(participant).to receive(:team).and_return(team)
+        # Ensure participant and team are created before the test runs
+        participant
+        team
       end
 
       response(400, 'folder name is nil') do
@@ -786,6 +781,12 @@ RSpec.describe 'Submitted Content API', type: :request do
   end
 
   describe 'Error handling' do
+    before(:all) do
+      require Rails.root.join('app/models/participant')
+      require Rails.root.join('app/models/assignment_participant')
+      require Rails.root.join('app/models/assignment_team')
+    end
+
     context 'when participant not found' do
       it 'returns 500 (RecordNotFound bubbles)' do
         allow(AssignmentParticipant).to receive(:find).and_raise(ActiveRecord::RecordNotFound)

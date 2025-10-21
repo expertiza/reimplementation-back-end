@@ -7,16 +7,19 @@ class Api::V1::SubmittedContentController < ApplicationController
   before_action :ensure_participant_team, only: [:submit_hyperlink, :remove_hyperlink, :submit_file, :folder_action, :download]
 
   # GET /api/v1/submitted_content
+  # Retrieves all submission records
   def index
     render json: SubmissionRecord.all, status: :ok
   end
 
   # GET /api/v1/submitted_content/:id
+  # Retrieves a specific submission record by ID
   def show
     render json: @submission_record, status: :ok
   end
 
   # POST /api/v1/submitted_content
+  # Creates a new submission record with automatic type detection (hyperlink or file)
   def create
     attrs = submitted_content_params
     attrs[:record_type] ||= attrs[:content].to_s.start_with?('http') ? 'hyperlink' : 'file'
@@ -25,42 +28,46 @@ class Api::V1::SubmittedContentController < ApplicationController
     if record.save
       render json: record, status: :created
     else
-      render json: record.errors, status: :unprocessable_entity
+      render json: record.errors, status: :unprocessable_content
     end
   end
 
   # POST /api/v1/submitted_content/submit_hyperlink
   # GET  /api/v1/submitted_content/submit_hyperlink
+  # Validates and submits a hyperlink for the participant's team
+  # Checks for blank submissions and duplicate hyperlinks before creating submission record
   def submit_hyperlink
-    team = @participant.team
+    team = current_team
     submission = params[:submission].to_s.strip
 
     if submission.blank?
-      return render json: { error: 'Submission cannot be blank' }, status: :bad_request
+      return render_error('Submission cannot be blank', :bad_request)
     end
 
     if team.hyperlinks.include?(submission)
-      return render json: { message: 'You or your teammate(s) have already submitted the same hyperlink.' }, status: :unprocessable_entity
+      return render_success('You or your teammate(s) have already submitted the same hyperlink.', :unprocessable_content)
     end
 
     begin
       team.submit_hyperlink(submission)
       create_submission_record_for('hyperlink', submission, 'Submit Hyperlink')
-      render json: { message: 'The link has been successfully submitted.' }, status: :ok
+      render_success('The link has been successfully submitted.')
     rescue StandardError => e
-      render json: { error: "The URL or URI is invalid. Reason: #{e.message}" }, status: :unprocessable_entity
+      render_error("The URL or URI is invalid. Reason: #{e.message}")
     end
   end
 
   # POST /api/v1/submitted_content/remove_hyperlink
   # GET  /api/v1/submitted_content/remove_hyperlink
+  # Removes a hyperlink at the specified index from the team's hyperlinks
+  # Creates a submission record for the removal action
   def remove_hyperlink
-    team = @participant.team
+    team = current_team
     index = params['chk_links'].to_i
     hyperlink_to_delete = team.hyperlinks[index]
 
     unless hyperlink_to_delete
-      return render json: { error: 'Hyperlink not found' }, status: :not_found
+      return render_error('Hyperlink not found', :not_found)
     end
 
     begin
@@ -68,35 +75,37 @@ class Api::V1::SubmittedContentController < ApplicationController
       create_submission_record_for('hyperlink', hyperlink_to_delete, 'Remove Hyperlink')
       head :no_content
     rescue StandardError => e
-      render json: { error: "There was an error deleting the hyperlink. Reason: #{e.message}" }, status: :unprocessable_entity
+      render_error("There was an error deleting the hyperlink. Reason: #{e.message}")
     end
   end
 
   # POST /api/v1/submitted_content/submit_file
   # GET  /api/v1/submitted_content/submit_file
+  # Handles file upload for the participant's team
+  # Validates file presence, size, and extension before saving to team directory
+  # Optionally unzips files if requested
   def submit_file
     uploaded = params[:uploaded_file]
-    return render json: { error: 'No file provided' }, status: :bad_request unless uploaded
+    return render_error('No file provided', :bad_request) unless uploaded
 
     file_size_limit_mb = 5
     unless check_content_size(uploaded, file_size_limit_mb)
-      return render json: { error: "File size must be smaller than #{file_size_limit_mb}MB" }, status: :bad_request
+      return render_error("File size must be smaller than #{file_size_limit_mb}MB", :bad_request)
     end
 
-    unless check_extension_integrity(uploaded.original_filename)
-      render json: { error: 'File extension does not match' }, status: :unprocessable_entity
-      return
+    unless check_extension_integrity(uploaded_file_name(uploaded))
+      return render_error('File extension does not match')
     end
 
     file_bytes = uploaded.read
     current_folder = sanitize_folder(params.dig(:current_folder, :name) || '/')
-    team = @participant.team
+    team = current_team
     team.set_student_directory_num
 
     current_directory = File.join(team.path.to_s, current_folder)
     FileUtils.mkdir_p(current_directory) unless File.exist?(current_directory)
 
-    safe_filename = sanitize_filename(uploaded.original_filename.tr('\\', '/')).gsub(' ', '_')
+    safe_filename = sanitize_filename(uploaded_file_name(uploaded).tr('\\', '/')).gsub(' ', '_')
     full_path = File.join(current_directory, File.basename(safe_filename))
 
     # Save file
@@ -108,13 +117,15 @@ class Api::V1::SubmittedContentController < ApplicationController
     end
 
     create_submission_record_for('file', full_path, 'Submit File')
-    render json: { message: 'The file has been submitted.' }, status: :ok
+    render_success('The file has been submitted.')
   rescue StandardError => e
-    render json: { error: "File submission failed: #{e.message}" }, status: :unprocessable_entity
+    render_error("File submission failed: #{e.message}")
   end
 
   # POST /api/v1/submitted_content/folder_action
   # GET  /api/v1/submitted_content/folder_action
+  # Dispatches folder management actions (delete, rename, move, copy, create)
+  # based on the faction parameter
   def folder_action
     faction = params[:faction] || {}
     if faction[:delete].present?
@@ -128,26 +139,28 @@ class Api::V1::SubmittedContentController < ApplicationController
     elsif faction[:create].present?
       create_new_folder
     else
-      render json: { error: 'No folder action specified' }, status: :bad_request
+      render_error('No folder action specified', :bad_request)
     end
   end
 
   # GET /api/v1/submitted_content/download
+  # Validates and streams a file for download
+  # Ensures the requested path is a file (not directory) and exists before streaming
   def download
     folder_name = sanitize_folder(params.dig(:current_folder, :name) || '/')
     file_name = params[:download]
 
     if folder_name.blank?
-      return render json: { message: 'Folder_name is nil.' }, status: :bad_request
+      return render_success('Folder_name is nil.', :bad_request)
     elsif file_name.blank?
-      return render json: { message: 'File name is nil.' }, status: :bad_request
+      return render_success('File name is nil.', :bad_request)
     end
 
     path = File.join(folder_name, file_name)
     if File.directory?(path)
-      return render json: { message: 'Cannot send a whole folder.' }, status: :bad_request
+      return render_success('Cannot send a whole folder.', :bad_request)
     elsif !File.exist?(path)
-      return render json: { message: 'File does not exist.' }, status: :not_found
+      return render_success('File does not exist.', :not_found)
     end
 
     # send_file will stream and return; do NOT render after send_file
@@ -176,14 +189,38 @@ class Api::V1::SubmittedContentController < ApplicationController
     params.require(:submitted_content).permit(:id, :content, :operation, :team_id, :user, :assignment_id, :record_type)
   end
 
+  # Memoized team retrieval to avoid multiple database calls
+  def current_team
+    @current_team ||= @participant.team
+  end
+
+  # Helper method to render error responses
+  def render_error(message, status = :unprocessable_content)
+    render json: { error: message }, status: status
+  end
+
+  # Helper method to render success responses
+  def render_success(message, status = :ok)
+    render json: { message: message }, status: status
+  end
+
+  # Helper method to safely get filename from uploaded file or string
+  def uploaded_file_name(uploaded)
+    if uploaded.respond_to?(:original_filename)
+      uploaded.original_filename
+    else
+      uploaded.to_s
+    end
+  end
+
   # single place to create records for both files and hyperlinks
   def create_submission_record_for(record_type, content, operation)
     SubmissionRecord.create!(
       record_type: record_type,
       content: content,
-      user: @participant.user.try(:name),
-      team_id: @participant.team.try(:id),
-      assignment_id: @participant.assignment.try(:id),
+      user: @participant.user_name,
+      team_id: @participant.team_id,
+      assignment_id: @participant.assignment_id,
       operation: operation
     )
   end

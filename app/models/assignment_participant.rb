@@ -6,6 +6,11 @@ class AssignmentParticipant < Participant
   belongs_to :user
   validates :handle, presence: true
 
+  # Delegation methods to avoid Law of Demeter violations
+  delegate :name, to: :user, prefix: true, allow_nil: true
+  delegate :id, to: :team, prefix: true, allow_nil: true
+  delegate :id, to: :assignment, prefix: true, allow_nil: true
+
   # Fetches the team for specific participant
   def team
     AssignmentTeam.team(self)
