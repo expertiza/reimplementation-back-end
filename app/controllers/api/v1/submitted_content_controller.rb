@@ -41,7 +41,7 @@ class Api::V1::SubmittedContentController < ApplicationController
     submission = params[:submission].to_s.strip
 
     if submission.blank?
-      return render_error('Submission cannot be blank', :bad_request)
+      return render_error('Hyperlink submission cannot be blank. Please provide a valid URL.', :bad_request)
     end
 
     if team.hyperlinks.include?(submission)
@@ -67,7 +67,7 @@ class Api::V1::SubmittedContentController < ApplicationController
     hyperlink_to_delete = team.hyperlinks[index]
 
     unless hyperlink_to_delete
-      return render_error('Hyperlink not found', :not_found)
+      return render_error('Hyperlink not found at the specified index. It may have already been removed.', :not_found)
     end
 
     begin
@@ -75,7 +75,7 @@ class Api::V1::SubmittedContentController < ApplicationController
       create_submission_record_for('hyperlink', hyperlink_to_delete, 'Remove Hyperlink')
       head :no_content
     rescue StandardError => e
-      render_error("There was an error deleting the hyperlink. Reason: #{e.message}", :internal_server_error)
+      render_error("Failed to remove hyperlink from team submissions due to a server error: #{e.message}. Please try again or contact support if the issue persists.", :internal_server_error)
     end
   end
 
@@ -86,7 +86,7 @@ class Api::V1::SubmittedContentController < ApplicationController
   # Optionally unzips files if requested
   def submit_file
     uploaded = params[:uploaded_file]
-    return render_error('No file provided', :bad_request) unless uploaded
+    return render_error('No file provided. Please select a file to upload using the "uploaded_file" parameter.', :bad_request) unless uploaded
 
     file_size_limit_mb = 5
     unless check_content_size(uploaded, file_size_limit_mb)
@@ -94,7 +94,7 @@ class Api::V1::SubmittedContentController < ApplicationController
     end
 
     unless check_extension_integrity(uploaded_file_name(uploaded))
-      return render_error('File extension does not match', :bad_request)
+      return render_error('File extension not allowed. Supported formats: pdf, png, jpeg, jpg, zip, tar, gz, 7z, odt, docx, md, rb, mp4, txt.', :bad_request)
     end
 
     file_bytes = uploaded.read
@@ -119,7 +119,7 @@ class Api::V1::SubmittedContentController < ApplicationController
     create_submission_record_for('file', full_path, 'Submit File')
     render_success('The file has been submitted successfully.', :created)
   rescue StandardError => e
-    render_error("File submission failed: #{e.message}", :internal_server_error)
+    render_error("Failed to save file to server: #{e.message}. Please verify the file is not corrupted and try again.", :internal_server_error)
   end
 
   # POST /api/v1/submitted_content/folder_action
@@ -139,7 +139,7 @@ class Api::V1::SubmittedContentController < ApplicationController
     elsif faction[:create].present?
       create_new_folder
     else
-      render_error('No folder action specified', :bad_request)
+      render_error('No folder action specified. Valid actions: delete, rename, move, copy, create. Provide one in the "faction" parameter.', :bad_request)
     end
   end
 
@@ -151,18 +151,18 @@ class Api::V1::SubmittedContentController < ApplicationController
     file_name = params[:download]
 
     if folder_name_param.blank?
-      return render_error('Folder name is required.', :bad_request)
+      return render_error('Folder name is required. Please provide a folder path in the "current_folder[name]" parameter.', :bad_request)
     elsif file_name.blank?
-      return render_error('File name is required.', :bad_request)
+      return render_error('File name is required. Please specify the file to download in the "download" parameter.', :bad_request)
     end
 
     folder_name = sanitize_folder(folder_name_param)
     path = File.join(folder_name, file_name)
 
     if File.directory?(path)
-      return render_error('Cannot download a directory. Please specify a file.', :bad_request)
+      return render_error('Cannot download a directory. Please specify a file path, not a folder path.', :bad_request)
     elsif !File.exist?(path)
-      return render_error('File does not exist.', :not_found)
+      return render_error("File '#{file_name}' does not exist in the specified folder. Please verify the file name and path.", :not_found)
     end
 
     # send_file will stream and return; do NOT render after send_file
@@ -183,7 +183,7 @@ class Api::V1::SubmittedContentController < ApplicationController
 
   def ensure_participant_team
     unless @participant && @participant.team
-      render json: { error: 'Participant or team not found' }, status: :not_found and return
+      render json: { error: 'Participant is not associated with a team. Please ensure the participant has joined a team before performing this action.' }, status: :not_found and return
     end
   end
 
