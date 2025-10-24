@@ -260,14 +260,14 @@ RSpec.describe 'Submitted Content API', type: :request do
           allow(team).to receive(:hyperlinks).and_return([submission])
         end
 
-        it 'returns unprocessable entity' do
+        it 'returns conflict' do
           send(method, '/api/v1/submitted_content/submit_hyperlink',
                params: { id: id, submission: submission },
                headers: auth_headers_student)
 
-          expect(response).to have_http_status(:unprocessable_content)
+          expect(response).to have_http_status(:conflict)
           parsed = json
-          expect(parsed['message']).to include('already submitted the same hyperlink')
+          expect(parsed['error']).to include('already submitted the same hyperlink')
         end
       end
 
@@ -280,12 +280,12 @@ RSpec.describe 'Submitted Content API', type: :request do
           allow(team).to receive(:submit_hyperlink).and_raise(StandardError, 'Invalid URL format')
         end
 
-        it 'returns unprocessable entity with error' do
+        it 'returns bad request with error' do
           send(method, '/api/v1/submitted_content/submit_hyperlink',
                params: { id: id, submission: submission },
                headers: auth_headers_student)
 
-          expect(response).to have_http_status(:unprocessable_content)
+          expect(response).to have_http_status(:bad_request)
           parsed = json
           expect(parsed['error']).to include('The URL or URI is invalid')
         end
@@ -358,12 +358,12 @@ RSpec.describe 'Submitted Content API', type: :request do
           allow(team).to receive(:remove_hyperlink).and_raise(StandardError, 'Database error')
         end
 
-        it 'returns unprocessable entity' do
+        it 'returns internal server error' do
           send(method, '/api/v1/submitted_content/remove_hyperlink',
                params: { id: id, chk_links: chk_links },
                headers: auth_headers_student)
 
-          expect(response).to have_http_status(:unprocessable_content)
+          expect(response).to have_http_status(:internal_server_error)
           parsed = json
           expect(parsed['error']).to include('There was an error deleting the hyperlink')
         end
@@ -459,7 +459,7 @@ RSpec.describe 'Submitted Content API', type: :request do
                params: { id: id, uploaded_file: uploaded_file },
                headers: auth_headers_student)
 
-          expect(response).to have_http_status(:unprocessable_content)
+          expect(response).to have_http_status(:bad_request)
           parsed = json
           expect(parsed['error']).to include('File extension does not match')
         end
@@ -497,9 +497,9 @@ RSpec.describe 'Submitted Content API', type: :request do
               params: { id: id, uploaded_file: uploaded_file },
               headers: auth_headers_student)
 
-          expect(response).to have_http_status(:ok)
+          expect(response).to have_http_status(:created)
           parsed = json
-          expect(parsed['message']).to eq('The file has been submitted.')
+          expect(parsed['message']).to eq('The file has been submitted successfully.')
         end
       end
 
@@ -542,7 +542,7 @@ RSpec.describe 'Submitted Content API', type: :request do
               params: { id: id, uploaded_file: uploaded_file, unzip: true },
               headers: auth_headers_student)
 
-          expect(response).to have_http_status(:ok)
+          expect(response).to have_http_status(:created)
         end
       end
     end
@@ -709,7 +709,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         run_test! do
           parsed = json
-          expect(parsed['message']).to eq('Folder_name is nil.')
+          expect(parsed['error']).to eq('Folder name is required.')
         end
       end
 
@@ -720,7 +720,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         run_test! do
           parsed = json
-          expect(parsed['message']).to eq('File name is nil.')
+          expect(parsed['error']).to eq('File name is required.')
         end
       end
 
@@ -735,7 +735,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         run_test! do
           parsed = json
-          expect(parsed['message']).to eq('Cannot send a whole folder.')
+          expect(parsed['error']).to eq('Cannot download a directory. Please specify a file.')
         end
       end
 
@@ -751,7 +751,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         run_test! do
           parsed = json
-          expect(parsed['message']).to eq('File does not exist.')
+          expect(parsed['error']).to eq('File does not exist.')
         end
       end
 

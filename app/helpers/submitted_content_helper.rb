@@ -69,10 +69,12 @@ module SubmittedContentHelper
 
     handle_file_operation_error('renaming') do
       if File.exist?(new_filename)
-        render json: { message: "A file already exists with that name" }, status: :conflict
+        render json: { error: "A file already exists with that name." }, status: :conflict
         return
       end
       File.rename(old_filename, new_filename)
+      render json: { message: "File renamed successfully." }, status: :ok
+      return
     end
   end
 
@@ -81,17 +83,19 @@ module SubmittedContentHelper
     new_filename = File.join(params[:directories][params[:chk_files]],
                              FileHelper.sanitize_filename(params[:faction][:copy]))
 
-    handle_file_operation_error('copying') do 
+    handle_file_operation_error('copying') do
       if File.exist?(new_filename)
-        render json: { message: 'A file with this name already exists.' }, status: :bad_request
+        render json: { error: 'A file with this name already exists.' }, status: :conflict
         return
       end
       unless File.exist?(old_filename)
-        render json: { message: 'The referenced file does not exist.' }, status: :not_found
+        render json: { error: 'The referenced file does not exist.' }, status: :not_found
         return
       end
 
       FileUtils.cp_r(old_filename, new_filename)
+      render json: { message: 'File copied successfully.' }, status: :ok
+      return
     end
   end
 
@@ -106,12 +110,12 @@ module SubmittedContentHelper
           FileUtils.rm_rf(file_path) # removes file or directory recursively
           deleted_files << file_path
         else
-          render json: { message: "File #{file_path} does not exist." }, status: :not_found
+          render json: { error: "File #{file_path} does not exist." }, status: :not_found
           return
         end
       end
 
-      render json: { message: "Deleted successfully.", files: deleted_files }, status: :ok
+      render json: { message: "Files deleted successfully.", files: deleted_files }, status: :no_content
     end
   end
 
@@ -119,7 +123,7 @@ module SubmittedContentHelper
     location = File.join(@participant.dir_path, params[:faction][:create])
     handle_file_operation_error('creating directory') do
       FileHelper.create_directory_from_path(location)
-      render json: { message: "The directory #{params[:faction][:create]} was created."}, status: :ok
+      render json: { message: "Directory '#{params[:faction][:create]}' created successfully." }, status: :created
     end
   end
 end

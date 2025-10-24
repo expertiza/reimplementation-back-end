@@ -45,7 +45,7 @@ class Api::V1::SubmittedContentController < ApplicationController
     end
 
     if team.hyperlinks.include?(submission)
-      return render_success('You or your teammate(s) have already submitted the same hyperlink.', :unprocessable_content)
+      return render_error('You or your teammate(s) have already submitted the same hyperlink.', :conflict)
     end
 
     begin
@@ -53,7 +53,7 @@ class Api::V1::SubmittedContentController < ApplicationController
       create_submission_record_for('hyperlink', submission, 'Submit Hyperlink')
       render_success('The link has been successfully submitted.')
     rescue StandardError => e
-      render_error("The URL or URI is invalid. Reason: #{e.message}")
+      render_error("The URL or URI is invalid. Reason: #{e.message}", :bad_request)
     end
   end
 
@@ -75,7 +75,7 @@ class Api::V1::SubmittedContentController < ApplicationController
       create_submission_record_for('hyperlink', hyperlink_to_delete, 'Remove Hyperlink')
       head :no_content
     rescue StandardError => e
-      render_error("There was an error deleting the hyperlink. Reason: #{e.message}")
+      render_error("There was an error deleting the hyperlink. Reason: #{e.message}", :internal_server_error)
     end
   end
 
@@ -94,7 +94,7 @@ class Api::V1::SubmittedContentController < ApplicationController
     end
 
     unless check_extension_integrity(uploaded_file_name(uploaded))
-      return render_error('File extension does not match')
+      return render_error('File extension does not match', :bad_request)
     end
 
     file_bytes = uploaded.read
@@ -117,9 +117,9 @@ class Api::V1::SubmittedContentController < ApplicationController
     end
 
     create_submission_record_for('file', full_path, 'Submit File')
-    render_success('The file has been submitted.')
+    render_success('The file has been submitted successfully.', :created)
   rescue StandardError => e
-    render_error("File submission failed: #{e.message}")
+    render_error("File submission failed: #{e.message}", :internal_server_error)
   end
 
   # POST /api/v1/submitted_content/folder_action
@@ -147,20 +147,22 @@ class Api::V1::SubmittedContentController < ApplicationController
   # Validates and streams a file for download
   # Ensures the requested path is a file (not directory) and exists before streaming
   def download
-    folder_name = sanitize_folder(params.dig(:current_folder, :name) || '/')
+    folder_name_param = params.dig(:current_folder, :name)
     file_name = params[:download]
 
-    if folder_name.blank?
-      return render_success('Folder_name is nil.', :bad_request)
+    if folder_name_param.blank?
+      return render_error('Folder name is required.', :bad_request)
     elsif file_name.blank?
-      return render_success('File name is nil.', :bad_request)
+      return render_error('File name is required.', :bad_request)
     end
 
+    folder_name = sanitize_folder(folder_name_param)
     path = File.join(folder_name, file_name)
+
     if File.directory?(path)
-      return render_success('Cannot send a whole folder.', :bad_request)
+      return render_error('Cannot download a directory. Please specify a file.', :bad_request)
     elsif !File.exist?(path)
-      return render_success('File does not exist.', :not_found)
+      return render_error('File does not exist.', :not_found)
     end
 
     # send_file will stream and return; do NOT render after send_file
