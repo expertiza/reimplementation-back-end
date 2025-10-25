@@ -111,7 +111,7 @@ RSpec.describe Team, type: :model do
       # An unsupported value for type should trigger an inclusion error.
       team = Team.new(parent_id: assignment.id, type: 'Team')
       expect(team).not_to be_valid
-      expect(team.errors[:type]).to include("must be 'Assignment' or 'Course' or 'Mentor'")
+      expect(team.errors[:type]).to include("must be 'AssignmentTeam', 'CourseTeam', or 'MentoredTeam'")
     end
 
     it 'is valid as AssignmentTeam' do
@@ -122,6 +122,41 @@ RSpec.describe Team, type: :model do
     it 'is valid as CourseTeam' do
       # Correct STI subclass automatically sets type = 'CourseTeam'
       expect(course_team).to be_valid
+    end
+  end
+
+  # ------------------------------------------------------------------------
+  # Tests for polymorphic abstract methods
+  # ------------------------------------------------------------------------
+  describe 'abstract methods' do
+    it 'raises NotImplementedError for parent_entity on base Team class' do
+      team = Team.new(parent_id: assignment.id, type: 'AssignmentTeam')
+      # Since we're using STI, we can't instantiate base Team, but we can test the behavior
+      expect { Team.new.parent_entity }.to raise_error(NotImplementedError)
+    end
+
+    it 'implements parent_entity for AssignmentTeam' do
+      expect(assignment_team.parent_entity).to eq(assignment)
+    end
+
+    it 'implements parent_entity for CourseTeam' do
+      expect(course_team.parent_entity).to eq(course)
+    end
+
+    it 'implements participant_class for AssignmentTeam' do
+      expect(assignment_team.participant_class).to eq(AssignmentParticipant)
+    end
+
+    it 'implements participant_class for CourseTeam' do
+      expect(course_team.participant_class).to eq(CourseParticipant)
+    end
+
+    it 'implements context_label for AssignmentTeam' do
+      expect(assignment_team.context_label).to eq('assignment')
+    end
+
+    it 'implements context_label for CourseTeam' do
+      expect(course_team.context_label).to eq('course')
     end
   end
 
@@ -263,7 +298,8 @@ RSpec.describe Team, type: :model do
         participant = AssignmentParticipant.create!(parent_id: assignment.id, user: user, handle: user.name)
 
         expect {
-          assignment_team.add_member(participant)
+          result = assignment_team.add_member(participant)
+          expect(result[:success]).to be true
         }.to change { TeamsParticipant.where(team_id: assignment_team.id).count }.by(1)
       end
 
@@ -279,7 +315,18 @@ RSpec.describe Team, type: :model do
         extra_part = AssignmentParticipant.create!(parent_id: assignment.id, user: extra_user, handle: extra_user.name)
         result     = assignment_team.add_member(extra_part)
 
-        expect(result[:error]).to include("team is at full capacity")
+        expect(result[:success]).to be false
+        expect(result[:error]).to include("full capacity")
+      end
+
+      it 'validates participant type matches team type' do
+        user        = create_student("wrong_type")
+        # Create a CourseParticipant instead of AssignmentParticipant
+        participant = CourseParticipant.create!(parent_id: course.id, user: user, handle: user.name)
+
+        result = assignment_team.add_member(participant)
+        expect(result[:success]).to be false
+        expect(result[:error]).to match(/Cannot add CourseParticipant to AssignmentTeam/)
       end
     end
 
@@ -289,7 +336,8 @@ RSpec.describe Team, type: :model do
         participant = CourseParticipant.create!(parent_id: course.id, user: user, handle: user.name)
         
         expect {
-          course_team.add_member(participant)
+          result = course_team.add_member(participant)
+          expect(result[:success]).to be true
         }.to change { TeamsParticipant.where(team_id: course_team.id).count }.by(1)
       end
 
@@ -308,6 +356,45 @@ RSpec.describe Team, type: :model do
         # CourseTeam.full? is false, so add_member should succeed
         expect(result[:success]).to be true
       end
+
+      it 'validates participant type matches team type' do
+        user        = create_student("wrong_type_course")
+        # Create an AssignmentParticipant instead of CourseParticipant
+        participant = AssignmentParticipant.create!(parent_id: assignment.id, user: user, handle: user.name)
+
+        result = course_team.add_member(participant)
+        expect(result[:success]).to be false
+        expect(result[:error]).to match(/Cannot add AssignmentParticipant to CourseTeam/)
+      end
+    end
+  end
+
+  # ------------------------------------------------------------------------
+  # Tests for helper methods
+  # ------------------------------------------------------------------------
+  describe '#size' do
+    it 'returns the number of participants' do
+      expect(assignment_team.size).to eq(0)
+      
+      user = create_student("size_test")
+      participant = AssignmentParticipant.create!(parent_id: assignment.id, user: user, handle: user.name)
+      assignment_team.add_member(participant)
+      
+      expect(assignment_team.size).to eq(1)
+    end
+  end
+
+  describe '#empty?' do
+    it 'returns true when no participants' do
+      expect(assignment_team.empty?).to be true
+    end
+
+    it 'returns false when participants exist' do
+      user = create_student("empty_test")
+      participant = AssignmentParticipant.create!(parent_id: assignment.id, user: user, handle: user.name)
+      assignment_team.add_member(participant)
+      
+      expect(assignment_team.empty?).to be false
     end
   end
 end

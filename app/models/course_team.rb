@@ -4,42 +4,54 @@ class CourseTeam < Team
   #Each course team must belong to a course
   belongs_to :course, class_name: 'Course', foreign_key: 'parent_id'
 
-  #adds members to the course team post validation
-  def add_member(user)
-    # return false unless validate_membership(user)
-    super(user)
+  # Implement abstract methods from Team
+  def parent_entity
+    course
+  end
+
+  def participant_class
+    CourseParticipant
+  end
+
+  def context_label
+    'course'
   end
 
   # Copies the current course team to an assignment team
-  # - Creates a new AssignmentTeam with a modified name
-  # - Copies team members from the course team to the assignment team
   def copy_to_assignment_team(assignment)
     assignment_team = AssignmentTeam.new(
-      name: "#{name} (Assignment)",             # Appends "(Assignment)" to the team name
-      assignment: assignment                    # Associates the course team with an assignment
+      name: "#{name} (Assignment)",
+      parent_id: assignment.id
     )
+    
     if assignment_team.save
-      team_members.each do |member|
-        assignment_team.add_member(member.user) # Copies each member to the new assignment team
-      end
+      copy_members_to_team(assignment_team, assignment)
     end
-    assignment_team       # Returns the newly created assignment team object
+    
+    assignment_team
+  end
+
+  # Copies the current course team to another course team
+  def copy_to_course_team(target_course)
+    new_team = CourseTeam.new(
+      name: "#{name} (Copy)",
+      parent_id: target_course.id
+    )
+    
+    if new_team.save
+      copy_members_to_team(new_team, target_course)
+    end
+    
+    new_team
   end
 
   protected
 
   def validate_membership(user)
-    # Check if user is enrolled in any assignment in the course
-    course.assignments.any? { |assignment| assignment.participants.exists?(user: user) }
+    course.participants.exists?(user: user)
   end
 
   private
 
-  # Custom validation method for team type
-  # - Ensures the type is 'CourseTeam'
-  def type_must_be_course_team
-    unless self.kind_of?(CourseTeam)
-      errors.add(:type, 'must be CourseTeam')
-    end
-  end
-end 
+
+end

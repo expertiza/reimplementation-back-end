@@ -1,14 +1,13 @@
+# frozen_string_literal: true
+
 class TeamsController < ApplicationController
   # Set the @team instance variable before executing actions except index and create
   before_action :set_team, except: [:index, :create]
 
-  # Validate team type only during team creation
-  before_action :validate_team_type, only: [:create]
-
   # GET /teams
   # Fetches all teams and renders them using TeamSerializer
   def index
-    @teams = Team.all
+    @teams = Team.all.includes(teams_participants: :user)
     render json: @teams, each_serializer: TeamSerializer
   end
 
@@ -45,15 +44,16 @@ class TeamsController < ApplicationController
     # Find the user specified in the request.
     user = User.find(team_participant_params[:user_id])
 
-    # Determine the correct type of participant (Assignment or Course) based on the team type.
-    participant_class = @team.is_a?(AssignmentTeam) ? AssignmentParticipant : CourseParticipant
-    
-    # Find the specific participant record for this user in the team's context.
-    participant = participant_class.find_by(user_id: user.id, parent_id: @team.parent_id)
+    # Use polymorphic participant_class method instead of type checking
+    participant = @team.participant_class.find_by(
+      user_id: user.id, 
+      parent_id: @team.parent_entity.id
+    )
 
-    # If no participant record exists, the user isn't part of the assignment/course.
     unless participant
-      return render json: { errors: ["#{user.name} is not a participant in this context."] }, status: :unprocessable_entity
+      return render json: { 
+        errors: ["#{user.name} is not a participant in this #{@team.context_label}."] 
+      }, status: :unprocessable_entity
     end
 
     # Delegate the add operation to the Team model with the found participant.
@@ -64,13 +64,15 @@ class TeamsController < ApplicationController
     else
       render json: { errors: [result[:error]] }, status: :unprocessable_entity
     end
+  rescue ActiveRecord::RecordNotFound => e
+    render json: { error: 'User not found' }, status: :not_found
   end
 
   # DELETE /teams/:id/members/:user_id
   # Removes a member from the team based on user ID
   def remove_member
     user = User.find(params[:user_id])
-    participant = Participant.find_by(user: user, parent_id: @team.parent_id)
+    participant = @team.participant_class.find_by(user_id: user.id, parent_id: @team.parent_entity.id)
     tp = @team.teams_participants.find_by(participant: participant)
 
     if tp
@@ -99,20 +101,11 @@ class TeamsController < ApplicationController
 
   # Whitelists the parameters allowed for team creation/updation
   def team_params
-    params.require(:team).permit(:name, :max_team_size, :type, :assignment_id)
+    params.require(:team).permit(:name, :type, :parent_id)
   end
 
   # Whitelists parameters required to add a team member
   def team_participant_params
     params.require(:team_participant).permit(:user_id)
   end
-
-  # Validates the team type before team creation to ensure it's among allowed types
-  def validate_team_type
-    return unless params[:team] && params[:team][:type]
-    valid_types = ['CourseTeam', 'AssignmentTeam', 'MentoredTeam']
-    unless valid_types.include?(params[:team][:type])
-      render json: { error: 'Invalid team type' }, status: :unprocessable_entity
-    end
-  end
-end 
+end

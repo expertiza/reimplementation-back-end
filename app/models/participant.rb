@@ -16,6 +16,25 @@ class Participant < ApplicationRecord
 
   # Methods
   def fullname
-    user.fullname
+    user.full_name
+  end
+
+  def parent_context
+    # Subclasses must implement this
+    raise NotImplementedError, "#{self.class} must implement #parent_context"
+  end
+
+  def set_handle
+    desired = user.handle.to_s.strip
+    context_participants = self.class.where(parent_id: parent_context.id)
+
+    self.handle = if desired.blank?
+                    user.name
+                  elsif context_participants.exists?(handle: desired)
+                    user.name
+                  else
+                    desired
+                  end
+    save
   end
 end

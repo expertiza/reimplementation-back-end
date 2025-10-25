@@ -5,7 +5,19 @@ begin
     inst_id = Institution.create!(
       name: 'North Carolina State University',
     ).id
-    
+
+    roles = {}
+
+    roles[:super_admin] = Role.find_or_create_by!(name: "Super Administrator", parent_id: nil)
+
+    roles[:admin] = Role.find_or_create_by!(name: "Administrator", parent_id: roles[:super_admin].id)
+
+    roles[:instructor] = Role.find_or_create_by!(name: "Instructor", parent_id: roles[:admin].id)
+
+    roles[:ta] = Role.find_or_create_by!(name: "Teaching Assistant", parent_id: roles[:instructor].id)
+
+    roles[:student] = Role.find_or_create_by!(name: "Student", parent_id: roles[:ta].id)
+
     # Create an admin user
     User.create!(
       name: 'admin',
@@ -126,5 +138,6 @@ begin
 
 
 rescue ActiveRecord::RecordInvalid => e
+    puts e.message
     puts 'The db has already been seeded'
 end
