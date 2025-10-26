@@ -21,7 +21,7 @@ class Response < ApplicationRecord
     existing_responses.each do |response|
       unless id == response.id # the current_response is also in existing_responses array
         count += 1
-        total +=  response.aggregate_questionnaire_score.to_f / response.maximum_score
+        total += response.aggregate_questionnaire_score.to_f / response.maximum_score
       end
     end
 
@@ -35,7 +35,8 @@ class Response < ApplicationRecord
     score = aggregate_questionnaire_score.to_f / maximum_score
     questionnaire = questionnaire_by_answer(scores.first)
     assignment = map.assignment
-    assignment_questionnaire = AssignmentQuestionnaire.find_by(assignment_id: assignment.id, questionnaire_id: questionnaire.id)
+    assignment_questionnaire = AssignmentQuestionnaire.find_by(assignment_id: assignment.id,
+                                                               questionnaire_id: questionnaire.id)
 
     # notification_limit can be specified on 'Rubrics' tab on assignment edit page.
     allowed_difference_percentage = assignment_questionnaire.notification_limit.to_f
@@ -55,5 +56,28 @@ class Response < ApplicationRecord
       sum += s.answer * item.weight unless s.answer.nil? || !item.scorable?
     end
     sum
+  end
+
+  # Returns the weighted sum across scorable items (alias for clarity)
+  def raw_total_score
+    aggregate_questionnaire_score.to_f
+  end
+
+  # normalized score in [0, 1], using maximum_score provided by helpers
+  def normalized_score
+    denom = maximum_score.to_f
+    return nil if denom.zero?
+
+    raw_total_score / denom
+  end
+
+  # Persist total score only if the column exists; always return the numeric total
+  def persist_total_score!
+    total = raw_total_score
+    if has_attribute?(:total_score)
+      # Do not touch submission flags here; controller will manage submit state.
+      update!(total_score: total)
+    end
+    total
   end
 end
