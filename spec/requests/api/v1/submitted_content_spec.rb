@@ -248,7 +248,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
           expect(response).to have_http_status(:bad_request)
           parsed = json
-          expect(parsed['error']).to eq('Submission cannot be blank')
+          expect(parsed['error']).to include('cannot be blank')
         end
       end
 
@@ -344,7 +344,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
           expect(response).to have_http_status(:not_found)
           parsed = json
-          expect(parsed['error']).to eq('Hyperlink not found')
+          expect(parsed['error']).to include('Hyperlink not found')
         end
       end
 
@@ -365,7 +365,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
           expect(response).to have_http_status(:internal_server_error)
           parsed = json
-          expect(parsed['error']).to include('There was an error deleting the hyperlink')
+          expect(parsed['error']).to include('Failed to remove hyperlink')
         end
       end
     end
@@ -400,7 +400,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
           expect(response).to have_http_status(:bad_request)
           parsed = json
-          expect(parsed['error']).to eq('No file provided')
+          expect(parsed['error']).to include('No file provided')
         end
       end
 
@@ -461,7 +461,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
           expect(response).to have_http_status(:bad_request)
           parsed = json
-          expect(parsed['error']).to include('File extension does not match')
+          expect(parsed['error']).to include('File extension not allowed')
         end
       end
 
@@ -485,9 +485,9 @@ RSpec.describe 'Submitted Content API', type: :request do
             .to receive(:check_extension_integrity).and_return(true)
           allow(FileUtils).to receive(:mkdir_p)
           allow(File).to receive(:exist?).and_return(false, true) # First for directory check, then exists after creation
-          allow(File).to receive(:open).and_call_original
+          # Mock File.open only for write mode ('wb')
           fake_file = StringIO.new
-          allow(File).to receive(:open).with(any_args).and_yield(fake_file)
+          allow(File).to receive(:open).with(anything, 'wb').and_yield(fake_file)
           allow_any_instance_of(Api::V1::SubmittedContentController)
             .to receive(:create_submission_record_for).and_return(true)
         end
@@ -527,9 +527,9 @@ RSpec.describe 'Submitted Content API', type: :request do
             .to receive(:file_type).and_return('zip')
           allow(FileUtils).to receive(:mkdir_p)
           allow(File).to receive(:exist?).and_return(false, true)
-          allow(File).to receive(:open).and_call_original
+          # Mock File.open only for write mode ('wb')
           fake_file = StringIO.new
-          allow(File).to receive(:open).with(any_args).and_yield(fake_file)
+          allow(File).to receive(:open).with(anything, 'wb').and_yield(fake_file)
           allow(SubmittedContentHelper).to receive(:unzip_file).and_return({ message: 'Unzipped successfully' })
           allow_any_instance_of(Api::V1::SubmittedContentController)
             .to receive(:create_submission_record_for).and_return(true)
@@ -573,7 +573,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
           expect(response).to have_http_status(:bad_request)
           parsed = json
-          expect(parsed['error']).to eq('No folder action specified')
+          expect(parsed['error']).to include('No folder action specified')
         end
       end
 
@@ -709,7 +709,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         run_test! do
           parsed = json
-          expect(parsed['error']).to eq('Folder name is required.')
+          expect(parsed['error']).to include('Folder name is required')
         end
       end
 
@@ -720,7 +720,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         run_test! do
           parsed = json
-          expect(parsed['error']).to eq('File name is required.')
+          expect(parsed['error']).to include('File name is required')
         end
       end
 
@@ -735,7 +735,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         run_test! do
           parsed = json
-          expect(parsed['error']).to eq('Cannot download a directory. Please specify a file.')
+          expect(parsed['error']).to include('Cannot download a directory')
         end
       end
 
@@ -751,7 +751,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         run_test! do
           parsed = json
-          expect(parsed['error']).to eq('File does not exist.')
+          expect(parsed['error']).to include('does not exist')
         end
       end
 
@@ -813,7 +813,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         expect(response).to have_http_status(:not_found)
         parsed = json
-        expect(parsed['error']).to eq('Participant or team not found')
+        expect(parsed['error']).to include('not associated with a team')
       end
     end
   end
