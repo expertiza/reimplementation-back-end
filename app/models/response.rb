@@ -10,6 +10,38 @@ class Response < ApplicationRecord
   alias map response_map
   delegate :questionnaire, :reviewee, :reviewer, to: :map
 
+  # response type to label mapping
+  KIND_LABELS = {
+    'ReviewResponseMap' => 'Review',
+    'TeammateReviewResponseMap' => 'Teammate Review',
+    'BookmarkRatingResponseMap' => 'Bookmark Review',
+    'QuizResponseMap' => 'Quiz',
+    'SurveyResponseMap' => 'Survey',
+    'AssignmentSurveyResponseMap' => 'Assignment Survey',
+    'GlobalSurveyResponseMap' => 'Global Survey',
+    'CourseSurveyResponseMap' => 'Course Survey',
+    'FeedbackResponseMap' => 'Feedback'
+  }.freeze
+
+  def kind_name
+    return 'Response' if map.nil?
+
+    klass_name = map.class.name
+    # use hash for the mapping first
+    if (label = KIND_LABELS[klass_name]).present?
+      return label
+    end
+  
+    # back up plan: use get_title
+    if map.respond_to?(:get_title)
+      title = map.get_title
+      return title if title.present?
+    end
+  
+    # response type doesn't exist
+    'Unknown Type'
+  end
+
   def reportable_difference?
     map_class = map.class
     # gets all responses made by a reviewee
@@ -58,6 +90,7 @@ class Response < ApplicationRecord
     sum
   end
 
+<<<<<<< HEAD
   # Returns the weighted sum across scorable items (alias for clarity)
   def raw_total_score
     aggregate_questionnaire_score.to_f
@@ -80,4 +113,6 @@ class Response < ApplicationRecord
     end
     total
   end
+=======
+>>>>>>> 05ce778ad05dbe0455e57fd937627f2a0ab2e111
 end
