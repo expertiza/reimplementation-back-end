@@ -15,8 +15,6 @@ class TeamsController < ApplicationController
   # Shows a specific team based on ID
   def show
     render json: @team, serializer: TeamSerializer
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: 'Team not found' }, status: :not_found
   end
 
   # POST /teams
