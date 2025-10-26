@@ -1,7 +1,15 @@
 services:
   app:
     build: .
-    command: tail -f /dev/null
+    entrypoint: ["/bin/bash", "-c"]
+    command: >
+      "bundle install &&
+       rm -f tmp/pids/server.pid &&
+       rake db:drop || true &&
+       rake db:create &&
+       rake db:migrate &&
+       rake db:seed &&
+       rails s -p 3002 -b '0.0.0.0'"
     environment:
       RAILS_ENV: development
       DATABASE_URL: mysql2://root:expertiza@db:3306/reimplementation?

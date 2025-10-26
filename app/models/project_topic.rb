@@ -15,7 +15,8 @@ class ProjectTopic < ApplicationRecord
   # Attempts to sign up a team for this topic.
   # If slots are available, it's confirmed; otherwise, waitlisted.
   # Also removes any previous waitlist entries for the same team on other topics.
-  def signup_team(team)
+  # CHANGED: Renamed from signup_team to sign_team_up for verb-based clarity (E2552)
+  def sign_team_up(team)
     return false if signed_up_teams.exists?(team: team)
     ActiveRecord::Base.transaction do
       signed_up_team = signed_up_teams.create!(

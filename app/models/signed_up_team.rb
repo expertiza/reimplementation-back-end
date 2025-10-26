@@ -15,9 +15,10 @@ class SignedUpTeam < ApplicationRecord
   validates :team, presence: true,
                    uniqueness: { scope: :project_topic }
 
-  # Calls ProjectTopic's signup_team method to initiate signup
-  def self.signup_for_topic(team, topic)
-    topic.signup_team(team)
+  # Calls ProjectTopic's sign_team_up method to initiate signup
+  # CHANGED: Updated to call sign_team_up instead of signup_team (E2552)
+  def self.sign_up_for_topic(team, topic)
+    topic.sign_team_up(team)
   end
 
   # Removes all signups (confirmed and waitlisted) for the given team
@@ -40,7 +41,7 @@ class SignedUpTeam < ApplicationRecord
     signed_up_team = SignedUpTeam.find_by(team_id: team_id)
     return [] unless signed_up_team
 
-    signed_up_team.team.try(:users).to_a
+    find_team_participants(team_id)
   end
 
   # Returns project topic the given user signed up for

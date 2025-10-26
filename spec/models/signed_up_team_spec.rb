@@ -18,7 +18,7 @@ RSpec.describe SignedUpTeam, type: :model do
 
   let!(:assignment) { Assignment.create!(name: "Test Assignment", instructor: instructor) }
   let!(:project_topic) { ProjectTopic.create!(topic_name: "Test Topic", assignment: assignment) }
-  let!(:team) { Team.create!(assignment: assignment) }
+  let!(:team) { AssignmentAssignmentTeam.create!(assignment: assignment) }
 
   describe 'validations' do
     # Ensure a project_topic is mandatory
@@ -47,7 +47,7 @@ RSpec.describe SignedUpTeam, type: :model do
   describe 'scopes' do
     # Create one confirmed and one waitlisted signup for testing scopes
     let!(:confirmed_signup) { SignedUpTeam.create!(project_topic: project_topic, team: team, is_waitlisted: false) }
-    let!(:waitlisted_signup) { SignedUpTeam.create!(project_topic: project_topic, team: Team.create!(assignment: assignment), is_waitlisted: true) }
+    let!(:waitlisted_signup) { SignedUpTeam.create!(project_topic: project_topic, team: AssignmentTeam.create!(assignment: assignment), is_waitlisted: true) }
 
     # Scope should only return confirmed signups
     it 'returns confirmed signups' do
@@ -60,19 +60,20 @@ RSpec.describe SignedUpTeam, type: :model do
     end
   end
 
-  describe 'signup_for_topic' do
-    # Should delegate logic to ProjectTopic's signup_team
+  # CHANGED: Updated test description to reflect renamed method (E2552)
+  describe 'sign_up_for_topic' do
+    # Should delegate logic to ProjectTopic's sign_team_up
     it 'delegates to project topic signup' do
-      allow(project_topic).to receive(:signup_team).with(team).and_return(true)
-      result = SignedUpTeam.signup_for_topic(team, project_topic)
+      allow(project_topic).to receive(:sign_team_up).with(team).and_return(true)
+      result = SignedUpTeam.sign_up_for_topic(team, project_topic)
       expect(result).to be true
-      expect(project_topic).to have_received(:signup_team).with(team)
+      expect(project_topic).to have_received(:sign_team_up).with(team)
     end
 
     # Should return false if ProjectTopic rejects the signup
     it 'returns false if topic rejects signup' do
-      allow(project_topic).to receive(:signup_team).with(team).and_return(false)
-      result = SignedUpTeam.signup_for_topic(team, project_topic)
+      allow(project_topic).to receive(:sign_team_up).with(team).and_return(false)
+      result = SignedUpTeam.sign_up_for_topic(team, project_topic)
       expect(result).to be false
     end
   end
@@ -93,7 +94,7 @@ RSpec.describe SignedUpTeam, type: :model do
 
     # Should not error if team has no signups
     it 'does not raise error if team has no signups' do
-      new_team = Team.create!(assignment: assignment)
+      new_team = AssignmentTeam.create!(assignment: assignment)
       expect { SignedUpTeam.remove_team_signups(new_team) }.not_to raise_error
     end
   end
@@ -138,7 +139,7 @@ RSpec.describe SignedUpTeam, type: :model do
 
       # Team with no users should return []
       it 'returns empty array when team exists but has no users' do
-        new_team = Team.create!(assignment: assignment)
+        new_team = AssignmentTeam.create!(assignment: assignment)
         expect(SignedUpTeam.find_team_participants(new_team.id)).to eq([])
       end
     end
@@ -154,13 +155,21 @@ RSpec.describe SignedUpTeam, type: :model do
 
       # Should return [] if team is not signed up to a topic
       it 'returns empty array if no signed up team found' do
-        new_team = Team.create!(assignment: assignment)
+        new_team = AssignmentTeam.create!(assignment: assignment)
         expect(SignedUpTeam.find_project_topic_team_users(new_team.id)).to eq([])
       end
 
       # Gracefully handle nil
       it 'handles nil team_id gracefully' do
         expect(SignedUpTeam.find_project_topic_team_users(nil)).to eq([])
+      end
+
+      # CHANGED: Added test to verify DRY principle is applied (E2552)
+      # Should use find_team_participants internally (DRY principle)
+      it 'delegates to find_team_participants method' do
+        allow(SignedUpTeam).to receive(:find_team_participants).with(team.id).and_return([user1, user2])
+        SignedUpTeam.find_project_topic_team_users(team.id)
+        expect(SignedUpTeam).to have_received(:find_team_participants).with(team.id)
       end
     end
 
@@ -194,17 +203,17 @@ RSpec.describe SignedUpTeam, type: :model do
 
   describe 'functional behavior' do
     # Should create a record on successful signup
-    it 'creates a record when signup_for_topic succeeds' do
+    it 'creates a record when sign_up_for_topic succeeds' do
       expect {
-        SignedUpTeam.signup_for_topic(team, project_topic)
+        SignedUpTeam.sign_up_for_topic(team, project_topic)
       }.to change { SignedUpTeam.count }.by(1)
     end
 
     # Should prevent duplicate signups
     it 'does not create a duplicate signup' do
-      SignedUpTeam.signup_for_topic(team, project_topic)
+      SignedUpTeam.sign_up_for_topic(team, project_topic)
       expect {
-        SignedUpTeam.signup_for_topic(team, project_topic)
+        SignedUpTeam.sign_up_for_topic(team, project_topic)
       }.not_to change { SignedUpTeam.count }
     end
 
@@ -212,8 +221,8 @@ RSpec.describe SignedUpTeam, type: :model do
     it 'remove_team_signups deletes all signups for team' do
       topic1 = ProjectTopic.create!(topic_name: "Another Topic", assignment: assignment)
       topic2 = ProjectTopic.create!(topic_name: "Third Topic", assignment: assignment)
-      SignedUpTeam.signup_for_topic(team, topic1)
-      SignedUpTeam.signup_for_topic(team, topic2)
+      SignedUpTeam.sign_up_for_topic(team, topic1)
+      SignedUpTeam.sign_up_for_topic(team, topic2)
 
       expect {
         SignedUpTeam.remove_team_signups(team)
@@ -225,11 +234,35 @@ RSpec.describe SignedUpTeam, type: :model do
       confirmed = SignedUpTeam.create!(project_topic: project_topic, team: team, is_waitlisted: false)
       waitlisted = SignedUpTeam.create!(
         project_topic: ProjectTopic.create!(topic_name: "Waitlist Topic", assignment: assignment),
-        team: Team.create!(assignment: assignment),
+        team: AssignmentTeam.create!(assignment: assignment),
         is_waitlisted: true
       )
       expect(SignedUpTeam.confirmed).to include(confirmed)
       expect(SignedUpTeam.waitlisted).to include(waitlisted)
+    end
+
+    # CHANGED: Added comprehensive test cases for waitlisting and team removal (E2552)
+    # Test waitlisting behavior
+    it 'creates waitlisted signup when topic is full' do
+      # Fill the topic to capacity
+      project_topic.update!(max_choosers: 1)
+      SignedUpTeam.sign_up_for_topic(AssignmentTeam.create!(assignment: assignment), project_topic)
+      
+      # Next signup should be waitlisted
+      new_team = AssignmentTeam.create!(assignment: assignment)
+      SignedUpTeam.sign_up_for_topic(new_team, project_topic)
+      
+      signup = SignedUpTeam.find_by(team: new_team, project_topic: project_topic)
+      expect(signup.is_waitlisted).to be true
+    end
+
+    # Test team removal from topic
+    it 'removes team from topic when dropped' do
+      SignedUpTeam.sign_up_for_topic(team, project_topic)
+      expect(SignedUpTeam.exists?(team: team, project_topic: project_topic)).to be true
+      
+      project_topic.drop_team(team)
+      expect(SignedUpTeam.exists?(team: team, project_topic: project_topic)).to be false
     end
   end
 end
