@@ -43,15 +43,23 @@ class InvitationsController < ApplicationController
   def update
     case params[:reply_status]
     when InvitationValidator::ACCEPT_STATUS
+      # if the current invitation status is either accepted/rejected/retracted then the invitation is no longer valid.
+      unless @invitation.reply_status.eql?(InvitationValidator::WAITING_STATUS)
+        render json: { error: "Sorry, the invitation is no longer valid" }, status: :unprocessable_entity
+        return
+      end
       result = @invitation.accept_invitation
       if result[:success]
         render json: { success: true, message: result[:message], invitation: @invitation}, status: :ok
       else
         render json: { error: result[:error] }, status: :unprocessable_entity
       end
-    when InvitationValidator::REJECT_STATUS
+    when InvitationValidator::DECLINED_STATUS
       @invitation.decline_invitation
       render json: { success: true, message: "Invitation rejected successfully", invitation: @invitation}, status: :ok
+    when InvitationValidator::RETRACT_STATUS
+      @invitation.retract_invitation
+      render json: { success: true, message: "Invitation retracted successfully", invitation: @invitation}, status: :ok
     else
       render json: @invitation.errors, status: :unprocessable_entity
     end
@@ -59,8 +67,8 @@ class InvitationsController < ApplicationController
 
   # DELETE /invitations/:id
   def destroy
-    @invitation.retract_invitation
-    render json: { success:true, message: "Invitation retracted successfully." }, status: :ok
+    @invitation.destroy!
+    render json: { success:true, message: "Invitation deleted successfully." }, status: :ok
 
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Invitation not found." }, status: :not_found
@@ -99,7 +107,7 @@ class InvitationsController < ApplicationController
 
   # only allow a list of valid invite params
   def invite_params
-    params.require(:invitation).permit(:id, :assignment_id, :reply_status).merge(from_team: inviter_team, to_participant: invitee_participant)
+    params.require(:invitation).permit(:id, :assignment_id, :reply_status).merge(from_team: inviter_team, to_participant: invitee_participant, from_participant: inviter_participant)
   end
 
   # helper method used when invite is not found
@@ -112,8 +120,12 @@ class InvitationsController < ApplicationController
     @invitation = Invitation.find(params[:id])
   end
 
+  def inviter_participant
+    AssignmentParticipant.find_by(user: current_user)    
+  end
+
+  # the team of the inviter at the time of sending invitation
   def inviter_team
-    inviter_participant = AssignmentParticipant.find_by(user: current_user)    
     inviter_participant.team
   end
 
@@ -123,6 +135,11 @@ class InvitationsController < ApplicationController
       render json: { error: "Participant with username #{params[:username]} not found" }, status: :not_found
       return
     end
-    AssignmentParticipant.find_by(parent_id: params[:assignment_id], user: invitee_user)
+    invitee = AssignmentParticipant.find_by(parent_id: params[:assignment_id], user: invitee_user)
+    unless invitee
+      render json: { error: "Participant with username #{params[:username]} not found" }, status: :not_found
+      return
+    end
+    invitee
   end
 end
