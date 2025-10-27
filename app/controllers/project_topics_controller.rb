@@ -1,7 +1,7 @@
-class Api::V1::ProjectTopicsController < ApplicationController
+class ProjectTopicsController < ApplicationController
   before_action :set_project_topic, only: %i[ show update ]
 
-  # GET /api/v1/project_topics?assignment_id=&topic_ids[]=
+  # GET /project_topics?assignment_id=&topic_ids[]=
   # Retrieve ProjectTopics by two query parameters - assignment_id (compulsory) and an array of topic_ids (optional)
   def index
     if params[:assignment_id].nil?

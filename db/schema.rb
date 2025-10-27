@@ -416,7 +416,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   add_foreign_key "participants", "join_team_requests"
   add_foreign_key "participants", "teams"
   add_foreign_key "participants", "users"
-  # CHANGED: Removed duplicate foreign key declaration to fix schema integrity (E2552)
   add_foreign_key "project_topics", "assignments"
   add_foreign_key "question_advices", "items", column: "question_id"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
