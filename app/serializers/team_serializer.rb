@@ -1,10 +1,10 @@
 class TeamSerializer < ActiveModel::Serializer
   attributes :id, :name, :type, :team_size
-  has_many :members, serializer: UserSerializer
+  has_many :members, serializer: ParticipantSerializer
 
   def members
-    # Use teams_participants association to get users
-    object.teams_participants.includes(:user).map(&:user)
+    # Use teams_participants association to get participants
+    object.teams_participants.includes(:participant).map(&:participant)
   end
 
   def team_size

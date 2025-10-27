@@ -39,7 +39,7 @@ RSpec.describe Invitation, type: :model do
   it 'rejects invitation and change reply_status to Reject(R)' do
     invitation = Invitation.create(to_id: user1.id, from_id: user2.id, assignment_id: assignment.id)
     invitation.decline_invitation(nil)
-    expect(invitation.reply_status).to eq(InvitationValidator::REJECT_STATUS)
+    expect(invitation.reply_status).to eq(InvitationValidator::DECLINED_STATUS)
   end
 
   it 'retracts invitation' do

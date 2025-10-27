@@ -4,6 +4,7 @@ class Invitation < ApplicationRecord
   belongs_to :to_participant, class_name: 'Participant', foreign_key: 'to_id', inverse_of: false
   belongs_to :from_team, class_name: 'AssignmentTeam', foreign_key: 'from_id', inverse_of: false
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'assignment_id'
+  belongs_to :from_participant, class_name: 'AssignmentParticipant', foreign_key: 'participant_id'
 
   validates_with InvitationValidator
 
@@ -44,8 +45,8 @@ class Invitation < ApplicationRecord
       # if participant is member of an existing team then only step 2 and 3 makes sense. otherwise just need to add the participant to the inviter team
       if invitee_team.present?
         # 2. Update the participant’s and team's assigned topic
-        inviter_signed_up_team = SignedUpTeam.find_by(team_id: invitee_team.id)
-        invitee_signed_up_team = SignedUpTeam.find_by(team_id: inviter_team.id)
+        inviter_signed_up_team = SignedUpTeam.find_by(team_id: inviter_team.id)
+        invitee_signed_up_team = SignedUpTeam.find_by(team_id: invitee_team.id)
   
         SignedUpTeam.update_topic_after_invite_accept(inviter_signed_up_team,invitee_signed_up_team)
   
@@ -68,12 +69,12 @@ class Invitation < ApplicationRecord
 
   # This method handles all that needs to be done upon an user declining an invitation.
   def decline_invitation
-    update(reply_status: InvitationValidator::REJECT_STATUS)  
+    update(reply_status: InvitationValidator::DECLINED_STATUS)  
   end
 
   # This method handles all that need to be done upon an invitation retraction.
   def retract_invitation
-    destroy!
+    update(reply_status: InvitationValidator::RETRACT_STATUS)
   end
 
   # This will override the default as_json method in the ApplicationRecord class and specify

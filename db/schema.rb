@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_19_160547) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_22_160053) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -181,8 +181,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_19_160547) do
     t.datetime "updated_at", null: false
     t.bigint "from_id", null: false
     t.bigint "to_id", null: false
+    t.bigint "participant_id", null: false
     t.index ["assignment_id"], name: "fk_invitation_assignments"
     t.index ["from_id"], name: "index_invitations_on_from_id"
+    t.index ["participant_id"], name: "index_invitations_on_participant_id"
     t.index ["to_id"], name: "index_invitations_on_to_id"
   end
 
@@ -418,8 +420,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_19_160547) do
   add_foreign_key "assignments", "users", column: "instructor_id"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
-  add_foreign_key "invitations", "participants", column: "from_id"
+  add_foreign_key "invitations", "participants"
   add_foreign_key "invitations", "participants", column: "to_id"
+  add_foreign_key "invitations", "teams", column: "from_id"
   add_foreign_key "items", "questionnaires"
   add_foreign_key "participants", "join_team_requests"
   add_foreign_key "participants", "teams"
