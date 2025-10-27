@@ -56,6 +56,14 @@ RSpec.describe 'Submitted Content API', type: :request do
       handle: student.name
     )
   end
+
+  let(:teams_participant) do
+    TeamsParticipant.create!(
+      team_id: team.id,
+      user_id: student.id,
+      participant_id: participant.id
+    )
+  end
   
   let(:Authorization) { auth_headers_student['Authorization'] }
   let(:auth_headers_instructor) { { 'Authorization' => "Bearer #{JsonWebToken.encode(id: instructor.id)}" } }
@@ -700,6 +708,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         # Ensure participant and team are created before the test runs
         participant
         team
+        teams_participant
       end
 
       response(400, 'folder name is nil') do
