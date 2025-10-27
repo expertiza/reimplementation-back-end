@@ -34,7 +34,7 @@ class AssignmentTeam < Team
     raise TeamFullError, "Team is full." if full?
 
     # Update the participant's team_id column - will remove the team reference inside participants table later. keeping it for now
-    participant.update!(team_id: id)
+    # participant.update!(team_id: id)
 
     # Create or reuse the join record to maintain the association
     TeamsParticipant.find_or_create_by!(participant_id: participant.id, team_id: id, user_id: participant.user_id)
@@ -42,14 +42,18 @@ class AssignmentTeam < Team
 
   # Removes a participant from this team.
   # - Delete the TeamsParticipant join record
+  # - if the participant sent any invitations while being on the team, they all need to be retracted
   # - If the team has no remaining members, destroy the team itself
   def remove_participant(participant)
+    # retract all the invitations the participant sent (if any) while being on the this team
+    participant.retract_sent_invitations
+
     # Remove the join record if it exists
     tp = TeamsParticipant.find_by(team_id: id, participant_id: participant.id)
     tp&.destroy
     
     # Update the participant's team_id column - will remove the team reference inside participants table later. keeping it for now
-    participant.update!(team_id: nil)
+    # participant.update!(team_id: nil)
 
     # If no participants remain after removal, delete the team
     destroy if participants.empty?

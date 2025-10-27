@@ -7,7 +7,9 @@ class Invitation < ApplicationRecord
   belongs_to :from_team, class_name: 'AssignmentTeam', foreign_key: 'from_id', inverse_of: false
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'assignment_id'
   belongs_to :from_participant, class_name: 'AssignmentParticipant', foreign_key: 'participant_id'
-  
+
+  validates_with InvitationValidator
+
   # Return a new invitation
   # params = :assignment_id, :to_id, :from_id, :reply_status
   def self.invitation_factory(params)
