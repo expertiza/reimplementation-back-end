@@ -2,7 +2,7 @@
 
 class Assignment < ApplicationRecord
   include MetricHelper
-  has_many :participants, class_name: 'AssignmentParticipant', foreign_key: 'parent_id', dependent: :destroy
+  has_many :participants, class_name: 'AssignmentParticipant', foreign_key: 'parent_id', inverse_of: :assignment, dependent: :destroy
   has_many :users, through: :participants, inverse_of: :assignment
   has_many :teams, class_name: 'AssignmentTeam', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :assignment
   has_many :invitations, class_name: 'Invitation', foreign_key: 'assignment_id', dependent: :destroy # , inverse_of: :assignment
@@ -11,9 +11,12 @@ class Assignment < ApplicationRecord
   has_many :response_maps, foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :sign_up_topics , class_name: 'SignUpTopic', foreign_key: 'assignment_id', dependent: :destroy
-  has_many :due_dates,as: :parent, class_name: 'DueDate',  dependent: :destroy
+  has_many :due_dates,as: :parent, class_name: 'DueDate',  dependent: :destroy, as: :parent
+  has_many :duties, dependent: :destroy
   belongs_to :course, optional: true
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments
+  has_many :assignments_duties, dependent: :destroy
+  has_many :duties, through: :assignments_duties
 
   #This method return the value of the has_badge field for the given assignment object.
   attr_accessor :title, :description, :has_badge, :enable_pair_programming, :is_calibrated, :staggered_deadline

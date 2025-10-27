@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_19_160547) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -106,6 +106,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
 
+  create_table "assignments_duties", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "assignment_id", null: false
+    t.bigint "duty_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "index_assignments_duties_on_assignment_id"
+    t.index ["duty_id"], name: "index_assignments_duties_on_duty_id"
+  end
+
   create_table "bookmark_ratings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.integer "bookmark_id"
     t.integer "user_id"
@@ -160,6 +169,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_type", "parent_id"], name: "index_due_dates_on_parent"
+  end
+
+  create_table "duties", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "instructor_id"
+    t.boolean "private", default: false
+    t.index ["instructor_id"], name: "index_duties_on_instructor_id"
   end
 
   create_table "institutions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -232,6 +250,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
     t.string "authorization"
     t.integer "parent_id", null: false
     t.string "type", null: false
+    t.bigint "duty_id"
+    t.index ["duty_id"], name: "index_participants_on_duty_id"
     t.index ["join_team_request_id"], name: "index_participants_on_join_team_request_id"
     t.index ["team_id"], name: "index_participants_on_team_id"
     t.index ["user_id"], name: "fk_participant_users"
@@ -345,17 +365,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   end
 
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.string "name", null: false
-    t.string "type", null: false
-    t.integer "max_team_size", default: 5, null: false
-    t.bigint "user_id"
-    t.bigint "mentor_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "name", null: false
+    t.string "type", null: false
     t.integer "parent_id", null: false
-    t.index ["mentor_id"], name: "index_teams_on_mentor_id"
-    t.index ["type"], name: "index_teams_on_type"
-    t.index ["user_id"], name: "index_teams_on_user_id"
   end
 
   create_table "teams_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -410,9 +424,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   add_foreign_key "account_requests", "roles"
   add_foreign_key "assignments", "courses"
   add_foreign_key "assignments", "users", column: "instructor_id"
+  add_foreign_key "assignments_duties", "assignments"
+  add_foreign_key "assignments_duties", "duties"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
+  add_foreign_key "duties", "users", column: "instructor_id"
   add_foreign_key "items", "questionnaires"
+  add_foreign_key "participants", "duties"
   add_foreign_key "participants", "join_team_requests"
   add_foreign_key "participants", "teams"
   add_foreign_key "participants", "users"
@@ -423,8 +441,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   add_foreign_key "signed_up_teams", "teams"
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
-  add_foreign_key "teams", "users"
-  add_foreign_key "teams", "users", column: "mentor_id"
   add_foreign_key "teams_participants", "participants"
   add_foreign_key "teams_participants", "teams"
   add_foreign_key "teams_users", "teams"

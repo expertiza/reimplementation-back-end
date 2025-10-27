@@ -28,121 +28,42 @@ RSpec.describe TeamsController, type: :request do
     )
   end
 
-  # A generic "new participant" used when adding to teams
-  let(:user) do
-    User.create!(
-      full_name:       "New Participant",
-      name:            "NewParticipant",
-      email:           "newparticipant@example.com",
-      password_digest: "password",
-      role_id:          @roles[:student].id,
-      institution_id:  institution.id
-    )
-  end
+  # --- FactoryBot Setup ---
+  let!(:course) { create(:course, instructor: instructor) }
+  let!(:assignment) { create(:assignment, instructor: instructor, max_team_size: 3) }
+  let!(:course_team) { create(:course_team, course: course) }
+  let!(:assignment_team) { create(:assignment_team, assignment: assignment) }
 
-  # A student user used for ownership checks in update_duty, list, etc.
-  let(:other_user) do
-    User.create!(
-      full_name:       "Student Member",
-      name:            "student_member",
-      email:           "studentmember@example.com",
-      password_digest: "password",
-      role_id:          @roles[:student].id,
-      institution_id:  institution.id
-    )
-  end
-  
-  # --------------------------------------------------------------------------
-  # Primary Resources
-  # --------------------------------------------------------------------------
-  # Two assignments: one main and one alternate, both owned by the instructor.
-  let(:assignment)  { Assignment.create!(name: "Assignment 1", instructor_id: instructor.id, max_team_size: 3) }
-  # A single course, also owned by the instructor.
-  let(:course) do
-    Course.create!(
-      name:            "Sample Course",
-      instructor_id:   instructor.id,
-      institution_id:  institution.id,
-      directory_path:  "/some/path"
-    )
-  end
-
-  let(:team_owner) do
-    User.create!(
-      name:            "team_owner",
-      full_name:       "Team Owner",
-      email:           "team_owner@example.com",
-      password_digest: "password",
-      role_id:          @roles[:student].id,
-      institution_id:  institution.id
-    )
-  end
-  let(:team_with_course) do
-    CourseTeam.create!(
-      parent_id:      course.id,
-      name:           'team 2',
-      user_id:        team_owner.id
-    )
-  end
-  
-  let(:team_with_assignment) do
-    AssignmentTeam.create!(
-      parent_id:      assignment.id,
-      name:           'team 1',
-      user_id:        team_owner.id
-    )
-  end
-
-  # Create one participant record per context for a baseline student_user:
-  let!(:participant_for_assignment) do
-    AssignmentParticipant.create!(
-      parent_id: assignment.id,
-      user:      other_user,
-      handle:    other_user.name
-    )
-  end
-  let!(:participant_for_course) do
-    CourseParticipant.create!(
-      parent_id: course.id,
-      user:      other_user,
-      handle:    other_user.name
-    )
-  end
-
-  # Link those participants into TeamsParticipant join records:
-  let(:teams_participant_assignment) do
-    TeamsParticipant.create!(
-      participant_id: participant_for_assignment.id,
-      team_id:        team_with_assignment.id,
-      user_id:        participant_for_assignment.user_id
-    )
-  end
-  let(:teams_participant_course) do
-    TeamsParticipant.create!(
-      participant_id: participant_for_course.id,
-      team_id:        team_with_course.id,
-      user_id:        participant_for_course.user_id
-    )
-  end
-
+  # --- Auth & Helpers ---
   let(:token) { JsonWebToken.encode(id: instructor.id) }
   let(:auth_headers) { { Authorization: "Bearer #{token}" } }
+  let(:json_response) { JSON.parse(response.body) }
 
+  # --- Controller Action Tests ---
   describe 'GET /teams' do
-    it 'returns all teams' do
-      team_with_course
+    it 'returns all teams of different types' do
+      # The let! blocks for course_team and assignment_team
+      # have already created these.
       get '/teams', headers: auth_headers
       expect(response).to have_http_status(:success)
-      expect(json_response.size).to eq(1)
-      expect(json_response.first['id']).to eq(team_with_course.id)
+      expect(json_response.size).to eq(2)
+      expect(json_response.map { |t| t['id'] }).to include(course_team.id, assignment_team.id)
     end
   end
 
   describe 'GET /teams/:id' do
-    it 'returns a specific team' do
-      get "/teams/#{team_with_course.id}", headers: auth_headers
+    it 'returns a specific course team' do
+      get "/teams/#{course_team.id}", headers: auth_headers
       expect(response).to have_http_status(:success)
-      expect(json_response['id']).to eq(team_with_course.id)
+      expect(json_response['id']).to eq(course_team.id)
+      expect(json_response['parent_type']).to eq('course') # Check polymorphic method
+    end
+
+    it 'returns a specific assignment team' do
+      get "/teams/#{assignment_team.id}", headers: auth_headers
+      expect(response).to have_http_status(:success)
+      expect(json_response['id']).to eq(assignment_team.id)
+      expect(json_response['parent_type']).to eq('assignment') # Check polymorphic method
     end
 
     it 'returns 404 for non-existent team' do
@@ -152,7 +73,50 @@ RSpec.describe TeamsController, type: :request do
   end
 
   describe 'POST /teams' do
-    it 'returns error for invalid params' do
+    it 'creates an AssignmentTeam with valid params' do
+      valid_params = {
+        team: {
+          name: 'New Assignment Team',
+          type: 'AssignmentTeam',
+          parent_id: assignment.id
+        }
+      }
+
+      expect {
+        post '/teams', params: valid_params, headers: auth_headers
+      }.to change(AssignmentTeam, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+      expect(json_response['name']).to eq('New Assignment Team')
+    end
+
+    it 'creates a CourseTeam with valid params' do
+      valid_params = {
+        team: {
+          name: 'New Course Team',
+          type: 'CourseTeam',
+          parent_id: course.id
+        }
+      }
+
+      expect {
+        post '/teams', params: valid_params, headers: auth_headers
+      }.to change(CourseTeam, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+      expect(json_response['name']).to eq('New Course Team')
+    end
+
+    it 'rejects invalid team type' do
+      invalid_params = {
+        team: { name: 'Invalid Team', type: 'InvalidTeam', parent_id: assignment.id }
+      }
+
+      post '/teams', params: invalid_params, headers: auth_headers
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it 'returns error for missing params' do
       post '/teams', params: { team: { name: '' } }, headers: auth_headers
       expect(response).to have_http_status(:unprocessable_entity)
       expect(json_response).to have_key('errors')
@@ -160,75 +124,109 @@ RSpec.describe TeamsController, type: :request do
   end
 
   describe 'Team Members' do
+    let!(:new_user) { create(:user) }
+
     describe 'GET /teams/:id/members' do
       it 'returns all team members' do
-        teams_participant_course
-        get "/teams/#{team_with_course.id}/members", headers: auth_headers
+        participant = create(:course_participant, course: course)
+        course_team.add_member(participant)
+
+        get "/teams/#{course_team.id}/members", headers: auth_headers
         expect(response).to have_http_status(:success)
         expect(json_response.size).to eq(1)
-        expect(json_response.first['id']).to eq(other_user.id)
+        expect(json_response.first['id']).to eq(participant.user.id)
+      end
+
+      it 'returns empty array for team with no members' do
+        get "/teams/#{course_team.id}/members", headers: auth_headers
+        expect(response).to have_http_status(:success)
+        expect(json_response).to be_empty
       end
     end
 
     describe 'POST /teams/:id/members' do
-      let(:new_user) { create(:user) }
-      let!(:new_participant) { create(:course_participant, user: new_user, parent_id: course.id) }
+      let(:participant_params) { { team_participant: { user_id: new_user.id } } }
 
-      let(:valid_participant_params) do
-        {
-          team_participant: {
-            user_id: new_user.id
-          }
-        }
+      context 'for CourseTeam' do
+        # Create the participant record so the controller can find them
+        let!(:new_participant) { create(:course_participant, user: new_user, course: course) }
+
+        it 'adds a new team member' do
+          expect {
+            post "/teams/#{course_team.id}/members", params: participant_params, headers: auth_headers
+          }.to change(TeamsParticipant, :count).by(1)
+          expect(response).to have_http_status(:created)
+          expect(json_response['id']).to eq(new_user.id)
+        end
+
+        it 'returns error when user is not a participant in course' do
+          non_participant_user = create(:user)
+          params = { team_participant: { user_id: non_participant_user.id } }
+
+          post "/teams/#{course_team.id}/members", params: params, headers: auth_headers
+          expect(response).to have_http_status(:unprocessable_entity)
+          expect(json_response['errors'].first).to match(/not a participant in this course/)
+        end
       end
 
-      it 'adds a new team member' do
-        expect {
-          post "/teams/#{team_with_course.id}/members", params: valid_participant_params, headers: auth_headers
-        }.to change(TeamsParticipant, :count).by(1)
-        expect(response).to have_http_status(:created)
-        expect(json_response['id']).to eq(new_user.id)
-      end
+      context 'for AssignmentTeam' do
+        # Create the participant record
+        let!(:new_assignment_participant) { create(:assignment_participant, user: new_user, assignment: assignment) }
 
-      it 'returns error when team is full' do
-        # For AssignmentTeam, set max_team_size on the assignment, not the team
-        assignment.update(max_team_size: 1)
-        teams_participant_assignment # This creates the first member
-        
-        # Create a new participant for the assignment
-        new_assignment_participant = create(:assignment_participant, user: new_user, parent_id: assignment.id)
-        
-        assignment_params = {
-          team_participant: {
-            user_id: new_user.id
-          }
-        }
-        
-        post "/teams/#{team_with_assignment.id}/members", params: assignment_params, headers: auth_headers
-        expect(response).to have_http_status(:unprocessable_entity)
-        expect(json_response).to have_key('errors')
+        it 'adds a new team member' do
+          expect {
+            post "/teams/#{assignment_team.id}/members", params: participant_params, headers: auth_headers
+          }.to change(TeamsParticipant, :count).by(1)
+          expect(response).to have_http_status(:created)
+        end
+
+        it 'returns error when team is full' do
+          assignment.update!(max_team_size: 1)
+          first_participant = create(:assignment_participant, assignment: assignment)
+          assignment_team.add_member(first_participant)
+
+          # Try to add the second member (new_user)
+          post "/teams/#{assignment_team.id}/members", params: participant_params, headers: auth_headers
+          expect(response).to have_http_status(:unprocessable_entity)
+          expect(json_response['errors'].first).to match(/full capacity/)
+        end
+
+        it 'returns error when user not a participant in assignment' do
+          non_participant_user = create(:user)
+          params = { team_participant: { user_id: non_participant_user.id } }
+
+          post "/teams/#{assignment_team.id}/members", params: params, headers: auth_headers
+          expect(response).to have_http_status(:unprocessable_entity)
+          expect(json_response['errors'].first).to match(/not a participant in this assignment/)
+        end
       end
     end
 
     describe 'DELETE /teams/:id/members/:user_id' do
-      it 'removes a team member' do
-        teams_participant_course
+      it 'removes a team member from a course team' do
+        participant = create(:course_participant, course: course)
+        course_team.add_member(participant)
+
         expect {
-          delete "/teams/#{team_with_course.id}/members/#{other_user.id}", headers: auth_headers
+          delete "/teams/#{course_team.id}/members/#{participant.user.id}", headers: auth_headers
+        }.to change(TeamsParticipant, :count).by(-1)
+        expect(response).to have_http_status(:no_content)
+      end
+
+      it 'removes a team member from an assignment team' do
+        participant = create(:assignment_participant, assignment: assignment)
+        assignment_team.add_member(participant)
+
+        expect {
+          delete "/teams/#{assignment_team.id}/members/#{participant.user.id}", headers: auth_headers
         }.to change(TeamsParticipant, :count).by(-1)
         expect(response).to have_http_status(:no_content)
       end
 
       it 'returns 404 for non-existent member' do
-        delete "/teams/#{team_with_course.id}/members/0", headers: auth_headers
+        delete "/teams/#{course_team.id}/members/0", headers: auth_headers
         expect(response).to have_http_status(:not_found)
       end
     end
-  end
-
-  private
-
-  def json_response
-    JSON.parse(response.body)
   end
 end
