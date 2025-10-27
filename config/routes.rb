@@ -81,6 +81,8 @@ Rails.application.routes.draw do
         collection do
           post '/sign_up', to: 'signed_up_teams#sign_up'
           post '/sign_up_student', to: 'signed_up_teams#sign_up_student'
+          delete '/drop_topic', to: 'signed_up_teams#drop_topic'
+          delete '/drop_team_from_topic', to: 'signed_up_teams#drop_team_from_topic'
         end
       end
 

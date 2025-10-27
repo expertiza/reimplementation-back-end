@@ -28,6 +28,17 @@ begin
       institution_id: 1,
       role_id: 1
     )
+
+    # Create a test student user for easy testing
+    test_student = User.create!(
+      name: 'teststudent',
+      email: 'student@test.com',
+      password: 'password123',
+      full_name: 'Test Student',
+      institution_id: 1,
+      role_id: 5
+    )
+    puts "Created test student: #{test_student.email} with password: password123"
     
 
     #Generate Random Users
@@ -129,6 +140,69 @@ begin
         parent_id: assignment_ids[i%num_assignments],
         team_id: team_ids[i%num_teams]
       ).id
+    end
+
+    puts "creating project topics for testing"
+    # Create some sample project topics for the first assignment
+    if assignment_ids.any?
+      first_assignment_id = assignment_ids.first
+      
+      # Create sample topics
+      topics_data = [
+        {
+          topic_identifier: "E2550",
+          topic_name: "Web Development with React",
+          category: "Web Development",
+          max_choosers: 3,
+          description: "Build a modern web application using React and Node.js",
+          link: "https://github.com/example/react-project"
+        },
+        {
+          topic_identifier: "E2551", 
+          topic_name: "Machine Learning Project",
+          category: "AI/ML",
+          max_choosers: 2,
+          description: "Implement a machine learning model for data analysis",
+          link: "https://github.com/example/ml-project"
+        },
+        {
+          topic_identifier: "E2552",
+          topic_name: "Mobile App Development",
+          category: "Mobile",
+          max_choosers: 4,
+          description: "Create a cross-platform mobile application",
+          link: "https://github.com/example/mobile-app"
+        },
+        {
+          topic_identifier: "E2553",
+          topic_name: "Database Design",
+          category: "Database",
+          max_choosers: 2,
+          description: "Design and implement a relational database system",
+          link: "https://github.com/example/database-project"
+        },
+        {
+          topic_identifier: "E2554",
+          topic_name: "Cybersecurity Analysis",
+          category: "Security",
+          max_choosers: 3,
+          description: "Analyze security vulnerabilities in web applications",
+          link: "https://github.com/example/security-analysis"
+        }
+      ]
+
+      topics_data.each do |topic_data|
+        ProjectTopic.create!(
+          topic_identifier: topic_data[:topic_identifier],
+          topic_name: topic_data[:topic_name],
+          category: topic_data[:category],
+          max_choosers: topic_data[:max_choosers],
+          description: topic_data[:description],
+          link: topic_data[:link],
+          assignment_id: first_assignment_id
+        )
+        puts "Created topic: #{topic_data[:topic_identifier]} - #{topic_data[:topic_name]}"
+      end
     end
 
 

@@ -8,10 +8,10 @@ class ProjectTopicsController < ApplicationController
       render json: { message: 'Assignment ID is required!' }, status: :unprocessable_entity
     elsif params[:topic_ids].nil?
       @project_topics = ProjectTopic.where(assignment_id: params[:assignment_id])
-      render json: @project_topics, status: :ok
+      render json: @project_topics.map { |topic| topic_with_calculated_fields(topic) }, status: :ok
     else
       @project_topics = ProjectTopic.where(assignment_id: params[:assignment_id], topic_identifier: params[:topic_ids])
-      render json: @project_topics, status: :ok
+      render json: @project_topics.map { |topic| topic_with_calculated_fields(topic) }, status: :ok
     end
     # render json: {message: 'All selected topics have been loaded successfully.', project_topics: @stopics}, status: 200
   end
@@ -80,5 +80,34 @@ class ProjectTopicsController < ApplicationController
   # Only allow a list of trusted parameters through.
   def project_topic_params
     params.require(:project_topic).permit(:topic_identifier, :category, :topic_name, :max_choosers, :assignment_id)
+  end
+
+  # Helper method to include calculated fields in the response
+  def topic_with_calculated_fields(topic)
+    topic.as_json.merge(
+      available_slots: topic.available_slots,
+      confirmed_teams: topic.confirmed_teams.map { |team| 
+        { 
+          teamId: team.id.to_s, 
+          members: team.users.map { |user| 
+            { 
+              id: user.id.to_s, 
+              name: user.full_name || user.name 
+            } 
+          } 
+        } 
+      },
+      waitlisted_teams: topic.waitlisted_teams.map { |team| 
+        { 
+          teamId: team.id.to_s, 
+          members: team.users.map { |user| 
+            { 
+              id: user.id.to_s, 
+              name: user.full_name || user.name 
+            } 
+          } 
+        } 
+      }
+    )
   end
 end

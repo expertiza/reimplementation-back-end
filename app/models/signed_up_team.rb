@@ -53,4 +53,41 @@ class SignedUpTeam < ApplicationRecord
                 .where(signed_up_teams: { team_id: user.teams.pluck(:id) })
                 .distinct.to_a
   end
+
+  # Creates a signed up team record and handles topic signup
+  def self.create_signed_up_team(topic_id, team_id)
+    return nil unless topic_id && team_id
+
+    project_topic = ProjectTopic.find_by(id: topic_id)
+    team = Team.find_by(id: team_id)
+    
+    return nil unless project_topic && team
+
+    # Use the existing sign_up_for_topic method which calls project_topic.sign_team_up
+    if sign_up_for_topic(team, project_topic)
+      # Find and return the created signed up team record
+      find_by(project_topic: project_topic, team: team)
+    else
+      nil
+    end
+  end
+
+  # Deletes a signed up team and handles topic drop
+  def self.delete_signed_up_team(team_id)
+    team = Team.find_by(id: team_id)
+    return false unless team
+
+    # Use the existing remove_team_signups method
+    remove_team_signups(team)
+    true
+  end
+
+  # Gets the team ID for a given user (for student signup)
+  def self.get_team_participants(user_id)
+    user = User.find_by(id: user_id)
+    return nil unless user
+
+    # Get the first team the user belongs to
+    user.teams.first&.id
+  end
 end
