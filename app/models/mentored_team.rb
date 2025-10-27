@@ -2,7 +2,10 @@
 
 class MentoredTeam < AssignmentTeam
   # The mentor is determined by a participant on this team having a Duty
-  validate :mentor_must_be_present, on: :update, if: -> { assignment.present? }
+
+  # This validation must be on: :update
+  # and should only run if mentor duties exist for the assignment.
+  validate :mentor_must_be_present, on: :update
 
   # === Public API for Mentors ===
 
@@ -59,7 +62,7 @@ class MentoredTeam < AssignmentTeam
 
   # === Overridden Methods ===
 
-  # REFACTOR: Deleted the `add_member` override.
+  # Deleted the `add_member` override.
   # We now use the `validate_participant_for_add` hook from the base class.
   # This fixes the LSP violation.
 

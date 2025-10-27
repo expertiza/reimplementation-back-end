@@ -5,7 +5,7 @@ class Participant < ApplicationRecord
   belongs_to :user
   has_many   :join_team_requests, dependent: :destroy
   
-  # REFACTOR: Removed `belongs_to :team`
+  # Removed `belongs_to :team`
   # This association is incorrect. A participant belongs to a team
   # *through* the `teams_participants` join table, not directly.
   # The `has_many :participants, through: :teams_participants` on Team

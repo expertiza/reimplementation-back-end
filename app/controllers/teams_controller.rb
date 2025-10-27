@@ -20,8 +20,29 @@ class TeamsController < ApplicationController
   # POST /teams
   # Creates a new team associated with the current user
   def create
-    @team = Team.new(team_params)
-    @team.user = current_user
+    # Extract the team type and parameters
+    team_type_str = team_params[:type]
+    safe_params = team_params.except(:type)
+
+    # 1. Whitelist the team type to prevent STI-related crashes
+    # We explicitly check for allowed types rather than passing untrusted input to .new
+    team_class = case team_type_str
+                 when 'AssignmentTeam' then AssignmentTeam
+                 when 'CourseTeam' then CourseTeam
+                 when 'MentoredTeam' then MentoredTeam
+                 end
+
+    unless team_class
+      # Return 422 if the type is invalid or missing
+      render json: { errors: ["Invalid or missing team type: '#{team_type_str}'"] },
+             status: :unprocessable_entity
+      return
+    end
+
+    # 2. Instantiate the correct team subclass using the safe params
+    @team = team_class.new(safe_params)
+
+    # 4. Save and render
     if @team.save
       render json: @team, serializer: TeamSerializer, status: :created
     else
@@ -44,13 +65,13 @@ class TeamsController < ApplicationController
 
     # Use polymorphic participant_class method instead of type checking
     participant = @team.participant_class.find_by(
-      user_id: user.id, 
+      user_id: user.id,
       parent_id: @team.parent_entity.id
     )
 
     unless participant
-      return render json: { 
-        errors: ["#{user.name} is not a participant in this #{@team.context_label}."] 
+      return render json: {
+        errors: ["#{user.name} is not a participant in this #{@team.context_label}."]
       }, status: :unprocessable_entity
     end
 
@@ -81,11 +102,6 @@ class TeamsController < ApplicationController
     end
   rescue ActiveRecord::RecordNotFound
     render json: { error: 'User not found' }, status: :not_found
-  end
-
-  # Placeholder method to get current user (can be replaced by actual auth logic)
-  def current_user
-    @current_user
   end
 
   private

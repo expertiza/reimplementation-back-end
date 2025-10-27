@@ -1,53 +1,53 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  factory :team do
-    name { Faker::Team.name }
-    type { 'CourseTeam' }
-
-    trait :with_assignment do
-      association :assignment, factory: :assignment
-    end
-  end
+  # NOTE: The base :team factory has been removed.
+  # Teams are an abstract class and should not be instantiated directly.
+  # Please use :course_team, :assignment_team, or :mentored_team.
 
   factory :course_team, class: 'CourseTeam' do
     name { Faker::Team.name }
-    type { 'CourseTeam' }
-    association :course, factory: :course
+    association :course
   end
 
   factory :assignment_team, class: 'AssignmentTeam' do
     name { Faker::Team.name }
-    type { 'AssignmentTeam' }
-    
+
+    # Allows passing max_size to the assignment, e.g.,
+    # create(:assignment_team, max_size: 3)
     transient do
-      course { create(:course) }
-      max_size { 5 } # Now passed to the assignment, not the team
+      max_size { 5 }
     end
 
-    assignment do
-      create(:assignment, course: course, max_team_size: max_size)
-    end
+    # Create the assignment and pass transient values to it
+    association :assignment, factory: :assignment, max_team_size: nil
 
+    # Use after(:build) to handle transient properties
     after(:build) do |team, evaluator|
-      unless team.assignment.nil?
-        team.assignment.update(max_team_size: evaluator.max_size) if evaluator.max_size
+      # This check ensures we don't override an explicitly passed assignment
+      # just to set the max_team_size.
+      if team.assignment&.persisted? && evaluator.max_size
+        team.assignment.update_column(:max_team_size, evaluator.max_size)
       end
     end
 
-    trait :with_assignment do
-      after(:build) do |team, evaluator|
-        team.assignment ||= create(:assignment, course: evaluator.course, max_team_size: evaluator.max_size)
+    # Trait to automatically create a mentor duty for the assignment
+    trait :with_mentor_duty do
+      after(:create) do |team|
+        duty = Duty.find_or_create_by!(
+          name: 'mentor',
+          instructor: team.assignment.instructor
+        )
+        team.assignment.duties << duty unless team.assignment.duties.include?(duty)
       end
     end
   end
 
-  factory :mentored_team, class: 'MentoredTeam' do
-    name { Faker::Team.name }
-    type { 'MentoredTeam' }
-    association :assignment, factory: :assignment
-    after(:build) do |t|
-      t.parent_id ||= t.assignment&.id
-    end
+  factory :mentored_team, parent: :assignment_team, class: 'MentoredTeam' do
+    # This factory now inherits all the logic from :assignment_team,
+    # including assignment creation, parent_id, and max_size transient.
+    
+    # By default, a mentored team factory should set up the mentor duty
+    with_mentor_duty
   end
 end
