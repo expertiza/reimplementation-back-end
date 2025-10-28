@@ -67,6 +67,103 @@ class ProjectTopic < ApplicationRecord
          .order('signed_up_teams.created_at ASC')
   end
 
+  # Business logic for creating a project topic
+  def self.create_topic_with_assignment(topic_params, assignment_id, micropayment = nil)
+    assignment = Assignment.find(assignment_id)
+    topic = new(topic_params)
+    topic.micropayment = micropayment if assignment.microtask?
+    
+    if topic.save
+      {
+        success: true,
+        message: "The topic: \"#{topic.topic_name}\" has been created successfully.",
+        topic: topic
+      }
+    else
+      {
+        success: false,
+        message: topic.errors.full_messages.join(', '),
+        errors: topic.errors
+      }
+    end
+  end
+
+  # Business logic for updating a project topic
+  def update_topic(topic_params)
+    if update(topic_params)
+      {
+        success: true,
+        message: "The topic: \"#{topic_name}\" has been updated successfully.",
+        topic: self
+      }
+    else
+      {
+        success: false,
+        message: errors.full_messages.join(', '),
+        errors: errors
+      }
+    end
+  end
+
+  # Business logic for finding topics by assignment and optional topic IDs
+  def self.find_by_assignment_and_topic_ids(assignment_id, topic_ids = nil)
+    if topic_ids.nil?
+      where(assignment_id: assignment_id)
+    else
+      where(assignment_id: assignment_id, topic_identifier: topic_ids)
+    end
+  end
+
+  # Business logic for deleting topics by assignment and optional topic IDs
+  def self.delete_by_assignment_and_topic_ids(assignment_id, topic_ids = nil)
+    topics = find_by_assignment_and_topic_ids(assignment_id, topic_ids)
+    
+    if topics.exists?
+      topics.each(&:destroy!)
+      {
+        success: true,
+        message: "The topics have been deleted successfully.",
+        count: topics.count
+      }
+    else
+      {
+        success: false,
+        message: "No topics found to delete."
+      }
+    end
+  end
+
+  # Converts ProjectTopic to JSON format with pre-calculated fields for API responses.
+  # This eliminates the need for frontend to calculate available_slots, confirmed_teams,
+  # and waitlisted_teams by providing complete data in a single API call.
+  def to_json_with_computed_data
+    as_json.merge(
+      available_slots: available_slots,
+      confirmed_teams: confirmed_teams.map { |team| 
+        { 
+          teamId: team.id.to_s, 
+          members: team.users.map { |user| 
+            { 
+              id: user.id.to_s, 
+              name: user.full_name || user.name 
+            } 
+          } 
+        } 
+      },
+      waitlisted_teams: waitlisted_teams.map { |team| 
+        { 
+          teamId: team.id.to_s, 
+          members: team.users.map { |user| 
+            { 
+              id: user.id.to_s, 
+              name: user.full_name || user.name 
+            } 
+          } 
+        } 
+      }
+    )
+  end
+
   private
 
   # Returns the count of teams confirmed for this topic.
