@@ -20,25 +20,29 @@ class ResponseMap < ApplicationRecord
   end
 
   def needs_update_link?
-    # If nothing has been reviewed yet → start a new review
-    return true if response.empty? # NOTE: your assoc is singular `:response`
+    # Get the most recent response for this map
+    last = Response.where(map_id: id).order(Arel.sql('created_at DESC')).first
 
-    last = Response.where(map_id: map_id)
-                   .order(Arel.sql('COALESCE(submitted_at, created_at) DESC'))
-                   .first
+    # If there’s no previous response, it’s clearly a new review
+    return true if last.nil?
 
-    # Strategy 1: Round-based (for each round, a new review is needed)
-    if respond_to?(:current_round) && last.respond_to?(:round) && current_round && (last.round.to_i < current_round.to_i)
+    last_created_at = last.created_at
+
+    # ---- Condition 1: Reviewee made a newer submission after the last review ----
+    if reviewee.respond_to?(:latest_submission_at) &&
+       reviewee.latest_submission_at.present? &&
+       reviewee.latest_submission_at > last_created_at
       return true
     end
 
-    # Strategy 2: Artifact/time-based (if its a new submission, a new review is needed)
-    if reviewee.respond_to?(:latest_submission_at) && last
-      last_review_time = last.submitted_at || last.created_at
-      return true if reviewee.latest_submission_at && last_review_time &&
-                     reviewee.latest_submission_at.to_i > last_review_time.to_i
+    # ---- Condition 2: Current round advanced since the last review ----
+    if respond_to?(:current_round)
+      last_round = (last.respond_to?(:round) ? last.round : 0).to_i
+      curr_round = current_round.to_i
+      return true if curr_round > last_round
     end
 
+    # Otherwise, keep "Edit"
     false
   end
 
@@ -73,5 +77,24 @@ class ResponseMap < ApplicationRecord
   # Check to see if this response map is a survey. Default is false, and some subclasses will overwrite to true.
   def survey?
     false
+  end
+
+  # Safely read the team's latest submission time if the API exists on Participant.
+  def latest_submission_at_for_reviewee
+    return nil unless reviewee.respond_to?(:latest_submission_at)
+
+    reviewee.latest_submission_at
+  end
+
+  # Safely read "current round".
+  # Prefer assignment.current_round if present; fall back to any method on self; else 0.
+  def current_round_safely
+    if assignment && assignment.respond_to?(:current_round)
+      assignment.current_round
+    elsif respond_to?(:current_round)
+      current_round
+    else
+      0
+    end
   end
 end
