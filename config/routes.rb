@@ -147,6 +147,7 @@ Rails.application.routes.draw do
       resources :submitted_content do
         collection do
           get :download
+          get :list_files
           get :folder_action
           post :folder_action
           get :remove_hyperlink

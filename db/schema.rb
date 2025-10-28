@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_19_154115) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_28_195837) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -365,6 +365,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_19_154115) do
     t.datetime "updated_at", null: false
     t.integer "parent_id", null: false
     t.text "submitted_hyperlinks"
+    t.integer "directory_num"
     t.index ["mentor_id"], name: "index_teams_on_mentor_id"
     t.index ["type"], name: "index_teams_on_type"
     t.index ["user_id"], name: "index_teams_on_user_id"

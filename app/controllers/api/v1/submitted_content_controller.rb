@@ -3,8 +3,8 @@ class Api::V1::SubmittedContentController < ApplicationController
   include FileHelper
 
   before_action :set_submission_record, only: [:show]
-  before_action :set_participant, only: [:submit_hyperlink, :remove_hyperlink, :submit_file, :folder_action, :download]
-  before_action :ensure_participant_team, only: [:submit_hyperlink, :remove_hyperlink, :submit_file, :folder_action, :download]
+  before_action :set_participant, only: [:submit_hyperlink, :remove_hyperlink, :submit_file, :folder_action, :download, :list_files]
+  before_action :ensure_participant_team, only: [:submit_hyperlink, :remove_hyperlink, :submit_file, :folder_action, :download, :list_files]
 
   # GET /api/v1/submitted_content
   # Retrieves all submission records from the database
@@ -229,6 +229,72 @@ class Api::V1::SubmittedContentController < ApplicationController
     # Stream the file to the client (disposition: 'inline' displays in browser if possible)
     # Note: send_file returns immediately, do NOT render after this line
     send_file(path, disposition: 'inline')
+  end
+
+  # GET /api/v1/submitted_content/list_files
+  # Lists all files and directories in the participant's submission folder
+  def list_files
+    # Get the team and ensure it has a directory
+    team = participant_team
+    team.set_student_directory_num
+
+    # Get the folder path from params, default to root
+    folder_param = params.dig(:folder, :name) || params[:folder] || '/'
+    folder_path = sanitize_folder(folder_param)
+
+    # Build the full directory path
+    base_path = @participant.team_path.to_s
+    full_path = folder_path == '/' ? base_path : File.join(base_path, folder_path)
+
+    # Check if directory exists
+    unless File.exist?(full_path)
+      # Create the directory if it doesn't exist
+      FileUtils.mkdir_p(full_path)
+      return render json: { files: [], folders: [], hyperlinks: team.hyperlinks }, status: :ok
+    end
+
+    # Check if path is actually a directory
+    unless File.directory?(full_path)
+      return render_error('The specified path is not a directory.', :bad_request)
+    end
+
+    # Collect files and folders
+    files = []
+    folders = []
+
+    Dir.entries(full_path).each do |entry|
+      # Skip current and parent directory references
+      next if entry == '.' || entry == '..'
+
+      entry_path = File.join(full_path, entry)
+
+      if File.directory?(entry_path)
+        # It's a folder
+        folders << {
+          name: entry,
+          modified_at: File.mtime(entry_path)
+        }
+      else
+        # It's a file
+        files << {
+          name: entry,
+          size: File.size(entry_path),
+          type: File.extname(entry).delete('.'),
+          modified_at: File.mtime(entry_path)
+        }
+      end
+    end
+
+    # Return the file listing with hyperlinks
+    render json: {
+      current_folder: folder_path,
+      files: files.sort_by { |f| f[:name] },
+      folders: folders.sort_by { |f| f[:name] },
+      hyperlinks: team.hyperlinks
+    }, status: :ok
+  rescue StandardError => e
+    # Handle any errors during file listing
+    render_error("Failed to list directory contents: #{e.message}. Please try again.", :internal_server_error)
   end
 
   private
