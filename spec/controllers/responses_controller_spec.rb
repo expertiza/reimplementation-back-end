@@ -14,7 +14,7 @@ RSpec.describe ResponsesController, type: :controller do
     request.headers['Authorization'] = 'Bearer faketoken'
     allow(JsonWebToken).to receive(:decode).and_return({ id: user.id })
     allow(User).to receive(:find).with(user.id).and_return(user)
-    # Note: not stubbing authenticate_request! so the controller's JwtToken behavior runs but uses the above stubs
+    # NOTE: not stubbing authenticate_request! so the controller's JwtToken behavior runs but uses the above stubs
 
     # Also provide current_user directly to be safe
     allow(controller).to receive(:current_user).and_return(user)
@@ -101,6 +101,7 @@ RSpec.describe ResponsesController, type: :controller do
     context 'when update succeeds' do
       before do
         allow(response_double).to receive(:is_submitted?).and_return(false)
+        allow(controller).to receive(:deadline_open?).with(response_double).and_return(true)
         allow(response_double).to receive(:update).and_return(true)
       end
 
@@ -115,6 +116,7 @@ RSpec.describe ResponsesController, type: :controller do
     context 'when update fails' do
       before do
         allow(response_double).to receive(:is_submitted?).and_return(false)
+        allow(controller).to receive(:deadline_open?).with(response_double).and_return(true)
         allow(response_double).to receive(:update).and_return(false)
         allow(response_double).to receive_message_chain(:errors, :full_messages).and_return(['bad'])
       end
@@ -149,6 +151,7 @@ RSpec.describe ResponsesController, type: :controller do
 
     context 'when already submitted' do
       before do
+        allow(controller).to receive(:deadline_open?).with(response_double).and_return(true)
         allow(response_double).to receive(:is_submitted?).and_return(true)
       end
 
@@ -162,6 +165,7 @@ RSpec.describe ResponsesController, type: :controller do
 
     context 'when update succeeds' do
       before do
+        allow(controller).to receive(:deadline_open?).with(response_double).and_return(true)
         allow(response_double).to receive(:is_submitted?).and_return(false)
         allow(response_double).to receive(:update).and_return(true)
       end
@@ -209,6 +213,7 @@ RSpec.describe ResponsesController, type: :controller do
     context 'when rubric incomplete' do
       before do
         allow(response_double).to receive(:is_submitted?).and_return(false)
+        allow(controller).to receive(:deadline_open?).with(response_double).and_return(true)
         allow(response_double).to receive(:scores).and_return([double('Score', answer: nil)])
       end
 
@@ -237,6 +242,7 @@ RSpec.describe ResponsesController, type: :controller do
     context 'when submitting twice (duplicate submission)' do
       before do
         # first call: not submitted, second call: already submitted
+        allow(controller).to receive(:deadline_open?).with(response_double).and_return(true)
         allow(response_double).to receive(:is_submitted?).and_return(false, true)
         allow(response_double).to receive(:scores).and_return([])
         allow(response_double).to receive(:aggregate_questionnaire_score).and_return(42)
@@ -302,6 +308,82 @@ RSpec.describe ResponsesController, type: :controller do
     end
   end
 
+  describe 'GET #next_action' do
+    let(:map) { instance_double('ResponseMap', id: 123, reviewer: user) }
+
+    before do
+      allow(ResponseMap).to receive(:find_by).and_return(map)
+    end
+
+    context 'when response_map is not found' do
+      before do
+        allow(ResponseMap).to receive(:find_by).with(id: '999').and_return(nil)
+      end
+
+      it 'returns 404' do
+        get :next_action, params: { map_id: 999 }
+        expect(response).to have_http_status(:not_found)
+        body = JSON.parse(response.body)
+        expect(body['error']).to eq('ResponseMap not found')
+      end
+    end
+
+    context 'when map.needs_update_link? is true' do
+      before do
+        allow(map).to receive(:needs_update_link?).and_return(true)
+      end
+
+      it 'returns next_action = update' do
+        get :next_action, params: { map_id: map.id }
+        expect(response).to have_http_status(:ok)
+        body = JSON.parse(response.body)
+        expect(body['map_id']).to eq(map.id)
+        expect(body['next_action']).to eq('update')
+      end
+    end
+
+    context 'when map.needs_update_link? is false' do
+      before do
+        allow(map).to receive(:needs_update_link?).and_return(false)
+      end
+
+      it 'returns next_action = edit' do
+        get :next_action, params: { map_id: map.id }
+        expect(response).to have_http_status(:ok)
+        body = JSON.parse(response.body)
+        expect(body['map_id']).to eq(map.id)
+        expect(body['next_action']).to eq('edit')
+      end
+    end
+
+    context 'authorization: reviewer must own the map (if inline ownership check is present)' do
+      let(:someone_else) { instance_double('User', id: 77) }
+
+      before do
+        allow(controller).to receive(:current_user).and_return(someone_else)
+        # If your controller relies on the global before_action + action_allowed?,
+        # uncomment the following to exercise the guard instead of inline check:
+        # allow(controller).to receive(:authorize).and_call_original
+        # allow(controller).to receive(:action_allowed?).and_call_original
+        # allow(controller).to receive(:has_role?).with('Reviewer').and_return(true)
+      end
+
+      it 'returns 403 forbidden if current_user != map.reviewer' do
+        # This spec passes if you kept the inline check in next_action.
+        # If you removed the inline check and rely entirely on the global guard,
+        # adapt the stubs above (uncomment) so action_allowed? denies access.
+        allow(map).to receive(:reviewer).and_return(instance_double('Participant', id: 555))
+        # When inline check exists, controller should render 403.
+        # When only global guard exists, modify stubs to force guard to return false.
+        get :next_action, params: { map_id: map.id }
+
+        # If inline check:
+        expect(response).to have_http_status(:forbidden)
+        body = JSON.parse(response.body)
+        expect(body['error']).to eq('forbidden')
+      end
+    end
+  end
   describe 'PATCH #unsubmit' do
     let(:response_double) { double('Response') }
 
