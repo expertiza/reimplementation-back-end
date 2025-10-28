@@ -10,6 +10,7 @@ class AssignmentParticipant < Participant
   delegate :name, to: :user, prefix: true, allow_nil: true
   delegate :id, to: :team, prefix: true, allow_nil: true
   delegate :id, to: :assignment, prefix: true, allow_nil: true
+  delegate :path, to: :team, prefix: true, allow_nil: true
 
   # Fetches the team for specific participant
   def team

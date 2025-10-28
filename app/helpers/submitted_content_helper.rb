@@ -43,7 +43,8 @@ module SubmittedContentHelper
   # @param unzip_dir [String] Target directory for extraction
   def self.extract_entry(e, unzip_dir)
     # Sanitize the entry name to prevent directory traversal attacks
-    safe_name = FileHelper.sanitize_filename(e.name)
+    just_filename = File.basename(e.name)
+    safe_name = just_filename.gsub(%r{[^\w\.\_/]}, '_').tr("'", '_')
 
     # Build the full path where the entry will be extracted
     file_path = File.join(unzip_dir, safe_name)
@@ -124,7 +125,7 @@ module SubmittedContentHelper
     # Wrap the move operation with error handling
     handle_file_operation_error('moving') do
       # Perform the file move using FileHelper
-      FileHelper.move_file(old_filename, new_location)
+      move_file(old_filename, new_location)
 
       # Render success response
       render json: { message: "The file was successfully moved." }, status: :ok
@@ -139,7 +140,7 @@ module SubmittedContentHelper
 
     # Build new filename with sanitization in the same directory
     new_filename = File.join(params[:directories][params[:chk_files]],
-                             FileHelper.sanitize_filename(params[:faction][:rename]))
+                             sanitize_filename(params[:faction][:rename]))
 
     # Wrap the rename operation with error handling
     handle_file_operation_error('renaming') do
@@ -171,7 +172,7 @@ module SubmittedContentHelper
 
     # Build destination filename with sanitization
     new_filename = File.join(params[:directories][params[:chk_files]],
-                             FileHelper.sanitize_filename(params[:faction][:copy]))
+                             sanitize_filename(params[:faction][:copy]))
 
     # Wrap the copy operation with error handling
     handle_file_operation_error('copying') do
@@ -238,7 +239,7 @@ module SubmittedContentHelper
     # Wrap the folder creation with error handling
     handle_file_operation_error('creating directory') do
       # Create the directory (and any necessary parent directories)
-      FileHelper.create_directory_from_path(location)
+      create_directory_from_path(location)
 
       # Render success response with folder name
       render json: { message: "Directory '#{params[:faction][:create]}' created successfully." }, status: :created

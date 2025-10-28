@@ -5,6 +5,9 @@ class AssignmentTeam < Team
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'parent_id'
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewee_id'
 
+  # Delegation to avoid Law of Demeter violations
+  delegate :path, to: :assignment, prefix: true
+
   def hyperlinks
     submitted_hyperlinks.blank? ? [] : YAML.safe_load(submitted_hyperlinks)
   end
@@ -63,7 +66,7 @@ class AssignmentTeam < Team
 
   # Gets the student directory path
   def path
-    "#{assignment.path}/#{directory_num}"
+    "#{assignment_path}/#{directory_num}"
   end
 
   # Copies the current assignment team to a course team

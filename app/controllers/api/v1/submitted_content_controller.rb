@@ -144,7 +144,7 @@ class Api::V1::SubmittedContentController < ApplicationController
     team.set_student_directory_num
 
     # Build the full directory path where file will be saved
-    current_directory = File.join(team.path.to_s, current_folder)
+    current_directory = File.join(@participant.team_path.to_s, current_folder)
 
     # Create the directory if it doesn't exist
     FileUtils.mkdir_p(current_directory) unless File.exist?(current_directory)
