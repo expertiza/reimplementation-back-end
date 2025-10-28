@@ -56,7 +56,6 @@ class ResponsesController < ApplicationController
                     status: :unprocessable_entity
     end
 
-
     if @response.update(response_params)
       render json: { message: 'Draft saved successfully', response: @response }, status: :ok
     else
@@ -86,7 +85,6 @@ class ResponsesController < ApplicationController
 
     # Lock response
     @response.is_submitted = true
-    @response.submitted_at = Time.current
 
     # Calculate score via ScorableHelper
     total_score = @response.aggregate_questionnaire_score
@@ -115,22 +113,6 @@ class ResponsesController < ApplicationController
     return true if due.nil?
 
     due > Time.current
-  end
-
-  # GET /responses/next_action?map_id=123
-  def next_action
-    map = ResponseMap.find_by(id: params[:map_id])
-    return render json: { error: 'ResponseMap not found' }, status: :not_found unless map
-
-    # (Optional) lock down so only the assigned reviewer can query this map
-    if respond_to?(:current_user) && map.reviewer != current_user
-      return render json: { error: 'forbidden' }, status: :forbidden
-    end
-
-    render json: {
-      map_id: map.id,
-      next_action: (map.needs_update_link? ? 'update' : 'edit')
-    }, status: :ok
   end
 
   # PATCH /responses/:id/unsubmit
