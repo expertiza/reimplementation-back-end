@@ -85,7 +85,8 @@ begin
       password: "password",
       full_name: Faker::Name.name,
       institution_id: 1,
-      role_id: 5
+      role_id: 5,
+      parent_id: [nil, *instructor_user_ids].sample
     ).id
   end
 
