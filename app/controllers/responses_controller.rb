@@ -1,20 +1,16 @@
 # frozen_string_literal: true
 
 class ResponsesController < ApplicationController
-  before_action :set_response, only: [:update, :submit, :unsubmit, :destroy]
+  before_action :set_response, only: %i[update save_draft submit unsubmit destroy]
   # before_action :authorize_action
 
   # Authorization: determines if current user can perform the action
   def action_allowed?
     case action_name
-    when 'create', 'update', 'save_draft', 'submit'
-      unless has_role?('Reviewer')
-        render json: { error: 'forbidden' }, status: :forbidden
-      end
+    when 'create', 'update', 'save_draft', 'submit', 'next_action'
+      render json: { error: 'forbidden' }, status: :forbidden unless has_role?('Reviewer') && owns_response_or_map?
     when 'unsubmit', 'destroy'
-      unless has_role?('Instructor') || has_role?('Admin')
-        render json: { error: 'forbidden' }, status: :forbidden
-      end
+      render json: { error: 'forbidden' }, status: :forbidden unless has_role?('Instructor') || has_role?('Admin')
     end
   end
 
@@ -40,6 +36,7 @@ class ResponsesController < ApplicationController
   # Reviewer edits existing draft (still unsubmitted)
   def update
     return render json: { error: 'forbidden' }, status: :forbidden if @response.is_submitted?
+    return render json: { error: 'Deadline has passed' }, status: :forbidden unless deadline_open?(@response)
 
     if @response.update(response_params)
       render json: { message: 'Draft updated successfully', response: @response }, status: :ok
@@ -51,10 +48,14 @@ class ResponsesController < ApplicationController
   # PATCH /responses/:id/save_draft
   # Reviewer saves progress without submitting
   def save_draft
-    @response = Response.find_by(id: params[:id])
-    return render json: { error: 'Response not found' }, status: :not_found unless @response
-    return render json: { error: 'forbidden' }, status: :forbidden unless has_role?('Reviewer')
-    return render json: { error: 'Response already submitted' }, status: :unprocessable_entity if @response.is_submitted?
+    return render json: { error: 'forbidden' }, status: :forbidden unless has_role?('Reviewer') # or rely on guard
+    return render json: { error: 'Deadline has passed' }, status: :forbidden unless deadline_open?(@response)
+
+    if @response.is_submitted?
+      return render json: { error: 'Response already submitted' },
+                    status: :unprocessable_entity
+    end
+
 
     if @response.update(response_params)
       render json: { message: 'Draft saved successfully', response: @response }, status: :ok
@@ -67,14 +68,21 @@ class ResponsesController < ApplicationController
   # Lock the response and calculate final score
   def submit
     return render json: { error: 'Response not found' }, status: :not_found unless @response
-    return render json: { error: 'Response already submitted' }, status: :unprocessable_entity if @response.is_submitted?
+
+    if @response.is_submitted?
+      return render json: { error: 'Response already submitted' },
+                    status: :unprocessable_entity
+    end
 
     # Check deadline
     return render json: { error: 'Deadline has passed' }, status: :forbidden unless deadline_open?(@response)
 
     # Validate rubric completion
     unanswered = @response.scores.select { |a| a.answer.nil? }
-    return render json: { error: 'All rubric items must be answered' }, status: :unprocessable_entity unless unanswered.empty?
+    unless unanswered.empty?
+      return render json: { error: 'All rubric items must be answered' },
+                    status: :unprocessable_entity
+    end
 
     # Lock response
     @response.is_submitted = true
@@ -100,13 +108,29 @@ class ResponsesController < ApplicationController
     return true if assignment.nil?
     return true if assignment.respond_to?(:due_date) && assignment.due_date.nil?
     # if due_date responds to future? use it, otherwise compare to now
-    if assignment.respond_to?(:due_date) && assignment.due_date.respond_to?(:future?)
-      return assignment.due_date.future?
-    end
+    return assignment.due_date.future? if assignment.respond_to?(:due_date) && assignment.due_date.respond_to?(:future?)
+
     # fallback: compare
     due = assignment.due_date
     return true if due.nil?
+
     due > Time.current
+  end
+
+  # GET /responses/next_action?map_id=123
+  def next_action
+    map = ResponseMap.find_by(id: params[:map_id])
+    return render json: { error: 'ResponseMap not found' }, status: :not_found unless map
+
+    # (Optional) lock down so only the assigned reviewer can query this map
+    if respond_to?(:current_user) && map.reviewer != current_user
+      return render json: { error: 'forbidden' }, status: :forbidden
+    end
+
+    render json: {
+      map_id: map.id,
+      next_action: (map.needs_update_link? ? 'update' : 'edit')
+    }, status: :ok
   end
 
   # PATCH /responses/:id/unsubmit
@@ -137,6 +161,7 @@ class ResponsesController < ApplicationController
 
   def set_response
     @response = Response.find_by(id: params[:id])
+    render json: { error: 'Response not found' }, status: :not_found and return unless @response
   end
 
   def response_params
@@ -144,7 +169,19 @@ class ResponsesController < ApplicationController
       :map_id,
       :is_submitted,
       :submitted_at,
-      scores_attributes: [:id, :question_id, :answer, :comment]
+      scores_attributes: %i[id question_id answer comment]
     )
+  end
+
+  def owns_map_or_response?
+    # Member actions: we have @response from set_response
+    return @response.map.reviewer == current_user if @response&.map
+
+    # Collection actions (create, next_action): check map ownership
+    map_id = params[:response_map_id] || params[:map_id]
+    return false if map_id.blank?
+
+    map = ResponseMap.find_by(id: map_id)
+    map && map.reviewer == current_user
   end
 end

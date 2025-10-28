@@ -16,7 +16,30 @@ class ResponseMap < ApplicationRecord
 
   # returns the assignment related to the response map
   def response_assignment
-    return Participant.find(self.reviewer_id).assignment
+    Participant.find(reviewer_id).assignment
+  end
+
+  def needs_update_link?
+    # If nothing has been reviewed yet → start a new review
+    return true if response.empty? # NOTE: your assoc is singular `:response`
+
+    last = Response.where(map_id: map_id)
+                   .order(Arel.sql('COALESCE(submitted_at, created_at) DESC'))
+                   .first
+
+    # Strategy 1: Round-based (for each round, a new review is needed)
+    if respond_to?(:current_round) && last.respond_to?(:round) && current_round && (last.round.to_i < current_round.to_i)
+      return true
+    end
+
+    # Strategy 2: Artifact/time-based (if its a new submission, a new review is needed)
+    if reviewee.respond_to?(:latest_submission_at) && last
+      last_review_time = last.submitted_at || last.created_at
+      return true if reviewee.latest_submission_at && last_review_time &&
+                     reviewee.latest_submission_at.to_i > last_review_time.to_i
+    end
+
+    false
   end
 
   def self.assessments_for(team)

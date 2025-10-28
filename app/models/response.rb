@@ -6,6 +6,7 @@ class Response < ApplicationRecord
 
   belongs_to :response_map, class_name: 'ResponseMap', foreign_key: 'map_id', inverse_of: false
   has_many :scores, class_name: 'Answer', foreign_key: 'response_id', dependent: :destroy, inverse_of: false
+  accepts_nested_attributes_for :scores
 
   alias map response_map
   delegate :questionnaire, :reviewee, :reviewer, to: :map
@@ -31,13 +32,13 @@ class Response < ApplicationRecord
     if (label = KIND_LABELS[klass_name]).present?
       return label
     end
-  
+
     # back up plan: use get_title
     if map.respond_to?(:get_title)
       title = map.get_title
       return title if title.present?
     end
-  
+
     # response type doesn't exist
     'Unknown Type'
   end
@@ -89,30 +90,4 @@ class Response < ApplicationRecord
     end
     sum
   end
-
-<<<<<<< HEAD
-  # Returns the weighted sum across scorable items (alias for clarity)
-  def raw_total_score
-    aggregate_questionnaire_score.to_f
-  end
-
-  # normalized score in [0, 1], using maximum_score provided by helpers
-  def normalized_score
-    denom = maximum_score.to_f
-    return nil if denom.zero?
-
-    raw_total_score / denom
-  end
-
-  # Persist total score only if the column exists; always return the numeric total
-  def persist_total_score!
-    total = raw_total_score
-    if has_attribute?(:total_score)
-      # Do not touch submission flags here; controller will manage submit state.
-      update!(total_score: total)
-    end
-    total
-  end
-=======
->>>>>>> 05ce778ad05dbe0455e57fd937627f2a0ab2e111
 end
