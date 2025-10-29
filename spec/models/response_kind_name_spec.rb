@@ -13,8 +13,8 @@ RSpec.describe Response, type: :model do
       end
     end
 
-    context 'when the map defines get_title' do
-      it 'returns the value of get_title' do
+    context 'when the map type is in KIND_LABELS' do
+      it 'returns the text-formatted name for the map type obtained from the KIND_LABELS' do
         map = ReviewResponseMap.new
         allow(map).to receive(:get_title).and_return('Review')
         response.response_map = map
