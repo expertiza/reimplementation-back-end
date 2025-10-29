@@ -5,16 +5,16 @@ require 'spec_helper'
 ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'
 # Prevent database truncation if the environment is production
-abort('The Rails environment is running in production mode!') if Rails.env.production?
+abort("The Rails environment is running in production mode!") if Rails.env.production?
 require 'rspec/rails'
 
 require 'factory_bot_rails'
 require 'database_cleaner/active_record'
 
 # Override DATABASE_URL for tests to prevent remote DB errors
-# if Rails.env.test?
+#if Rails.env.test?
 #  ENV['DATABASE_URL'] = 'mysql2://root:expertiza@127.0.0.1/reimplementation_test'
-# end
+#end
 
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
@@ -77,16 +77,7 @@ rescue ActiveRecord::PendingMigrationError => e
 end
 RSpec.configure do |config|
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
-  if config.respond_to?(:fixture_paths=)
-    config.fixture_paths = [Rails.root.join('spec/fixtures').to_s]
-  else
-    # fallback for older Rails / rspec-rails
-    config.fixture_path = Rails.root.join('spec/fixtures')
-  end
-
-  config.use_transactional_fixtures = true
-  config.infer_spec_type_from_file_location!
-  config.filter_rails_from_backtrace!
+  config.fixture_path = Rails.root.join('spec/fixtures')
 
   # If you're not using ActiveRecord, or you'd prefer not to run each of your
   # examples within a transaction, remove the following line or assign false
@@ -121,39 +112,5 @@ Shoulda::Matchers.configure do |config|
   config.integrate do |with|
     with.test_framework :rspec
     with.library :rails
-  end
-  module ResponseMapTestHelpers
-    # Mock a team to have a specific submission timestamp
-    def mock_team_with_submission(team, timestamp)
-      allow(team).to receive(:respond_to?).with(:latest_submission_at).and_return(true)
-      allow(team).to receive(:latest_submission_at).and_return(timestamp)
-    end
-
-    # Mock a team to have no submission timestamp
-    def mock_team_with_no_submission(team)
-      allow(team).to receive(:respond_to?).with(:latest_submission_at).and_return(true)
-      allow(team).to receive(:latest_submission_at).and_return(nil)
-    end
-
-    # Mock a response_map to have a specific round number
-    def mock_map_with_round(response_map, round_number)
-      allow(response_map).to receive(:respond_to?).with(:current_round).and_return(true)
-      allow(response_map).to receive(:current_round).and_return(round_number)
-    end
-
-    # Mock a response_map to not have round information
-    def mock_map_without_rounds(response_map)
-      allow(response_map).to receive(:respond_to?).with(:current_round).and_return(false)
-    end
-
-    # Mock a response to have a specific round number
-    def mock_response_with_round(response, round_number)
-      allow(response).to receive(:respond_to?).with(:round).and_return(true)
-      allow(response).to receive(:round).and_return(round_number)
-    end
-  end
-
-  RSpec.configure do |config|
-    config.include ResponseMapTestHelpers, type: :model
   end
 end
