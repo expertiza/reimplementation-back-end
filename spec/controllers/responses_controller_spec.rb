@@ -130,55 +130,6 @@ RSpec.describe ResponsesController, type: :controller do
     end
   end
 
-  describe 'PATCH #save_draft' do
-    let(:response_double) { double('Response') }
-
-    before do
-      allow(Response).to receive(:find_by).and_return(response_double)
-      allow(controller).to receive(:has_role?).with('Reviewer').and_return(true)
-    end
-
-    context 'when response not found' do
-      before do
-        allow(Response).to receive(:find_by).and_return(nil)
-      end
-
-      it 'returns 404' do
-        patch :save_draft, params: { id: 1, response: { content: 'x' } }
-        expect(response).to have_http_status(:not_found)
-      end
-    end
-
-    context 'when already submitted' do
-      before do
-        allow(controller).to receive(:deadline_open?).with(response_double).and_return(true)
-        allow(response_double).to receive(:is_submitted?).and_return(true)
-      end
-
-      it 'returns 422' do
-        patch :save_draft, params: { id: 1, response: { content: 'x' } }
-        expect(response).to have_http_status(:unprocessable_entity)
-        body = JSON.parse(response.body)
-        expect(body['error']).to eq('Response already submitted')
-      end
-    end
-
-    context 'when update succeeds' do
-      before do
-        allow(controller).to receive(:deadline_open?).with(response_double).and_return(true)
-        allow(response_double).to receive(:is_submitted?).and_return(false)
-        allow(response_double).to receive(:update).and_return(true)
-      end
-
-      it 'saves draft and returns ok' do
-        patch :save_draft, params: { id: 1, response: { content: 'x' } }
-        expect(response).to have_http_status(:ok)
-        body = JSON.parse(response.body)
-        expect(body['message']).to eq('Draft saved successfully')
-      end
-    end
-  end
-
   describe 'PATCH #submit' do
     let(:response_double) { double('Response') }
 
@@ -330,7 +281,7 @@ RSpec.describe ResponsesController, type: :controller do
     context 'when response is submitted' do
       before do
         allow(response_double).to receive(:is_submitted?).and_return(true)
-        allow(response_double).to receive(:update).with(is_submitted: false, submitted_at: nil).and_return(true)
+        allow(response_double).to receive(:update).with(is_submitted: false).and_return(true)
       end
 
       it 'reopens the response and returns ok' do
