@@ -16,7 +16,34 @@ class ResponseMap < ApplicationRecord
 
   # returns the assignment related to the response map
   def response_assignment
-    return Participant.find(self.reviewer_id).assignment
+    Participant.find(reviewer_id).assignment
+  end
+
+  def needs_update_link?
+    # Get the most recent response for this map
+    last = Response.where(map_id: id).order(Arel.sql('created_at DESC')).first
+
+    # If there’s no previous response, it’s clearly a new review
+    return true if last.nil?
+
+    last_created_at = last.created_at
+
+    # ---- Condition 1: Reviewee made a newer submission after the last review ----
+    if reviewee.respond_to?(:latest_submission_at) &&
+       reviewee.latest_submission_at.present? &&
+       reviewee.latest_submission_at > last_created_at
+      return true
+    end
+
+    # ---- Condition 2: Current round advanced since the last review ----
+    if respond_to?(:current_round)
+      last_round = (last.respond_to?(:round) ? last.round : 0).to_i
+      curr_round = current_round.to_i
+      return true if curr_round > last_round
+    end
+
+    # Otherwise, keep "Edit"
+    false
   end
 
   def self.assessments_for(team)
@@ -50,5 +77,24 @@ class ResponseMap < ApplicationRecord
   # Check to see if this response map is a survey. Default is false, and some subclasses will overwrite to true.
   def survey?
     false
+  end
+
+  # Safely read the team's latest submission time if the API exists on Participant.
+  def latest_submission_at_for_reviewee
+    return nil unless reviewee.respond_to?(:latest_submission_at)
+
+    reviewee.latest_submission_at
+  end
+
+  # Safely read "current round".
+  # Prefer assignment.current_round if present; fall back to any method on self; else 0.
+  def current_round_safely
+    if assignment && assignment.respond_to?(:current_round)
+      assignment.current_round
+    elsif respond_to?(:current_round)
+      current_round
+    else
+      0
+    end
   end
 end
