@@ -92,13 +92,25 @@ class Api::V1::InvitationsController < ApplicationController
 
   def invitations_sent_by_team
     begin
-      @team = AssignmentTeam.find(params[:team_id])
+      team = AssignmentTeam.find(params[:team_id])
     rescue ActiveRecord::RecordNotFound => e
       render json: { message: e.message, success: false }, status: :not_found
       return
     end
 
-    @invitations = Invitation.where(from_id: @team.id, assignment_id: @team.parent_id)
+    @invitations = Invitation.where(from_id: team.id, assignment_id: team.parent_id)
+    render json: @invitations, status: :ok
+  end
+
+  def invitations_sent_by_participant
+    begin
+      participant = AssignmentParticipant.find(params[:participant_id])
+    rescue ActiveRecord::RecordNotFound => e
+      render json: { message: e.message, success: false }, status: :not_found
+      return
+    end
+
+    @invitations = Invitation.where(participant_id: participant.id, assignment_id: participant.parent_id)
     render json: @invitations, status: :ok
   end
 

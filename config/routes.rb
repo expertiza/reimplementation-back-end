@@ -101,7 +101,8 @@ Rails.application.routes.draw do
 
       resources :invitations do
         collection do
-          get '/sent_by/:team_id', to: 'invitations_sent_by_team'
+          get '/sent_by/team/:team_id', to: 'invitations_sent_by_team'
+          get '/sent_by/participant/:participant_id', to: 'invitations_sent_by_participant'
           get '/sent_to/:participant_id', to: 'invitations_sent_to_participant'
         end
       end

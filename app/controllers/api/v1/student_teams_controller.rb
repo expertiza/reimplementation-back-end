@@ -3,7 +3,7 @@ class Api::V1::StudentTeamsController < ApplicationController
     #  team is gaining or losing a member
     def team
         @team ||= if params[:student_id].present? && student.present?
-                    student.team 
+                    TeamsParticipant.find_by(participant_id:student.id)&.team
                 elsif params[:team_id].present?
                     AssignmentTeam.find_by(id:params[:team_id])
                   end
