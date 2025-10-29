@@ -1326,6 +1326,131 @@ paths:
       responses:
         '200':
           description: A specific student task
+  "/responses":
+    post:
+      summary: Create a new Response
+      tags:
+        - Responses
+      parameters: []
+      responses:
+        '201':
+          description: Response created successfully
+        '422':
+          description: Invalid request payload
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                questionnaire_id:
+                  type: integer
+                content:
+                  type: string
+              required:
+                - user_id
+                - questionnaire_id
+                - content
+
+  "/responses/{id}":
+    parameters:
+      - name: id
+        in: path
+        description: ID of the response
+        required: true
+        schema:
+          type: integer
+    patch:
+      summary: Update a Response
+      tags:
+        - Responses
+      responses:
+        '200':
+          description: Response updated successfully
+        '403':
+          description: Forbidden
+        '404':
+          description: Response not found
+        '422':
+          description: Invalid request payload
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+    delete:
+      summary: Delete a Response
+      tags:
+        - Responses
+      responses:
+        '204':
+          description: Response deleted successfully
+        '404':
+          description: Response not found
+  "/responses/{id}/submit":
+    parameters:
+      - name: id
+        in: path
+        description: ID of the response
+        required: true
+        schema:
+          type: integer
+    patch:
+      summary: Submit a Response
+      tags:
+        - Responses
+      responses:
+        '200':
+          description: Response updated successfully
+        '403':
+          description: Deadline has passed
+        '404':
+          description: Response not found
+        '422':
+          description: All rubric items must be answered
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+  "/responses/:id/unsubmit":
+    parameters:
+      - name: id
+        in: path
+        description: ID of the response
+        required: true
+        schema:
+          type: integer
+    patch:
+      summary: Unsubmit a Response
+      tags:
+        - Responses
+      responses:
+        '200':
+          description: Response reopened for revision
+        '403':
+          description: Forbidden
+        '404':
+          description: Response not found
+        '422':
+          description: Response already unsubmitted
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+
 
 
 
