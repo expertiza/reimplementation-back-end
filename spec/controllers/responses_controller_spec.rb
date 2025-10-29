@@ -14,7 +14,7 @@ RSpec.describe ResponsesController, type: :controller do
     request.headers['Authorization'] = 'Bearer faketoken'
     allow(JsonWebToken).to receive(:decode).and_return({ id: user.id })
     allow(User).to receive(:find).with(user.id).and_return(user)
-    # Note: not stubbing authenticate_request! so the controller's JwtToken behavior runs but uses the above stubs
+    # NOTE: not stubbing authenticate_request! so the controller's JwtToken behavior runs but uses the above stubs
 
     # Also provide current_user directly to be safe
     allow(controller).to receive(:current_user).and_return(user)
@@ -101,6 +101,7 @@ RSpec.describe ResponsesController, type: :controller do
     context 'when update succeeds' do
       before do
         allow(response_double).to receive(:is_submitted?).and_return(false)
+        allow(controller).to receive(:deadline_open?).with(response_double).and_return(true)
         allow(response_double).to receive(:update).and_return(true)
       end
 
@@ -115,6 +116,7 @@ RSpec.describe ResponsesController, type: :controller do
     context 'when update fails' do
       before do
         allow(response_double).to receive(:is_submitted?).and_return(false)
+        allow(controller).to receive(:deadline_open?).with(response_double).and_return(true)
         allow(response_double).to receive(:update).and_return(false)
         allow(response_double).to receive_message_chain(:errors, :full_messages).and_return(['bad'])
       end
@@ -149,6 +151,7 @@ RSpec.describe ResponsesController, type: :controller do
 
     context 'when already submitted' do
       before do
+        allow(controller).to receive(:deadline_open?).with(response_double).and_return(true)
         allow(response_double).to receive(:is_submitted?).and_return(true)
       end
 
@@ -162,6 +165,7 @@ RSpec.describe ResponsesController, type: :controller do
 
     context 'when update succeeds' do
       before do
+        allow(controller).to receive(:deadline_open?).with(response_double).and_return(true)
         allow(response_double).to receive(:is_submitted?).and_return(false)
         allow(response_double).to receive(:update).and_return(true)
       end
@@ -209,6 +213,7 @@ RSpec.describe ResponsesController, type: :controller do
     context 'when rubric incomplete' do
       before do
         allow(response_double).to receive(:is_submitted?).and_return(false)
+        allow(controller).to receive(:deadline_open?).with(response_double).and_return(true)
         allow(response_double).to receive(:scores).and_return([double('Score', answer: nil)])
       end
 
@@ -237,6 +242,7 @@ RSpec.describe ResponsesController, type: :controller do
     context 'when submitting twice (duplicate submission)' do
       before do
         # first call: not submitted, second call: already submitted
+        allow(controller).to receive(:deadline_open?).with(response_double).and_return(true)
         allow(response_double).to receive(:is_submitted?).and_return(false, true)
         allow(response_double).to receive(:scores).and_return([])
         allow(response_double).to receive(:aggregate_questionnaire_score).and_return(42)
