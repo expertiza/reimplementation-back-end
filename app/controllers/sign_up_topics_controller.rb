@@ -16,6 +16,35 @@ class SignUpTopicsController < ApplicationController
     # render json: {message: 'All selected topics have been loaded successfully.', sign_up_topics: @stopics}, status: 200
   end
 
+  def rubric_list
+    if params[:assignment_id].nil?
+      render json: { message: 'Assignment ID is required!' }, status :unprocessable_entity
+      return
+    end
+
+    assignment = Assignment.find_by(id: params[:assignment_id])
+    if assignment.nil?
+      render json: { message: 'Assignment not found!' }, status: :not_found
+      return
+    end
+
+    topics = assignment.sign_up_topics.includes(:questionnaire)
+    render json: topics.map { |t| serialize_topic_with_rubric(t) }, status: :ok
+  end
+
+  private
+  def serialize_topic_with_rubric(topic)
+    {
+      id: topic.id,
+      name: topic.topic_name,
+      identifier: topic.topic_identifier,
+      max_choosers: topic.max_choosers,
+      questionnaire_id: topic.questionnaire_id,
+      questionnaire_name: topic.questionnaire&.name,
+      assignment_id: topic.assignment_id
+    }
+  end
+
   # POST /sign_up_topics
   # The create method allows the instructor to create a new topic
   # params[:sign_up_topic][:topic_identifier] follows a json format
