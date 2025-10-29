@@ -7,7 +7,7 @@ class ResponsesController < ApplicationController
   # Authorization: determines if current user can perform the action
   def action_allowed?
     case action_name
-    when 'create', 'update', 'save_draft', 'submit', 'next_action'
+    when 'create', 'update', 'save_draft', 'submit'
       render json: { error: 'forbidden' }, status: :forbidden unless has_role?('Reviewer') && owns_response_or_map?
     when 'unsubmit', 'destroy'
       render json: { error: 'forbidden' }, status: :forbidden unless has_role?('Instructor') || has_role?('Admin')
@@ -155,15 +155,17 @@ class ResponsesController < ApplicationController
     )
   end
 
-  def owns_map_or_response?
+  def owns_response_or_map?
     # Member actions: we have @response from set_response
-    return @response.map.reviewer == current_user if @response&.map
+    return @response.map&.reviewer == current_user if @response&.map && current_user
 
     # Collection actions (create, next_action): check map ownership
     map_id = params[:response_map_id] || params[:map_id]
     return false if map_id.blank?
 
     map = ResponseMap.find_by(id: map_id)
-    map && map.reviewer == current_user
+    return false unless map
+
+    map.reviewer == current_user
   end
 end
