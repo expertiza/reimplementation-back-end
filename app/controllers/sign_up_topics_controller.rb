@@ -18,7 +18,7 @@ class SignUpTopicsController < ApplicationController
 
   def rubric_list
     if params[:assignment_id].nil?
-      render json: { message: 'Assignment ID is required!' }, status :unprocessable_entity
+      render json: { message: 'Assignment ID is required!' }, status: :unprocessable_entity
       return
     end
 

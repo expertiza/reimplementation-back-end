@@ -90,15 +90,11 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :sign_up_topics do
-        collection do
-          get :filter
-          delete '/', to: 'sign_up_topics#destroy'
-        end
-      end
       resources :sign_up_topics, only: [:index, :create, :update, :show, :destroy] do
         collection do
-          get 'rubric_list', to: 'sign_up_topics#rubric_list'
+          get :filter                     # ✅ keeps previous working route
+          delete '/', to: 'sign_up_topics#destroy'   # ✅ keeps previous DELETE
+          get :rubric_list               # ✅ new addition from 2nd block
         end
       end
 
