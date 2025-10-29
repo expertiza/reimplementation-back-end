@@ -143,7 +143,6 @@ Rails.application.routes.draw do
       end
       resources :responses do
         member do
-          patch :save_draft     # PATCH /responses/:id/save_draft
           patch :submit         # PATCH /responses/:id/submit
           patch :unsubmit       # PATCH /responses/:id/unsubmit
         end
