@@ -10,9 +10,7 @@ class ResponsesController < ApplicationController
       true
     when 'update', 'submit'
       @response = Response.find(params[:id])
-      # user_id = response.map.reviewer.user_id if response.map.reviewer
       unless owns_response_or_map? || has_role?('Instructor') || has_role?('Admin')
-        # puts "current_user.id: #{current_user.id}, user_id: #{user_id}"
         render json: { error: 'forbidden' }, status: :forbidden
       end
     when 'unsubmit', 'destroy'
@@ -127,21 +125,15 @@ class ResponsesController < ApplicationController
 
   def owns_response_or_map?
     # Member actions: we have @response from set_response
-    puts "Checking ownership for Response ID: #{@response&.id}"
-    puts "ResponseMap associated: #{@response&.map&.reviewer&.id}"
-    puts "Current User ID: #{current_user&.id}"
     return @response.map&.reviewer&.id == current_user.id if @response&.map&.reviewer && current_user
 
     # Collection actions (create, next_action): check map ownership
-    puts "Checking ownership for ResponseMap ID from params"
     map_id = params[:response_map_id] || params[:map_id]
     return false if map_id.blank?
 
     map = ResponseMap.find_by(id: map_id)
-    puts "Found ResponseMap: #{map.inspect}"
     return false unless map
 
-    puts "Checking ownership: map.reviewer_id=#{map.reviewer_id}, current_user.id=#{current_user.id}"
     map.reviewer == current_user
   end
 
