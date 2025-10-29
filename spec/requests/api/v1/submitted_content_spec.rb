@@ -691,12 +691,6 @@ RSpec.describe 'Submitted Content API', type: :request do
   end
 
   path '/api/v1/submitted_content/download' do
-    before(:all) do
-      require Rails.root.join('app/models/participant')
-      require Rails.root.join('app/models/assignment_participant')
-      require Rails.root.join('app/models/assignment_team')
-    end
-
     get('download file') do
       tags 'SubmittedContent'
       produces 'application/octet-stream'
@@ -790,12 +784,6 @@ RSpec.describe 'Submitted Content API', type: :request do
   end
 
   describe 'Error handling' do
-    before(:all) do
-      require Rails.root.join('app/models/participant')
-      require Rails.root.join('app/models/assignment_participant')
-      require Rails.root.join('app/models/assignment_team')
-    end
-
     context 'when participant not found' do
       it 'returns 500 (RecordNotFound bubbles)' do
         allow(AssignmentParticipant).to receive(:find).and_raise(ActiveRecord::RecordNotFound)
