@@ -14,7 +14,7 @@ RSpec.describe Response, type: :model do
     end
 
     context 'when the map defines get_title' do
-      it 'returns the value of get_title' do
+      it 'returns the value of get_title if not present in the response map' do
         map = ReviewResponseMap.new
         allow(map).to receive(:get_title).and_return('Review')
         response.response_map = map
