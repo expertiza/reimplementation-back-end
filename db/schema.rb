@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_29_210525) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -43,8 +43,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "used_in_round"
+    t.bigint "topic_id"
     t.index ["assignment_id"], name: "fk_aq_assignments_id"
     t.index ["questionnaire_id"], name: "fk_aq_questionnaire_id"
+    t.index ["topic_id"], name: "index_assignment_questionnaires_on_topic_id"
   end
 
   create_table "assignments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -408,6 +410,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
 
   add_foreign_key "account_requests", "institutions"
   add_foreign_key "account_requests", "roles"
+  add_foreign_key "assignment_questionnaires", "sign_up_topics", column: "topic_id"
   add_foreign_key "assignments", "courses"
   add_foreign_key "assignments", "users", column: "instructor_id"
   add_foreign_key "courses", "institutions"

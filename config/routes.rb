@@ -91,10 +91,15 @@ Rails.application.routes.draw do
       end
 
       resources :sign_up_topics, only: [:index, :create, :update, :show, :destroy] do
+        member do
+          post :assign_rubric
+          delete :remove_rubric
+          get :show_rubric
+        end
         collection do
-          get :filter                     # ✅ keeps previous working route
-          delete '/', to: 'sign_up_topics#destroy'   # ✅ keeps previous DELETE
-          get :rubric_list               # ✅ new addition from 2nd block
+          get :filter
+          delete '/', to: 'sign_up_topics#destroy'
+          get :rubric_list
         end
       end
 
