@@ -90,12 +90,16 @@ Rails.application.routes.draw do
         end
       end
 
-
-
-      resources :sign_up_topics do
+      resources :sign_up_topics, only: [:index, :create, :update, :show, :destroy] do
+        member do
+          post :assign_rubric
+          delete :remove_rubric
+          get :show_rubric
+        end
         collection do
           get :filter
           delete '/', to: 'sign_up_topics#destroy'
+          get :rubric_list
         end
       end
 
@@ -141,4 +145,6 @@ Rails.application.routes.draw do
           delete :delete_participants
         end
       end
+
+      
 end

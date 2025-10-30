@@ -4,7 +4,7 @@ services:
     command: tail -f /dev/null
     environment:
       RAILS_ENV: development
-      DATABASE_URL: mysql2://root:expertiza@db:3306/reimplementation?
+      DATABASE_URL: mysql2://root:expertiza@db:3306/reimplementation
       CACHE_STORE: redis://redis:6380/0
     ports:
       - "3002:3002"
@@ -24,7 +24,7 @@ services:
     ports:
       - "3307:3306"
     volumes:
-      - expertiza-mysql:/var/lib/mysql2/data
+      - expertiza-mysql:/var/lib/mysql
       - ./db:/docker-entrypoint-initdb.d
 
   redis:
