@@ -1050,10 +1050,12 @@ paths:
             type: integer
         - name: topic_ids
           in: query
-          description: Topic Identifier
+          description: Topic Identifiers (topic_identifier)
           required: false
           schema:
-            type: string
+            type: array
+            items:
+              type: string
       tags:
         - ProjectTopic
       responses:
@@ -1107,6 +1109,10 @@ paths:
                   type: integer
                 micropayment:
                   type: integer
+                description:
+                  type: string
+                link:
+                  type: string
               required:
                 - topic_identifier
                 - topic_name
@@ -1148,6 +1154,10 @@ paths:
                   type: integer
                 micropayment:
                   type: integer
+                description:
+                  type: string
+                link:
+                  type: string
               required:
                 - topic_identifier
                 - topic_name

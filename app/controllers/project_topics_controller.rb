@@ -66,6 +66,6 @@ class ProjectTopicsController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def project_topic_params
-    params.require(:project_topic).permit(:topic_identifier, :category, :topic_name, :max_choosers, :assignment_id)
+    params.require(:project_topic).permit(:topic_identifier, :category, :topic_name, :max_choosers, :assignment_id, :description, :link)
   end
 end
