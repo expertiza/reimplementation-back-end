@@ -149,14 +149,15 @@ begin
         num_topics = rand(3..6)
         
         num_topics.times do |i|
-          topic_num = rand(1000..9999)
+          # Ensure topic_identifier within 10 chars limit
+          identifier = "T" + Faker::Alphanumeric.alphanumeric(number: 5).upcase
           ProjectTopic.create!(
-            topic_identifier: "E#{topic_num}",
-            topic_name: "Topic #{SecureRandom.hex(4)}",
-            category: "Category-#{SecureRandom.hex(3)}",
+            topic_identifier: identifier,
+            topic_name: Faker::Educator.course_name,
+            category: Faker::Book.genre,
             max_choosers: rand(2..5),
-            description: "Description for topic #{SecureRandom.hex(6)}",
-            link: "https://github.com/",
+            description: Faker::Lorem.sentence(word_count: 10),
+            link: Faker::Internet.url,
             assignment_id: assignment_id
           )
         end
