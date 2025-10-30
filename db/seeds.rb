@@ -29,16 +29,18 @@ begin
       role_id: 1
     )
 
-    # Create a test student user for easy testing
-    test_student = User.create!(
-      name: 'teststudent',
-      email: 'student@test.com',
-      password: 'password123',
-      full_name: 'Test Student',
-      institution_id: 1,
-      role_id: 5
-    )
-    puts "Created test student: #{test_student.email} with password: password123"
+    # Create test student users student1..student5 for easy testing
+    (1..5).each do |i|
+      created_student = User.create!(
+        name: "student#{i}",
+        email: "student#{i}@test.com",
+        password: 'password123',
+        full_name: "Student #{i}",
+        institution_id: 1,
+        role_id: 5
+      )
+      puts "Created test student: #{created_student.email} with password: password123"
+    end
     
 
     #Generate Random Users
