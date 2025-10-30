@@ -109,26 +109,23 @@ begin
       ).id
     end
 
-    puts "assigning students to teams"
-    teams_users_ids = []
-    #num_students.times do |i|
-    #  teams_users_ids << TeamsUser.create(
-    #    team_id: team_ids[i%num_teams],
-    #    user_id: student_user_ids[i]
-    #  ).id
-    #end
-
+    puts "assigning students to teams (TeamsParticipant)"
+    teams_participant_ids = []
     num_students.times do |i|
-      puts "Creating TeamsUser with team_id: #{team_ids[i % num_teams]}, user_id: #{student_user_ids[i]}"
-      teams_user = TeamsUser.create(
-        team_id: team_ids[i % num_teams],
-        user_id: student_user_ids[i]
+      team_id = team_ids[i % num_teams]
+      user_id = student_user_ids[i]
+      participant = AssignmentParticipant.find_by(user_id: user_id, parent_id: assignment_ids[i%num_assignments])
+      participant ||= AssignmentParticipant.create(user_id: user_id, parent_id: assignment_ids[i%num_assignments], team_id: team_id)
+
+      tp = TeamsParticipant.create(
+        team_id: team_id,
+        user_id: user_id,
+        participant_id: participant.id
       )
-      if teams_user.persisted?
-        teams_users_ids << teams_user.id
-        puts "Created TeamsUser with ID: #{teams_user.id}"
+      if tp.persisted?
+        teams_participant_ids << tp.id
       else
-        puts "Failed to create TeamsUser: #{teams_user.errors.full_messages.join(', ')}"
+        puts "Failed to create TeamsParticipant: #{tp.errors.full_messages.join(', ')}"
       end
     end
 

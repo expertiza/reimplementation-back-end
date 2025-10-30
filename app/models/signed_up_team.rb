@@ -82,18 +82,51 @@ class SignedUpTeam < ApplicationRecord
     true
   end
 
-  # Gets the team ID for a given user (for student signup)
+  # Gets any team ID for a given user (legacy behavior)
   def self.get_team_participants(user_id)
     user = User.find_by(id: user_id)
     return nil unless user
 
-    # Get the first team the user belongs to
     user.teams.first&.id
+  end
+
+  # Gets the user's team ID for a specific assignment (preferred for student signup)
+  def self.get_team_for_assignment(user_id, assignment_id)
+    user = User.find_by(id: user_id)
+    return nil unless user && assignment_id
+
+    user.teams.where(type: 'AssignmentTeam', parent_id: assignment_id).first&.id
+  end
+
+  # Ensure a student has an AssignmentTeam for the given assignment. Creates one if missing.
+  def self.ensure_team_for_assignment(user_id, assignment_id)
+    return nil unless user_id && assignment_id
+    # If already has a team, return it
+    existing_id = get_team_for_assignment(user_id, assignment_id)
+    return existing_id if existing_id
+
+    # Create a new assignment team and link the user
+    team = AssignmentTeam.create!(name: "Team-#{user_id}-#{assignment_id}", parent_id: assignment_id)
+    user = User.find_by(id: user_id)
+    # Create or fetch assignment participant with a valid handle
+    participant = AssignmentParticipant.find_or_initialize_by(user_id: user_id, parent_id: assignment_id)
+    if participant.new_record?
+      participant.handle = user&.handle.presence || user&.name || "user-#{user_id}"
+      participant.team_id = team.id
+      participant.save!
+    else
+      participant.update!(team_id: team.id) unless participant.team_id == team.id
+    end
+    TeamsParticipant.create!(team_id: team.id, user_id: user_id, participant_id: participant.id)
+    team.id
+  rescue StandardError
+    nil
   end
 
   # Business logic for student signup with automatic topic switching
   def self.sign_up_student_for_topic(user_id, topic_id)
-    team_id = get_team_participants(user_id)
+    assignment_id = ProjectTopic.find_by(id: topic_id)&.assignment_id
+    team_id = get_team_for_assignment(user_id, assignment_id) || ensure_team_for_assignment(user_id, assignment_id) || get_team_participants(user_id)
     return { success: false, message: "User is not part of any team" } unless team_id
 
     # Drop any existing topic signups for this team
@@ -116,7 +149,8 @@ class SignedUpTeam < ApplicationRecord
 
   # Business logic for dropping a topic for a student
   def self.drop_topic_for_student(user_id, topic_id)
-    team_id = get_team_participants(user_id)
+    assignment_id = ProjectTopic.find_by(id: topic_id)&.assignment_id
+    team_id = get_team_for_assignment(user_id, assignment_id) || get_team_participants(user_id)
     return { success: false, message: "User is not part of any team" } unless team_id
 
     project_topic = ProjectTopic.find_by(id: topic_id)
