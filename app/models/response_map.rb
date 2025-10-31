@@ -14,41 +14,33 @@ class ResponseMap < ApplicationRecord
     Questionnaire.find_by(id: reviewed_object_id)
   end
 
-  # returns the assignment related to the response map
   def response_assignment
     Participant.find(reviewer_id).assignment
   end
 
+  # Decide whether the reviewer should see an "Update" button (something new to review)
+  # or the default "Edit" button (no changes since the last submitted review).
   def needs_update_link?
-    # Get the most recent response for this map
-    last = Response.where(map_id: id).order(Arel.sql('created_at DESC')).first
-
-    # If there’s no previous response, it’s clearly a new review
+    # Most recent submitted review for this mapping
+    last = Response.where(map_id: id, is_submitted: true).order(Arel.sql('created_at DESC')).first
     return true if last.nil?
 
     last_created_at = last.created_at
 
-    # ---- Condition 1: Reviewee made a newer submission after the last review ----
-    if reviewee.respond_to?(:latest_submission_at) &&
-       reviewee.latest_submission_at.present? &&
-       reviewee.latest_submission_at > last_created_at
-      return true
-    end
+    #  Latest time the reviewee (or their team) made a submission
+    latest_submission = latest_submission_at_for_reviewee
+    return true if latest_submission.present? && latest_submission > last_created_at
 
-    # ---- Condition 2: Current round advanced since the last review ----
-    if respond_to?(:current_round)
-      last_round = (last.respond_to?(:round) ? last.round : 0).to_i
-      curr_round = current_round.to_i
-      return true if curr_round > last_round
-    end
+    # Check if a later review round has passed since the last submitted review
+    last_round = (last.respond_to?(:round, true) ? last.round : 0).to_i
+    curr_round = current_round_safely.to_i
+    return true if curr_round.positive? && curr_round > last_round
 
-    # Otherwise, keep "Edit"
     false
   end
 
   def self.assessments_for(team)
     responses = []
-    # stime = Time.now
     if team
       array_sort = []
       sort_to = []
@@ -58,13 +50,11 @@ class ResponseMap < ApplicationRecord
 
         all_resp = Response.where(map_id: map.map_id).last
         if map.type.eql?('ReviewResponseMap')
-          # If its ReviewResponseMap then only consider those response which are submitted.
           array_sort << all_resp if all_resp.is_submitted
         else
           array_sort << all_resp
         end
-        # sort all versions in descending order and get the latest one.
-        sort_to = array_sort.sort # { |m1, m2| (m1.updated_at and m2.updated_at) ? m2.updated_at <=> m1.updated_at : (m1.version_num ? -1 : 1) }
+        sort_to = array_sort.sort
         responses << sort_to[0] unless sort_to[0].nil?
         array_sort.clear
         sort_to.clear
@@ -74,27 +64,56 @@ class ResponseMap < ApplicationRecord
     responses
   end
 
-  # Check to see if this response map is a survey. Default is false, and some subclasses will overwrite to true.
   def survey?
     false
   end
 
-  # Safely read the team's latest submission time if the API exists on Participant.
+  # Best-effort timestamp of when the reviewee (or their team) last touched the work.
   def latest_submission_at_for_reviewee
-    return nil unless reviewee.respond_to?(:latest_submission_at)
+    return nil unless reviewee
 
-    reviewee.latest_submission_at
+    candidates = []
+    candidates << reviewee.updated_at if reviewee.respond_to?(:updated_at) && reviewee.updated_at.present?
+
+    # Check team-related timestamps if the reviewee has a team
+    if reviewee.respond_to?(:team) && reviewee.team
+      team = reviewee.team
+      candidates << team.updated_at if team.respond_to?(:updated_at) && team.updated_at.present?
+
+    # Also check teams_participants or teams_users join records if they exist
+      if team.respond_to?(:teams_participants)
+        team.teams_participants.each do |tp|
+          candidates << tp.updated_at if tp.respond_to?(:updated_at) && tp.updated_at.present?
+        end
+      end
+    # Also check teams_users join records if they exist
+      if team.respond_to?(:teams_users)
+        team.teams_users.each do |tu|
+          candidates << tu.updated_at if tu.respond_to?(:updated_at) && tu.updated_at.present?
+        end
+      end
+    end
+
+    candidates.compact.max
   end
 
-  # Safely read "current round".
-  # Prefer assignment.current_round if present; fall back to any method on self; else 0.
+  # Infer the current review round from due dates when the assignment doesn’t provide it directly.
   def current_round_safely
-    if assignment && assignment.respond_to?(:current_round)
-      assignment.current_round
-    elsif respond_to?(:current_round)
-      current_round
-    else
-      0
+    return 0 unless assignment
+
+    # Gather all due dates with round and due_at
+
+    due_dates = Array(assignment.due_dates).select do |d|
+      d.respond_to?(:round) && d.round.present? &&
+        d.respond_to?(:due_at) && d.due_at.present?
     end
+    return 0 if due_dates.empty?
+
+    # Find the latest due date that is in the past (or the earliest if none are in the past)
+    past = due_dates.select { |d| d.due_at <= Time.current }
+
+    # Use the latest past due date if available, otherwise the earliest future due date
+    reference = past.max_by(&:due_at) || due_dates.min_by(&:due_at)
+    reference.round.to_i
   end
 end

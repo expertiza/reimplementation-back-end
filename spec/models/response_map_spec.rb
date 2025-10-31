@@ -1,130 +1,134 @@
 # spec/models/response_map_spec.rb
 require 'rails_helper'
+require 'securerandom'
 
 RSpec.describe ResponseMap, type: :model do
   describe '#needs_update_link?' do
-    # Create required objects - simple and minimal
-    let(:assignment) { create(:assignment) }
-    let(:reviewer) { create(:assignment_participant, assignment: assignment) }
-    let(:reviewee_team) do
-      # Create team with the same assignment, using with_assignment trait
-      team = build(:assignment_team)
-      team.assignment = assignment
-      team.save!(validate: false) # Skip validation to avoid parent issues
-      team
+    def create_role(label)
+      Role.create!(name: "#{label} #{SecureRandom.hex(4)}")
     end
 
-    let(:response_map) do
-      ReviewResponseMap.create!(
-        reviewed_object_id: assignment.id,
-        reviewer_id: reviewer.id,
-        reviewee_id: reviewee_team.id
+    def create_user(prefix, role, institution)
+      User.create!(
+        name: "#{prefix}_#{SecureRandom.hex(4)}",
+        email: "#{prefix}_#{SecureRandom.hex(4)}@example.com",
+        password: 'password',
+        full_name: "#{prefix.capitalize} User",
+        role: role,
+        institution: institution
       )
     end
 
-    context 'when there is no previous response' do
-      it 'returns true (should show Update link for first review)' do
-        expect(Response.where(map_id: response_map.id).count).to eq(0)
-        expect(response_map.needs_update_link?).to be true
-      end
+    let(:institution) { Institution.create!(name: "Institution #{SecureRandom.hex(4)}") }
+    let(:student_role) { create_role('Student') }
+    let(:instructor_role) { create_role('Instructor') }
+
+    let(:instructor_user) { create_user('instructor', instructor_role, institution) }
+
+    let(:assignment) do
+      Assignment.create!(
+        name: "Assignment #{SecureRandom.hex(4)}",
+        directory_path: "dir_#{SecureRandom.hex(4)}",
+        instructor: instructor_user
+      )
     end
 
-    context 'when reviewee has submitted new work after last review' do
-      it 'returns true (should show Update link)' do
-        Response.create!(map_id: response_map.id, created_at: 5.days.ago)
-
-        # Stub respond_to? with all possible arguments
-        allow(reviewee_team).to receive(:respond_to?).and_call_original
-        allow(reviewee_team).to receive(:respond_to?).with(:latest_submission_at, anything).and_return(true)
-        allow(reviewee_team).to receive(:latest_submission_at).and_return(1.day.ago)
-        allow(response_map).to receive(:reviewee).and_return(reviewee_team)
-
-        allow(response_map).to receive(:respond_to?).and_call_original
-        allow(response_map).to receive(:respond_to?).with(:current_round, anything).and_return(false)
-
-        expect(response_map.needs_update_link?).to be true
-      end
+    let(:team) do
+      AssignmentTeam.create!(
+        name: "Team #{SecureRandom.hex(4)}",
+        type: 'AssignmentTeam',
+        max_team_size: 5,
+        parent_id: assignment.id
+      )
     end
 
-    context 'when reviewee has NOT submitted new work after last review' do
-      it 'returns false (should show Edit link)' do
-        Response.create!(map_id: response_map.id, created_at: 1.day.ago)
+    let(:reviewer_user) { create_user('reviewer', student_role, institution) }
+    let(:reviewee_user) { create_user('reviewee', student_role, institution) }
 
-        allow(reviewee_team).to receive(:respond_to?).and_call_original
-        allow(reviewee_team).to receive(:respond_to?).with(:latest_submission_at, anything).and_return(true)
-        allow(reviewee_team).to receive(:latest_submission_at).and_return(5.days.ago)
-        allow(response_map).to receive(:reviewee).and_return(reviewee_team)
-
-        allow(response_map).to receive(:respond_to?).and_call_original
-        allow(response_map).to receive(:respond_to?).with(:current_round, anything).and_return(false)
-
-        expect(response_map.needs_update_link?).to be false
-      end
+    let(:reviewer_participant) do
+      AssignmentParticipant.create!(
+        user: reviewer_user,
+        assignment: assignment,
+        parent_id: assignment.id,
+        handle: reviewer_user.name
+      )
     end
 
-    context 'when round has advanced since last review' do
-      it 'returns true (should show Update link)' do
-        last_response = Response.create!(map_id: response_map.id, created_at: 5.days.ago)
-
-        allow(last_response).to receive(:respond_to?).and_call_original
-        allow(last_response).to receive(:respond_to?).with(:round, anything).and_return(true)
-        allow(last_response).to receive(:round).and_return(1)
-
-        allow(reviewee_team).to receive(:respond_to?).and_call_original
-        allow(reviewee_team).to receive(:respond_to?).with(:latest_submission_at, anything).and_return(false)
-        allow(response_map).to receive(:reviewee).and_return(reviewee_team)
-
-        allow(response_map).to receive(:respond_to?).and_call_original
-        allow(response_map).to receive(:respond_to?).with(:current_round, anything).and_return(true)
-        allow(response_map).to receive(:current_round).and_return(2)
-        allow(Response).to receive_message_chain(:where, :order, :first).and_return(last_response)
-
-        expect(response_map.needs_update_link?).to be true
-      end
+    let(:reviewee_participant) do
+      AssignmentParticipant.create!(
+        user: reviewee_user,
+        assignment: assignment,
+        parent_id: assignment.id,
+        handle: reviewee_user.name,
+        team: team
+      )
     end
 
-    context 'when round has NOT advanced and no new submission' do
-      it 'returns false (should show Edit link)' do
-        last_response = Response.create!(map_id: response_map.id, created_at: 1.day.ago)
-
-        allow(last_response).to receive(:respond_to?).and_call_original
-        allow(last_response).to receive(:respond_to?).with(:round, anything).and_return(true)
-        allow(last_response).to receive(:round).and_return(2)
-
-        allow(reviewee_team).to receive(:respond_to?).and_call_original
-        allow(reviewee_team).to receive(:respond_to?).with(:latest_submission_at, anything).and_return(true)
-        allow(reviewee_team).to receive(:latest_submission_at).and_return(5.days.ago)
-        allow(response_map).to receive(:reviewee).and_return(reviewee_team)
-
-        allow(response_map).to receive(:respond_to?).and_call_original
-        allow(response_map).to receive(:respond_to?).with(:current_round, anything).and_return(true)
-        allow(response_map).to receive(:current_round).and_return(2)
-        allow(Response).to receive_message_chain(:where, :order, :first).and_return(last_response)
-
-        expect(response_map.needs_update_link?).to be false
-      end
+    let!(:teams_participant_record) do
+      TeamsParticipant.create!(participant: reviewee_participant, team: team, user: reviewee_user)
     end
 
-    context 'when BOTH new submission AND new round' do
-      it 'returns true (should show Update link)' do
-        last_response = Response.create!(map_id: response_map.id, created_at: 5.days.ago)
+    let!(:response_map) do
+      ResponseMap.create!(
+        assignment: assignment,
+        reviewer: reviewer_participant,
+        reviewee: reviewee_participant
+      )
+    end
 
-        allow(last_response).to receive(:respond_to?).and_call_original
-        allow(last_response).to receive(:respond_to?).with(:round, anything).and_return(true)
-        allow(last_response).to receive(:round).and_return(1)
+    let(:base_time) { Time.zone.now - 5.days }
+    let(:response_time) { base_time + 1.day }
 
-        allow(reviewee_team).to receive(:respond_to?).and_call_original
-        allow(reviewee_team).to receive(:respond_to?).with(:latest_submission_at, anything).and_return(true)
-        allow(reviewee_team).to receive(:latest_submission_at).and_return(1.day.ago)
-        allow(response_map).to receive(:reviewee).and_return(reviewee_team)
+    before do
+      reviewee_participant.update_column(:updated_at, base_time)
+      team.update_column(:updated_at, base_time)
+      teams_participant_record.update_column(:updated_at, base_time)
+    end
 
-        allow(response_map).to receive(:respond_to?).and_call_original
-        allow(response_map).to receive(:respond_to?).with(:current_round, anything).and_return(true)
-        allow(response_map).to receive(:current_round).and_return(2)
-        allow(Response).to receive_message_chain(:where, :order, :first).and_return(last_response)
+    it 'returns true when no submitted response exists yet' do
+      expect(response_map.needs_update_link?).to be true
+    end
 
-        expect(response_map.needs_update_link?).to be true
-      end
+    it 'returns false when the last submitted response is the most recent activity' do
+      Response.create!(map_id: response_map.id, is_submitted: true, created_at: response_time, updated_at: response_time)
+
+      expect(response_map.needs_update_link?).to be false
+    end
+
+    it 'returns true when the reviewee participant updates after the last submitted response' do
+      Response.create!(map_id: response_map.id, is_submitted: true, created_at: response_time, updated_at: response_time)
+      reviewee_participant.update_column(:updated_at, response_time + 2.days)
+
+      expect(response_map.needs_update_link?).to be true
+    end
+
+    it 'returns true when the reviewee team updates after the last submitted response' do
+      Response.create!(map_id: response_map.id, is_submitted: true, created_at: response_time, updated_at: response_time)
+      team.update_column(:updated_at, response_time + 2.days)
+
+      expect(response_map.needs_update_link?).to be true
+    end
+
+    it 'returns true when a later review round has passed since the last response' do
+      Response.create!(map_id: response_map.id, is_submitted: true, created_at: response_time, updated_at: response_time)
+
+      assignment.due_dates.create!(
+        due_at: response_time + 1.day,
+        deadline_type_id: 1,
+        submission_allowed_id: 1,
+        review_allowed_id: 1,
+        round: 1
+      )
+
+      assignment.due_dates.create!(
+        due_at: Time.zone.now - 1.day,
+        deadline_type_id: 1,
+        submission_allowed_id: 1,
+        review_allowed_id: 1,
+        round: 2
+      )
+
+      expect(response_map.needs_update_link?).to be true
     end
   end
 end
