@@ -1,5 +1,14 @@
 # Dangerfile
 
+# Handle missing commits gracefully
+begin
+  # Check if we can access git information
+  git.commits
+rescue => e
+  warn("Danger cannot access git information: #{e.message}")
+  return
+end
+
 # --- PR Size Checks ---
 warn("Pull request is too big (more than 500 LoC).") if git.lines_of_code > 500
 warn("Pull request is too small (less than 50 LoC).") if git.lines_of_code < 50
