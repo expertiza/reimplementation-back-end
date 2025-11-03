@@ -106,7 +106,6 @@ GEM
       term-ansicolor
       thor
     crass (1.0.6)
-    csv (3.3.5)
     danger (9.5.3)
       base64 (~> 0.2)
       claide (~> 1.0)
@@ -202,13 +201,10 @@ GEM
       mime-types-data (~> 3.2025, >= 3.2025.0507)
     mime-types-data (3.2025.0924)
     mini_mime (1.1.5)
-    mini_portile2 (2.8.9)
     minitest (5.25.5)
     mize (0.6.1)
-    monitor (0.2.0)
     msgpack (1.8.0)
     multi_json (1.17.0)
-    mutex_m (0.3.0)
     mysql2 (0.5.7)
       bigdecimal
     nap (1.1.0)
@@ -225,7 +221,7 @@ GEM
       net-protocol
     netrc (0.11.0)
     nio4r (2.5.9)
-    nokogiri (1.18.10-aarch64-linux-gnu)
+    nokogiri (1.15.2-aarch64-linux)
       racc (~> 1.4)
     nokogiri (1.18.10-arm64-darwin)
       racc (~> 1.4)
