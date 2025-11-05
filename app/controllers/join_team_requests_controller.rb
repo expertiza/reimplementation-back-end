@@ -101,6 +101,6 @@ class JoinTeamRequestsController < ApplicationController
 
   # Permits specified parameters for join team requests
   def join_team_request_params
-    params.require(:join_team_request).permit(:comments, :status)
+    params.require(:join_team_request).permit(:comments, :reply_status)
   end
 end

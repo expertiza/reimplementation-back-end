@@ -123,6 +123,14 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :signed_up_teams do
+        member do
+          post :create_advertisement
+          patch :update_advertisement
+          delete :remove_advertisement
+        end
+      end
+      
       resources :student_teams, only: %i[create update] do
         collection do
           get :view          
