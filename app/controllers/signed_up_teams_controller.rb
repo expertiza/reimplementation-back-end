@@ -24,6 +24,11 @@ class SignedUpTeamsController < ApplicationController
     render json: @signed_up_team
   end
 
+  def show
+    @signed_up_team = SignedUpTeam.find_by(id:params[:id])
+    render json: @signed_up_team
+  end
+
   # Implemented by signed_up_team.rb (Model) --> create_signed_up_team
   def create; end
 
