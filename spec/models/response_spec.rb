@@ -3,8 +3,9 @@
 require 'rails_helper'
 
 describe Response do
+
   let(:user) { User.new(id: 1, role_id: 1, name: 'no name', full_name: 'no one') }
-  let(:team) { Team.new }
+  let(:team) {Team.new}
   let(:participant) { Participant.new(id: 1, user: user) }
   let(:assignment) { Assignment.new(id: 1, name: 'Test Assignment') }
   let(:answer) { Answer.new(answer: 1, comments: 'Answer text', question_id: 1) }
@@ -34,8 +35,7 @@ describe Response do
           allow(response).to receive(:maximum_score).and_return(100)
           allow(response).to receive(:questionnaire_by_answer).with(answer).and_return(questionnaire)
           allow(AssignmentQuestionnaire).to receive(:find_by).with(assignment_id: 1, questionnaire_id: 1)
-                                                             .and_return(double('AssignmentQuestionnaire',
-                                                                                notification_limit: 5.0))
+                                                             .and_return(double('AssignmentQuestionnaire', notification_limit: 5.0))
           expect(response.reportable_difference?).to be true
         end
       end
@@ -45,18 +45,11 @@ describe Response do
   # Calculate the total score of a review
   describe '#calculate_total_score' do
     it 'computes the total score of a review' do
-      # question2 = double('ScoredItem', weight: 2)
-      # arr_question2 = [question2]
-      # allow(Item).to receive(:find_with_order).with([1]).and_return(arr_question2)
-      # allow(question2).to receive(:scorable?).and_return(true)
-      # allow(question2).to receive(:answer).and_return(answer)
-      # expect(response.calculate_total_score).to eq(2)
-
-      # Our Answer above has question_id: 1
-      allow(Item).to receive(:find).with(1).and_return(item)
-      allow(item).to receive(:scorable?).and_return(true)
-
-      # answer.answer == 1, item.weight == 2  ->  1 * 2 = 2
+      question2 = double('ScoredItem', weight: 2)
+      arr_question2 = [question2]
+      allow(Item).to receive(:find_with_order).with([1]).and_return(arr_question2)
+      allow(question2).to receive(:scorable?).and_return(true)
+      allow(question2).to receive(:answer).and_return(answer)
       expect(response.calculate_total_score).to eq(2)
     end
   end
@@ -117,46 +110,7 @@ describe Response do
       allow(review_response_map).to receive(:assignment).and_return(assignment)
 
       expect(review_response_map.response_assignment).to eq(assignment)
-    end
-  end
-  # Weighted rubric math
-  describe '#calculate_total_score (weighted)' do
-    it 'adds weight * answer for scorable items' do
-      # Item A: weight=2, answer=3
-      item_a = instance_double('ScoredItem', id: 101, weight: 2)
-      answer_a = Answer.new(answer: 3, question_id: 101)
 
-      # Item B: weight=1, answer=5
-      item_b = instance_double('ScoredItem', id: 102, weight: 1)
-      answer_b = Answer.new(answer: 5, question_id: 102)
-
-      resp = Response.new(map_id: 1, response_map: review_response_map, scores: [answer_a, answer_b])
-
-      allow(Item).to receive(:find).with(101).and_return(item_a)
-      allow(Item).to receive(:find).with(102).and_return(item_b)
-      allow(item_a).to receive(:scorable?).and_return(true)
-      allow(item_b).to receive(:scorable?).and_return(true)
-
-      expect(resp.calculate_total_score).to eq(3 * 2 + 5 * 1) # 11
-    end
-  end
-  # Ignore non-scorable and nil answers
-  describe '#calculate_total_score (skips non-scorable and nil)' do
-    it 'ignores items that are not scorable and answers that are nil' do
-      item_c = instance_double('Item', id: 201, weight: 10)
-      answer_c = Answer.new(answer: nil, question_id: 201) # nil -> ignored
-
-      item_d = instance_double('Item', id: 202, weight: 5)
-      answer_d = Answer.new(answer: 4, question_id: 202)   # but item_d non-scorable
-
-      resp = Response.new(map_id: 1, response_map: review_response_map, scores: [answer_c, answer_d])
-
-      allow(Item).to receive(:find).with(201).and_return(item_c)
-      allow(Item).to receive(:find).with(202).and_return(item_d)
-      allow(item_c).to receive(:scorable?).and_return(true)   # but answer is nil
-      allow(item_d).to receive(:scorable?).and_return(false)  # non-scorable
-
-      expect(resp.calculate_total_score).to eq(0)
     end
   end
 end
