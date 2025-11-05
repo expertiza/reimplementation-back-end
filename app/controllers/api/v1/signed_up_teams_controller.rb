@@ -9,6 +9,11 @@ class Api::V1::SignedUpTeamsController < ApplicationController
     render json: @signed_up_team
   end
 
+  def show
+    @signed_up_team = SignedUpTeam.find_by(id:params[:id])
+    render json: @signed_up_team
+  end
+
   # Implemented by signed_up_team.rb (Model) --> create_signed_up_team
   def create; end
 
@@ -64,10 +69,34 @@ class Api::V1::SignedUpTeamsController < ApplicationController
     end
   end
 
+  def create_advertisement
+    params[:signed_up_team] = { advertise_for_partner: true, comments_for_advertisement: params[:comments_for_advertisement] }
+    update_custom_message("Advertisement created successfully.")
+  end
+
+  def update_advertisement
+    params[:signed_up_team] = { comments_for_advertisement: params[:comments_for_advertisement] }
+    update_custom_message("Advertisement updated successfully.")
+  end
+
+  def remove_advertisement
+    params[:signed_up_team] = { advertise_for_partner: false, comments_for_advertisement: nil }
+    update_custom_message("Advertisement removed successfully.")
+  end
+
   private
 
+  def update_custom_message(message)
+    @signed_up_team = SignedUpTeam.find(params[:id])
+    if @signed_up_team.update(signed_up_teams_params)
+      render json: { success: true, message: message }, status: :ok
+    else
+      render json: {message: @signed_up_team.errors.first, success:false}, status: :unprocessable_entity
+    end
+  end
+
   def signed_up_teams_params
-    params.require(:signed_up_team).permit(:topic_id, :team_id, :is_waitlisted, :preference_priority_number)
+    params.require(:signed_up_team).permit(:topic_id, :team_id, :is_waitlisted, :preference_priority_number, :comments_for_advertisement, :advertise_for_partner)
   end
 
 end
