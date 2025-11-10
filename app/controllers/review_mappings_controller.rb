@@ -1,5 +1,7 @@
 class ReviewMappingsController < ApplicationController
+  include Authorization
   before_action :set_assignment
+  before_action :authorize
 
   # ===== STATIC ASSIGNMENT =====
   def assign_round_robin
@@ -30,8 +32,7 @@ class ReviewMappingsController < ApplicationController
 
     mapping = handler.assign_dynamically(
       ReviewMappingStrategies::LeastReviewedSubmissionStrategy,
-      reviewer,
-      allow_self_review: false
+      reviewer
     )
 
     if mapping
@@ -57,15 +58,15 @@ class ReviewMappingsController < ApplicationController
   # ===== CALIBRATION =====
   def set_calibration_artifact
     reviewer = AssignmentParticipant.find(params[:reviewer_id])
-    calibration_submission = Submission.find(params[:submission_id])
+    team = AssignmentTeam.find(params[:submission_id])
     handler = ReviewMappingHandler.new(@assignment)
 
-    mapping = handler.assign_calibration_review(reviewer, calibration_submission)
+    mapping = handler.assign_calibration_review(reviewer, team)
     render json: { status: "ok", mapping_id: mapping.id }
   end
 
   # ===== DELETE =====
-  def delete
+  def destroy
     handler = ReviewMappingHandler.new(@assignment)
     handler.delete_review_mapping(params[:id])
     render json: { status: "ok", message: "Mapping deleted" }

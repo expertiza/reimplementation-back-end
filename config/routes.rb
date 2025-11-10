@@ -99,6 +99,20 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :assignments do
+        resources :review_mappings, except: [:index, :show, :new, :edit, :create, :update] do
+          collection do
+            post 'assign_round_robin'
+            post 'assign_random'
+            post 'assign_from_csv'
+            post 'request_review_fewest'
+            post 'set_calibration_artifact'
+            delete 'delete_all_for_reviewer/:reviewer_id', action: :delete_all_for_reviewer
+            patch 'grade_review/:mapping_id', action: :grade_review
+          end
+        end
+      end
+
       resources :invitations do
         get 'user/:user_id/assignment/:assignment_id/', on: :collection, action: :invitations_for_user_assignment
       end
@@ -141,4 +155,24 @@ Rails.application.routes.draw do
           delete :delete_participants
         end
       end
+
+      resources :review_mappings, only: [] do
+        collection do
+          post :assign_round_robin
+          post :assign_random
+          post :assign_from_csv
+          post :request_review_fewest
+          post :assign_calibration
+          post :assign_quiz
+          delete :delete_all_for_reviewer
+        end
+
+        member do
+          patch :submit_review
+          patch :unsubmit_review
+          patch :grade_review
+          delete :delete_mapping
+        end
+    end
+
 end

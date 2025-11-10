@@ -370,10 +370,8 @@ GEM
     simplecov_json_formatter (0.1.4)
     singleton (0.3.0)
     spring (4.4.0)
-    sqlite3 (1.7.3-aarch64-linux)
-    sqlite3 (1.7.3-arm64-darwin)
-    sqlite3 (1.7.3-x64-mingw-ucrt)
-    sqlite3 (1.7.3-x86_64-linux)
+    sqlite3 (1.7.3)
+      mini_portile2 (~> 2.8.0)
     stringio (3.1.7)
     sync (0.5.0)
     term-ansicolor (1.11.3)
@@ -457,7 +455,7 @@ DEPENDENCIES
   uri
 
 RUBY VERSION
-   ruby 3.2.7p253
+   ruby 3.4.5p51
 
 BUNDLED WITH
    2.4.14

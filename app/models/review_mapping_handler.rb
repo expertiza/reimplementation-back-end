@@ -15,7 +15,7 @@ class ReviewMappingHandler
   end
 
   def assign_from_csv(csv_text)
-    strategy = RevieMappingStrategies::CsvImportStrategy.new(@assignment, csv_text)
+    strategy = ReviewMappingStrategies::CsvImportStrategy.new(@assignment, csv_text)
     strategy.each_review_pair do |reviewer, team|
       create_mapping(reviewer, team)
     end
@@ -23,7 +23,7 @@ class ReviewMappingHandler
 
 
   def assign_random
-    strategy = RevieMappingStrategies::RandomStaticStrategy.new(@assignment)
+    strategy = ReviewMappingStrategies::RandomStaticStrategy.new(@assignment)
     strategy.each_review_pair do |reviewer, team|
       create_mapping(reviewer, team)
     end
@@ -44,7 +44,7 @@ class ReviewMappingHandler
   def assign_dynamic_topic_fairly(reviewer, k: 1)
     return nil unless can_accept_more_reviews?(reviewer, k: DEFAULT_OUTSTANDING_LIMIT)
 
-    strategy = RevieMappingStrategies::LeastReviewedTopicStrategy.new(@assignment)
+    strategy = ReviewMappingStrategies::LeastReviewedTopicStrategy.new(@assignment)
     team = strategy.assign_one(reviewer, k: k)
     return nil unless team
 
