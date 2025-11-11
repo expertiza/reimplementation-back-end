@@ -76,6 +76,14 @@ rescue ActiveRecord::PendingMigrationError => e
   abort e.to_s.strip
 end
 RSpec.configure do |config|
+
+  if config.respond_to?(:fixture_path=)
+    config.fixture_path = [Rails.root.join('spec/fixtures').to_s]
+  else
+    # fallback for older Rails / rspec versions
+    config.fixture_path = Rails.root.join('spec/fixtures')
+  end
+  
   # Since we're using Factory Bot instead of fixtures, we don't need fixture_path
   # config.fixture_path is deprecated in newer RSpec versions anyway
 
