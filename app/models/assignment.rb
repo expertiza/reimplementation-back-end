@@ -11,7 +11,7 @@ class Assignment < ApplicationRecord
   has_many :response_maps, foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :project_topics , class_name: 'ProjectTopic', foreign_key: 'assignment_id', dependent: :destroy
-  has_many :due_dates, class_name: 'DueDate', foreign_key: 'due_date_id', dependent: :destroy, as: :parent
+  has_many :due_dates, class_name: 'DueDate', dependent: :destroy, as: :parent
   belongs_to :course, optional: true
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments
 

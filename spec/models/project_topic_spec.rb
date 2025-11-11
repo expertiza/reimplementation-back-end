@@ -14,7 +14,7 @@ RSpec.describe ProjectTopic, type: :model do
   let!(:assignment) { Assignment.create!(name: "Test Assignment", instructor: instructor) }
   let!(:project_topic) { ProjectTopic.create!(topic_name: "Test Topic", assignment: assignment, max_choosers: 2) }
   # CHANGED: Updated to use AssignmentTeam instead of generic Team for proper validation (E2552)
-  let!(:team) { AssignmentTeam.create!(assignment: assignment) }
+  let!(:team) { AssignmentTeam.create!(name: "Test Team", assignment: assignment) }
 
   # CHANGED: Updated test description to reflect renamed method (E2552)
   describe '#sign_team_up' do
@@ -37,12 +37,12 @@ RSpec.describe ProjectTopic, type: :model do
     context 'when slots are full' do
       before do
         # Fill all slots before each test in this context.
-        2.times { project_topic.sign_team_up(AssignmentTeam.create!(assignment: assignment)) }
+        2.times { project_topic.sign_team_up(AssignmentTeam.create!(name: "Team", assignment: assignment)) }
       end
 
       it 'adds team to waitlist' do
         # When no slots are available, the team should be added to the waitlist.
-        new_team = AssignmentTeam.create!(assignment: assignment)
+        new_team = AssignmentTeam.create!(name: "Team", assignment: assignment)
         expect(project_topic.sign_team_up(new_team)).to be true
         expect(project_topic.waitlisted_teams).to include(new_team)
       end
@@ -68,7 +68,7 @@ RSpec.describe ProjectTopic, type: :model do
 
     it 'returns nil if team is not signed up' do
       # Verifies that dropping a team not signed up to the topic returns nil.
-      new_team = AssignmentTeam.create!(assignment: assignment)
+      new_team = AssignmentTeam.create!(name: "Team", assignment: assignment)
       expect(project_topic.drop_team(new_team)).to be_nil
     end
 
@@ -89,7 +89,7 @@ RSpec.describe ProjectTopic, type: :model do
 
     it 'returns 0 when full' do
       # Ensures it returns 0 when max_choosers is reached.
-      2.times { project_topic.sign_team_up(AssignmentTeam.create!(assignment: assignment)) }
+      2.times { project_topic.sign_team_up(AssignmentTeam.create!(name: "Team", assignment: assignment)) }
       expect(project_topic.available_slots).to eq(0)
     end
   end
@@ -97,14 +97,14 @@ RSpec.describe ProjectTopic, type: :model do
   describe '#get_signed_up_teams' do
     it 'returns all signed up teams' do
       # Checks that all teams, both confirmed and waitlisted, are returned.
-      teams = 3.times.map { AssignmentTeam.create!(assignment: assignment) }
+      teams = 3.times.map { AssignmentTeam.create!(name: "Team", assignment: assignment) }
       teams.each { |t| project_topic.sign_team_up(t) }
       expect(project_topic.get_signed_up_teams.pluck(:team_id)).to include(*teams.map(&:id))
     end
 
     it 'returns only SignedUpTeam records' do
       # Verifies that returned records are of the SignedUpTeam model.
-      team1 = AssignmentTeam.create!(assignment: assignment)
+      team1 = AssignmentTeam.create!(name: "Team", assignment: assignment)
       project_topic.sign_team_up(team1)
       expect(project_topic.get_signed_up_teams.first).to be_a(SignedUpTeam)
     end
@@ -118,7 +118,7 @@ RSpec.describe ProjectTopic, type: :model do
 
     it 'returns false when no slots are left' do
       # Confirms slot_available? returns false once topic is full.
-      2.times { project_topic.sign_team_up(AssignmentTeam.create!(assignment: assignment)) }
+      2.times { project_topic.sign_team_up(AssignmentTeam.create!(name: "Team", assignment: assignment)) }
       expect(project_topic.slot_available?).to be false
     end
   end
@@ -139,7 +139,7 @@ RSpec.describe ProjectTopic, type: :model do
   describe '#waitlisted_teams' do
     it 'returns waitlisted teams in order' do
       # Ensures waitlisted teams are returned in the order they were added.
-      5.times { project_topic.sign_team_up(AssignmentTeam.create!(assignment: assignment)) }
+      5.times { project_topic.sign_team_up(AssignmentTeam.create!(name: "Team", assignment: assignment)) }
       waitlisted = project_topic.waitlisted_teams
       expect(waitlisted.size).to eq(3)
       expect(waitlisted).to eq(waitlisted.sort_by(&:created_at))
@@ -182,9 +182,9 @@ RSpec.describe ProjectTopic, type: :model do
 
     it 'does not allow more than max_choosers confirmed teams' do
       # Confirms that additional teams beyond limit go to waitlist.
-      t1 = AssignmentTeam.create!(assignment: assignment)
-      t2 = AssignmentTeam.create!(assignment: assignment)
-      t3 = AssignmentTeam.create!(assignment: assignment)
+      t1 = AssignmentTeam.create!(name: "Team", assignment: assignment)
+      t2 = AssignmentTeam.create!(name: "Team", assignment: assignment)
+      t3 = AssignmentTeam.create!(name: "Team", assignment: assignment)
       project_topic.sign_team_up(t1)
       project_topic.sign_team_up(t2)
       project_topic.sign_team_up(t3)
@@ -194,7 +194,7 @@ RSpec.describe ProjectTopic, type: :model do
 
     it 'removes team’s other waitlisted entries on confirmed signup' do
       # Ensures a confirmed team is removed from other topic waitlists.
-      t = AssignmentTeam.create!(assignment: assignment)
+      t = AssignmentTeam.create!(name: "Team", assignment: assignment)
       t1 = ProjectTopic.create!(topic_name: "Alt Topic", assignment: assignment, max_choosers: 0)
       t1.sign_team_up(t)
       expect(t1.waitlisted_teams).to include(t)
@@ -204,8 +204,8 @@ RSpec.describe ProjectTopic, type: :model do
 
     it 'get_signed_up_teams includes waitlisted and confirmed teams' do
       # Validates that all signed-up teams, regardless of status, are returned.
-      t1 = AssignmentTeam.create!(assignment: assignment)
-      t2 = AssignmentTeam.create!(assignment: assignment)
+      t1 = AssignmentTeam.create!(name: "Team", assignment: assignment)
+      t2 = AssignmentTeam.create!(name: "Team", assignment: assignment)
       project_topic.sign_team_up(t1)
       project_topic.sign_team_up(t2)
       expect(project_topic.get_signed_up_teams.map(&:team_id)).to include(t1.id, t2.id)
@@ -213,8 +213,8 @@ RSpec.describe ProjectTopic, type: :model do
 
     it 'slot_available? reflects accurate state after signup and drop' do
       # Checks dynamic behavior of slot availability after signup and drop.
-      t1 = AssignmentTeam.create!(assignment: assignment)
-      t2 = AssignmentTeam.create!(assignment: assignment)
+      t1 = AssignmentTeam.create!(name: "Team", assignment: assignment)
+      t2 = AssignmentTeam.create!(name: "Team", assignment: assignment)
       project_topic.sign_team_up(t1)
       project_topic.sign_team_up(t2)
       expect(project_topic.slot_available?).to be false
@@ -231,7 +231,7 @@ RSpec.describe ProjectTopic, type: :model do
     it 'multiple topics maintain independent signups' do
       # Ensures that signups in one topic do not affect another topic.
       topic2 = ProjectTopic.create!(topic_name: "Topic 2", assignment: assignment, max_choosers: 1)
-      team2 = AssignmentTeam.create!(assignment: assignment)
+      team2 = AssignmentTeam.create!(name: "Team", assignment: assignment)
       project_topic.sign_team_up(team)
       topic2.sign_team_up(team2)
       expect(project_topic.confirmed_teams).to include(team)
@@ -240,9 +240,9 @@ RSpec.describe ProjectTopic, type: :model do
 
     it 'promotes the earliest waitlisted team after dropping a confirmed one' do
       # Ensures that when a confirmed team is dropped, the earliest waitlisted is promoted.
-      t1 = AssignmentTeam.create!(assignment: assignment)
-      t2 = AssignmentTeam.create!(assignment: assignment)
-      t3 = AssignmentTeam.create!(assignment: assignment)
+      t1 = AssignmentTeam.create!(name: "Team", assignment: assignment)
+      t2 = AssignmentTeam.create!(name: "Team", assignment: assignment)
+      t3 = AssignmentTeam.create!(name: "Team", assignment: assignment)
       project_topic.sign_team_up(t1)
       project_topic.sign_team_up(t2)
       project_topic.sign_team_up(t3)
@@ -254,9 +254,9 @@ RSpec.describe ProjectTopic, type: :model do
 
     it 'does not increase available slots after promoting a waitlisted team' do
       # Verifies that slot count remains constant when a waitlisted team is promoted.
-      t1 = AssignmentTeam.create!(assignment: assignment)
-      t2 = AssignmentTeam.create!(assignment: assignment)
-      t3 = AssignmentTeam.create!(assignment: assignment)
+      t1 = AssignmentTeam.create!(name: "Team", assignment: assignment)
+      t2 = AssignmentTeam.create!(name: "Team", assignment: assignment)
+      t3 = AssignmentTeam.create!(name: "Team", assignment: assignment)
       project_topic.sign_team_up(t1)
       project_topic.sign_team_up(t2)
       project_topic.sign_team_up(t3)

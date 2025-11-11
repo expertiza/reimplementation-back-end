@@ -18,7 +18,7 @@ RSpec.describe SignedUpTeam, type: :model do
 
   let!(:assignment) { Assignment.create!(name: "Test Assignment", instructor: instructor) }
   let!(:project_topic) { ProjectTopic.create!(topic_name: "Test Topic", assignment: assignment) }
-  let!(:team) { AssignmentAssignmentTeam.create!(assignment: assignment) }
+  let!(:team) { AssignmentTeam.create!(name: "Test Team", assignment: assignment) }
 
   describe 'validations' do
     # Ensure a project_topic is mandatory
@@ -47,7 +47,7 @@ RSpec.describe SignedUpTeam, type: :model do
   describe 'scopes' do
     # Create one confirmed and one waitlisted signup for testing scopes
     let!(:confirmed_signup) { SignedUpTeam.create!(project_topic: project_topic, team: team, is_waitlisted: false) }
-    let!(:waitlisted_signup) { SignedUpTeam.create!(project_topic: project_topic, team: AssignmentTeam.create!(assignment: assignment), is_waitlisted: true) }
+    let!(:waitlisted_signup) { SignedUpTeam.create!(project_topic: project_topic, team: AssignmentTeam.create!(name: "Team", assignment: assignment), is_waitlisted: true) }
 
     # Scope should only return confirmed signups
     it 'returns confirmed signups' do
@@ -94,7 +94,7 @@ RSpec.describe SignedUpTeam, type: :model do
 
     # Should not error if team has no signups
     it 'does not raise error if team has no signups' do
-      new_team = AssignmentTeam.create!(assignment: assignment)
+      new_team = AssignmentTeam.create!(name: "Team", assignment: assignment)
       expect { SignedUpTeam.remove_team_signups(new_team) }.not_to raise_error
     end
   end
@@ -122,7 +122,11 @@ RSpec.describe SignedUpTeam, type: :model do
     end
 
     before do
-      team.users << [user1, user2]
+      # Create participants and add them to the team properly
+      participant1 = AssignmentParticipant.create!(parent_id: assignment.id, user: user1, handle: user1.name)
+      participant2 = AssignmentParticipant.create!(parent_id: assignment.id, user: user2, handle: user2.name)
+      TeamsParticipant.create!(team: team, participant: participant1, user: user1)
+      TeamsParticipant.create!(team: team, participant: participant2, user: user2)
     end
 
     describe '.find_team_participants' do
@@ -139,7 +143,7 @@ RSpec.describe SignedUpTeam, type: :model do
 
       # Team with no users should return []
       it 'returns empty array when team exists but has no users' do
-        new_team = AssignmentTeam.create!(assignment: assignment)
+        new_team = AssignmentTeam.create!(name: "Team", assignment: assignment)
         expect(SignedUpTeam.find_team_participants(new_team.id)).to eq([])
       end
     end
@@ -155,7 +159,7 @@ RSpec.describe SignedUpTeam, type: :model do
 
       # Should return [] if team is not signed up to a topic
       it 'returns empty array if no signed up team found' do
-        new_team = AssignmentTeam.create!(assignment: assignment)
+        new_team = AssignmentTeam.create!(name: "Team", assignment: assignment)
         expect(SignedUpTeam.find_project_topic_team_users(new_team.id)).to eq([])
       end
 
@@ -234,7 +238,7 @@ RSpec.describe SignedUpTeam, type: :model do
       confirmed = SignedUpTeam.create!(project_topic: project_topic, team: team, is_waitlisted: false)
       waitlisted = SignedUpTeam.create!(
         project_topic: ProjectTopic.create!(topic_name: "Waitlist Topic", assignment: assignment),
-        team: AssignmentTeam.create!(assignment: assignment),
+        team: AssignmentTeam.create!(name: "Team", assignment: assignment),
         is_waitlisted: true
       )
       expect(SignedUpTeam.confirmed).to include(confirmed)
@@ -246,10 +250,10 @@ RSpec.describe SignedUpTeam, type: :model do
     it 'creates waitlisted signup when topic is full' do
       # Fill the topic to capacity
       project_topic.update!(max_choosers: 1)
-      SignedUpTeam.sign_up_for_topic(AssignmentTeam.create!(assignment: assignment), project_topic)
+      SignedUpTeam.sign_up_for_topic(AssignmentTeam.create!(name: "Team", assignment: assignment), project_topic)
       
       # Next signup should be waitlisted
-      new_team = AssignmentTeam.create!(assignment: assignment)
+      new_team = AssignmentTeam.create!(name: "Team", assignment: assignment)
       SignedUpTeam.sign_up_for_topic(new_team, project_topic)
       
       signup = SignedUpTeam.find_by(team: new_team, project_topic: project_topic)
