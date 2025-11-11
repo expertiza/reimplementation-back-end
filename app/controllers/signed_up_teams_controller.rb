@@ -1,12 +1,14 @@
 class SignedUpTeamsController < ApplicationController
 
   # Returns signed up topics using sign_up_topic assignment id
-  # Retrieves sign_up_topic using topic_id as a parameter
   def index
-    # puts params[:topic_id]
-    @sign_up_topic = SignUpTopic.find(params[:topic_id])
-    @signed_up_team = SignedUpTeam.find_team_participants(@sign_up_topic.assignment_id)
-    render json: @signed_up_team
+    result = SignedUpTeam.get_team_participants_for_topic(params[:topic_id])
+    
+    if result[:success]
+      render json: result[:participants], status: :ok
+    else
+      render json: { message: result[:message] }, status: :not_found
+    end
   end
 
   # Implemented by signed_up_team.rb (Model) --> create_signed_up_team
@@ -14,53 +16,68 @@ class SignedUpTeamsController < ApplicationController
 
   # Update signed_up_team using parameters.
   def update
-    @signed_up_team = SignedUpTeam.find(params[:id])
-    if @signed_up_team.update(signed_up_teams_params)
-      render json: { message: "The team has been updated successfully. " }, status: 200
+    result = SignedUpTeam.update_signed_up_team(params[:id], signed_up_teams_params)
+    
+    if result[:success]
+      render json: { message: result[:message] }, status: :ok
     else
-      render json: @signed_up_team.errors, status: :unprocessable_entity
+      render json: { message: result[:message] }, status: :unprocessable_entity
     end
   end
 
   # Sign up using parameters: team_id and topic_id
-  # Calls model method create_signed_up_team
   def sign_up
-    team_id = params[:team_id]
-    topic_id = params[:topic_id]
-    @signed_up_team = SignedUpTeam.create_signed_up_team(topic_id, team_id)
-    if @signed_up_team
-      render json: { message: "Signed up team successful!" }, status: :created
+    result = SignedUpTeam.sign_up_team_for_topic(params[:team_id], params[:topic_id])
+    
+    if result[:success]
+      render json: result.except(:success), status: :created
     else
-      render json: { message: @signed_up_team.errors }, status: :unprocessable_entity
+      render json: { message: result[:message] }, status: :unprocessable_entity
     end
   end
 
   # Method for signing up as student
-  # Params : topic_id
-  # Get team_id using model method get_team_participants
-  # Call create_signed_up_team Model method
   def sign_up_student
-    user_id = params[:user_id]
-    topic_id = params[:topic_id]
-    team_id = SignedUpTeam.get_team_participants(user_id)
-    # @teams_user = TeamsUser.where(user_id: user_id).first
-    # team_id = @teams_user.team_id
-    @signed_up_team = SignedUpTeam.create_signed_up_team(topic_id, team_id)
-    # create(topic_id, team_id)
-    if @signed_up_team
-      render json: { message: "Signed up team successful!" }, status: :created
+    result = SignedUpTeam.sign_up_student_for_topic(params[:user_id], params[:topic_id])
+    
+    if result[:success]
+      render json: result.except(:success), status: :created
     else
-      render json: { message: @signed_up_team.errors }, status: :unprocessable_entity
+      render json: { message: result[:message] }, status: :unprocessable_entity
     end
   end
 
-  # Delete signed_up team. Calls method delete_signed_up_team from the model.
+  # Delete signed_up team
   def destroy
     @signed_up_team = SignedUpTeam.find(params[:id])
     if SignedUpTeam.delete_signed_up_team(@signed_up_team.team_id)
       render json: { message: 'Signed up teams was deleted successfully!' }, status: :ok
     else
-      render json: @signed_up_team.errors, status: :unprocessable_entity
+      render json: { message: 'Failed to delete signed up team' }, status: :unprocessable_entity
+    end
+  end
+
+  # Drop a topic for a student
+  def drop_topic
+    result = SignedUpTeam.drop_topic_for_student(params[:user_id], params[:topic_id])
+    
+    if result[:success]
+      render json: result.except(:success), status: :ok
+    else
+      status = result[:message].include?("not found") ? :not_found : :unprocessable_entity
+      render json: { message: result[:message] }, status: status
+    end
+  end
+
+  # Drop a team from a topic (admin function)
+  def drop_team_from_topic
+    result = SignedUpTeam.drop_team_from_topic_by_admin(params[:topic_id], params[:team_id])
+    
+    if result[:success]
+      render json: result.except(:success), status: :ok
+    else
+      status = result[:message].include?("not found") ? :not_found : :unprocessable_entity
+      render json: { message: result[:message] }, status: status
     end
   end
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_28_200538) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -102,6 +102,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
     t.boolean "enable_pair_programming", default: false
     t.boolean "has_teams", default: false
     t.boolean "has_topics", default: false
+    t.boolean "allow_bookmarks", default: false, null: false
     t.index ["course_id"], name: "index_assignments_on_course_id"
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
@@ -238,6 +239,22 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
     t.index ["user_id"], name: "index_participants_on_user_id"
   end
 
+  create_table "project_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.text "topic_name", null: false
+    t.bigint "assignment_id", null: false
+    t.integer "max_choosers", default: 0, null: false
+    t.text "category"
+    t.string "topic_identifier", limit: 10
+    t.integer "micropayment", default: 0
+    t.integer "private_to"
+    t.text "description"
+    t.string "link"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "fk_sign_up_categories_sign_up_topics"
+    t.index ["assignment_id"], name: "index_project_topics_on_assignment_id"
+  end
+
   create_table "question_advices", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "question_id", null: false
     t.integer "score"
@@ -307,30 +324,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
   end
 
-  create_table "sign_up_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.text "topic_name", null: false
-    t.bigint "assignment_id", null: false
-    t.integer "max_choosers", default: 0, null: false
-    t.text "category"
-    t.string "topic_identifier", limit: 10
-    t.integer "micropayment", default: 0
-    t.integer "private_to"
-    t.text "description"
-    t.string "link"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["assignment_id"], name: "fk_sign_up_categories_sign_up_topics"
-    t.index ["assignment_id"], name: "index_sign_up_topics_on_assignment_id"
-  end
-
   create_table "signed_up_teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.bigint "sign_up_topic_id", null: false
+    t.bigint "project_topic_id", null: false
     t.bigint "team_id", null: false
     t.boolean "is_waitlisted"
     t.integer "preference_priority_number"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["sign_up_topic_id"], name: "index_signed_up_teams_on_sign_up_topic_id"
+    t.index ["project_topic_id"], name: "index_signed_up_teams_on_project_topic_id"
     t.index ["team_id"], name: "index_signed_up_teams_on_team_id"
   end
 
@@ -416,10 +417,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   add_foreign_key "participants", "join_team_requests"
   add_foreign_key "participants", "teams"
   add_foreign_key "participants", "users"
+  add_foreign_key "project_topics", "assignments"
   add_foreign_key "question_advices", "items", column: "question_id"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
-  add_foreign_key "sign_up_topics", "assignments"
-  add_foreign_key "signed_up_teams", "sign_up_topics"
+  add_foreign_key "signed_up_teams", "project_topics"
   add_foreign_key "signed_up_teams", "teams"
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"

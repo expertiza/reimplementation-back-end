@@ -151,7 +151,7 @@ class AssignmentsController < ApplicationController
   end
 
   # check if assignment has topics
-  # has_topics is set to true if there is SignUpTopic corresponding to the input assignment id 
+  # has_topics is set to true if there is ProjectTopic corresponding to the input assignment id
   def has_topics
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
@@ -213,7 +213,7 @@ class AssignmentsController < ApplicationController
   private
   # Only allow a list of trusted parameters through.
   def assignment_params
-    params.require(:assignment).permit(:title, :description)
+    params.require(:assignment).permit(:title, :description, :allow_bookmarks)
   end
 
   # Helper method to determine staggered_and_no_topic for the assignment

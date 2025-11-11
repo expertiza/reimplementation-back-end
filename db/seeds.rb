@@ -5,7 +5,20 @@ begin
     inst_id = Institution.create!(
       name: 'North Carolina State University',
     ).id
-    
+
+    roles = {}
+
+    roles[:super_admin] = Role.find_or_create_by!(name: "Super Administrator", parent_id: nil)
+
+    roles[:admin] = Role.find_or_create_by!(name: "Administrator", parent_id: roles[:super_admin].id)
+
+    roles[:instructor] = Role.find_or_create_by!(name: "Instructor", parent_id: roles[:admin].id)
+
+    roles[:ta] = Role.find_or_create_by!(name: "Teaching Assistant", parent_id: roles[:instructor].id)
+
+    roles[:student] = Role.find_or_create_by!(name: "Student", parent_id: roles[:ta].id)
+
+    puts "reached here"
     # Create an admin user
     User.create!(
       name: 'admin',
@@ -15,6 +28,19 @@ begin
       institution_id: 1,
       role_id: 1
     )
+
+    # Create test student users student1..student5 for easy testing
+    (1..5).each do |i|
+      created_student = User.create!(
+        name: "student#{i}",
+        email: "student#{i}@test.com",
+        password: 'password123',
+        full_name: "Student #{i}",
+        institution_id: 1,
+        role_id: 5
+      )
+      puts "Created test student: #{created_student.email} with password: password123"
+    end
     
 
     #Generate Random Users
@@ -85,26 +111,23 @@ begin
       ).id
     end
 
-    puts "assigning students to teams"
-    teams_users_ids = []
-    #num_students.times do |i|
-    #  teams_users_ids << TeamsUser.create(
-    #    team_id: team_ids[i%num_teams],
-    #    user_id: student_user_ids[i]
-    #  ).id
-    #end
-
+    puts "assigning students to teams (TeamsParticipant)"
+    teams_participant_ids = []
     num_students.times do |i|
-      puts "Creating TeamsUser with team_id: #{team_ids[i % num_teams]}, user_id: #{student_user_ids[i]}"
-      teams_user = TeamsUser.create(
-        team_id: team_ids[i % num_teams],
-        user_id: student_user_ids[i]
+      team_id = team_ids[i % num_teams]
+      user_id = student_user_ids[i]
+      participant = AssignmentParticipant.find_by(user_id: user_id, parent_id: assignment_ids[i%num_assignments])
+      participant ||= AssignmentParticipant.create(user_id: user_id, parent_id: assignment_ids[i%num_assignments], team_id: team_id)
+
+      tp = TeamsParticipant.create(
+        team_id: team_id,
+        user_id: user_id,
+        participant_id: participant.id
       )
-      if teams_user.persisted?
-        teams_users_ids << teams_user.id
-        puts "Created TeamsUser with ID: #{teams_user.id}"
+      if tp.persisted?
+        teams_participant_ids << tp.id
       else
-        puts "Failed to create TeamsUser: #{teams_user.errors.full_messages.join(', ')}"
+        puts "Failed to create TeamsParticipant: #{tp.errors.full_messages.join(', ')}"
       end
     end
 
@@ -114,8 +137,31 @@ begin
       participant_ids << AssignmentParticipant.create(
         user_id: student_user_ids[i],
         parent_id: assignment_ids[i%num_assignments],
-        team_id: team_ids[i%num_teams],
+        team_id: team_ids[i%num_teams]
       ).id
+    end
+
+    puts "creating project topics for testing"
+    if assignment_ids.any?
+      # Generate random topics for each assignment
+      assignment_ids.each do |assignment_id|
+        num_topics = rand(3..6)
+        
+        num_topics.times do |i|
+          # Ensure topic_identifier within 10 chars limit
+          identifier = "T" + Faker::Alphanumeric.alphanumeric(number: 5).upcase
+          ProjectTopic.create!(
+            topic_identifier: identifier,
+            topic_name: Faker::Educator.course_name,
+            category: Faker::Book.genre,
+            max_choosers: rand(2..5),
+            description: Faker::Lorem.sentence(word_count: 10),
+            link: Faker::Internet.url,
+            assignment_id: assignment_id
+          )
+        end
+        puts "Created #{num_topics} topics for assignment #{assignment_id}"
+      end
     end
 
 
@@ -126,5 +172,6 @@ begin
 
 
 rescue ActiveRecord::RecordInvalid => e
+    puts e.message
     puts 'The db has already been seeded'
 end
