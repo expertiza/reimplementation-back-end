@@ -10,11 +10,11 @@ class ResponsesController < ApplicationController
       true
     when 'update', 'submit'
       @response = Response.find(params[:id])
-      unless owns_response_or_map? || has_role?('Instructor') || has_role?('Admin')
+      unless response_belongs_to? || has_privileges_of?('Instructor') || has_privileges_of?('Admin')
         render json: { error: 'forbidden' }, status: :forbidden
       end
     when 'unsubmit', 'destroy'
-      unless has_role?('Instructor') || has_role?('Admin')
+      unless has_privileges_of?('Instructor') || has_privileges_of?('Admin')
         render json: { error: 'forbidden' }, status: :forbidden
       end
     else
@@ -57,15 +57,20 @@ class ResponsesController < ApplicationController
   # PATCH /responses/:id/submit
   # Lock the response and calculate final score
   def submit
-    return render json: { error: 'Response not found' }, status: :not_found unless @response
-    return render json: { error: 'Response already submitted' }, status: :unprocessable_entity if @response.is_submitted?
-
+    return render json: { error: 'User response not found' }, status: :not_found unless @response
+    if @response.is_submitted?
+      return render json: { error: 'User has already submitted the response' }, status: :unprocessable_entity
+    end
     # Check deadline
-    return render json: { error: 'Deadline has passed' }, status: :forbidden unless deadline_open?(@response)
+    unless submission_window_open?(@response)
+      return render json: { error: 'Deadline has passed' }, status: :forbidden
+    end
 
     # Validate rubric completion
     unanswered = @response.scores.select { |a| a.answer.nil? }
-    return render json: { error: 'All rubric items must be answered' }, status: :unprocessable_entity unless unanswered.empty?
+    unless unanswered.empty?
+      return render json: { error: 'All rubric items must be answered' }, status: :unprocessable_entity
+    end
 
     # Lock response
     @response.is_submitted = true
@@ -87,20 +92,20 @@ class ResponsesController < ApplicationController
   # PATCH /responses/:id/unsubmit
   # Instructor/Admin reopens a submitted response
   def unsubmit
-    return render json: { error: 'Response not found' }, status: :not_found unless @response
+    return render json: { error: 'User response not found' }, status: :not_found unless @response
 
     if @response.is_submitted?
       @response.update(is_submitted: false)
-      render json: { message: 'Response reopened for revision', response: @response }, status: :ok
+      render json: { message: 'User response has been unsubmitted', response: @response }, status: :ok
     else
-      render json: { error: 'Response already unsubmitted' }, status: :unprocessable_entity
+      render json: { error: 'User response already unsubmitted' }, status: :unprocessable_entity
     end
   end
 
   # DELETE /responses/:id
   # Instructor/Admin deletes invalid/test response
   def destroy
-    return render json: { error: 'Response not found' }, status: :not_found unless @response
+    return render json: { error: 'User response not found' }, status: :not_found unless @response
 
     @response.destroy
     head :no_content
@@ -123,7 +128,7 @@ class ResponsesController < ApplicationController
     )
   end
 
-  def owns_response_or_map?
+  def response_belongs_to?
     # Member actions: we have @response from set_response
     return @response.map&.reviewer&.id == current_user.id if @response&.map&.reviewer && current_user
 
@@ -138,7 +143,7 @@ class ResponsesController < ApplicationController
   end
 
   # Returns true if the assignment's due date is in the future or no due date is set
-  def deadline_open?(response)
+  def submission_window_open?(response)
     assignment = response.respond_to?(:response_map) ? response.response_map&.assignment : nil
     return true if assignment.nil?
     return true if assignment.respond_to?(:due_dates) && assignment.due_dates.nil?
@@ -146,9 +151,11 @@ class ResponsesController < ApplicationController
     if assignment.respond_to?(:due_dates) && assignment.due_dates.respond_to?(:future?)
       return assignment.due_dates.first.future?
     end
+
     # fallback: compare
     due = assignment.due_dates
     return true if due.nil?
+
     puts "Checking deadline: due_at=#{due.inspect}, current_time=#{Time.current}"
     due.first.due_at > Time.current
   end
