@@ -66,12 +66,6 @@ class ResponsesController < ApplicationController
       return render json: { error: 'Deadline has passed' }, status: :forbidden
     end
 
-    # Validate rubric completion
-    unanswered = @response.scores.select { |a| a.answer.nil? }
-    unless unanswered.empty?
-      return render json: { error: 'All rubric items must be answered' }, status: :unprocessable_entity
-    end
-
     # Lock response
     @response.is_submitted = true
 
