@@ -59,8 +59,20 @@ module SubmittedContentHelper
   # Constructs the full file path from params for file operations
   # @return [String] Full path to the file
   def get_filename
-    # Build path from directories array and filenames array using chk_files index
-    "#{params[:directories][params[:chk_files]]}/#{params[:filenames][params[:chk_files]]}"
+    # Build path from directories array and filenames array using the selected file index
+    idx = primary_selected_file_index
+    "#{params[:directories][idx]}/#{params[:filenames][idx]}"
+  end
+
+  # Returns the list (or single value) of selected file indexes
+  def selected_file_indexes
+    params[:selected_file_indexes]
+  end
+
+  # Returns the first selected file index for operations that act on one file
+  def primary_selected_file_index
+    indexes = selected_file_indexes
+    indexes.is_a?(Array) ? indexes.first : indexes
   end
 
   # Wraps file operations with comprehensive error handling
@@ -139,7 +151,7 @@ module SubmittedContentHelper
     old_filename = get_filename
 
     # Build new filename with sanitization in the same directory
-    new_filename = File.join(params[:directories][params[:chk_files]],
+    new_filename = File.join(params[:directories][primary_selected_file_index],
                              sanitize_filename(params[:faction][:rename]))
 
     # Wrap the rename operation with error handling
@@ -171,7 +183,7 @@ module SubmittedContentHelper
     old_filename = get_filename
 
     # Build destination filename with sanitization
-    new_filename = File.join(params[:directories][params[:chk_files]],
+    new_filename = File.join(params[:directories][primary_selected_file_index],
                              sanitize_filename(params[:faction][:copy]))
 
     # Wrap the copy operation with error handling
@@ -204,8 +216,8 @@ module SubmittedContentHelper
       # Track successfully deleted files for response
       deleted_files = []
 
-      # Iterate through each file index in the chk_files param
-      Array(params[:chk_files]).each do |idx|
+      # Iterate through each file index in the selected_file_indexes param
+      Array(selected_file_indexes).each do |idx|
         # Build the full file path for this index
         file_path = File.join(params[:directories][idx], params[:filenames][idx])
 
