@@ -6,10 +6,25 @@ class Response < ApplicationRecord
 
   belongs_to :response_map, class_name: 'ResponseMap', foreign_key: 'map_id', inverse_of: false
   has_many :scores, class_name: 'Answer', foreign_key: 'response_id', dependent: :destroy, inverse_of: false
+  accepts_nested_attributes_for :scores
 
   alias map response_map
   delegate :questionnaire, :reviewee, :reviewer, to: :map
 
+  # returns a string of response name, needed so the front end can tell students which rubric they are filling out
+  def rubric_label
+    return 'Response' if map.nil?
+
+    if map.respond_to?(:response_map_label)
+      label = map.response_map_label
+      return label if label.present?
+    end
+
+    # response type doesn't exist
+    'Unknown Type'
+  end
+
+  # Returns true if this response's score differs from peers by more than the assignment notification limit
   def reportable_difference?
     map_class = map.class
     # gets all responses made by a reviewee
@@ -18,10 +33,11 @@ class Response < ApplicationRecord
     count = 0
     total = 0
     # gets the sum total percentage scores of all responses that are not this response
+    # (each response can omit questions, so maximum_score may differ and we normalize before averaging)
     existing_responses.each do |response|
       unless id == response.id # the current_response is also in existing_responses array
         count += 1
-        total +=  response.aggregate_questionnaire_score.to_f / response.maximum_score
+        total += response.aggregate_questionnaire_score.to_f / response.maximum_score
       end
     end
 
@@ -35,7 +51,8 @@ class Response < ApplicationRecord
     score = aggregate_questionnaire_score.to_f / maximum_score
     questionnaire = questionnaire_by_answer(scores.first)
     assignment = map.assignment
-    assignment_questionnaire = AssignmentQuestionnaire.find_by(assignment_id: assignment.id, questionnaire_id: questionnaire.id)
+    assignment_questionnaire = AssignmentQuestionnaire.find_by(assignment_id: assignment.id,
+                                                               questionnaire_id: questionnaire.id)
 
     # notification_limit can be specified on 'Rubrics' tab on assignment edit page.
     allowed_difference_percentage = assignment_questionnaire.notification_limit.to_f

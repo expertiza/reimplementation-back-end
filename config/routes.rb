@@ -141,4 +141,10 @@ Rails.application.routes.draw do
           delete :delete_participants
         end
       end
+      resources :responses do
+        member do
+          patch :submit         # PATCH /responses/:id/submit
+          patch :unsubmit       # PATCH /responses/:id/unsubmit
+        end
+      end
 end
