@@ -41,7 +41,7 @@ class ResponseMap < ApplicationRecord
 
     # Check if a later review round has passed since the last submitted review
     last_round = (last.respond_to?(:round, true) ? last.round : 0).to_i
-    curr_round = current_round_safely.to_i
+    curr_round = current_round_from_due_dates.to_i
     return true if curr_round.positive? && curr_round > last_round
 
     false
@@ -81,6 +81,7 @@ class ResponseMap < ApplicationRecord
     return nil unless reviewee
 
     candidates = []
+    # Use respond_to? because legacy records might not have timestamps (or reviewee could be a Team instead of Participant)
     candidates << reviewee.updated_at if reviewee.respond_to?(:updated_at) && reviewee.updated_at.present?
 
     # Check team-related timestamps if the reviewee has a team
@@ -88,16 +89,10 @@ class ResponseMap < ApplicationRecord
       team = reviewee.team
       candidates << team.updated_at if team.respond_to?(:updated_at) && team.updated_at.present?
 
-    # Also check teams_participants or teams_users join records if they exist
+    # Also gather timestamps from join records (teams_participants) so collaborator edits count as activity
       if team.respond_to?(:teams_participants)
         team.teams_participants.each do |tp|
           candidates << tp.updated_at if tp.respond_to?(:updated_at) && tp.updated_at.present?
-        end
-      end
-    # Also check teams_users join records if they exist
-      if team.respond_to?(:teams_users)
-        team.teams_users.each do |tu|
-          candidates << tu.updated_at if tu.respond_to?(:updated_at) && tu.updated_at.present?
         end
       end
     end
@@ -106,7 +101,7 @@ class ResponseMap < ApplicationRecord
   end
 
   # Infer the current review round from due dates when the assignment doesn’t provide it directly.
-  def current_round_safely
+  def current_round_from_due_dates
     return 0 unless assignment
 
     # Gather all due dates with round and due_at
@@ -121,7 +116,12 @@ class ResponseMap < ApplicationRecord
     past = due_dates.select { |d| d.due_at <= Time.current }
 
     # Use the latest past due date if available, otherwise the earliest future due date
-    reference = past.max_by(&:due_at) || due_dates.min_by(&:due_at)
+    reference =
+      if past.any?
+        past.sort_by(&:due_at).last
+      else
+        due_dates.sort_by(&:due_at).first
+      end
     reference.round.to_i
   end
 end
