@@ -130,6 +130,296 @@ paths:
       responses:
         '204':
           description: successful
+  "/assignments":
+    get:
+      summary: Get assignments
+      tags:
+      - Get All Assignments
+      parameters:
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: assignment successfully
+  "/assignments/{assignment_id}/add_participant/{user_id}":
+    parameters:
+    - name: assignment_id
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: user_id
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Adds a participant to an assignment
+      tags:
+      - Assignments
+      parameters:
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: participant added successfully
+        '404':
+          description: assignment not found
+  "/assignments/{assignment_id}/remove_participant/{user_id}":
+    parameters:
+    - name: assignment_id
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: user_id
+      in: path
+      required: true
+      schema:
+        type: string
+    delete:
+      summary: Removes a participant from an assignment
+      tags:
+      - Assignments
+      parameters:
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: participant removed successfully
+        '404':
+          description: assignment or user not found
+  "/assignments/{assignment_id}/assign_course/{course_id}":
+    parameters:
+    - name: assignment_id
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: course_id
+      in: path
+      required: true
+      schema:
+        type: string
+    patch:
+      summary: Make course_id of assignment null
+      tags:
+      - Assignments
+      parameters:
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: course_id assigned successfully
+        '404':
+          description: assignment not found
+  "/assignments/{assignment_id}/remove_assignment_from_course":
+    patch:
+      summary: Removes assignment from course
+      tags:
+      - Assignments
+      parameters:
+      - name: assignment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: assignment removed from course
+        '404':
+          description: assignment not found
+  "/assignments/{assignment_id}/copy_assignment":
+    parameters:
+    - name: assignment_id
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      summary: Copy an existing assignment
+      tags:
+      - Assignments
+      parameters:
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: assignment copied successfully
+        '404':
+          description: assignment not found
+  "/assignments/{id}":
+    parameters:
+    - name: id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    delete:
+      summary: Delete an assignment
+      tags:
+      - Assignments
+      parameters:
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/assignments/{assignment_id}/has_topics":
+    parameters:
+    - name: assignment_id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Check if an assignment has topics
+      tags:
+      - Assignments
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/assignments/{assignment_id}/team_assignment":
+    parameters:
+    - name: assignment_id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Check if an assignment is a team assignment
+      tags:
+      - Assignments
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/assignments/{assignment_id}/valid_num_review/{review_type}":
+    parameters:
+    - name: assignment_id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    - name: review_type
+      in: path
+      description: Review Type
+      required: true
+      schema:
+        type: string
+    get:
+      summary: Check if an assignment has a valid number of reviews
+      tags:
+      - Assignments
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/assignments/{assignment_id}/has_teams":
+    parameters:
+    - name: assignment_id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Check if an assignment has teams
+      tags:
+      - Assignments
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
+  "/assignments/{id}/show_assignment_details":
+    parameters:
+    - name: id
+      in: path
+      description: Assignment ID
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: Retrieve assignment details
+      tags:
+      - Assignments
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
+        '404':
+          description: Assignment not found
   "/bookmarks":
     get:
       summary: list bookmarks
@@ -162,14 +452,11 @@ paths:
                   type: string
                 topic_id:
                   type: integer
-                rating:
-                  type: integer
               required:
               - url
               - title
               - description
               - topic_id
-              - rating
   "/bookmarks/{id}":
     parameters:
     - name: id
@@ -196,12 +483,6 @@ paths:
           description: successful
         '404':
           description: not found
-        '422':
-          description: unprocessable entity
-          content:
-            application/json:
-              schema:
-                type: string
       requestBody:
         content:
           application/json:
@@ -475,7 +756,7 @@ paths:
       responses:
         '200':
           description: successful
-    patch:
+    put:
       summary: update institution
       tags:
       - Institutions
@@ -495,7 +776,7 @@ paths:
                   type: string
               required:
               - name
-    put:
+    patch:
       summary: update institution
       tags:
       - Institutions
@@ -628,6 +909,156 @@ paths:
           description: Show all invitations for the user for an assignment
         '404':
           description: Not found
+  "/participants/user/{user_id}":
+    get:
+      summary: Retrieve participants for a specific user
+      tags:
+      - Participants
+      parameters:
+      - name: user_id
+        in: path
+        description: ID of the user
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Participant not found with user_id
+        '404':
+          description: User Not Found
+        '401':
+          description: Unauthorized
+  "/participants/assignment/{assignment_id}":
+    get:
+      summary: Retrieve participants for a specific assignment
+      tags:
+      - Participants
+      parameters:
+      - name: assignment_id
+        in: path
+        description: ID of the assignment
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Returns participants
+        '404':
+          description: Assignment Not Found
+        '401':
+          description: Unauthorized
+  "/participants/{id}":
+    get:
+      summary: Retrieve a specific participant
+      tags:
+      - Participants
+      parameters:
+      - name: id
+        in: path
+        description: ID of the participant
+        required: true
+        schema:
+          type: integer
+      responses:
+        '201':
+          description: Returns a participant
+        '404':
+          description: Participant not found
+        '401':
+          description: Unauthorized
+    delete:
+      summary: Delete a specific participant
+      tags:
+      - Participants
+      parameters:
+      - name: id
+        in: path
+        description: ID of the participant
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Participant deleted
+        '404':
+          description: Participant not found
+        '401':
+          description: Unauthorized
+  "/participants/{id}/{authorization}":
+    patch:
+      summary: Update participant authorization
+      tags:
+      - Participants
+      parameters:
+      - name: id
+        in: path
+        description: ID of the participant
+        required: true
+        schema:
+          type: integer
+      - name: authorization
+        in: path
+        description: New authorization
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        required: true
+        description: Bearer token
+        schema:
+          type: string
+      responses:
+        '201':
+          description: Participant updated
+        '404':
+          description: Participant not found
+        '422':
+          description: Authorization not found
+        '401':
+          description: Unauthorized
+  "/participants/{authorization}":
+    post:
+      summary: Add a participant
+      tags:
+      - Participants
+      parameters:
+      - name: authorization
+        in: path
+        description: Authorization level (Reader, Reviewer, Submitter, Mentor)
+        required: true
+        schema:
+          type: string
+      - name: Authorization
+        in: header
+        required: true
+        description: Bearer token
+        schema:
+          type: string
+      responses:
+        '201':
+          description: Participant successfully added
+        '500':
+          description: Participant already exist
+        '404':
+          description: Assignment not found
+        '422':
+          description: Invalid authorization
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  description: ID of the user
+                assignment_id:
+                  type: integer
+                  description: ID of the assignment
+              required:
+              - user_id
+              - assignment_id
   "/questionnaires":
     get:
       summary: list questionnaires
@@ -638,8 +1069,6 @@ paths:
           description: successful
     post:
       summary: create questionnaire
-      tags:
-      - Questionnaires
       parameters: []
       responses:
         '201':
@@ -703,7 +1132,9 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                type: array
+                items:
+                  type: string
       requestBody:
         content:
           application/json:
@@ -727,7 +1158,9 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                type: array
+                items:
+                  type: string
       requestBody:
         content:
           application/json:
@@ -850,7 +1283,7 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                type: object
       requestBody:
         content:
           application/json:
@@ -876,7 +1309,7 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                type: object
       requestBody:
         content:
           application/json:
@@ -1038,247 +1471,236 @@ paths:
       responses:
         '204':
           description: successful
-  "/sign_up_topics":
+  "/student_tasks/list":
     get:
-      summary: Get sign-up topics
+      summary: student tasks list
+      tags:
+      - StudentTasks
       parameters:
-      - name: assignment_id
-        in: query
-        description: Assignment ID
-        required: true
-        schema:
-          type: integer
-      - name: topic_ids
-        in: query
-        description: Topic Identifier
-        required: false
+      - name: Authorization
+        in: header
         schema:
           type: string
-      tags:
-      - SignUpTopic
       responses:
         '200':
-          description: successful
-    delete:
-      summary: Delete sign-up topics
+          description: authorized request has proper JSON schema
+        '401':
+          description: unauthorized request has error response
+  "/student_tasks/view":
+    get:
+      summary: Retrieve a specific student task by ID
+      tags:
+      - StudentTasks
       parameters:
-      - name: assignment_id
+      - name: id
         in: query
-        description: Assignment ID
         required: true
         schema:
-          type: integer
-      - name: topic_ids
-        in: query
-        items:
-          type: string
-        description: Topic Identifiers to delete
-        required: false
+          type: Integer
+      - name: Authorization
+        in: header
         schema:
-          type: array
-      tags:
-      - SignUpTopic
+          type: string
       responses:
         '200':
-          description: successful
-    post:
-      summary: create a new topic in the sheet
-      tags:
-      - SignUpTopic
-      parameters: []
-      responses:
-        '201':
-          description: Success
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                topic_identifier:
-                  type: integer
-                topic_name:
-                  type: string
-                max_choosers:
-                  type: integer
-                category:
-                  type: string
-                assignment_id:
-                  type: integer
-                micropayment:
-                  type: integer
-              required:
-              - topic_identifier
-              - topic_name
-              - max_choosers
-              - category
-              - assignment_id
-              - micropayment
-  "/sign_up_topics/{id}":
-    parameters:
-    - name: id
-      in: path
-      description: id of the sign up topic
-      required: true
-      schema:
-        type: integer
-    put:
-      summary: update a new topic in the sheet
-      tags:
-      - SignUpTopic
-      parameters: []
-      responses:
-        '200':
-          description: successful
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                topic_identifier:
-                  type: integer
-                topic_name:
-                  type: string
-                max_choosers:
-                  type: integer
-                category:
-                  type: string
-                assignment_id:
-                  type: integer
-                micropayment:
-                  type: integer
-              required:
-              - topic_identifier
-              - topic_name
-              - category
-              - assignment_id
-  "/signed_up_teams/sign_up":
-    post:
-      summary: Creates a signed up team
-      tags:
-      - SignedUpTeams
-      parameters: []
-      responses:
-        '201':
-          description: signed up team created
-        '422':
-          description: invalid request
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                team_id:
-                  type: integer
-                topic_id:
-                  type: integer
-              required:
-              - team_id
-              - topic_id
-  "/signed_up_teams/sign_up_student":
-    parameters:
-    - name: user_id
-      in: query
-      description: User ID
-      required: true
-      schema:
-        type: integer
-    post:
-      summary: Creates a signed up team by student
-      tags:
-      - SignedUpTeams
-      parameters: []
-      responses:
-        '201':
-          description: signed up team created
-        '422':
-          description: invalid request
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                topic_id:
-                  type: integer
-              required:
-              - topic_id
-  "/signed_up_teams":
-    parameters:
-    - name: topic_id
-      in: query
-      description: Topic ID
-      required: true
-      schema:
-        type: integer
+          description: successful retrieval of a student task
+        '500':
+          description: participant not found
+        '401':
+          description: unauthorized request has error response
+  "/api/v1/submitted_content":
     get:
-      summary: Retrieves signed up teams
+      summary: list all submission records
       tags:
-      - SignedUpTeams
+      - SubmittedContent
       responses:
         '200':
-          description: signed up teams found
-          content:
-            application/json:
-              schema:
-                type: array
-                properties:
-                  id:
-                    type: integer
-                  topic_id:
-                    type: integer
-                  team_id:
-                    type: integer
-                  is_waitlisted:
-                    type: boolean
-                  preference_priority_number:
-                    type: integer
-                required:
-                - id
-                - topic_id
-                - team_id
-                - is_waitlisted
-                - preference_priority_number
+          description: successful
+    post:
+      summary: create a submission record
+      tags:
+      - SubmittedContent
+      parameters: []
+      responses:
+        '201':
+          description: created
+        '422':
+          description: unprocessable entity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                submitted_content:
+                  type: object
+                  properties:
+                    record_type:
+                      type: string
+                    content:
+                      type: string
+                    operation:
+                      type: string
+                    team_id:
+                      type: integer
+                    user:
+                      type: string
+                    assignment_id:
+                      type: integer
+                  required:
+                  - content
+                  - team_id
+                  - user
+                  - assignment_id
+  "/api/v1/submitted_content/{id}":
+    get:
+      summary: show a submission record
+      tags:
+      - SubmittedContent
+      parameters:
+      - name: id
+        in: path
+        description: id
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: successful
         '404':
-          description: signed up teams not found
-  "/signed_up_teams/{id}":
-    parameters:
-    - name: id
-      in: path
-      required: true
-      schema:
-        type: integer
-    put:
-      summary: Updates a signed up team
+          description: not found
+  "/api/v1/submitted_content/download":
+    get:
+      summary: download file
       tags:
-      - SignedUpTeams
+      - SubmittedContent
+      parameters:
+      - name: current_folder[name]
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: download
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        '400':
+          description: cannot send whole folder
+        '404':
+          description: file does not exist
+        '200':
+          description: file downloaded
+  "/teams_participants/update_duty":
+    put:
+      summary: update participant duty
+      tags:
+      - Teams Participants
       parameters: []
       responses:
         '200':
-          description: signed up team updated
-        '422':
-          description: invalid request
+          description: duty updated successfully
+        '403':
+          description: 'forbidden: user not authorized'
+        '404':
+          description: teams participant not found
       requestBody:
         content:
           application/json:
             schema:
               type: object
               properties:
-                is_waitlisted:
-                  type: boolean
-                preference_priority_number:
+                teams_participant_id:
                   type: integer
-    delete:
-      summary: Deletes a signed up team
+                teams_participant:
+                  type: object
+                  properties:
+                    duty_id:
+                      type: integer
+                  required:
+                  - duty_id
+              required:
+              - teams_participant_id
+              - teams_participant
+  "/teams_participants/{id}/list_participants":
+    get:
+      summary: list participants
       tags:
-      - SignedUpTeams
+      - Teams Participants
+      parameters:
+      - name: id
+        in: path
+        description: Team ID
+        required: true
+        schema:
+          type: integer
       responses:
-        '204':
-          description: signed up team deleted
-        '422':
-          description: invalid request
+        '200':
+          description: for course
+        '404':
+          description: team not found
+  "/teams_participants/{id}/add_participant":
+    post:
+      summary: add participant
+      tags:
+      - Teams Participants
+      parameters:
+      - name: id
+        in: path
+        description: Team ID
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: added to course
+        '404':
+          description: participant not found
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+              - name
+  "/teams_participants/{id}/delete_participants":
+    delete:
+      summary: delete participants
+      tags:
+      - Teams Participants
+      parameters:
+      - name: id
+        in: path
+        description: Team ID
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: no participants selected
+        '404':
+          description: team not found
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                item:
+                  type: array
+                  items:
+                    type: integer
+              required:
+              - item
   "/login":
     post:
       summary: Logs in a user
@@ -1303,34 +1725,6 @@ paths:
               required:
               - user_name
               - password
-  /student_tasks/list:
-      get:
-        summary: List all Student Tasks
-        tags:
-          - Student Tasks
-        responses:
-          '200':
-            description: An array of student tasks
-  /student_tasks/view:
-    get:
-      summary: View a student task
-      tags:
-        - Student Tasks
-      parameters:
-        - in: query
-          name: id
-          schema:
-            type: string
-          required: true
-          description: The ID of the student task to retrieve
-      responses:
-        '200':
-          description: A specific student task
-
-
-
-
-
 servers:
 - url: http://{defaultHost}
   variables:
