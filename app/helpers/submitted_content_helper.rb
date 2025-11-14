@@ -97,11 +97,11 @@ module SubmittedContentHelper
     allowed_extensions.include?(file_extension)
   end
 
-  # Validates if a file size is within the specified limit
+  # Validates that a file is within the specified size limit
   # @param file [File] The file object to check
   # @param size_mb [Integer] Maximum allowed size in megabytes
   # @return [Boolean] true if file size is acceptable, false otherwise
-  def check_content_size(file, size_mb)
+  def is_file_small_enough(file, size_mb)
     # Compare file size (in bytes) against limit (converted from MB to bytes)
     file.size <= size_mb * 1024 * 1024
   end

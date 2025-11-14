@@ -124,7 +124,7 @@ class SubmittedContentController < ApplicationController
     file_size_limit_mb = 5
 
     # Validate file size against the limit
-    unless check_content_size(uploaded, file_size_limit_mb)
+    unless is_file_small_enough(uploaded, file_size_limit_mb)
       return render_error("File size must be smaller than #{file_size_limit_mb}MB", :bad_request)
     end
 

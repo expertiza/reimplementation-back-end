@@ -431,7 +431,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         before do
           allow_any_instance_of(Api::V1::SubmittedContentController)
-            .to receive(:check_content_size).and_return(false)
+            .to receive(:is_file_small_enough).and_return(false)
         end
 
         it 'returns bad request for size limit' do
@@ -457,7 +457,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         before do
           allow_any_instance_of(Api::V1::SubmittedContentController)
-            .to receive(:check_content_size).and_return(true)
+            .to receive(:is_file_small_enough).and_return(true)
           allow_any_instance_of(Api::V1::SubmittedContentController)
             .to receive(:check_extension_integrity).and_return(false)
         end
@@ -488,7 +488,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         before do
           allow_any_instance_of(Api::V1::SubmittedContentController)
-            .to receive(:check_content_size).and_return(true)
+            .to receive(:is_file_small_enough).and_return(true)
           allow_any_instance_of(Api::V1::SubmittedContentController)
             .to receive(:check_extension_integrity).and_return(true)
           allow(FileUtils).to receive(:mkdir_p)
@@ -528,7 +528,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         before do
           allow_any_instance_of(Api::V1::SubmittedContentController)
-            .to receive(:check_content_size).and_return(true)
+            .to receive(:is_file_small_enough).and_return(true)
           allow_any_instance_of(Api::V1::SubmittedContentController)
             .to receive(:check_extension_integrity).and_return(true)
           allow_any_instance_of(Api::V1::SubmittedContentController)
