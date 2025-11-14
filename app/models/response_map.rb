@@ -10,6 +10,14 @@ class ResponseMap < ApplicationRecord
 
   alias map_id id
 
+  # Shared helper for Response#rubric_label; looks up the declarative constant so each map advertises its UI label
+  def response_map_label
+    const_name = "#{self.class.name.demodulize.underscore.upcase}_TITLE"
+    if ResponseMapSubclassTitles.const_defined?(const_name)
+      ResponseMapSubclassTitles.const_get(const_name).presence
+    end
+  end
+
   def questionnaire
     Questionnaire.find_by(id: reviewed_object_id)
   end

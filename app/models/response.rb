@@ -11,32 +11,13 @@ class Response < ApplicationRecord
   alias map response_map
   delegate :questionnaire, :reviewee, :reviewer, to: :map
 
-  # response type to label mapping
-  KIND_LABELS = {
-    'ReviewResponseMap' => 'Review',
-    'TeammateReviewResponseMap' => 'Teammate Review',
-    'BookmarkRatingResponseMap' => 'Bookmark Review',
-    'QuizResponseMap' => 'Quiz',
-    'SurveyResponseMap' => 'Survey',
-    'AssignmentSurveyResponseMap' => 'Assignment Survey',
-    'GlobalSurveyResponseMap' => 'Global Survey',
-    'CourseSurveyResponseMap' => 'Course Survey',
-    'FeedbackResponseMap' => 'Feedback'
-  }.freeze
-
-  def kind_name
+  # returns a string of response name, needed so the front end can tell students which rubric they are filling out
+  def rubric_label
     return 'Response' if map.nil?
 
-    klass_name = map.class.name
-    # use hash for the mapping first
-    if (label = KIND_LABELS[klass_name]).present?
-      return label
-    end
-
-    # back up plan: use get_title
-    if map.respond_to?(:get_title)
-      title = map.get_title
-      return title if title.present?
+    if map.respond_to?(:response_map_label)
+      label = map.response_map_label
+      return label if label.present?
     end
 
     # response type doesn't exist
