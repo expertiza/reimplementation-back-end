@@ -85,7 +85,7 @@ RSpec.describe 'Submitted Content API', type: :request do
     }.merge(attrs))
   end
 
-  path '/api/v1/submitted_content' do
+  path '/submitted_content' do
     get('list all submission records') do
       tags 'SubmittedContent'
       produces 'application/json'
@@ -179,7 +179,7 @@ RSpec.describe 'Submitted Content API', type: :request do
     end
   end
 
-  path '/api/v1/submitted_content/{id}' do
+  path '/submitted_content/{id}' do
     get('show a submission record') do
       tags 'SubmittedContent'
       produces 'application/json'
@@ -216,7 +216,7 @@ RSpec.describe 'Submitted Content API', type: :request do
     end
   end
 
-  path '/api/v1/submitted_content/submit_hyperlink' do
+  path '/submitted_content/submit_hyperlink' do
     shared_examples 'hyperlink submission' do |method|
       before do
         allow(AssignmentParticipant).to receive(:find).and_return(participant)
@@ -235,7 +235,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
 
         it 'returns success' do
-          send(method, '/api/v1/submitted_content/submit_hyperlink',
+          send(method, '/submitted_content/submit_hyperlink',
                params: { id: id, submission: submission },
                headers: auth_headers_student)
 
@@ -250,7 +250,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         let(:submission) { '' }
 
         it 'returns bad request' do
-          send(method, '/api/v1/submitted_content/submit_hyperlink',
+          send(method, '/submitted_content/submit_hyperlink',
                params: { id: id, submission: submission },
                headers: auth_headers_student)
 
@@ -269,7 +269,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
 
         it 'returns conflict' do
-          send(method, '/api/v1/submitted_content/submit_hyperlink',
+          send(method, '/submitted_content/submit_hyperlink',
                params: { id: id, submission: submission },
                headers: auth_headers_student)
 
@@ -289,7 +289,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
 
         it 'returns bad request with error' do
-          send(method, '/api/v1/submitted_content/submit_hyperlink',
+          send(method, '/submitted_content/submit_hyperlink',
                params: { id: id, submission: submission },
                headers: auth_headers_student)
 
@@ -309,7 +309,7 @@ RSpec.describe 'Submitted Content API', type: :request do
     end
   end
 
-  path '/api/v1/submitted_content/remove_hyperlink' do
+  path '/submitted_content/remove_hyperlink' do
     shared_examples 'hyperlink removal' do |method|
       before do
         allow(AssignmentParticipant).to receive(:find).and_return(participant)
@@ -329,7 +329,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
 
         it 'returns no content' do
-          send(method, '/api/v1/submitted_content/remove_hyperlink',
+          send(method, '/submitted_content/remove_hyperlink',
                params: { id: id, chk_links: chk_links },
                headers: auth_headers_student)
 
@@ -346,7 +346,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
 
         it 'returns not found' do
-          send(method, '/api/v1/submitted_content/remove_hyperlink',
+          send(method, '/submitted_content/remove_hyperlink',
                params: { id: id, chk_links: chk_links },
                headers: auth_headers_student)
 
@@ -367,7 +367,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
 
         it 'returns internal server error' do
-          send(method, '/api/v1/submitted_content/remove_hyperlink',
+          send(method, '/submitted_content/remove_hyperlink',
                params: { id: id, chk_links: chk_links },
                headers: auth_headers_student)
 
@@ -387,7 +387,7 @@ RSpec.describe 'Submitted Content API', type: :request do
     end
   end
 
-  path '/api/v1/submitted_content/submit_file' do
+  path '/submitted_content/submit_file' do
     shared_examples 'file submission' do |method|
       before do
         allow(AssignmentParticipant).to receive(:find).and_return(participant)
@@ -402,7 +402,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         let(:id) { participant.id }
 
         it 'returns bad request' do
-          send(method, '/api/v1/submitted_content/submit_file',
+          send(method, '/submitted_content/submit_file',
                params: { id: id },
                headers: auth_headers_student)
 
@@ -430,12 +430,12 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
 
         before do
-          allow_any_instance_of(Api::V1::SubmittedContentController)
+          allow_any_instance_of(SubmittedContentController)
             .to receive(:is_file_small_enough).and_return(false)
         end
 
         it 'returns bad request for size limit' do
-          send(method, '/api/v1/submitted_content/submit_file',
+          send(method, '/submitted_content/submit_file',
                params: { id: id, uploaded_file: uploaded_file },
                headers: auth_headers_student)
 
@@ -456,14 +456,14 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
 
         before do
-          allow_any_instance_of(Api::V1::SubmittedContentController)
+          allow_any_instance_of(SubmittedContentController)
             .to receive(:is_file_small_enough).and_return(true)
-          allow_any_instance_of(Api::V1::SubmittedContentController)
+          allow_any_instance_of(SubmittedContentController)
             .to receive(:check_extension_integrity).and_return(false)
         end
 
         it 'returns bad request for invalid extension' do
-          send(method, '/api/v1/submitted_content/submit_file',
+          send(method, '/submitted_content/submit_file',
                params: { id: id, uploaded_file: uploaded_file },
                headers: auth_headers_student)
 
@@ -487,21 +487,21 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
 
         before do
-          allow_any_instance_of(Api::V1::SubmittedContentController)
+          allow_any_instance_of(SubmittedContentController)
             .to receive(:is_file_small_enough).and_return(true)
-          allow_any_instance_of(Api::V1::SubmittedContentController)
+          allow_any_instance_of(SubmittedContentController)
             .to receive(:check_extension_integrity).and_return(true)
           allow(FileUtils).to receive(:mkdir_p)
           allow(File).to receive(:exist?).and_return(false, true) # First for directory check, then exists after creation
           # Mock File.open only for write mode ('wb')
           fake_file = StringIO.new
           allow(File).to receive(:open).with(anything, 'wb').and_yield(fake_file)
-          allow_any_instance_of(Api::V1::SubmittedContentController)
+          allow_any_instance_of(SubmittedContentController)
             .to receive(:create_submission_record_for).and_return(true)
         end
 
         it 'returns success' do
-          send(method, '/api/v1/submitted_content/submit_file',
+          send(method, '/submitted_content/submit_file',
               params: { id: id, uploaded_file: uploaded_file },
               headers: auth_headers_student)
 
@@ -527,11 +527,11 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
 
         before do
-          allow_any_instance_of(Api::V1::SubmittedContentController)
+          allow_any_instance_of(SubmittedContentController)
             .to receive(:is_file_small_enough).and_return(true)
-          allow_any_instance_of(Api::V1::SubmittedContentController)
+          allow_any_instance_of(SubmittedContentController)
             .to receive(:check_extension_integrity).and_return(true)
-          allow_any_instance_of(Api::V1::SubmittedContentController)
+          allow_any_instance_of(SubmittedContentController)
             .to receive(:file_type).and_return('zip')
           allow(FileUtils).to receive(:mkdir_p)
           allow(File).to receive(:exist?).and_return(false, true)
@@ -539,14 +539,14 @@ RSpec.describe 'Submitted Content API', type: :request do
           fake_file = StringIO.new
           allow(File).to receive(:open).with(anything, 'wb').and_yield(fake_file)
           allow(SubmittedContentHelper).to receive(:unzip_file).and_return({ message: 'Unzipped successfully' })
-          allow_any_instance_of(Api::V1::SubmittedContentController)
+          allow_any_instance_of(SubmittedContentController)
             .to receive(:create_submission_record_for).and_return(true)
         end
 
         it 'unzips the file when requested' do
           expect(SubmittedContentHelper).to receive(:unzip_file)
 
-          send(method, '/api/v1/submitted_content/submit_file',
+          send(method, '/submitted_content/submit_file',
               params: { id: id, uploaded_file: uploaded_file, unzip: true },
               headers: auth_headers_student)
 
@@ -564,7 +564,7 @@ RSpec.describe 'Submitted Content API', type: :request do
     end
   end
 
-  path '/api/v1/submitted_content/folder_action' do
+  path '/submitted_content/folder_action' do
     shared_examples 'folder actions' do |method|
       before do
         allow(AssignmentParticipant).to receive(:find).and_return(participant)
@@ -575,7 +575,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         let(:id) { participant.id }
 
         it 'returns bad request' do
-          send(method, '/api/v1/submitted_content/folder_action',
+          send(method, '/submitted_content/folder_action',
                params: { id: id },
                headers: auth_headers_student)
 
@@ -590,15 +590,15 @@ RSpec.describe 'Submitted Content API', type: :request do
         let(:faction) { { delete: 'true' } }
 
         before do
-          allow_any_instance_of(Api::V1::SubmittedContentController)
+          allow_any_instance_of(SubmittedContentController)
             .to receive(:delete_selected_files).and_return(nil)
         end
 
         it 'calls delete_selected_files' do
-          expect_any_instance_of(Api::V1::SubmittedContentController)
+          expect_any_instance_of(SubmittedContentController)
             .to receive(:delete_selected_files)
 
-          send(method, '/api/v1/submitted_content/folder_action',
+          send(method, '/submitted_content/folder_action',
                params: { id: id, faction: faction },
                headers: auth_headers_student)
         end
@@ -609,15 +609,15 @@ RSpec.describe 'Submitted Content API', type: :request do
         let(:faction) { { rename: 'new_name.txt' } }
 
         before do
-          allow_any_instance_of(Api::V1::SubmittedContentController)
+          allow_any_instance_of(SubmittedContentController)
             .to receive(:rename_selected_file).and_return(nil)
         end
 
         it 'calls rename_selected_file' do
-          expect_any_instance_of(Api::V1::SubmittedContentController)
+          expect_any_instance_of(SubmittedContentController)
             .to receive(:rename_selected_file)
 
-          send(method, '/api/v1/submitted_content/folder_action',
+          send(method, '/submitted_content/folder_action',
                params: { id: id, faction: faction },
                headers: auth_headers_student)
         end
@@ -628,15 +628,15 @@ RSpec.describe 'Submitted Content API', type: :request do
         let(:faction) { { move: '/new/location' } }
 
         before do
-          allow_any_instance_of(Api::V1::SubmittedContentController)
+          allow_any_instance_of(SubmittedContentController)
             .to receive(:move_selected_file).and_return(nil)
         end
 
         it 'calls move_selected_file' do
-          expect_any_instance_of(Api::V1::SubmittedContentController)
+          expect_any_instance_of(SubmittedContentController)
             .to receive(:move_selected_file)
 
-          send(method, '/api/v1/submitted_content/folder_action',
+          send(method, '/submitted_content/folder_action',
                params: { id: id, faction: faction },
                headers: auth_headers_student)
         end
@@ -647,15 +647,15 @@ RSpec.describe 'Submitted Content API', type: :request do
         let(:faction) { { copy: '/copy/location' } }
 
         before do
-          allow_any_instance_of(Api::V1::SubmittedContentController)
+          allow_any_instance_of(SubmittedContentController)
             .to receive(:copy_selected_file).and_return(nil)
         end
 
         it 'calls copy_selected_file' do
-          expect_any_instance_of(Api::V1::SubmittedContentController)
+          expect_any_instance_of(SubmittedContentController)
             .to receive(:copy_selected_file)
 
-          send(method, '/api/v1/submitted_content/folder_action',
+          send(method, '/submitted_content/folder_action',
                params: { id: id, faction: faction },
                headers: auth_headers_student)
         end
@@ -666,15 +666,15 @@ RSpec.describe 'Submitted Content API', type: :request do
         let(:faction) { { create: 'new_folder' } }
 
         before do
-          allow_any_instance_of(Api::V1::SubmittedContentController)
+          allow_any_instance_of(SubmittedContentController)
             .to receive(:create_new_folder).and_return(nil)
         end
 
         it 'calls create_new_folder' do
-          expect_any_instance_of(Api::V1::SubmittedContentController)
+          expect_any_instance_of(SubmittedContentController)
             .to receive(:create_new_folder)
 
-          send(method, '/api/v1/submitted_content/folder_action',
+          send(method, '/submitted_content/folder_action',
                params: { id: id, faction: faction },
                headers: auth_headers_student)
         end
@@ -690,7 +690,7 @@ RSpec.describe 'Submitted Content API', type: :request do
     end
   end
 
-  path '/api/v1/submitted_content/download' do
+  path '/submitted_content/download' do
     get('download file') do
       tags 'SubmittedContent'
       produces 'application/octet-stream'
@@ -767,15 +767,15 @@ RSpec.describe 'Submitted Content API', type: :request do
         before do
           allow(File).to receive(:directory?).with(file_path).and_return(false)
           allow(File).to receive(:exist?).with(file_path).and_return(true)
-          allow_any_instance_of(Api::V1::SubmittedContentController)
+          allow_any_instance_of(SubmittedContentController)
             .to receive(:send_file).and_return(nil)
         end
 
         it 'sends the file' do
-          expect_any_instance_of(Api::V1::SubmittedContentController)
+          expect_any_instance_of(SubmittedContentController)
             .to receive(:send_file).with(file_path, disposition: 'inline')
 
-          get '/api/v1/submitted_content/download',
+          get '/submitted_content/download',
               params: { id: id, current_folder: current_folder, download: download },
               headers: auth_headers_student
         end
@@ -788,7 +788,7 @@ RSpec.describe 'Submitted Content API', type: :request do
       it 'returns 500 (RecordNotFound bubbles)' do
         allow(AssignmentParticipant).to receive(:find).and_raise(ActiveRecord::RecordNotFound)
 
-        post '/api/v1/submitted_content/submit_hyperlink',
+        post '/submitted_content/submit_hyperlink',
              params: { id: 999, submission: 'http://test.com' },
              headers: auth_headers_student
 
@@ -804,7 +804,7 @@ RSpec.describe 'Submitted Content API', type: :request do
       end
 
       it 'returns not found for submit_hyperlink' do
-        post '/api/v1/submitted_content/submit_hyperlink',
+        post '/submitted_content/submit_hyperlink',
              params: { id: participant.id, submission: 'http://test.com' },
              headers: auth_headers_student
 
