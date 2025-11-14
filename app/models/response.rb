@@ -24,6 +24,7 @@ class Response < ApplicationRecord
     'Unknown Type'
   end
 
+  # Returns true if this response's score differs from peers by more than the assignment notification limit
   def reportable_difference?
     map_class = map.class
     # gets all responses made by a reviewee
@@ -32,6 +33,7 @@ class Response < ApplicationRecord
     count = 0
     total = 0
     # gets the sum total percentage scores of all responses that are not this response
+    # (each response can omit questions, so maximum_score may differ and we normalize before averaging)
     existing_responses.each do |response|
       unless id == response.id # the current_response is also in existing_responses array
         count += 1
