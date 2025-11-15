@@ -20,6 +20,27 @@ begin
       institution_id: 1,
       role_id:  roles[:admin].id,
     )
+    puts "creating standard test students"
+    test_students = [
+      { name: 'alice', full_name: 'Alice Johnson', email: 'alice@example.com' },
+      { name: 'bob', full_name: 'Bob Smith', email: 'bob@example.com' },
+      { name: 'charlie', full_name: 'Charlie Davis', email: 'charlie@example.com' },
+      { name: 'diana', full_name: 'Diana Martinez', email: 'diana@example.com' },
+      { name: 'ethan', full_name: 'Ethan Brown', email: 'ethan@example.com' },
+      { name: 'fiona', full_name: 'Fiona Wilson', email: 'fiona@example.com' }
+    ]
+
+    test_students.each do |student_data|
+      User.find_or_create_by!(email: student_data[:email]) do |user|
+        user.name = student_data[:name]
+        user.full_name = student_data[:full_name]
+        user.password = 'password123'
+        user.institution_id = 1
+        user.role_id = roles[:student].id
+        user.handle = student_data[:name]
+      end
+    end
+    puts "✅ Created #{test_students.count} standard test students"
     
 
     #Generate Random Users
