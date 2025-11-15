@@ -10,12 +10,13 @@ class JoinTeamRequestsController < ApplicationController
   # This filter runs before the specified actions, finding the join team request
   before_action :find_request, only: %i[show update destroy decline accept]
 
-  # This filter ensures the request is still pending before processing
-  before_action :ensure_request_pending, only: %i[accept decline]
-
   # Centralized authorization method
   def action_allowed?
     case params[:action]
+    when 'index'
+      # Only administrators can view all join team requests
+      current_user_has_admin_privileges?
+    
     when 'create'
       # Any student can create a join team request
       current_user_has_student_privileges?
@@ -23,32 +24,38 @@ class JoinTeamRequestsController < ApplicationController
     when 'show'
       # The participant who made the request OR any team member can view it
       return false unless current_user_has_student_privileges?
-      load_request_for_authorization
+      # Load the request for authorization check
+      @join_team_request = JoinTeamRequest.find_by(id: params[:id]) unless @join_team_request
       return false unless @join_team_request
       current_user_is_request_creator? || current_user_is_team_member?
     
     when 'update', 'destroy'
       # Only the participant who created the request can update or delete it
       return false unless current_user_has_student_privileges?
-      load_request_for_authorization
+      # Load the request for authorization check
+      @join_team_request = JoinTeamRequest.find_by(id: params[:id]) unless @join_team_request
       return false unless @join_team_request
       current_user_is_request_creator?
     
-    when 'decline', 'accept'
-      # Only team members of the target team can accept/decline a request
+    when 'decline'
+      # Only team members of the target team can decline a request
       return false unless current_user_has_student_privileges?
-      load_request_for_authorization
+      # Load the request for authorization check
+      @join_team_request = JoinTeamRequest.find_by(id: params[:id]) unless @join_team_request
       return false unless @join_team_request
       current_user_is_team_member?
-    
-    when 'for_team', 'by_user', 'pending'
-      # Students can view filtered lists
-      current_user_has_student_privileges?
     
     else
       # Default: deny access
       false
     end
+  end
+
+  # GET api/v1/join_team_requests
+  # gets a list of all the join team requests
+  def index
+    join_team_requests = JoinTeamRequest.all
+    render json: join_team_requests, status: :ok
   end
 
   # GET api/v1/join_team_requests/1
@@ -85,11 +92,26 @@ class JoinTeamRequestsController < ApplicationController
   # POST api/v1/join_team_requests
   # Creates a new join team request
   def create
-    # Find participant object for the user who is requesting to join the team
-    participant = AssignmentParticipant.find_by(user_id: @current_user.id, parent_id: params[:assignment_id])
+    join_team_request = JoinTeamRequest.new
+    join_team_request.comments = params[:comments]
+    join_team_request.reply_status = PENDING
+    join_team_request.team_id = params[:team_id]
     
-    unless participant
-      return render json: { error: 'You are not a participant in this assignment' }, status: :unprocessable_entity
+    # Find participant based on assignment_id
+    participant = AssignmentParticipant.find_by(user_id: @current_user.id, parent_id: params[:assignment_id])
+    team = Team.find(params[:team_id])
+
+    if team.participants.include?(participant)
+      render json: { error: 'You already belong to the team' }, status: :unprocessable_entity
+    elsif participant
+      join_team_request.participant_id = participant.id
+      if join_team_request.save
+        render json: join_team_request, status: :created
+      else
+        render json: { errors: join_team_request.errors.full_messages }, status: :unprocessable_entity
+      end
+    else
+      render json: { errors: 'Participant not found' }, status: :unprocessable_entity
     end
 
     team = Team.find_by(id: params[:team_id])
@@ -197,11 +219,9 @@ class JoinTeamRequestsController < ApplicationController
   # PATCH api/v1/join_team_requests/1/decline
   # Decline a join team request
   def decline
-    if @join_team_request.update(reply_status: DECLINED)
-      render json: { 
-        message: 'Join team request declined successfully',
-        join_team_request: JoinTeamRequestSerializer.new(@join_team_request).as_json
-      }, status: :ok
+    @join_team_request.reply_status = DECLINED
+    if @join_team_request.save
+      render json: { message: 'JoinTeamRequest declined successfully' }, status: :ok
     else
       render json: { errors: @join_team_request.errors.full_messages }, status: :unprocessable_entity
     end
@@ -243,21 +263,29 @@ class JoinTeamRequestsController < ApplicationController
   def current_user_is_request_creator?
     return false unless @join_team_request && @current_user
     
-    @join_team_request.participant&.user_id == @current_user.id
+    participant = Participant.find_by(id: @join_team_request.participant_id)
+    participant&.user_id == @current_user.id
   end
 
   # Helper method to check if current user is a member of the target team
   def current_user_is_team_member?
     return false unless @join_team_request && @current_user
     
-    team = @join_team_request.team
-    return false unless team.is_a?(AssignmentTeam)
+    team = Team.find_by(id: @join_team_request.team_id)
+    return false unless team
     
-    participant = AssignmentParticipant.find_by(
-      user_id: @current_user.id,
-      parent_id: team.parent_id
-    )
-    
-    participant && team.participants.include?(participant)
+    # Find the participant record for the current user in the same assignment
+    # We need to get the assignment from the team
+    if team.is_a?(AssignmentTeam)
+      participant = AssignmentParticipant.find_by(
+        user_id: @current_user.id,
+        parent_id: team.parent_id
+      )
+      return false unless participant
+      
+      team.participants.include?(participant)
+    else
+      false
+    end
   end
 end
