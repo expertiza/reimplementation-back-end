@@ -10,17 +10,50 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   # This filter runs before the specified actions, finding the join team request
   before_action :find_request, only: %i[show update destroy decline]
 
-  #checks if the current user is a student
+  # Centralized authorization method
   def action_allowed?
-    @current_user.student?
+    case params[:action]
+    when 'index'
+      # Only administrators can view all join team requests
+      current_user_has_admin_privileges?
+    
+    when 'create'
+      # Any student can create a join team request
+      current_user_has_student_privileges?
+    
+    when 'show'
+      # The participant who made the request OR any team member can view it
+      return false unless current_user_has_student_privileges?
+      # Load the request for authorization check
+      @join_team_request = JoinTeamRequest.find_by(id: params[:id]) unless @join_team_request
+      return false unless @join_team_request
+      current_user_is_request_creator? || current_user_is_team_member?
+    
+    when 'update', 'destroy'
+      # Only the participant who created the request can update or delete it
+      return false unless current_user_has_student_privileges?
+      # Load the request for authorization check
+      @join_team_request = JoinTeamRequest.find_by(id: params[:id]) unless @join_team_request
+      return false unless @join_team_request
+      current_user_is_request_creator?
+    
+    when 'decline'
+      # Only team members of the target team can decline a request
+      return false unless current_user_has_student_privileges?
+      # Load the request for authorization check
+      @join_team_request = JoinTeamRequest.find_by(id: params[:id]) unless @join_team_request
+      return false unless @join_team_request
+      current_user_is_team_member?
+    
+    else
+      # Default: deny access
+      false
+    end
   end
 
   # GET api/v1/join_team_requests
   # gets a list of all the join team requests
   def index
-    unless @current_user.administrator?
-      return render json: { errors: 'Unauthorized' }, status: :unauthorized
-    end
     join_team_requests = JoinTeamRequest.all
     render json: join_team_requests, status: :ok
   end
@@ -36,9 +69,11 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   def create
     join_team_request = JoinTeamRequest.new
     join_team_request.comments = params[:comments]
-    join_team_request.status = PENDING
+    join_team_request.reply_status = PENDING
     join_team_request.team_id = params[:team_id]
-    participant = Participant.where(user_id: @current_user.id, assignment_id: params[:assignment_id]).first
+    
+    # Find participant based on assignment_id
+    participant = AssignmentParticipant.find_by(user_id: @current_user.id, parent_id: params[:assignment_id])
     team = Team.find(params[:team_id])
 
     if team.participants.include?(participant)
@@ -77,7 +112,7 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
 
   # decline a join team request
   def decline
-    @join_team_request.status = DECLINED
+    @join_team_request.reply_status = DECLINED
     if @join_team_request.save
       render json: { message: 'JoinTeamRequest declined successfully' }, status: :ok
     else
@@ -86,6 +121,7 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   end
 
   private
+  
   # checks if the team is full already
   def check_team_status
     team = Team.find(params[:team_id])
@@ -102,5 +138,35 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   # Permits specified parameters for join team requests
   def join_team_request_params
     params.require(:join_team_request).permit(:comments, :reply_status)
+  end
+
+  # Helper method to check if current user is the creator of the request
+  def current_user_is_request_creator?
+    return false unless @join_team_request && @current_user
+    
+    participant = Participant.find_by(id: @join_team_request.participant_id)
+    participant&.user_id == @current_user.id
+  end
+
+  # Helper method to check if current user is a member of the target team
+  def current_user_is_team_member?
+    return false unless @join_team_request && @current_user
+    
+    team = Team.find_by(id: @join_team_request.team_id)
+    return false unless team
+    
+    # Find the participant record for the current user in the same assignment
+    # We need to get the assignment from the team
+    if team.is_a?(AssignmentTeam)
+      participant = AssignmentParticipant.find_by(
+        user_id: @current_user.id,
+        parent_id: team.parent_id
+      )
+      return false unless participant
+      
+      team.participants.include?(participant)
+    else
+      false
+    end
   end
 end
