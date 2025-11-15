@@ -1,16 +1,19 @@
 # frozen_string_literal: true
 
 begin
-  # Create an instritution
-  inst_id = Institution.create!(
-    name: 'North Carolina State University'
-  ).id
-
-  Role.create!(id: 1, name: 'Super Administrator')
-  Role.create!(id: 2, name: 'Administrator')
-  Role.create!(id: 3, name: 'Instructor')
-  Role.create!(id: 4, name: 'Teaching Assistant')
-  Role.create!(id: 5, name: 'Student')
+    #Create an institution
+    inst_id = Institution.create!(
+      name: 'North Carolina State University',
+    ).id
+    
+    roles = {
+      admin: Role.find_or_create_by!(name: 'Super Administrator'),
+      administrator: Role.find_or_create_by!(name: 'Administrator'),
+      instructor: Role.find_or_create_by!(name: 'Instructor'),
+      ta: Role.find_or_create_by!(name: 'Teaching Assistant'),
+      student: Role.find_or_create_by!(name: 'Student')
+    }
+    
 
   # Create an admin user
   User.create!(
