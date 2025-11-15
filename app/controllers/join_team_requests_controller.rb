@@ -37,13 +37,17 @@ class JoinTeamRequestsController < ApplicationController
       return false unless @join_team_request
       current_user_is_request_creator?
     
-    when 'decline'
-      # Only team members of the target team can decline a request
+    when 'decline', 'accept'
+      # Only team members of the target team can accept/decline a request
       return false unless current_user_has_student_privileges?
       # Load the request for authorization check
       @join_team_request = JoinTeamRequest.find_by(id: params[:id]) unless @join_team_request
       return false unless @join_team_request
       current_user_is_team_member?
+    
+    when 'for_team', 'by_user', 'pending'
+      # Students can view filtered lists
+      current_user_has_student_privileges?
     
     else
       # Default: deny access
@@ -54,8 +58,8 @@ class JoinTeamRequestsController < ApplicationController
   # GET api/v1/join_team_requests
   # gets a list of all the join team requests
   def index
-    join_team_requests = JoinTeamRequest.all
-    render json: join_team_requests, status: :ok
+    join_team_requests = JoinTeamRequest.includes(:participant, :team).all
+    render json: join_team_requests, each_serializer: JoinTeamRequestSerializer, status: :ok
   end
 
   # GET api/v1/join_team_requests/1
@@ -92,26 +96,11 @@ class JoinTeamRequestsController < ApplicationController
   # POST api/v1/join_team_requests
   # Creates a new join team request
   def create
-    join_team_request = JoinTeamRequest.new
-    join_team_request.comments = params[:comments]
-    join_team_request.reply_status = PENDING
-    join_team_request.team_id = params[:team_id]
-    
     # Find participant based on assignment_id
     participant = AssignmentParticipant.find_by(user_id: @current_user.id, parent_id: params[:assignment_id])
-    team = Team.find(params[:team_id])
-
-    if team.participants.include?(participant)
-      render json: { error: 'You already belong to the team' }, status: :unprocessable_entity
-    elsif participant
-      join_team_request.participant_id = participant.id
-      if join_team_request.save
-        render json: join_team_request, status: :created
-      else
-        render json: { errors: join_team_request.errors.full_messages }, status: :unprocessable_entity
-      end
-    else
-      render json: { errors: 'Participant not found' }, status: :unprocessable_entity
+    
+    unless participant
+      return render json: { error: 'You are not a participant in this assignment' }, status: :unprocessable_entity
     end
 
     team = Team.find_by(id: params[:team_id])
@@ -132,7 +121,7 @@ class JoinTeamRequestsController < ApplicationController
     )
     
     if existing_request
-      return render json: { error: 'You already have a pending request to join this team' }, status: :unprocessable_entity
+      return render json: { error: 'You already have a pending request for this team' }, status: :unprocessable_entity
     end
 
     # Create the request
@@ -176,52 +165,50 @@ class JoinTeamRequestsController < ApplicationController
   # PATCH api/v1/join_team_requests/1/accept
   # Accept a join team request and add the participant to the team
   def accept
+    # Check if request is still pending
+    unless @join_team_request.reply_status == PENDING
+      return render json: { error: 'This request has already been processed' }, status: :unprocessable_entity
+    end
+
+    # Check if team is full
     team = @join_team_request.team
     if team.full?
       return render json: { error: 'Team is full' }, status: :unprocessable_entity
     end
 
-    participant = @join_team_request.participant
-
-    # Use a transaction to ensure both removal and addition happen atomically
-    ActiveRecord::Base.transaction do
-      # Find and remove participant from their old team (if any)
-      old_team_participant = TeamsParticipant.find_by(participant_id: participant.id)
-      if old_team_participant
-        old_team = old_team_participant.team
-        old_team_participant.destroy!
-        
-        # If the old team is now empty, optionally clean up (but keep the team for now)
-        Rails.logger.info "Removed participant #{participant.id} from old team #{old_team&.id}"
+    # Add participant to team
+    begin
+      result = team.add_member(@join_team_request.participant)
+      
+      if result[:success]
+        @join_team_request.reply_status = ACCEPTED
+        @join_team_request.save
+        render json: { 
+          message: 'Join team request accepted successfully', 
+          join_team_request: JoinTeamRequestSerializer.new(@join_team_request).as_json
+        }, status: :ok
+      else
+        render json: { error: result[:error] }, status: :unprocessable_entity
       end
-
-      # Add participant to the new team
-      TeamsParticipant.create!(
-        participant_id: participant.id,
-        team_id: team.id,
-        user_id: participant.user_id
-      )
-
-      # Update the request status
-      @join_team_request.update!(reply_status: ACCEPTED)
-
-      render json: { 
-        message: 'Join team request accepted successfully', 
-        join_team_request: JoinTeamRequestSerializer.new(@join_team_request).as_json
-      }, status: :ok
+    rescue StandardError => e
+      render json: { error: e.message }, status: :unprocessable_entity
     end
-  rescue ActiveRecord::RecordInvalid => e
-    render json: { error: e.message }, status: :unprocessable_entity
-  rescue StandardError => e
-    render json: { error: e.message }, status: :unprocessable_entity
   end
 
   # PATCH api/v1/join_team_requests/1/decline
   # Decline a join team request
   def decline
+    # Check if request is still pending
+    unless @join_team_request.reply_status == PENDING
+      return render json: { error: 'This request has already been processed' }, status: :unprocessable_entity
+    end
+
     @join_team_request.reply_status = DECLINED
     if @join_team_request.save
-      render json: { message: 'JoinTeamRequest declined successfully' }, status: :ok
+      render json: { 
+        message: 'Join team request declined successfully',
+        join_team_request: JoinTeamRequestSerializer.new(@join_team_request).as_json
+      }, status: :ok
     else
       render json: { errors: @join_team_request.errors.full_messages }, status: :unprocessable_entity
     end
@@ -237,21 +224,9 @@ class JoinTeamRequestsController < ApplicationController
     end
   end
 
-  # Ensures the request is still pending before processing accept/decline
-  def ensure_request_pending
-    unless @join_team_request.reply_status == PENDING
-      render json: { error: 'This request has already been processed' }, status: :unprocessable_entity
-    end
-  end
-
   # Finds the join team request by ID
   def find_request
     @join_team_request = JoinTeamRequest.find(params[:id])
-  end
-
-  # Loads the request for authorization check (avoids duplicate queries)
-  def load_request_for_authorization
-    @join_team_request ||= JoinTeamRequest.find_by(id: params[:id])
   end
 
   # Permits specified parameters for join team requests

@@ -259,21 +259,95 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
 
       it 'allows team members to decline a request' do
         participant1 # Ensure participant exists
-        post "/api/v1/join_team_requests/decline/#{join_team_request.id}", headers: team_member_headers
+        patch "/api/v1/join_team_requests/#{join_team_request.id}/decline", headers: team_member_headers
         expect(response).to have_http_status(:ok)
-        expect(JSON.parse(response.body)['message']).to eq('JoinTeamRequest declined successfully')
+        expect(JSON.parse(response.body)['message']).to eq('Join team request declined successfully')
       end
 
       it 'denies the request creator from declining their own request' do
         participant2 # Ensure participant exists
-        post "/api/v1/join_team_requests/decline/#{join_team_request.id}", headers: creator_headers
+        patch "/api/v1/join_team_requests/#{join_team_request.id}/decline", headers: creator_headers
         expect(response).to have_http_status(:forbidden)
       end
 
       it 'denies outsiders from declining the request' do
         participant3 # Ensure participant exists
-        post "/api/v1/join_team_requests/decline/#{join_team_request.id}", headers: outsider_headers
+        patch "/api/v1/join_team_requests/#{join_team_request.id}/decline", headers: outsider_headers
         expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context 'when accepting a join team request' do
+      let(:team_member_token) { JsonWebToken.encode({id: student1.id}) }
+      let(:team_member_headers) { { 'Authorization' => "Bearer #{team_member_token}" } }
+      
+      let(:creator_token) { JsonWebToken.encode({id: student2.id}) }
+      let(:creator_headers) { { 'Authorization' => "Bearer #{creator_token}" } }
+
+      it 'allows team members to accept a request' do
+        participant1 # Ensure participant exists
+        patch "/api/v1/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body)['message']).to eq('Join team request accepted successfully')
+        
+        # Verify participant was added to team
+        expect(team1.participants.reload).to include(participant2)
+      end
+
+      it 'denies the request creator from accepting their own request' do
+        participant2 # Ensure participant exists
+        patch "/api/v1/join_team_requests/#{join_team_request.id}/accept", headers: creator_headers
+        expect(response).to have_http_status(:forbidden)
+      end
+
+      it 'prevents accepting when team is full' do
+        # Fill the team to max capacity
+        assignment.update!(max_team_size: 1)
+        participant1 # Ensure participant exists
+        
+        patch "/api/v1/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(JSON.parse(response.body)['error']).to eq('Team is full')
+      end
+    end
+
+    context 'when filtering join team requests' do
+      let(:student_token) { JsonWebToken.encode({id: student1.id}) }
+      let(:student_headers) { { 'Authorization' => "Bearer #{student_token}" } }
+
+      it 'gets requests for a specific team' do
+        participant2 # Ensure participant exists
+        join_team_request # Create the request
+        
+        get "/api/v1/join_team_requests/for_team/#{team1.id}", headers: student_headers
+        expect(response).to have_http_status(:ok)
+        
+        data = JSON.parse(response.body)
+        expect(data).to be_an(Array)
+        expect(data.length).to be >= 1
+      end
+
+      it 'gets requests by a specific user' do
+        participant2 # Ensure participant exists
+        join_team_request # Create the request
+        
+        get "/api/v1/join_team_requests/by_user/#{student2.id}", headers: student_headers
+        expect(response).to have_http_status(:ok)
+        
+        data = JSON.parse(response.body)
+        expect(data).to be_an(Array)
+      end
+
+      it 'gets only pending requests' do
+        participant2 # Ensure participant exists
+        join_team_request # Create the request
+        
+        get "/api/v1/join_team_requests/pending", headers: student_headers
+        expect(response).to have_http_status(:ok)
+        
+        data = JSON.parse(response.body)
+        expect(data).to be_an(Array)
+        expect(data.all? { |req| req['reply_status'] == 'PENDING' }).to be true
       end
     end
   end
