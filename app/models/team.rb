@@ -6,6 +6,7 @@ class Team < ApplicationRecord
   has_many :teams_participants, dependent: :destroy
   has_many :users, through: :teams_participants
   has_many :participants, through: :teams_participants
+  has_many :join_team_requests, dependent: :destroy
 
   # The team is either an AssignmentTeam or a CourseTeam
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'parent_id', optional: true
