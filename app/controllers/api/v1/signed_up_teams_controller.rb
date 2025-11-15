@@ -1,12 +1,22 @@
 class Api::V1::SignedUpTeamsController < ApplicationController
 
-  # Returns signed up topics using sign_up_topic assignment id
-  # Retrieves sign_up_topic using topic_id as a parameter
+  # Returns signed up teams
+  # Can query by topic_id or assignment_id
   def index
-    # puts params[:topic_id]
-    @sign_up_topic = SignUpTopic.find(params[:topic_id])
-    @signed_up_team = SignedUpTeam.find_team_participants(@sign_up_topic.assignment_id)
-    render json: @signed_up_team
+    if params[:assignment_id].present?
+      # Get all signed up teams for an assignment (across all topics)
+      topic_ids = SignUpTopic.where(assignment_id: params[:assignment_id]).pluck(:id)
+      @signed_up_teams = SignedUpTeam.where(sign_up_topic_id: topic_ids)
+                                      .includes(team: :users, sign_up_topic: :assignment)
+      render json: @signed_up_teams, include: { team: { methods: [:team_size, :max_size] }, sign_up_topic: {} }
+    elsif params[:topic_id].present?
+      # Get signed up teams for a specific topic with their participants
+      @signed_up_teams = SignedUpTeam.where(sign_up_topic_id: params[:topic_id])
+                                      .includes(team: :users, sign_up_topic: :assignment)
+      render json: @signed_up_teams, include: { team: { include: :users, methods: [:team_size, :max_size] }, sign_up_topic: {} }
+    else
+      render json: { error: 'Either assignment_id or topic_id parameter is required' }, status: :bad_request
+    end
   end
 
   def show

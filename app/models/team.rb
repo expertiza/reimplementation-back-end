@@ -21,6 +21,22 @@ class Team < ApplicationRecord
     participants.exists?(user_id: user.id)
   end
   
+  # Returns the current number of team members
+  def team_size
+    users.count
+  end
+  
+  # Returns the maximum allowed team size
+  def max_size
+    if is_a?(AssignmentTeam) && assignment&.max_team_size
+      assignment.max_team_size
+    elsif is_a?(CourseTeam) && course&.max_team_size
+      course.max_team_size
+    else
+      nil
+    end
+  end
+  
   def full?
     current_size = participants.count
 
