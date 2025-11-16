@@ -436,7 +436,7 @@ DEPENDENCIES
   observer
   ostruct
   psych (~> 5.2)
-  puma (~> 6.0)
+  puma (~> 6.4)
   rack-cors
   rails (~> 8.0, >= 8.0.1)
   rspec-rails
