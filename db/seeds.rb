@@ -127,3 +127,5 @@ begin
 rescue ActiveRecord::RecordInvalid => e
   puts e, 'The db has already been seeded'
 end
+
+puts 'Seed completed.'

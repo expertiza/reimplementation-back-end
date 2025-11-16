@@ -33,11 +33,11 @@ class AssignmentTeam < Team
 
   private
 
-  
+
   # Validates that the team is an AssignmentTeam or a subclass (e.g., MentoredTeam)
   def validate_assignment_team_type
     unless self.kind_of?(AssignmentTeam)
       errors.add(:type, 'must be an AssignmentTeam or its subclass')
     end
   end
-end 
+end

@@ -8,5 +8,6 @@ class CreateTeamsUsers < ActiveRecord::Migration[7.0]
 
       t.timestamps
     end
+    add_index :teams_users, [:team_id, :user_id], unique: true
   end
 end

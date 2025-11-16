@@ -43,4 +43,4 @@ class CourseTeam < Team
       errors.add(:type, 'must be CourseTeam')
     end
   end
-end 
+end
