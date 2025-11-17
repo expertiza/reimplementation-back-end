@@ -183,7 +183,7 @@ module Authorization
 
   # Determine if the current user and the given assignment are associated by a TA mapping
   def current_user_has_ta_mapping_for_assignment?(assignment)
-    user_logged_in? && !assignment.nil? && TaMapping.exists?(ta_id: current_user.id, course_id: assignment.course.id)
+    user_logged_in? && !assignment.nil? && TaMapping.exists?(user_id: current_user.id, course_id: assignment.course.id)
   end
 
   # Recursively find an assignment given the passed in Response id. Because a ResponseMap
@@ -210,6 +210,27 @@ module Authorization
     end
   end
 
+  def current_user_has_all_heatgrid_data_privileges?(assignment)
+    return false unless user_logged_in?
+
+    # 1. Super Admin
+    return true if current_user_is_a?('Super Administrator')
+
+    # 2. Admin who created the instructor of the assignment
+    if current_user_is_a?('Administrator')
+      instructor = find_assignment_instructor(assignment)
+      return true if instructor && instructor.parent_id == current_user.id
+    end
+
+    # 3. Instructor of the assignment
+    return true if current_user_is_a?('Instructor') && current_user_instructs_assignment?(assignment)
+
+    # 4. TA mapped to the course of the assignment
+    return true if current_user_is_a?('Teaching Assistant') && current_user_has_ta_mapping_for_assignment?(assignment)
+
+    false
+  end
+
   # PRIVATE METHODS
   private
 
@@ -217,9 +238,9 @@ module Authorization
   # Let the Role model define this logic for the sake of DRY
   # If there is no currently logged-in user simply return false
   def current_user_has_privileges_of?(role_name)
-    puts current_user_and_role_exist?
-    puts current_user
-    puts current_user.role.all_privileges_of?(Role.find_by(name: role_name))
+    # puts current_user_and_role_exist?
+    # puts current_user
+    # puts current_user.role.all_privileges_of?(Role.find_by(name: role_name))
     current_user_and_role_exist? && current_user.role.all_privileges_of?(Role.find_by(name: role_name))
   end
 
@@ -242,26 +263,5 @@ module Authorization
 
   def current_user_and_role_exist?
     user_logged_in? && !current_user.role.nil?
-  end
-
-  def current_user_has_all_heatgrid_data_privileges?(assignment)
-    return false unless user_logged_in?
-
-    # 1. Super Admin
-    return true if current_user_is_a?('Super Administrator')
-
-    # 2. Admin who created the instructor of the assignment
-    if current_user_is_a?('Administrator')
-      instructor = find_assignment_instructor(assignment)
-      return true if instructor && instructor.parent_id == current_user.id
-    end
-
-    # 3. Instructor of the assignment
-    return true if current_user_is_a?('Instructor') && current_user_instructs_assignment?(assignment)
-
-    # 4. TA mapped to the course of the assignment
-    return true if current_user_is_a?('Teaching Assistant') && current_user_has_ta_mapping_for_assignment?(assignment)
-
-    false
   end
 end

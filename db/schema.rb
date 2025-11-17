@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_27_170825) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -125,6 +125,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_27_170825) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "cakes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "courses", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -171,14 +176,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_27_170825) do
 
   create_table "invitations", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.integer "assignment_id"
-    t.integer "from_id"
-    t.integer "to_id"
     t.string "reply_status", limit: 1
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "from_id", null: false
+    t.bigint "to_id", null: false
+    t.bigint "participant_id", null: false
     t.index ["assignment_id"], name: "fk_invitation_assignments"
-    t.index ["from_id"], name: "fk_invitationfrom_users"
-    t.index ["to_id"], name: "fk_invitationto_users"
+    t.index ["from_id"], name: "index_invitations_on_from_id"
+    t.index ["participant_id"], name: "index_invitations_on_participant_id"
+    t.index ["to_id"], name: "index_invitations_on_to_id"
   end
 
   create_table "items", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -204,7 +211,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_27_170825) do
     t.integer "participant_id"
     t.integer "team_id"
     t.text "comments"
-    t.string "status"
+    t.string "reply_status"
   end
 
   create_table "nodes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -335,6 +342,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_27_170825) do
     t.integer "preference_priority_number"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "comments_for_advertisement"
+    t.boolean "advertise_for_partner"
     t.index ["sign_up_topic_id"], name: "index_signed_up_teams_on_sign_up_topic_id"
     t.index ["team_id"], name: "index_signed_up_teams_on_team_id"
   end
@@ -352,9 +361,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_27_170825) do
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "parent_id", null: false
+    t.string "name", null: false
     t.string "type", null: false
-    t.string "name"
+    t.integer "parent_id", null: false
     t.integer "grade_for_submission"
     t.string "comment_for_submission"
   end
@@ -413,6 +422,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_27_170825) do
   add_foreign_key "assignments", "users", column: "instructor_id"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
+  add_foreign_key "invitations", "participants", column: "from_id"
+  add_foreign_key "invitations", "participants", column: "to_id"
   add_foreign_key "items", "questionnaires"
   add_foreign_key "participants", "join_team_requests"
   add_foreign_key "participants", "teams"
