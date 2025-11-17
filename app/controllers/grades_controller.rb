@@ -237,7 +237,7 @@ class GradesController < ApplicationController
 
                 reviewee_scores[round_symbol].each_with_index do |scores_array, idx|
                     # Sort each question's answers array by reviewer_name and reviwee_name 
-                    reviewee_scores[round_symbol][idx] = scores_array.sort_by { |ans| [ans[:reviewer_name].downcase , ans[:reviewee_name].downcase] }
+                    reviewee_scores[round_symbol][idx] = scores_array.sort_by { |answer| [answer[:reviewer_name].downcase , answer[:reviewee_name].downcase] }
                 end
             end
 

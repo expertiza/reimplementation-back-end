@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class AssignmentTeam < Team
+  include Analytic::AssignmentTeamAnalytic
   include ReviewAggregator
   # Each AssignmentTeam must belong to a specific assignment
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'parent_id'

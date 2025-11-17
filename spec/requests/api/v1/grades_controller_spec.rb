@@ -46,10 +46,15 @@ RSpec.describe 'Grades API', type: :request do
     )
   end
 
-  let!(:assignment) { Assignment.create!(name: 'Test Assignment', instructor_id: instructor.id) }
+  let(:course) {create(:course)}
+
+  let(:ta_mapping) {TaMapping.create!(course_id:course.id, user_id: ta.id)}
+
+  let!(:assignment) { Assignment.create!(name: 'Test Assignment', instructor_id: instructor.id, course_id: course.id) }
   let!(:team) { AssignmentTeam.create!(name: 'Team 1', parent_id: assignment.id) }
   let!(:participant) { AssignmentParticipant.create!(user_id: student.id, parent_id: assignment.id, team_id: team.id, handle: student.name) }
   let!(:participant2) { AssignmentParticipant.create!(user_id: student2.id, parent_id: assignment.id, team_id: team.id, handle: student2.name) }
+  
 
   let(:instructor_token) { JsonWebToken.encode({id: instructor.id}) }
   let(:ta_token) { JsonWebToken.encode({id: ta.id}) }

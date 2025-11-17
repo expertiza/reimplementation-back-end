@@ -39,7 +39,7 @@ module GradesHelper
     items = {}
     questionnaires.each do |questionnaire|
       round = AssignmentQuestionnaire.where(assignment_id: assignment_id, questionnaire_id: questionnaire.id).first.used_in_round
-      #can accomodate other types of questionnaires too such as TeammateReviewQuestionnaire, AuthorFeedbackQuestionnaire
+      #can accommodate other types of questionnaires too such as TeammateReviewQuestionnaire, AuthorFeedbackQuestionnaire
       questionnaire_symbol = if round.nil?
                                questionnaire.display_type
                              else
