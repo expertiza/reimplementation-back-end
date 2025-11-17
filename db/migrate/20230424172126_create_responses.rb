@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateResponses < ActiveRecord::Migration[7.0]
   def change
     create_table :responses, on_delete: :cascade do |t|

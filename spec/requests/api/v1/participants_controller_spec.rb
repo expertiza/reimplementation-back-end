@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'swagger_helper'
 require 'json_web_token'
 
@@ -44,7 +46,7 @@ RSpec.describe 'Participants API', type: :request do
   let(:token) { JsonWebToken.encode({id: studenta.id}) }
   let(:Authorization) { "Bearer #{token}" }
 
-  path '/api/v1/participants/user/{user_id}' do
+  path '/participants/user/{user_id}' do
     get 'Retrieve participants for a specific user' do
       tags 'Participants'
       produces 'application/json'
@@ -93,7 +95,7 @@ RSpec.describe 'Participants API', type: :request do
     end
   end
 
-  path '/api/v1/participants/assignment/{assignment_id}' do
+  path '/participants/assignment/{assignment_id}' do
     get 'Retrieve participants for a specific assignment' do
       tags 'Participants'
       produces 'application/json'
@@ -133,7 +135,7 @@ RSpec.describe 'Participants API', type: :request do
     end
   end
 
-  path '/api/v1/participants/{id}' do
+  path '/participants/{id}' do
     get 'Retrieve a specific participant' do
       tags 'Participants'
       produces 'application/json'
@@ -199,7 +201,7 @@ RSpec.describe 'Participants API', type: :request do
     end
   end
 
-  path '/api/v1/participants/{id}/{authorization}' do
+  path '/participants/{id}/{authorization}' do
     patch 'Update participant authorization' do
       tags 'Participants'
       consumes 'application/json'
@@ -258,7 +260,7 @@ RSpec.describe 'Participants API', type: :request do
     end
   end
 
-  path '/api/v1/participants/{authorization}' do
+  path '/participants/{authorization}' do
     post 'Add a participant' do
       tags 'Participants'
       consumes 'application/json'

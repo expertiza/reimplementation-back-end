@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class JoinTeamRequest < ApplicationRecord
   # TODO Uncomment the following line when Team and Team Controller is thoroughly implemented
   # belongs_to :team

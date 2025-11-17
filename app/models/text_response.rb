@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class TextResponse < Item
     validates :size, presence: true
   

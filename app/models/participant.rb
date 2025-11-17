@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Participant < ApplicationRecord
   # Associations
   belongs_to :user
@@ -15,7 +17,5 @@ class Participant < ApplicationRecord
   def fullname
     user.full_name
   end
-
-
 
 end

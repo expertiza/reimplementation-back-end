@@ -1,18 +1,20 @@
+# frozen_string_literal: true
+
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 require 'spec_helper'
 ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'
 # Prevent database truncation if the environment is production
-abort("The Rails environment is running in production mode!") if Rails.env.production?
+abort('The Rails environment is running in production mode!') if Rails.env.production?
 require 'rspec/rails'
 
 require 'factory_bot_rails'
 require 'database_cleaner/active_record'
 
 # Override DATABASE_URL for tests to prevent remote DB errors
-if Rails.env.test?
-  ENV['DATABASE_URL'] = 'mysql2://root:expertiza@127.0.0.1/reimplementation_test'
-end
+# if Rails.env.test?
+#  ENV['DATABASE_URL'] = 'mysql2://root:expertiza@127.0.0.1/reimplementation_test'
+# end
 
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
@@ -77,10 +79,11 @@ RSpec.configure do |config|
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   # config.fixture_path = Rails.root.join('spec/fixtures')
 
-  # If you're not using ActiveRecord, or you'd prefer not to run each of your
-  # examples within a transaction, remove the following line or assign false
-  # instead of true.
-  config.use_transactional_fixtures = true
+  # Since we're using Factory Bot instead of fixtures, we don't need fixture_path
+  # config.fixture_path is deprecated in newer RSpec versions anyway
+
+  # We're using DatabaseCleaner instead of transactional fixtures
+  # config.use_transactional_fixtures = false
 
   # You can uncomment this line to turn off ActiveRecord support entirely.
   # config.use_active_record = false
@@ -104,4 +107,11 @@ RSpec.configure do |config|
   config.filter_rails_from_backtrace!
   # arbitrary gems may also be filtered via:
   # config.filter_gems_from_backtrace("gem name")
+end
+
+Shoulda::Matchers.configure do |config|
+  config.integrate do |with|
+    with.test_framework :rspec
+    with.library :rails
+  end
 end

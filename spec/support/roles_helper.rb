@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module RolesHelper
   def create_roles_hierarchy
     # Ensure roles exist without duplication

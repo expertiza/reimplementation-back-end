@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 FactoryBot.define do
   factory :student_task do
     assignment { nil }
@@ -6,7 +8,6 @@ FactoryBot.define do
     stage_deadline { "2024-04-15 15:55:54" }
     topic { "MyString" }
   end
-
 
   factory :join_team_request do
   end
@@ -26,6 +27,17 @@ FactoryBot.define do
     sequence(:full_name) { |_n| "#{Faker::Name.name}#{Faker::Name.name}".downcase }
     role factory: :role
     institution factory: :institution
-  end
 
+    trait :instructor do
+      role { create(:role, :instructor) }
+    end
+
+    trait :student do
+      role { create(:role, :student) }
+    end
+
+    trait :admin do
+      role { create(:role, :administrator) }
+    end
+  end
 end

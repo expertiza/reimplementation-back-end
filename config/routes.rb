@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Rails.application.routes.draw do
 
   mount Rswag::Api::Engine => 'api-docs'
@@ -7,8 +9,6 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "articles#index"
   post '/login', to: 'authentication#login'
-  namespace :api do
-    namespace :v1 do
       resources :institutions
       resources :roles do
         collection do
@@ -118,6 +118,17 @@ Rails.application.routes.draw do
           post '/:authorization', to: 'participants#add'
           patch '/:id/:authorization', to: 'participants#update_authorization'
           delete '/:id', to: 'participants#destroy'
+        end
+      end
+      resources :teams do
+        member do
+          get 'members'
+          post 'members', to: 'teams#add_member'
+          delete 'members/:user_id', to: 'teams#remove_member'
+
+          get 'join_requests'
+          post 'join_requests', to: 'teams#create_join_request'
+          put 'join_requests/:join_request_id', to: 'teams#update_join_request'
         end
       end
       resources :teams_participants, only: [] do

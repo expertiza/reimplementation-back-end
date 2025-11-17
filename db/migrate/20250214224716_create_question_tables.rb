@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateQuestionTables < ActiveRecord::Migration[7.0]
   def change
     create_table :question_advices, options: "CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci" do |t|

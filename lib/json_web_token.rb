@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # app/lib/json_web_token.rb
 require 'openssl'
 

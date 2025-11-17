@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Assignment < ApplicationRecord
   include MetricHelper
   has_many :participants, class_name: 'AssignmentParticipant', foreign_key: 'parent_id', dependent: :destroy
@@ -9,6 +11,7 @@ class Assignment < ApplicationRecord
   has_many :response_maps, foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :sign_up_topics , class_name: 'SignUpTopic', foreign_key: 'assignment_id', dependent: :destroy
+  has_many :due_dates,as: :parent, class_name: 'DueDate',  dependent: :destroy
   has_many :due_dates,as: :parent, class_name: 'DueDate',  dependent: :destroy
   belongs_to :course, optional: true
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments

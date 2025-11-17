@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # spec/models/due_date_spec.rb
 require 'rails_helper'
 

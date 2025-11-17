@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddRefsToAccountRequests < ActiveRecord::Migration[7.0]
   def change
     add_reference :account_requests, :role, null: false, foreign_key: true
