@@ -31,6 +31,9 @@ class AssignmentTeam < Team
     'ReviewResponseMap'
   end
 
+  def fullname
+    name
+  end
 
   # Use current object (AssignmentTeam) as reviewee and create the ReviewResponseMap record
   def assign_reviewer(reviewer)

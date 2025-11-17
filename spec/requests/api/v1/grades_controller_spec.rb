@@ -57,7 +57,7 @@ RSpec.describe 'Grades API', type: :request do
 
   let(:Authorization) { "Bearer #{instructor_token}" }
 
-  path '/api/v1/grades/{assignment_id}/view_all_scores' do
+  path '/grades/{assignment_id}/view_all_scores' do
     get 'Retrieve all review scores for an assignment' do
       tags 'Grades'
       produces 'application/json'
@@ -103,7 +103,7 @@ RSpec.describe 'Grades API', type: :request do
         let(:Authorization) { "Bearer #{student_token}" }
 
         run_test! do |response|
-          expect(JSON.parse(response.body)['error']).to eq('You are not authorized to view_all_scores this api/v1/grades')
+          expect(JSON.parse(response.body)['error']).to eq('You are not authorized to view_all_scores this grades')
         end
       end
 
@@ -118,7 +118,7 @@ RSpec.describe 'Grades API', type: :request do
     end
   end
 
-  path '/api/v1/grades/{assignment_id}/view_our_scores' do
+  path '/grades/{assignment_id}/view_our_scores' do
     get 'Retrieve team scores for the requesting student' do
       tags 'Grades'
       produces 'application/json'
@@ -143,7 +143,7 @@ RSpec.describe 'Grades API', type: :request do
         let(:Authorization) { "Bearer #{student_token}" }
 
         run_test! do |response|
-          expect(JSON.parse(response.body)['error']).to eq('You are not authorized to view_our_scores this api/v1/grades')
+          expect(JSON.parse(response.body)['error']).to eq('You are not authorized to view_our_scores this grades')
         end
       end
 
@@ -158,7 +158,7 @@ RSpec.describe 'Grades API', type: :request do
     end
   end
 
-  path '/api/v1/grades/{assignment_id}/view_my_scores' do
+  path '/grades/{assignment_id}/view_my_scores' do
     get 'Retrieve individual participant scores' do
       tags 'Grades'
       produces 'application/json'
@@ -187,7 +187,7 @@ RSpec.describe 'Grades API', type: :request do
         let(:Authorization) { "Bearer #{student_token}" }
 
         run_test! do |response|
-          expect(JSON.parse(response.body)['error']).to eq('You are not authorized to view_my_scores this api/v1/grades')
+          expect(JSON.parse(response.body)['error']).to eq('You are not authorized to view_my_scores this grades')
         end
       end
 
@@ -202,7 +202,7 @@ RSpec.describe 'Grades API', type: :request do
     end
   end
 
-  path '/api/v1/grades/{participant_id}/edit' do
+  path '/grades/{participant_id}/edit' do
     get 'Get grade assignment interface data' do
       tags 'Grades'
       produces 'application/json'
@@ -238,7 +238,7 @@ RSpec.describe 'Grades API', type: :request do
         let(:Authorization) { "Bearer #{student_token}" }
 
         run_test! do |response|
-          expect(JSON.parse(response.body)['error']).to eq('You are not authorized to edit this api/v1/grades')
+          expect(JSON.parse(response.body)['error']).to eq('You are not authorized to edit this grades')
         end
       end
 
@@ -253,7 +253,7 @@ RSpec.describe 'Grades API', type: :request do
     end
   end
 
-  path '/api/v1/grades/{participant_id}/assign_grade' do
+  path '/grades/{participant_id}/assign_grade' do
     patch 'Assign grades and comment to team' do
       tags 'Grades'
       consumes 'application/json'
@@ -312,7 +312,7 @@ RSpec.describe 'Grades API', type: :request do
         let(:Authorization) { "Bearer #{student_token}" }
 
         run_test! do |response|
-          expect(JSON.parse(response.body)['error']).to eq('You are not authorized to assign_grade this api/v1/grades')
+          expect(JSON.parse(response.body)['error']).to eq('You are not authorized to assign_grade this grades')
         end
       end
 
@@ -328,7 +328,7 @@ RSpec.describe 'Grades API', type: :request do
     end
   end
 
-  path '/api/v1/grades/{participant_id}/instructor_review' do
+  path '/grades/{participant_id}/instructor_review' do
     get 'Begin or continue grading a submission' do
       tags 'Grades'
       produces 'application/json'
@@ -382,7 +382,7 @@ RSpec.describe 'Grades API', type: :request do
         let(:Authorization) { "Bearer #{student_token}" }
 
         run_test! do |response|
-          expect(JSON.parse(response.body)['error']).to eq('You are not authorized to instructor_review this api/v1/grades')
+          expect(JSON.parse(response.body)['error']).to eq('You are not authorized to instructor_review this grades')
         end
       end
 
@@ -402,17 +402,17 @@ RSpec.describe 'Grades API', type: :request do
     let(:Authorization) { "Bearer #{ta_token}" }
 
     it 'allows TA to access view_all_scores' do
-      get "/api/v1/grades/#{assignment.id}/view_all_scores", headers: { 'Authorization' => Authorization }
+      get "/grades/#{assignment.id}/view_all_scores", headers: { 'Authorization' => Authorization }
       expect(response).to have_http_status(:ok)
     end
 
     it 'allows TA to access instructor_review' do
-      get "/api/v1/grades/#{participant.id}/instructor_review", headers: { 'Authorization' => Authorization }
+      get "/grades/#{participant.id}/instructor_review", headers: { 'Authorization' => Authorization }
       expect(response).to have_http_status(:ok)
     end
 
     it 'denies TA from assigning grades' do
-      patch "/api/v1/grades/#{participant.id}/assign_grade", 
+      patch "/grades/#{participant.id}/assign_grade", 
             params: { grade_for_submission: 90 },
             headers: { 'Authorization' => Authorization }
       expect(response).to have_http_status(:forbidden)
