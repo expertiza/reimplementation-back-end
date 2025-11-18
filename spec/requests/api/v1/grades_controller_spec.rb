@@ -48,8 +48,6 @@ RSpec.describe 'Grades API', type: :request do
 
   let(:course) {create(:course)}
 
-  let(:ta_mapping) {TaMapping.create!(course_id:course.id, user_id: ta.id)}
-
   let!(:assignment) { Assignment.create!(name: 'Test Assignment', instructor_id: instructor.id, course_id: course.id) }
   let!(:team) { AssignmentTeam.create!(name: 'Team 1', parent_id: assignment.id) }
   let!(:participant) { AssignmentParticipant.create!(user_id: student.id, parent_id: assignment.id, team_id: team.id, handle: student.name) }
@@ -404,22 +402,28 @@ RSpec.describe 'Grades API', type: :request do
 
   # Testing with Teaching Assistant permissions
   describe 'Teaching Assistant access' do
-    let(:Authorization) { "Bearer #{ta_token}" }
+    before do
+      TaMapping.create!(course_id: course.id, user_id: ta.id)
+    end
+
+    it 'creates the TA mapping' do
+      expect(TaMapping.exists?(course_id: course.id, user_id: ta.id)).to be true
+    end
 
     it 'allows TA to access view_all_scores' do
-      get "/grades/#{assignment.id}/view_all_scores", headers: { 'Authorization' => Authorization }
+      get "/grades/#{assignment.id}/view_all_scores", headers: { 'Authorization' => "Bearer #{ta_token}" }
       expect(response).to have_http_status(:ok)
     end
 
-    it 'allows TA to access instructor_review' do
-      get "/grades/#{participant.id}/instructor_review", headers: { 'Authorization' => Authorization }
-      expect(response).to have_http_status(:ok)
+    it 'denies TA from accessing instructor_review' do
+      get "/grades/#{participant.id}/instructor_review", headers: { 'Authorization' => "Bearer #{ta_token}" }
+      expect(response).to have_http_status(:forbidden)
     end
 
     it 'denies TA from assigning grades' do
       patch "/grades/#{participant.id}/assign_grade", 
             params: { grade_for_submission: 90 },
-            headers: { 'Authorization' => Authorization }
+            headers: { 'Authorization' => "Bearer #{ta_token}" }
       expect(response).to have_http_status(:forbidden)
     end
   end

@@ -39,11 +39,11 @@ class Questionnaire < ApplicationRecord
   end
 
   # clones the contents of a questionnaire, including the questions and associated advice
-  def self.copy_questionnaire_details(params, instructor_id)
+  def self.copy_questionnaire_details(params)
     orig_questionnaire = Questionnaire.find(params[:id])
     questions = Item.where(questionnaire_id: params[:id])
     questionnaire = orig_questionnaire.dup
-    questionnaire.instructor_id = instructor_id
+    questionnaire.instructor_id = params[:instructor_id]
     questionnaire.name = 'Copy of ' + orig_questionnaire.name
     questionnaire.created_at = Time.zone.now
     questionnaire.save!
