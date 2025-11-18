@@ -38,6 +38,32 @@ class Questionnaire < ApplicationRecord
     errors.add(:name, 'Questionnaire names must be unique.') if results.present?
   end
 
+  # clones the contents of a questionnaire, including the questions and associated advice
+  def self.copy_questionnaire_details(params, instructor_id)
+    orig_questionnaire = Questionnaire.find(params[:id])
+    questions = Item.where(questionnaire_id: params[:id])
+    questionnaire = orig_questionnaire.dup
+    questionnaire.instructor_id = instructor_id
+    questionnaire.name = 'Copy of ' + orig_questionnaire.name
+    questionnaire.created_at = Time.zone.now
+    questionnaire.save!
+    questions.each do |question|
+      new_question = question.dup
+      new_question.questionnaire_id = questionnaire.id
+      new_question.size = '50,3' if (new_question.is_a?(Criterion) || new_question.is_a?(TextResponse)) && new_question.size.nil?
+      new_question.save!
+      advices = QuestionAdvice.where(question_id: question.id)
+      next if advices.empty?
+
+      advices.each do |advice|
+        new_advice = advice.dup
+        new_advice.question_id = new_question.id
+        new_advice.save!
+      end
+    end
+    questionnaire
+  end
+
   # Check_for_question_associations checks if questionnaire has associated questions or not
   def check_for_question_associations
     if questions.any?

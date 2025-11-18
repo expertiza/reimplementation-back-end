@@ -122,7 +122,7 @@ describe Questionnaire, type: :model do
       questionnaire.save!
       question1.save!
       question2.save!
-      copied_questionnaire = Questionnaire.copy_questionnaire_details( { id: questionnaire.id})
+      copied_questionnaire = Questionnaire.copy_questionnaire_details( { id: questionnaire.id}, instructor.id)
       expect(copied_questionnaire.instructor_id).to eq(questionnaire.instructor_id)
       expect(copied_questionnaire.name).to eq("Copy of #{questionnaire.name}")
       expect(copied_questionnaire.created_at).to be_within(1.second).of(Time.zone.now)
@@ -134,7 +134,7 @@ describe Questionnaire, type: :model do
       questionnaire.save!
       question1.save!
       question2.save!
-      copied_questionnaire = described_class.copy_questionnaire_details({ id: questionnaire.id })
+      copied_questionnaire = described_class.copy_questionnaire_details({ id: questionnaire.id }, instructor.id)
       expect(copied_questionnaire.items.count).to eq(2)
       expect(copied_questionnaire.items.first.txt).to eq(question1.txt)
       expect(copied_questionnaire.items.second.txt).to eq(question2.txt)

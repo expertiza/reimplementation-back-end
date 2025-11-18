@@ -15,7 +15,7 @@ class ResponseMap < ApplicationRecord
   # returns the assignment related to the response map
   def response_assignment
     # reviewer will always be the Assignment Participant so finding Assignment based on reviewer_id.
-    return Participant.find(self.reviewer_id).assignment
+    return reviewer.assignment
   end
 
   def self.assessments_for(team)
