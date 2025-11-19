@@ -111,25 +111,6 @@ RSpec.describe ReviewMappingsController, type: :controller do
     end
   end
 
-  describe 'POST #set_calibration_artifact' do
-    it 'assigns a calibration review' do
-      reviewer_double = reviewer
-      team = create(:team, assignment: assignment)
-      mapping = double('ReviewResponseMap', id: 99)
-
-      allow(AssignmentParticipant).to receive(:find).with(reviewer_double.id.to_s).and_return(reviewer_double)
-      allow(AssignmentTeam).to receive(:find).with(team.id.to_s).and_return(team)
-      expect(handler).to receive(:assign_calibration_review).with(reviewer_double, team).and_return(mapping)
-
-      post :set_calibration_artifact, params: { assignment_id: assignment.id, reviewer_id: reviewer.id, submission_id: team.id }, format: :json
-      expect(response).to have_http_status(:ok)
-      expect(JSON.parse(response.body)).to eq({
-        'status' => 'ok',
-        'mapping_id' => 99
-      })
-    end
-  end
-
   describe 'DELETE #destroy' do
     it 'deletes a mapping' do
       allow_any_instance_of(Authorization).to receive(:authorize).and_return(true)

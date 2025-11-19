@@ -56,13 +56,10 @@ class ReviewMappingsController < ApplicationController
   end
 
   # ===== CALIBRATION =====
-  def set_calibration_artifact
-    reviewer = AssignmentParticipant.find(params[:reviewer_id])
-    team = AssignmentTeam.find(params[:submission_id])
+  def assign_calibration_artifacts
     handler = ReviewMappingHandler.new(@assignment)
-
-    mapping = handler.assign_calibration_review(reviewer, team)
-    render json: { status: "ok", mapping_id: mapping.id }
+    handler.assign_calibration_reviews_round_robin
+    render json: { status: "ok", message: "Calibration reviews assigned to all reviewers" }
   end
 
   # ===== DELETE =====

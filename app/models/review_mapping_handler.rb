@@ -52,14 +52,31 @@ class ReviewMappingHandler
   end
 
   # ===== CALIBRATION =====
-  def assign_calibration_review(reviewer, calibration_submission)
-    ReviewResponseMap.create!(
-      reviewer: reviewer,
-      reviewee: calibration_submission.team,
-      reviewed_object_id: calibration_submission.assignment_id,
-      calibration: true
-    )
+  # calibration for bit turned on 
+  # everyone gets assigned 2 calibration reviews along with the other reviwes
+  # assign calibration reviews done by instructor in round robin to students 
+  def assign_calibration_reviews_round_robin
+    # Get all participants (students)
+    reviewers = AssignmentParticipant.where(parent_id: @assignment.id)
+
+    # Get all instructor calibration teams/submissions
+    calibration_teams = AssignmentTeam.where(parent_id: @assignment.id, is_calibration: true)
+    return if calibration_teams.empty?
+
+    # Assign in round robin: each reviewer gets 2 calibration reviews
+    reviewers.each_with_index do |reviewer, index|
+      2.times do |i|
+        team = calibration_teams[(index + i) % calibration_teams.size]
+        ReviewResponseMap.find_or_create_by!(
+          reviewer: reviewer,
+          reviewee: team,
+          reviewed_object_id: @assignment.id,
+          calibration: true
+        )
+      end
+    end
   end
+
 
   def calibration_reviews_for(reviewer)
     ReviewResponseMap.where(reviewer: reviewer, calibration: true)
