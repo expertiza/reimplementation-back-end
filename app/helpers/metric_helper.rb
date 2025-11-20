@@ -37,7 +37,7 @@ module MetricHelper
       (1..num_review_rounds + 1).each do |round|
         comments_in_round[round] = ''
         counter_in_round[round] = 0
-        last_response_in_current_round = response_map.response.select { |r| r.round == round }.last
+        last_response_in_current_round = response_map.responses.select { |r| r.round == round }.last
         next if last_response_in_current_round.nil?
 
         last_response_in_current_round.scores.each do |answer|

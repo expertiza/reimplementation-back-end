@@ -16,7 +16,8 @@ class ResponseMap < ApplicationRecord
 
   # returns the assignment related to the response map
   def response_assignment
-    return Participant.find(self.reviewer_id).assignment
+    # reviewer will always be the Assignment Participant so finding Assignment based on reviewer_id.
+    return reviewer.assignment
   end
 
   def self.assessments_for(team)
@@ -47,9 +48,38 @@ class ResponseMap < ApplicationRecord
     responses
   end
 
-  # Check to see if this response map is a survey. Default is false, and some subclasses will overwrite to true.
-  def survey?
-    false
+  # Computes the average score (as a fraction between 0 and 1) across the latest submitted responses
+  # from each round for this ReviewResponseMap.
+  def aggregate_reviewers_score
+    # Return nil if there are no responses for this map
+    return nil if responses.empty?
+
+    # Group all responses by round, then select the latest one per round based on the most recent created one (i.e., most recent revision in that round)
+    latest_responses_by_round = responses
+      .group_by(&:round)
+      .transform_values { |resps| resps.max_by(&:updated_at) } 
+
+    response_score = 0.0  # Sum of actual scores obtained
+    total_score = 0.0     # Sum of maximum possible scores
+    submitted_found = false  #flag to track if any submitted response exists
+
+    # For each latest response in each round, if the response was submitted, sum up its earned score and its maximum possible score.
+    latest_responses_by_round.each_value do |response|
+      # Only consider responses that were submitted
+      next unless response.is_submitted
+      
+      submitted_found = true  # true if a submitted response is found
+      
+      # Accumulate the obtained and maximum scores
+      response_score += response.aggregate_questionnaire_score
+      total_score += response.maximum_score
+    end
+
+    # If no submitted responses at all, return nil
+    return nil unless submitted_found
+
+    # Return the normalized score (as a float), or 0 if no valid total score
+    total_score > 0 ? (response_score.to_f / total_score) : 0
   end
 
   # Computes the average score (as a fraction between 0 and 1) across the latest submitted responses

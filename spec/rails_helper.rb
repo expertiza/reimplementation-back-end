@@ -12,9 +12,9 @@ require 'factory_bot_rails'
 require 'database_cleaner/active_record'
 
 # Override DATABASE_URL for tests to prevent remote DB errors
-# if Rails.env.test?
-#  ENV['DATABASE_URL'] = 'mysql2://root:expertiza@127.0.0.1/reimplementation_test'
-# end
+if Rails.env.test?
+ ENV['DATABASE_URL'] = 'mysql2://root:expertiza@127.0.0.1/reimplementation_test'
+end
 
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods

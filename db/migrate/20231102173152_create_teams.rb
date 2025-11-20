@@ -11,8 +11,6 @@ class CreateTeams < ActiveRecord::Migration[8.0]
       t.boolean :advertise_for_partner, null: false, default: false
       t.text    :submitted_hyperlinks
       t.integer :directory_num
-      t.integer :grade_for_submission
-      t.text    :comment_for_submission
 
       t.timestamps
     end

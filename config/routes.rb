@@ -96,8 +96,6 @@ Rails.application.routes.draw do
         end
       end
 
-
-
       resources :sign_up_topics do
         collection do
           get :filter
@@ -179,6 +177,5 @@ Rails.application.routes.draw do
           get '/:participant_id/instructor_review', to: 'grades#instructor_review'
         end
       end
-    end
   end
 end
