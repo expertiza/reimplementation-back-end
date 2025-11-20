@@ -12,9 +12,9 @@ require 'factory_bot_rails'
 require 'database_cleaner/active_record'
 
 # Override DATABASE_URL for tests to prevent remote DB errors
-# if Rails.env.test?
-#  ENV['DATABASE_URL'] = 'mysql2://root:expertiza@127.0.0.1/reimplementation_test'
-# end
+if Rails.env.test?
+ ENV['DATABASE_URL'] = 'mysql2://root:expertiza@127.0.0.1/reimplementation_test'
+end
 
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
@@ -76,14 +76,8 @@ rescue ActiveRecord::PendingMigrationError => e
   abort e.to_s.strip
 end
 RSpec.configure do |config|
+  # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   # config.fixture_path = Rails.root.join('spec/fixtures')
-
-  if config.respond_to?(:fixture_paths=)
-    config.fixture_paths = [Rails.root.join('spec/fixtures').to_s]
-  else
-    # fallback for older Rails / rspec-rails
-    config.fixture_path = Rails.root.join('spec/fixtures')
-  end
 
   # Since we're using Factory Bot instead of fixtures, we don't need fixture_path
   # config.fixture_path is deprecated in newer RSpec versions anyway
