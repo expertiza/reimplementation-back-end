@@ -2,237 +2,328 @@
 
 class DueDate < ApplicationRecord
   include Comparable
-
-  # Named constants for teammate review statuses
-  ALLOWED = 3
-  LATE_ALLOWED = 2
-  NOT_ALLOWED = 1
+  include DueDatePermissions
 
   belongs_to :parent, polymorphic: true
-  validate :due_at_is_valid_datetime
+  belongs_to :deadline_type, foreign_key: :deadline_type_id
+
   validates :due_at, presence: true
+  validates :deadline_type_id, presence: true
+  validates :round, presence: true, numericality: { greater_than: 0 }
+  validate :due_at_is_valid_datetime
 
-  # TODO: These attributes appear to represent whether each action is allowed for this deadline.
-  #       But these are NOT persisted in DB.  
-  #       → Verify if they should be real DB columns.
-  attr_accessor :teammate_review_allowed, :submission_allowed, :review_allowed
+  # Scopes for common queries
+  scope :upcoming, -> { where('due_at > ?', Time.current).order(:due_at) }
+  scope :overdue, -> { where('due_at < ?', Time.current).order(:due_at) }
+  scope :for_round, ->(round_num) { where(round: round_num) }
+  scope :for_deadline_type, ->(type_name) { joins(:deadline_type).where(deadline_types: { name: type_name }) }
+  scope :active, -> { where('due_at > ?', Time.current) }
 
-  # TODO: This validator may be unnecessary because Rails supports datetime validation declaratively.
-  #       Investigate replacing this with a standard validation or `validates_timeliness`.
-  def due_at_is_valid_datetime
-    errors.add(:due_at, 'must be a valid datetime') unless due_at.is_a?(Time)
-  end
+  # Instance methods for individual due date operations
 
-  # Method to compare due dates
-  def <=>(other)
-    due_at <=> other.due_at
-  end
-
-  # TODO: This only sorts an array and is fine.
-  #       But we likely don't need this method because DB queries can order by due_at.
-  def self.sort_due_dates(due_dates)
-    due_dates.sort_by(&:due_at)
-  end
-
-  # TODO: BAD DESIGN — DueDate should NOT know how to fetch due dates from parent.
-  #       Fetching due dates MUST be done inside Assignment or ProjectTopic.
-  #       → This method will be removed after moving logic to Assignment#due_dates.
-  def self.fetch_due_dates(parent_id)
-    due_dates = where('parent_id = ?', parent_id)
-    sort_due_dates(due_dates)
-  end
-
-  # TODO: Should accept a list of due dates as an argument
-  #       instead of re-querying by parent_id.
-  #       Example new signature:
-  #          def self.next_due_date(due_dates)
-  #            due_dates.min_by(&:due_at)
-  #          end
-  #
-  #       Current design violates Single Responsibility.
-  def self.next_due_date(parent_id)
-    due_dates = fetch_due_dates(parent_id)
-    due_dates.find { |due_date| due_date.due_at > Time.zone.now }
-  end
-
-  # TODO: This method is fine (operates only on due date objects),
-  #       BUT it should not be responsible for fetching them.
-  #       Accept due_dates array as argument instead.
-  def self.any_future_due_dates?(due_dates)
-    due_dates.any? { |due_date| due_date.due_at > Time.zone.now }
-  end
-
-  # TODO: This is basically an initialization step.
-  #       Should NOT live here — should be handled by Assignment or a factory.
-  #       Also violates SRP because DueDate is deciding how assignment uses deadlines.
-  def set(deadline, assignment_id, max_round)
-    self.deadline_type_id = deadline
-    self.parent_id = assignment_id
-    self.round = max_round
-    save
-  end
-
-  # TODO: Same problem — eliminates need for fetch_due_dates entirely.
-  #       After refactoring, Assignment should already hold due_dates in memory:
-  #
-  #          class Assignment
-  #            def next_due_date
-  #              due_dates.order(:due_at).first
-  #            end
-  #          end
-  #
-  #       So this DueDate class method will no longer query DB.
-  def self.next_due_date(parent_id)
-    due_dates = fetch_due_dates(parent_id)
-    due_dates.find { |due_date| due_date.due_at > Time.zone.now }
-  end
-
-  # TODO: This is too ambiguous — name suggests copying a SET of due dates
-  #       but actually duplicates only one.
-  #       Will be moved to Assignment:
-  #
-  #          def copy_due_dates_to(new_assignment)
-  #            due_dates.each { |d| d.duplicate_to_parent(new_assignment.id) }
-  #          end
-  #
-  #       Rename here to avoid confusion: duplicate_to_parent or clone_for_parent
-  def copy(new_assignment_id)
+  # Create a copy of this due date for a new parent
+  def copy_to(new_parent)
     new_due_date = dup
-    new_due_date.parent_id = new_assignment_id
+    new_due_date.parent = new_parent
+    new_due_date.save!
+    new_due_date
+  end
 
-    # TODO: If new Assignment design stores additional metadata for deadlines,
-    #       ensure they are copied here.
-    new_due_date.save
+  # Duplicate this due date with different attributes
+  def duplicate_with_changes(changes = {})
+    new_due_date = dup
+    changes.each { |attr, value| new_due_date.public_send("#{attr}=", value) }
+    new_due_date.save!
+    new_due_date
+  end
+
+  # Check if this deadline has passed
+  def overdue?
+    due_at < Time.current
+  end
+
+  # Check if this deadline is upcoming
+  def upcoming?
+    due_at > Time.current
+  end
+
+  # Check if this deadline is today
+  def due_today?
+    due_at.to_date == Time.current.to_date
+  end
+
+  # Check if this deadline is this week
+  def due_this_week?
+    due_at >= Time.current.beginning_of_week && due_at <= Time.current.end_of_week
+  end
+
+  # Time remaining until deadline (returns nil if overdue)
+  def time_remaining
+    return nil if overdue?
+
+    due_at - Time.current
+  end
+
+  # Time since deadline passed (returns nil if not overdue)
+  def time_overdue
+    return nil unless overdue?
+
+    Time.current - due_at
+  end
+
+  # Get human-readable time description
+  def time_description
+    if due_today?
+      "Due today at #{due_at.strftime('%I:%M %p')}"
+    elsif overdue?
+      days_overdue = (Time.current.to_date - due_at.to_date).to_i
+      "#{days_overdue} day#{'s' if days_overdue != 1} overdue"
+    elsif upcoming?
+      days_until = (due_at.to_date - Time.current.to_date).to_i
+      if days_until == 0
+        "Due today"
+      elsif days_until == 1
+        "Due tomorrow"
+      else
+        "Due in #{days_until} days"
+      end
+    else
+      "Due #{due_at.strftime('%B %d, %Y')}"
+    end
+  end
+
+  # Check if this deadline is for a specific type of activity
+  def for_submission?
+    deadline_type&.submission?
+  end
+
+  def for_review?
+    deadline_type&.review?
+  end
+
+  def for_quiz?
+    deadline_type&.quiz?
+  end
+
+  def for_teammate_review?
+    deadline_type&.teammate_review?
+  end
+
+  def for_metareview?
+    deadline_type&.metareview?
+  end
+
+  def for_team_formation?
+    deadline_type&.team_formation?
+  end
+
+  def for_signup?
+    deadline_type&.signup?
+  end
+
+  def for_topic_drop?
+    deadline_type&.drop_topic?
+  end
+
+  # Get the deadline type name
+  def deadline_type_name
+    deadline_type&.name
+  end
+
+  # Get human-readable deadline type
+  def deadline_type_display
+    deadline_type&.display_name || 'Unknown'
+  end
+
+  # Check if this deadline allows late submissions
+  def allows_late_work?
+    allows_late_submission? || allows_late_review? || allows_late_quiz?
+  end
+
+  # Get status description
+  def status_description
+    if overdue?
+      allows_late_work? ? 'Overdue (Late work accepted)' : 'Closed'
+    elsif due_today?
+      'Due today'
+    elsif upcoming?
+      time_description
+    else
+      'Unknown status'
+    end
+  end
+
+  # Check if this deadline is currently in effect
+  def currently_active?
+    active? && (upcoming? || (overdue? && allows_late_work?))
+  end
+
+  # Get the next deadline after this one (for the same parent)
+  def next_deadline
+    parent.due_dates
+          .where('due_at > ? OR (due_at = ? AND id > ?)', due_at, due_at, id)
+          .order(:due_at, :id)
+          .first
+  end
+
+  # Get the previous deadline before this one (for the same parent)
+  def previous_deadline
+    parent.due_dates
+          .where('due_at < ? OR (due_at = ? AND id < ?)', due_at, due_at, id)
+          .order(due_at: :desc, id: :desc)
+          .first
+  end
+
+  # Check if this is the last deadline for the parent
+  def last_deadline?
+    next_deadline.nil?
+  end
+
+  # Check if this is the first deadline for the parent
+  def first_deadline?
+    previous_deadline.nil?
+  end
+
+  # Comparison method for sorting
+  def <=>(other)
+    return nil unless other.is_a?(DueDate)
+
+    # Primary sort: due_at
+    comparison = due_at <=> other.due_at
+    return comparison unless comparison.zero?
+
+    # Secondary sort: deadline type workflow order
+    if deadline_type && other.deadline_type
+      workflow_comparison = deadline_type.workflow_position <=> other.deadline_type.workflow_position
+      return workflow_comparison unless workflow_comparison.zero?
+    end
+
+    # Tertiary sort: id for consistency
+    id <=> other.id
+  end
+
+  # Get all due dates for the same round and parent
+  def round_siblings
+    parent.due_dates.where(round: round).where.not(id: id).order(:due_at)
+  end
+
+  # Check if this deadline conflicts with others in the same round
+  def has_round_conflicts?
+    round_siblings.where(deadline_type_id: deadline_type_id).exists?
+  end
+
+  # Get summary information about this deadline
+  def summary
+    {
+      id: id,
+      deadline_type: deadline_type_name,
+      due_at: due_at,
+      round: round,
+      overdue: overdue?,
+      upcoming: upcoming?,
+      currently_active: currently_active?,
+      time_description: time_description,
+      status: status_description,
+      permissions: permissions_summary
+    }
+  end
+
+  # String representation
+  def to_s
+    "#{deadline_type_display} - #{time_description}"
+  end
+
+  # Detailed string representation
+  def inspect_details
+    "DueDate(id: #{id}, type: #{deadline_type_name}, due: #{due_at}, " \
+    "round: #{round}, parent: #{parent_type}##{parent_id})"
+  end
+
+  # Class methods for collection operations
+  class << self
+    # Sort a collection of due dates
+    def sort_by_due_date(due_dates)
+      due_dates.sort
+    end
+
+    # Find the next upcoming due date from a collection
+    def next_from_collection(due_dates)
+      due_dates.select(&:upcoming?).min
+    end
+
+    # Check if any due dates in collection allow late work
+    def any_allow_late_work?(due_dates)
+      due_dates.any?(&:allows_late_work?)
+    end
+
+    # Get due dates grouped by deadline type
+    def group_by_type(due_dates)
+      due_dates.group_by(&:deadline_type_name)
+    end
+
+    # Get due dates grouped by round
+    def group_by_round(due_dates)
+      due_dates.group_by(&:round)
+    end
+
+    # Filter due dates that are currently actionable
+    def currently_actionable(due_dates)
+      due_dates.select(&:currently_active?)
+    end
+
+    # Get statistics for a collection of due dates
+    def collection_stats(due_dates)
+      {
+        total: due_dates.count,
+        upcoming: due_dates.count(&:upcoming?),
+        overdue: due_dates.count(&:overdue?),
+        due_today: due_dates.count(&:due_today?),
+        active: due_dates.count(&:currently_active?),
+        types: due_dates.map(&:deadline_type_name).uniq.compact.sort
+      }
+    end
+
+    # Find deadline conflicts in a collection
+    def find_conflicts(due_dates)
+      conflicts = []
+
+      due_dates.group_by(&:round).each do |round, round_deadlines|
+        round_deadlines.group_by(&:deadline_type_name).each do |type, type_deadlines|
+          if type_deadlines.count > 1
+            conflicts << {
+              round: round,
+              deadline_type: type,
+              conflicting_deadlines: type_deadlines.map(&:id)
+            }
+          end
+        end
+      end
+
+      conflicts
+    end
+
+    # Get upcoming deadlines across all due dates
+    def upcoming_across_all(limit: 10)
+      upcoming.limit(limit).includes(:deadline_type, :parent)
+    end
+
+    # Get overdue deadlines across all due dates
+    def overdue_across_all(limit: 10)
+      overdue.limit(limit).includes(:deadline_type, :parent)
+    end
+  end
+
+  private
+
+  def due_at_is_valid_datetime
+    return unless due_at.present?
+
+    unless due_at.is_a?(Time) || due_at.is_a?(DateTime) || due_at.is_a?(Date)
+      errors.add(:due_at, 'must be a valid datetime')
+    end
+
+    if due_at.is_a?(Date)
+      errors.add(:due_at, 'should include time information, not just date')
+    end
   end
 end
-
-# ==============================================================================
-# 1. MOVE ALL "DUE DATE FETCHING" LOGIC OUT OF THIS FILE
-# ==============================================================================
-# Problem:
-#   - Methods like `fetch_due_dates(parent_id)` and `next_due_date(parent_id)`
-#     require DueDate to know how Assignments or Topics store deadlines.
-#   - This violates Single Responsibility and increases cross-class coupling.
-#
-# Required Fix:
-#   - Delete `fetch_due_dates` entirely.
-#   - Delete the version of `next_due_date` that accepts `parent_id`.
-#   - Instead, Assignment (and possibly ProjectTopic) must define:
-#
-#         def due_dates
-#           DueDate.where(parent: self)
-#         end
-#
-#         def next_due_date
-#           due_dates.order(:due_at).first
-#         end
-#
-#   - After refactoring, DueDate class methods must operate ONLY on
-#     *collections of DueDate objects*, not on parent objects.
-#
-# Benefit:
-#   - Prevents DueDate from depending on Assignment internals.
-#   - Clarifies that each "parent" object is responsible for retrieving its own deadlines.
-
-
-
-# ==============================================================================
-# 2. CREATE A NEW MIX-IN: DueDateActions (used by Assignment & ProjectTopic)
-# ==============================================================================
-# Problem:
-#   - The system needs a clean way to determine whether a user can perform
-#     an activity at the current time (submit, review, teammate_review, etc.).
-#   - Currently there is no unified mechanism to check
-#       "Is this activity allowed at this time?"
-#   - Logic must NOT live in DueDate.rb (not its responsibility).
-#
-# Required Fix:
-#   - Create file: app/models/concerns/due_date_actions.rb
-#   - Implement:
-#
-#         module DueDateActions
-#           def activity_permissible?(activity)
-#             nd = next_due_date
-#             return false unless nd
-#             nd.public_send("#{activity}_allowed")
-#           end
-#
-#           # syntactic sugar (no duplication)
-#           def submission_permissible?
-#             activity_permissible?(:submission)
-#           end
-#
-#           def review_permissible?
-#             activity_permissible?(:review)
-#           end
-#
-#           def teammate_review_permissible?
-#             activity_permissible?(:teammate_review)
-#           end
-#         end
-#
-#   - Then include this in Assignment.rb (and possibly ProjectTopic.rb):
-#
-#         include DueDateActions
-#
-# Benefit:
-#   - Provides one place to define "time-based permission logic".
-#   - Prevents repeated boilerplate methods.
-#   - Clean API: assignment.submission_permissible?
-
-
-
-# ==============================================================================
-# 3. MOVE THE "COPYING MULTIPLE DUE DATES" LOGIC INTO Assignment
-# ==============================================================================
-# Problem:
-#   - DueDate#copy duplicates only a single due date,
-#     but real usage requires duplicating *all* due dates when copying an assignment.
-#   - Currently, responsibility is incorrectly placed inside DueDate#copy.
-#   - The method name `copy` is misleading (implies copying a collection).
-#
-# Required Fix:
-#   - Keep DueDate responsible ONLY for cloning one instance:
-#
-#         def duplicate_to_parent(new_parent_id)
-#           new = dup
-#           new.parent_id = new_parent_id
-#           new.save
-#         end
-#
-#   - Move the loop for copying all due dates into Assignment:
-#
-#         def copy_due_dates_to(new_assignment)
-#           due_dates.each do |due|
-#             due.duplicate_to_parent(new_assignment.id)
-#           end
-#         end
-#
-# Benefit:
-#   - Assignment knows it owns a set of due dates → SRP respected.
-#   - Code becomes easier to maintain and avoids hidden cross-class dependencies.
-
-
-
-################################################################################
-# After completing these refactorings:
-#   - DueDate.rb will represent ONLY the structure + behavior of ONE deadline.
-#   - Assignment / ProjectTopic will manage collections of deadlines.
-#   - DueDateActions mix-in will manage time-based permission logic.
-################################################################################
-
-
-################################################################################
-# TODO (DB MIGRATIONS REQUIRED)
-################################################################################
-
-# 1) Create `deadline_types` table.
-#    - Add table with :name, :description; make due_dates.deadline_type_id a FK.
-
-# 2) Persist allowed-activity fields in DB.
-#    - Add boolean columns to due_dates: :submission_allowed, :review_allowed,
-#      :teammate_review_allowed (default false).
-
-# 3) Audit due_dates schema consistency.
-#    - Re-check round, parent_id, deadline_type_id after refactor to ensure
-#      creation logic moves to Assignment/factories cleanly.
