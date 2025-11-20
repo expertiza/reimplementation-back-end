@@ -116,16 +116,13 @@ begin
   puts "assigning participant to students, teams, courses, and assignments"
   participant_ids = []
   num_students.times do |i|
-    puts "Creating AssignmentParticipant for user_id: #{student_user_ids[i]}, assignment_id: #{assignment_ids[i % num_assignments]}, team_id: #{team_ids[i % num_teams]}"
     participant_ids << AssignmentParticipant.create(
       user_id: student_user_ids[i],
-      parent_id: assignment_ids[i % num_assignments],
-      team_id: team_ids[i % num_teams],
-      handle: Faker::Internet.unique.username
+      parent_id: assignment_ids[i%num_assignments],
+      team_id: team_ids[i%num_teams],
     ).id
   end
+
 rescue ActiveRecord::RecordInvalid => e
   puts e, 'The db has already been seeded'
 end
-
-puts 'Seed completed.'
