@@ -116,6 +116,9 @@ class GradesController < ApplicationController
 
     private
 
+    # helper method used when participant_id is passed as a paramater. this will be helpful in case of instructor/TA view 
+    # as they need participant id to view their scores or assign grade. It will take the participant id (i.e. AssignmentParticipant ID) to set 
+    # the team and assignment variables which are used inside other methods like edit, update, assign_grade
     def set_team_and_assignment_via_participant
         @participant = AssignmentParticipant.find(params[:participant_id])
         unless @participant
@@ -128,7 +131,9 @@ class GradesController < ApplicationController
         @assignment = @participant.assignment
     end
 
-    # only called when a student wants to review its grades
+    # helper method used when participant_id is passed as a paramater. this will be helpful in case of student view 
+    # It will take the assignment id and the current user's id to set the participant and team variables which are used inside other methods
+    # like view_our_scores and view_my_scores
     def set_participant_and_team_via_assignment
         @participant = AssignmentParticipant.find_by(parent_id: params[:assignment_id], user_id: current_user.id)
         unless @participant
