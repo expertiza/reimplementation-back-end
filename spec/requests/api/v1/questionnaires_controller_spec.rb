@@ -11,7 +11,7 @@ RSpec.describe 'questionnaires', type: :request do
   end
 
   let(:prof) {
-    User.create(
+    User.create!(
       name: "profa",
       password_digest: "password",
       role_id: @roles[:instructor].id,
@@ -332,7 +332,22 @@ RSpec.describe 'questionnaires', type: :request do
 
   path '/questionnaires/copy/{id}' do
     parameter name: 'id', in: :path, type: :integer
-    let(:valid_questionnaire_params) do
+    parameter name: :questionnaire1, in: :body, schema: {
+      type: :object,
+      properties: {
+        name: { type: :string },
+        questionnaire_type: { type: :string },
+        private: { type: :boolean },
+        min_question_score: { type: :integer },
+        max_question_score: { type: :integer },
+        instructor_id: { type: :integer }
+      },
+      required: ['name', 'questionnaire_type', 'instructor_id']
+    }
+    
+    before {prof}
+
+    let!(:valid_questionnaire_params) do
       {
         name: 'Test Questionnaire',
         questionnaire_type: 'AuthorFeedbackReview',
@@ -340,19 +355,17 @@ RSpec.describe 'questionnaires', type: :request do
         min_question_score: 0,
         max_question_score: 5,
         instructor_id: prof.id
-      }
+      }      
     end
 
-    let(:questionnaire) do
-      prof
-      Questionnaire.create(valid_questionnaire_params)
+    let!(:questionnaire1) do
+      Questionnaire.create!(valid_questionnaire_params)
     end
-
-    let(:id) do
-      questionnaire
-      questionnaire.id
+    
+    let!(:id) do
+      questionnaire1.id
     end
-
+        
     post('copy questionnaire') do
       tags 'Questionnaires'
       consumes 'application/json'
@@ -360,6 +373,7 @@ RSpec.describe 'questionnaires', type: :request do
 
       # post request on /questionnaires/copy/{id} returns 200 successful response when request returns copied questionnaire with questionnaire id is present in the database
       response(200, 'successful') do
+        let(:questionnaire) { valid_questionnaire_params }
         run_test! do
           expect(response.body).to include('"name":"Copy of Test Questionnaire"')
         end

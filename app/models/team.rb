@@ -4,7 +4,7 @@ class Team < ApplicationRecord
 
   # Core associations
   has_many :signed_up_teams, dependent: :destroy
-  has_many :teams_users, dependent: :destroy  
+  has_many :teams_users, dependent: :destroy
   has_many :teams_participants, dependent: :destroy
   has_many :users, through: :teams_participants
   has_many :participants, through: :teams_participants
@@ -13,7 +13,7 @@ class Team < ApplicationRecord
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'parent_id', optional: true
   belongs_to :course, class_name: 'Course', foreign_key: 'parent_id', optional: true
   belongs_to :user, optional: true # Team creator
-  
+
   attr_accessor :max_participants
   validates :parent_id, presence: true
   validates :type, presence: true, inclusion: { in: %w[AssignmentTeam CourseTeam MentoredTeam], message: "must be 'Assignment' or 'Course' or 'Mentor'" }
@@ -21,7 +21,7 @@ class Team < ApplicationRecord
   def has_member?(user)
     participants.exists?(user_id: user.id)
   end
-  
+
   def full?
     current_size = participants.count
 
