@@ -154,19 +154,19 @@ module GradesHelper
 
   # Checks if the student has the necessary permissions and authorizations to proceed.
   def student_with_permissions?
-    has_role?('Student') &&
+    current_user_has_role?('Student') &&
       self_review_finished?(current_user.id) &&
       are_needed_authorizations_present?(current_user.id, 'reader', 'reviewer')
   end
 
   # Checks if the user is either a student viewing their own team or has Teaching Assistant privileges.
   def student_or_ta?
-    student_viewing_own_team? || has_privileges_of?('Teaching Assistant')
+    student_viewing_own_team? || current_user_has_ta_privileges?
   end
 
   # This method checks if the current user, who must have the 'Student' role, is viewing their own team.
   def student_viewing_own_team?
-    return false unless has_role?('Student')
+    return false unless current_user_has_role?('Student')
   
     participant = AssignmentParticipant.find_by(id: params[:id])
     participant && current_user_is_assignment_participant?(participant.assignment.id)

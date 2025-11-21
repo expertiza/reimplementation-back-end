@@ -3,7 +3,7 @@ class QuestionsController < ApplicationController
 
   # GET /questions
   def action_allowed?
-    has_role?('Instructor')
+    current_user_has_role?('Instructor')
   end
   # Index method returns the list of questions JSON object
   # GET on /questions
@@ -29,7 +29,7 @@ class QuestionsController < ApplicationController
     end
   end
 
-  # GET /questions/show_all/questionnaire/:id
+  # GET /api/v1/questions/show_all/questionnaire/:id
   def show_all
     questionnaire = Questionnaire.find(params[:id])
     items = questionnaire.items.order(:id)
@@ -90,7 +90,7 @@ class QuestionsController < ApplicationController
     render json: { error: "Couldn't find Item" }, status: :not_found
   end
 
-  # DELETE /questions/delete_all/questionnaire/:id
+  # DELETE /api/v1/questions/delete_all/questionnaire/:id
   def delete_all
     questionnaire = Questionnaire.find(params[:id])
     if questionnaire.items.delete_all
