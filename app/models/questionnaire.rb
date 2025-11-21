@@ -132,20 +132,6 @@ class Questionnaire < ApplicationRecord
       false
     end
 
-    def delete
-      assignments.each do |assignment|
-        raise "The assignment #{assignment.name} uses this questionnaire.
-              Do you want to <A href='../assignment/delete/#{assignment.id}'>delete</A> the assignment?"
-      end
-
-      items.each(&:delete)
-
-      node = QuestionnaireNode.find_by(node_object_id: id)
-      node.destroy if node
-
-      destroy
-    end
-
     def max_possible_score
       results = Questionnaire.joins('INNER JOIN items ON items.questionnaire_id = questionnaires.id')
                             .select('SUM(items.weight) * questionnaires.max_question_score as max_score')

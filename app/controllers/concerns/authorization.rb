@@ -173,7 +173,7 @@ module Authorization
 
   # Determine if the current user and the given assignment are associated by a TA mapping
   def current_user_has_ta_mapping_for_assignment?(assignment)
-    user_logged_in? && !assignment.nil? && TaMapping.exists?(ta_id: current_user.id, course_id: assignment.course.id)
+    user_logged_in? && !assignment.nil? && TaMapping.exists?(user_id: current_user.id, course_id: assignment.course.id)
   end
 
   # Recursively find an assignment given the passed in Response id. Because a ResponseMap

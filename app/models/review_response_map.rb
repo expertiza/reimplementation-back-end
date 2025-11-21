@@ -2,10 +2,6 @@
 class ReviewResponseMap < ResponseMap
   include ResponseMapSubclassTitles
   belongs_to :reviewee, class_name: 'Team', foreign_key: 'reviewee_id', inverse_of: false
-  belongs_to :assignment, class_name: 'Assignment', foreign_key: 'parent_id'
-  has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewee_id'
-  has_many :review_response_maps, foreign_key: 'reviewee_id'
-  has_many :responses, through: :review_response_maps, foreign_key: 'map_id' 
 
   # returns the assignment related to the response map
   def response_assignment
