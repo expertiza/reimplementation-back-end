@@ -1,4 +1,4 @@
-class Api::V1::QuestionnairesController < ApplicationController
+class QuestionnairesController < ApplicationController
   
   # Index method returns the list of JSON objects of the questionnaire
   # GET on /questionnaires

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_22_160053) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -342,6 +342,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_22_160053) do
     t.integer "preference_priority_number"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "comments_for_advertisement"
+    t.boolean "advertise_for_partner"
     t.index ["sign_up_topic_id"], name: "index_signed_up_teams_on_sign_up_topic_id"
     t.index ["team_id"], name: "index_signed_up_teams_on_team_id"
   end
@@ -357,10 +359,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_22_160053) do
   end
 
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
     t.string "name", null: false
     t.string "type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.integer "parent_id", null: false
     t.integer "grade_for_submission"
     t.string "comment_for_submission"

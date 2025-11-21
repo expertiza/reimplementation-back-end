@@ -1,4 +1,4 @@
-class Api::V1::JoinTeamRequestsController < ApplicationController
+class JoinTeamRequestsController < ApplicationController
   # Constants used to indicate status for the request
   PENDING = 'PENDING'
   DECLINED = 'DECLINED'
@@ -15,7 +15,7 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
     @current_user.student?
   end
 
-  # GET api/v1/join_team_requests
+  # GET /join_team_requests
   # gets a list of all the join team requests
   def index
     unless @current_user.administrator?
@@ -25,13 +25,13 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
     render json: join_team_requests, status: :ok
   end
 
-  # GET api/v1join_team_requests/1
+  # GET /join_team_requests/1
   # show the join team request that is passed into the route
   def show
     render json: @join_team_request, status: :ok
   end
 
-  # POST api/v1/join_team_requests
+  # POST /join_team_requests
   # Creates a new join team request
   def create
     join_team_request = JoinTeamRequest.new
@@ -55,7 +55,7 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
     end
   end
 
-  # PATCH/PUT api/v1/join_team_requests/1
+  # PATCH/PUT /join_team_requests/1
   # Updates a join team request
   def update
     if @join_team_request.update(join_team_request_params)
@@ -65,7 +65,7 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
     end
   end
 
-  # DELETE api/v1/join_team_requests/1
+  # DELETE /join_team_requests/1
   # delete a join team request
   def destroy
     if @join_team_request.destroy

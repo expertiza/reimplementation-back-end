@@ -39,7 +39,7 @@ module GradesHelper
     items = {}
     questionnaires.each do |questionnaire|
       round = AssignmentQuestionnaire.where(assignment_id: assignment_id, questionnaire_id: questionnaire.id).first.used_in_round
-      #can accomodate other types of questionnaires too such as TeammateReviewQuestionnaire, AuthorFeedbackQuestionnaire
+      #can accommodate other types of questionnaires too such as TeammateReviewQuestionnaire, AuthorFeedbackQuestionnaire
       questionnaire_symbol = if round.nil?
                                questionnaire.display_type
                              else
@@ -154,19 +154,19 @@ module GradesHelper
 
   # Checks if the student has the necessary permissions and authorizations to proceed.
   def student_with_permissions?
-    current_user_has_role?('Student') &&
+    has_role?('Student') &&
       self_review_finished?(current_user.id) &&
       are_needed_authorizations_present?(current_user.id, 'reader', 'reviewer')
   end
 
   # Checks if the user is either a student viewing their own team or has Teaching Assistant privileges.
   def student_or_ta?
-    student_viewing_own_team? || current_user_has_ta_privileges?
+    student_viewing_own_team? || has_privileges_of?('Teaching Assistant')
   end
 
   # This method checks if the current user, who must have the 'Student' role, is viewing their own team.
   def student_viewing_own_team?
-    return false unless current_user_has_role?('Student')
+    return false unless has_role?('Student')
   
     participant = AssignmentParticipant.find_by(id: params[:id])
     participant && current_user_is_assignment_participant?(participant.assignment.id)

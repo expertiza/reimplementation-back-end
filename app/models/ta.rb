@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Ta < User
   
   # Get all users whose parent is the TA

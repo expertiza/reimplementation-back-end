@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'json_web_token'
 module JwtToken
   extend ActiveSupport::Concern

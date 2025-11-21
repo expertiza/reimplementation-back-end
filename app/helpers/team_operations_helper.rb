@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module TeamOperationsHelper
   # Validates whether the given user can be part of the specified team based on parent context
   def self.validate_team_membership(team, user)

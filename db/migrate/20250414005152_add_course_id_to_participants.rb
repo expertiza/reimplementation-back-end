@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddCourseIdToParticipants < ActiveRecord::Migration[8.0]
   def change
     add_reference :participants, :course, foreign_key: true

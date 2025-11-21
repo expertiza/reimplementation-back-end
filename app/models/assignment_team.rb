@@ -1,6 +1,13 @@
+# frozen_string_literal: true
+
 class AssignmentTeam < Team
+  include Analytic::AssignmentTeamAnalytic
+  include ReviewAggregator
   # Each AssignmentTeam must belong to a specific assignment
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'parent_id'
+  has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewee_id'
+  has_many :review_response_maps, foreign_key: 'reviewee_id'
+  has_many :responses, through: :review_response_maps, foreign_key: 'map_id'
 
 
   # Copies the current assignment team to a course team
@@ -20,6 +27,34 @@ class AssignmentTeam < Team
     course_team   # Returns the newly created course team object
   end  
   
+  # Get the review response map
+  def review_map_type
+    'ReviewResponseMap'
+  end
+
+  def fullname
+    name
+  end
+
+  # Use current object (AssignmentTeam) as reviewee and create the ReviewResponseMap record
+  def assign_reviewer(reviewer)
+    assignment = Assignment.find(parent_id)
+    raise 'The assignment cannot be found.' if assignment.nil?
+
+    ReviewResponseMap.create(reviewee_id: id, reviewer_id: reviewer.get_reviewer.id, reviewed_object_id: assignment.id, team_reviewing_enabled: assignment.team_reviewing_enabled)
+  end
+
+  # Whether the team has submitted work or not
+  def has_submissions?
+    submitted_files.any? || submitted_hyperlinks.present?
+  end
+
+  # Computes the average review grade for an assignment team.
+  # This method aggregates scores from all ReviewResponseMaps (i.e., all reviewers of the team).
+  def aggregate_review_grade
+    compute_average_review_score(review_mappings)
+  end
+
   # Adds a participant to this team.
   # - Update the participant's team_id (so their direct reference is consistent)
   # - Ensure there is a TeamsParticipant join record connecting the participant and this team
@@ -64,7 +99,6 @@ class AssignmentTeam < Team
 
   private
 
-  
   # Validates that the team is an AssignmentTeam or a subclass (e.g., MentoredTeam)
   def validate_assignment_team_type
     unless self.kind_of?(AssignmentTeam)

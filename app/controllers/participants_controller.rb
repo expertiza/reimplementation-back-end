@@ -1,4 +1,4 @@
-class Api::V1::ParticipantsController < ApplicationController
+class ParticipantsController < ApplicationController
   include ParticipantsHelper
 
   # Return a list of participants for a given user
@@ -29,7 +29,7 @@ class Api::V1::ParticipantsController < ApplicationController
     if participants.nil?
       render json: participants.errors, status: :unprocessable_entity
     else
-      render json: participants, status: :ok
+      render json: participants.as_json(include: { user: { include: %i[role parent] } }), status: :ok
     end
   end
 
@@ -103,7 +103,7 @@ class Api::V1::ParticipantsController < ApplicationController
   # DELETE /participants/:id
   def destroy
     participant = Participant.find_by(id: params[:id])
-  
+
     if participant.nil?
       render json: { error: 'Not Found' }, status: :not_found
     elsif participant.destroy
@@ -139,8 +139,7 @@ class Api::V1::ParticipantsController < ApplicationController
   # Filters participants based on the provided assignment
   # Returns participants ordered by their IDs
   def filter_assignment_participants(assignment)
-    participants = Participant.all
-    participants = participants.where(parent_id: assignment.id, type: 'AssignmentParticipant') if assignment
+    participants = Participant.where(parent_id: assignment.id, type: 'AssignmentParticipant') if assignment
     participants.order(:id)
   end
 

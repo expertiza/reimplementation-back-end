@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class AddFieldsToJoinTeamRequests < ActiveRecord::Migration[7.0]
   def change
     add_column :join_team_requests, :participant_id, :integer

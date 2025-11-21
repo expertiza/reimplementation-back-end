@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Rails.application.routes.draw do
 
   mount Rswag::Api::Engine => 'api-docs'
@@ -7,8 +9,6 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "articles#index"
   post '/login', to: 'authentication#login'
-  namespace :api do
-    namespace :v1 do
       resources :institutions
       resources :roles do
         collection do
@@ -90,8 +90,6 @@ Rails.application.routes.draw do
         end
       end
 
-
-
       resources :sign_up_topics do
         collection do
           get :filter
@@ -154,17 +152,15 @@ Rails.application.routes.draw do
           post :add_participant
           delete :delete_participants
         end
-      end
+      end      
       resources :grades do
         collection do        
           get '/:assignment_id/view_all_scores', to: 'grades#view_all_scores'
-          post '/:participant_id/update', to: 'grades#update'
+          patch '/:participant_id/assign_grade', to: 'grades#assign_grade'
           get '/:participant_id/edit', to: 'grades#edit'
           get '/:assignment_id/view_our_scores', to: 'grades#view_our_scores'
           get '/:assignment_id/view_my_scores', to: 'grades#view_my_scores'
           get '/:participant_id/instructor_review', to: 'grades#instructor_review'
         end
       end
-    end
-  end
 end

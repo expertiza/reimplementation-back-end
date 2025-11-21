@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class TeammateReviewResponseMap < ResponseMap
   belongs_to :reviewee, class_name: 'Participant', foreign_key: 'reviewee_id', inverse_of: false
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'reviewed_object_id'
@@ -5,7 +6,7 @@ class TeammateReviewResponseMap < ResponseMap
   def questionnaire_type
       'TeammateReview'
   end
-
+  
   def questionnaire
     assignment.questionnaires.find_by(type: 'TeammateReviewQuestionnaire')
   end

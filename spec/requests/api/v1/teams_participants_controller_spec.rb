@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 require 'swagger_helper'
 require 'json_web_token'
 
-RSpec.describe 'api/v1/teams_participants', type: :request do
+RSpec.describe 'teams_participants', type: :request do
   # --------------------------------------------------------------------------
   # Global Setup
   # --------------------------------------------------------------------------
@@ -89,14 +91,12 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
     AssignmentTeam.create!(
       parent_id:      assignment.id,
       name:           'team 1',
-      user_id:        team_owner.id
     )
   end
   let(:team_with_course) do
     CourseTeam.create!(
       parent_id:      course.id,
       name:           'team 2',
-      user_id:        team_owner.id
     )
   end
 
@@ -142,7 +142,7 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
   ##########################################################################
   # update_duty Endpoint Tests
   ##########################################################################
-  path '/api/v1/teams_participants/update_duty' do
+  path '/teams_participants/update_duty' do
     put('update participant duty') do
       tags 'Teams Participants'
       consumes 'application/json'
@@ -234,7 +234,7 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
   ##########################################################################
   # list_participants Endpoint Tests
   ##########################################################################
-  path '/api/v1/teams_participants/{id}/list_participants' do
+  path '/teams_participants/{id}/list_participants' do
     get('list participants') do
       tags 'Teams Participants'
       produces 'application/json'
@@ -279,7 +279,7 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
   ##########################################################################
   # add_participant Endpoint Tests
   ##########################################################################
-  path '/api/v1/teams_participants/{id}/add_participant' do
+  path '/teams_participants/{id}/add_participant' do
     post('add participant') do
       tags 'Teams Participants'
       consumes 'application/json'
@@ -337,7 +337,7 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
   ##########################################################################
   # delete_participants Endpoint Tests
   ##########################################################################
-  path '/api/v1/teams_participants/{id}/delete_participants' do
+  path '/teams_participants/{id}/delete_participants' do
     delete('delete participants') do
       tags 'Teams Participants'
       consumes 'application/json'
@@ -354,7 +354,6 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
         AssignmentTeam.create!(
           parent_id:      assignment.id,
           name:           'team 1',
-          user_id:        team_owner.id
         )
       end
       let(:assignment_participant1) { AssignmentParticipant.create!(parent_id: assignment.id, user: student_user, handle: student_user.name) }
@@ -367,7 +366,6 @@ RSpec.describe 'api/v1/teams_participants', type: :request do
         CourseTeam.create!(
           parent_id:      course.id,
           name:           'team 2',
-          user_id:        team_owner.id
         )
       end
       let(:course_participant1) { CourseParticipant.create!(parent_id: course.id, user: student_user, handle: student_user.name) }

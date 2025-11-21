@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 require 'swagger_helper'
 require 'json_web_token'
 
 # Rspec test for Bookmarks Controller
-RSpec.describe 'api/v1/bookmarks', type: :request do
+RSpec.describe 'bookmarks', type: :request do
   before(:all) do
     @roles = create_roles_hierarchy
   end
@@ -21,7 +23,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
   let(:token) { JsonWebToken.encode({ id: student.id }) }
   let(:Authorization) { "Bearer #{token}" }
 
-  path '/api/v1/bookmarks' do
+  path '/bookmarks' do
     # Creation of dummy objects for the test with the help of let statements
     let(:bookmark1) do
       student
@@ -48,7 +50,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
     let(:token) { JsonWebToken.encode({ id: student.id }) }
     let(:Authorization) { "Bearer #{token}" }
 
-    # get request on /api/v1/bookmarks return list of bookmarks with response 200
+    # get request on /bookmarks return list of bookmarks with response 200
     get('list bookmarks') do
       tags 'Bookmarks'
       produces 'application/json'
@@ -92,7 +94,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         required: %w[url title description topic_id]
       }
 
-      # post request on /api/v1/bookmarks creates bookmark with response 201 when correct params are passed
+      # post request on /bookmarks creates bookmark with response 201 when correct params are passed
       response(201, 'created') do
         let(:bookmark) do
           student
@@ -103,7 +105,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         end
       end
 
-      # post request on /api/v1/bookmarks returns 422 response - unprocessable entity when wrong params is passed to create bookmark
+      # post request on /bookmarks returns 422 response - unprocessable entity when wrong params is passed to create bookmark
       response(422, 'unprocessable entity') do
         let(:bookmark) do
           student
@@ -114,7 +116,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
     end
   end
 
-  path '/api/v1/bookmarks/{id}' do
+  path '/bookmarks/{id}' do
     parameter name: 'id', in: :path, type: :integer
 
     # Creation of dummy objects for the test with the help of let statements
@@ -138,7 +140,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
       bookmark.id
     end
 
-    # Get request on /api/v1/bookmarks/{id} returns the response 200 successful - bookmark with id = {id} when correct id is passed which is in the database
+    # Get request on /bookmarks/{id} returns the response 200 successful - bookmark with id = {id} when correct id is passed which is in the database
     get('show bookmark') do
       tags 'Bookmarks'
       produces 'application/json'
@@ -148,7 +150,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         end
       end
 
-      # Get request on /api/v1/bookmarks/{id} returns the response 404 not found - bookmark with id = {id} when correct id is passed which is not present in the database
+      # Get request on /bookmarks/{id} returns the response 404 not found - bookmark with id = {id} when correct id is passed which is not present in the database
       response(404, 'not_found') do
         let(:id) { 'invalid' }
         run_test! do
@@ -169,7 +171,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         }
       }
 
-      # put request on /api/v1/bookmarks/{id} returns 200 response successful when bookmark id is present in the database and correct valid params are passed
+      # put request on /bookmarks/{id} returns 200 response successful when bookmark id is present in the database and correct valid params are passed
       response(200, 'successful') do
         let(:body_params) do
           {
@@ -181,7 +183,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
         end
       end
 
-      # put request on /api/v1/bookmarks/{id} returns 404 not found when id is not present in the database which bookmark needs to be updated
+      # put request on /bookmarks/{id} returns 404 not found when id is not present in the database which bookmark needs to be updated
       response(404, 'not found') do
         let(:id) { 0 }
         let(:body_params) do
@@ -198,14 +200,14 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
     delete('delete bookmark') do
       tags 'Bookmarks'
       produces 'application/json'
-      # delete request on /api/v1/bookmarks/{id} returns 204 successful response when bookmark with id present in the database is successfully deleted
+      # delete request on /bookmarks/{id} returns 204 successful response when bookmark with id present in the database is successfully deleted
       response(204, 'successful') do
         run_test! do
           expect(Bookmark.exists?(id)).to eq(false)
         end
       end
 
-      # delete request on /api/v1/bookmarks/{id} returns 404 not found response when bookmark id is not present in the database
+      # delete request on /bookmarks/{id} returns 404 not found response when bookmark id is not present in the database
       response(404, 'not found') do
         let(:id) { 0 }
         run_test! do
@@ -215,7 +217,7 @@ RSpec.describe 'api/v1/bookmarks', type: :request do
     end
   end
 
-  path '/api/v1/bookmarks/{id}/bookmarkratings' do
+  path '/bookmarks/{id}/bookmarkratings' do
     parameter name: 'id', in: :path, type: :integer
     
     let(:bookmark) do

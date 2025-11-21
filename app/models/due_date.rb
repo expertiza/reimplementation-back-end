@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class DueDate < ApplicationRecord
   include Comparable
   # Named constants for teammate review statuses

@@ -1,4 +1,7 @@
+# frozen_string_literal: true
+
 class AssignmentSurveyResponseMap < SurveyResponseMap
+    include ResponseMapSubclassTitles
     belongs_to :assignment, foreign_key: 'reviewed_object_id'
     def survey_parent
         assignment

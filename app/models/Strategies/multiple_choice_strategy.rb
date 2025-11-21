@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Strategies
   class MultipleChoiceStrategy < ChoiceStrategy
     def render(item)

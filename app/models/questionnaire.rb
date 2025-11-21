@@ -1,46 +1,73 @@
-  class Questionnaire < ApplicationRecord
-    belongs_to :instructor
-    has_many :items, class_name: "Item", foreign_key: "questionnaire_id", dependent: :destroy # the collection of items associated with this Questionnaire
-    before_destroy :check_for_question_associations
-    has_many :questions
+# frozen_string_literal: true
 
-    validate :validate_questionnaire
-    validates :name, presence: true
-    validates :max_question_score, :min_question_score, numericality: true 
-    
+class Questionnaire < ApplicationRecord
+  belongs_to :instructor
+  has_many :items, class_name: "Item", foreign_key: "questionnaire_id", dependent: :destroy # the collection of items associated with this Questionnaire
+  before_destroy :check_for_question_associations
 
-    # after_initialize :post_initialization
-      # @print_name = 'Review Rubric'
-    
-      # class << self
-      #   attr_reader :print_name
-      # end
-    
-      # def post_initialization
-      #   self.display_type = 'Review'
-      # end
-    
-      def symbol
-        'review'.to_sym
-      end
-    
-      def get_assessments_for(participant)
-        participant.reviews
-      end
-      
-    # validate the entries for this questionnaire
-    def validate_questionnaire
-      errors.add(:max_question_score, 'The maximum item score must be a positive integer.') if max_question_score < 1
-      errors.add(:min_question_score, 'The minimum item score must be a positive integer.') if min_question_score < 0
-      errors.add(:min_question_score, 'The minimum item score must be less than the maximum.') if min_question_score >= max_question_score
-      results = Questionnaire.where('id <> ? and name = ? and instructor_id = ?', id, name, instructor_id)
-      errors.add(:name, 'Questionnaire names must be unique.') if results.present?
+  validate :validate_questionnaire
+  validates :name, presence: true
+  validates :max_question_score, :min_question_score, numericality: true 
+  
+
+  # after_initialize :post_initialization
+    # @print_name = 'Review Rubric'
+  
+    # class << self
+    #   attr_reader :print_name
+    # end
+  
+    # def post_initialization
+    #   self.display_type = 'Review'
+    # end
+  
+    def symbol
+      'review'.to_sym
     end
+  
+    def get_assessments_for(participant)
+      participant.reviews
+    end
+    
+  # validate the entries for this questionnaire
+  def validate_questionnaire
+    errors.add(:max_question_score, 'The maximum item score must be a positive integer.') if max_question_score < 1
+    errors.add(:min_question_score, 'The minimum item score must be a positive integer.') if min_question_score < 0
+    errors.add(:min_question_score, 'The minimum item score must be less than the maximum.') if min_question_score >= max_question_score
+    results = Questionnaire.where('id <> ? and name = ? and instructor_id = ?', id, name, instructor_id)
+    errors.add(:name, 'Questionnaire names must be unique.') if results.present?
+  end
 
-    # Check_for_question_associations checks if questionnaire has associated questions or not
+  # clones the contents of a questionnaire, including the items and associated advice
+  def self.copy_questionnaire_details(params)
+    orig_questionnaire = Questionnaire.find(params[:id])
+    items = Item.where(questionnaire_id: params[:id])
+    questionnaire = orig_questionnaire.dup
+    questionnaire.instructor_id = params[:instructor_id]
+    questionnaire.name = 'Copy of ' + orig_questionnaire.name
+    questionnaire.created_at = Time.zone.now
+    questionnaire.save!
+    items.each do |question|
+      new_question = question.dup
+      new_question.questionnaire_id = questionnaire.id
+      new_question.size = '50,3' if (new_question.is_a?(Criterion) || new_question.is_a?(TextResponse)) && new_question.size.nil?
+      new_question.save!
+      advices = QuestionAdvice.where(question_id: question.id)
+      next if advices.empty?
+
+      advices.each do |advice|
+        new_advice = advice.dup
+        new_advice.question_id = new_question.id
+        new_advice.save!
+      end
+    end
+    questionnaire
+  end
+
+    # Check_for_question_associations checks if questionnaire has associated items or not
     def check_for_question_associations
-      if questions.any?
-        raise ActiveRecord::DeleteRestrictionError.new( "Cannot delete record because dependent questions exist")
+      if items.any?
+        raise ActiveRecord::DeleteRestrictionError.new( "Cannot delete record because dependent items exist")
       end
     end
 
@@ -99,9 +126,9 @@
       end
     end
 
-    # Does this questionnaire contain true/false questions?
-    def true_false_questions?
-      questions.each { |question| return true if question.type == 'Checkbox' }
+    # Does this questionnaire contain true/false items?
+    def true_false_items?
+      items.each { |question| return true if question.type == 'Checkbox' }
       false
     end
 
@@ -111,7 +138,7 @@
               Do you want to <A href='../assignment/delete/#{assignment.id}'>delete</A> the assignment?"
       end
 
-      questions.each(&:delete)
+      items.each(&:delete)
 
       node = QuestionnaireNode.find_by(node_object_id: id)
       node.destroy if node
@@ -120,36 +147,10 @@
     end
 
     def max_possible_score
-      results = Questionnaire.joins('INNER JOIN questions ON questions.questionnaire_id = questionnaires.id')
-                            .select('SUM(questions.weight) * questionnaires.max_question_score as max_score')
+      results = Questionnaire.joins('INNER JOIN items ON items.questionnaire_id = questionnaires.id')
+                            .select('SUM(items.weight) * questionnaires.max_question_score as max_score')
                             .where('questionnaires.id = ?', id)
       results[0].max_score
-    end
-
-    # clones the contents of a questionnaire, including the questions and associated advice
-    def self.copy_questionnaire_details(params, instructor_id)
-      orig_questionnaire = Questionnaire.find(params[:id])
-      questions = Question.where(questionnaire_id: params[:id])
-      questionnaire = orig_questionnaire.dup
-      questionnaire.instructor_id = instructor_id
-      questionnaire.name = 'Copy of ' + orig_questionnaire.name
-      questionnaire.created_at = Time.zone.now
-      questionnaire.save!
-      questions.each do |question|
-        new_question = question.dup
-        new_question.questionnaire_id = questionnaire.id
-        new_question.size = '50,3' if (new_question.is_a?(Criterion) || new_question.is_a?(TextResponse)) && new_question.size.nil?
-        new_question.save!
-        advices = QuestionAdvice.where(question_id: question.id)
-        next if advices.empty?
-
-        advices.each do |advice|
-          new_advice = advice.dup
-          new_advice.question_id = new_question.id
-          new_advice.save!
-        end
-      end
-      questionnaire
     end
 
   end
