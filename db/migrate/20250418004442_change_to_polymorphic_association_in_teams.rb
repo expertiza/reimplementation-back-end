@@ -2,10 +2,14 @@
 
 class ChangeToPolymorphicAssociationInTeams < ActiveRecord::Migration[8.0]
   def change
-    # Remove old assignment reference (course reference doesn't exist)
-    remove_reference :teams, :assignment, foreign_key: true
+    # Remove assignment reference ONLY if it exists
+    if column_exists?(:teams, :assignment_id)
+      remove_reference :teams, :assignment, foreign_key: true
+    end
 
-    # Add polymorphic association fields (type column already exists)
-    add_column :teams, :parent_id, :integer, null: false
+    # Add parent_id ONLY if it does NOT already exist
+    unless column_exists?(:teams, :parent_id)
+      add_column :teams, :parent_id, :integer, null: false
+    end
   end
 end
