@@ -103,6 +103,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_27_170825) do
     t.boolean "enable_pair_programming", default: false
     t.boolean "has_teams", default: false
     t.boolean "has_topics", default: false
+    t.boolean "vary_by_round", default: false, null: false
     t.index ["course_id"], name: "index_assignments_on_course_id"
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
