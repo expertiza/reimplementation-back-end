@@ -3,12 +3,13 @@
 class Questionnaire < ApplicationRecord
   belongs_to :instructor
   has_many :items, class_name: "Item", foreign_key: "questionnaire_id", dependent: :destroy # the collection of questions associated with this Questionnaire
+  accepts_nested_attributes_for :items, allow_destroy: true 
   before_destroy :check_for_question_associations
 
   validate :validate_questionnaire
   validates :name, presence: true
   validates :max_question_score, :min_question_score, numericality: true 
-  
+
 
   # after_initialize :post_initialization
     # @print_name = 'Review Rubric'
@@ -28,7 +29,7 @@ class Questionnaire < ApplicationRecord
     def get_assessments_for(participant)
       participant.reviews
     end
-    
+
   # validate the entries for this questionnaire
   def validate_questionnaire
     errors.add(:max_question_score, 'The maximum item score must be a positive integer.') if max_question_score < 1
@@ -64,9 +65,9 @@ class Questionnaire < ApplicationRecord
     questionnaire
   end
 
-  # Check_for_question_associations checks if questionnaire has associated questions or not
+  # Check_for_question_associations checks if questionnaire has associated items or not
   def check_for_question_associations
-    if questions.any?
+    if items.any?
       raise ActiveRecord::DeleteRestrictionError.new( "Cannot delete record because dependent questions exist")
     end
   end
