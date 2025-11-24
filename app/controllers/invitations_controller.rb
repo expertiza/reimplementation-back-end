@@ -35,7 +35,6 @@ class InvitationsController < ApplicationController
 
   # POST /invitations/
   def create
-    params[:invitation][:reply_status] ||= InvitationValidator::WAITING_STATUS
     @invitation = Invitation.invitation_factory(invite_params)
     if @invitation.save
       @invitation.send_invite_email
@@ -54,7 +53,7 @@ class InvitationsController < ApplicationController
   def update
     case params[:reply_status]
     when InvitationValidator::ACCEPT_STATUS
-      # accepting or declining the invitation is allowed only by the recepient of the invitation
+      # accepting or declining the invitation is allowed only by the recipient of the invitation
       unless current_user_can_respond_to_invitation?(@invitation)
         return render_forbidden
       end
