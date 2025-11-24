@@ -2,7 +2,7 @@ class StudentTasksController < ApplicationController
 
   # List retrieves all student tasks associated with the current logged-in user.
   def action_allowed?
-    has_privileges_of?('Student')
+    current_user_has_student_privileges?
   end
   def list
     # Retrieves all tasks that belong to the current user.

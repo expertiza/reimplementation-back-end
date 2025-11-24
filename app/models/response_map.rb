@@ -46,8 +46,13 @@ class ResponseMap < ApplicationRecord
     responses
   end
 
+  # Check to see if this response map is a survey. Default is false, and some subclasses will overwrite to true.
+  def survey?
+    false
+  end
+
   # Computes the average score (as a fraction between 0 and 1) across the latest submitted responses
-  # from each round for this ReviewResponseMap.
+  # from each round for corresponding ResponseMap.
   def aggregate_reviewers_score
     # Return nil if there are no responses for this map
     return nil if responses.empty?
