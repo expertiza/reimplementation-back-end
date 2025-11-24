@@ -27,7 +27,6 @@ class Team < ApplicationRecord
 
     # assignment teams use the column max_team_size
     if is_a?(AssignmentTeam) && assignment&.max_team_size
-      print current_size
       return current_size >= assignment.max_team_size
     end
 

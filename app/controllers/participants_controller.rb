@@ -68,7 +68,6 @@ class ParticipantsController < ApplicationController
     participant.can_mentor = permissions[:can_mentor]
 
     if participant.save
-      print participant.attributes
       render json: participant, status: :created
     else
       render json: participant.errors, status: :unprocessable_entity
