@@ -63,7 +63,7 @@ class AssignmentTeam < Team
     raise TeamFullError, "Team is full." if full?
 
     # Update the participant's team_id column - will remove the team reference inside participants table later. keeping it for now
-    # participant.update!(team_id: id)
+    participant.update!(team_id: id)
 
     # Create or reuse the join record to maintain the association
     TeamsParticipant.find_or_create_by!(participant_id: participant.id, team_id: id, user_id: participant.user_id)

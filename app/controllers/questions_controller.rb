@@ -29,7 +29,7 @@ class QuestionsController < ApplicationController
     end
   end
 
-  # GET /api/v1/questions/show_all/questionnaire/:id
+  # GET /questions/show_all/questionnaire/:id
   def show_all
     questionnaire = Questionnaire.find(params[:id])
     items = questionnaire.items.order(:id)
@@ -90,7 +90,7 @@ class QuestionsController < ApplicationController
     render json: { error: "Couldn't find Item" }, status: :not_found
   end
 
-  # DELETE /api/v1/questions/delete_all/questionnaire/:id
+  # DELETE /questions/delete_all/questionnaire/:id
   def delete_all
     questionnaire = Questionnaire.find(params[:id])
     if questionnaire.items.delete_all

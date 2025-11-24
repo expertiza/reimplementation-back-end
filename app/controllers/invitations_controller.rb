@@ -30,7 +30,7 @@ class InvitationsController < ApplicationController
       @invitation.send_invite_email
       render json: { success: true, message: "Invitation successfully sent to #{params[:username]}", invitation: @invitation}, status: :created
     else
-      render json: { error: @invitation.errors[:base].first}, status: :unprocessable_entity
+      render json: { error: @invitation.errors[:base]}, status: :unprocessable_entity
     end
   end
 
@@ -142,7 +142,7 @@ class InvitationsController < ApplicationController
   end
 
   def invitee_participant
-    invitee_user = User.find_by(name: params[:username])
+    invitee_user = User.find_by(name: params[:username])|| User.find_by(email: params[:username])
     unless invitee_user
       render json: { error: "Participant with username #{params[:username]} not found" }, status: :not_found
       return
