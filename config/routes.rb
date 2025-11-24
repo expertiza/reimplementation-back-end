@@ -69,6 +69,13 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :questionnaire_types, only: [:index] do
+      end
+
+      resources :question_types, only: [:index] do
+      end
+
+
       resources :questions do
         collection do
           get :types
@@ -76,6 +83,12 @@ Rails.application.routes.draw do
           delete 'delete_all/questionnaire/:id', to:'questions#delete_all#questionnaire', as: 'delete_all'
         end
       end
+
+      # config/routes.rb
+      resources :questionnaires do
+        resources :items, only: [:index]
+      end
+
 
       resources :signed_up_teams do
         collection do

@@ -2,7 +2,7 @@
 
 class Item < ApplicationRecord
   before_create :set_seq
-  belongs_to :questionnaire # each item belongs to a specific questionnaire
+  belongs_to :questionnaire, optional: true
   has_many :answers, dependent: :destroy, foreign_key: 'item_id'
   attr_accessor :choice_strategy
   
@@ -18,14 +18,18 @@ class Item < ApplicationRecord
   def scored?
     question_type.in?(%w[ScaleItem CriterionItem])
   end
-    
+  
   def set_seq
     self.seq = questionnaire.items.size + 1
   end
 
   def as_json(options = {})
       super(options.merge({
-                            only: %i[txt weight seq question_type size alternatives break_before min_label max_label created_at updated_at],
+                            only: %i[
+      txt weight seq question_type size alternatives break_before 
+      min_label max_label created_at updated_at textarea_width 
+      textarea_height textbox_width col_names row_names
+    ],
                             include: {
                               questionnaire: { only: %i[name id] }
                             }

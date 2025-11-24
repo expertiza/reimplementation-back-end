@@ -123,6 +123,48 @@ begin
     ).id
   end
 
+  questionnaire_type_names = [
+    'Review',
+    'Author feedback',
+    'Teammate review',
+    'Survey',
+    'Quiz',
+    'Bookmark rating',
+    'Teammate review',
+    'Assignment survey',
+    'Course evaluation',
+    'Global survey'
+  ]
+
+  questionnaire_types = {}
+  questionnaire_type_names.each do |type_name|
+    questionnaire_types[type_name] = QuestionnaireType.find_or_create_by!(name: type_name)
+  end
+  puts "Created questionnaire types: #{questionnaire_types.keys.join(', ')}"
+
+  question_type_names = [
+    'Section header',
+    'Table header',
+    'Column header',
+    'Criterion',
+    'Text field',
+    'Text area',
+    'Dropdown',
+    'Multiple choice',
+    'Scale',
+    'Grid',
+    'Checkbox',
+    'Upload',
+  ]
+
+  question_types = {}
+  question_type_names.each do |type_name|
+    question_types[type_name] = QuestionType.find_or_create_by!(name: type_name)
+  end
+  puts "Created item types: #{question_types.keys.join(', ')}"
+
+  
+
 rescue ActiveRecord::RecordInvalid => e
   puts e, 'The db has already been seeded'
 end

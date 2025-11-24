@@ -201,6 +201,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "questionnaire_id", null: false
+    t.integer "textarea_width"
+    t.integer "textarea_height"
+    t.integer "textbox_width"
+    t.string "col_names"
+    t.string "row_names"
     t.index ["questionnaire_id"], name: "fk_question_questionnaires"
     t.index ["questionnaire_id"], name: "index_items_on_questionnaire_id"
   end
