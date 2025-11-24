@@ -82,7 +82,10 @@ class AssignmentTeam < Team
     tp&.destroy
     
     # Update the participant's team_id column - will remove the team reference inside participants table later. keeping it for now
-    # participant.update!(team_id: nil)
+    # this will remove the reference only if the participant's current team is the same team removing the participant
+    if participant.team_id==id
+      participant.update!(team_id: nil)
+    end
 
     # If no participants remain after removal, delete the team
     destroy if participants.empty?

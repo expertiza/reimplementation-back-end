@@ -10,15 +10,6 @@ RSpec.describe 'Invitations API', type: :request do
   #
   # --- USERS ---
   #
-    let(:instructor) do
-    User.create!(
-      name: "instructor",
-      password_digest: "password",
-      role_id: @roles[:instructor].id,
-      full_name: "Instructor Name",
-      email: "instructor@example.com"
-    )
-  end
 
   let(:ta) do
     User.create!(
@@ -63,11 +54,10 @@ RSpec.describe 'Invitations API', type: :request do
   #
   let(:assignment) { Assignment.create!(name: "Test Assignment", instructor_id: prof.id) }
 
-  # let(:user1) { create(:user, :student) }
-  # let(:user2) { create(:user, :student) }
-
   let(:token) { JsonWebToken.encode({ id: user1.id }) }
   let(:Authorization) { "Bearer #{token}" }
+
+  let(:ta_token) { JsonWebToken.encode({ id: ta.id }) }
 
   let(:team1) { AssignmentTeam.create!(name: "Team1", parent_id: assignment.id) }
   let(:team2) { AssignmentTeam.create!(name: "Team2", parent_id: assignment.id) }
@@ -94,6 +84,15 @@ RSpec.describe 'Invitations API', type: :request do
     )
   }
 
+  let(:invitation2) {
+    Invitation.create!(
+      from_team: team2,
+      from_participant: participant2,
+      to_participant: participant1,
+      assignment: assignment
+    )
+  }
+
   #
   # --- TESTS ---
   #
@@ -101,12 +100,15 @@ RSpec.describe 'Invitations API', type: :request do
     get("list invitations") do
       tags "Invitations"
       produces "application/json"
-      parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
+      parameter name: 'Authorization', in: :header, type: :string, required: true
+      let(:Authorization) { "Bearer #{ta_token}" }
       response(200, "Success") do
         run_test!
       end
     end
+  end
 
+  path "/invitations" do
     #
     # POST /invitations
     #
@@ -171,12 +173,13 @@ RSpec.describe 'Invitations API', type: :request do
   end
 
   #
-  # GET /invitations/:id
+  # CRUD Operation on /invitations/:id
   #
   path "/invitations/{id}" do
     parameter name: "id", in: :path, type: :integer
     parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
-
+    
+    # GET /invitations/:id
     get("show invitation") do
       tags "Invitations"
       response(200, "Show invitation") do
@@ -184,15 +187,13 @@ RSpec.describe 'Invitations API', type: :request do
         run_test!
       end
 
-      response(404, "Not found") do
-        let(:id) { 999999 }
+      response(403, "Cannot see other's invitations") do
+        let(:id) { invitation2.id }
         run_test!
       end
     end
 
-    #
     # PATCH /invitations/:id
-    #
     patch("update invitation") do
       tags "Invitations"
       consumes "application/json"
@@ -204,66 +205,82 @@ RSpec.describe 'Invitations API', type: :request do
         }
       }
 
-      #
-      # Accept
-      #
-      response(200, "Update successful") do
+      # Accept invitation
+      response(200, "Acceptance successful") do
+        let(:id) { invitation2.id }
+        let(:invitation_status) { { reply_status: InvitationValidator::ACCEPT_STATUS } }
+        run_test!
+      end
+
+      response(403, "Cannot accept other's invitations") do
         let(:id) { invitation.id }
         let(:invitation_status) { { reply_status: InvitationValidator::ACCEPT_STATUS } }
         run_test!
       end
 
-      #
-      # Decline
-      #
-      response(200, "Update successful") do
+      # Decline invitation
+      response(200, "Decline successful") do
+        let(:id) { invitation2.id }
+        let(:invitation_status) { { reply_status: InvitationValidator::DECLINED_STATUS } }
+        run_test!
+      end
+
+      response(403, "Cannot decline other's invitations") do
         let(:id) { invitation.id }
         let(:invitation_status) { { reply_status: InvitationValidator::DECLINED_STATUS } }
         run_test!
       end
 
-      #
+      # Retract invitation
+      response(200, "Retraction successful") do
+        let(:id) { invitation.id }
+        let(:invitation_status) { { reply_status: InvitationValidator::RETRACT_STATUS } }
+        run_test!
+      end
+
+      response(403, "Cannot retract other's invitations") do
+        let(:id) { invitation2.id }
+        let(:invitation_status) { { reply_status: InvitationValidator::RETRACT_STATUS } }
+        run_test!
+      end
+
       # Invalid status
-      #
       response(422, "Invalid request") do
         let(:id) { invitation.id }
         let(:invitation_status) { { reply_status: "Z" } }
         run_test!
       end
+    end
 
-      #
-      # Not found
-      #
-      response(404, "Not found") do
-        let(:id) { invitation.id + 100 }
-        let(:invitation_status) { { reply_status: "A" } }
+    # DELETE /invitations/:id
+    delete("Delete invitation") do
+      tags "Invitations"
+      parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
+
+      response(403, "Student cannot delete invitations") do
+        let(:id) { invitation2.id }
         run_test!
       end
     end
 
-    #
-    # DELETE /invitations/:id
-    #
     delete("Delete invitation") do
       tags "Invitations"
+      parameter name: 'Authorization', in: :header, type: :string, required: true
+      let(:Authorization) { "Bearer #{ta_token}" }
 
       response(200, "Delete successful") do
         let(:id) { invitation.id }
-        run_test!
-      end
-
-      response(404, "Not found") do
-        let(:id) { invitation.id + 500 }
         run_test!
       end
     end
   end
 
   #
-  # GET by user + assignment
+  # GET invitations sent by a team 
   #
   path "/invitations/sent_by/team/{team_id}" do
     parameter name: "team_id", in: :path, type: :integer
+    parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
 
     get("Show all invitations sent by team") do
       tags "Invitations"
@@ -272,11 +289,55 @@ RSpec.describe 'Invitations API', type: :request do
         let(:team_id) { team1.id }
         run_test!
       end
-
-      response(404, "Not found - team") do
-        let(:team_id) { 999 }
+      
+      response(403, "Not allowed") do
+        let(:team_id) {team2.id}
         run_test!
-      end     
+      end
+    end
+  end
+
+  #
+  # GET invitations sent by a participant
+  #
+  path "/invitations/sent_by/participant/{participant_id}" do
+    parameter name: "participant_id", in: :path, type: :integer
+    parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
+
+    get("Show all invitations sent by participant") do
+      tags "Invitations"
+
+      response(200, "OK") do
+        let(:participant_id) { participant1.id }
+        run_test!
+      end
+      
+      response(403, "Not allowed") do
+        let(:participant_id) {participant2.id}
+        run_test!
+      end
+    end
+  end
+
+  #
+  # GET invitations sent to a participant
+  #
+  path "/invitations/sent_to/{participant_id}" do
+    parameter name: "participant_id", in: :path, type: :integer
+    parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
+
+    get("Show all invitations sent to participant") do
+      tags "Invitations"
+
+      response(200, "OK") do
+        let(:participant_id) { participant1.id }
+        run_test!
+      end
+      
+      response(403, "Not allowed") do
+        let(:participant_id) {participant2.id}
+        run_test!
+      end
     end
   end
 end
