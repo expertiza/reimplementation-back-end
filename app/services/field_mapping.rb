@@ -1,23 +1,45 @@
-# This file is used to map fields from an external data source to the internal data model.
+# app/services/field_mapping.rb
 class FieldMapping
-  def initialize(data)
-    @data = data
+  attr_reader :model_class, :ordered_fields
+
+  # model_class: an ActiveRecord class (User, Assignment, Team, etc.)
+  # ordered_fields: array of symbols/strings like [:email, :last_name]
+  def initialize(model_class, ordered_fields)
+    @model_class    = model_class
+    @ordered_fields = ordered_fields.map(&:to_s)
   end
 
-  def map
-    @data.map do |record|
-      {
-        internal_field_1: record[:external_field_a],
-        internal_field_2: record[:external_field_b],
-        internal_field_3: transform_field(record[:external_field_c])
-      }
-    end
+  # Build mapping from a CSV header row
+  # header_row is an array like ["Email", "Last Name", "First Name"]
+  def self.from_header(model_class, header_row)
+    header_row = header_row.map(&:strip)
+
+    valid_fields =
+      model_class.mandatory_fields +
+      model_class.optional_fields
+
+    matched = header_row.map do |h|
+      valid_fields.find { |f| f.casecmp?(h) }
+    end.compact
+
+    new(model_class, matched)
   end
 
-  private
+  # Return CSV header row
+  def headers
+    ordered_fields
+  end
 
-  def transform_field(value)
-    # Example transformation logic
-    value.strip.upcase
+  # Return values in correct order for a record
+  def values_for(record)
+    ordered_fields.map { |f| record.public_send(f) }
+  end
+
+  # JSON-friendly
+  def to_h
+    {
+      model_class: model_class.name,
+      ordered_fields: ordered_fields
+    }
   end
 end
