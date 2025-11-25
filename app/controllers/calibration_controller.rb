@@ -93,6 +93,7 @@ class CalibrationController < ApplicationController
   # they calibrated:
   #  - all reviewers (team members who submitted the work)
   #  - all hyperlinks submitted by that user/team
+  #  - the to_calibrate flag for that calibration review
   def summary
     student_participant_id = params[:student_participant_id]
     assignment_id          = params[:assignment_id]
@@ -130,7 +131,8 @@ class CalibrationController < ApplicationController
         reviewee_participant_id: reviewee.id,
         reviewee_team_id:        reviewee.parent_id,
         reviewers:               reviewers,
-        hyperlinks:              hyperlinks
+        hyperlinks:              hyperlinks,
+        to_calibrate:            student_response_map.to_calibrate
       }
     end.compact
 
