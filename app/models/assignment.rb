@@ -26,8 +26,12 @@ class Assignment < ApplicationRecord
   def teams?
     @has_teams ||= teams.any?
   end
+
+  # Returns review round count: prefer the number of review due dates; 
+  # if none exist, fall back to the persisted rounds_of_reviews column (or 0).
   def num_review_rounds
-    rounds_of_reviews
+    review_rounds = due_dates.where(deadline_type_id: DueDate::REVIEW_DEADLINE_TYPE_ID).count
+    review_rounds.positive? ? review_rounds : (rounds_of_reviews || 0)
   end
 
   # Add a participant to the assignment based on the provided user_id.
@@ -188,10 +192,10 @@ class Assignment < ApplicationRecord
   end
 
 
-  #This method check if for the given assignment,different type of rubrics are used in different round.
-  # Checks if for the given assignment any questionnaire is present with used_in_round field not nil.
-  # Returns a boolean value whether such questionnaire is present.
+  # Returns true only if per-round rubrics are enabled on the assignment and at least one attached questionnaire specifies a round via used_in_round
   def varying_rubrics_by_round?
+    return false unless vary_by_round
+
     rubric_with_round = AssignmentQuestionnaire.where(assignment_id: id).where.not(used_in_round: nil).first
     # Check if any rubric has a specified round
     rubric_with_round.present?

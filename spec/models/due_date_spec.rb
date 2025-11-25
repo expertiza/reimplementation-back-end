@@ -47,6 +47,22 @@ RSpec.describe DueDate, type: :model do
     end
   end
 
+  describe '#review_deadline?' do
+    let(:assignment) { Assignment.create(id: 123, name: 'Test Assignment', instructor:) }
+
+    it 'returns true for review deadlines' do
+      due_date = DueDate.create(parent: assignment, due_at: 2.days.from_now, submission_allowed_id: 3,
+                                review_allowed_id: 3, deadline_type_id: DueDate::REVIEW_DEADLINE_TYPE_ID)
+      expect(due_date.review_deadline?).to be true
+    end
+
+    it 'returns false for other deadline types' do
+      due_date = DueDate.create(parent: assignment, due_at: 2.days.from_now, submission_allowed_id: 3,
+                                review_allowed_id: 3, deadline_type_id: 99)
+      expect(due_date.review_deadline?).to be false
+    end
+  end
+
   describe '.any_future_due_dates?' do
     let(:assignment) { Assignment.create(id: 1, name: 'Test Assignment', instructor:) }
     it 'returns true when a future due date exists' do
