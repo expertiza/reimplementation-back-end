@@ -88,8 +88,60 @@ class CalibrationController < ApplicationController
     }, status: :ok
   end
 
-  private
+  # GET /calibration/assignments/:assignment_id/students/:student_participant_id/summary
+  # For a given student + assignment, returns info about each submission
+  # they calibrated:
+  #  - all reviewers (team members who submitted the work)
+  #  - all hyperlinks submitted by that user/team
+  def summary
+    student_participant_id = params[:student_participant_id]
+    assignment_id          = params[:assignment_id]
 
+    # All calibration maps for this student on this assignment
+    student_calibration_maps = ResponseMap.where(
+      reviewer_id:        student_participant_id,
+      reviewed_object_id: assignment_id,
+      to_calibrate:       true
+    )
+
+    submissions = student_calibration_maps.map do |student_response_map|
+      # The submission being calibrated belongs to this reviewee participant
+      reviewee = Participant.find_by(id: student_response_map.reviewee_id)
+      next unless reviewee
+
+      # Team members (there may be multiple if the submission is by a team)
+      team_members = Participant.where(
+        assignment_id: assignment_id,
+        parent_id:     reviewee.parent_id
+      )
+
+      reviewers = team_members.map do |member|
+        {
+          participant_id: member.id,
+          full_name:      member.name
+        }
+      end
+
+      # Submitted content for this team/user (hyperlinks + files)
+      submitted_content = get_submitted_content(reviewee.parent_id)
+      hyperlinks = submitted_content[:hyperlinks] || []
+
+      {
+        reviewee_participant_id: reviewee.id,
+        reviewee_team_id:        reviewee.parent_id,
+        reviewers:               reviewers,
+        hyperlinks:              hyperlinks
+      }
+    end.compact
+
+    render json: {
+      student_participant_id: student_participant_id,
+      assignment_id:          assignment_id,
+      submissions:            submissions
+    }, status: :ok
+  end
+
+  private
 
   def get_instructor_participant_id(assignment_id)
 
@@ -186,4 +238,25 @@ class CalibrationController < ApplicationController
     matches = comparisons.count { |c| c[:matches] }
     (matches.to_f / comparisons.length * 100).round(2) #Calculate Percentage
   end
+
+  # Serialize a review into a structure for JSON output
+  def serialize_review(review)
+    return nil unless review
+
+    answers = Answer.where(response_id: review.id)
+
+    {
+      id:          review.id,
+      updated_at:  review.updated_at,
+      is_submitted: review.is_submitted,
+      answers: answers.map do |ans|
+        {
+          question_id: ans.question_id,
+          score:       ans.answer,
+          comments:    ans.comments
+        }
+      end
+    }
+  end
+
 end

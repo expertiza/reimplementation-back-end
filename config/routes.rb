@@ -162,6 +162,11 @@ Rails.application.routes.draw do
           # Instructor views aggregate report for a specific calibration submission
           get 'assignments/:assignment_id/report/:reviewee_id', 
               to: 'calibration#calibration_aggregate_report'
+
+          # Summary of all calibration and student reviews of a specific user submission
+          get '/calibration/assignments/:assignment_id/students/:student_participant_id/summary',
+              to: 'calibration#summary'
+
         end
       end
 end
