@@ -213,7 +213,7 @@ class AssignmentsController < ApplicationController
   private
   # Only allow a list of trusted parameters through.
   def assignment_params
-    params.require(:assignment).permit(:title, :description)
+    params.require(:assignment).permit(:title, :description, :vary_by_round)
   end
 
   # Helper method to determine staggered_and_no_topic for the assignment

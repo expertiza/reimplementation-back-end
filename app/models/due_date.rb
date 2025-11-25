@@ -2,6 +2,8 @@
 
 class DueDate < ApplicationRecord
   include Comparable
+  # Any due date with deadline_type_id == DueDate::REVIEW_DEADLINE_TYPE_ID (constant = 2) is treated as a review deadline and counts as a review round
+  REVIEW_DEADLINE_TYPE_ID = 2 
   # Named constants for teammate review statuses
   ALLOWED = 3
   LATE_ALLOWED = 2
@@ -43,6 +45,10 @@ class DueDate < ApplicationRecord
     self.parent_id = assignment_id
     self.round = max_round
     save
+  end
+
+  def review_deadline?
+    deadline_type_id == REVIEW_DEADLINE_TYPE_ID
   end
 
   # Fetches due dates from parent then selects the next upcoming due date
