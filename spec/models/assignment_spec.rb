@@ -10,10 +10,13 @@ RSpec.describe Assignment, type: :model do
   let(:review_response_map) { ReviewResponseMap.new(assignment: assignment, reviewee: team) }
   let(:answer) { Answer.new(answer: 1, comments: 'Answer text', item_id: 1) }
   let(:answer2) { Answer.new(answer: 1, comments: 'Answer text', item_id: 1) }
+  
+  include RolesHelper
+  before(:all) { @roles = create_roles_hierarchy } # Create the full roles hierarchy once for creating the instructor role later
+  let(:institution) { Institution.create!(name: "NC State") } # All users belong to the same institution to satisfy foreign key constraints.
+  let(:instructor) { User.create!(name: "instructor", full_name: "Instructor User", email: "instructor@example.com", password_digest: "password", role_id: @roles[:instructor].id, institution_id: institution.id) }
 
   describe '#num_review_rounds' do
-    let(:instructor) { create(:user, :instructor) }
-
     it 'counts review due dates to determine the number of rounds' do
       assignment = Assignment.create!(name: 'Round Count', instructor: instructor, vary_by_round: true)
       AssignmentDueDate.create!(parent: assignment, due_at: 1.day.from_now,
@@ -40,7 +43,6 @@ RSpec.describe Assignment, type: :model do
   end
 
   describe '#varying_rubrics_by_round?' do
-    let(:instructor) { create(:user, :instructor) }
     let(:questionnaire) { Questionnaire.create!(name: 'Review Q', instructor_id: instructor.id, questionnaire_type: 'ReviewQuestionnaire',
                                                 display_type: 'Review', min_question_score: 0, max_question_score: 5) }
 
