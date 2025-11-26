@@ -1,48 +1,108 @@
 # importable_exportable_helper.rb
 module ImportableExportableHelper
-  # This module provides methods to import and export data in various formats.
+  attr_accessor :available_actions_on_duplicate
+  def self.included(base)
+    base.extend(ClassMethods)
+  end
 
-  require 'csv'
-  require 'json'
-  require 'yaml'
+  module ClassMethods
+    attr_accessor :mandatory_fields, :optional_fields, :external_classes
 
-  # Exports data to the specified format.
-  #
-  # @param data [Array<Hash>] The data to be exported.
-  # @param format [Symbol] The format to export the data in (:csv, :json, :yaml).
-  # @return [String] The exported data as a string.
-  def export_data(data, format)
-    case format
-    when :csv
-      CSV.generate do |csv|
-        csv << data.first.keys if data.any?
-        data.each { |row| csv << row.values }
+    def mandatory_fields(*fields)
+      if fields.any?
+        @mandatory_fields = fields.map(&:to_s)
+      else
+        @mandatory_fields
       end
-    when :json
-      JSON.pretty_generate(data)
-    when :yaml
-      data.to_yaml
-    else
-      raise ArgumentError, "Unsupported format: #{format}"
+    end
+
+    def optional_fields(*fields)
+      if fields.any?
+        @optional_fields = fields.map(&:to_s)
+      else
+        @optional_fields
+      end
+    end
+
+    def external_classes(*fields)
+      if fields.any?
+        @external_classes = fields.map(&:to_s)
+      else
+        @external_classes
+      end
+    end
+
+    def import_export_fields()
+      (@mandatory_fields || []) + (@optional_fields || [])
+    end
+
+    # Factory method for importing a record from a hash
+    def from_hash(attrs)
+      new(attrs)
+    end
+
+    # todo - possibly extract this function to the service
+    def try_import_records(file, headers, use_header: false)
+      temp_file = 'output.csv'
+      csv_file = CSV.open(file, headers: false)
+
+      # In a temp file, so that headers can be added to the top if the use_header options isn't selected
+      CSV.open(temp_file, "w") do |csv|
+        unless use_header
+          csv << headers
+        end
+
+        # then copy the rest of the csv file
+        csv_file.each() do |row|
+          csv << row
+        end
+      end
+
+      CSV.foreach(temp_file) do |row|
+        # Get the row as a hash, with the header pointing towards the attribute value
+        import_row(row,  temp_file)
+        # pp row
+      end
+
+      File.delete(temp_file)
+    end
+
+    # Import row function takes a hash for a row and tries to save it in the current class.
+    # It takes a related class and object so that it can be used recursively. If a row should
+    # update two classes,and one relies upon another, the recurison can be used to set the
+    # belongs torelationship.
+    # (EX if )
+    def import_row(row, file, related_class: nil, related_obj: nil)
+      # Open the csv file, get the header row, and build the mapping with only the fields available in the current class
+      header_row = CSV.open(file, &:first)
+      mapping = FieldMapping.from_header(self, header_row)
+
+      # For internal fields, get the attributes and save a new version of the class
+      row_hash = Hash[mapping.ordered_fields.zip(row)]
+      attrs = row_hash.slice(*self.import_export_fields)
+      created_object = self.from_hash(attrs)
+
+      # If this is an auxilary class (on recursive run), make sure the main class is linked to this auxilary class
+      created_object.send("#{related_class}=", related_obj) if related_class
+
+      pp created_object
+      # created_object.save! todo - return to this after testing
+
+
+      # Recursive call to this import_row function. This means that any auxilary class is expected to
+      # also use this helper
+      if self.external_classes
+        self.external_classes.each do |external_class|
+          external_class.import_row(row, file, mapping, use_header, self.class.name, created_object)
+        end
+      end
     end
   end
 
-  # Imports data from the specified format.
-  #
-  # @param data_string [String] The string containing the data to be imported.
-  # @param format [Symbol] The format of the input data (:csv, :json, :yaml).
-  # @return [Array<Hash>] The imported data as an array of hashes.
-  def import_data(data_string, format)
-    case format
-    when :csv
-      csv = CSV.parse(data_string, headers: true)
-      csv.map(&:to_h)
-    when :json
-      JSON.parse(data_string)
-    when :yaml
-      YAML.safe_load(data_string)
-    else
-      raise ArgumentError, "Unsupported format: #{format}"
-    end
+
+
+  # Instance method to serialize a record for export
+  def to_hash(fields = self.class.import_export_fields)
+    fields.to_h { |f| [f, send(f)] }
   end
 end

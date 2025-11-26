@@ -1,32 +1,23 @@
 # This file holds the logic for importing data from external sources into the application.
 
-class Import
-  def initialize(source)
-    @source = source
+class ImportController < ApplicationController
+  before_action :import_params
+  def index
+    imported_class = params[:class].constantize
+    mapping = FieldMapping.new(imported_class, ["name", "id", "email"])
+
+    p mapping.duplicate_headers
   end
 
-  def perform
-    data = fetch_data
-    mapped_data = map_fields(data)
-    save_data(mapped_data)
+  def import
+    uploaded_file = params[:csv_file]
+    use_headers = ActiveRecord::Type::Boolean.new.deserialize(params[:use_headers])
+
+    User.try_import_records(uploaded_file, User.import_export_fields, use_header: use_headers)
   end
 
   private
-
-  def fetch_data
-    # Logic to fetch data from the external source
-    @source.get_data
-  end
-
-  def map_fields(data)
-    # Logic to map fields from external data to internal model
-    FieldMapping.new(data).map
-  end
-
-  def save_data(mapped_data)
-    # Logic to save the mapped data into the application database
-    mapped_data.each do |record|
-      Model.create(record)
-    end
+  def import_params
+    params.permit(:csv_file, :use_headers, :class)
   end
 end

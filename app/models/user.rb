@@ -1,8 +1,13 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
+  include ImportableExportableHelper
+  mandatory_fields :name, :email, :password, :full_name
+
+
   has_secure_password
   after_initialize :set_defaults
+
 
   # name must be lowercase and unique
   validates :name, presence: true, uniqueness: true, allow_blank: false

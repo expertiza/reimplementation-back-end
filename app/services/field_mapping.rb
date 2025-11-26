@@ -14,9 +14,7 @@ class FieldMapping
   def self.from_header(model_class, header_row)
     header_row = header_row.map(&:strip)
 
-    valid_fields =
-      model_class.mandatory_fields +
-      model_class.optional_fields
+    valid_fields = model_class.import_export_fields
 
     matched = header_row.map do |h|
       valid_fields.find { |f| f.casecmp?(h) }
@@ -28,6 +26,11 @@ class FieldMapping
   # Return CSV header row
   def headers
     ordered_fields
+  end
+
+  def duplicate_headers
+    ordered_fields.group_by{ |header| header }.select{|_, v| v.size > 1}.map(&:first)
+    # .map { |k, v| [k, v.size()] }.to_h
   end
 
   # Return values in correct order for a record
