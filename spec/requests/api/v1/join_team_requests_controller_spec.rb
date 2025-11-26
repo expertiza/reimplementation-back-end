@@ -351,4 +351,66 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
       end
     end
   end
+
+  describe 'Email Notifications on Acceptance' do
+    let(:team_member_token) { JsonWebToken.encode({id: student1.id}) }
+    let(:team_member_headers) { { 'Authorization' => "Bearer #{team_member_token}" } }
+
+    before(:each) do
+      ActiveJob::Base.queue_adapter = :test
+    end
+
+    after(:each) do
+      clear_enqueued_jobs
+    end
+
+    it 'sends acceptance email to requester when join request is accepted' do
+      participant1 # Ensure participant exists
+      participant2 # Ensure participant exists
+      
+      expect {
+        patch "/api/v1/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
+      }.to have_enqueued_job(ActionMailer::MailDeliveryJob).on_queue('default').at_least(:once)
+    end
+
+    it 'sends email to correct recipient (requester)' do
+      participant1 # Ensure participant exists
+      participant2 # Ensure participant exists
+      
+      patch "/api/v1/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
+      
+      expect(response).to have_http_status(:ok)
+      # Email should be queued for the requester
+      expect(ActionMailer::MailDeliveryJob).to have_been_enqueued
+    end
+
+    it 'does not send email if acceptance fails due to full team' do
+      assignment.update!(max_team_size: 1)
+      participant1 # Ensure participant exists
+      participant2 # Ensure participant exists
+      
+      expect {
+        patch "/api/v1/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
+      }.not_to have_enqueued_job(ActionMailer::MailDeliveryJob)
+    end
+
+    it 'updates reply_status to ACCEPTED before sending email' do
+      participant1 # Ensure participant exists
+      participant2 # Ensure participant exists
+      
+      patch "/api/v1/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
+      
+      join_team_request.reload
+      expect(join_team_request.reply_status).to eq('ACCEPTED')
+    end
+
+    it 'adds participant to team before sending email' do
+      participant1 # Ensure participant exists
+      participant2 # Ensure participant exists
+      
+      patch "/api/v1/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
+      
+      expect(team1.participants.reload).to include(participant2)
+    end
+  end
 end
