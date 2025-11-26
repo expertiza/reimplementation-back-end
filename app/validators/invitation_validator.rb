@@ -12,6 +12,7 @@ class InvitationValidator < ActiveModel::Validator
   REPLY_STATUS_ERROR_MSG = 'must be present and have a maximum length of 1'.freeze
   DIFFERENT_ASSIGNMENT_PARTICIPANT_MSG = "the participant is not part of this assignment".freeze
   REPLY_STATUS_INCLUSION_ERROR_MSG = "must be one of #{[ACCEPT_STATUS, DECLINED_STATUS, WAITING_STATUS, RETRACT_STATUS].to_sentence}".freeze
+  INVITEE_ALREADY_TEAMMATE_MSG = 'The person you are trying to invite is already in your team'.freeze
 
   def validate(record)
     validate_invitee(record)
@@ -28,6 +29,10 @@ class InvitationValidator < ActiveModel::Validator
     participant = AssignmentParticipant.find_by(id: record.to_id, parent_id: record.assignment_id)
     unless participant.present?
       record.errors.add(:base, DIFFERENT_ASSIGNMENT_PARTICIPANT_MSG)
+    end
+    is_teammate = TeamsParticipant.find_by(participant_id: participant.id)&.team_id == record.from_id
+    if is_teammate
+      record.errors.add(:base, INVITEE_ALREADY_TEAMMATE_MSG)
     end
   end
 

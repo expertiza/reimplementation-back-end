@@ -24,6 +24,12 @@ RSpec.describe Invitation, type: :model do
   let(:participant2) { AssignmentParticipant.create!(user: user2, parent_id: assignment.id, handle: 'user2_handle') }
   let(:invalid_user) { build :user, name: 'INVALID' }
 
+  before do
+    # assign participants to teams
+    team1.add_participant(participant1)
+    team2.add_participant(participant2)
+  end
+
   before(:each) do
     ActiveJob::Base.queue_adapter = :test
   end
@@ -49,6 +55,13 @@ RSpec.describe Invitation, type: :model do
     invitation = Invitation.create(to_id: participant1.id, from_id: team2.id, assignment_id: assignment.id,  participant_id: participant2.id)
     invitation.accept_invitation
     expect(invitation.reply_status).to eq(InvitationValidator::ACCEPT_STATUS)
+  end
+
+  it 'accepts invitation and update invitee team' do
+    invitation = Invitation.create(to_id: participant1.id, from_id: team2.id, assignment_id: assignment.id,  participant_id: participant2.id)
+    invitation.accept_invitation
+    participant1.reload
+    expect(participant1.team_id).to eq(team2.id)
   end
 
   it 'rejects invitation and change reply_status to Decline(D)' do
