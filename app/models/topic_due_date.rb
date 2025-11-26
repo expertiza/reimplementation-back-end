@@ -1,12 +1,15 @@
 # frozen_string_literal: true
 
 class TopicDueDate < DueDate
-  # overwrite super method with additional logic to check for topic first
   def self.next_due_date(assignment_id, topic_id)
-    next_due_date = super(topic_id)
+    topic_deadline = where(parent_id: topic_id, parent_type: 'SignUpTopic')
+                     .where('due_at >= ?', Time.current)
+                     .order(:due_at)
+                     .first
 
-    next_due_date ||= DueDate.next_due_date(assignment_id)
-
-    next_due_date
+    topic_deadline || DueDate.where(parent_id: assignment_id, parent_type: 'Assignment')
+                             .where('due_at >= ?', Time.current)
+                             .order(:due_at)
+                             .first
   end
 end
