@@ -56,6 +56,15 @@ class Invitation < ApplicationRecord
 
       # 4. Mark this invitation as accepted
       update!(reply_status: InvitationValidator::ACCEPT_STATUS)
+      
+      # 5. Send acceptance emails
+      InvitationMailer.with(invitation: self)
+                      .send_acceptance_email
+                      .deliver_now
+      
+      InvitationMailer.with(invitation: self)
+                      .send_team_acceptance_notification
+                      .deliver_now
     end
 
     { success: true, message: "Invitation accepted successfully." }
