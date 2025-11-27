@@ -1,7 +1,8 @@
 module FileHelper
+  extend self
   # Replace invalid characters with underscore
   def clean_path(file_name)
-    file_name.gsub(%r{[^\w\.\_/]}, '_').tr("'", '_')
+    file_name.to_s.gsub(%r{[^\w\.\_/]}, '_').tr("'", '_')
   end
 
   # Removes any extension or paths from file_name

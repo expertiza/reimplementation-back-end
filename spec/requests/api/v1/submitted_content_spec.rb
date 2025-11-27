@@ -2,16 +2,60 @@ require 'swagger_helper'
 require 'rails_helper'
 require 'action_dispatch/http/upload'
 require 'json_web_token'
-
-# Load STI models (parent class must be loaded before child)
+require 'tmpdir'
+# Explicitly load dependencies to avoid autoload ordering issues
+require Rails.root.join('app/models/application_record')
+require Rails.root.join('app/models/user')
+require Rails.root.join('app/models/role')
+require Rails.root.join('app/models/institution')
 require Rails.root.join('app/models/participant')
 require Rails.root.join('app/models/assignment_participant')
+require Rails.root.join('app/models/team')
 require Rails.root.join('app/models/assignment_team')
+require Rails.root.join('app/models/teams_participant')
+require Rails.root.join('app/helpers/file_helper')
+require Rails.root.join('app/helpers/metric_helper')
+require Rails.root.join('app/helpers/submitted_content_helper')
 require Rails.root.join('app/models/assignment')
+require Rails.root.join('app/controllers/concerns/jwt_token')
+require Rails.root.join('app/controllers/concerns/authorization')
+require Rails.root.join('app/controllers/application_controller')
+require Rails.root.join('app/controllers/submitted_content_controller')
 
 RSpec.describe 'Submitted Content API', type: :request do
   before(:all) do
     @roles = create_roles_hierarchy
+    Assignment
+  end
+
+  def assignment_participant_class
+    Object.const_get('AssignmentParticipant')
+  rescue NameError
+    require Rails.root.join('app/models/application_record')
+    require Rails.root.join('app/models/user')
+    require Rails.root.join('app/models/role')
+    require Rails.root.join('app/models/institution')
+    require Rails.root.join('app/models/participant')
+    require Rails.root.join('app/models/assignment_participant')
+    require Rails.root.join('app/models/team')
+    require Rails.root.join('app/models/assignment_team')
+    require Rails.root.join('app/models/teams_participant')
+    require Rails.root.join('app/helpers/file_helper')
+    require Rails.root.join('app/helpers/metric_helper')
+    require Rails.root.join('app/helpers/submitted_content_helper')
+    require Rails.root.join('app/models/assignment')
+    require Rails.root.join('app/controllers/concerns/jwt_token')
+    require Rails.root.join('app/controllers/application_controller')
+    require Rails.root.join('app/controllers/concerns/authorization')
+    require Rails.root.join('app/controllers/submitted_content_controller')
+    Object.const_get('AssignmentParticipant')
+  end
+
+  def assignment_class
+    Object.const_get('Assignment')
+  rescue NameError
+    load Rails.root.join('app/models/assignment.rb')
+    Object.const_get('Assignment')
   end
 
   let(:institution) { Institution.create!(name: 'NC State') }
@@ -39,7 +83,7 @@ RSpec.describe 'Submitted Content API', type: :request do
     )
   end
 
-  let(:assignment) { Assignment.create!(name: 'Assignment 1', instructor_id: instructor.id, max_team_size: 3) }
+  let(:assignment) { assignment_class.create!(name: 'Assignment 1', instructor_id: instructor.id, max_team_size: 3) }
 
   let(:team) do
     AssignmentTeam.create!(
@@ -50,7 +94,7 @@ RSpec.describe 'Submitted Content API', type: :request do
   end
 
   let(:participant) do
-    AssignmentParticipant.create!(
+    assignment_participant_class.create!(
       user_id: student.id,
       parent_id: assignment.id,
       handle: student.name
@@ -389,11 +433,22 @@ RSpec.describe 'Submitted Content API', type: :request do
 
   path '/submitted_content/submit_file' do
     shared_examples 'file submission' do |method|
+      let(:team_directory) { Dir.mktmpdir }
+
+      after do
+        FileUtils.remove_entry(team_directory) if team_directory && Dir.exist?(team_directory)
+      end
+
       before do
         allow(AssignmentParticipant).to receive(:find).and_return(participant)
         allow(participant).to receive(:team).and_return(team)
         allow(participant).to receive(:user).and_return(student)
         allow(participant).to receive(:assignment).and_return(assignment)
+        allow(participant).to receive(:team_path).and_return(team_directory)
+        allow_any_instance_of(SubmittedContentController)
+          .to receive(:ensure_participant_team).and_return(true)
+        allow_any_instance_of(SubmittedContentController)
+          .to receive(:participant_team).and_return(team)
         allow(team).to receive(:set_student_directory_num)
         allow(team).to receive(:path).and_return('/test/path')
       end
@@ -491,18 +546,13 @@ RSpec.describe 'Submitted Content API', type: :request do
             .to receive(:is_file_small_enough).and_return(true)
           allow_any_instance_of(SubmittedContentController)
             .to receive(:check_extension_integrity).and_return(true)
-          allow(FileUtils).to receive(:mkdir_p)
-          allow(File).to receive(:exist?).and_return(false, true) # First for directory check, then exists after creation
-          # Mock File.open only for write mode ('wb')
-          fake_file = StringIO.new
-          allow(File).to receive(:open).with(anything, 'wb').and_yield(fake_file)
           allow_any_instance_of(SubmittedContentController)
             .to receive(:create_submission_record_for).and_return(true)
         end
 
         it 'returns success' do
           send(method, '/submitted_content/submit_file',
-              params: { id: id, uploaded_file: uploaded_file },
+              params: { id: id, uploaded_file: uploaded_file, current_folder: { name: '' } },
               headers: auth_headers_student)
 
           expect(response).to have_http_status(:created)
@@ -533,11 +583,6 @@ RSpec.describe 'Submitted Content API', type: :request do
             .to receive(:check_extension_integrity).and_return(true)
           allow_any_instance_of(SubmittedContentController)
             .to receive(:file_type).and_return('zip')
-          allow(FileUtils).to receive(:mkdir_p)
-          allow(File).to receive(:exist?).and_return(false, true)
-          # Mock File.open only for write mode ('wb')
-          fake_file = StringIO.new
-          allow(File).to receive(:open).with(anything, 'wb').and_yield(fake_file)
           allow(SubmittedContentHelper).to receive(:unzip_file).and_return({ message: 'Unzipped successfully' })
           allow_any_instance_of(SubmittedContentController)
             .to receive(:create_submission_record_for).and_return(true)
@@ -547,7 +592,7 @@ RSpec.describe 'Submitted Content API', type: :request do
           expect(SubmittedContentHelper).to receive(:unzip_file)
 
           send(method, '/submitted_content/submit_file',
-              params: { id: id, uploaded_file: uploaded_file, unzip: true },
+              params: { id: id, uploaded_file: uploaded_file, unzip: true, current_folder: { name: '' } },
               headers: auth_headers_student)
 
           expect(response).to have_http_status(:created)
@@ -569,6 +614,8 @@ RSpec.describe 'Submitted Content API', type: :request do
       before do
         allow(AssignmentParticipant).to receive(:find).and_return(participant)
         allow(participant).to receive(:team).and_return(team)
+        allow_any_instance_of(SubmittedContentController)
+          .to receive(:ensure_participant_team).and_return(true)
       end
 
       context 'without action specified' do
@@ -694,7 +741,13 @@ RSpec.describe 'Submitted Content API', type: :request do
     get('download file') do
       tags 'SubmittedContent'
       produces 'application/octet-stream'
-      parameter name: 'current_folder[name]', in: :query, type: :string, required: true
+      parameter name: :current_folder, in: :query, schema: {
+        type: :object,
+        properties: {
+          name: { type: :string }
+        },
+        required: [:name]
+      }
       parameter name: :download, in: :query, type: :string, required: true
       parameter name: :id, in: :query, type: :string, required: true
 
@@ -706,7 +759,7 @@ RSpec.describe 'Submitted Content API', type: :request do
       end
 
       response(400, 'folder name is nil') do
-        let(:'current_folder[name]') { '' }
+        let(:current_folder) { { name: '' } }
         let(:download) { 'test.txt' }
         let(:id) { participant.id }
 
@@ -718,7 +771,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
       response(400, 'file name is nil') do
         let(:id) { participant.id }
-        let(:'current_folder[name]') { '/test' }
+        let(:current_folder) { { name: '/test' } }
         let(:download) { '' }
 
         run_test! do
@@ -729,7 +782,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
       response(400, 'cannot send whole folder') do
         let(:id) { participant.id }
-        let(:'current_folder[name]') { '/test' }
+        let(:current_folder) { { name: '/test' } }
         let(:download) { 'folder_name' }
 
         before do
@@ -744,7 +797,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
       response(404, 'file does not exist') do
         let(:id) { participant.id }
-        let(:'current_folder[name]') { '/test' }
+        let(:current_folder) { { name: '/test' } }
         let(:download) { 'nonexistent.txt' }
 
         before do
@@ -765,6 +818,8 @@ RSpec.describe 'Submitted Content API', type: :request do
         let(:file_path) { File.join('/test', 'existing.txt') }
 
         before do
+          allow(File).to receive(:directory?).and_call_original
+          allow(File).to receive(:exist?).and_call_original
           allow(File).to receive(:directory?).with(file_path).and_return(false)
           allow(File).to receive(:exist?).with(file_path).and_return(true)
           allow_any_instance_of(SubmittedContentController)
@@ -778,6 +833,59 @@ RSpec.describe 'Submitted Content API', type: :request do
           get '/submitted_content/download',
               params: { id: id, current_folder: current_folder, download: download },
               headers: auth_headers_student
+        end
+      end
+    end
+  end
+
+  path '/submitted_content/list_files' do
+    get('list files and hyperlinks') do
+      tags 'SubmittedContent'
+      produces 'application/json'
+      parameter name: :id, in: :query, type: :string, required: true
+      parameter name: :folder, in: :query, schema: {
+        type: :object,
+        properties: {
+          name: { type: :string }
+        }
+      }
+
+      let(:id) { participant.id }
+      let(:folder) { { name: '/' } }
+      let(:temp_dir) { Dir.mktmpdir }
+
+      before do
+        allow(AssignmentParticipant).to receive(:find).and_return(participant)
+        allow(participant).to receive(:team).and_return(team)
+        allow(participant).to receive(:team_path).and_return(temp_dir)
+        allow(team).to receive(:set_student_directory_num)
+        allow(team).to receive(:hyperlinks).and_return([])
+        FileUtils.mkdir_p(File.join(temp_dir, 'subfolder'))
+        File.write(File.join(temp_dir, 'file.txt'), 'content')
+      end
+
+      after do
+        FileUtils.remove_entry(temp_dir) if temp_dir && Dir.exist?(temp_dir)
+      end
+
+      response(200, 'directory listed') do
+        run_test! do
+          expect(response).to have_http_status(:ok)
+          parsed = json
+          expect(parsed['current_folder']).to eq('/')
+          expect(parsed['files']).to be_an(Array)
+          expect(parsed['folders']).to be_an(Array)
+          expect(parsed['hyperlinks']).to be_an(Array)
+        end
+      end
+
+      response(400, 'not a directory') do
+        let(:folder) { { name: '/file.txt' } }
+
+        run_test! do
+          expect(response).to have_http_status(:bad_request)
+          parsed = json
+          expect(parsed['error']).to include('not a directory')
         end
       end
     end
@@ -812,6 +920,90 @@ RSpec.describe 'Submitted Content API', type: :request do
         parsed = json
         expect(parsed['error']).to include('not associated with a team')
       end
+    end
+  end
+
+  # Minimal happy-path coverage to ensure rswag generation for all routes
+  describe 'SubmittedContent happy paths' do
+    before do
+      allow(AssignmentParticipant).to receive(:find).and_return(participant)
+      allow(participant).to receive(:team).and_return(team)
+      allow(participant).to receive(:team_path).and_return(Dir.mktmpdir)
+      allow(team).to receive(:hyperlinks).and_return([])
+      allow(team).to receive(:submit_hyperlink)
+      allow(team).to receive(:remove_hyperlink)
+      allow(team).to receive(:set_student_directory_num)
+      allow(team).to receive(:path).and_return('/tmp')
+    end
+
+    it 'lists submission records' do
+      create_submission_record
+      get '/submitted_content', headers: auth_headers_student
+      expect(response).to have_http_status(:ok)
+    end
+
+    it 'shows a submission record' do
+      rec = create_submission_record
+      get "/submitted_content/#{rec.id}", headers: auth_headers_student
+      expect(response).to have_http_status(:ok)
+    end
+
+    it 'submits a hyperlink (POST)' do
+      post '/submitted_content/submit_hyperlink',
+           params: { id: participant.id, submission: 'http://example.com' },
+           headers: auth_headers_student
+      expect(response).to have_http_status(:ok)
+    end
+
+    it 'removes a hyperlink (POST)' do
+      allow(team).to receive(:hyperlinks).and_return(['http://example.com'])
+      post '/submitted_content/remove_hyperlink',
+           params: { id: participant.id, chk_links: 0 },
+           headers: auth_headers_student
+      expect(response).to have_http_status(:no_content)
+    end
+
+    it 'submits a file (POST)' do
+      tempfile = Tempfile.new(['happy', '.txt'])
+      tempfile.write('hi')
+      tempfile.rewind
+      uploaded = ActionDispatch::Http::UploadedFile.new(tempfile: tempfile, filename: 'happy.txt', type: 'text/plain')
+      allow_any_instance_of(SubmittedContentController).to receive(:check_extension_integrity).and_return(true)
+      allow_any_instance_of(SubmittedContentController).to receive(:create_submission_record_for).and_return(true)
+      post '/submitted_content/submit_file',
+           params: { id: participant.id, uploaded_file: uploaded, current_folder: { name: '' } },
+           headers: auth_headers_student
+      expect(response).to have_http_status(:created)
+    ensure
+      tempfile&.close!
+    end
+
+    it 'performs a folder action (POST)' do
+      allow_any_instance_of(SubmittedContentController).to receive(:delete_selected_files).and_return(nil)
+      post '/submitted_content/folder_action',
+           params: { id: participant.id, faction: { delete: 'true' } },
+           headers: auth_headers_student
+      expect([200, 204]).to include(response.status)
+    end
+
+    it 'downloads a file (GET)' do
+      dir = Dir.mktmpdir
+      file_path = File.join(dir, 'dl.txt')
+      File.write(file_path, 'hi')
+      allow(participant).to receive(:team_path).and_return(dir)
+      get '/submitted_content/download',
+          params: { id: participant.id, current_folder: { name: dir }, download: 'dl.txt' },
+          headers: auth_headers_student
+      expect(response).to have_http_status(:ok)
+    ensure
+      FileUtils.remove_entry(dir) if dir && Dir.exist?(dir)
+    end
+
+    it 'lists files (GET)' do
+      get '/submitted_content/list_files',
+          params: { id: participant.id, folder: { name: '/' } },
+          headers: auth_headers_student
+      expect(response).to have_http_status(:ok)
     end
   end
 end

@@ -241,10 +241,11 @@ class SubmittedContentController < ApplicationController
     # Get the folder path from params, default to root
     folder_param = params.dig(:folder, :name) || params[:folder] || '/'
     folder_path = sanitize_folder(folder_param)
+    relative_folder = folder_path.sub(/\A\//, '')
 
     # Build the full directory path
     base_path = @participant.team_path.to_s
-    full_path = folder_path == '/' ? base_path : File.join(base_path, folder_path)
+    full_path = relative_folder.blank? ? base_path : File.join(base_path, relative_folder)
 
     # Check if directory exists
     unless File.exist?(full_path)
