@@ -24,7 +24,7 @@ module DueDatePermissions
     deadline_right&.name&.in?(%w[OK Late])
   end
 
-  def can_teammate_review?
+  def can_review_teammate?
     return false unless teammate_review_allowed_id
 
     deadline_right = DeadlineRight.find_by(id: teammate_review_allowed_id)
@@ -65,11 +65,6 @@ module DueDatePermissions
     deadline_right&.name == 'Late'
   end
 
-  # Check if this deadline is currently active (allows some action)
-  def active?
-    can_submit? || can_review? || can_take_quiz? || can_teammate_review?
-  end
-
   # Get permission status for an action (OK, Late, No)
   def permission_status_for(action)
     permission_field = "#{action}_allowed_id"
@@ -88,8 +83,7 @@ module DueDatePermissions
       submission: permission_status_for(:submission),
       review: permission_status_for(:review),
       quiz: permission_status_for(:quiz),
-      teammate_review: permission_status_for(:teammate_review),
-      active: active?
+      teammate_review: permission_status_for(:teammate_review)
     }
   end
 end

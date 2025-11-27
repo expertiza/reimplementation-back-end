@@ -74,22 +74,9 @@ module DueDateActions
   end
 
   # Shift deadlines of a specific type by a time interval
-  def shift_deadlines_of_type(deadline_type_name, time_interval)
-    due_dates.joins(:deadline_type)
-             .where(deadline_types: { name: deadline_type_name })
-             .update_all("due_at = due_at + INTERVAL #{time_interval.to_i} SECOND")
+  def shift_deadlines_of_type(deadline_type_name, days)
+  due_dates
+    .joins(:deadline_type)
+    .where(deadline_types: { name: deadline_type_name })
+    .update_all("due_at = due_at + INTERVAL #{days.to_i} DAY")
   end
-
-  # Check if deadlines are in proper chronological order
-  def deadlines_properly_ordered?
-    sorted_deadlines = due_dates.order(:due_at)
-    previous_date = nil
-
-    sorted_deadlines.each do |deadline|
-      return false if previous_date && deadline.due_at < previous_date
-      previous_date = deadline.due_at
-    end
-
-    true
-  end
-end

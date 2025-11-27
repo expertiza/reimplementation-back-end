@@ -116,10 +116,6 @@ namespace :deadline do
     puts "Assignment submission deadline: #{submission_deadline.due_at.strftime('%B %d, %Y')}"
     puts
 
-    puts "8. Deadline ordering demo:"
-    puts "Deadlines properly ordered: #{assignment.deadlines_properly_ordered?}"
-    puts
-
     puts "9. Class method demos:"
     all_due_dates = assignment.due_dates.to_a
     sorted_dates = DueDate.sort_due_dates(all_due_dates)
