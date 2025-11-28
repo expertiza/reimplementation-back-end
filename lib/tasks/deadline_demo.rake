@@ -32,7 +32,7 @@ namespace :deadline do
       round: 1
     )
 
-    review_deadline = DueDate.create!(
+    DueDate.create!(
       parent: assignment,
       deadline_type_id: 2,
       due_at: 3.weeks.from_now,
@@ -43,7 +43,7 @@ namespace :deadline do
       round: 1
     )
 
-    teammate_review_deadline = DueDate.create!(
+    DueDate.create!(
       parent: assignment,
       deadline_type_id: 3,
       due_at: 4.weeks.from_now,
@@ -73,7 +73,7 @@ namespace :deadline do
 
     puts "5. Due date properties demo:"
     assignment.due_dates.each do |due_date|
-      puts "#{due_date.deadline_type_name.ljust(15)} | #{due_date.overdue? ? 'Overdue' : 'Upcoming'} | #{due_date.to_s}"
+      puts "#{due_date.deadline_type_name.ljust(15)} | #{due_date.overdue? ? 'Overdue' : 'Upcoming'} | #{due_date}"
     end
     puts
 
@@ -91,39 +91,18 @@ namespace :deadline do
     puts "Copy successful: #{assignment.due_dates.count == new_assignment.due_dates.count}"
     puts
 
-    puts "7. Topic-specific deadline demo..."
-
-    topic = SignUpTopic.create!(
-      topic_name: "Demo Topic",
-      topic_identifier: "DEMO-001",
-      max_choosers: 5,
-      assignment: assignment
-    )
-
-    topic_submission = DueDate.create!(
-      parent: topic,
-      deadline_type_id: 1,
-      due_at: 10.days.from_now,
-      submission_allowed_id: 3,
-      review_allowed_id: 1,
-      teammate_review_allowed_id: 1,
-      quiz_allowed_id: 1,
-      round: 1
-    )
-
-    puts "Created topic: #{topic.topic_name}"
-    puts "Topic submission deadline: #{topic_submission.due_at.strftime('%B %d, %Y')}"
-    puts "Assignment submission deadline: #{submission_deadline.due_at.strftime('%B %d, %Y')}"
-    puts
-
-    puts "9. Class method demos:"
+    puts "7. Class method demos:"
     all_due_dates = assignment.due_dates.to_a
     sorted_dates = DueDate.sort_due_dates(all_due_dates)
     puts "Sorted #{sorted_dates.count} due dates chronologically"
     puts "Any future due dates: #{DueDate.any_future_due_dates?(all_due_dates)}"
     puts
 
-    puts "10. Cleaning up demo data..."
+    puts "8. Deadline ordering demo:"
+    puts "Deadlines properly ordered: #{assignment.deadlines_properly_ordered?}"
+    puts
+
+    puts "9. Cleaning up demo data..."
     new_assignment.destroy
     assignment.destroy
     puts "Demo completed successfully!"
@@ -133,8 +112,7 @@ namespace :deadline do
     puts "- Basic permission checking methods"
     puts "- Next due date functionality"
     puts "- Due date copying between assignments"
-    puts "- Topic-specific deadline support"
-    puts "- Chronological ordering validation"
+    puts "- Chronological date sorting"
     puts "- Class methods for date management"
     puts "=" * 80
   end
@@ -157,18 +135,5 @@ namespace :deadline do
     puts "  Upcoming: #{DueDate.upcoming.count}"
     puts "  Overdue: #{DueDate.overdue.count}"
     puts
-  end
-
-  desc "Test basic due date functionality"
-  task test: :environment do
-    puts "Testing basic due date functionality..."
-
-    submission_type = DeadlineType.find_by_name('submission')
-    puts "Submission type found: #{submission_type.present?}"
-
-    ok_right = DeadlineRight.find_by_name('OK')
-    puts "OK right found: #{ok_right.present?}"
-
-    puts "Basic functionality test completed."
   end
 end

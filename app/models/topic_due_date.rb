@@ -2,7 +2,7 @@
 
 class TopicDueDate < DueDate
   def self.next_due_date(assignment_id, topic_id)
-    topic_deadline = where(parent_id: topic_id, parent_type: 'SignUpTopic')
+    topic_deadline = where(parent_id: topic_id, parent_type: 'ProjectTopic')
                      .where('due_at >= ?', Time.current)
                      .order(:due_at)
                      .first

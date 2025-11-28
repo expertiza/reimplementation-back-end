@@ -1,14 +1,17 @@
 # frozen_string_literal: true
 
 module DueDateActions
+  extend ActiveSupport::Concern
+
   included do
     has_many :due_dates, as: :parent, dependent: :destroy
+
   end
 
   # Generic activity permission checker that determines if an activity is permissible
   # based on the current deadline state for this parent object
   def activity_permissible?(activity)
-    current_deadline = next_due_date
+    current_deadline = next_due_date()
     return false unless current_deadline
 
     current_deadline.activity_permissible?(activity)
@@ -23,6 +26,7 @@ module DueDateActions
   end
 
   # Syntactic sugar methods for common activities
+  # These provide clean, readable method names while avoiding DRY violations
   def submission_permissible?
     activity_permissible?(:submission)
   end
@@ -52,16 +56,29 @@ module DueDateActions
   end
 
   # Get the next due date for this parent
-  def next_due_date
+  def next_due_date(topic_id = nil)
+    if topic_id && has_topic_specific_deadlines?
+      topic_deadline = due_dates.where(parent_id: topic_id, parent_type: 'ProjectTopic')
+                               .where('due_at >= ?', Time.current)
+                               .order(:due_at)
+                               .first
+      return topic_deadline if topic_deadline
+    end
+
     due_dates.where('due_at >= ?', Time.current).order(:due_at).first
   end
 
   # Get the current stage name for display purposes
   def current_stage
-    deadline = next_due_date
+    deadline = next_due_date()
     return 'finished' unless deadline
 
     deadline.deadline_type&.name || 'unknown'
+  end
+
+  # Check if assignment has topic-specific deadlines
+  def has_topic_specific_deadlines?
+    staggered_deadline || due_dates.where(parent_type: 'ProjectTopic').exists?
   end
 
   # Copy due dates to a new parent object
@@ -75,8 +92,21 @@ module DueDateActions
 
   # Shift deadlines of a specific type by a time interval
   def shift_deadlines_of_type(deadline_type_name, days)
-  due_dates
-    .joins(:deadline_type)
-    .where(deadline_types: { name: deadline_type_name })
-    .update_all("due_at = due_at + INTERVAL #{days.to_i} DAY")
+    due_dates.joins(:deadline_type)
+             .where(deadline_types: { name: deadline_type_name })
+             .update_all("due_at = due_at + INTERVAL #{days.to_i} DAY")
   end
+
+  # Check if deadlines are in proper chronological order
+  def deadlines_properly_ordered?
+    sorted_deadlines = due_dates.order(:due_at)
+    previous_date = nil
+
+    sorted_deadlines.each do |deadline|
+      return false if previous_date && deadline.due_at < previous_date
+      previous_date = deadline.due_at
+    end
+
+    true
+  end
+end

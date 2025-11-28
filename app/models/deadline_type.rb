@@ -6,11 +6,6 @@ class DeadlineType < ApplicationRecord
 
   has_many :due_dates, foreign_key: :deadline_type_id, dependent: :restrict_with_exception
 
-  # Class methods for finding deadline types
-  def self.find_by_name(name)
-    find_by(name: name.to_s)
-  end
-
   # Semantic helper methods for deadline type identification
   def submission?
     name == 'submission'

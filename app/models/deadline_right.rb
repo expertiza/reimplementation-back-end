@@ -3,11 +3,6 @@
 class DeadlineRight < ApplicationRecord
   validates :name, presence: true, uniqueness: true
 
-  # Class methods for finding deadline rights
-  def self.find_by_name(name)
-    find_by(name: name.to_s)
-  end
-
   # Permission checking methods
   def allows_action?
     %w[OK Late].include?(name)

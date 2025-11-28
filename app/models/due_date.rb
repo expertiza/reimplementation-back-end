@@ -90,17 +90,11 @@ class DueDate < ApplicationRecord
 
 
     # Fetch all due dates for a parent object
-    def fetch_due_dates(parent_id)
-      if parent_id.is_a?(Assignment)
-        where(parent: parent_id).includes(:deadline_type).order(:due_at)
-      else
-        includes(:deadline_type).where(parent_id: parent_id).order(:due_at)
-      end
-    end
+
 
     def next_due_date(parent_id, topic_id = nil)
       if topic_id
-        topic_deadline = where(parent_id: topic_id, parent_type: 'SignUpTopic')
+        topic_deadline = where(parent_id: topic_id, parent_type: 'ProjectTopic')
                          .upcoming.first
         return topic_deadline if topic_deadline
       end

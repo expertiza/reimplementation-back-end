@@ -2,30 +2,35 @@
 
 module DueDatePermissions
   # Permission checking methods that combine deadline-based and role-based logic
+  # These methods also need to check the can_submit, can_review, etc. fields of the Participant object
 
-  def can_submit?
+  def can_submit?(participant = nil)
     return false unless submission_allowed_id
+    return false if participant && !participant.can_submit
 
     deadline_right = DeadlineRight.find_by(id: submission_allowed_id)
     deadline_right&.name&.in?(%w[OK Late])
   end
 
-  def can_review?
+  def can_review?(participant = nil)
     return false unless review_allowed_id
+    return false if participant && !participant.can_review
 
     deadline_right = DeadlineRight.find_by(id: review_allowed_id)
     deadline_right&.name&.in?(%w[OK Late])
   end
 
-  def can_take_quiz?
+  def can_take_quiz?(participant = nil)
     return false unless quiz_allowed_id
+    return false if participant && !participant.can_take_quiz
 
     deadline_right = DeadlineRight.find_by(id: quiz_allowed_id)
     deadline_right&.name&.in?(%w[OK Late])
   end
 
-  def can_review_teammate?
+  def can_review_teammate?(participant = nil)
     return false unless teammate_review_allowed_id
+    return false if participant && !participant.can_review
 
     deadline_right = DeadlineRight.find_by(id: teammate_review_allowed_id)
     deadline_right&.name&.in?(%w[OK Late])
@@ -77,13 +82,5 @@ module DueDatePermissions
     deadline_right&.name || 'No'
   end
 
-  # Get a summary of all permissions for this deadline
-  def permissions_summary
-    {
-      submission: permission_status_for(:submission),
-      review: permission_status_for(:review),
-      quiz: permission_status_for(:quiz),
-      teammate_review: permission_status_for(:teammate_review)
-    }
-  end
+
 end
