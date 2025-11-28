@@ -351,6 +351,31 @@ RSpec.describe 'Submitted Content API', type: :request do
     describe 'GET' do
       it_behaves_like 'hyperlink submission', :get
     end
+
+    # Minimal rswag-friendly example so swaggerize captures the route
+    post('submit hyperlink (swagger)') do
+      tags 'SubmittedContent'
+      parameter name: :Authorization, in: :header, schema: { type: :string }
+      parameter name: :id, in: :query, schema: { type: :string }, required: true
+      parameter name: :submission, in: :query, schema: { type: :string }, required: true
+
+      response(200, 'successful') do
+        before do
+          allow(AssignmentParticipant).to receive(:find).and_return(participant)
+          allow(participant).to receive(:team).and_return(team)
+          allow(participant).to receive(:user).and_return(student)
+          allow(participant).to receive(:assignment).and_return(assignment)
+          allow(team).to receive(:hyperlinks).and_return([])
+          allow(team).to receive(:submit_hyperlink)
+        end
+
+        let(:Authorization) { auth_headers_student['Authorization'] }
+        let(:id) { participant.id }
+        let(:submission) { 'http://example.com' }
+
+        run_test!
+      end
+    end
   end
 
   path '/submitted_content/remove_hyperlink' do
@@ -428,6 +453,31 @@ RSpec.describe 'Submitted Content API', type: :request do
 
     describe 'GET' do
       it_behaves_like 'hyperlink removal', :get
+    end
+
+    post('remove hyperlink (swagger)') do
+      tags 'SubmittedContent'
+      parameter name: :Authorization, in: :header, schema: { type: :string }
+      parameter name: :id, in: :query, schema: { type: :string }, required: true
+      parameter name: :chk_links, in: :query, schema: { type: :integer }, required: true
+
+      response(204, 'removed') do
+        before do
+          allow(AssignmentParticipant).to receive(:find).and_return(participant)
+          allow(participant).to receive(:team).and_return(team)
+          allow(participant).to receive(:user).and_return(student)
+          allow(participant).to receive(:assignment).and_return(assignment)
+          allow(team).to receive(:hyperlinks).and_return(['http://example.com'])
+          allow(team).to receive(:remove_hyperlink)
+          allow_any_instance_of(SubmittedContentController).to receive(:ensure_participant_team).and_return(true)
+        end
+
+        let(:Authorization) { auth_headers_student['Authorization'] }
+        let(:id) { participant.id }
+        let(:chk_links) { 0 }
+
+        run_test!
+      end
     end
   end
 
@@ -607,6 +657,50 @@ RSpec.describe 'Submitted Content API', type: :request do
     describe 'GET' do
       it_behaves_like 'file submission', :get
     end
+
+    post('submit file (swagger)') do
+      tags 'SubmittedContent'
+      consumes 'multipart/form-data'
+      parameter name: :Authorization, in: :header, schema: { type: :string }
+      parameter name: :id, in: :query, schema: { type: :string }, required: true
+      parameter name: :uploaded_file, in: :formData, schema: { type: :string, format: :binary }, required: true
+      parameter name: :current_folder, in: :query, schema: { type: :object, properties: { name: { type: :string } } }
+
+      response(201, 'file submitted') do
+        let(:Authorization) { auth_headers_student['Authorization'] }
+        let(:id) { participant.id }
+        let(:uploaded_file) do
+          file = Tempfile.new(['swagger', '.txt'])
+          file.write('content')
+          file.rewind
+          ActionDispatch::Http::UploadedFile.new(
+            tempfile: file,
+            filename: 'swagger.txt',
+            type: 'text/plain'
+          )
+        end
+        let(:current_folder) { { name: '' } }
+
+        before do
+          allow(AssignmentParticipant).to receive(:find).and_return(participant)
+          allow(participant).to receive(:team).and_return(team)
+          allow(participant).to receive(:user).and_return(student)
+          allow(participant).to receive(:assignment).and_return(assignment)
+          allow(participant).to receive(:team_path).and_return(Dir.mktmpdir)
+          allow_any_instance_of(SubmittedContentController)
+            .to receive(:ensure_participant_team).and_return(true)
+          allow_any_instance_of(SubmittedContentController)
+            .to receive(:participant_team).and_return(team)
+          allow(team).to receive(:set_student_directory_num)
+          allow_any_instance_of(SubmittedContentController)
+            .to receive(:check_extension_integrity).and_return(true)
+          allow_any_instance_of(SubmittedContentController)
+            .to receive(:create_submission_record_for).and_return(true)
+        end
+
+        run_test!
+      end
+    end
   end
 
   path '/submitted_content/folder_action' do
@@ -734,6 +828,33 @@ RSpec.describe 'Submitted Content API', type: :request do
 
     describe 'GET' do
       it_behaves_like 'folder actions', :get
+    end
+
+    post('folder action (swagger)') do
+      tags 'SubmittedContent'
+      consumes 'application/json'
+      parameter name: :Authorization, in: :header, schema: { type: :string }
+      parameter name: :'Content-Type', in: :header, schema: { type: :string }
+      parameter name: :id, in: :query, schema: { type: :string }, required: true
+      parameter name: :faction, in: :body, schema: { type: :object }
+
+      response(400, 'folder action') do
+        before do
+          allow(AssignmentParticipant).to receive(:find).and_return(participant)
+          allow(participant).to receive(:team).and_return(team)
+          allow_any_instance_of(SubmittedContentController)
+            .to receive(:ensure_participant_team).and_return(true)
+          allow_any_instance_of(SubmittedContentController)
+            .to receive(:delete_selected_files).and_return(nil)
+        end
+
+        let(:Authorization) { auth_headers_student['Authorization'] }
+        let(:'Content-Type') { 'application/json' }
+        let(:id) { participant.id }
+        let(:faction) { { delete: 'true' } }
+
+        run_test!
+      end
     end
   end
 

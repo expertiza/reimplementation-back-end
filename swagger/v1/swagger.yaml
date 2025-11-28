@@ -1508,7 +1508,7 @@ paths:
           description: participant not found
         '401':
           description: unauthorized request has error response
-  "/api/v1/submitted_content":
+  "/submitted_content":
     get:
       summary: list all submission records
       tags:
@@ -1552,7 +1552,7 @@ paths:
                   - team_id
                   - user
                   - assignment_id
-  "/api/v1/submitted_content/{id}":
+  "/submitted_content/{id}":
     get:
       summary: show a submission record
       tags:
@@ -1569,17 +1569,126 @@ paths:
           description: successful
         '404':
           description: not found
-  "/api/v1/submitted_content/download":
+  "/submitted_content/submit_hyperlink":
+    post:
+      summary: submit hyperlink (swagger)
+      tags:
+      - SubmittedContent
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: id
+        in: query
+        schema:
+          type: string
+        required: true
+      - name: submission
+        in: query
+        schema:
+          type: string
+        required: true
+      responses:
+        '200':
+          description: successful
+  "/submitted_content/remove_hyperlink":
+    post:
+      summary: remove hyperlink (swagger)
+      tags:
+      - SubmittedContent
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: id
+        in: query
+        schema:
+          type: string
+        required: true
+      - name: chk_links
+        in: query
+        schema:
+          type: integer
+        required: true
+      responses:
+        '204':
+          description: removed
+  "/submitted_content/submit_file":
+    post:
+      summary: submit file (swagger)
+      tags:
+      - SubmittedContent
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: id
+        in: query
+        schema:
+          type: string
+        required: true
+      - name: current_folder
+        in: query
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+      responses:
+        '201':
+          description: file submitted
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: string
+              format: binary
+        required: true
+  "/submitted_content/folder_action":
+    post:
+      summary: folder action (swagger)
+      tags:
+      - SubmittedContent
+      parameters:
+      - name: Authorization
+        in: header
+        schema:
+          type: string
+      - name: Content-Type
+        in: header
+        schema:
+          type: string
+      - name: id
+        in: query
+        schema:
+          type: string
+        required: true
+      responses:
+        '400':
+          description: folder action
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+  "/submitted_content/download":
     get:
       summary: download file
       tags:
       - SubmittedContent
       parameters:
-      - name: current_folder[name]
+      - name: current_folder
         in: query
-        required: true
         schema:
-          type: string
+          type: object
+          properties:
+            name:
+              type: string
+          required:
+          - name
       - name: download
         in: query
         required: true
@@ -1597,6 +1706,29 @@ paths:
           description: file does not exist
         '200':
           description: file downloaded
+  "/submitted_content/list_files":
+    get:
+      summary: list files and hyperlinks
+      tags:
+      - SubmittedContent
+      parameters:
+      - name: id
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: folder
+        in: query
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+      responses:
+        '200':
+          description: directory listed
+        '400':
+          description: not a directory
   "/teams_participants/update_duty":
     put:
       summary: update participant duty
