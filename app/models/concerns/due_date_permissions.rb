@@ -44,21 +44,21 @@ module DueDatePermissions
   end
 
   # Check if deadline allows late submissions
-  def allows_late_submission?
+  def late_submission_allowed?
     return false unless submission_allowed_id
 
     deadline_right = DeadlineRight.find_by(id: submission_allowed_id)
     deadline_right&.name == 'Late'
   end
 
-  def allows_late_review?
+  def late_review_allowed?
     return false unless review_allowed_id
 
     deadline_right = DeadlineRight.find_by(id: review_allowed_id)
     deadline_right&.name == 'Late'
   end
 
-  def allows_late_quiz?
+  def late_quiz_allowed?
     return false unless quiz_allowed_id
 
     deadline_right = DeadlineRight.find_by(id: quiz_allowed_id)
