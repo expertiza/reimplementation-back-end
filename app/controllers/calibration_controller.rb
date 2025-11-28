@@ -143,6 +143,88 @@ class CalibrationController < ApplicationController
     }, status: :ok
   end
 
+
+
+  # GET /calibration/assignments/:assignment_id/report
+  # method generates an calibration analytics report showing how closely students’ calibration reviews match the instructor’s scores
+  # Compares ALL students' reviews against the Instructor's review for a specific artifact
+  def calibration_aggregate_report
+    assignment_id = params[:assignment_id]
+    reviewee_id   = params[:reviewee_id]
+
+    #  Get the Instructor's Review 
+    instructor_review = get_instructor_review_for_reviewee(assignment_id, reviewee_id)
+
+    if instructor_review.nil?
+      render json: { error: "Instructor review not found. Cannot generate report." }, status: :not_found
+      return
+    end
+
+    # Find ALL student calibration reviews for this specific reviewee
+    student_calibration_maps = ResponseMap.where(
+      reviewed_object_id: assignment_id,
+      reviewee_id: reviewee_id,
+      to_calibrate: true
+    )
+
+    # Exclude the instructor's own map to ensure we only get students
+    instructor_participant_id = get_instructor_participant_id(assignment_id)
+    student_calibration_maps = student_calibration_maps.where.not(reviewer_id: instructor_participant_id)
+
+    # Collect the latest submitted Response for each student
+    student_responses = student_calibration_maps.map do |map|
+      Response.where(response_map_id: map.id).order(updated_at: :desc).first
+    end.compact
+
+    # Process Question Breakdown
+    instructor_answers = Answer.where(response_id: instructor_review.id)
+    
+    question_breakdown = []
+    total_match_rate_sum = 0
+
+    instructor_answers.each do |inst_answer|
+      question_id = inst_answer.question_id
+      
+      # Try to find question text, fallback if missing
+      begin
+        question_text = Question.find(question_id).txt
+      rescue ActiveRecord::RecordNotFound
+        question_text = "Question #{question_id}"
+      end
+
+      # Find all student answers for THIS specific question
+      student_answers_for_q = student_responses.map do |resp|
+        Answer.find_by(response_id: resp.id, question_id: question_id)
+      end.compact
+
+      # Calculate Stats for this question
+      student_count_for_q = student_answers_for_q.size
+      
+      if student_count_for_q > 0
+        total_score = student_answers_for_q.sum(&:answer)
+        avg_student_score = (total_score.to_f / student_count_for_q).round(2)
+
+        matches = student_answers_for_q.count { |ans| ans.answer == inst_answer.answer }
+        match_rate = ((matches.to_f / student_count_for_q) * 100).round(2)
+      else
+        avg_student_score = 0
+        match_rate = 0
+      end
+
+      total_match_rate_sum += match_rate
+
+      question_breakdown << {
+        question_id: question_id,
+        question_text: question_text,
+        instructor_score: inst_answer.answer,
+        avg_student_score: avg_student_score,
+        match_rate: match_rate
+      }
+    end
+
+  
+
+
   private
 
   def get_instructor_participant_id(assignment_id)
