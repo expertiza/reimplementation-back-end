@@ -133,8 +133,15 @@ class SubmittedContentController < ApplicationController
       return render_error('File extension not allowed. Supported formats: pdf, png, jpeg, jpg, zip, tar, gz, 7z, odt, docx, md, rb, mp4, txt.', :bad_request)
     end
 
-    # Read the file contents into memory
-    file_bytes = uploaded.read
+    # Read the file contents into memory; support both uploaded IOs and plain strings
+    file_bytes =
+      if uploaded.respond_to?(:read)
+        uploaded.read
+      elsif uploaded.is_a?(String) && File.exist?(uploaded)
+        File.binread(uploaded)
+      else
+        uploaded.to_s
+      end
 
     # Get the current folder from params, default to root '/'
     current_folder = sanitize_folder(params.dig(:current_folder, :name) || '/')
@@ -170,6 +177,7 @@ class SubmittedContentController < ApplicationController
     render_success('The file has been submitted successfully.', :created)
   rescue StandardError => e
     # Handle any errors during file upload (disk space, permissions, corruption, etc.)
+    Rails.logger.error("submit_file failed: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}") if defined?(Rails)
     render_error("Failed to save file to server: #{e.message}. Please verify the file is not corrupted and try again.", :internal_server_error)
   end
 
@@ -201,7 +209,7 @@ class SubmittedContentController < ApplicationController
   # Validates and streams a file for download
   def download
     # Extract folder name and file name from params
-    folder_name_param = params.dig(:current_folder, :name)
+    folder_name_param = params.dig(:current_folder, :name) || params[:current_folder] || params[:name]
     file_name = params[:download]
 
     # Validate that folder name was provided
@@ -229,6 +237,9 @@ class SubmittedContentController < ApplicationController
     # Stream the file to the client (disposition: 'inline' displays in browser if possible)
     # Note: send_file returns immediately, do NOT render after this line
     send_file(path, disposition: 'inline')
+  rescue StandardError => e
+    Rails.logger.error("download failed: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}") if defined?(Rails)
+    render_error("Failed to download file: #{e.message}", :not_found)
   end
 
   # GET /submitted_content/list_files
@@ -239,7 +250,7 @@ class SubmittedContentController < ApplicationController
     team.set_student_directory_num
 
     # Get the folder path from params, default to root
-    folder_param = params.dig(:folder, :name) || params[:folder] || '/'
+    folder_param = params.dig(:folder, :name) || params[:folder] || params[:name] || '/'
     folder_path = sanitize_folder(folder_param)
     relative_folder = folder_path.sub(/\A\//, '')
 

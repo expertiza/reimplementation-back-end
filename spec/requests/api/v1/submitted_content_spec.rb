@@ -799,10 +799,13 @@ RSpec.describe 'Submitted Content API', type: :request do
         let(:id) { participant.id }
         let(:current_folder) { { name: '/test' } }
         let(:download) { 'nonexistent.txt' }
+        let(:file_path) { File.join('/test', 'nonexistent.txt') }
 
         before do
-          allow(File).to receive(:directory?).and_return(false)
-          allow(File).to receive(:exist?).and_return(false)
+          allow(File).to receive(:directory?).and_call_original
+          allow(File).to receive(:exist?).and_call_original
+          allow(File).to receive(:directory?).with(file_path).and_return(false)
+          allow(File).to receive(:exist?).with(file_path).and_return(false)
         end
 
         run_test! do
