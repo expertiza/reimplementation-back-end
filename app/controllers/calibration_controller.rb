@@ -343,24 +343,4 @@ class CalibrationController < ApplicationController
     (matches.to_f / comparisons.length * 100).round(2) #Calculate Percentage
   end
 
-  # Serialize a review into a structure for JSON output
-  def serialize_review(review)
-    return nil unless review
-
-    answers = Answer.where(response_id: review.id)
-
-    {
-      id:          review.id,
-      updated_at:  review.updated_at,
-      is_submitted: review.is_submitted,
-      answers: answers.map do |ans|
-        {
-          question_id: ans.question_id,
-          score:       ans.answer,
-          comments:    ans.comments
-        }
-      end
-    }
-  end
-
 end
