@@ -185,7 +185,7 @@ class CalibrationController < ApplicationController
       
       # Try to find question text, fallback if missing
       begin
-        question_text = Questionnaire.find(question_id).txt
+        question_text = Question.find(question_id).txt
       rescue ActiveRecord::RecordNotFound
         question_text = "Question #{question_id}"
       end
