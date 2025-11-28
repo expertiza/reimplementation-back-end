@@ -143,16 +143,13 @@ class CalibrationController < ApplicationController
     }, status: :ok
   end
 
-
-
-  # GET /calibration/assignments/:assignment_id/report
-  # method generates an calibration analytics report showing how closely students’ calibration reviews match the instructor’s scores
-  # Compares ALL students' reviews against the Instructor's review for a specific artifact
+  # GET /calibration/assignments/:assignment_id/report/:reviewee_id
+  # Calculates aggregate statistics for the class on a specific calibration assignment
   def calibration_aggregate_report
     assignment_id = params[:assignment_id]
     reviewee_id   = params[:reviewee_id]
 
-    #  Get the Instructor's Review 
+    # 1. Get the Instructor's Review 
     instructor_review = get_instructor_review_for_reviewee(assignment_id, reviewee_id)
 
     if instructor_review.nil?
@@ -160,7 +157,7 @@ class CalibrationController < ApplicationController
       return
     end
 
-    # Find ALL student calibration reviews for this specific reviewee
+    # 2. Find ALL student calibration reviews for this specific reviewee
     student_calibration_maps = ResponseMap.where(
       reviewed_object_id: assignment_id,
       reviewee_id: reviewee_id,
@@ -171,12 +168,13 @@ class CalibrationController < ApplicationController
     instructor_participant_id = get_instructor_participant_id(assignment_id)
     student_calibration_maps = student_calibration_maps.where.not(reviewer_id: instructor_participant_id)
 
-    # Collect the latest submitted Response for each student
+    # 3. Collect the latest submitted Response for each student
     student_responses = student_calibration_maps.map do |map|
       Response.where(response_map_id: map.id).order(updated_at: :desc).first
     end.compact
 
-    # Process Question Breakdown
+    # 4. Process Question Breakdown
+    # Get all answers from the instructor to identify the questions
     instructor_answers = Answer.where(response_id: instructor_review.id)
     
     question_breakdown = []
@@ -187,7 +185,7 @@ class CalibrationController < ApplicationController
       
       # Try to find question text, fallback if missing
       begin
-        question_text = Question.find(question_id).txt
+        question_text = Questionnaire.find(question_id).txt
       rescue ActiveRecord::RecordNotFound
         question_text = "Question #{question_id}"
       end
@@ -201,9 +199,11 @@ class CalibrationController < ApplicationController
       student_count_for_q = student_answers_for_q.size
       
       if student_count_for_q > 0
+        # Average Student Score
         total_score = student_answers_for_q.sum(&:answer)
         avg_student_score = (total_score.to_f / student_count_for_q).round(2)
 
+        # Match Rate (How many students exactly matched the instructor?)
         matches = student_answers_for_q.count { |ans| ans.answer == inst_answer.answer }
         match_rate = ((matches.to_f / student_count_for_q) * 100).round(2)
       else
@@ -222,7 +222,27 @@ class CalibrationController < ApplicationController
       }
     end
 
-  
+    # 5. Calculate Overall Aggregate Stats
+    num_questions = question_breakdown.size
+    avg_agreement_pct = num_questions > 0 ? (total_match_rate_sum / num_questions).round(2) : 0
+
+    # 6. Build Final JSON Response
+    reviewee = Participant.find_by(id: reviewee_id)
+    reviewee_name = reviewee ? reviewee.name : "Unknown Reviewee"
+
+    render json: {
+      reviewee_id: reviewee_id,
+      reviewee_name: reviewee_name,
+      assignment_id: assignment_id,
+      aggregate_stats: {
+        total_reviews: student_responses.size,
+        avg_agreement_percentage: avg_agreement_pct,
+        question_breakdown: question_breakdown
+      }
+    }, status: :ok
+  end
+
+ 
 
 
   private
