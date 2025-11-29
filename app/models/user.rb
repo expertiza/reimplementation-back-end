@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
-  include ImportableExportableHelper
+  extend ImportableExportableHelper
   mandatory_fields :name, :email, :password, :full_name
+  external_classes ExternalClass.new(Role, true, false, :name),
+                   ExternalClass.new(Institution, true, false, :name)
 
 
   has_secure_password

@@ -14,11 +14,14 @@ class FieldMapping
   def self.from_header(model_class, header_row)
     header_row = header_row.map(&:strip)
 
-    valid_fields = model_class.import_export_fields
+    valid_fields = model_class.internal_and_external_fields
 
     matched = header_row.map do |h|
       valid_fields.find { |f| f.casecmp?(h) }
     end.compact
+
+    pp "matched"
+    puts "Header Row: #{header_row}"
 
     new(model_class, matched)
   end

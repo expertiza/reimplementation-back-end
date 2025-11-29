@@ -3,6 +3,7 @@
 require 'json'
 
 class QuizItem < Item
+  extend ImportableExportableHelper
   has_many :quiz_question_choices, class_name: 'QuizQuestionChoice', foreign_key: 'question_id', inverse_of: false, dependent: :nullify
 
   def edit

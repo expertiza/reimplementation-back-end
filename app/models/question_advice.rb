@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class QuestionAdvice < ApplicationRecord
+  extend ImportableExportableHelper
+  mandatory_fields :score, :advice
+
     belongs_to :item
     def self.export_fields(_options)
       QuestionAdvice.columns.map(&:name)
