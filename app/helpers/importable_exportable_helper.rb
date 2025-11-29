@@ -170,8 +170,7 @@ module ImportableExportableHelper
           dup_records << dup_obj if dup_obj
         end
 
-        puts "okay take it back"
-        raise ActiveRecord::Rollback
+        raise ActiveRecord::Rollback # todo - remove this when wanting to actually channge the data
       end
 
       # todo - add duplicate action and error handling for this
@@ -266,7 +265,7 @@ module ImportableExportableHelper
       begin
         puts "Create Obj:"
         pp created_object
-        created_object.save! # todo - change to save! when ready to finish testing
+        created_object.save!
       rescue ActiveRecord::RecordInvalid => e
         # Handle validation errors
         puts "Validation error: #{e.message}"
