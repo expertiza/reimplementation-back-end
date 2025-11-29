@@ -43,6 +43,7 @@ class DueDate < ApplicationRecord
     new_due_date
   end
 
+
   # Get the deadline type name
   def deadline_type_name
     deadline_type&.name
@@ -89,7 +90,6 @@ class DueDate < ApplicationRecord
 
 
 
-    # Fetch all due dates for a parent object
 
 
     def next_due_date(parent_id, topic_id = nil)
@@ -112,6 +112,7 @@ class DueDate < ApplicationRecord
       errors.add(:due_at, 'must be a valid datetime')
     end
   end
+
 
   # Set default round if not specified
   before_save :set_default_round

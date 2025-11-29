@@ -1,13 +1,6 @@
 # frozen_string_literal: true
 
 module DueDateActions
-  extend ActiveSupport::Concern
-
-  included do
-    has_many :due_dates, as: :parent, dependent: :destroy
-
-  end
-
   # Generic activity permission checker that determines if an activity is permissible
   # based on the current deadline state for this parent object
   def activity_permissible?(activity)

@@ -81,6 +81,4 @@ module DueDatePermissions
     deadline_right = DeadlineRight.find_by(id: allowed_id)
     deadline_right&.name || 'No'
   end
-
-
 end
