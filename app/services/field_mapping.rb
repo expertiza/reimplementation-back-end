@@ -20,8 +20,9 @@ class FieldMapping
       valid_fields.find { |f| f.casecmp?(h) }
     end.compact
 
-    pp "matched"
-    puts "Header Row: #{header_row}"
+    # todo - remove debug statements
+    # pp "matched"
+    # puts "Header Row: #{header_row}"
 
     new(model_class, matched)
   end

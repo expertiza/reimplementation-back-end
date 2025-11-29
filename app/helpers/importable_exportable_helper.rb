@@ -167,13 +167,18 @@ module ImportableExportableHelper
         temp_contents.each do |row|
           # Get the row as a hash, with the header pointing towards the attribute value
           dup_obj = import_row(row,  temp_file)
-          dup_records << dup_obj if dup_obj
+          dup_records << dup_obj if dup_obj && dup_obj != true
         end
+
+        pp dup_records
+
+        # todo - Handle duplicate records that are thrown out when importing the rows
+
+
 
         raise ActiveRecord::Rollback # todo - remove this when wanting to actually channge the data
       end
 
-      # todo - add duplicate action and error handling for this
 
       File.delete(temp_file)
     end
@@ -187,7 +192,7 @@ module ImportableExportableHelper
       # Open the csv file, get the header row, and build the mapping with only the fields available in the current class
       header_row = CSV.open(file, &:first)
       mapping = FieldMapping.from_header(self, header_row) # Get mapping of only internal fields
-      pp row
+      # pp row
       row_hash = {}
       mapping.ordered_fields.zip(row).each do |key, value|
         row_hash[key] ||= [] # Initialize an empty array if the key is new
@@ -206,7 +211,9 @@ module ImportableExportableHelper
         end
       end
 
-      save_object(created_object)
+      dup_obj = save_object(created_object)
+
+      return dup_obj if dup_obj
 
       # Then create external classes that rely on the object we just created
       if external_classes
@@ -257,7 +264,6 @@ module ImportableExportableHelper
 
           save_object(created_object)
         end
-
       end
     end
 
@@ -269,7 +275,7 @@ module ImportableExportableHelper
       rescue ActiveRecord::RecordInvalid => e
         # Handle validation errors
         puts "Validation error: #{e.message}"
-        raise ActiveRecord::Rollback
+        return created_object
       rescue ActiveRecord::RecordNotUnique => e
         # Handle unique constraint violations
         puts "Unique constraint violation: #{e.message}"
