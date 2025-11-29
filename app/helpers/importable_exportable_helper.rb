@@ -16,7 +16,7 @@ class ExternalClass
   # If it doessn't, return the lookup field (or the primary key)
   def internal_fields
     if @ref_class.respond_to?(:internal_fields)
-      @ref_class.internal_fields
+      @ref_class.internal_fields.map {|field| append_class_name(field)}
     else
       [append_class_name(@lookup_field.to_s), @ref_class.primary_key]
     end
@@ -26,7 +26,11 @@ class ExternalClass
   # Method to add the class name to a field. This is useful when the CSV might refer to a column with
   # the class name appended (Ex role_name) but the internal field drops the class name (Ex Role.name)
   def append_class_name(field)
-    @ref_class.name.downcase + "_" + field
+    @ref_class.name.underscore + "_" + field
+  end
+
+  def unappended_class_name(name)
+    name.delete_prefix(@ref_class.name.underscore + "_")
   end
 
   # Attempts too look in the database for any mention of the current class. It looks using the
@@ -53,6 +57,13 @@ class ExternalClass
     end
 
     value
+  end
+
+  def from_hash(attrs)
+    fixed_attrs = {}
+    attrs.each {|k, v| fixed_attrs[unappended_class_name(k)] = v}
+
+    @ref_class.new(fixed_attrs)
   end
 end
 
@@ -118,7 +129,10 @@ module ImportableExportableHelper
 
     # Factory method for importing a record from a hash
     def from_hash(attrs)
-      new(attrs)
+      fixed_attrs = {}
+      attrs.each {|k, v| fixed_attrs[k] = v[0]}
+
+      new(fixed_attrs)
     end
 
     # todo - possibly extract this function to the service
@@ -167,14 +181,20 @@ module ImportableExportableHelper
 
     # Import row function takes a hash for a row and tries to save it in the current class.
     # It takes a related class and object so that it can be used recursively. If a row should
-    # update two classes,and one relies upon another, the recurison can be used to set the
-    # belongs torelationship.
+    # update two classes,and one relies upon another, the recursion can be used to set the
+    # belongs to relationship.
     # (EX if )
     def import_row(row, file)
       # Open the csv file, get the header row, and build the mapping with only the fields available in the current class
       header_row = CSV.open(file, &:first)
       mapping = FieldMapping.from_header(self, header_row) # Get mapping of only internal fields
-      row_hash = Hash[mapping.ordered_fields.zip(row)]
+      pp row
+      row_hash = {}
+      mapping.ordered_fields.zip(row).each do |key, value|
+        row_hash[key] ||= [] # Initialize an empty array if the key is new
+        row_hash[key] << value
+      end
+
       puts "Row Hash: #{row_hash}"
 
       current_class_attrs = row_hash.slice(*internal_fields)
@@ -183,55 +203,62 @@ module ImportableExportableHelper
       # for each external class, try to look them up
       if external_classes
         external_classes.each do |external_class|
-          if external_class.should_lookup
-            handle_external_class(row_hash, external_class, self, created_object)
-          end
+          lookup_external_class(row_hash, external_class, self, created_object)
         end
       end
 
       save_object(created_object)
 
-      puts "now do the external classes"
+      # Then create external classes that rely on the object we just created
       if external_classes
         external_classes.each do |external_class|
-          if external_class.should_create
-            handle_external_class(row_hash, external_class, self, created_object)
-          end
+          create_external_class(row_hash, mapping, external_class, self, created_object)
         end
       end
     end
 
-    def handle_external_class(row_hash, external_class, parent_class, parent_obj)
-      # Open the csv file, get the header row, and build the mapping with only the fields available in the current class
-      # header_row = CSV.open(file, &:first)
-      # mapping = FieldMapping.from_header(header_row)
-      # row_hash = Hash[mapping.ordered_fields.zip(row)]
-
+    def lookup_external_class(row_hash, external_class, parent_class, parent_obj)
       # Lookup - If the external class is marked as a lookup and a value is found
       if external_class.should_lookup && (lookup_value = external_class.lookup(row_hash))
         # Connect lookup value to the parent obj
         parent_obj.send("#{external_class.ref_class.name.downcase}=", lookup_value)
         return
       end
+    end
 
+  def create_external_class(row_hash, mapping, external_class, parent_class, parent_obj)
       # Create - If the external class is marked as a create, attempt to create a new obj and link to parents
       # This can happen if it is marked and a lookup val wasn't found
       if external_class.should_create
+
+        # Get the attributes, with duplicates in an array
         current_class_attrs = row_hash.slice(*external_class.internal_fields)
-        created_object = external_class.ref_class.from_hash(current_class_attrs)
 
-        puts "The parent object: #{@class_name.downcase}"
-        pp created_object
-        # link the newly created object and the parent both ways
-        created_object.send("#{@class_name.downcase}=", parent_obj)
-        parent_obj.send("#{external_class.ref_class.name.downcase}=", created_object)
-
-        # Rare Case: Nested External Classes - for each external class, try to either look them up or create them
-        external_class.ref_class.external_classes.each do |inner_external_class|
-          handle_external_class(row_hash, inner_external_class, self, created_object)
+        # In the order of the attributes, pair them together in new hashes. These new hashes
+        # are ready to be made into the new object
+        # Ex.
+        # Initial: {"question_advice_score" => ["1", "2"],
+        #           "question_advice_advice" => ["okay", "good"]}
+        # Result:  [{"question_advice_score" => "1", "question_advice_advice" => "okay"},
+        #           {"question_advice_score" => "2", "question_advice_advice" => "good"}]
+        #
+        object_sets = current_class_attrs.values.transpose
+        object_sets_with_keys = object_sets.map do |row_values|
+          Hash[current_class_attrs.keys.zip(row_values)]
         end
 
-        save_object(created_object)
+
+        # Use each set to create the new objects
+        object_sets_with_keys.each do |attrs|
+          created_object = external_class.from_hash(attrs)
+
+          # link the newly created object and the parent both ways
+          created_object.send("#{@class_name.underscore}=", parent_obj)
+          # parent_obj.send("#{external_class.ref_class.name.underscore}=", created_object)
+
+          save_object(created_object)
+        end
+
       end
     end
 
@@ -240,26 +267,20 @@ module ImportableExportableHelper
         puts "Create Obj:"
         pp created_object
         created_object.save! # todo - change to save! when ready to finish testing
-        puts "wat"
       rescue ActiveRecord::RecordInvalid => e
         # Handle validation errors
         puts "Validation error: #{e.message}"
-        pp "hi"
         raise ActiveRecord::Rollback
       rescue ActiveRecord::RecordNotUnique => e
         # Handle unique constraint violations
         puts "Unique constraint violation: #{e.message}"
-        pp "uh oh"
         return created_object
       rescue StandardError => e
         puts "An unexpected error occurred: #{e.message}"
-        pp "bye"
         raise ActiveRecord::Rollback
       end
     end
   # end
-
-
 
   # Instance method to serialize a record for export
   def to_hash(fields = self.class.internal_fields)
