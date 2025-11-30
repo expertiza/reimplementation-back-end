@@ -13,7 +13,7 @@ class CalibrationController < ApplicationController
     calibration_submissions = ResponseMap.where(
       reviewed_object_id: assignment_id,
       reviewer_id: instructor_participant_id,
-      to_calibrate: true # for_calibration indicates instructor reviews
+      for_calibration: true
     )
 
     # Get the details for each calibration submission
@@ -50,7 +50,7 @@ class CalibrationController < ApplicationController
     student_calibration_maps = ResponseMap.where(
       reviewer_id: student_participant_id,
       reviewed_object_id: assignment_id,
-      to_calibrate: true
+      for_calibration: true
     )
 
     # For each calibration review, compare the student's review and the instructor's review
@@ -91,8 +91,8 @@ class CalibrationController < ApplicationController
   # they calibrated:
   #  - all reviewers (team members who submitted the work)
   #  - all hyperlinks submitted by that user/team
-  #  - the to_calibrate flag for that calibration review
-  def summary
+  #  - the for_calibration flag
+  def get_student_calibration_summary
     student_participant_id = params[:student_participant_id]
     assignment_id          = params[:assignment_id]
 
@@ -100,7 +100,7 @@ class CalibrationController < ApplicationController
     student_calibration_maps = ResponseMap.where(
       reviewer_id: student_participant_id,
       reviewed_object_id: assignment_id,
-      to_calibrate: true
+      for_calibration: true
     )
 
     submissions = student_calibration_maps.map do |student_response_map|
@@ -130,7 +130,7 @@ class CalibrationController < ApplicationController
         reviewee_team_id: reviewee.parent_id,
         reviewers: reviewers,
         hyperlinks: hyperlinks,
-        to_calibrate: student_response_map.to_calibrate
+        for_calibration: student_response_map.for_calibration
       }
     end.compact
 
@@ -159,7 +159,7 @@ class CalibrationController < ApplicationController
     student_calibration_maps = ResponseMap.where(
       reviewed_object_id: assignment_id,
       reviewee_id: reviewee_id,
-      to_calibrate: true
+      for_calibration: true
     )
 
     # Exclude the instructor's own map to ensure we only get students
@@ -379,7 +379,7 @@ class CalibrationController < ApplicationController
     instructor_response_map = ResponseMap.find_by(
       reviewer_id: instructor_participant_id,
       reviewee_id: reviewee_id,
-      to_calibrate: true
+      for_calibration: true
     )
 
     return nil if instructor_response_map.nil? # No review found
