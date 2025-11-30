@@ -10,13 +10,9 @@ class ImportController < ApplicationController
   end
 
   def import
-    pp params
     uploaded_file = params[:csv_file]
     use_headers = ActiveRecord::Type::Boolean.new.deserialize(params[:use_headers])
     ordered_fields = JSON.parse(params[:ordered_fields]) if params[:ordered_fields]
-
-    puts "Item Mandatory: #{Item.mandatory_fields}"
-    puts "Quiz Item Mandatory: #{QuizItem.mandatory_fields}"
 
     params[:class].constantize.try_import_records(uploaded_file, ordered_fields, use_header: use_headers)
   end
