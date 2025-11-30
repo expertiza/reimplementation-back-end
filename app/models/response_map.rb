@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
 class ResponseMap < ApplicationRecord
-  include ResponseMapSubclassTitles
-
-  has_many :response, foreign_key: 'map_id', dependent: :destroy, inverse_of: false
+  has_many :responses, foreign_key: 'map_id', dependent: :destroy, inverse_of: false
   belongs_to :reviewer, class_name: 'Participant', foreign_key: 'reviewer_id', inverse_of: false
   belongs_to :reviewee, class_name: 'Participant', foreign_key: 'reviewee_id', inverse_of: false
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'reviewed_object_id', inverse_of: false

@@ -32,6 +32,10 @@ FactoryBot.define do
       role { create(:role, :instructor) }
     end
 
+    trait :ta do
+      role { create(:role, :ta) }
+    end
+
     trait :student do
       role { create(:role, :student) }
     end

@@ -9,7 +9,12 @@ class Response < ApplicationRecord
   accepts_nested_attributes_for :scores
 
   alias map response_map
-  delegate :questionnaire, :reviewee, :reviewer, to: :map
+  delegate :response_assignment, :reviewee, :reviewer, to: :map
+
+  # return the questionnaire that belongs to the response
+  def questionnaire
+    response_assignment.assignment_questionnaires.find_by(used_in_round: self.round).questionnaire
+  end
 
   # returns a string of response name, needed so the front end can tell students which rubric they are filling out
   def rubric_label
@@ -63,14 +68,26 @@ class Response < ApplicationRecord
   end
 
   def aggregate_questionnaire_score
-    # only count the scorable questions, only when the answer is not nil
-    # we accept nil as answer for scorable questions, and they will not be counted towards the total score
+    # only count the scorable items, only when the answer is not nil
+    # we accept nil as answer for scorable items, and they will not be counted towards the total score
     sum = 0
     scores.each do |s|
-      item = Item.find(s.question_id)
       # For quiz responses, the weights will be 1 or 0, depending on if correct
-      sum += s.answer * item.weight unless s.answer.nil? || !item.scorable?
+      sum += s.answer * s.item.weight unless s.answer.nil?  #|| !s.item.scorable?
     end
+    # puts "sum: #{sum}"
     sum
+  end
+
+  # Returns the maximum possible score for this response
+  def maximum_score
+    # only count the scorable questions, only when the answer is not nil (we accept nil as
+    # answer for scorable questions, and they will not be counted towards the total score)
+    total_weight = 0
+    scores.each do |s|
+      total_weight += s.item.weight unless s.answer.nil? #|| !s.item.is_a(ScoredItem)?
+    end
+    # puts "total: #{total_weight * questionnaire.max_question_score} "
+    total_weight * questionnaire.max_question_score
   end
 end

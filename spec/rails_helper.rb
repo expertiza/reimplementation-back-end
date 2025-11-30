@@ -5,16 +5,16 @@ require 'spec_helper'
 ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'
 # Prevent database truncation if the environment is production
-abort("The Rails environment is running in production mode!") if Rails.env.production?
+abort('The Rails environment is running in production mode!') if Rails.env.production?
 require 'rspec/rails'
 
 require 'factory_bot_rails'
 require 'database_cleaner/active_record'
 
 # Override DATABASE_URL for tests to prevent remote DB errors
-#if Rails.env.test?
-#  ENV['DATABASE_URL'] = 'mysql2://root:expertiza@127.0.0.1/reimplementation_test'
-#end
+if Rails.env.test?
+ ENV['DATABASE_URL'] = 'mysql2://root:expertiza@127.0.0.1/reimplementation_test'
+end
 
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
@@ -86,10 +86,8 @@ RSpec.configure do |config|
     config.fixture_path = Rails.root.join('spec/fixtures')
   end
 
-  # If you're not using ActiveRecord, or you'd prefer not to run each of your
-  # examples within a transaction, remove the following line or assign false
-  # instead of true.
-  config.use_transactional_fixtures = true
+  # We're using DatabaseCleaner instead of transactional fixtures
+  # config.use_transactional_fixtures = false
 
   # You can uncomment this line to turn off ActiveRecord support entirely.
   # config.use_active_record = false

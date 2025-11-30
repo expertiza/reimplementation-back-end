@@ -4,10 +4,11 @@ class CreateTeams < ActiveRecord::Migration[8.0]
   def change
     create_table :teams do |t|
       t.string :name, null: false
+      t.integer :parent_id, index: true
       t.string :type, null: false
-      t.integer :max_team_size, null: false, default: 5
-      t.references :user, foreign_key: true
-      t.references :mentor, foreign_key: { to_table: :users }
+      t.boolean :advertise_for_partner, null: false, default: false
+      t.text    :submitted_hyperlinks
+      t.integer :directory_num
 
       t.timestamps
     end
