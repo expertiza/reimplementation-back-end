@@ -92,15 +92,9 @@ class DueDate < ApplicationRecord
 
 
 
-    def next_due_date(parent_id, topic_id = nil)
-      if topic_id
-        topic_deadline = where(parent_id: topic_id, parent_type: 'ProjectTopic')
-                         .upcoming.first
-        return topic_deadline if topic_deadline
-      end
-
-      where(parent_id: parent_id).upcoming.first
-    end
+    # This method is no longer needed as the functionality has been moved
+    # to the DueDateActions concern which provides a cleaner interface
+    # that doesn't require the caller to know about topic vs assignment due dates
   end
 
   private

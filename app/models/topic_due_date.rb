@@ -1,15 +1,11 @@
 # frozen_string_literal: true
 
 class TopicDueDate < DueDate
-  def self.next_due_date(assignment_id, topic_id)
-    topic_deadline = where(parent_id: topic_id, parent_type: 'ProjectTopic')
-                     .where('due_at >= ?', Time.current)
-                     .order(:due_at)
-                     .first
-
-    topic_deadline || DueDate.where(parent_id: assignment_id, parent_type: 'Assignment')
-                             .where('due_at >= ?', Time.current)
-                             .order(:due_at)
-                             .first
-  end
+  # TopicDueDate is a subclass of DueDate that uses single table inheritance
+  # The 'type' field in the database will be automatically set to 'TopicDueDate'
+  # when instances of this class are created.
+  #
+  # This class inherits all functionality from DueDate and doesn't need
+  # any additional methods since the parent class and DueDateActions concern
+  # already handle topic-specific due date logic properly.
 end

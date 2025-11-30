@@ -48,17 +48,31 @@ module DueDateActions
     activity_permissible?(:drop_topic)
   end
 
-  # Get the next due date for this parent
+  # Get the next due date for this assignment
+  #
+  # This method abstracts away whether the assignment has topic-specific deadlines
+  # or assignment-level deadlines. The caller doesn't need to know the implementation
+  # details, they just ask for the next due date and get the appropriate one.
+  #
+  # @param topic_id [Integer, nil] Optional topic ID. If provided and the assignment
+  #   has topic-specific deadlines, returns the next deadline for that topic.
+  #   If the topic has no upcoming deadlines, falls back to assignment-level deadlines.
+  # @return [DueDate, nil] The next upcoming due date, or nil if none exist
   def next_due_date(topic_id = nil)
+    # If a topic is specified and this assignment has topic-specific deadlines,
+    # look for topic due dates first
     if topic_id && has_topic_specific_deadlines?
       topic_deadline = due_dates.where(parent_id: topic_id, parent_type: 'ProjectTopic')
-                               .where('due_at >= ?', Time.current)
-                               .order(:due_at)
+                               .upcoming
                                .first
       return topic_deadline if topic_deadline
     end
 
-    due_dates.where('due_at >= ?', Time.current).order(:due_at).first
+    # Fall back to assignment-level due dates
+    # This handles both cases:
+    # 1. No topic specified
+    # 2. Topic specified but no topic-specific deadlines found
+    due_dates.upcoming.first
   end
 
   # Get the current stage name for display purposes
