@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_29_040855) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -26,13 +26,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   end
 
   create_table "answers", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.integer "question_id", default: 0, null: false
+    t.integer "item_id", default: 0, null: false
     t.integer "response_id"
     t.integer "answer"
     t.text "comments"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["question_id"], name: "fk_score_questions"
+    t.index ["item_id"], name: "fk_score_questions"
     t.index ["response_id"], name: "fk_score_response"
   end
 
@@ -239,12 +239,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   end
 
   create_table "question_advices", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.bigint "question_id", null: false
+    t.bigint "item_id", null: false
     t.integer "score"
     t.text "advice"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["question_id"], name: "index_question_advices_on_question_id"
+    t.index ["item_id"], name: "index_question_advices_on_item_id"
   end
 
   create_table "question_types", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -273,7 +273,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   end
 
   create_table "quiz_question_choices", id: :integer, charset: "latin1", force: :cascade do |t|
-    t.integer "question_id"
+    t.integer "item_id"
     t.text "txt"
     t.boolean "iscorrect", default: false
     t.datetime "created_at", null: false
@@ -416,7 +416,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   add_foreign_key "participants", "join_team_requests"
   add_foreign_key "participants", "teams"
   add_foreign_key "participants", "users"
-  add_foreign_key "question_advices", "items", column: "question_id"
+  add_foreign_key "question_advices", "items"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
   add_foreign_key "sign_up_topics", "assignments"
   add_foreign_key "signed_up_teams", "sign_up_topics"

@@ -50,7 +50,7 @@ class Response < ApplicationRecord
     # we accept nil as answer for scorable questions, and they will not be counted towards the total score
     sum = 0
     scores.each do |s|
-      item = Item.find(s.question_id)
+      item = Item.find(s.item_id)
       # For quiz responses, the weights will be 1 or 0, depending on if correct
       sum += s.answer * item.weight unless s.answer.nil? || !item.scorable?
     end
