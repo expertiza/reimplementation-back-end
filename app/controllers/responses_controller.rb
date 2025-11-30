@@ -10,11 +10,14 @@ class ResponsesController < ApplicationController
       true
     when 'update', 'submit'
       @response = Response.find(params[:id])
-      unless response_belongs_to? || has_privileges_of?('Instructor') || has_privileges_of?('Admin')
+      unless response_belongs_to? || current_user_has_admin_privileges? || 
+             (current_user_has_instructor_privileges? && current_user_instructs_response_assignment?)
         render json: { error: 'forbidden' }, status: :forbidden
       end
     when 'unsubmit', 'destroy'
-      unless has_privileges_of?('Instructor') || has_privileges_of?('Admin')
+      # Only allow if user is the instructor of the associated assignment or has admin privileges
+      unless current_user_has_admin_privileges? || 
+             (current_user_has_instructor_privileges? && current_user_instructs_response_assignment?)
         render json: { error: 'forbidden' }, status: :forbidden
       end
     else
@@ -35,7 +38,7 @@ class ResponsesController < ApplicationController
     )
 
     if @response.save
-      render json: { message: 'Response draft created successfully', response: @response }, status: :created
+      render json: { message: "#{response_map_label} submission started successfully", response: @response }, status: :created
     else
       render json: { error: @response.errors.full_messages.to_sentence }, status: :unprocessable_entity
     end
@@ -44,11 +47,10 @@ class ResponsesController < ApplicationController
   # PATCH /responses/:id
   # Reviewer edits existing draft (still unsubmitted)
   def update
-    puts "Updating Response ID: #{params[:id]}"
     return render json: { error: 'forbidden' }, status: :forbidden if @response.is_submitted?
 
     if @response.update(response_params)
-      render json: { message: 'Draft updated successfully', response: @response }, status: :ok
+      render json: { message: "#{response_map_label} submission saved successfully", response: @response }, status: :ok
     else
       render json: { error: @response.errors.full_messages.to_sentence }, status: :unprocessable_entity
     end
@@ -57,13 +59,13 @@ class ResponsesController < ApplicationController
   # PATCH /responses/:id/submit
   # Lock the response and calculate final score
   def submit
-    return render json: { error: 'User response not found' }, status: :not_found unless @response
+    return render json: { error: 'Submission not found' }, status: :not_found unless @response
     if @response.is_submitted?
-      return render json: { error: 'User has already submitted the response' }, status: :unprocessable_entity
+      return render json: { error: 'Submission has already been locked' }, status: :unprocessable_entity
     end
     # Check deadline
     unless submission_window_open?(@response)
-      return render json: { error: 'Deadline has passed' }, status: :forbidden
+      return render json: { error: 'Submission deadline has passed' }, status: :forbidden
     end
 
     # Lock response
@@ -74,7 +76,7 @@ class ResponsesController < ApplicationController
 
     if @response.save
       render json: {
-        message: 'Response submitted successfully',
+        message: "#{response_map_label} submission locked and scored successfully",
         response: @response,
         total_score: total_score
       }, status: :ok
@@ -84,22 +86,22 @@ class ResponsesController < ApplicationController
   end
 
   # PATCH /responses/:id/unsubmit
-  # Instructor/Admin reopens a submitted response
+  # Instructor/Admin reopens a submitted response for further editing
   def unsubmit
-    return render json: { error: 'User response not found' }, status: :not_found unless @response
+    return render json: { error: "#{response_map_label} submission not found" }, status: :not_found unless @response
 
     if @response.is_submitted?
       @response.update(is_submitted: false)
-      render json: { message: 'User response has been unsubmitted', response: @response }, status: :ok
+      render json: { message: "#{response_map_label} submission reopened for edits. The reviewer can now make changes.", response: @response }, status: :ok
     else
-      render json: { error: 'User response already unsubmitted' }, status: :unprocessable_entity
+      render json: { error: "This #{response_map_label.downcase} submission is not locked, so it cannot be reopened" }, status: :unprocessable_entity
     end
   end
 
   # DELETE /responses/:id
   # Instructor/Admin deletes invalid/test response
   def destroy
-    return render json: { error: 'User response not found' }, status: :not_found unless @response
+    return render json: { error: 'Submission not found' }, status: :not_found unless @response
 
     @response.destroy
     head :no_content
@@ -136,21 +138,44 @@ class ResponsesController < ApplicationController
     map.reviewer == current_user
   end
 
+  # Checks whether the current_user is the instructor for the assignment
+  # associated with the response identified by params[:id].
+  # Uses the shared authorization method from Authorization concern.
+  def current_user_instructs_response_assignment?
+    resp = Response.find_by(id: params[:id])
+    return false unless resp&.response_map
+
+    assignment = resp.response_map&.assignment
+    return false unless assignment
+
+    # Delegate to the shared authorization helper
+    current_user_instructs_assignment?(assignment)
+  end
+
+  # Returns the friendly label for the response's map type (e.g., "Review", "Assignment Survey")
+  # Falls back to a generic "Submission" if the label cannot be determined.
+  def response_map_label
+    return 'Submission' unless @response&.response_map
+
+    map_label = @response.response_map&.response_map_label
+    map_label.presence || 'Submission'
+  end
+
   # Returns true if the assignment's due date is in the future or no due date is set
   def submission_window_open?(response)
-    assignment = response.respond_to?(:response_map) ? response.response_map&.assignment : nil
+    assignment = response&.response_map&.assignment
     return true if assignment.nil?
-    return true if assignment.respond_to?(:due_dates) && assignment.due_dates.nil?
-    # if due_date responds to future? use it, otherwise compare to now
-    if assignment.respond_to?(:due_dates) && assignment.due_dates.respond_to?(:future?)
-      return assignment.due_dates.first.future?
+    return true if assignment.due_dates.nil?
+    
+    # Check if due_date has a future? method, otherwise compare timestamps
+    due_dates = assignment.due_dates
+    if due_dates.respond_to?(:future?)
+      return due_dates.first.future?
     end
 
-    # fallback: compare
-    due = assignment.due_dates
-    return true if due.nil?
-
-    puts "Checking deadline: due_at=#{due.inspect}, current_time=#{Time.current}"
-    due.first.due_at > Time.current
+    # Fallback: compare timestamps
+    return true if due_dates.first.nil?
+    
+    due_dates.first.due_at > Time.current
   end
 end
