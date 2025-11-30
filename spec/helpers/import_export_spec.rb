@@ -100,24 +100,30 @@ RSpec.describe ImportableExportableHelper, type: :helper do
   # * Create a test with an empty CSV (With Headers)
   # * Create a test with an empty CSV (Without Headers)
   describe 'Create Tests to test Errors/Edge Cases' do
-    it 'Create a test with external lookup class that does not exist' do
+    it 'Import a class with an invalid field (User with invalid email)' do
+      csv_file = file_fixture('single_user_email_invalid.csv')
+
+      expect {User.try_import_records(csv_file, nil, use_header: true)}.to raise_error
+    end
+
+    it 'Import a class with external lookup class that does not exist' do
       expect(User.count).to eq(1)
 
       csv_file = file_fixture('single_user_role_doe_not_exist.csv')
 
-      User.try_import_records(csv_file, nil, use_header: true)
+      expect { User.try_import_records(csv_file, nil, use_header: true) }.to raise_error
 
       expect(User.count).to eq(1)
       expect(User.find_by(email: 'jdoe@email.com')).not_to be_present
     end
 
-    it 'Create a test with an empty CSV (With Headers)' do
+    it 'Import an empty CSV (With Headers)' do
       csv_file = file_fixture('empty_with_headers.csv')
 
       expect{User.try_import_records(csv_file, nil, use_header: true)}.not_to change(User, :count)
     end
 
-    it 'Create a test with an empty CSV (Without Headers)' do
+    it 'Import an empty CSV (Without Headers)' do
       csv_file = file_fixture('empty.csv')
 
       expect{User.try_import_records(csv_file, [], use_header: false)}.not_to change(User, :count)

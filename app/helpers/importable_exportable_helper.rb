@@ -23,15 +23,6 @@ class ExternalClass
 
   end
 
-  # Method to add the class name to a field. This is useful when the CSV might refer to a column with
-  # the class name appended (Ex role_name) but the internal field drops the class name (Ex Role.name)
-  def append_class_name(field)
-    @ref_class.name.underscore + "_" + field
-  end
-
-  def unappended_class_name(name)
-    name.delete_prefix(@ref_class.name.underscore + "_")
-  end
 
   # Attempts too look in the database for any mention of the current class. It looks using the
   # given lookup field and the primary key. It checks both with and without the classname appended
@@ -74,6 +65,17 @@ class ExternalClass
 
     @ref_class.new(fixed_attrs)
   end
+
+  private
+  # Method to add the class name to a field. This is useful when the CSV might refer to a column with
+  # the class name appended (Ex role_name) but the internal field drops the class name (Ex Role.name)
+  def append_class_name(field)
+    @ref_class.name.underscore + "_" + field
+  end
+
+  def unappended_class_name(name)
+    name.delete_prefix(@ref_class.name.underscore + "_")
+  end
 end
 
 module ImportableExportableHelper
@@ -88,6 +90,7 @@ module ImportableExportableHelper
       base.instance_variable_set(:@mandatory_fields, base.superclass.mandatory_fields)
       base.instance_variable_set(:@external_classes, base.superclass.external_classes)
       base.instance_variable_set(:@class_name, base.superclass.name)
+      base.instance_variable_set(:@available_actions_on_duplicate, base.superclass.available_actions_on_duplicate)
     else
       base.instance_variable_set(:@class_name, base.name)
     end
@@ -184,11 +187,13 @@ module ImportableExportableHelper
       # todo - Handle duplicate records that are thrown out when importing the rows
 
       # Comment this out if you want to run the tests
-      raise ActiveRecord::Rollback # todo - remove this when wanting to actually channge the data
+      # raise ActiveRecord::Rollback # todo - remove this when wanting to actually channge the data
     end
 
 
     File.delete(temp_file)
+    dup_records
+
   end
 
     # Import row function takes a hash for a row and tries to save it in the current class.
@@ -284,14 +289,22 @@ module ImportableExportableHelper
     rescue ActiveRecord::RecordInvalid => e
       # Handle validation errors
       puts "Validation error: #{e.message}"
-      return created_object
+
+      # Check if a specific attribute has a :uniqueness error
+      if created_object.errors.details[:attribute_name].any? { |detail| detail[:error] == :uniqueness }
+        puts "Uniqueness violation on attribute_name!"
+        return created_object
+      else
+        raise StandardError
+      end
+
+
     rescue ActiveRecord::RecordNotUnique => e
       # Handle unique constraint violations
       puts "Unique constraint violation: #{e.message}"
       return created_object
-    rescue StandardError => e
-      puts "An unexpected error occurred: #{e.message}"
-      raise ActiveRecord::Rollback
+    rescue StandardError
+      raise StandardError
     end
   end
   # end

@@ -4,9 +4,13 @@ class ImportController < ApplicationController
   before_action :import_params
   def index
     imported_class = params[:class].constantize
-    mapping = FieldMapping.new(imported_class, ["name", "id", "email"])
 
-    p mapping.duplicate_headers
+    render json: {
+      mandatory_fields: imported_class.mandatory_fields,
+      optional_fields: imported_class.optional_fields,
+      external_fields: imported_class.external_fields,
+      available_actions_on_dup: [] # Only for import
+    }, status: :ok
   end
 
   def import
@@ -15,6 +19,12 @@ class ImportController < ApplicationController
     ordered_fields = JSON.parse(params[:ordered_fields]) if params[:ordered_fields]
 
     params[:class].constantize.try_import_records(uploaded_file, ordered_fields, use_header: use_headers)
+
+    render json: { message: "#{params[:class].name} has been imported!" }, status: :created
+
+  rescue StandardError => e
+      puts "An unexpected error occurred: #{e.message}"
+      render json: { error: e.message }, status: :unprocessable_entity
   end
 
   private
