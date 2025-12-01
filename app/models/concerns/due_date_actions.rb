@@ -4,7 +4,7 @@ module DueDateActions
   # Generic activity permission checker that determines if an activity is permissible
   # based on the current deadline state for this parent object
   def activity_permissible?(activity)
-    current_deadline = next_due_date()
+    current_deadline = next_due_date
     return false unless current_deadline
 
     current_deadline.activity_permissible?(activity)
@@ -48,23 +48,17 @@ module DueDateActions
     activity_permissible?(:drop_topic)
   end
 
-  # Get the next due date for this assignment
+  # Return the next upcoming due date. If topic_id is given and topic-specific
+  # deadlines exist, prefer that topic's next deadline; otherwise fall back to
+  # assignment-level deadlines.
   #
-  # This method abstracts away whether the assignment has topic-specific deadlines
-  # or assignment-level deadlines. The caller doesn't need to know the implementation
-  # details, they just ask for the next due date and get the appropriate one.
-  #
-  # @param topic_id [Integer, nil] Optional topic ID. If provided and the assignment
-  #   has topic-specific deadlines, returns the next deadline for that topic.
-  #   If the topic has no upcoming deadlines, falls back to assignment-level deadlines.
-  # @return [DueDate, nil] The next upcoming due date, or nil if none exist
+  # @param topic_id [Integer, nil] optional topic ID to prefer topic-specific deadlines
+  # @return [DueDate, nil] next upcoming due date or nil if none exist
   def next_due_date(topic_id = nil)
     # If a topic is specified and this assignment has topic-specific deadlines,
     # look for topic due dates first
     if topic_id && has_topic_specific_deadlines?
-      topic_deadline = due_dates.where(parent_id: topic_id, parent_type: 'ProjectTopic')
-                               .upcoming
-                               .first
+      topic_deadline = due_dates.where(parent_id: topic_id, parent_type: 'ProjectTopic').upcoming.first
       return topic_deadline if topic_deadline
     end
 
@@ -77,7 +71,7 @@ module DueDateActions
 
   # Get the current stage name for display purposes
   def current_stage
-    deadline = next_due_date()
+    deadline = next_due_date
     return 'finished' unless deadline
 
     deadline.deadline_type&.name || 'unknown'
@@ -111,6 +105,7 @@ module DueDateActions
 
     sorted_deadlines.each do |deadline|
       return false if previous_date && deadline.due_at < previous_date
+
       previous_date = deadline.due_at
     end
 
