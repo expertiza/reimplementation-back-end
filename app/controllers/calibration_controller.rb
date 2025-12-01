@@ -13,7 +13,7 @@ class CalibrationController < ApplicationController
     calibration_submissions = ResponseMap.where(
       reviewed_object_id: assignment_id,
       reviewer_id: instructor_participant_id,
-      for_calibration: true
+      to_calibrate: true # for_calibration indicates instructor reviews
     )
 
     # Get the details for each calibration submission
@@ -50,7 +50,7 @@ class CalibrationController < ApplicationController
     student_calibration_maps = ResponseMap.where(
       reviewer_id: student_participant_id,
       reviewed_object_id: assignment_id,
-      for_calibration: true
+      to_calibrate: true
     )
 
     # For each calibration review, compare the student's review and the instructor's review
@@ -91,8 +91,8 @@ class CalibrationController < ApplicationController
   # they calibrated:
   #  - all reviewers (team members who submitted the work)
   #  - all hyperlinks submitted by that user/team
-  #  - the for_calibration flag
-  def get_student_calibration_summary
+  #  - the to_calibrate flag for that calibration review
+  def summary
     student_participant_id = params[:student_participant_id]
     assignment_id          = params[:assignment_id]
 
@@ -100,7 +100,7 @@ class CalibrationController < ApplicationController
     student_calibration_maps = ResponseMap.where(
       reviewer_id: student_participant_id,
       reviewed_object_id: assignment_id,
-      for_calibration: true
+      to_calibrate: true
     )
 
     submissions = student_calibration_maps.map do |student_response_map|
@@ -130,7 +130,7 @@ class CalibrationController < ApplicationController
         reviewee_team_id: reviewee.parent_id,
         reviewers: reviewers,
         hyperlinks: hyperlinks,
-        for_calibration: student_response_map.for_calibration
+        to_calibrate: student_response_map.to_calibrate
       }
     end.compact
 
@@ -159,7 +159,7 @@ class CalibrationController < ApplicationController
     student_calibration_maps = ResponseMap.where(
       reviewed_object_id: assignment_id,
       reviewee_id: reviewee_id,
-      for_calibration: true
+      to_calibrate: true
     )
 
     # Exclude the instructor's own map to ensure we only get students
@@ -258,37 +258,34 @@ class CalibrationController < ApplicationController
     instructor_participant.id
   end
 
-  # Need to updated once the pull request is complete!
+  # Retrieves submitted content (hyperlinks and files) for a team using SubmissionRecord model
+  # SubmissionRecord stores both hyperlinks and files with metadata
+  # This method queries the SubmissionRecord table for the given team and assignment
+  # Gets the latest submissions and reads files from the team's submission directory
   def get_submitted_content(team_id)
     # Find the team
     team = Team.find_by(id: team_id)
-
     unless team
       Rails.logger.warn("Team not found: #{team_id}")
       return { hyperlinks: [], files: [], error: 'Team not found' }
     end
 
-    # Find a participant from this team (needed for file path)
-    participant = Participant.find_by(parent_id: team_id)
-
-    unless participant
-      Rails.logger.warn("No participant found for team_id: #{team_id}")
-      # Still return hyperlinks even without participant
-      return {
-        hyperlinks: format_team_hyperlinks(team.hyperlinks),
-        files: [],
-        error: 'No participant found for files'
-      }
+    # Get assignment from team (AssignmentTeam has assignment through parent_id)
+    assignment = team.assignment
+    unless assignment
+      Rails.logger.warn("Assignment not found for team: #{team_id}")
+      return { hyperlinks: [], files: [], error: 'Assignment not found' }
     end
 
-    # Ensure team has directory number
-    team.set_student_directory_num
+    # Get the most recent hyperlinks from SubmissionRecord (ordered by creation date, latest first)
+    submission_records = SubmissionRecord.where(team_id: team_id, assignment_id: assignment.id)
+                                         .order(created_at: :desc)
 
-    # Get hyperlinks directly from team
-    hyperlinks = format_team_hyperlinks(team.hyperlinks)
+    # Retrieve hyperlinks from SubmissionRecord, excluding those with 'remove' operation
+    hyperlinks = build_hyperlinks_from_records(submission_records.hyperlinks.where.not(operation: 'remove'))
 
-    # Get files from file system
-    files = get_team_files(participant)
+    # Retrieve files from the team's submission directory (actual files on filesystem)
+    files = get_team_submitted_files(team, assignment)
 
     {
       hyperlinks: hyperlinks,
@@ -300,55 +297,56 @@ class CalibrationController < ApplicationController
     { hyperlinks: [], files: [], error: "Content not available: #{e.message}" }
   end
 
-  def format_team_hyperlinks(hyperlink_array)
-    return [] if hyperlink_array.blank?
-
-    hyperlink_array.map.with_index do |url, index|
-      {
-        url: url,
-        display_text: url.length > 50 ? "#{url[0..47]}..." : url,
-        index: index
-      }
-    end
-  end
-
-  def get_team_files(participant)
-    base_path = participant.team_path.to_s
+  # Retrieves actual submitted files from the team's submission directory on the filesystem
+  # Uses team's directory_num to construct the path where files are stored
+  def get_team_submitted_files(team, assignment)
     files = []
 
-    # Check if directory exists
+    # Return empty if team has no directory number (hasn't submitted yet)
+    return [] if team.directory_num.blank?
+
+    # Construct the submission directory path: /submissions/{assignment_id}/{directory_num}/
+    base_path = Rails.root.join('submissions', assignment.id.to_s, team.directory_num.to_s)
+
+    # Return empty array if directory doesn't exist
     unless File.exist?(base_path) && File.directory?(base_path)
-      Rails.logger.info("Team directory doesn't exist yet: #{base_path}")
+      Rails.logger.info("Submission directory not found: #{base_path}")
       return []
     end
 
-    # List all files in directory
+    # List all files in the submission directory
     Dir.entries(base_path).each do |entry|
+      # Skip current directory and parent directory references
       next if ['.', '..'].include?(entry)
 
       entry_path = File.join(base_path, entry)
+
+      # Only include files, not subdirectories
       next if File.directory?(entry_path)
 
-      files << {
-        filename: entry,
-        size: File.size(entry_path),
-        size_human: format_file_size(File.size(entry_path)),
-        type: File.extname(entry).delete('.'),
-        modified_at: File.mtime(entry_path),
-        download_url: build_file_download_url(participant.id, entry)
-      }
+      begin
+        files << {
+          filename: entry,
+          size: File.size(entry_path),
+          size_human: format_file_size(File.size(entry_path)),
+          type: File.extname(entry).delete_prefix('.'),
+          modified_at: File.mtime(entry_path),
+          download_url: "/submitted_content/download?team_id=#{team.id}&filename=#{CGI.escape(entry)}"
+        }
+      rescue StandardError => e
+        Rails.logger.warn("Error processing file #{entry_path}: #{e.message}")
+        next
+      end
     end
 
+    # Return files sorted alphabetically for consistent ordering
     files.sort_by { |f| f[:filename].downcase }
   rescue StandardError => e
-    Rails.logger.error("Error reading files from #{base_path}: #{e.message}")
+    Rails.logger.error("Error reading submitted files from #{base_path}: #{e.message}")
     []
   end
 
-  def build_file_download_url(participant_id, filename)
-    "/submitted_content/download?id=#{participant_id}&download=#{CGI.escape(filename)}&current_folder[name]=/"
-  end
-
+  # Formats file size from bytes to human-readable format
   def format_file_size(bytes)
     return '0 B' if bytes.zero?
 
@@ -359,6 +357,27 @@ class CalibrationController < ApplicationController
     else
       "#{(bytes / (1024.0 * 1024.0)).round(2)} MB"
     end
+  end
+
+  # Builds hyperlink array from SubmissionRecord hyperlink records
+  # Each record contains: content (URL), user (string), created_at, operation
+  def build_hyperlinks_from_records(hyperlink_records)
+    hyperlink_records.map do |record|
+      {
+        url: record.content,
+        display_text: truncate_url(record.content),
+        submitted_by: record.user || 'Unknown',
+        submitted_at: record.created_at
+      }
+    end
+  rescue StandardError => e
+    Rails.logger.error("Error building hyperlinks from records: #{e.message}")
+    []
+  end
+
+  # Truncates URL for display purposes (shows first 50 chars, adds ellipsis if longer)
+  def truncate_url(url)
+    url.length > 50 ? "#{url[0..47]}..." : url
   end
 
   # Check whether the review has been started, is in progress or is completed
@@ -379,7 +398,7 @@ class CalibrationController < ApplicationController
     instructor_response_map = ResponseMap.find_by(
       reviewer_id: instructor_participant_id,
       reviewee_id: reviewee_id,
-      for_calibration: true
+      to_calibrate: true
     )
 
     return nil if instructor_response_map.nil? # No review found
