@@ -205,9 +205,14 @@ module GradesHelper
   
   # This method retrieves all items from relevant questionnaires associated with this assignment. 
   def list_items(assignment)
+    return {} unless assignment&.questionnaires&.any?
+    
     assignment.questionnaires.each_with_object({}) do |questionnaire, items|
-      items[questionnaire.id.to_s] = questionnaire.items
+      items[questionnaire.id.to_s] = questionnaire.items.to_a rescue []
     end
+  rescue => e
+    Rails.logger.error "Error in list_items: #{e.message}"
+    {}
   end
 
   # Method associated with Update methods:
