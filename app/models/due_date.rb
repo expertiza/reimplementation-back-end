@@ -43,7 +43,6 @@ class DueDate < ApplicationRecord
     new_due_date
   end
 
-
   # Get the deadline type name
   def deadline_type_name
     deadline_type&.name
@@ -57,6 +56,7 @@ class DueDate < ApplicationRecord
   # Comparison method for sorting
   def <=>(other)
     return nil unless other.is_a?(DueDate)
+
     due_at <=> other.due_at
   end
 
@@ -87,14 +87,6 @@ class DueDate < ApplicationRecord
         new_due_date.save!
       end
     end
-
-
-
-
-
-    # This method is no longer needed as the functionality has been moved
-    # to the DueDateActions concern which provides a cleaner interface
-    # that doesn't require the caller to know about topic vs assignment due dates
   end
 
   private
@@ -102,11 +94,10 @@ class DueDate < ApplicationRecord
   def due_at_is_valid_datetime
     return unless due_at.present?
 
-    unless due_at.is_a?(Time) || due_at.is_a?(DateTime)
-      errors.add(:due_at, 'must be a valid datetime')
-    end
-  end
+    return if due_at.is_a?(Time) || due_at.is_a?(DateTime)
 
+    errors.add(:due_at, 'must be a valid datetime')
+  end
 
   # Set default round if not specified
   before_save :set_default_round
