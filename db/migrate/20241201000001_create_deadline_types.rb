@@ -11,8 +11,10 @@ class CreateDeadlineTypes < ActiveRecord::Migration[7.0]
 
     add_index :deadline_types, :name, unique: true
 
+    change_column :due_dates, :deadline_type_id, :bigint
+
     # Add foreign key constraint to due_dates table
-    add_foreign_key :due_dates, :deadline_types, column: :deadline_type_id
+    # add_foreign_key :due_dates, :deadline_types, column: :deadline_type_id
 
     # Seed canonical deadline type data
     reversible do |dir|
