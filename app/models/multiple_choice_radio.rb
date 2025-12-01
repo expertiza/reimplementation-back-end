@@ -4,7 +4,7 @@ require 'json'
 
 class MultipleChoiceRadio < QuizItem
   def edit
-    quiz_question_choices = QuizQuestionChoice.where(question_id: id)
+    quiz_question_choices = QuizQuestionChoice.where(item_id: id)
 
     choices = quiz_question_choices.map.with_index(1) do |choice, index|
       {
@@ -24,7 +24,7 @@ class MultipleChoiceRadio < QuizItem
   end
 
   def complete
-    quiz_question_choices = QuizQuestionChoice.where(question_id: id)
+    quiz_question_choices = QuizQuestionChoice.where(item_id: id)
 
     choices = quiz_question_choices.map.with_index(1) do |choice, index|
       {
@@ -35,14 +35,14 @@ class MultipleChoiceRadio < QuizItem
     end
 
     {
-      question_id: id,
+      item_id: id,
       question_text: txt,
       choices: choices
     }.to_json
   end
 
   def view_completed_item(user_answer)
-    quiz_question_choices = QuizQuestionChoice.where(question_id: id)
+    quiz_question_choices = QuizQuestionChoice.where(item_id: id)
 
     choices = quiz_question_choices.map do |choice|
       {

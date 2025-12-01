@@ -8,7 +8,7 @@ module ScorableHelper
     # answer for scorable questions, and they will not be counted towards the total score)
 
     sum = 0
-    question_ids = scores.map(&:question_id)
+    question_ids = scores.map(&:item_id)
 
     # We use find with order here to ensure that the list of questions we get is in the same order as that of question_ids
     questions = Item.find_with_order(question_ids)
@@ -35,7 +35,7 @@ module ScorableHelper
     # Only count the scorable questions, only when the answer is not nil (we accept nil as
     # answer for scorable questions, and they will not be counted towards the total score)
     total_weight = 0
-    question_ids = scores.map(&:question_id)
+    question_ids = scores.map(&:item_id)
 
     # We use find with order here to ensure that the list of questions we get is in the same order as that of question_ids
     questions = Item.find_with_order(question_ids)
@@ -60,7 +60,7 @@ module ScorableHelper
       assignment = map.response_assignment
       questionnaire = Questionnaire.find(assignment.review_questionnaire_id)
     else
-      questionnaire = Item.find(answer.question_id).questionnaire
+      questionnaire = Item.find(answer.item_id).questionnaire
     end
     questionnaire
   end
