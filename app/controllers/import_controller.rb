@@ -1,7 +1,28 @@
-# This file holds the logic for importing data from external sources into the application.
+# This controller handles importing CSV data into any supported model.
+# It exposes two endpoints:
+#   • GET  /import        -> returns field requirements for the selected class
+#   • POST /import        -> processes the uploaded CSV file
+#
+# The controller delegates actual import logic to:
+#   klass.try_import_records(...)
+#
+# Each model that supports importing must implement:
+#   mandatory_fields
+#   optional_fields
+#   external_fields
+#   try_import_records(file, ordered_fields, use_header:)
+#
 
 class ImportController < ApplicationController
+  # Ensure strong parameters are processed before each action
   before_action :import_params
+
+  ##
+  # GET /import
+  #
+  # Returns metadata about which fields a given class requires or accepts.
+  # The frontend uses this to build the mapping UI (drag/drop field matching).
+  #
   def index
     imported_class = params[:class].constantize
 
@@ -9,25 +30,55 @@ class ImportController < ApplicationController
       mandatory_fields: imported_class.mandatory_fields,
       optional_fields: imported_class.optional_fields,
       external_fields: imported_class.external_fields,
-      available_actions_on_dup: [] # Only for import
+
+      # Import does not provide duplicate-resolution strategies (those apply to export)
+      available_actions_on_dup: []
     }, status: :ok
   end
 
+  ##
+  # POST /import
+  #
+  # This action performs the actual import process. It:
+  #   1. Reads the uploaded CSV file
+  #   2. Determines whether the CSV includes headers
+  #   3. Applies user-chosen field ordering (if provided)
+  #   4. Hands off import logic to the model via `try_import_records`
+  #
   def import
-    uploaded_file = params[:csv_file]
-    use_headers = ActiveRecord::Type::Boolean.new.deserialize(params[:use_headers])
+    uploaded_file  = params[:csv_file]
+
+    # Convert use_headers ("true"/"false") into actual boolean
+    use_headers    = ActiveRecord::Type::Boolean.new.deserialize(params[:use_headers])
+
+    # If the user provided a custom field ordering, load it from JSON
     ordered_fields = JSON.parse(params[:ordered_fields]) if params[:ordered_fields]
 
-    params[:class].constantize.try_import_records(uploaded_file, ordered_fields, use_header: use_headers)
+    # Dynamically load the model class (e.g., "User", "Team", etc.)
+    klass = params[:class].constantize
 
-    render json: { message: "#{params[:class].name} has been imported!" }, status: :created
+    # Call the model-level importer (defined in each model using the import mixin)
+    klass.try_import_records(
+      uploaded_file,
+      ordered_fields,
+      use_header: use_headers
+    )
+
+    # If no exceptions occur, return success
+    render json: { message: "#{klass.name} has been imported!" }, status: :created
 
   rescue StandardError => e
-      puts "An unexpected error occurred: #{e.message}"
-      render json: { error: e.message }, status: :unprocessable_entity
+    # Catch any unexpected runtime errors
+    puts "An unexpected error occurred during import: #{e.message}"
+
+    render json: { error: e.message }, status: :unprocessable_entity
   end
 
   private
+
+  ##
+  # Strong parameters for import operations
+  #
   def import_params
     params.permit(:csv_file, :use_headers, :class, :ordered_fields)
   end
