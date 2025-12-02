@@ -8,33 +8,39 @@ class CalibrationController < ApplicationController
 
     # Get the instructor's participant ID for this assignment
     instructor_participant_id = get_instructor_participant_id(assignment_id)
+    return render json: { error: 'Instructor not found' }, status: :not_found if instructor_participant_id.nil?
 
     # Find calibration submissions where the INSTRUCTOR is the REVIEWER
+    # ReviewResponseMap has reviewee_id as a Team ID
     calibration_submissions = ResponseMap.where(
       reviewed_object_id: assignment_id,
       reviewer_id: instructor_participant_id,
-      to_calibrate: true # for_calibration indicates instructor reviews
+      for_calibration: true
     )
 
     # Get the details for each calibration submission
     submissions = calibration_submissions.map do |response_map|
-      # Find the participant who is being reviewed
-      reviewee = Participant.find_by(id: response_map.reviewee_id)
+      # For ReviewResponseMap, reviewee_id is a Team ID
+      reviewee_team = Team.find_by(id: response_map.reviewee_id)
+      next unless reviewee_team
+
+      # Get team display name (team name or first member's name)
+      team_name = reviewee_team.name.present? ? reviewee_team.name : reviewee_team.participants.first&.user&.full_name || 'Unknown Team'
 
       # Get the submission content for that team
-      submitted_content = get_submitted_content(reviewee.parent_id)
+      submitted_content = get_submitted_content(reviewee_team.id)
 
       # Check if the review has been started
       review_status = get_review_status(response_map.id)
 
       {
-        participant_name: reviewee.user.full_name,
+        team_name: team_name,
         reviewee_id: response_map.reviewee_id,
         response_map_id: response_map.id,
         submitted_content: submitted_content,
         review_status: review_status
       }
-    end
+    end.compact
 
     render json: { calibration_submissions: submissions }, status: :ok
   end
@@ -47,16 +53,24 @@ class CalibrationController < ApplicationController
     assignment_id = params[:assignment_id]
 
     # Find all calibration reviews this student did
+    # ReviewResponseMap has reviewee_id as a Team ID
     student_calibration_maps = ResponseMap.where(
       reviewer_id: student_participant_id,
       reviewed_object_id: assignment_id,
-      to_calibrate: true
+      for_calibration: true
     )
 
     # For each calibration review, compare the student's review and the instructor's review
     comparisons = student_calibration_maps.map do |student_response_map|
+      # For ReviewResponseMap, reviewee_id is a Team ID
+      reviewee_team = Team.find_by(id: student_response_map.reviewee_id)
+      next unless reviewee_team
+
+      # Get team display name
+      team_name = reviewee_team.name.present? ? reviewee_team.name : reviewee_team.participants.first&.user&.full_name || 'Unknown Team'
+
       # Get the student's review
-      student_review = Response.where(response_map_id: student_response_map.id)
+      student_review = Response.where(map_id: student_response_map.id)
                                .order(updated_at: :desc)
                                .first
 
@@ -74,11 +88,11 @@ class CalibrationController < ApplicationController
                    end
 
       {
-        reviewee_name: Participant.find(student_response_map.reviewee_id).user.full_name,
+        reviewee_name: team_name,
         reviewee_id: student_response_map.reviewee_id,
         comparison: comparison
       }
-    end
+    end.compact
 
     render json: {
       student_participant_id: student_participant_id,
@@ -91,28 +105,26 @@ class CalibrationController < ApplicationController
   # they calibrated:
   #  - all reviewers (team members who submitted the work)
   #  - all hyperlinks submitted by that user/team
-  #  - the to_calibrate flag for that calibration review
+  #  - the for_calibration flag for that calibration review
   def summary
     student_participant_id = params[:student_participant_id]
     assignment_id          = params[:assignment_id]
 
     # All calibration maps for this student on this assignment
+    # ReviewResponseMap has reviewee_id as a Team ID
     student_calibration_maps = ResponseMap.where(
       reviewer_id: student_participant_id,
       reviewed_object_id: assignment_id,
-      to_calibrate: true
+      for_calibration: true
     )
 
     submissions = student_calibration_maps.map do |student_response_map|
-      # The submission being calibrated belongs to this reviewee participant
-      reviewee = Participant.find_by(id: student_response_map.reviewee_id)
-      next unless reviewee
+      # For ReviewResponseMap, reviewee_id is a Team ID
+      reviewee_team = Team.find_by(id: student_response_map.reviewee_id)
+      next unless reviewee_team
 
       # Team members (there may be multiple if the submission is by a team)
-      team_members = Participant.where(
-        assignment_id: assignment_id,
-        parent_id: reviewee.parent_id
-      )
+      team_members = reviewee_team.participants
 
       reviewers = team_members.map do |member|
         {
@@ -121,16 +133,15 @@ class CalibrationController < ApplicationController
         }
       end
 
-      # Submitted content for this team/user (hyperlinks + files)
-      submitted_content = get_submitted_content(reviewee.parent_id)
+      # Submitted content for this team (hyperlinks + files)
+      submitted_content = get_submitted_content(reviewee_team.id)
       hyperlinks = submitted_content[:hyperlinks] || []
 
       {
-        reviewee_participant_id: reviewee.id,
-        reviewee_team_id: reviewee.parent_id,
+        reviewee_team_id: reviewee_team.id,
         reviewers: reviewers,
         hyperlinks: hyperlinks,
-        to_calibrate: student_response_map.to_calibrate
+        for_calibration: student_response_map.for_calibration
       }
     end.compact
 
@@ -159,7 +170,7 @@ class CalibrationController < ApplicationController
     student_calibration_maps = ResponseMap.where(
       reviewed_object_id: assignment_id,
       reviewee_id: reviewee_id,
-      to_calibrate: true
+      for_calibration: true
     )
 
     # Exclude the instructor's own map to ensure we only get students
@@ -168,7 +179,7 @@ class CalibrationController < ApplicationController
 
     # 3. Collect the latest submitted Response for each student
     student_responses = student_calibration_maps.map do |map|
-      Response.where(response_map_id: map.id).order(updated_at: :desc).first
+      Response.where(map_id: map.id).order(updated_at: :desc).first
     end.compact
 
     # 4. Process Question Breakdown
@@ -226,8 +237,10 @@ class CalibrationController < ApplicationController
     avg_agreement_pct = num_questions > 0 ? (total_match_rate_sum / num_questions).round(2) : 0
 
     # 6. Build Final JSON Response
-    reviewee = Participant.find_by(id: reviewee_id)
-    reviewee_name = reviewee ? reviewee.user.full_name : 'Unknown Reviewee'
+    # reviewee_id refers to a Team ID, not Participant ID
+    reviewee_team = Team.find_by(id: reviewee_id)
+    # Get the first participant's full name as representative of the team
+    reviewee_name = reviewee_team&.participants&.first&.user&.full_name || 'Unknown Reviewee'
 
     render json: {
       reviewee_id: reviewee_id,
@@ -249,13 +262,15 @@ class CalibrationController < ApplicationController
     instructor_id = assignment.instructor_id
 
     # Find the instructor's participant record for THIS assignment
+    # Use parent_id (not assignment_id) which references the assignment
     instructor_participant = Participant.find_by(
       user_id: instructor_id,
-      assignment_id: assignment_id
+      parent_id: assignment_id,
+      type: 'AssignmentParticipant'
     )
 
     # Return the participant_id (used in ResponseMaps)
-    instructor_participant.id
+    instructor_participant&.id
   end
 
   # Retrieves submitted content (hyperlinks and files) for a team using SubmissionRecord model
@@ -382,7 +397,7 @@ class CalibrationController < ApplicationController
 
   # Check whether the review has been started, is in progress or is completed
   def get_review_status(response_map_id)
-    response = Response.where(response_map_id: response_map_id)
+    response = Response.where(map_id: response_map_id)
                        .order(updated_at: :desc)
                        .first
 
@@ -393,18 +408,20 @@ class CalibrationController < ApplicationController
 
   def get_instructor_review_for_reviewee(assignment_id, reviewee_id)
     instructor_participant_id = get_instructor_participant_id(assignment_id)
+    return nil if instructor_participant_id.nil?
 
     # Find the ResponseMap where instructor reviewed this reviewee
+    # ReviewResponseMap has reviewee_id as a Team ID
     instructor_response_map = ResponseMap.find_by(
       reviewer_id: instructor_participant_id,
       reviewee_id: reviewee_id,
-      to_calibrate: true
+      for_calibration: true
     )
 
     return nil if instructor_response_map.nil? # No review found
 
     # Get the most recent Response
-    Response.where(response_map_id: instructor_response_map.id)
+    Response.where(map_id: instructor_response_map.id)
             .order(updated_at: :desc)
             .first
   end
