@@ -79,7 +79,7 @@ class GradesController < ApplicationController
 
         response_mapping_condition = "reviewed_object_id = " + params[:assignment_id] + " AND reviewer_id = " + params[:participant_id]
         ReviewResponseMap.where(response_mapping_condition).find_each do |mapping|
-            Response.where("map_id = " + mapping[:id]).find_each do |response|
+            Response.where("map_id = " + mapping[:id].to_s).find_each do |response|
             
                 # response = Response.find_by(map_id: mapping[:id])
 
