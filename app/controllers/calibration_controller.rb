@@ -50,62 +50,62 @@ class CalibrationController < ApplicationController
 # GET /calibration/student_report
 # Compares the logged-in student's calibration reviews against the instructor's reviews.
 # Returns detailed breakdown per question including scores, comments, and match statistics.
-def calibration_student_report
-  student_participant_id = params[:student_participant_id]
-  assignment_id = params[:assignment_id]
+  def calibration_student_report
+    student_participant_id = params[:student_participant_id]
+    assignment_id = params[:assignment_id]
 
-  # Validate required parameters
-  if student_participant_id.blank? || assignment_id.blank?
-    render json: { error: 'Missing required parameters' }, status: :bad_request and return
-  end
+    # Validate required parameters
+    if student_participant_id.blank? || assignment_id.blank?
+      render json: { error: 'Missing required parameters' }, status: :bad_request and return
+    end
 
-  # Find all calibration reviews this student completed for this assignment
-  student_calibration_maps = ResponseMap.where(
-    reviewer_id: student_participant_id,
-    reviewed_object_id: assignment_id,
-    for_calibration: true
-  )
-
-  # Build comparison report for each calibration review
-  calibration_reviews = student_calibration_maps.map do |student_response_map|
-    # Get reviewee team information
-    reviewee_team = Team.find_by(id: student_response_map.reviewee_id)
-    next unless reviewee_team
-
-    # Get team display name (consistent with other methods)
-    team_name = reviewee_team.name.present? ? reviewee_team.name : reviewee_team.participants.first&.user&.full_name || 'Unknown Team'
-
-    # Get the student's most recent review for this calibration
-    student_review = Response.where(map_id: student_response_map.id)
-                             .order(updated_at: :desc)
-                             .first
-
-    # Get the instructor's review of the same submission
-    instructor_review = get_instructor_review_for_reviewee(
-      assignment_id,
-      student_response_map.reviewee_id
+    # Find all calibration reviews this student completed for this assignment
+    student_calibration_maps = ResponseMap.where(
+      reviewer_id: student_participant_id,
+      reviewed_object_id: assignment_id,
+      for_calibration: true
     )
 
-    # Compare the two reviews (includes scores, comments, match rate, etc.)
-    comparison_data = if instructor_review && student_review
-                        compare_two_reviews(instructor_review, student_review)
-                      else
-                        { error: 'Missing review data' }
-                      end
+    # Build comparison report for each calibration review
+    calibration_reviews = student_calibration_maps.map do |student_response_map|
+      # Get reviewee team information
+      reviewee_team = Team.find_by(id: student_response_map.reviewee_id)
+      next unless reviewee_team
 
-    {
-      reviewee_name: team_name,
-      reviewee_id: student_response_map.reviewee_id,
-      comparison: comparison_data
-    }
-  end.compact
+      # Get team display name (consistent with other methods)
+      team_name = reviewee_team.name.present? ? reviewee_team.name : reviewee_team.participants.first&.user&.full_name || 'Unknown Team'
 
-  render json: {
-    student_participant_id: student_participant_id,
-    assignment_id: assignment_id,
-    calibration_reviews: calibration_reviews
-  }, status: :ok
-end
+      # Get the student's most recent review for this calibration
+      student_review = Response.where(map_id: student_response_map.id)
+                              .order(updated_at: :desc)
+                              .first
+
+      # Get the instructor's review of the same submission
+      instructor_review = get_instructor_review_for_reviewee(
+        assignment_id,
+        student_response_map.reviewee_id
+      )
+
+      # Compare the two reviews (includes scores, comments, match rate, etc.)
+      comparison_data = if instructor_review && student_review
+                          compare_two_reviews(instructor_review, student_review)
+                        else
+                          { error: 'Missing review data' }
+                        end
+
+      {
+        reviewee_name: team_name,
+        reviewee_id: student_response_map.reviewee_id,
+        comparison: comparison_data
+      }
+    end.compact
+
+    render json: {
+      student_participant_id: student_participant_id,
+      assignment_id: assignment_id,
+      calibration_reviews: calibration_reviews
+    }, status: :ok
+  end
 
   
 
@@ -443,60 +443,103 @@ end
             .first
   end
 
-  # Compare instructor and student reviews question by question
+  # Core logic: Compares instructor and student reviews question by question
+  # Returns detailed breakdown per question + summary stats
+  # Reusable by both Student Report and Aggregate Report
   def compare_two_reviews(instructor_review, student_review)
     return nil if instructor_review.nil? || student_review.nil?
 
-    # Get all answers (scores for each question) from both reviews
+    # Fetch all answers for both reviews
     instructor_answers = Answer.where(response_id: instructor_review.id)
     student_answers = Answer.where(response_id: student_review.id)
 
-    # Grouping by question for easy comparison
+    # Index by item_id for fast O(1) lookup
     instructor_scores = instructor_answers.index_by(&:item_id)
     student_scores = student_answers.index_by(&:item_id)
 
     question_comparisons = []
+    
+    # Statistics Counters
+    total_questions = 0
+    exact_matches = 0
+    close_matches = 0 # Off by 1 or 2 points
 
     instructor_scores.each do |item_id, instructor_answer|
       student_answer = student_scores[item_id]
-      item = Item.find(item_id)
+      
+      # 1. Get Values (Handle nil student answers gracefully)
+      inst_val = instructor_answer.answer.to_i
+      stud_val = student_answer&.answer.to_i || 0 # Treats missing answers as 0
+      diff = (inst_val - stud_val).abs
 
-      # Calculate the difference
-      instructor_score_value = instructor_answer.answer.to_i
-      student_score_value = student_answer&.answer.to_i || 0
-      difference = (student_score_value - instructor_score_value).abs
+      # 2. Update Stats
+      if diff == 0
+        exact_matches += 1
+      elsif diff <= 2
+        close_matches += 1
+      end
+      total_questions += 1
 
+      # 3. Build Question Object (Includes Comments & Text)
       question_comparisons << {
         item_id: item_id,
-        question_text: item.txt,
-        instructor_score: instructor_score_value,
-        student_score: student_score_value,
-        difference: difference,
-        direction: calculate_direction(student_score_value, instructor_score_value)
+        question_text: get_question_text(item_id),
+        instructor: { 
+          score: inst_val, 
+          comments: instructor_answer.comments 
+        },
+        student: { 
+          score: stud_val, 
+          comments: student_answer&.comments 
+        },
+        difference: diff,
+        direction: calculate_direction(stud_val, inst_val)
       }
     end
 
+    # 4. Calculate Final Aggregates
+    match_rate = total_questions > 0 ? ((exact_matches.to_f / total_questions) * 100).round(2) : 0
+    avg_diff = calculate_average_difference(question_comparisons)
+
     {
       questions: question_comparisons,
-      average_difference: calculate_average_difference(question_comparisons)
+      stats: {
+        total_questions: total_questions,
+        exact_matches: exact_matches,
+        close_matches: close_matches,      # Requirement: Off by 1 or 2
+        match_rate_percentage: match_rate, # Requirement: Match Rate
+        average_difference: avg_diff       # Requirement: Average Difference
+      }
     }
   end
 
-  # Calculate whether student scored higher, lower, or exactly the same
+  # Helper to safely retrieve question text using Item model
+  # Used to prevent crashes if an Item ID is invalid
+  def get_question_text(item_id)
+    Item.find(item_id).txt
+  rescue ActiveRecord::RecordNotFound
+    "Question #{item_id}"
+  end
+
+  # Determines if the student scored higher, lower, or exact
   def calculate_direction(student_score, instructor_score)
     if student_score == instructor_score
       'exact'
     elsif student_score > instructor_score
-      'over' # Student gave higher score than instructor
+      'over' # Student gave higher score
     else
-      'under' # Student gave lower score than instructor
+      'under' # Student gave lower score
     end
   end
 
+  # Computes the mean difference across all questions
   def calculate_average_difference(comparisons)
     return 0 if comparisons.empty?
-
-    total_difference = comparisons.sum { |c| c[:difference] }
-    (total_difference.to_f / comparisons.length).round(2)
+    total_diff = comparisons.sum { |c| c[:difference] }
+    (total_diff.to_f / comparisons.length).round(2)
   end
+
+
+
+
 end
