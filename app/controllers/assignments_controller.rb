@@ -9,8 +9,16 @@ class AssignmentsController < ApplicationController
 
   # GET /assignments/:id
   def show
-    assignment = Assignment.find(params[:id])
-    render json: assignment
+    assignment = Assignment.includes(assignment_questionnaires: :questionnaire, due_dates: {}).find(params[:id])
+    render json: assignment.as_json(
+      methods: [:num_review_rounds, :varying_rubrics_by_round], # for review rubrics vary by round functionality
+      include: {
+        assignment_questionnaires: {
+          include: :questionnaire
+        },
+        due_dates: {}
+      }
+    )
   end
 
   # POST /assignments
@@ -213,7 +221,8 @@ class AssignmentsController < ApplicationController
   private
   # Only allow a list of trusted parameters through.
   def assignment_params
-    params.require(:assignment).permit(:title, :description, :vary_by_round)
+    params.require(:assignment).permit(:title, :description, :name, :directory_path, :spec_location, :vary_by_round, :rounds_of_reviews,
+                                       assignment_questionnaires_attributes: [:id, :questionnaire_id, :used_in_round, :questionnaire_weight, :notification_limit, :_destroy])
   end
 
   # Helper method to determine staggered_and_no_topic for the assignment

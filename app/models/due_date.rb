@@ -47,10 +47,6 @@ class DueDate < ApplicationRecord
     save
   end
 
-  def review_deadline?
-    deadline_type_id == REVIEW_DEADLINE_TYPE_ID
-  end
-
   # Fetches due dates from parent then selects the next upcoming due date
   def self.next_due_date(parent_id)
     due_dates = fetch_due_dates(parent_id)
