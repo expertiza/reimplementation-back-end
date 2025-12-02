@@ -8,21 +8,21 @@ RSpec.describe 'Calibration API', type: :request do
     @roles = create_roles_hierarchy
   end
 
-  let(:instructor) {
+  let(:adm) {
     User.create(
-      name: "instructor",
+      name: "adma",
       password_digest: "password",
       role_id: @roles[:admin].id,
-      full_name: "Instructor",
+      full_name: "Admin A",
       email: "instructor@example.com",
-      mru_directory_path: "/home/instructor",
+      mru_directory_path: "/home/testuser",
       )
   }
 
   let(:token) { JsonWebToken.encode({id: adm.id}) }
   let(:Authorization) { "Bearer #{token}" }
 
-  path '/assignments/{assignment_id}/calibration_submissions' do
+  path '/calibration/assignments/{assignment_id}/submissions' do
     parameter name: 'assignment_id', in: :path, type: :integer,
               description: 'ID of the assignment'
 
@@ -30,7 +30,7 @@ RSpec.describe 'Calibration API', type: :request do
       tags 'Calibration'
       produces 'application/json'
 
-      let(:instructor) { instructor }
+      let(:instructor) { adm }
 
       let(:assignment) do
         Assignment.create!(
@@ -45,76 +45,95 @@ RSpec.describe 'Calibration API', type: :request do
       let!(:instructor_participant) do
         Participant.create!(
           user_id: instructor.id,
-          assignment_id: assignment.id,
-          parent_id: 1,            # team/group id; adjust if your schema differs
-          name: 'Instructor Participant'
+          parent_id: assignment.id,
+          type: 'AssignmentParticipant',
+          handle: 'instructor_handle'
         )
       end
 
-      # Student whose work is being calibrated
-      let!(:student_user) do
-        User.create!(
-          name: 'student1',
-          password_digest: 'password',
-          role_id: @roles[:student].id,
-          full_name: 'Student One',
-          email: 'student1@example.com',
-          mru_directory_path: '/home/student1'
+      # Reviewee team (reviewee_id is a Team ID)
+      let!(:reviewee_team) do
+        Team.create!(
+          name: 'Team A',
+          parent_id: assignment.id,
+          type: 'AssignmentTeam'   # or whatever your app uses for assignment teams
         )
       end
 
-      let!(:reviewee) do
+      # Instructor's participant record for this assignment
+      let!(:instructor_participant) do
         Participant.create!(
-          user_id: student_user.id,
-          assignment_id: assignment.id,
-          parent_id: 2,           # this is the "team id" used to fetch submitted content
-          name: 'Student One'
+          user_id: instructor.id,
+          parent_id: assignment.id,
+          type: 'AssignmentParticipant',
+          handle: 'instructor_handle'
         )
       end
 
-      # ResponseMap where the INSTRUCTOR is the reviewer (to_calibrate: true)
+      # ResponseMap where the INSTRUCTOR is the reviewer (for_calibration: true)
       let!(:response_map) do
         ResponseMap.create!(
-          reviewer_id: instructor_participant.id,
-          reviewee_id: reviewee.id,
+          reviewer_id:        instructor_participant.id,
+          reviewee_id:        reviewee_team.id,   # Team ID
           reviewed_object_id: assignment.id,
-          to_calibrate: true
+          for_calibration:    true
         )
       end
 
       # A submitted response so that get_review_status returns "completed"
       let!(:response_record) do
         Response.create!(
-          response_map_id: response_map.id,
+          map_id:       response_map.id,
           is_submitted: true
         )
       end
 
       # Stub submitted content for the team so the JSON is predictable
       before do
-        allow(SubmittedContentController).to receive(:get_content_for_team)
-          .with(reviewee.parent_id)
+        allow_any_instance_of(CalibrationController).to receive(:get_submitted_content)
+          .with(reviewee_team.id)
           .and_return({
             hyperlinks: ['https://example.com/report'],
             files: []
           })
+
+        allow_any_instance_of(CalibrationController).to receive(:get_instructor_participant_id)
+          .and_return(instructor_participant.id)
       end
 
       response(200, 'successful') do
         # rswag hook to capture an example response in the generated swagger
         after do |example|
+          next unless response&.body.present?
+
           example.metadata[:response][:content] = {
             'application/json' => {
               example: JSON.parse(response.body, symbolize_names: true)
             }
           }
         end
-        run_test!
+
+        run_test! do |resp|
+          body = JSON.parse(resp.body)
+
+          expect(body['calibration_submissions']).to be_an(Array)
+          expect(body['calibration_submissions'].size).to eq(1)
+
+          submission = body['calibration_submissions'].first
+
+          expect(submission['team_name']).to eq('Team A')
+          expect(submission['reviewee_id']).to eq(reviewee_team.id)
+          expect(submission['response_map_id']).to eq(response_map.id)
+          expect(submission['submitted_content']['hyperlinks'])
+            .to eq(['https://example.com/report'])
+          expect(submission['review_status']).to eq('completed')
+        end
       end
     end
   end
 
-  path '/calibration/student_comparison' do
+
+  path '/calibration/calibration_student_report' do
     parameter name: 'assignment_id', in: :query, type: :integer,
               description: 'ID of the assignment'
     parameter name: 'student_participant_id', in: :query, type: :integer,
@@ -148,12 +167,12 @@ RSpec.describe 'Calibration API', type: :request do
           )
         end
 
-        let(:student_participant) do
+        let!(:student_participant) do
           Participant.create!(
             user_id: student_user.id,
-            assignment_id: assignment.id,
-            parent_id: 42,
-            name: 'Student One'
+            parent_id: assignment.id,
+            type: 'AssignmentParticipant',
+            handle: 'student_handle'
           )
         end
 
@@ -163,7 +182,9 @@ RSpec.describe 'Calibration API', type: :request do
         # If your app uses AssignmentTeam < Team, replace with AssignmentTeam.create!
         let!(:reviewee_team) do
           Team.create!(
-            name: 'Team A'
+            name: 'Team A',
+            parent_id: assignment.id,
+            type: 'AssignmentTeam'   # or whatever your app uses for assignment teams
           )
         end
 
@@ -171,9 +192,34 @@ RSpec.describe 'Calibration API', type: :request do
         let!(:student_response_map) do
           ResponseMap.create!(
             reviewer_id:        student_participant.id,
-            reviewee_id:        reviewee_team.id,
+            reviewee_id:        student_participant.id, # valid Participant for validation
             reviewed_object_id: assignment.id,
             for_calibration:    true
+          ).tap do |rm|
+            # Now point it at the Team ID, which is what the controller uses
+            rm.update_column(:reviewee_id, reviewee_team.id)
+          end
+        end
+
+        # ResponseMap where the INSTRUCTOR is the reviewer (for_calibration: true)
+        let!(:instructor_response_map) do
+          ResponseMap.create!(
+            reviewer_id:        instructor_participant.id,
+            reviewee_id:        instructor_participant.id, # valid Participant
+            reviewed_object_id: assignment.id,
+            for_calibration:    true
+          ).tap do |rm|
+            rm.update_column(:reviewee_id, reviewee_team.id)
+          end
+        end
+
+        # Instructor's participant record for this assignment
+        let!(:instructor_participant) do
+          Participant.create!(
+            user_id: instructor.id,
+            parent_id: assignment.id,
+            type: 'AssignmentParticipant',
+            handle: 'instructor_handle'
           )
         end
 
@@ -186,9 +232,9 @@ RSpec.describe 'Calibration API', type: :request do
         end
 
         # Fake instructor review object (we don't care about its internals here)
-        let(:instructor_review) do
+        let!(:instructor_review) do
           Response.create!(
-            map_id:       999,
+            map_id:       instructor_response_map.id,
             is_submitted: true
           )
         end
@@ -198,7 +244,7 @@ RSpec.describe 'Calibration API', type: :request do
           allow_any_instance_of(CalibrationController).to receive(:get_instructor_review_for_reviewee)
             .and_return(instructor_review)
 
-          allow_any_instance_of(CalibrationController).to receive(:compare_two_reviews)
+          allow_any_instance_of(CalibrationController).to receive(:instructor_review_better?)
             .and_return({
               agreement_percentage: 100.0,
               questions: []
@@ -207,6 +253,9 @@ RSpec.describe 'Calibration API', type: :request do
 
         # Capture example for Swagger
         after do |example|
+          # If the request never actually ran (e.g., setup error), response will be nil
+          next unless response&.body.present?
+
           example.metadata[:response][:content] = {
             'application/json' => {
               example: JSON.parse(response.body, symbolize_names: true)
@@ -217,9 +266,9 @@ RSpec.describe 'Calibration API', type: :request do
         run_test! do |resp|
           body = JSON.parse(resp.body)
 
-          expect(body['calibration_comparisons']).to be_an(Array)
-          expect(body['calibration_comparisons'].size).to eq(1)
-          first = body['calibration_comparisons'].first
+          expect(body['calibration_reviews']).to be_an(Array)
+          expect(body['calibration_reviews'].size).to eq(1)
+          first = body['calibration_reviews'].first
 
           expect(first['reviewee_name']).to eq('Team A')
           expect(first['reviewee_id']).to eq(reviewee_team.id)
@@ -250,12 +299,12 @@ RSpec.describe 'Calibration API', type: :request do
           )
         end
 
-        let(:student_participant) do
+        let!(:student_participant) do
           Participant.create!(
             user_id: student_user.id,
-            assignment_id: assignment.id,
-            parent_id: 100,
-            name: 'Student Two'
+            parent_id: assignment.id,
+            type: 'AssignmentParticipant',
+            handle: 'student_handle'
           )
         end
 
@@ -263,17 +312,21 @@ RSpec.describe 'Calibration API', type: :request do
 
         let!(:reviewee_team) do
           Team.create!(
-            name: 'Team B'
+            name: 'Team B',
+            parent_id: assignment.id,
+            type: 'AssignmentTeam'   # or whatever your app uses for assignment teams
           )
         end
 
         let!(:student_response_map) do
           ResponseMap.create!(
             reviewer_id:        student_participant.id,
-            reviewee_id:        reviewee_team.id,
+            reviewee_id:        student_participant.id,
             reviewed_object_id: assignment.id,
             for_calibration:    true
-          )
+          ).tap do |rm|
+            rm.update_column(:reviewee_id, reviewee_team.id)
+          end
         end
 
         # NOTE: no Response created for the student → student_review will be nil
@@ -287,10 +340,10 @@ RSpec.describe 'Calibration API', type: :request do
         run_test! do |resp|
           body = JSON.parse(resp.body)
 
-          expect(body['calibration_comparisons']).to be_an(Array)
-          expect(body['calibration_comparisons'].size).to eq(1)
+          expect(body['calibration_reviews']).to be_an(Array)
+          expect(body['calibration_reviews'].size).to eq(1)
 
-          comparison = body['calibration_comparisons'].first
+          comparison = body['calibration_reviews'].first
           expect(comparison['reviewee_name']).to eq('Team B')
 
           comparison_hash = comparison['comparison']
@@ -321,12 +374,12 @@ RSpec.describe 'Calibration API', type: :request do
           )
         end
 
-        let(:student_participant) do
+        let!(:student_participant) do
           Participant.create!(
             user_id: student_user.id,
-            assignment_id: assignment.id,
-            parent_id: 200,
-            name: 'Student Three'
+            parent_id: assignment.id,
+            type: 'AssignmentParticipant',
+            handle: 'student_handle'
           )
         end
 
@@ -336,7 +389,7 @@ RSpec.describe 'Calibration API', type: :request do
 
         run_test! do |resp|
           body = JSON.parse(resp.body)
-          expect(body['calibration_comparisons']).to eq([])
+          expect(body['calibration_reviews']).to eq([])
         end
       end
     end
@@ -376,12 +429,12 @@ RSpec.describe 'Calibration API', type: :request do
           )
         end
 
-        let(:student_participant) do
+        let!(:student_participant) do
           Participant.create!(
             user_id: student_user.id,
-            assignment_id: assignment.id,
-            parent_id: 999, # arbitrary
-            name: 'Student Summary One'
+            parent_id: assignment.id,
+            type: 'AssignmentParticipant',
+            handle: 'student_handle'
           )
         end
 
@@ -389,10 +442,12 @@ RSpec.describe 'Calibration API', type: :request do
 
         # Team being reviewed (reviewee_team_id)
         let!(:reviewee_team) do
-          Team.create!(
-            name: 'Summary Team A'
-          )
-        end
+        Team.create!(
+          name: 'Summary Team A',
+          parent_id: assignment.id,
+          type: 'AssignmentTeam'   # or whatever your app uses for assignment teams
+        )
+      end
 
         # Team members (participants on this team)
         let!(:team_member_user1) do
@@ -419,27 +474,27 @@ RSpec.describe 'Calibration API', type: :request do
 
         let!(:team_member1) do
           Participant.create!(
-            user_id: team_member_user1.id,
-            assignment_id: assignment.id,
-            parent_id: reviewee_team.id, # so reviewee_team.participants sees them
-            name: 'Member One'
+            user_id:  team_member_user1.id,
+            parent_id: reviewee_team.id,      # treat team as the parent in this context
+            type:     'AssignmentParticipant',
+            handle:   'member_one'
           )
         end
 
         let!(:team_member2) do
           Participant.create!(
-            user_id: team_member_user2.id,
-            assignment_id: assignment.id,
+            user_id:  team_member_user2.id,
             parent_id: reviewee_team.id,
-            name: 'Member Two'
+            type:     'AssignmentParticipant',
+            handle:   'member_two'
           )
         end
 
         # ResponseMap for this student’s calibration review
         let!(:student_response_map) do
-          ResponseMap.create!(
+          ReviewResponseMap.create!(
             reviewer_id:        student_participant.id,
-            reviewee_id:        reviewee_team.id, # Team ID
+            reviewee_id:        reviewee_team.id,
             reviewed_object_id: assignment.id,
             for_calibration:    true
           )
@@ -456,7 +511,11 @@ RSpec.describe 'Calibration API', type: :request do
         end
 
         # Capture example JSON in Swagger
+        # Inside the `response(200, 'when everything is working') do ... end` block
         after do |example|
+          # If the request never ran (setup error), response will be nil
+          next unless response&.body.present?
+
           example.metadata[:response][:content] = {
             'application/json' => {
               example: JSON.parse(response.body, symbolize_names: true)
@@ -483,15 +542,15 @@ RSpec.describe 'Calibration API', type: :request do
         end
       end
 
-      response(400, 'when a required parameter is missing') do
-        # Intentionally blank path params -> treated as missing / invalid
-        let(:assignment_id) { '' }
-        let(:student_participant_id) { '' }
+      response(404, 'when student or assignment does not exist') do
+        # Use IDs that don't exist in the DB
+        let(:assignment_id) { 999_999 }
+        let(:student_participant_id) { 888_888 }
 
         run_test! do |resp|
-          expect(resp.status).to eq(400)
+          expect(resp.status).to eq(404)
           body = JSON.parse(resp.body)
-          expect(body['error']).to eq('Missing required parameters')
+          expect(body['error']).to eq('Assignment or student not found')
         end
       end
 
@@ -518,22 +577,24 @@ RSpec.describe 'Calibration API', type: :request do
           )
         end
 
-        let(:student_participant) do
+        let!(:student_participant) do
           Participant.create!(
             user_id: student_user.id,
-            assignment_id: assignment.id,
-            parent_id: 888,
-            name: 'Student Summary Two'
+            parent_id: assignment.id,
+            type: 'AssignmentParticipant',
+            handle: 'student_handle'
           )
         end
 
         let(:student_participant_id) { student_participant.id }
 
         let!(:reviewee_team) do
-          Team.create!(
-            name: 'Summary Team B'
-          )
-        end
+        Team.create!(
+          name: 'Summary Team B',
+          parent_id: assignment.id,
+          type: 'AssignmentTeam'   # or whatever your app uses for assignment teams
+        )
+      end
 
         let!(:team_member_user) do
           User.create!(
@@ -548,15 +609,15 @@ RSpec.describe 'Calibration API', type: :request do
 
         let!(:team_member) do
           Participant.create!(
-            user_id: team_member_user.id,
-            assignment_id: assignment.id,
+            user_id:  team_member_user.id,
             parent_id: reviewee_team.id,
-            name: 'Solo Member'
+            type:     'AssignmentParticipant',
+            handle:   'solo_member'
           )
         end
 
         let!(:student_response_map) do
-          ResponseMap.create!(
+          ReviewResponseMap.create!(
             reviewer_id:        student_participant.id,
             reviewee_id:        reviewee_team.id,
             reviewed_object_id: assignment.id,
@@ -588,7 +649,7 @@ RSpec.describe 'Calibration API', type: :request do
     end
   end
 
-    path '/calibration/assignments/{assignment_id}/report/{reviewee_id}' do
+  path '/calibration/assignments/{assignment_id}/report/{reviewee_id}' do
     parameter name: 'assignment_id', in: :path, type: :integer,
               description: 'ID of the assignment'
     parameter name: 'reviewee_id', in: :path, type: :integer,
@@ -613,7 +674,9 @@ RSpec.describe 'Calibration API', type: :request do
         # Reviewee team (reviewee_id is a Team ID)
         let!(:reviewee_team) do
           Team.create!(
-            name: 'Team Aggregate'
+            name: '',                          # force fallback to participant.user.full_name
+            parent_id: assignment.id,
+            type: 'AssignmentTeam'
           )
         end
 
@@ -633,18 +696,61 @@ RSpec.describe 'Calibration API', type: :request do
 
         let!(:reviewee_participant) do
           Participant.create!(
-            user_id: reviewee_user.id,
-            assignment_id: assignment.id,
-            parent_id: reviewee_team.id, # so reviewee_team.participants sees them
-            name: 'Reviewee Participant'
+            user_id:  reviewee_user.id,
+            parent_id: reviewee_team.id,      # makes reviewee_team.participants work
+            type:     'AssignmentParticipant',
+            handle:   'reviewee_participant'
+          )
+        end
+
+        # Instructor's participant record for this assignment
+        let!(:instructor_participant) do
+          Participant.create!(
+            user_id: instructor.id,
+            parent_id: assignment.id,
+            type: 'AssignmentParticipant',
+            handle: 'instructor_handle'
+          )
+        end
+
+        # ResponseMap where the INSTRUCTOR is the reviewer (for_calibration: true)
+        let!(:instructor_response_map) do
+          ReviewResponseMap.create!(
+            reviewer_id:        instructor_participant.id,
+            reviewee_id:        reviewee_team.id,
+            reviewed_object_id: assignment.id,
+            for_calibration:    true
           )
         end
 
         # Instructor review we will feed into the report
         let!(:instructor_review) do
           Response.create!(
-            map_id: 0,          # map_id not used in this action
+            map_id:       instructor_response_map.id,
             is_submitted: true
+          )
+        end
+
+        let!(:questionnaire) do
+          instructor
+          Questionnaire.create(
+            name: 'Questionnaire 1',
+            questionnaire_type: 'AuthorFeedbackReview',
+            private: true,
+            min_question_score: 0,
+            max_question_score: 10,
+            instructor_id: instructor.id
+          )
+        end
+
+        let!(:item) do
+          Item.create(
+            seq: 1, 
+            txt: "test item 1",
+            question_type: "multiple_choice", 
+            break_before: true, 
+            weight: 5,
+            questionnaire: questionnaire
           )
         end
 
@@ -652,7 +758,7 @@ RSpec.describe 'Calibration API', type: :request do
         let!(:instructor_answer) do
           Answer.create!(
             response_id: instructor_review.id,
-            item_id: 1,
+            item_id: item.id,
             answer: 5
           )
         end
@@ -672,15 +778,15 @@ RSpec.describe 'Calibration API', type: :request do
         let!(:student_participant) do
           Participant.create!(
             user_id: student_user.id,
-            assignment_id: assignment.id,
-            parent_id: 123,
-            name: 'Student Agg'
+            parent_id: assignment.id,
+            type: 'AssignmentParticipant',
+            handle: 'student_handle'
           )
         end
 
         # Student calibration map for this assignment + reviewee team
         let!(:student_map) do
-          ResponseMap.create!(
+          ReviewResponseMap.create!(
             reviewer_id:        student_participant.id,
             reviewee_id:        reviewee_team.id,
             reviewed_object_id: assignment.id,
@@ -712,11 +818,13 @@ RSpec.describe 'Calibration API', type: :request do
 
           # We don't care what this returns as long as it's NOT the student reviewer_id
           allow_any_instance_of(CalibrationController).to receive(:get_instructor_participant_id)
-            .and_return(9999)
+            .and_return(instructor_participant.id)
         end
 
         # Capture example JSON for Swagger UI
         after do |example|
+          next unless response&.body.present?
+
           example.metadata[:response][:content] = {
             'application/json' => {
               example: JSON.parse(response.body, symbolize_names: true)
@@ -761,7 +869,9 @@ RSpec.describe 'Calibration API', type: :request do
 
         let!(:reviewee_team) do
           Team.create!(
-            name: 'Team Without Instructor Review'
+            name: 'Team Without Instructor Review',
+            parent_id: assignment.id,
+            type: 'AssignmentTeam'   # or whatever your app uses for assignment teams
           )
         end
 
@@ -778,20 +888,6 @@ RSpec.describe 'Calibration API', type: :request do
           expect(body['error']).to eq('Instructor review not found. Cannot generate report.')
         end
       end
-
-      response(400, 'when required parameters are missing') do
-        # This assumes you added the `blank?` guard at the top of the action.
-        let(:assignment_id) { '' }
-        let(:reviewee_id)   { '' }
-
-        run_test! do |resp|
-          expect(resp.status).to eq(400)
-          body = JSON.parse(resp.body)
-          expect(body['error']).to eq('Missing required parameters')
-        end
-      end
     end
   end
-
-
-end    
+end

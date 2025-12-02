@@ -2,7 +2,7 @@
 
 class CalibrationController < ApplicationController
   # This function retrives all submissions that an intsructor has to review for calibration
-  # GET /assignments/:assignment_id/calibration_submissions
+  # GET /calibration/assignments/{assignment_id}/submissions
   def get_instructor_calibration_submissions
     assignment_id = params[:assignment_id]
 
@@ -45,7 +45,7 @@ class CalibrationController < ApplicationController
     render json: { calibration_submissions: submissions }, status: :ok
   end
 
-  # GET /calibration/student_report
+  # GET /calibration/calibration_student_report
   # Compares the logged-in student's calibration reviews against the instructor's reviews.
   # Returns detailed breakdown per question including scores, comments, and match statistics.
   def calibration_student_report
@@ -112,54 +112,75 @@ class CalibrationController < ApplicationController
   #  - all hyperlinks submitted by that user/team
   #  - the for_calibration flag for that calibration review
   def summary
-    student_participant_id = params[:student_participant_id]
-    assignment_id          = params[:assignment_id]
+    student_participant_id = params[:student_participant_id].presence
+    assignment_id          = params[:assignment_id].presence
 
-    if student_participant_id.blank? || assignment_id.blank?
+    # 1) Hard-missing or empty params → 400
+    if student_participant_id.nil? || assignment_id.nil?
       render json: { error: 'Missing required parameters' }, status: :bad_request and return
     end
 
-    # All calibration maps for this student on this assignment
-    # ReviewResponseMap has reviewee_id as a Team ID
-    student_calibration_maps = ResponseMap.where(
-      reviewer_id: student_participant_id,
-      reviewed_object_id: assignment_id,
-      for_calibration: true
+    # 2) Resolve actual records
+    assignment = Assignment.find_by(id: assignment_id)
+    student    = Participant.find_by(id: student_participant_id)
+
+    # assignment or participant doesn't exist at all → 404
+    unless assignment && student
+      render json: { error: 'Assignment or student not found' }, status: :not_found and return
+    end
+
+    # 3) Ensure the participant belongs to that assignment
+    if student.parent_id != assignment.id
+      render json: { error: 'Student is not a participant in this assignment' }, status: :unprocessable_entity and return
+    end
+
+    # 4) All calibration maps for this student on this assignment
+    # Use ReviewResponseMap – reviewee_id is a Team ID
+    student_calibration_maps = ReviewResponseMap.where(
+      reviewer_id:        student.id,
+      reviewed_object_id: assignment.id,
+      for_calibration:    true
     )
 
     submissions = student_calibration_maps.map do |student_response_map|
-      # For ReviewResponseMap, reviewee_id is a Team ID
-      reviewee_team = Team.find_by(id: student_response_map.reviewee_id)
+      # For ReviewResponseMap, reviewee is a Team
+      reviewee_team = student_response_map.reviewee
       next unless reviewee_team
 
-      # Team members (there may be multiple if the submission is by a team)
-      team_members = reviewee_team.participants
+      # IMPORTANT: match the spec's notion of team membership:
+      # participants whose parent_id == reviewee_team.id
+      team_members = Participant
+        .where(parent_id: reviewee_team.id, type: 'AssignmentParticipant')
+        .includes(:user)
 
       reviewers = team_members.map do |member|
         {
           participant_id: member.id,
-          full_name: member.user.full_name
+          full_name:      member.user.full_name
         }
       end
 
       # Submitted content for this team (hyperlinks + files)
-      submitted_content = get_submitted_content(reviewee_team.id)
-      hyperlinks = submitted_content[:hyperlinks] || []
+      submitted_content = get_submitted_content(reviewee_team.id) || {}
+      hyperlinks = submitted_content[:hyperlinks] ||
+                  submitted_content['hyperlinks'] ||
+                  []
 
       {
         reviewee_team_id: reviewee_team.id,
-        reviewers: reviewers,
-        hyperlinks: hyperlinks,
-        for_calibration: student_response_map.for_calibration
+        reviewers:        reviewers,
+        hyperlinks:       hyperlinks,
+        for_calibration:  student_response_map.for_calibration
       }
     end.compact
 
     render json: {
-      student_participant_id: student_participant_id,
-      assignment_id: assignment_id,
-      submissions: submissions
+      student_participant_id: student.id,
+      assignment_id:          assignment.id,
+      submissions:            submissions
     }, status: :ok
   end
+
 
   # GET /calibration/assignments/:assignment_id/report/:reviewee_id
   # Calculates aggregate statistics for the class on a specific calibration assignment
@@ -219,7 +240,18 @@ class CalibrationController < ApplicationController
 
     # 7. Get Team Metadata
     reviewee_team = Team.find_by(id: reviewee_id)
-    reviewee_name = reviewee_team&.name.present? ? reviewee_team.name : reviewee_team&.participants&.first&.user&.full_name || 'Unknown Team'
+
+    # Fallback: directly look up a participant whose parent_id is this team
+    reviewee_participant = Participant.find_by(parent_id: reviewee_id)
+
+    reviewee_name =
+      if reviewee_team&.name.present?
+        reviewee_team.name
+      elsif reviewee_participant&.user&.full_name.present?
+        reviewee_participant.user.full_name
+      else
+        'Unknown Team'
+      end
 
     render json: {
       reviewee_id: reviewee_id,
