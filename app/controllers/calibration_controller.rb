@@ -110,6 +110,10 @@ class CalibrationController < ApplicationController
     student_participant_id = params[:student_participant_id]
     assignment_id          = params[:assignment_id]
 
+    if student_participant_id.blank? || assignment_id.blank?
+      render json: { error: 'Missing required parameters' }, status: :bad_request and return
+    end
+
     # All calibration maps for this student on this assignment
     # ReviewResponseMap has reviewee_id as a Team ID
     student_calibration_maps = ResponseMap.where(
@@ -157,6 +161,10 @@ class CalibrationController < ApplicationController
   def calibration_aggregate_report
     assignment_id = params[:assignment_id]
     reviewee_id   = params[:reviewee_id]
+
+    if assignment_id.blank? || reviewee_id.blank?
+      render json: { error: 'Missing required parameters' }, status: :bad_request and return
+    end
 
     # 1. Get the Instructor's Review
     instructor_review = get_instructor_review_for_reviewee(assignment_id, reviewee_id)
