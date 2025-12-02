@@ -1,4 +1,4 @@
-# This file defines a service class for handling data export operations.
+# app/services/export.rb
 class Export
   def initialize(data)
     @data = data
@@ -6,10 +6,8 @@ class Export
 
   def to_csv
     CSV.generate do |csv|
-      csv << @data.first.keys # Add headers
-      @data.each do |row|
-        csv << row.values
-      end
+      csv << @data.first.keys
+      @data.each { |row| csv << row.values }
     end
   end
 

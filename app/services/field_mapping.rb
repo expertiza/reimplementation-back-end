@@ -12,17 +12,13 @@ class FieldMapping
   # Build mapping from a CSV header row
   # header_row is an array like ["Email", "Last Name", "First Name"]
   def self.from_header(model_class, header_row)
-    header_row = header_row.map(&:strip)
+    header_row = header_row.map { |h| h.to_s.strip }
 
-    valid_fields = model_class.internal_and_external_fields
+    valid_fields = model_class.internal_and_external_fields.map(&:to_s)
 
-    matched = header_row.map do |h|
+    matched = header_row.filter_map do |h|
       valid_fields.find { |f| f.casecmp?(h) }
-    end.compact
-
-    # todo - remove debug statements
-    # pp "matched"
-    # puts "Header Row: #{header_row}"
+    end
 
     new(model_class, matched)
   end
@@ -33,8 +29,10 @@ class FieldMapping
   end
 
   def duplicate_headers
-    ordered_fields.group_by{ |header| header }.select{|_, v| v.size > 1}.map(&:first)
-    # .map { |k, v| [k, v.size()] }.to_h
+    ordered_fields
+      .group_by { |h| h }
+      .select   { |_k, v| v.size > 1 }
+      .keys
   end
 
   # Return values in correct order for a record

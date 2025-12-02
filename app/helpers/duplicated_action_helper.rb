@@ -1,130 +1,131 @@
-# This file defines a helper module for handling duplicate record events.
-# It is backwards-compatible with the previous interface while also
-# providing a full class-based DuplicateAction architecture.
-module DuplicatedActionHelper
-  ###############################################
-  # PUBLIC METHOD (Existing API)
-  ###############################################
-  # Processes duplicated actions using the legacy string-based API
-  # OR the new class-based DuplicateAction actions.
-  #
-  # @param action [String, DuplicateAction] the action to perform
-  # @param data [Array<Hash>] duplicated data entries
-  # @return [Array<Hash>] result after applying the action
-  def process_duplicated_action(action, data)
-    case action
-    when 'merge'
-      merge_duplicated_data(data)
+# frozen_string_literal: true
 
-    when 'delete'
-      delete_duplicated_data(data)
-
-      # NEW: Allow passing in an object that implements DuplicateAction
-    when DuplicateAction
-      record = OpenStruct.new(data.first) # Adapts hash input to object-like behavior
-      klass  = OpenStruct # For non-ActiveRecord duplicate workflows
-      resolved = action.on_duplicate_record(klass: klass, record: record)
-      resolved ? [resolved.to_h] : []
-
-    else
-      raise ArgumentError, "Unknown action: #{action}"
-    end
+# ===============================================================
+# DuplicateAction (ABSTRACT MIXIN)
+#
+# All duplicate-resolution strategies used during import must include
+# this module and implement:
+#
+#   on_duplicate_record(klass:, records:)
+#
+# Parameters:
+#   klass    => ActiveRecord model affected
+#   records  => Array of hashes or model objects representing conflicts
+#
+# Return:
+#   - nil                 → skip inserting record
+#   - Array<Hash>         → rows to (re)insert
+#
+# ===============================================================
+module DuplicateAction
+  def on_duplicate_record(klass:, records:)
+    raise NotImplementedError,
+          "#{self.class} must implement `on_duplicate_record`"
   end
+end
 
-  ###############################################
-  # EXISTING PRIVATE METHODS (unchanged behavior)
-  ###############################################
-  private
-  # Merges duplicated data entries into a single entry.
-  #
-  # @param data [Array<Hash>]
-  # @return [Array<Hash>]
-  def merge_duplicated_data(data)
-    data.uniq { |entry| entry[:id] }
+# ===============================================================
+# SkipRecordAction
+#
+# Simply skips the offending row. Nothing is inserted.
+# ===============================================================
+class SkipRecordAction
+  include DuplicateAction
+
+  def on_duplicate_record(klass:, records:)
+    nil
   end
+end
 
-  # Deletes duplicated data entries.
-  #
-  # @param data [Array<Hash>]
-  # @return [Array<Hash>]
-  def delete_duplicated_data(data)
-    []
-  end
+# ===============================================================
+# UpdateExistingRecordAction
+#
+# Takes all conflicting rows and merges them. Later values override earlier ones.
+# Result:
+#   One fully merged record replacing the original.
+# ===============================================================
+class UpdateExistingRecordAction
+  include DuplicateAction
 
-  ###############################################
-  # NEW — DUPLICATE ACTION SYSTEM
-  ###############################################
-  module DuplicateAction
-    # Abstract method that all actions must implement.
-    def on_duplicate_record(klass:, record:)
-      raise NotImplementedError,
-            "on_duplicate_record must be implemented in #{self.class.name}"
-    end
+  def on_duplicate_record(klass:, records:)
+    merged = {}
 
-    private
-
-    # Offending fields for systems using uniqueness attributes.
-    # For simple hash-based data, this defaults to [:id].
-    def offending_fields_for(_klass, record)
-      record.to_h.keys.select { |k| k.to_s.include?("id") }
-    end
-  end
-
-  ###############################################
-  # NEW ACTION CLASS: SkipRecord
-  ###############################################
-  class SkipRecord
-    include DuplicateAction
-
-    def on_duplicate_record(klass:, record:)
-      Rails.logger.info("Skipping duplicate record: #{record.to_h}")
-      nil
-    end
-  end
-
-  ###############################################
-  # NEW ACTION CLASS: ChangeField (“_copy” resolver)
-  ###############################################
-  class ChangeField
-    include DuplicateAction
-
-    MAX_ATTEMPTS = 10
-
-    def on_duplicate_record(klass:, record:)
-      fields = offending_fields_for(klass, record)
-      return nil if fields.empty?
-
-      updated = record.dup
-      attempts = 0
-
-      while attempts < MAX_ATTEMPTS
-        fields.each do |f|
-          value = updated.send(f)
-          updated.send("#{f}=", "#{value}_copy")
-        end
-
-        # For simple usage (hash input), assume "copy" resolves duplicates
-        return updated unless updated.to_h.values.any?(&:nil?)
-
-        attempts += 1
+    # Accept both Hashes and ActiveRecord objects
+    records.each do |rec|
+      row = rec.is_a?(Hash) ? rec : rec.attributes.symbolize_keys
+      row.each do |key, value|
+        merged[key] = value unless value.nil?
       end
-
-      Rails.logger.warn("Could not resolve duplicate after #{MAX_ATTEMPTS} attempts")
-      nil
     end
+
+    [merged]  # Return exactly one merged record
+  end
+end
+
+# ===============================================================
+# ChangeOffendingFieldAction
+#
+# Autoresolves uniqueness violations by modifying unique fields.
+# Example:
+#   existing: { name: "Alice" }
+#   incoming: { name: "Alice" }
+#
+# Becomes:
+#   { name: "Alice_copy" }
+#
+# If still not unique:
+#   { name: "Alice_copy2" }
+#
+# ===============================================================
+class ChangeOffendingFieldAction
+  include DuplicateAction
+
+  def on_duplicate_record(klass:, records:)
+    existing = normalize(records.first)
+    incoming = normalize(records.last).dup
+
+    unique_fields = unique_constraint_fields(klass)
+
+    unique_fields.each do |field|
+      next unless incoming[field] == existing[field]
+
+      incoming[field] =
+        generate_unique_value(
+          klass: klass,
+          field: field,
+          base: incoming[field]
+        )
+    end
+
+    [incoming]
   end
 
-  ###############################################
-  # NEW ACTION CLASS: UpdateExistingRecord
-  ###############################################
-  class UpdateExistingRecord
-    include DuplicateAction
+  private
 
-    def on_duplicate_record(klass:, record:)
-      # For hash-based workflows, just return the provided record
-      # (Existing record is "updated" logically)
-      record
-    end
+  # Accept ActiveRecord or hash
+  def normalize(record)
+    return record.symbolize_keys if record.is_a?(Hash)
+    record.attributes.symbolize_keys
   end
 
+  # Use AR validators to detect which fields are unique
+  def unique_constraint_fields(klass)
+    klass.validators
+         .select { |v| v.is_a?(ActiveRecord::Validations::UniquenessValidator) }
+         .flat_map(&:attributes)
+         .map(&:to_sym)
+  end
+
+  # Increment until unique in DB
+  def generate_unique_value(klass:, field:, base:)
+    candidate = base.to_s
+    counter = 1
+
+    while klass.exists?(field => candidate)
+      candidate = "#{base}_copy#{counter == 1 ? '' : counter}"
+      counter += 1
+    end
+
+    candidate
+  end
 end
