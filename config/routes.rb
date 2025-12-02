@@ -155,11 +155,11 @@ Rails.application.routes.draw do
           get 'assignments/:assignment_id/submissions', 
               to: 'calibration#get_instructor_calibration_submissions'
           
-          Student views their own calibration report
+          # Student views their own calibration report
           get 'calibration_student_report', 
-              to: 'calibration#calibration_stdent_report'
+              to: 'calibration#calibration_student_report'
 
-         
+          
           
           # Instructor views aggregate report for a specific calibration submission
           get 'assignments/:assignment_id/report/:reviewee_id', 
