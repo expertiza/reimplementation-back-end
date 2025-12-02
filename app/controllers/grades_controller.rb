@@ -62,30 +62,14 @@ class GradesController < ApplicationController
     # This lets the front end display an interface where an instructor can assign a grade and feedback (score breakdown) to that submission.
     def edit
         items = list_items(@assignment)
-        
-        # For now, return simplified data structure to avoid complex heatgrid calculation issues
-        scores = {
-            my_team: {
-                team_details: @team,
-                reviews_of_our_work: create_sample_review_data,
-                avg_score_of_our_work: 4.5
-            },
-            my_own: {
-                participant_details: @participant,
-                reviews_of_me: {},
-                reviews_by_me: {},
-                author_feedback_scores: {},
-                avg_score_from_my_teammates: 4.0,
-                avg_score_to_my_teammates: 4.2,
-                avg_score_from_my_authors: 4.1
-            }
-        }
-        
+        scores = {}
+        scores[:my_team] = get_our_scores_data(@team)
+        scores[:my_own] = get_my_scores_data(@participant)
         render json: {
-            participant: @participant,
-            assignment: @assignment,
-            items: items,
-            scores: scores
+        participant: @participant,
+        assignment: @assignment,
+        items: items,
+        scores: scores
         }
     end
 
@@ -167,20 +151,7 @@ class GradesController < ApplicationController
     def get_our_scores_data(team)
         reviews_of_our_work_maps = ReviewResponseMap.where(reviewed_object_id: @assignment.id, reviewee_id: team.id).to_a
         reviews_of_our_work = get_heatgrid_data_for(reviews_of_our_work_maps)
-        
-        # Calculate average score from reviews or use a default value
-        avg_score_of_our_work = if team.respond_to?(:aggregate_review_grade)
-                                  team.aggregate_review_grade
-                                else
-                                  # Simple fallback calculation
-                                  scores = []
-                                  reviews_of_our_work_maps.each do |map|
-                                    map.responses.each do |response|
-                                      response.scores.each { |score| scores << score.answer if score.answer.is_a?(Numeric) }
-                                    end
-                                  end
-                                  scores.empty? ? 0.0 : (scores.sum.to_f / scores.count).round(2)
-                                end
+        avg_score_of_our_work = team.aggregate_review_grade
 
         {
             team_details: team,
@@ -216,24 +187,9 @@ class GradesController < ApplicationController
 
         feedback_scores_from_my_reviewees = get_heatgrid_data_for(feedback_from_my_reviewees_maps)
 
-        # Calculate average scores with fallbacks
-        avg_score_from_my_teammates = if participant.respond_to?(:aggregate_teammate_review_grade)
-                                        participant.aggregate_teammate_review_grade(reviews_of_me_maps)
-                                      else
-                                        calculate_average_score_from_maps(reviews_of_me_maps)
-                                      end
-        
-        avg_score_to_my_teammates = if participant.respond_to?(:aggregate_teammate_review_grade)
-                                      participant.aggregate_teammate_review_grade(reviews_by_me_maps)
-                                    else
-                                      calculate_average_score_from_maps(reviews_by_me_maps)
-                                    end
-        
-        avg_score_from_my_authors = if participant.respond_to?(:aggregate_teammate_review_grade)
-                                      participant.aggregate_teammate_review_grade(feedback_from_my_reviewees_maps)
-                                    else
-                                      calculate_average_score_from_maps(feedback_from_my_reviewees_maps)
-                                    end 
+        avg_score_from_my_teammates = participant.aggregate_teammate_review_grade(reviews_of_me_maps) 
+        avg_score_to_my_teammates = participant.aggregate_teammate_review_grade(reviews_by_me_maps) 
+        avg_score_from_my_authors = participant.aggregate_teammate_review_grade(feedback_from_my_reviewees_maps) 
 
         {
             participant_details: participant,
@@ -318,47 +274,5 @@ class GradesController < ApplicationController
             reviewer_name: reviewer_name,
             reviewee_name: reviewee_name
         }
-    end
-    
-    # Helper method to calculate average score from response maps
-    def calculate_average_score_from_maps(maps)
-        scores = []
-        maps.each do |map|
-            map.responses.each do |response|
-                response.scores.each { |score| scores << score.answer if score.answer.is_a?(Numeric) }
-            end
-        end
-        scores.empty? ? 0.0 : (scores.sum.to_f / scores.count).round(2)
-    end
-    
-    # Create sample review data for testing
-    def create_sample_review_data
-        team_name = @team&.name || "Team #{@team&.id || 'Unknown'}"
-        {
-            "Review-Round-1" => [
-                [
-                    {
-                        id: 1,
-                        item_id: 1,
-                        txt: "Criterion 1",
-                        answer: 4,
-                        comments: "Good work on Criterion 1",
-                        reviewer_name: "Participant 1",
-                        reviewee_name: team_name
-                    }
-                ],
-                [
-                    {
-                        id: 2,
-                        item_id: 2,
-                        txt: "Criterion 2",
-                        answer: 5,
-                        comments: "Good work on Criterion 2",
-                        reviewer_name: "Participant 1",
-                        reviewee_name: team_name
-                    }
-                ]
-            ]
-        }
-    end
+    end 
 end
