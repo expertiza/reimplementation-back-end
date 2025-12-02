@@ -45,11 +45,9 @@ class CalibrationController < ApplicationController
     render json: { calibration_submissions: submissions }, status: :ok
   end
 
-
-
-# GET /calibration/student_report
-# Compares the logged-in student's calibration reviews against the instructor's reviews.
-# Returns detailed breakdown per question including scores, comments, and match statistics.
+  # GET /calibration/student_report
+  # Compares the logged-in student's calibration reviews against the instructor's reviews.
+  # Returns detailed breakdown per question including scores, comments, and match statistics.
   def calibration_student_report
     student_participant_id = params[:student_participant_id]
     assignment_id = params[:assignment_id]
@@ -77,8 +75,8 @@ class CalibrationController < ApplicationController
 
       # Get the student's most recent review for this calibration
       student_review = Response.where(map_id: student_response_map.id)
-                              .order(updated_at: :desc)
-                              .first
+                               .order(updated_at: :desc)
+                               .first
 
       # Get the instructor's review of the same submission
       instructor_review = get_instructor_review_for_reviewee(
@@ -88,7 +86,7 @@ class CalibrationController < ApplicationController
 
       # Compare the two reviews (includes scores, comments, match rate, etc.)
       comparison_data = if instructor_review && student_review
-                          compare_two_reviews(instructor_review, student_review)
+                          instructor_review_better?(instructor_review, student_review)
                         else
                           { error: 'Missing review data' }
                         end
@@ -106,8 +104,6 @@ class CalibrationController < ApplicationController
       calibration_reviews: calibration_reviews
     }, status: :ok
   end
-
-  
 
   # GET /calibration/assignments/:assignment_id/students/:student_participant_id/summary
   # For a given student + assignment, returns info about each submission
@@ -165,7 +161,6 @@ class CalibrationController < ApplicationController
     }, status: :ok
   end
 
-
   # GET /calibration/assignments/:assignment_id/report/:reviewee_id
   # Calculates aggregate statistics for the class on a specific calibration assignment
   # Includes distribution of scores (exact, off by 1, off by 2, etc.)
@@ -207,13 +202,13 @@ class CalibrationController < ApplicationController
 
     # 5. Process Question Breakdown
     total_match_rate_sum = 0
-    
+
     question_breakdown = instructor_answers.map do |inst_answer|
       stud_answers_for_q = student_answers_by_item[inst_answer.item_id] || []
-      
+
       # Use helper to calculate all stats (Match rate, off-by-1, etc.)
       stats = calculate_aggregate_question_stats(inst_answer, stud_answers_for_q)
-      
+
       total_match_rate_sum += stats[:match_rate]
       stats
     end
@@ -413,7 +408,7 @@ class CalibrationController < ApplicationController
   # Core logic: Compares instructor and student reviews question by question
   # Returns detailed breakdown per question + summary stats
   # Reusable by both Student Report and Aggregate Report
-  def compare_two_reviews(instructor_review, student_review)
+  def instructor_review_better?(instructor_review, student_review)
     return nil if instructor_review.nil? || student_review.nil?
 
     # Fetch all answers for both reviews
@@ -425,7 +420,7 @@ class CalibrationController < ApplicationController
     student_scores = student_answers.index_by(&:item_id)
 
     question_comparisons = []
-    
+
     # Statistics Counters
     total_questions = 0
     exact_matches = 0
@@ -433,7 +428,7 @@ class CalibrationController < ApplicationController
 
     instructor_scores.each do |item_id, instructor_answer|
       student_answer = student_scores[item_id]
-      
+
       # 1. Get Values (Handle nil student answers gracefully)
       inst_val = instructor_answer.answer.to_i
       stud_val = student_answer&.answer.to_i || 0 # Treats missing answers as 0
@@ -451,16 +446,16 @@ class CalibrationController < ApplicationController
       question_comparisons << {
         item_id: item_id,
         question_text: get_question_text(item_id),
-        instructor: { 
-          score: inst_val, 
-          comments: instructor_answer.comments 
+        instructor: {
+          score: inst_val,
+          comments: instructor_answer.comments
         },
-        student: { 
-          score: stud_val, 
-          comments: student_answer&.comments 
+        student: {
+          score: stud_val,
+          comments: student_answer&.comments
         },
         difference: diff,
-        direction: calculate_direction(stud_val, inst_val)
+        direction: student_review_higher?(stud_val, inst_val)
       }
     end
 
@@ -489,7 +484,7 @@ class CalibrationController < ApplicationController
   end
 
   # Determines if the student scored higher, lower, or exact
-  def calculate_direction(student_score, instructor_score)
+  def student_review_higher?(student_score, instructor_score)
     if student_score == instructor_score
       'exact'
     elsif student_score > instructor_score
@@ -502,6 +497,7 @@ class CalibrationController < ApplicationController
   # Computes the mean difference across all questions
   def calculate_average_difference(comparisons)
     return 0 if comparisons.empty?
+
     total_diff = comparisons.sum { |c| c[:difference] }
     (total_diff.to_f / comparisons.length).round(2)
   end
@@ -525,7 +521,7 @@ class CalibrationController < ApplicationController
     student_answers_list.each do |ans|
       stud_score = ans.answer.to_i
       stats[:total_student_score] += stud_score
-      
+
       diff = (inst_score - stud_score).abs
 
       if diff == 0
@@ -557,8 +553,4 @@ class CalibrationController < ApplicationController
       }
     }
   end
-
-
-
-
 end
