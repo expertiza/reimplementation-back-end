@@ -45,60 +45,69 @@ class CalibrationController < ApplicationController
     render json: { calibration_submissions: submissions }, status: :ok
   end
 
-  # GET /calibration/student_comparison
-  def get_student_calibration_comparison
-    # When Student wants to see their calibration comparison with the Instructor review
 
-    student_participant_id = params[:student_participant_id]
-    assignment_id = params[:assignment_id]
 
-    # Find all calibration reviews this student did
-    # ReviewResponseMap has reviewee_id as a Team ID
-    student_calibration_maps = ResponseMap.where(
-      reviewer_id: student_participant_id,
-      reviewed_object_id: assignment_id,
-      for_calibration: true
+# GET /calibration/student_report
+# Compares the logged-in student's calibration reviews against the instructor's reviews.
+# Returns detailed breakdown per question including scores, comments, and match statistics.
+def calibration_student_report
+  student_participant_id = params[:student_participant_id]
+  assignment_id = params[:assignment_id]
+
+  # Validate required parameters
+  if student_participant_id.blank? || assignment_id.blank?
+    render json: { error: 'Missing required parameters' }, status: :bad_request and return
+  end
+
+  # Find all calibration reviews this student completed for this assignment
+  student_calibration_maps = ResponseMap.where(
+    reviewer_id: student_participant_id,
+    reviewed_object_id: assignment_id,
+    for_calibration: true
+  )
+
+  # Build comparison report for each calibration review
+  calibration_reviews = student_calibration_maps.map do |student_response_map|
+    # Get reviewee team information
+    reviewee_team = Team.find_by(id: student_response_map.reviewee_id)
+    next unless reviewee_team
+
+    # Get team display name (consistent with other methods)
+    team_name = reviewee_team.name.present? ? reviewee_team.name : reviewee_team.participants.first&.user&.full_name || 'Unknown Team'
+
+    # Get the student's most recent review for this calibration
+    student_review = Response.where(map_id: student_response_map.id)
+                             .order(updated_at: :desc)
+                             .first
+
+    # Get the instructor's review of the same submission
+    instructor_review = get_instructor_review_for_reviewee(
+      assignment_id,
+      student_response_map.reviewee_id
     )
 
-    # For each calibration review, compare the student's review and the instructor's review
-    comparisons = student_calibration_maps.map do |student_response_map|
-      # For ReviewResponseMap, reviewee_id is a Team ID
-      reviewee_team = Team.find_by(id: student_response_map.reviewee_id)
-      next unless reviewee_team
+    # Compare the two reviews (includes scores, comments, match rate, etc.)
+    comparison_data = if instructor_review && student_review
+                        compare_two_reviews(instructor_review, student_review)
+                      else
+                        { error: 'Missing review data' }
+                      end
 
-      # Get team display name
-      team_name = reviewee_team.name.present? ? reviewee_team.name : reviewee_team.participants.first&.user&.full_name || 'Unknown Team'
+    {
+      reviewee_name: team_name,
+      reviewee_id: student_response_map.reviewee_id,
+      comparison: comparison_data
+    }
+  end.compact
 
-      # Get the student's review
-      student_review = Response.where(map_id: student_response_map.id)
-                               .order(updated_at: :desc)
-                               .first
+  render json: {
+    student_participant_id: student_participant_id,
+    assignment_id: assignment_id,
+    calibration_reviews: calibration_reviews
+  }, status: :ok
+end
 
-      # Get the instructor's review of the SAME reviewee
-      instructor_review = get_instructor_review_for_reviewee(
-        assignment_id,
-        student_response_map.reviewee_id
-      )
-
-      # Compare them
-      comparison = if instructor_review && student_review
-                     compare_two_reviews(instructor_review, student_review)
-                   else
-                     { error: 'Missing review data' }
-                   end
-
-      {
-        reviewee_name: team_name,
-        reviewee_id: student_response_map.reviewee_id,
-        comparison: comparison
-      }
-    end.compact
-
-    render json: {
-      student_participant_id: student_participant_id,
-      calibration_comparisons: comparisons
-    }, status: :ok
-  end
+  
 
   # GET /calibration/assignments/:assignment_id/students/:student_participant_id/summary
   # For a given student + assignment, returns info about each submission
