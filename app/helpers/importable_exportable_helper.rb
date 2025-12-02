@@ -41,11 +41,11 @@ class ExternalClass
   #
   # All returned fields are namespaced (role_name, user_email, etc.)
   # --------------------------------------------------------------
-  def internal_fields
+  def fields
     if @ref_class.respond_to?(:internal_fields)
       @ref_class.internal_fields.map { |field| append_class_name(field) }
     else
-      [append_class_name(@lookup_field.to_s), @ref_class.primary_key]
+      [append_class_name(@lookup_field.to_s), append_class_name(@ref_class.primary_key)]
     end
   end
 
@@ -104,7 +104,7 @@ class ExternalClass
 
   # Remove class name prefix
   def unappended_class_name(name)
-    name.delete_prefix(@ref_class.name.underscore + "_")
+    name.delete_prefix("#{@ref_class.name.underscore}_")
   end
 end
 
@@ -132,7 +132,7 @@ end
 #
 # ===============================================================
 module ImportableExportableHelper
-  attr_accessor :available_actions_on_duplicate, :mandatory_fields, :external_classes
+  attr_accessor :available_actions_on_duplicate
 
   # --------------------------------------------------------------
   # When extended by a class, inherit parent import settings.
@@ -140,7 +140,7 @@ module ImportableExportableHelper
   # This allows STI or subclassed models to reuse configuration.
   # --------------------------------------------------------------
   def self.extended(base)
-    if base.superclass&.respond_to?(:mandatory_fields)
+    if base.superclass.respond_to?(:mandatory_fields)
       base.instance_variable_set(:@mandatory_fields, base.superclass.mandatory_fields)
       base.instance_variable_set(:@external_classes, base.superclass.external_classes)
       base.instance_variable_set(:@class_name, base.superclass.name)
@@ -203,9 +203,8 @@ module ImportableExportableHelper
   # --------------------------------------------------------------
   def external_fields
     fields = []
-    external_classes&.each do |ext|
-      fields += ext.internal_fields
-    end
+    external_classes&.each { |external_class| fields += external_class.fields }
+
     fields
   end
 
@@ -227,6 +226,15 @@ module ImportableExportableHelper
   end
 
   # --------------------------------------------------------------
+  # Export helper
+  # Returns a hash of internal fields → values
+  # --------------------------------------------------------------
+  def to_hash(fields = self.class.internal_fields)
+    fields.to_h { |f| [f, send(f)] }
+  end
+
+
+  # --------------------------------------------------------------
   # MAIN IMPORT WORKFLOW
   #
   # Creates a temporary file with normalized headers,
@@ -236,14 +244,14 @@ module ImportableExportableHelper
   # --------------------------------------------------------------
   def try_import_records(file, headers, use_header: false)
     temp_file = 'output.csv'
-    csv_file = CSV.read(file, headers: false)
+    csv_file = CSV.read(file)
 
     # ---- Normalize header row ----
     CSV.open(temp_file, "w") do |csv|
       if use_header
         headers = csv_file.shift.map { |h| h.parameterize.underscore }
       else
-        headers = headers.map { |h| h.parameterize.underscore }
+        headers = headers.map { |header| header.parameterize.underscore }
       end
 
       csv << headers
@@ -299,27 +307,32 @@ module ImportableExportableHelper
     current_class_attrs = row_hash.slice(*internal_fields)
     created_obj = from_hash(current_class_attrs)
 
-    # ----- Lookup referenced external objects -----
-    external_classes&.each do |ext|
-      lookup_external_class(row_hash, ext, self, created_obj)
+    # for each external class, try to look them up
+    external_classes&.each do |external_class|
+      lookup_external_class(row_hash, external_class, created_object)
     end
 
     duplicate = save_object(created_obj)
     return duplicate if duplicate && duplicate != true
 
-    # ----- Create dependent external objects -----
-    external_classes&.each do |ext|
-      create_external_class(row_hash, mapping, ext, self, created_obj)
+    return unless external_classes
+
+    external_classes.each do |external_class|
+      create_external_class(row_hash, external_class, created_object)
     end
+
   end
+
+  private
 
   # --------------------------------------------------------------
   # Attempt to find an external object via lookup rules.
   # If found, attach it to the parent object.
   # --------------------------------------------------------------
-  def lookup_external_class(row_hash, external_class, parent_class, parent_obj)
+  def lookup_external_class(row_hash, external_class, parent_obj)
     if external_class.should_lookup && (found = external_class.lookup(row_hash))
       parent_obj.send("#{external_class.ref_class.name.downcase}=", found)
+      nil
     end
   end
 
@@ -334,23 +347,23 @@ module ImportableExportableHelper
   # Which turns into:
   #   [{field1: "A", field2: "X"}, {field1: "B", field2: "Y"}]
   # --------------------------------------------------------------
-  def create_external_class(row_hash, mapping, external_class, parent_class, parent_obj)
+  def create_external_class(row_hash, external_class, parent_obj)
     return unless external_class.should_create
 
-    current_attrs = row_hash.slice(*external_class.internal_fields)
+    current_class_attrs = row_hash.slice(*external_class.internal_fields)
 
-    # Transpose arrays to pair values correctly
-    object_sets = current_attrs.values.transpose
-    object_sets_with_keys =
-      object_sets.map { |vals| Hash[current_attrs.keys.zip(vals)] }
+    object_sets = current_class_attrs.values.transpose
+    object_sets_with_keys = object_sets.map do |row_values|
+      Hash[current_class_attrs.keys.zip(row_values)]
+    end
 
     object_sets_with_keys.each do |attrs|
-      new_obj = external_class.from_hash(attrs)
+      created_object = external_class.from_hash(attrs)
 
       # Set relationship to parent
-      new_obj.send("#{@class_name.underscore}=", parent_obj)
+      created_object.send("#{@class_name.underscore}=", parent_obj)
 
-      save_object(new_obj)
+      save_object(created_object)
     end
   end
 
@@ -364,30 +377,19 @@ module ImportableExportableHelper
   #   • true if saved
   # --------------------------------------------------------------
   def save_object(created_object)
-    puts "Create Obj:"
-    pp created_object
-
     created_object.save!
   rescue ActiveRecord::RecordInvalid => e
+    # Check if a specific attribute has a :uniqueness error
     puts "Validation error: #{e.message}"
 
-    if created_object.errors.details[:attribute_name].any? { |d| d[:error] == :uniqueness }
-      puts "Uniqueness violation on attribute_name!"
-      return created_object
-    else
-      raise
+    unless created_object.errors.details[:attribute_name].any? { |detail| detail[:error] == :uniqueness }
+      raise StandardError.new(e.message)
     end
 
+    puts 'Uniqueness violation on attribute_name!'
+    created_object
   rescue ActiveRecord::RecordNotUnique => e
     puts "Unique constraint violation: #{e.message}"
-    return created_object
-  end
-
-  # --------------------------------------------------------------
-  # Export helper
-  # Returns a hash of internal fields → values
-  # --------------------------------------------------------------
-  def to_hash(fields = self.class.internal_fields)
-    fields.to_h { |f| [f, send(f)] }
+    created_object
   end
 end
