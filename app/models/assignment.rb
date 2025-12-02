@@ -15,6 +15,7 @@ class Assignment < ApplicationRecord
   has_many :due_dates,as: :parent, class_name: 'DueDate',  dependent: :destroy
   belongs_to :course, optional: true
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments
+  accepts_nested_attributes_for :assignment_questionnaires, allow_destroy: true
 
   #This method return the value of the has_badge field for the given assignment object.
   attr_accessor :title, :description, :has_badge, :enable_pair_programming, :is_calibrated, :staggered_deadline
@@ -199,6 +200,11 @@ class Assignment < ApplicationRecord
     rubric_with_round = AssignmentQuestionnaire.where(assignment_id: id).where.not(used_in_round: nil).first
     # Check if any rubric has a specified round
     rubric_with_round.present?
+  end
+
+  # Alias without question mark for JSON rendering convenience
+  def varying_rubrics_by_round
+    varying_rubrics_by_round?
   end
 
   def review_rounds(questionnaireType)
