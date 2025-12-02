@@ -165,8 +165,10 @@ class CalibrationController < ApplicationController
     }, status: :ok
   end
 
+
   # GET /calibration/assignments/:assignment_id/report/:reviewee_id
   # Calculates aggregate statistics for the class on a specific calibration assignment
+  # Includes distribution of scores (exact, off by 1, off by 2, etc.)
   def calibration_aggregate_report
     assignment_id = params[:assignment_id]
     reviewee_id   = params[:reviewee_id]
@@ -175,89 +177,54 @@ class CalibrationController < ApplicationController
       render json: { error: 'Missing required parameters' }, status: :bad_request and return
     end
 
-    # 1. Get the Instructor's Review
+    # 1. Get the Instructor's Review (Answer Key)
     instructor_review = get_instructor_review_for_reviewee(assignment_id, reviewee_id)
-
     if instructor_review.nil?
       render json: { error: 'Instructor review not found. Cannot generate report.' }, status: :not_found
       return
     end
 
-    # 2. Find ALL student calibration reviews for this specific reviewee
+    # 2. Find ALL student calibration reviews (excluding the instructor's own self-review)
+    instructor_participant_id = get_instructor_participant_id(assignment_id)
     student_calibration_maps = ResponseMap.where(
       reviewed_object_id: assignment_id,
       reviewee_id: reviewee_id,
       for_calibration: true
-    )
-
-    # Exclude the instructor's own map to ensure we only get students
-    instructor_participant_id = get_instructor_participant_id(assignment_id)
-    student_calibration_maps = student_calibration_maps.where.not(reviewer_id: instructor_participant_id)
+    ).where.not(reviewer_id: instructor_participant_id)
 
     # 3. Collect the latest submitted Response for each student
+    # (Optimized to load map_id and id to avoid N+1 issues later if expanded)
     student_responses = student_calibration_maps.map do |map|
       Response.where(map_id: map.id).order(updated_at: :desc).first
     end.compact
 
-    # 4. Process Question Breakdown
-    # Get all answers from the instructor to identify the questions
+    # 4. Prepare Answer Data for Processing
+    # Optimization: Fetch all student answers in one query and group by Item ID
+    # This prevents running a DB query for every single question inside the loop
     instructor_answers = Answer.where(response_id: instructor_review.id)
+    student_answers_flat = Answer.where(response_id: student_responses.map(&:id))
+    student_answers_by_item = student_answers_flat.group_by(&:item_id)
 
-    question_breakdown = []
+    # 5. Process Question Breakdown
     total_match_rate_sum = 0
-
-    instructor_answers.each do |inst_answer|
-      item_id = inst_answer.item_id
-
-      # Try to find question text, fallback if missing
-      begin
-        item = Item.find(item_id)
-        question_text = item.txt
-      rescue ActiveRecord::RecordNotFound
-        question_text = "Question #{item_id}"
-      end
-
-      # Find all student answers for THIS specific question
-      student_answers_for_q = student_responses.map do |resp|
-        Answer.find_by(response_id: resp.id, item_id: item_id)
-      end.compact
-
-      # Calculate Stats for this question
-      student_count_for_q = student_answers_for_q.size
-
-      if student_count_for_q > 0
-        # Average Student Score
-        total_score = student_answers_for_q.sum(&:answer)
-        avg_student_score = (total_score.to_f / student_count_for_q).round(2)
-
-        # Match Rate (How many students exactly matched the instructor?)
-        matches = student_answers_for_q.count { |ans| ans.answer == inst_answer.answer }
-        match_rate = ((matches.to_f / student_count_for_q) * 100).round(2)
-      else
-        avg_student_score = 0
-        match_rate = 0
-      end
-
-      total_match_rate_sum += match_rate
-
-      question_breakdown << {
-        item_id: item_id,
-        question_text: question_text,
-        instructor_score: inst_answer.answer,
-        avg_student_score: avg_student_score,
-        match_rate: match_rate
-      }
+    
+    question_breakdown = instructor_answers.map do |inst_answer|
+      stud_answers_for_q = student_answers_by_item[inst_answer.item_id] || []
+      
+      # Use helper to calculate all stats (Match rate, off-by-1, etc.)
+      stats = calculate_aggregate_question_stats(inst_answer, stud_answers_for_q)
+      
+      total_match_rate_sum += stats[:match_rate]
+      stats
     end
 
-    # 5. Calculate Overall Aggregate Stats
+    # 6. Calculate Overall Aggregate Stats
     num_questions = question_breakdown.size
     avg_agreement_pct = num_questions > 0 ? (total_match_rate_sum / num_questions).round(2) : 0
 
-    # 6. Build Final JSON Response
-    # reviewee_id refers to a Team ID, not Participant ID
+    # 7. Get Team Metadata
     reviewee_team = Team.find_by(id: reviewee_id)
-    # Get the first participant's full name as representative of the team
-    reviewee_name = reviewee_team&.participants&.first&.user&.full_name || 'Unknown Reviewee'
+    reviewee_name = reviewee_team&.name.present? ? reviewee_team.name : reviewee_team&.participants&.first&.user&.full_name || 'Unknown Team'
 
     render json: {
       reviewee_id: reviewee_id,
