@@ -506,6 +506,58 @@ class CalibrationController < ApplicationController
     (total_diff.to_f / comparisons.length).round(2)
   end
 
+  # Calculates detailed statistics for a single question across all students
+  # Used by calibration_aggregate_report
+  def calculate_aggregate_question_stats(instructor_answer, student_answers_list)
+    inst_score = instructor_answer.answer.to_i
+    total_students = student_answers_list.size
+
+    # Initialize counters
+    stats = {
+      exact_matches: 0,
+      off_by_one: 0,
+      off_by_two: 0,
+      off_by_three_plus: 0,
+      total_student_score: 0
+    }
+
+    # Iterate through students to populate counters
+    student_answers_list.each do |ans|
+      stud_score = ans.answer.to_i
+      stats[:total_student_score] += stud_score
+      
+      diff = (inst_score - stud_score).abs
+
+      if diff == 0
+        stats[:exact_matches] += 1
+      elsif diff == 1
+        stats[:off_by_one] += 1
+      elsif diff == 2
+        stats[:off_by_two] += 1
+      else
+        stats[:off_by_three_plus] += 1
+      end
+    end
+
+    # Calculate Derived Metrics
+    avg_score = total_students > 0 ? (stats[:total_student_score].to_f / total_students).round(2) : 0
+    match_rate = total_students > 0 ? ((stats[:exact_matches].to_f / total_students) * 100).round(2) : 0
+
+    {
+      item_id: instructor_answer.item_id,
+      question_text: get_question_text(instructor_answer.item_id), # Reuses your existing helper
+      instructor_score: inst_score,
+      avg_student_score: avg_score,
+      match_rate: match_rate,
+      counts: {
+        exact: stats[:exact_matches],
+        off_by_one: stats[:off_by_one],
+        off_by_two: stats[:off_by_two],
+        off_by_three_plus: stats[:off_by_three_plus]
+      }
+    }
+  end
+
 
 
 
