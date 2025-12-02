@@ -130,6 +130,7 @@ class GradesController < ApplicationController
         Item.where("questionnaire_id = " + questionnaire_id.to_s).find_each do |item|
             item_data[item[:id]] = {
                 description: item[:txt],
+                question_type: item[:question_type],
                 answers: {
                     values: [],
                     comments: []
