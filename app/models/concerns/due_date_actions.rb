@@ -100,15 +100,12 @@ module DueDateActions
 
   # Check if deadlines are in proper chronological order
   def deadlines_properly_ordered?
-    sorted_deadlines = due_dates.order(:due_at)
-    previous_date = nil
+    previous_due = nil
+    due_dates.order(:id).each do |deadline|
+      return false if previous_due && deadline.due_at < previous_due
 
-    sorted_deadlines.each do |deadline|
-      return false if previous_date && deadline.due_at < previous_date
-
-      previous_date = deadline.due_at
+      previous_due = deadline.due_at
     end
-
     true
   end
 end
