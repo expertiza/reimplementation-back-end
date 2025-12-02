@@ -79,26 +79,29 @@ class GradesController < ApplicationController
 
         response_mapping_condition = "reviewed_object_id = " + params[:assignment_id] + " AND reviewer_id = " + params[:participant_id]
         ReviewResponseMap.where(response_mapping_condition).find_each do |mapping|
-            response = Response.find_by(map_id: mapping[:id])
+            Response.where("map_id = " + mapping[:id].to_s).find_each do |response|
+            
+                # response = Response.find_by(map_id: mapping[:id])
 
-            if response == nil
-                # If, for some reason, there is no response with this mapping id, move on to the next mapping id.
-                next
-            end
+                if response == nil
+                    # If, for some reason, there is no response with this mapping id, move on to the next mapping id.
+                    next
+                end
 
-            response_id = response[:id]
-            round_id = response[:round]
+                response_id = response[:id]
+                round_id = response[:round]
 
-            if !responses_by_round.key?(round_id)
-                # If, for some reason, there is no questionnaire associated with the given round, move on to the next mapping id.
-                next
-            end
+                if !responses_by_round.key?(round_id)
+                    # If, for some reason, there is no questionnaire associated with the given round, move on to the next mapping id.
+                    next
+                end
 
-            # Record this response's values and comments, one pair for each item in the corresponding questionnaire.
-            responses_by_round[round_id].each_key do |item_id|
-                response_answer = Answer.find_by(item_id: item_id, response_id: response_id)
-                responses_by_round[round_id][item_id][:answers][:values].append(response_answer[:answer])
-                responses_by_round[round_id][item_id][:answers][:comments].append(response_answer[:comments])
+                # Record this response's values and comments, one pair for each item in the corresponding questionnaire.
+                responses_by_round[round_id].each_key do |item_id|
+                    response_answer = Answer.find_by(item_id: item_id, response_id: response_id)
+                    responses_by_round[round_id][item_id][:answers][:values].append(response_answer[:answer])
+                    responses_by_round[round_id][item_id][:answers][:comments].append(response_answer[:comments])
+                end
             end
         end
 
