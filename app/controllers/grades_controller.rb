@@ -102,11 +102,24 @@ class GradesController < ApplicationController
             end
         end
 
+        # Get participant and user information for the response
+        participant = AssignmentParticipant.find(params[:participant_id])
+        assignment = Assignment.find(params[:assignment_id])
+
         # Return JSON containing all answer values and comments associated with this reviewer and for this assignment.
         render json: {
             responses_by_round: responses_by_round,
-            participant: params[:participant_id].to_i,
-            assignment: params[:assignment_id].to_i
+            participant: {
+                id: participant.id,
+                user_id: participant.user_id,
+                user_name: participant.user.name,
+                full_name: participant.user.full_name,
+                handle: participant.handle
+            },
+            assignment: {
+                id: assignment.id,
+                name: assignment.name
+            }
         }
     end
 
