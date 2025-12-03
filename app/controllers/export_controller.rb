@@ -15,13 +15,10 @@ class ExportController < ApplicationController
   def export
     ordered_fields = JSON.parse(params[:ordered_fields]) if params[:ordered_fields]
 
-    params[:class].constantize.try_import_records(uploaded_file, ordered_fields, use_header: use_headers)
+    csv_file = Export.perform(params[:class].constantize, ordered_fields)
 
-    # Logic for exporting data
-    data = DataExporter.new.export(format: params[:format])
-    send_data data, filename: "exported_data.#{params[:format]}"
 
-    render json: { message: "#{params[:class].name} has been imported!" }, status: :ok
+    render json: { message: "#{params[:class]} has been imported!", file: csv_file }, status: :ok
 
   end
 

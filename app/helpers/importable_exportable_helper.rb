@@ -43,9 +43,9 @@ class ExternalClass
   # --------------------------------------------------------------
   def fields
     if @ref_class.respond_to?(:internal_fields)
-      @ref_class.internal_fields.map { |field| append_class_name(field) }
+      @ref_class.internal_fields.map { |field| self.class.append_class_name(@ref_class, field) }
     else
-      [append_class_name(@lookup_field.to_s), append_class_name(@ref_class.primary_key)]
+      [self.class.append_class_name(@ref_class, @lookup_field.to_s), self.class.append_class_name(@ref_class, @ref_class.primary_key)]
     end
   end
 
@@ -60,8 +60,8 @@ class ExternalClass
   # and the raw version (name) depending on what exists in the model.
   # --------------------------------------------------------------
   def lookup(class_values)
-    class_name_lookup_field  = append_class_name(@lookup_field.to_s)
-    class_name_primary_field = append_class_name(@ref_class.primary_key)
+    class_name_lookup_field  = self.class.append_class_name(@ref_class, @lookup_field.to_s)
+    class_name_primary_field = self.class.append_class_name(@ref_class, @ref_class.primary_key)
 
     value = nil
 
@@ -91,20 +91,18 @@ class ExternalClass
   # --------------------------------------------------------------
   def from_hash(attrs)
     fixed = {}
-    attrs.each { |k, v| fixed[unappended_class_name(k)] = v }
+    attrs.each { |k, v| fixed[self.class.unappended_class_name(@ref_class, k)] = v }
     @ref_class.new(fixed)
   end
 
-  private
-
   # Prefix column with the class name ("role_name", "user_email")
-  def append_class_name(field)
-    "#{@ref_class.name.underscore}_#{field}"
+  def self.append_class_name(ref_class, field)
+    "#{ref_class.name.underscore}_#{field}"
   end
 
   # Remove class name prefix
-  def unappended_class_name(name)
-    name.delete_prefix("#{@ref_class.name.underscore}_")
+  def self.unappended_class_name(ref_class, name)
+    name.delete_prefix("#{ref_class.name.underscore}_")
   end
 end
 
