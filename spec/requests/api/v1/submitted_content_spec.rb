@@ -663,8 +663,16 @@ RSpec.describe 'Submitted Content API', type: :request do
       consumes 'multipart/form-data'
       parameter name: :Authorization, in: :header, schema: { type: :string }
       parameter name: :id, in: :query, schema: { type: :string }, required: true
-      parameter name: :uploaded_file, in: :formData, schema: { type: :string, format: :binary }, required: true
       parameter name: :current_folder, in: :query, schema: { type: :object, properties: { name: { type: :string } } }
+      parameter name: :uploaded_file, in: :body, required: true, schema: {
+        type: :object,
+        properties: {
+          uploaded_file: {
+            type: :string,
+            format: :binary
+          }
+        }
+      }
 
       response(201, 'file submitted') do
         let(:Authorization) { auth_headers_student['Authorization'] }

@@ -246,7 +246,7 @@ module SubmittedContentHelper
   # Creates a new folder in the participant's directory
   def create_new_folder
     # Build the full path for the new folder
-    location = File.join(@participant.dir_path, params[:faction][:create])
+    location = File.join(@participant.team_path.to_s, params[:faction][:create])
 
     # Wrap the folder creation with error handling
     handle_file_operation_error('creating directory') do

@@ -222,9 +222,12 @@ class SubmittedContentController < ApplicationController
 
     # Sanitize the folder name to prevent directory traversal attacks
     folder_name = sanitize_folder(folder_name_param)
+    relative_folder = folder_name.sub(/\A\//, '')
 
-    # Build the full path to the requested file
-    path = File.join(folder_name, file_name)
+    # Build the full path to the requested file using participant's team path
+    base_path = @participant.team_path.to_s
+    full_path = relative_folder.blank? ? base_path : File.join(base_path, relative_folder)
+    path = File.join(full_path, file_name)
 
     # Check if the path is a directory (cannot download directories)
     if File.directory?(path)
