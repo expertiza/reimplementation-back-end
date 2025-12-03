@@ -5,6 +5,7 @@ class User < ApplicationRecord
   mandatory_fields :name, :email, :password, :full_name
   external_classes ExternalClass.new(Role, true, false, :name),
                    ExternalClass.new(Institution, true, false, :name)
+  available_actions_on_duplicate SkipRecordAction.new, UpdateExistingRecordAction.new, ChangeOffendingFieldAction.new
 
 
   has_secure_password
