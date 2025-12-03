@@ -183,12 +183,6 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
       if result[:success]
         @join_team_request.reply_status = ACCEPTED
         @join_team_request.save
-        
-        # Send acceptance email to the person whose request was accepted
-        JoinTeamRequestMailer.with(join_team_request: @join_team_request)
-                             .send_acceptance_email
-                             .deliver_now
-        
         render json: { 
           message: 'Join team request accepted successfully', 
           join_team_request: JoinTeamRequestSerializer.new(@join_team_request).as_json
