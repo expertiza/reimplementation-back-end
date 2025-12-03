@@ -10,6 +10,7 @@ class AssignmentsController < ApplicationController
   # GET /assignments/:id
   def show
     assignment = Assignment.find(params[:id])
+    puts "from show assignment: #{assignment.inspect}"
     render json: assignment
   end
 
@@ -26,9 +27,14 @@ class AssignmentsController < ApplicationController
   # PATCH/PUT /assignments/:id
   def update
     assignment = Assignment.find(params[:id])
+    puts "=== UPDATE ASSIGNMENT ==="
+    puts "Raw params: #{params.inspect}"
+    puts "Permitted params: #{assignment_params.inspect}"
     if assignment.update(assignment_params)
+      puts "Assignment updated successfully: #{assignment.inspect}"
       render json: assignment, status: :ok
     else
+      puts "Assignment update failed: #{assignment.errors.full_messages.inspect}"
       render json: assignment.errors, status: :unprocessable_entity
     end
   end
@@ -213,7 +219,14 @@ class AssignmentsController < ApplicationController
   private
   # Only allow a list of trusted parameters through.
   def assignment_params
-    params.require(:assignment).permit(:title, :description)
+    # Handle both wrapped and unwrapped params
+    permitted_params = if params[:assignment].present?
+      params.require(:assignment)
+    else
+      params
+    end
+    
+    permitted_params.permit!
   end
 
   # Helper method to determine staggered_and_no_topic for the assignment
