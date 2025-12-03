@@ -41,14 +41,14 @@ class User < ApplicationRecord
   delegate :super_administrator?, to: :role
 
   def self.instantiate(record)
-    case record.role
-    when Role::TEACHING_ASSISTANT
+    case record.role.id
+    when Role::TEACHING_ASSISTANT_ID
       record.becomes(Ta)
-    when Role::INSTRUCTOR
+    when Role::INSTRUCTOR_ID
       record.becomes(Instructor)
-    when Role::ADMINISTRATOR
+    when Role::ADMINISTRATOR_ID
       record.becomes(Administrator)
-    when Role::SUPER_ADMINISTRATOR
+    when Role::SUPER_ADMINISTRATOR_ID
       record.becomes(SuperAdministrator)
     else
       super
