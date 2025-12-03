@@ -12,6 +12,7 @@ module DueDateActions
 
   # Activity permission checker for a specific deadline date (not current date)
   def activity_permissible_for?(activity, deadline_date)
+    # Find the most recent due date that has passed by the given deadline_date
     deadline = due_dates.where('due_at <= ?', deadline_date).order(:due_at).last
     return false unless deadline
 

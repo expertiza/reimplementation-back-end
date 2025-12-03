@@ -72,28 +72,6 @@ module DueDatePermissions
     deadline_right&.name&.in?(%w[OK Late])
   end
 
-  # Check if deadline allows late submissions
-  def late_submission_allowed?
-    return false unless submission_allowed_id
-
-    deadline_right = DeadlineRight.find_by(id: submission_allowed_id)
-    deadline_right&.name == 'Late'
-  end
-
-  def late_review_allowed?
-    return false unless review_allowed_id
-
-    deadline_right = DeadlineRight.find_by(id: review_allowed_id)
-    deadline_right&.name == 'Late'
-  end
-
-  def late_quiz_allowed?
-    return false unless quiz_allowed_id
-
-    deadline_right = DeadlineRight.find_by(id: quiz_allowed_id)
-    deadline_right&.name == 'Late'
-  end
-
   # Get permission status for an action (OK, Late, No)
   def permission_status_for(action)
     permission_field = "#{action}_allowed_id"

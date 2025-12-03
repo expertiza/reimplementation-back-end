@@ -44,15 +44,5 @@ class DeadlineType < ApplicationRecord
     display_name
   end
 
-  private
 
-  # Ensure we maintain referential integrity
-  def cannot_delete_if_has_due_dates
-    return unless due_dates.exists?
-
-    errors.add(:base, 'Cannot delete deadline type that has associated due dates')
-    throw :abort
-  end
-
-  before_destroy :cannot_delete_if_has_due_dates
 end
