@@ -130,7 +130,6 @@ end
 #
 # ===============================================================
 module ImportableExportableHelper
-  attr_accessor :available_actions_on_duplicate
 
   # --------------------------------------------------------------
   # When extended by a class, inherit parent import settings.
@@ -178,6 +177,20 @@ module ImportableExportableHelper
       @external_classes = fields
     else
       @external_classes
+    end
+  end
+
+  # --------------------------------------------------------------
+  # Define or retrieve available duplicate actions.
+  #
+  # Example:
+  #   available_actions_on_duplicate DuplicateAction, SkipRecordAction
+  # --------------------------------------------------------------
+  def available_actions_on_duplicate(*fields)
+    if fields.any?
+      @available_actions_on_duplicate = fields
+    else
+      @available_actions_on_duplicate
     end
   end
 
@@ -240,7 +253,7 @@ module ImportableExportableHelper
   #
   # Duplicate objects are collected and returned.
   # --------------------------------------------------------------
-  def try_import_records(file, headers, use_header: false)
+  def try_import_records(file, headers, use_header)
     temp_file = 'output.csv'
     csv_file = CSV.read(file)
 
@@ -267,8 +280,8 @@ module ImportableExportableHelper
         duplicate_records << dup if dup && dup != true
       end
 
-      # Keep duplicates for UI, roll back DB changes
-      # raise ActiveRecord::Rollback
+      rescue StandardError
+        raise ActiveRecord::Rollback
     end
 
     File.delete(temp_file)
@@ -380,12 +393,28 @@ module ImportableExportableHelper
     # Check if a specific attribute has a :uniqueness error
     puts "Validation error: #{e.message}"
 
-    unless created_object.errors.details[:attribute_name].any? { |detail| detail[:error] == :uniqueness }
-      raise StandardError.new(e.message)
+
+
+    # created_object.errors.details.each do |attribute, error_details_array|
+    #   error_details_array.each do |detail_hash|
+    #     error_type = detail_hash[:error]
+    #     if error_type == :taken
+    #
+    #   end
+    # end
+
+
+    is_taken = created_object.errors.details.any? { |attribute, error_details_array| error_details_array.any? { |detail_hash| detail_hash[:error] == :taken } }
+    multiple_field_errors = created_object.errors.details.size > 1
+    single_field_errors =  created_object.errors.details.any? { |attribute, error_details_array| error_details_array.size > 1}
+
+    if is_taken && !multiple_field_errors && !single_field_errors
+      return created_object
     end
 
-    puts 'Uniqueness violation on attribute_name!'
-    created_object
+    raise StandardError.new(e.message)
+
+
   rescue ActiveRecord::RecordNotUnique => e
     puts "Unique constraint violation: #{e.message}"
     created_object

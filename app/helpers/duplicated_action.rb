@@ -23,7 +23,7 @@
 #   The Import class will call klass.create!(hash) for each returned hash.
 #
 # ===============================================================
-module DuplicateAction
+module DuplicateActionHelper
   def on_duplicate_record(klass:, records:)
     raise NotImplementedError,
           "#{self.class} must implement `on_duplicate_record`"
@@ -43,13 +43,11 @@ end
 # Behavior:
 #   Returning `nil` instructs Import.perform to do nothing.
 # ===============================================================
-class SkipRecordAction
-  include DuplicateAction
-
-  def on_duplicate_record(klass:, records:)
-    nil
-  end
-end
+# class SkipRecordAction
+#   def on_duplicate_record(klass:, records:)
+#     nil
+#   end
+# end
 
 
 # ===============================================================
@@ -73,27 +71,26 @@ end
 # Importer will delete the original conflicting record and replace it
 # with the merged one.
 # ===============================================================
-class UpdateExistingRecordAction
-  include DuplicateAction
-
-  def on_duplicate_record(klass:, records:)
-    merged = {}
-
-    records.each do |rec|
-      # Accept Hashes OR ActiveRecord instances
-      row = rec.is_a?(Hash) ? rec : rec.attributes.symbolize_keys
-
-      # Merge:
-      # Later values override earlier ones unless nil
-      row.each do |key, value|
-        merged[key] = value unless value.nil?
-      end
-    end
-
-    # Return one record to create
-    [merged]
-  end
-end
+# class UpdateExistingRecordAction
+#
+#   def on_duplicate_record(klass:, records:)
+#     merged = {}
+#
+#     records.each do |rec|
+#       # Accept Hashes OR ActiveRecord instances
+#       row = rec.is_a?(Hash) ? rec : rec.attributes.symbolize_keys
+#
+#       # Merge:
+#       # Later values override earlier ones unless nil
+#       row.each do |key, value|
+#         merged[key] = value unless value.nil?
+#       end
+#     end
+#
+#     # Return one record to create
+#     [merged]
+#   end
+# end
 
 
 # ===============================================================
@@ -120,8 +117,6 @@ end
 #
 # ===============================================================
 class ChangeOffendingFieldAction
-  include DuplicateAction
-
   def on_duplicate_record(klass:, records:)
     # Normalize both existing and incoming row formats
     existing = normalize(records.first)

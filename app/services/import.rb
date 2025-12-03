@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 require 'csv'
-require_relative 'field_mapping'
-require_relative 'duplicate_action'
 
 # By default, if the caller does not specify a duplicate action,
 # we use ChangeOffendingFieldAction. This ensures the importer
@@ -33,10 +31,10 @@ class Import
   # @param mapping [FieldMapping, nil] optional mapping override
   # @param dup_action [DuplicateAction, nil] optional duplicate handler override
   #
-  def initialize(klass:, file:, mapping: nil, dup_action: nil)
+  def initialize(klass:, file:, headers: nil, dup_action: nil)
     @klass = klass
     @file = file
-    @mapping = mapping
+    @headers = headers
     @duplicate_action = dup_action || DEFAULT_DUPLICATE_ACTION
   end
 
@@ -54,34 +52,44 @@ class Import
   #
   # Returns a summary with :imported and :duplicates count
   #
-  def perform
+  def perform(use_headers)
     # Use provided mapping or fall back to default derived from model
-    mapping = @mapping || default_mapping(@klass)
+    # mapping = @mapping || default_mapping(@klass)
 
     # Convert CSV rows into attribute hashes using the field mapping
-    rows = parse_csv(@file, mapping)
+    # rows = parse_csv(@file, mapping)
 
     duplicate_groups = []   # Will hold duplicate row sets
     successful_inserts = 0  # Counter for successful saves
 
     # Wrap everything in a transaction to ensure consistency
-    ActiveRecord::Base.transaction do
-      rows.each do |attrs|
-        begin
-          # Attempt to create the record
-          obj = @klass.new(attrs)
-          obj.save!
-          successful_inserts += 1
+    # ActiveRecord::Base.transaction do
+    #   rows.each do |attrs|
+    #     begin
+    #       # Attempt to create the record
+    #       obj = @klass.new(attrs)
+    #       obj.save!
+    #       successful_inserts += 1
+    #
+    #     rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid => e
+    #       # Any uniqueness or validation failure is treated as a duplicate
+    #
+    #     end
+    #   end
 
-        rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid => e
-          # Any uniqueness or validation failure is treated as a duplicate
-          duplicate_groups << normalize_duplicate(attrs)
-        end
-      end
+    # Call the model-level importer (defined in each model using the import mixin)
+    dups = @klass.try_import_records(
+      @file,
+      @headers,
+      use_headers
+    )
 
-      # Let the duplicate action process all collected conflicts
-      process_duplicates(@klass, duplicate_groups)
-    end
+    dups.each {|dup| duplicate_groups << normalize_duplicate(dup)}
+
+
+    # Let the duplicate action process all collected conflicts
+    process_duplicates(@klass, duplicate_groups)
+
 
     # Return summary of import results
     {
@@ -108,16 +116,36 @@ class Import
   # This format is used by DuplicateAction subclasses to determine
   # how the conflict should be resolved.
   #
-  def normalize_duplicate(incoming_hash)
-    pk = @klass.primary_key.to_sym
+  def normalize_duplicate(incoming_obj)
+    # pk = @klass.primary_key
 
     # Try to find the existing record using the primary key value
-    existing = @klass.find_by(pk => incoming_hash[pk])
+    # pp incoming_hash
+    hash = incoming_obj.as_json
+    pp hash
+    pp incoming_obj.as_json.slice([find_offending_field(incoming_obj)])
+    field = find_offending_field(incoming_obj)
+    pp field
+    pp hash[field.to_s]
 
-    [
-      existing&.attributes&.symbolize_keys || {},  # Existing row (maybe empty)
-      incoming_hash.symbolize_keys                 # Incoming row
-    ]
+
+    value = {}
+    value[field] = incoming_obj.as_json()[field.to_s]
+    pp value
+
+    existing = @klass.find_by(value)
+    pp existing
+    {
+      existing: existing,  # Existing row (maybe empty)
+      incoming: incoming_obj                # Incoming row
+    }
+  end
+
+  def find_offending_field(incoming_obj)
+    incoming_obj.validate
+    incoming_obj.errors.details.each do |attribute, error_details_array|
+      return attribute if error_details_array.any? { |detail_hash| detail_hash[:error] == :taken }
+    end
   end
 
   ##
@@ -132,17 +160,14 @@ class Import
   def process_duplicates(klass, groups)
     groups.each do |records|
       processed = @duplicate_action.on_duplicate_record(
-        klass: klass,
-        records: records
+         klass,
+         records
       )
 
       # If the duplicate action returns nil, it means “skip insertion”
       next if processed.nil?
 
-      # Otherwise, treat each returned hash as a new valid record
-      processed.each do |attrs|
-        klass.create!(attrs)
-      end
+      processed.save!
     end
   end
 
@@ -155,9 +180,9 @@ class Import
   # exposed by the model. This ensures every column that CAN be imported
   # will be imported.
   #
-  def default_mapping(klass)
-    FieldMapping.new(klass, klass.internal_and_external_fields)
-  end
+  # def default_mapping(klass)
+  #   FieldMapping.new(klass, klass.internal_and_external_fields)
+  # end
 
   # --------------------------------------------------------------
   # CSV PARSING
@@ -170,15 +195,15 @@ class Import
   #
   # The mapping determines which fields correspond to which columns.
   #
-  def parse_csv(file, mapping)
-    fields = mapping.ordered_fields
-    rows = []
-
-    # No headers — CSV columns must follow mapping order precisely.
-    CSV.foreach(file, headers: false) do |row|
-      rows << Hash[fields.zip(row)]
-    end
-
-    rows
-  end
+  # def parse_csv(file, mapping)
+  #   fields = mapping.ordered_fields
+  #   rows = []
+  #
+  #   # No headers — CSV columns must follow mapping order precisely.
+  #   CSV.foreach(file, headers: false) do |row|
+  #     rows << Hash[fields.zip(row)]
+  #   end
+  #
+  #   rows
+  # end
 end

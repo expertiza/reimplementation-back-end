@@ -32,7 +32,7 @@ class ImportController < ApplicationController
       external_fields: imported_class.external_fields,
 
       # Import does not provide duplicate-resolution strategies (those apply to export)
-      available_actions_on_dup: []
+      available_actions_on_dup: imported_class.available_actions_on_duplicate.map{|klass| klass.class.name},
     }, status: :ok
   end
 
@@ -57,15 +57,16 @@ class ImportController < ApplicationController
     # Dynamically load the model class (e.g., "User", "Team", etc.)
     klass = params[:class].constantize
 
-    # Call the model-level importer (defined in each model using the import mixin)
-    klass.try_import_records(
-      uploaded_file,
-      ordered_fields,
-      use_header: use_headers
-    )
+    # Load the chosen duplicate action (Skip, Update, Change)
+    dup_action = params[:dup_action].constantize
+
+    pp dup_action
+
+    importService = Import.new(klass: klass, file: uploaded_file, headers: ordered_fields, dup_action: dup_action.new)
+    result = importService.perform(use_headers)
 
     # If no exceptions occur, return success
-    render json: { message: "#{klass.name} has been imported!" }, status: :created
+    render json: { message: "#{klass.name} has been imported!", **result }, status: :created
 
   rescue StandardError => e
     # Catch any unexpected runtime errors
@@ -80,6 +81,6 @@ class ImportController < ApplicationController
   # Strong parameters for import operations
   #
   def import_params
-    params.permit(:csv_file, :use_headers, :class, :ordered_fields)
+    params.permit(:csv_file, :use_headers, :class, :ordered_fields, :dup_action)
   end
 end
