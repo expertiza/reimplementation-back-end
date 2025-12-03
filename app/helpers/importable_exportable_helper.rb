@@ -305,14 +305,14 @@ module ImportableExportableHelper
 
     # Create object for this class
     current_class_attrs = row_hash.slice(*internal_fields)
-    created_obj = from_hash(current_class_attrs)
+    created_object = from_hash(current_class_attrs)
 
     # for each external class, try to look them up
     external_classes&.each do |external_class|
       lookup_external_class(row_hash, external_class, created_object)
     end
 
-    duplicate = save_object(created_obj)
+    duplicate = save_object(created_object)
     return duplicate if duplicate && duplicate != true
 
     return unless external_classes
