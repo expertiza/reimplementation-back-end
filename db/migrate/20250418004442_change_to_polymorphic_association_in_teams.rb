@@ -6,6 +6,8 @@ class ChangeToPolymorphicAssociationInTeams < ActiveRecord::Migration[8.0]
     remove_reference :teams, :assignment, foreign_key: true
 
     # Add polymorphic association fields (type column already exists)
+    return if column_exists?(:teams, :parent_id)
+
     add_column :teams, :parent_id, :integer, null: false
   end
 end

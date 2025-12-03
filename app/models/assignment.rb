@@ -2,6 +2,7 @@
 
 class Assignment < ApplicationRecord
   include MetricHelper
+  include DueDateActions
   has_many :participants, class_name: 'AssignmentParticipant', foreign_key: 'parent_id', dependent: :destroy
   has_many :users, through: :participants, inverse_of: :assignment
   has_many :teams, class_name: 'AssignmentTeam', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :assignment
@@ -11,8 +12,7 @@ class Assignment < ApplicationRecord
   has_many :response_maps, foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :sign_up_topics , class_name: 'SignUpTopic', foreign_key: 'assignment_id', dependent: :destroy
-  has_many :due_dates,as: :parent, class_name: 'DueDate',  dependent: :destroy
-  has_many :due_dates,as: :parent, class_name: 'DueDate',  dependent: :destroy
+  has_many :due_dates, as: :parent, dependent: :destroy
   belongs_to :course, optional: true
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments
 
@@ -118,17 +118,20 @@ class Assignment < ApplicationRecord
     # Save the copied assignment to the database
     copied_assignment.save
 
+    # Copy all due dates to the new assignment
+    copy_due_dates_to(copied_assignment)
+
     copied_assignment
 
   end
   def is_calibrated?
     is_calibrated
   end
-  
+
   def pair_programming_enabled?
     enable_pair_programming
   end
-  
+
   def has_badge?
     has_badge
   end

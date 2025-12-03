@@ -1,60 +1,108 @@
 # frozen_string_literal: true
 
 class DueDate < ApplicationRecord
-  include Comparable
-  # Named constants for teammate review statuses
-  ALLOWED = 3
-  LATE_ALLOWED = 2
-  NOT_ALLOWED = 1
+  include DueDatePermissions
 
   belongs_to :parent, polymorphic: true
-  validate :due_at_is_valid_datetime
+  belongs_to :deadline_type, foreign_key: :deadline_type_id
+
   validates :due_at, presence: true
+  validates :deadline_type_id, presence: true
+  validates :parent, presence: true
+  validates :round, numericality: { greater_than: 0 }, allow_nil: true
+  validate :due_at_is_valid_datetime
 
-  attr_accessor :teammate_review_allowed, :submission_allowed, :review_allowed
+  # Scopes for common queries
+  scope :upcoming, -> { where('due_at > ?', Time.current).order(:due_at) }
+  scope :overdue, -> { where('due_at < ?', Time.current).order(:due_at) }
+  scope :for_round, ->(round_num) { where(round: round_num) }
+  scope :for_deadline_type, ->(type_name) { joins(:deadline_type).where(deadline_types: { name: type_name }) }
 
-  def due_at_is_valid_datetime
-    errors.add(:due_at, 'must be a valid datetime') unless due_at.is_a?(Time)
+  # Check if this deadline has passed
+  def overdue?
+    due_at < Time.current
   end
 
-  # Method to compare due dates
+  # Check if this deadline is upcoming
+  def upcoming?
+    due_at > Time.current
+  end
+
+  def set(deadline_type_id, parent_id, round)
+    self.deadline_type_id = deadline_type_id
+    self.parent_id = parent_id
+    self.round = round
+    save!
+  end
+
+  def copy(to_assignment_id)
+    to_assignment = Assignment.find(to_assignment_id)
+    new_due_date = dup
+    new_due_date.parent = to_assignment
+    new_due_date.save!
+    new_due_date
+  end
+
+  # Get the deadline type name
+  def deadline_type_name
+    deadline_type&.name
+  end
+
+  # Check if this is the last deadline for the parent
+  def last_deadline?
+    parent.due_dates.where('due_at > ?', due_at).empty?
+  end
+
+  # Comparison method for sorting
   def <=>(other)
+    return nil unless other.is_a?(DueDate)
+
     due_at <=> other.due_at
   end
 
-  # Return the set of due dates sorted by due_at
-  def self.sort_due_dates(due_dates)
-    due_dates.sort_by(&:due_at)
+  # String representation
+  def to_s
+    "#{deadline_type_name} - Due #{due_at.strftime('%B %d, %Y at %I:%M %p')}"
   end
 
-  # Fetches all due dates for the parent Assignment or Topic
-  def self.fetch_due_dates(parent_id)
-    due_dates = where('parent_id = ?', parent_id)
-    sort_due_dates(due_dates)
+  # Class methods for collection operations
+  class << self
+    # Sort a collection of due dates chronologically
+    def sort_due_dates(due_dates)
+      due_dates.sort_by(&:due_at)
+    end
+
+    # Check if any due dates in the future exist for a collection
+    def any_future_due_dates?(due_dates)
+      due_dates.any?(&:upcoming?)
+    end
+
+    def copy(from_assignment_id, to_assignment_id)
+      from_assignment = Assignment.find(from_assignment_id)
+      to_assignment = Assignment.find(to_assignment_id)
+
+      from_assignment.due_dates.each do |due_date|
+        new_due_date = due_date.dup
+        new_due_date.parent = to_assignment
+        new_due_date.save!
+      end
+    end
   end
 
-  # Class method to check if any due date is in the future
-  def self.any_future_due_dates?(due_dates)
-    due_dates.any? { |due_date| due_date.due_at > Time.zone.now }
+  private
+
+  def due_at_is_valid_datetime
+    return unless due_at.present?
+
+    return if due_at.is_a?(Time) || due_at.is_a?(DateTime)
+
+    errors.add(:due_at, 'must be a valid datetime')
   end
 
-  def set(deadline, assignment_id, max_round)
-    self.deadline_type_id = deadline
-    self.parent_id = assignment_id
-    self.round = max_round
-    save
-  end
+  # Set default round if not specified
+  before_save :set_default_round
 
-  # Fetches due dates from parent then selects the next upcoming due date
-  def self.next_due_date(parent_id)
-    due_dates = fetch_due_dates(parent_id)
-    due_dates.find { |due_date| due_date.due_at > Time.zone.now }
-  end
-
-  # Creates duplicate due dates and assigns them to a new assignment
-  def copy(new_assignment_id)
-    new_due_date = dup
-    new_due_date.parent_id = new_assignment_id
-    new_due_date.save
+  def set_default_round
+    self.round ||= 1
   end
 end

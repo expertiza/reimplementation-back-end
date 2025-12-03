@@ -1,12 +1,11 @@
 # frozen_string_literal: true
 
 class TopicDueDate < DueDate
-  # overwrite super method with additional logic to check for topic first
-  def self.next_due_date(assignment_id, topic_id)
-    next_due_date = super(topic_id)
-
-    next_due_date ||= DueDate.next_due_date(assignment_id)
-
-    next_due_date
-  end
+  # TopicDueDate is a subclass of DueDate that uses single table inheritance
+  # The 'type' field in the database will be automatically set to 'TopicDueDate'
+  # when instances of this class are created.
+  #
+  # This class inherits all functionality from DueDate and doesn't need
+  # any additional methods since the parent class and DueDateActions concern
+  # already handle topic-specific due date logic properly.
 end
