@@ -176,23 +176,40 @@ class JoinTeamRequestsController < ApplicationController
       return render json: { error: 'Team is full' }, status: :unprocessable_entity
     end
 
-    # Add participant to team
-    begin
-      result = team.add_member(@join_team_request.participant)
-      
-      if result[:success]
-        @join_team_request.reply_status = ACCEPTED
-        @join_team_request.save
-        render json: { 
-          message: 'Join team request accepted successfully', 
-          join_team_request: JoinTeamRequestSerializer.new(@join_team_request).as_json
-        }, status: :ok
-      else
-        render json: { error: result[:error] }, status: :unprocessable_entity
+    participant = @join_team_request.participant
+
+    # Use a transaction to ensure both removal and addition happen atomically
+    ActiveRecord::Base.transaction do
+      # Find and remove participant from their old team (if any)
+      old_team_participant = TeamsParticipant.find_by(participant_id: participant.id)
+      if old_team_participant
+        old_team = old_team_participant.team
+        old_team_participant.destroy!
+        
+        # If the old team is now empty, optionally clean up (but keep the team for now)
+        Rails.logger.info "Removed participant #{participant.id} from old team #{old_team&.id}"
       end
-    rescue StandardError => e
-      render json: { error: e.message }, status: :unprocessable_entity
+
+      # Add participant to the new team
+      team_participant = TeamsParticipant.create!(
+        participant_id: participant.id,
+        team_id: team.id,
+        user_id: participant.user_id
+      )
+
+      # Update the request status
+      @join_team_request.reply_status = ACCEPTED
+      @join_team_request.save!
+
+      render json: { 
+        message: 'Join team request accepted successfully', 
+        join_team_request: JoinTeamRequestSerializer.new(@join_team_request).as_json
+      }, status: :ok
     end
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  rescue StandardError => e
+    render json: { error: e.message }, status: :unprocessable_entity
   end
 
   # PATCH api/v1/join_team_requests/1/decline
