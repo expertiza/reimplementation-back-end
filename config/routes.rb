@@ -149,4 +149,26 @@ Rails.application.routes.draw do
           get '/:participant_id/instructor_review', to: 'grades#instructor_review'
         end
       end
+      resources :calibration, only: [] do
+        collection do
+          # Instructor views calibration submissions for an assignment
+          get 'assignments/:assignment_id/submissions', 
+              to: 'calibration#get_instructor_calibration_submissions'
+          
+          # Student views their own calibration report
+          get 'calibration_student_report', 
+              to: 'calibration#calibration_student_report'
+
+          
+          
+          # Instructor views aggregate report for a specific calibration submission
+          get 'assignments/:assignment_id/report/:reviewee_id', 
+              to: 'calibration#calibration_aggregate_report'
+
+          # Summary of all calibration and student reviews of a specific user submission
+          get '/assignments/:assignment_id/students/:student_participant_id/summary',
+              to: 'calibration#summary'
+
+        end
+      end
 end
