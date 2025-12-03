@@ -1,30 +1,45 @@
-# This file holds the logic for exporting data from the application to various formats.
-
+# This controller handles exporting data from the application to various formats.
 class ExportController < ApplicationController
   before_action :export_params
+
   def index
-    imported_class = params[:class].constantize
+    klass = params[:class].constantize
 
     render json: {
-      mandatory_fields: imported_class.mandatory_fields,
-      optional_fields: imported_class.optional_fields,
-      external_fields: imported_class.external_fields
+      mandatory_fields: klass.mandatory_fields,
+      optional_fields: klass.optional_fields,
+      external_fields: klass.external_fields
     }, status: :ok
+  rescue StandardError => e
+    render json: { error: e.message }, status: :unprocessable_entity
   end
 
   def export
-    ordered_fields = JSON.parse(params[:ordered_fields]) if params[:ordered_fields]
+    # Parse ordered fields from JSON, if provided
+    ordered_fields =
+      begin
+        JSON.parse(params[:ordered_fields]) if params[:ordered_fields]
+      rescue JSON::ParserError
+        render json: { error: "Invalid JSON for ordered_fields" }, status: :unprocessable_entity
+        return
+      end
 
-    csv_file = Export.perform(params[:class].constantize, ordered_fields)
+    klass = params[:class].constantize
 
+    csv_file = Export.perform(klass, ordered_fields)
 
-    render json: { message: "#{params[:class]} has been imported!", file: csv_file }, status: :ok
+    render json: {
+      message: "#{params[:class]} has been exported!",
+      file: csv_file
+    }, status: :ok
 
+  rescue StandardError => e
+    render json: { error: e.message }, status: :unprocessable_entity
   end
 
   private
+
   def export_params
-    puts params
     params.permit(:class, :ordered_fields)
   end
 end
