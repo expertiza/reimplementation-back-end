@@ -1,91 +1,141 @@
 # importable_exportable_helper.rb
-
-# Class for combining external class information. Keeps track of whether this class should have
-# its information looked up or saved. Assumes that information should be created when initialized
+#
+# ===============================================================
+# ExternalClass
+#
+# Represents a class referenced by another class during import.
+# For example:
+#   - Importing Teams may also need to create Users or Roles
+#   - Importing Assignments may need to create Topics
+#
+# This object encodes:
+#   • Which class is referenced
+#   • Whether it should be LOOKED UP or CREATED
+#   • What field should be used to perform lookups
+#
+# The importer uses this information to:
+#   • Map CSV fields to the external class
+#   • Attempt to find existing referenced objects
+#   • Create new referenced objects when required
+#
+# Example:
+#   ExternalClass.new(User, should_lookup: true, should_create: false, lookup_field: :email)
+# ===============================================================
 class ExternalClass
   attr_accessor :ref_class, :should_lookup, :should_create
 
   def initialize(ref_class, should_lookup = false, should_create = true, lookup_field = nil)
-    @ref_class = ref_class
-    @should_lookup = should_lookup
-    @should_create = should_create
-    @lookup_field = lookup_field
+    @ref_class     = ref_class      # The class being referenced (e.g., User)
+    @should_lookup = should_lookup  # Whether existing objects should be searched for
+    @should_create = should_create  # Whether new objects should be created if no match found
+    @lookup_field  = lookup_field   # Column used to identify existing objects
   end
 
-  # If the ref class has the ImportableExportable Mixin, refer to that version of the import export fields func.
-  # If it doessn't, return the lookup field (or the primary key)
-  def internal_fields
+  # --------------------------------------------------------------
+  # Resolve what fields belong to the external class.
+  #
+  # If the class itself includes ImportableExportable, we use its
+  # internal_fields. Otherwise, we fall back to:
+  #   - the lookup field, or
+  #   - the primary key
+  #
+  # All returned fields are namespaced (role_name, user_email, etc.)
+  # --------------------------------------------------------------
+  def fields
     if @ref_class.respond_to?(:internal_fields)
-      @ref_class.internal_fields.map {|field| append_class_name(field)}
+      @ref_class.internal_fields.map { |field| self.class.append_class_name(@ref_class, field) }
     else
-      [append_class_name(@lookup_field.to_s), append_class_name(@ref_class.primary_key)]
+      [self.class.append_class_name(@ref_class, @lookup_field.to_s), self.class.append_class_name(@ref_class, @ref_class.primary_key)]
     end
-
   end
 
-
-  # Attempts too look in the database for any mention of the current class. It looks using the
-  # given lookup field and the primary key. It checks both with and without the classname appended
-  # to the front
+  # --------------------------------------------------------------
+  # Lookup an external object in the database.
+  #
+  # Uses either:
+  #   • a lookup field, or
+  #   • the primary key
+  #
+  # It will try both the namespaced version (e.g. role_name)
+  # and the raw version (name) depending on what exists in the model.
+  # --------------------------------------------------------------
   def lookup(class_values)
-    # See if lookup field or primary key is in values hash. If not, return nothing
-    # puts "starting lookup"
-    class_name_lookup_field = append_class_name(@lookup_field.to_s)
-    class_name_primary_key = append_class_name(@ref_class.primary_key)
+    class_name_lookup_field  = self.class.append_class_name(@ref_class, @lookup_field.to_s)
+    class_name_primary_field = self.class.append_class_name(@ref_class, @ref_class.primary_key)
+
+    value = nil
+
+    # ---------- Try lookup field ----------
     if @lookup_field && class_values[class_name_lookup_field]
-      # puts @lookup_field
-      # Ex. field: name,        value: class_values[role_name]
       if @ref_class.attribute_method?(@lookup_field)
         value = @ref_class.find_by(@lookup_field => class_values[class_name_lookup_field])
-      # puts "lookup field: #{value}"
-      # Ex. field: role_name,   value: class_values[role_name]
       elsif @ref_class.attribute_method?(class_name_lookup_field)
-        value ||= @ref_class.find_by(class_name_lookup_field => class_values[class_name_lookup_field])
-        # puts "append class name? #{value}"
+        value = @ref_class.find_by(class_name_lookup_field => class_values[class_name_lookup_field])
       end
 
-    elsif class_values[class_name_primary_key]
-      # Ex. field: id,          value: class_values[role_id]
+      # ---------- Try primary key ----------
+    elsif class_values[class_name_primary_field]
       if @ref_class.attribute_method?(@ref_class.primary_key)
-        value ||= @ref_class.find_by(@ref_class.primary_key => class_values[class_name_primary_key])
-      # puts "primary key: #{value}"
-      # Ex. field: role_id      value: class_values[role_id]
-      elsif @ref_class.attribute_method?(class_name_primary_key)
-        value ||= @ref_class.find_by(class_name_primary_key => class_values[class_name_primary_key])
-        # puts "pk with class name: #{value}"
+        value = @ref_class.find_by(@ref_class.primary_key => class_values[class_name_primary_field])
+      elsif @ref_class.attribute_method?(class_name_primary_field)
+        value = @ref_class.find_by(class_name_primary_field => class_values[class_name_primary_field])
       end
     end
 
     value
   end
 
+  # --------------------------------------------------------------
+  # Convert CSV attributes (namespaced) into attributes that match
+  # the external class (un-namespaced).
+  # --------------------------------------------------------------
   def from_hash(attrs)
-    fixed_attrs = {}
-    attrs.each {|k, v| fixed_attrs[unappended_class_name(k)] = v}
-
-    @ref_class.new(fixed_attrs)
+    fixed = {}
+    attrs.each { |k, v| fixed[self.class.unappended_class_name(@ref_class, k)] = v }
+    @ref_class.new(fixed)
   end
 
-  private
-
-  # Method to add the class name to a field. This is useful when the CSV might refer to a column with
-  # the class name appended (Ex role_name) but the internal field drops the class name (Ex Role.name)
-  def append_class_name(field)
-    "#{@ref_class.name.underscore}_#{field}"
+  # Prefix column with the class name ("role_name", "user_email")
+  def self.append_class_name(ref_class, field)
+    "#{ref_class.name.underscore}_#{field}"
   end
 
-  def unappended_class_name(name)
-    name.delete_prefix("#{@ref_class.name.underscore}_")
+  # Remove class name prefix
+  def self.unappended_class_name(ref_class, name)
+    name.delete_prefix("#{ref_class.name.underscore}_")
   end
 end
 
+# ===============================================================
+# ImportableExportableHelper
+#
+# This module adds import/export metadata and behavior to models.
+#
+# It supports:
+#   • mandatory fields
+#   • optional fields
+#   • external class definitions
+#   • combining internal and external fields
+#   • row-level import logic
+#
+# Any model including this module becomes import/export capable.
+#
+# Example:
+#
+#   class Team < ApplicationRecord
+#     extend ImportableExportableHelper
+#     mandatory_fields :name
+#     external_classes ExternalClass.new(User, true, true, :email)
+#   end
+#
+# ===============================================================
 module ImportableExportableHelper
-  attr_accessor :available_actions_on_duplicate
 
-  # def self.included(base)
-  #   base.extend(ClassMethods)
-  # end
-
+  # --------------------------------------------------------------
+  # When extended by a class, inherit parent import settings.
+  #
+  # This allows STI or subclassed models to reuse configuration.
+  # --------------------------------------------------------------
   def self.extended(base)
     if base.superclass.respond_to?(:mandatory_fields)
       base.instance_variable_set(:@mandatory_fields, base.superclass.mandatory_fields)
@@ -95,11 +145,12 @@ module ImportableExportableHelper
     else
       base.instance_variable_set(:@class_name, base.name)
     end
-
   end
 
-  # module ClassMethods
-
+  # --------------------------------------------------------------
+  # Define or retrieve mandatory fields.
+  # These must be present in the CSV.
+  # --------------------------------------------------------------
   def mandatory_fields(*fields)
     if fields.any?
       @mandatory_fields = fields.map(&:to_s)
@@ -108,10 +159,19 @@ module ImportableExportableHelper
     end
   end
 
+  # --------------------------------------------------------------
+  # Optional = internal fields - mandatory
+  # --------------------------------------------------------------
   def optional_fields
     internal_fields - mandatory_fields
   end
 
+  # --------------------------------------------------------------
+  # Define or retrieve external classes.
+  #
+  # Example:
+  #   external_classes ExternalClass.new(Role, true, false, :name)
+  # --------------------------------------------------------------
   def external_classes(*fields)
     if fields.any?
       @external_classes = fields
@@ -120,106 +180,141 @@ module ImportableExportableHelper
     end
   end
 
+  # --------------------------------------------------------------
+  # Define or retrieve available duplicate actions.
+  #
+  # Example:
+  #   available_actions_on_duplicate DuplicateAction, SkipRecordAction
+  # --------------------------------------------------------------
+  def available_actions_on_duplicate(*fields)
+    if fields.any?
+      @available_actions_on_duplicate = fields
+    else
+      @available_actions_on_duplicate
+    end
+  end
 
-  # use the column names and mandaroty fields to know which fields constitute
-  # internal fields. This is becuase of cases such as the password of a user being
-  # the password_digest column in the database, but we need to assign it to the
-  # password field of the object.
+  # --------------------------------------------------------------
+  # INTERNAL FIELDS
+  #
+  # Internal fields come from:
+  #   • database column names
+  #   • mandatory_fields
+  #
+  # Then external fields are removed (to prevent duplication).
+  # --------------------------------------------------------------
   def internal_fields
     (column_names + (mandatory_fields || [])).uniq - external_fields
   end
 
+  # --------------------------------------------------------------
+  # EXTERNAL FIELDS
+  #
+  # Flatten all internal fields from all external class definitions.
+  # --------------------------------------------------------------
   def external_fields
     fields = []
-    external_classes&.each { |external_class| fields += external_class.internal_fields }
+    external_classes&.each { |external_class| fields += external_class.fields }
 
     fields
   end
 
+  # Combined fields for full CSV mapping
   def internal_and_external_fields
     internal_fields + external_fields
   end
 
-  # Factory method for importing a record from a hash
+  # --------------------------------------------------------------
+  # Construct an object from a CSV row hash.
+  #
+  # For internal fields, the value is stored as an array during
+  # parsing, so we take the first element.
+  # --------------------------------------------------------------
   def from_hash(attrs)
-    fixed_attrs = {}
-    attrs.each {|k, v| fixed_attrs[k] = v[0]}
-
-    new(fixed_attrs)
+    cleaned = {}
+    attrs.each { |k, v| cleaned[k] = v[0] }
+    new(cleaned)
   end
 
-  # Instance method to serialize a record for export
+  # --------------------------------------------------------------
+  # Export helper
+  # Returns a hash of internal fields → values
+  # --------------------------------------------------------------
   def to_hash(fields = self.class.internal_fields)
     fields.to_h { |f| [f, send(f)] }
   end
 
-  # todo - possibly extract this function to the service
-  def try_import_records(file, headers, use_header: false)
+
+  # --------------------------------------------------------------
+  # MAIN IMPORT WORKFLOW
+  #
+  # Creates a temporary file with normalized headers,
+  # then iterates through rows, importing them one by one.
+  #
+  # Duplicate objects are collected and returned.
+  # --------------------------------------------------------------
+  def try_import_records(file, headers, use_header)
     temp_file = 'output.csv'
     csv_file = CSV.read(file)
 
-    # In a temp file, so that headers can be added to the top if the use_header options isn't selected
-    CSV.open(temp_file, 'w') do |csv|
-
+    # ---- Normalize header row ----
+    CSV.open(temp_file, "w") do |csv|
       if use_header
-        headers = csv_file[0].map { |header| header.parameterize.underscore }
-        csv_file.shift
+        headers = csv_file.shift.map { |h| h.parameterize.underscore }
       else
         headers = headers.map { |header| header.parameterize.underscore }
       end
 
       csv << headers
-
-      # then copy the rest of the csv file
-      csv_file.each do |row|
-        csv << row
-      end
+      csv_file.each { |row| csv << row }
     end
 
     temp_contents = CSV.read(temp_file)
-    temp_contents.shift
+    temp_contents.shift  # drop header
 
-    dup_records = []
+    duplicate_records = []
 
     ActiveRecord::Base.transaction do
       temp_contents.each do |row|
-        # Get the row as a hash, with the header pointing towards the attribute value
-        dup_obj = import_row(row,  temp_file)
-        dup_records << dup_obj if dup_obj && dup_obj != true
+        dup = import_row(row, temp_file)
+        duplicate_records << dup if dup && dup != true
       end
 
-      pp dup_records
-
-      # todo - Handle duplicate records that are thrown out when importing the rows
-
-      # Comment this out if you want to run the tests
-      # raise ActiveRecord::Rollback # todo - remove this when wanting to actually channge the data
+      rescue StandardError
+        raise ActiveRecord::Rollback
     end
 
-
     File.delete(temp_file)
-    dup_records
-
+    duplicate_records
   end
 
-  # Import row function takes a hash for a row and tries to save it in the current class.
-  # It takes a related class and object so that it can be used recursively. If a row should
-  # update two classes,and one relies upon another, the recursion can be used to set the
-  # belongs to relationship.
-  # (EX if )
+  # --------------------------------------------------------------
+  # Import a single row into the current model.
+  #
+  # Handles:
+  #   • mapping values
+  #   • building internal object
+  #   • external object lookup/creation
+  #   • save + duplicate capture
+  #
+  # Returns:
+  #   • true if saved successfully
+  #   • duplicate object if duplicate occurred
+  # --------------------------------------------------------------
   def import_row(row, file)
-    # Open the csv file, get the header row, and build the mapping with only the fields available in the current class
     header_row = CSV.open(file, &:first)
-    mapping = FieldMapping.from_header(self, header_row) # Get mapping of only internal fields
-    # pp row
+    mapping = FieldMapping.from_header(self, header_row)
+
+    # Build row_hash where each key maps to all found values
     row_hash = {}
     mapping.ordered_fields.zip(row).each do |key, value|
-      row_hash[key] ||= [] # Initialize an empty array if the key is new
+      row_hash[key] ||= []
       row_hash[key] << value
     end
 
     puts "Row Hash: #{row_hash}"
 
+    # Create object for this class
     current_class_attrs = row_hash.slice(*internal_fields)
     created_object = from_hash(current_class_attrs)
 
@@ -228,11 +323,8 @@ module ImportableExportableHelper
       lookup_external_class(row_hash, external_class, created_object)
     end
 
-    dup_obj = save_object(created_object)
-
-    return dup_obj if dup_obj && dup_obj != true
-
-    # Then create external classes that rely on the object we just created
+    duplicate = save_object(created_object)
+    return duplicate if duplicate && duplicate != true
 
     return unless external_classes
 
@@ -244,73 +336,87 @@ module ImportableExportableHelper
 
   private
 
+  # --------------------------------------------------------------
+  # Attempt to find an external object via lookup rules.
+  # If found, attach it to the parent object.
+  # --------------------------------------------------------------
   def lookup_external_class(row_hash, external_class, parent_obj)
-    # Lookup - If the external class is marked as a lookup and a value is found
-    if external_class.should_lookup && (lookup_value = external_class.lookup(row_hash))
-      # Connect lookup value to the parent obj
-      parent_obj.send("#{external_class.ref_class.name.downcase}=", lookup_value)
+    if external_class.should_lookup && (found = external_class.lookup(row_hash))
+      parent_obj.send("#{external_class.ref_class.name.downcase}=", found)
       nil
     end
   end
 
+  # --------------------------------------------------------------
+  # When lookups fail AND the external class allows creation,
+  # build and save new external objects.
+  #
+  # Handles multi-row data such as:
+  #   field1: ["A", "B"]
+  #   field2: ["X", "Y"]
+  #
+  # Which turns into:
+  #   [{field1: "A", field2: "X"}, {field1: "B", field2: "Y"}]
+  # --------------------------------------------------------------
   def create_external_class(row_hash, external_class, parent_obj)
-    # Create - If the external class is marked as a create, attempt to create a new obj and link to parents
-    # This can happen if it is marked and a lookup val wasn't found
     return unless external_class.should_create
 
-    # Get the attributes, with duplicates in an array
     current_class_attrs = row_hash.slice(*external_class.internal_fields)
 
-    # In the order of the attributes, pair them together in new hashes. These new hashes
-    # are ready to be made into the new object
-    # Ex.
-    # Initial: {"question_advice_score" => ["1", "2"],
-    #           "question_advice_advice" => ["okay", "good"]}
-    # Result:  [{"question_advice_score" => "1", "question_advice_advice" => "okay"},
-    #           {"question_advice_score" => "2", "question_advice_advice" => "good"}]
-    #
     object_sets = current_class_attrs.values.transpose
     object_sets_with_keys = object_sets.map do |row_values|
       Hash[current_class_attrs.keys.zip(row_values)]
     end
 
-
-    # Use each set to create the new objects
     object_sets_with_keys.each do |attrs|
       created_object = external_class.from_hash(attrs)
 
-      # link the newly created object and the parent both ways
+      # Set relationship to parent
       created_object.send("#{@class_name.underscore}=", parent_obj)
-      # parent_obj.send("#{external_class.ref_class.name.underscore}=", created_object)
 
       save_object(created_object)
     end
-
   end
 
+  # --------------------------------------------------------------
+  # Save an object safely, detecting:
+  #   • Validation errors
+  #   • Uniqueness violations
+  #
+  # Returns:
+  #   • created_object on uniqueness error (for duplicate workflow)
+  #   • true if saved
+  # --------------------------------------------------------------
   def save_object(created_object)
-    puts 'Create Obj:'
-    pp created_object
     created_object.save!
   rescue ActiveRecord::RecordInvalid => e
     # Check if a specific attribute has a :uniqueness error
-    unless created_object.errors.details[:attribute_name].any? { |detail| detail[:error] == :uniqueness }
-      raise StandardError.new(e.message)
-    end
-
-    # Handle validation errors
     puts "Validation error: #{e.message}"
 
-    puts 'Uniqueness violation on attribute_name!'
-    created_object
+
+
+    # created_object.errors.details.each do |attribute, error_details_array|
+    #   error_details_array.each do |detail_hash|
+    #     error_type = detail_hash[:error]
+    #     if error_type == :taken
+    #
+    #   end
+    # end
+
+
+    is_taken = created_object.errors.details.any? { |attribute, error_details_array| error_details_array.any? { |detail_hash| detail_hash[:error] == :taken } }
+    multiple_field_errors = created_object.errors.details.size > 1
+    single_field_errors =  created_object.errors.details.any? { |attribute, error_details_array| error_details_array.size > 1}
+
+    if is_taken && !multiple_field_errors && !single_field_errors
+      return created_object
+    end
+
+    raise StandardError.new(e.message)
+
+
   rescue ActiveRecord::RecordNotUnique => e
-    # Handle unique constraint violations
     puts "Unique constraint violation: #{e.message}"
     created_object
-  rescue StandardError => e
-    raise e
-
   end
-
-
 end
