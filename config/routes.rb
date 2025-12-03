@@ -143,4 +143,12 @@ Rails.application.routes.draw do
           delete :delete_participants
         end
       end
+      resources :review_reports, only: [] do
+        collection do
+          get ':assignment_id', action: :index
+        end
+        member do
+          patch 'update_grade', action: :update_grade
+        end
+      end
 end
