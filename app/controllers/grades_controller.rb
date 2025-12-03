@@ -68,7 +68,6 @@ class GradesController < ApplicationController
                 if !responses_by_round.key?(round_id)
                     responses_by_round[round_id] = {}
                 end
-
                 # If this questionnaire has not been recorded yet, record it.
                 if !responses_by_round[round_id].key?(rubric_id)
                     # Items (the "questions") are always the same across responses of the same rubric.
@@ -134,9 +133,14 @@ class GradesController < ApplicationController
     # A helper function which, given a questionnaire id, returns a hash keyed by the ids of that questionnaire's items.
     # The values of the hash include the description (usually a question) of the item, and an empty hash for including responses.
     def get_items_from_questionnaire(questionnaire_id)
-        item_data = {}
+        questionnaire = Questionnaire.find_by(id: questionnaire_id)
+        item_data = {
+            min_answer_value: questionnaire[:min_question_score],
+            max_answer_value: questionnaire[:max_question_score],
+            items: {}
+        }
         Item.where("questionnaire_id = " + questionnaire_id.to_s).find_each do |item|
-            item_data[item[:id]] = {
+            item_data[:items][item[:id]] = {
                 description: item[:txt],
                 question_type: item[:question_type],
                 answers: {
