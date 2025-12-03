@@ -82,14 +82,6 @@ end
 
 # Case 4: No review (Purple)
 ReviewResponseMap.find_or_create_by!(reviewed_object_id: assignment.id, reviewer_id: reviewers[3].id, reviewee_id: teams[1].id)
-
-# Case 5: Reviewer 1 also reviews Team 2 (to test multiple reviews)
-map5 = ReviewResponseMap.find_or_create_by!(reviewed_object_id: assignment.id, reviewer_id: reviewers[0].id, reviewee_id: teams[1].id)
-map5.update!(reviewer_grade: 85, reviewer_comment: "Decent work")
-resp5 = Response.find_or_create_by!(map_id: map5.id) do |r|
-  r.is_submitted = true
-  r.additional_comment = "Good effort on Team 2."
-end
-Answer.create!(response_id: resp5.id, question_id: question.id, answer: 4, comments: "Good") unless Answer.exists?(response_id: resp5.id, question_id: question.id)
+# No response object created
 
 puts "Seeded review data for Assignment ID: #{assignment.id}"
