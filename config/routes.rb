@@ -149,4 +149,12 @@ Rails.application.routes.draw do
           get '/:participant_id/instructor_review', to: 'grades#instructor_review'
         end
       end
+      resources :review_reports, only: [] do
+        collection do
+          get ':assignment_id', action: :index
+        end
+        member do
+          patch 'update_grade', action: :update_grade
+        end
+      end
 end

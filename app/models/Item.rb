@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Item < ApplicationRecord
+  self.inheritance_column = 'question_type'
+
   before_create :set_seq
   belongs_to :questionnaire # each item belongs to a specific questionnaire
   has_many :answers, dependent: :destroy, foreign_key: 'item_id'
@@ -72,5 +74,10 @@ class Item < ApplicationRecord
 
     # Cast the existing record to the desired subclass
     klass.new(record.attributes)
+  end
+
+  def self.find_with_order(ids)
+    return [] if ids.empty?
+    where(id: ids).index_by(&:id).slice(*ids).values
   end
 end
