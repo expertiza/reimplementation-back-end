@@ -149,4 +149,10 @@ Rails.application.routes.draw do
           get '/:participant_id/instructor_review', to: 'grades#instructor_review'
         end
       end
+      resources :responses do
+        member do
+          patch :submit         # PATCH /responses/:id/submit
+          patch :unsubmit       # PATCH /responses/:id/unsubmit
+        end
+      end
 end

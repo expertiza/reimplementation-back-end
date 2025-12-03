@@ -9,5 +9,6 @@ module ResponseMapSubclassTitles
     METAREVIEW_RESPONSE_MAP_TITLE = 'Metareview'
     QUIZ_RESPONSE_MAP_TITLE = 'Quiz'
     REVIEW_RESPONSE_MAP_TITLE = 'Review'
+    SURVEY_RESPONSE_MAP_TITLE = 'Survey'
     TEAMMATE_REVIEW_RESPONSE_MAP_TITLE = 'Teammate Review' 
 end
