@@ -35,25 +35,39 @@ class Response < ApplicationRecord
     # gets all responses made by a reviewee
     existing_responses = map_class.assessments_for(map.reviewee)
 
-    count = 0
-    total = 0
+  count = 0
+  total_numerator = BigDecimal('0')
+  total_denominator = BigDecimal('0')
     # gets the sum total percentage scores of all responses that are not this response
     # (each response can omit questions, so maximum_score may differ and we normalize before averaging)
     existing_responses.each do |response|
       unless id == response.id # the current_response is also in existing_responses array
         count += 1
-        total += response.aggregate_questionnaire_score.to_f / response.maximum_score
+        # Accumulate raw sums and divide once to minimize rounding error
+        total_numerator += BigDecimal(response.aggregate_questionnaire_score.to_s)
+        total_denominator += BigDecimal(response.maximum_score.to_s)
       end
     end
 
     # if this response is the only response by the reviewee, there's no grade conflict
     return false if count.zero?
 
-    # calculates the average score of all other responses
-    average_score = total / count
+    # Calculate average of peers by dividing once at the end
+    average_score = if total_denominator.zero?
+                      0.0
+                    else
+                      (total_numerator / total_denominator).to_f
+                    end
 
     # This score has already skipped the unfilled scorable item(s)
-    score = aggregate_questionnaire_score.to_f / maximum_score
+    # Normalize this response similarly, dividing once
+    this_numerator = BigDecimal(aggregate_questionnaire_score.to_s)
+    this_denominator = BigDecimal(maximum_score.to_s)
+    score = if this_denominator.zero?
+              0.0
+            else
+              (this_numerator / this_denominator).to_f
+            end
     questionnaire = questionnaire_by_answer(scores.first)
     assignment = map.assignment
     assignment_questionnaire = AssignmentQuestionnaire.find_by(assignment_id: assignment.id,

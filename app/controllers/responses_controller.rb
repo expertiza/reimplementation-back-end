@@ -10,14 +10,14 @@ class ResponsesController < ApplicationController
       true
     when 'update', 'submit'
       @response = Response.find(params[:id])
-      unless response_belongs_to? || current_user_has_admin_privileges? || 
-             (current_user_has_instructor_privileges? && current_user_instructs_response_assignment?)
+      unless response_belongs_to? || current_user_is_parent_of_assignment_instructor_for_response? || 
+             current_user_is_teaching_staff_for_response_assignment?
         render json: { error: 'forbidden' }, status: :forbidden
       end
     when 'unsubmit', 'destroy'
       # Only allow if user is the instructor of the associated assignment or has admin privileges
-      unless current_user_has_admin_privileges? || 
-             (current_user_has_instructor_privileges? && current_user_instructs_response_assignment?)
+      unless current_user_is_parent_of_assignment_instructor_for_response? || 
+             current_user_is_teaching_staff_for_response_assignment?
         render json: { error: 'forbidden' }, status: :forbidden
       end
     else
@@ -152,6 +152,34 @@ class ResponsesController < ApplicationController
     current_user_instructs_assignment?(assignment)
   end
 
+  # Returns true if current user is teaching staff for the assignment associated
+  # with the current response (instructor or TA mapped to the assignment's course)
+  def current_user_is_teaching_staff_for_response_assignment?
+    resp = Response.find_by(id: params[:id])
+    return false unless resp&.response_map
+
+    assignment = resp.response_map&.assignment
+    return false unless assignment
+
+    # Uses Authorization concern helper to check instructor OR TA mapping
+    current_user_teaching_staff_of_assignment?(assignment.id)
+  end
+
+  # Returns true if the current user is the parent (creator) of the instructor
+  # for the assignment associated with the current response (params[:id]).
+  def current_user_is_parent_of_assignment_instructor_for_response?
+    resp = Response.find_by(id: params[:id])
+    return false unless resp&.response_map
+
+    assignment = resp.response_map&.assignment
+    return false unless assignment
+
+    instructor = find_assignment_instructor(assignment)
+    return false unless instructor
+
+    user_logged_in? && instructor.parent_id == current_user.id
+  end
+
   # Returns the friendly label for the response's map type (e.g., "Review", "Assignment Survey")
   # Falls back to a generic "Submission" if the label cannot be determined.
   def response_map_label
@@ -169,6 +197,13 @@ class ResponsesController < ApplicationController
     
     # Check if due_date has a future? method, otherwise compare timestamps
     due_dates = assignment.due_dates
+    # Prefer the `upcoming` API if available 
+    if due_dates.respond_to?(:upcoming)
+      next_due = due_dates.upcoming.first
+      return true if next_due.nil?
+      return next_due.due_at > Time.current
+    end
+    # Fallback to legacy `future?` if present
     if due_dates.respond_to?(:future?)
       return due_dates.first.future?
     end
