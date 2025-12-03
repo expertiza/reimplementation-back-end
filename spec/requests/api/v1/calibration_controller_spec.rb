@@ -90,6 +90,29 @@ RSpec.describe 'Calibration API', type: :request do
 
       # Stub submitted content for the team so the JSON is predictable
       before do
+        # TODO (future): replace this stub with a real submission via SubmittedContentController.
+        # Once we’re ready to stop stubbing, we should:
+        #
+        #   # 1. Create a participant on the reviewee_team
+        #   #    (this participant represents someone on that team).
+        #   team_participant = AssignmentParticipant.create!(
+        #     user_id:  instructor.id,
+        #     parent_id: reviewee_team.id, # team as parent for membership
+        #     type:     'AssignmentParticipant',
+        #     handle:   'instructor_on_team'
+        #   )
+        #
+        #   # 2. Use the real SubmittedContentController endpoint to submit a hyperlink
+        #   post '/submitted_content/submit_hyperlink',
+        #        params: {
+        #          id:         team_participant.id,                 # participant ID
+        #          submission: 'https://example.com/report'
+        #        },
+        #        headers: { 'Authorization' => Authorization }
+        #
+        #   # 3. Remove the stub below so CalibrationController#get_submitted_content
+        #   #    reads hyperlinks/files from the submission records created above.
+
         allow_any_instance_of(CalibrationController).to receive(:get_submitted_content)
           .with(reviewee_team.id)
           .and_return({
@@ -502,6 +525,21 @@ RSpec.describe 'Calibration API', type: :request do
 
         # Stub submitted content so hyperlinks are deterministic
         before do
+          # TODO (future): when using real assignment files, create the artifact via
+          # SubmittedContentController instead of stubbing:
+          #
+          #   # 1. Use one of the team members as the participant whose team is reviewee_team
+          #   #    (team_member1/team_member2 are already defined in this context).
+          #   post '/submitted_content/submit_hyperlink',
+          #        params: {
+          #          id:         team_member1.id,                     # participant on Summary Team A
+          #          submission: 'https://example.com/artifact1'
+          #        },
+          #        headers: { 'Authorization' => Authorization }
+          #
+          #   # 2. Remove the stub below so CalibrationController#get_submitted_content
+          #   #    pulls from the hyperlinks stored by SubmittedContentController / team.hyperlinks.
+          #
           allow_any_instance_of(CalibrationController).to receive(:get_submitted_content)
             .with(reviewee_team.id)
             .and_return({
@@ -626,6 +664,23 @@ RSpec.describe 'Calibration API', type: :request do
         end
 
         before do
+          # TODO (future): when using the real SubmittedContentController, simply do NOT
+          # create any hyperlinks via /submitted_content/submit_hyperlink for this team.
+          # For example, you could still exercise the file upload path:
+          #
+          #   # Example of creating a file submission only (no hyperlinks):
+          #   uploaded = fixture_file_upload('spec/fixtures/files/dummy.txt', 'text/plain')
+          #   post '/submitted_content/submit_file',
+          #        params: {
+          #          id:            team_member.id,                # participant on Summary Team B
+          #          uploaded_file: uploaded,
+          #          current_folder: { name: '/' }
+          #        },
+          #        headers: { 'Authorization' => Authorization }
+          #
+          #   # Then remove the stub below so CalibrationController#get_submitted_content
+          #   # observes hyperlinks: [] coming from the real storage.
+          #
           # No hyperlinks; controller should output []
           allow_any_instance_of(CalibrationController).to receive(:get_submitted_content)
             .with(reviewee_team.id)
