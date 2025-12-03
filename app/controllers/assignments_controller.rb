@@ -10,7 +10,6 @@ class AssignmentsController < ApplicationController
   # GET /assignments/:id
   def show
     assignment = Assignment.find(params[:id])
-    puts "from show assignment: #{assignment.inspect}"
     render json: assignment
   end
 
@@ -27,14 +26,9 @@ class AssignmentsController < ApplicationController
   # PATCH/PUT /assignments/:id
   def update
     assignment = Assignment.find(params[:id])
-    puts "=== UPDATE ASSIGNMENT ==="
-    puts "Raw params: #{params.inspect}"
-    puts "Permitted params: #{assignment_params.inspect}"
     if assignment.update(assignment_params)
-      puts "Assignment updated successfully: #{assignment.inspect}"
       render json: assignment, status: :ok
     else
-      puts "Assignment update failed: #{assignment.errors.full_messages.inspect}"
       render json: assignment.errors, status: :unprocessable_entity
     end
   end
