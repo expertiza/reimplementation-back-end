@@ -40,7 +40,7 @@ RSpec.describe ImportableExportableHelper, type: :helper do
       csv_file = file_fixture('single_user_no_headers.csv')
       headers = ['Name', 'Email', 'Password', 'Full Name', 'Role Name']
 
-      User.try_import_records(csv_file, headers, use_header: false)
+      pp User.try_import_records(csv_file, headers, false)
 
       expect(User.count).to eq(2)
       expect(User.find_by(email: 'jdoe@email.com')).to be_present
@@ -76,7 +76,7 @@ RSpec.describe ImportableExportableHelper, type: :helper do
       expect(QuestionAdvice.count).to eq(0)
 
       csv_file = file_fixture('questionnaire_item_with_headers.csv')
-      QuizItem.try_import_records(csv_file, nil, use_header: true)
+      QuizItem.try_import_records(csv_file, nil, true)
 
       expect(QuizItem.count).to eq(1)
       expect(QuizItem.find_by(txt: 'test')).to be_present
@@ -103,7 +103,7 @@ RSpec.describe ImportableExportableHelper, type: :helper do
     it 'Import a class with an invalid field (User with invalid email)' do
       csv_file = file_fixture('single_user_email_invalid.csv')
 
-      expect {User.try_import_records(csv_file, nil, use_header: true)}.to raise_error
+      expect {User.try_import_records(csv_file, nil, true)}.not_to change(User, :count)
     end
 
     it 'Import a class with external lookup class that does not exist' do
@@ -111,7 +111,7 @@ RSpec.describe ImportableExportableHelper, type: :helper do
 
       csv_file = file_fixture('single_user_role_doe_not_exist.csv')
 
-      expect { User.try_import_records(csv_file, nil, use_header: true) }.to raise_error
+      expect { User.try_import_records(csv_file, nil, true) }.not_to change(User, :count)
 
       expect(User.count).to eq(1)
       expect(User.find_by(email: 'jdoe@email.com')).not_to be_present
@@ -120,16 +120,13 @@ RSpec.describe ImportableExportableHelper, type: :helper do
     it 'Import an empty CSV (With Headers)' do
       csv_file = file_fixture('empty_with_headers.csv')
 
-      expect{User.try_import_records(csv_file, nil, use_header: true)}.not_to change(User, :count)
+      expect{User.try_import_records(csv_file, nil, true)}.not_to change(User, :count)
     end
 
     it 'Import an empty CSV (Without Headers)' do
       csv_file = file_fixture('empty.csv')
 
-      expect{User.try_import_records(csv_file, [], use_header: false)}.not_to change(User, :count)
+      expect{User.try_import_records(csv_file, [], false)}.not_to change(User, :count)
     end
-
-
   end
-
 end
