@@ -47,9 +47,9 @@ class Export
 
         export_class.external_classes.each do |external_class|
           ext_class_fields = mapping.ordered_fields.select{ |ele| external_class.fields.include?(ele) }
-          lookup_record = record.send(external_class.ref_class.name.underscore)
+          found_record = record.send(external_class.ref_class.name.underscore)
           row += ext_class_fields.map do |f|
-            lookup_record.send(ExternalClass.unappended_class_name(external_class.ref_class, f)) if f
+            found_record.send(ExternalClass.unappended_class_name(external_class.ref_class, f)) if f
           end
         end
 

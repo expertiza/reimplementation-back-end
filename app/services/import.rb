@@ -53,29 +53,8 @@ class Import
   # Returns a summary with :imported and :duplicates count
   #
   def perform(use_headers)
-    # Use provided mapping or fall back to default derived from model
-    # mapping = @mapping || default_mapping(@klass)
-
-    # Convert CSV rows into attribute hashes using the field mapping
-    # rows = parse_csv(@file, mapping)
-
     duplicate_groups = []   # Will hold duplicate row sets
     successful_inserts = 0  # Counter for successful saves
-
-    # Wrap everything in a transaction to ensure consistency
-    # ActiveRecord::Base.transaction do
-    #   rows.each do |attrs|
-    #     begin
-    #       # Attempt to create the record
-    #       obj = @klass.new(attrs)
-    #       obj.save!
-    #       successful_inserts += 1
-    #
-    #     rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid => e
-    #       # Any uniqueness or validation failure is treated as a duplicate
-    #
-    #     end
-    #   end
 
     # Call the model-level importer (defined in each model using the import mixin)
     dups = @klass.try_import_records(
@@ -117,24 +96,13 @@ class Import
   # how the conflict should be resolved.
   #
   def normalize_duplicate(incoming_obj)
-    # pk = @klass.primary_key
-
     # Try to find the existing record using the primary key value
-    # pp incoming_hash
-    hash = incoming_obj.as_json
-    pp hash
-    pp incoming_obj.as_json.slice([find_offending_field(incoming_obj)])
     field = find_offending_field(incoming_obj)
-    pp field
-    pp hash[field.to_s]
-
 
     value = {}
     value[field] = incoming_obj.as_json()[field.to_s]
-    pp value
 
     existing = @klass.find_by(value)
-    pp existing
     {
       existing: existing,  # Existing row (maybe empty)
       incoming: incoming_obj                # Incoming row
@@ -171,39 +139,4 @@ class Import
     end
   end
 
-  # --------------------------------------------------------------
-  # MAPPING
-  # --------------------------------------------------------------
-
-  ##
-  # Generates a default field mapping using all internal and external fields
-  # exposed by the model. This ensures every column that CAN be imported
-  # will be imported.
-  #
-  # def default_mapping(klass)
-  #   FieldMapping.new(klass, klass.internal_and_external_fields)
-  # end
-
-  # --------------------------------------------------------------
-  # CSV PARSING
-  # --------------------------------------------------------------
-
-  ##
-  # Reads the CSV and builds an array of attribute hashes:
-  #
-  #   [ {field1: val1, field2: val2, ...}, ... ]
-  #
-  # The mapping determines which fields correspond to which columns.
-  #
-  # def parse_csv(file, mapping)
-  #   fields = mapping.ordered_fields
-  #   rows = []
-  #
-  #   # No headers — CSV columns must follow mapping order precisely.
-  #   CSV.foreach(file, headers: false) do |row|
-  #     rows << Hash[fields.zip(row)]
-  #   end
-  #
-  #   rows
-  # end
 end

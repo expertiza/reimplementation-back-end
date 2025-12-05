@@ -1,3 +1,26 @@
+# ===============================================================
+# ChangeOffendingFieldAction
+#
+# Strategy: **Automatically adjust the offending (unique) fields**
+# so the imported row can still be inserted.
+#
+# This is the default strategy used by Import unless overridden.
+#
+# Example:
+#   existing.name = "Alice"
+#   incoming.name = "Alice"
+#
+# → incoming.name becomes "Alice_copy"
+#
+# If still not unique:
+#   "Alice_copy2", "Alice_copy3", etc.
+#
+# How it works:
+#   1. Collect all fields with uniqueness validators
+#   2. If incoming[field] == existing[field], mutate it
+#   3. Keep incrementing until the value no longer exists in the DB
+#
+# ===============================================================
 class ChangeOffendingFieldAction
   def on_duplicate_record(klass, records)
     # Normalize both existing and incoming row formats
