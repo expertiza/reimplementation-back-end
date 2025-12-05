@@ -28,7 +28,7 @@ class FieldMapping
   # ordered_fields:
   #   Array of field names that define the order CSV fields appear
   #   in. We convert everything to strings to ensure consistent
-  #   lookups (symbols vs strings cause unnecessary mismatches).
+  #   look_ups (symbols vs strings cause unnecessary mismatches).
   #
   # Example:
   #   FieldMapping.new(User, [:email, "first_name", :last_name])
