@@ -10,13 +10,12 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   # This filter runs before the specified actions, finding the join team request
   before_action :find_request, only: %i[show update destroy decline accept]
 
+  # This filter ensures the request is still pending before processing
+  before_action :ensure_request_pending, only: %i[accept decline]
+
   # Centralized authorization method
   def action_allowed?
     case params[:action]
-    when 'index'
-      # Only administrators can view all join team requests
-      current_user_has_admin_privileges?
-    
     when 'create'
       # Any student can create a join team request
       current_user_has_student_privileges?
@@ -24,24 +23,21 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
     when 'show'
       # The participant who made the request OR any team member can view it
       return false unless current_user_has_student_privileges?
-      # Load the request for authorization check
-      @join_team_request = JoinTeamRequest.find_by(id: params[:id]) unless @join_team_request
+      load_request_for_authorization
       return false unless @join_team_request
       current_user_is_request_creator? || current_user_is_team_member?
     
     when 'update', 'destroy'
       # Only the participant who created the request can update or delete it
       return false unless current_user_has_student_privileges?
-      # Load the request for authorization check
-      @join_team_request = JoinTeamRequest.find_by(id: params[:id]) unless @join_team_request
+      load_request_for_authorization
       return false unless @join_team_request
       current_user_is_request_creator?
     
     when 'decline', 'accept'
       # Only team members of the target team can accept/decline a request
       return false unless current_user_has_student_privileges?
-      # Load the request for authorization check
-      @join_team_request = JoinTeamRequest.find_by(id: params[:id]) unless @join_team_request
+      load_request_for_authorization
       return false unless @join_team_request
       current_user_is_team_member?
     
@@ -53,13 +49,6 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
       # Default: deny access
       false
     end
-  end
-
-  # GET api/v1/join_team_requests
-  # gets a list of all the join team requests
-  def index
-    join_team_requests = JoinTeamRequest.includes(:participant, :team).all
-    render json: join_team_requests, each_serializer: JoinTeamRequestSerializer, status: :ok
   end
 
   # GET api/v1/join_team_requests/1
@@ -96,7 +85,7 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   # POST api/v1/join_team_requests
   # Creates a new join team request
   def create
-    # Find participant based on assignment_id
+    # Find participant object for the user who is requesting to join the team
     participant = AssignmentParticipant.find_by(user_id: @current_user.id, parent_id: params[:assignment_id])
     
     unless participant
@@ -121,7 +110,7 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
     )
     
     if existing_request
-      return render json: { error: 'You already have a pending request for this team' }, status: :unprocessable_entity
+      return render json: { error: 'You already have a pending request to join this team' }, status: :unprocessable_entity
     end
 
     # Create the request
@@ -165,12 +154,6 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   # PATCH api/v1/join_team_requests/1/accept
   # Accept a join team request and add the participant to the team
   def accept
-    # Check if request is still pending
-    unless @join_team_request.reply_status == PENDING
-      return render json: { error: 'This request has already been processed' }, status: :unprocessable_entity
-    end
-
-    # Check if team is full
     team = @join_team_request.team
     if team.full?
       return render json: { error: 'Team is full' }, status: :unprocessable_entity
@@ -191,15 +174,14 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
       end
 
       # Add participant to the new team
-      team_participant = TeamsParticipant.create!(
+      TeamsParticipant.create!(
         participant_id: participant.id,
         team_id: team.id,
         user_id: participant.user_id
       )
 
       # Update the request status
-      @join_team_request.reply_status = ACCEPTED
-      @join_team_request.save!
+      @join_team_request.update!(reply_status: ACCEPTED)
 
       render json: { 
         message: 'Join team request accepted successfully', 
@@ -215,13 +197,7 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   # PATCH api/v1/join_team_requests/1/decline
   # Decline a join team request
   def decline
-    # Check if request is still pending
-    unless @join_team_request.reply_status == PENDING
-      return render json: { error: 'This request has already been processed' }, status: :unprocessable_entity
-    end
-
-    @join_team_request.reply_status = DECLINED
-    if @join_team_request.save
+    if @join_team_request.update(reply_status: DECLINED)
       render json: { 
         message: 'Join team request declined successfully',
         join_team_request: JoinTeamRequestSerializer.new(@join_team_request).as_json
@@ -241,9 +217,21 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
     end
   end
 
+  # Ensures the request is still pending before processing accept/decline
+  def ensure_request_pending
+    unless @join_team_request.reply_status == PENDING
+      render json: { error: 'This request has already been processed' }, status: :unprocessable_entity
+    end
+  end
+
   # Finds the join team request by ID
   def find_request
     @join_team_request = JoinTeamRequest.find(params[:id])
+  end
+
+  # Loads the request for authorization check (avoids duplicate queries)
+  def load_request_for_authorization
+    @join_team_request ||= JoinTeamRequest.find_by(id: params[:id])
   end
 
   # Permits specified parameters for join team requests
@@ -255,29 +243,21 @@ class Api::V1::JoinTeamRequestsController < ApplicationController
   def current_user_is_request_creator?
     return false unless @join_team_request && @current_user
     
-    participant = Participant.find_by(id: @join_team_request.participant_id)
-    participant&.user_id == @current_user.id
+    @join_team_request.participant&.user_id == @current_user.id
   end
 
   # Helper method to check if current user is a member of the target team
   def current_user_is_team_member?
     return false unless @join_team_request && @current_user
     
-    team = Team.find_by(id: @join_team_request.team_id)
-    return false unless team
+    team = @join_team_request.team
+    return false unless team.is_a?(AssignmentTeam)
     
-    # Find the participant record for the current user in the same assignment
-    # We need to get the assignment from the team
-    if team.is_a?(AssignmentTeam)
-      participant = AssignmentParticipant.find_by(
-        user_id: @current_user.id,
-        parent_id: team.parent_id
-      )
-      return false unless participant
-      
-      team.participants.include?(participant)
-    else
-      false
-    end
+    participant = AssignmentParticipant.find_by(
+      user_id: @current_user.id,
+      parent_id: team.parent_id
+    )
+    
+    participant && team.participants.include?(participant)
   end
 end
