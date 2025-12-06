@@ -142,7 +142,7 @@ module SubmittedContentHelper
 
     # Build new filename with sanitization in the same directory
     new_filename = File.join(params[:directories][params[:chk_files]],
-                             sanitize_filename(params[:faction][:rename]))
+                             clean_filename(params[:faction][:rename]))
 
     # Wrap the rename operation with error handling
     handle_file_operation_error('renaming') do
@@ -174,7 +174,7 @@ module SubmittedContentHelper
 
     # Build destination filename with sanitization
     new_filename = File.join(params[:directories][params[:chk_files]],
-                             sanitize_filename(params[:faction][:copy]))
+                             clean_filename(params[:faction][:copy]))
 
     # Wrap the copy operation with error handling
     handle_file_operation_error('copying') do

@@ -137,7 +137,7 @@ class SubmittedContentController < ApplicationController
     file_bytes = uploaded.read
 
     # Get the current folder from params, default to root '/'
-    current_folder = sanitize_folder(params.dig(:current_folder, :name) || '/')
+    current_folder = clean_folder(params.dig(:current_folder, :name) || '/')
 
     # Get team and ensure it has a directory number assigned
     team = participant_team
@@ -150,7 +150,7 @@ class SubmittedContentController < ApplicationController
     FileUtils.mkdir_p(current_directory) unless File.exist?(current_directory)
 
     # Sanitize the filename: remove backslashes, replace spaces with underscores
-    safe_filename = sanitize_filename(uploaded_file_name(uploaded).tr('\\', '/')).gsub(' ', '_')
+    safe_filename = clean_filename(uploaded_file_name(uploaded).tr('\\', '/')).gsub(' ', '_')
 
     # Build the full file path (use basename to prevent directory traversal)
     full_path = File.join(current_directory, File.basename(safe_filename))
@@ -217,7 +217,7 @@ class SubmittedContentController < ApplicationController
     team.set_team_directory_num
 
     # Sanitize the folder name to prevent directory traversal attacks
-    folder_name = sanitize_folder(folder_name_param)
+    folder_name = clean_folder(folder_name_param)
 
     # Build the full path to the requested file using team path
     base_path = team.path.to_s
@@ -246,7 +246,7 @@ class SubmittedContentController < ApplicationController
 
     # Get the folder path from params, default to root
     folder_param = params.dig(:folder, :name) || params[:folder] || '/'
-    folder_path = sanitize_folder(folder_param)
+    folder_path = clean_folder(folder_param)
 
     # Build the full directory path
     base_path = team.path.to_s
