@@ -79,7 +79,15 @@ module SubmittedContentHelper
     render json: { error: "File or directory not found while #{operation}. The file may have been moved or deleted."}, status: :not_found
   rescue Errno::ENOSPC => e
     # Handle insufficient disk space errors (507 Insufficient Storage)
-    render json: { error: "Insufficient disk space while #{operation} the file. Please contact your system administrator."}, status: :insufficient_storage
+    # Calculate available disk space for more helpful error message
+    begin
+      stat = File.statvfs(Rails.root)
+      available_mb = (stat.bavail * stat.bsize) / 1024 / 1024
+      error_msg = "Insufficient disk space while #{operation} the file. Available space: #{available_mb}MB. Please free up disk space or contact your system administrator."
+    rescue
+      error_msg = "Insufficient disk space while #{operation} the file. Please check available disk space and contact your system administrator if needed."
+    end
+    render json: { error: error_msg }, status: :insufficient_storage
   rescue StandardError => e
     # Handle all other unexpected errors (422 Unprocessable Entity)
     render json: { error: "Failed while #{operation} the file: #{e.message}. Please verify the file path and try again."}, status: :unprocessable_entity
