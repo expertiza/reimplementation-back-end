@@ -499,7 +499,7 @@ RSpec.describe 'Submitted Content API', type: :request do
           .to receive(:ensure_participant_team).and_return(true)
         allow_any_instance_of(SubmittedContentController)
           .to receive(:participant_team).and_return(team)
-        allow(team).to receive(:set_student_directory_num)
+        allow(team).to receive(:set_team_directory_num)
         allow(team).to receive(:path).and_return('/test/path')
       end
 
@@ -699,7 +699,7 @@ RSpec.describe 'Submitted Content API', type: :request do
             .to receive(:ensure_participant_team).and_return(true)
           allow_any_instance_of(SubmittedContentController)
             .to receive(:participant_team).and_return(team)
-          allow(team).to receive(:set_student_directory_num)
+          allow(team).to receive(:set_team_directory_num)
           allow_any_instance_of(SubmittedContentController)
             .to receive(:check_extension_integrity).and_return(true)
           allow_any_instance_of(SubmittedContentController)
@@ -990,7 +990,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         allow(AssignmentParticipant).to receive(:find).and_return(participant)
         allow(participant).to receive(:team).and_return(team)
         allow(participant).to receive(:team_path).and_return(temp_dir)
-        allow(team).to receive(:set_student_directory_num)
+        allow(team).to receive(:set_team_directory_num)
         allow(team).to receive(:hyperlinks).and_return([])
         FileUtils.mkdir_p(File.join(temp_dir, 'subfolder'))
         File.write(File.join(temp_dir, 'file.txt'), 'content')
@@ -1064,7 +1064,7 @@ RSpec.describe 'Submitted Content API', type: :request do
       allow(team).to receive(:hyperlinks).and_return([])
       allow(team).to receive(:submit_hyperlink)
       allow(team).to receive(:remove_hyperlink)
-      allow(team).to receive(:set_student_directory_num)
+      allow(team).to receive(:set_team_directory_num)
       allow(team).to receive(:path).and_return('/tmp')
     end
 

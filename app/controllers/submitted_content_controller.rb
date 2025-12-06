@@ -1,6 +1,9 @@
-class Api::V1::SubmittedContentController < ApplicationController
+class SubmittedContentController < ApplicationController
   include SubmittedContentHelper
   include FileHelper
+
+  # Maximum file upload size in megabytes
+  MAX_FILE_SIZE_MB = 5
 
   before_action :set_submission_record, only: [:show]
   before_action :set_participant, only: [:submit_hyperlink, :remove_hyperlink, :submit_file, :folder_action, :download, :list_files]
@@ -120,17 +123,14 @@ class Api::V1::SubmittedContentController < ApplicationController
     # Validate that a file was provided
     return render_error('No file provided. Please select a file to upload using the "uploaded_file" parameter.', :bad_request) unless uploaded
 
-    # Define file size limit (5MB)
-    file_size_limit_mb = 5
-
     # Validate file size against the limit
-    unless check_content_size(uploaded, file_size_limit_mb)
-      return render_error("File size must be smaller than #{file_size_limit_mb}MB", :bad_request)
+    unless check_content_size(uploaded, MAX_FILE_SIZE_MB)
+      return render_error("File size must be smaller than #{MAX_FILE_SIZE_MB}MB", :bad_request)
     end
 
     # Validate file extension against allowed types
     unless check_extension_integrity(uploaded_file_name(uploaded))
-      return render_error('File extension not allowed. Supported formats: pdf, png, jpeg, jpg, zip, tar, gz, 7z, odt, docx, md, rb, mp4, txt.', :bad_request)
+      return render_error('File extension not allowed. Supported extensions: pdf, png, jpeg, jpg, zip, tar, gz, 7z, odt, docx, md, rb, mp4, txt.', :bad_request)
     end
 
     # Read the file contents into memory
@@ -141,7 +141,7 @@ class Api::V1::SubmittedContentController < ApplicationController
 
     # Get team and ensure it has a directory number assigned
     team = participant_team
-    team.set_student_directory_num
+    team.set_team_directory_num
 
     # Build the full directory path where file will be saved
     current_directory = File.join(team.path.to_s, current_folder)
@@ -214,7 +214,7 @@ class Api::V1::SubmittedContentController < ApplicationController
 
     # Get the team and ensure it has a directory
     team = participant_team
-    team.set_student_directory_num
+    team.set_team_directory_num
 
     # Sanitize the folder name to prevent directory traversal attacks
     folder_name = sanitize_folder(folder_name_param)
@@ -242,7 +242,7 @@ class Api::V1::SubmittedContentController < ApplicationController
   def list_files
     # Get the team and ensure it has a directory
     team = participant_team
-    team.set_student_directory_num
+    team.set_team_directory_num
 
     # Get the folder path from params, default to root
     folder_param = params.dig(:folder, :name) || params[:folder] || '/'
@@ -252,22 +252,23 @@ class Api::V1::SubmittedContentController < ApplicationController
     base_path = team.path.to_s
     full_path = folder_path == '/' ? base_path : File.join(base_path, folder_path)
 
-    # Check if directory exists
+    # Check if directory exists; create it if it doesn't
     unless File.exist?(full_path)
-      # Create the directory if it doesn't exist
+      # Create the directory and any necessary parent directories
       FileUtils.mkdir_p(full_path)
       return render json: { files: [], folders: [], hyperlinks: team.hyperlinks }, status: :ok
     end
 
-    # Check if path is actually a directory
+    # Verify that the full_path points to a directory, not a file
     unless File.directory?(full_path)
       return render_error('The specified path is not a directory.', :bad_request)
     end
 
-    # Collect files and folders
+    # Collect files and folders from the full_path directory
     files = []
     folders = []
 
+    # Iterate through directory entries using Ruby's built-in Dir class
     Dir.entries(full_path).each do |entry|
       # Skip current and parent directory references
       next if entry == '.' || entry == '..'

@@ -42,7 +42,8 @@ module SubmittedContentHelper
   # @param e [Zip::Entry] The ZIP entry to extract
   # @param unzip_dir [String] Target directory for extraction
   def self.extract_entry(e, unzip_dir)
-    # Sanitize the entry name to prevent directory traversal attacks
+    # Sanitize the entry name to prevent directory traversal attacks (e.g., malicious paths like "../../../etc/passwd")
+    # Use only the filename, removing any directory path components
     just_filename = File.basename(e.name)
     safe_name = just_filename.gsub(%r{[^\w\.\_/]}, '_').tr("'", '_')
 
@@ -59,7 +60,8 @@ module SubmittedContentHelper
   # Constructs the full file path from params for file operations
   # @return [String] Full path to the file
   def get_filename
-    # Build path from directories array and filenames array using chk_files index
+    # Build path from directories and filenames arrays
+    # chk_files contains the index of the selected file from the file list
     "#{params[:directories][params[:chk_files]]}/#{params[:filenames][params[:chk_files]]}"
   end
 

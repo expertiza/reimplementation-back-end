@@ -56,7 +56,7 @@ class AssignmentTeam < Team
   end
 
   # Set the directory num for this team
-  def set_student_directory_num
+  def set_team_directory_num
     return if directory_num && (directory_num >= 0)
 
     max_num = AssignmentTeam.where(parent_id:).order('directory_num desc').first.directory_num
@@ -64,7 +64,7 @@ class AssignmentTeam < Team
     update(directory_num: dir_num)
   end
 
-  # Gets the student directory path
+  # Gets the team directory path
   def path
     "#{assignment_path}/#{directory_num}"
   end
