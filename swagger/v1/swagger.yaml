@@ -1584,7 +1584,7 @@ paths:
         schema:
           type: string
         required: true
-      - name: submission
+      - name: submit_link
         in: query
         schema:
           type: string

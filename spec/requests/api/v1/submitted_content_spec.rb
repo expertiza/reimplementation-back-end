@@ -280,7 +280,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         it 'returns success' do
           send(method, '/submitted_content/submit_hyperlink',
-               params: { id: id, submission: submission },
+               params: { id: id, submit_link: submission },
                headers: auth_headers_student)
 
           expect(response).to have_http_status(:ok)
@@ -295,7 +295,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         it 'returns bad request' do
           send(method, '/submitted_content/submit_hyperlink',
-               params: { id: id, submission: submission },
+               params: { id: id, submit_link: submission },
                headers: auth_headers_student)
 
           expect(response).to have_http_status(:bad_request)
@@ -314,7 +314,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         it 'returns conflict' do
           send(method, '/submitted_content/submit_hyperlink',
-               params: { id: id, submission: submission },
+               params: { id: id, submit_link: submission },
                headers: auth_headers_student)
 
           expect(response).to have_http_status(:conflict)
@@ -334,7 +334,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         it 'returns bad request with error' do
           send(method, '/submitted_content/submit_hyperlink',
-               params: { id: id, submission: submission },
+               params: { id: id, submit_link: submission },
                headers: auth_headers_student)
 
           expect(response).to have_http_status(:bad_request)
@@ -1029,7 +1029,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         allow(AssignmentParticipant).to receive(:find).and_raise(ActiveRecord::RecordNotFound)
 
         post '/submitted_content/submit_hyperlink',
-             params: { id: 999, submission: 'http://test.com' },
+             params: { id: 999, submit_link: 'http://test.com' },
              headers: auth_headers_student
 
         # controller currently does not rescue set_participant -> RecordNotFound => 500
@@ -1045,7 +1045,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
       it 'returns not found for submit_hyperlink' do
         post '/submitted_content/submit_hyperlink',
-             params: { id: participant.id, submission: 'http://test.com' },
+             params: { id: participant.id, submit_link: 'http://test.com' },
              headers: auth_headers_student
 
         expect(response).to have_http_status(:not_found)
@@ -1082,7 +1082,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
     it 'submits a hyperlink (POST)' do
       post '/submitted_content/submit_hyperlink',
-           params: { id: participant.id, submission: 'http://example.com' },
+           params: { id: participant.id, submit_link: 'http://example.com' },
            headers: auth_headers_student
       expect(response).to have_http_status(:ok)
     end

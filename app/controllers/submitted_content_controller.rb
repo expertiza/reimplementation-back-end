@@ -50,26 +50,26 @@ class SubmittedContentController < ApplicationController
     # Get the participant's team (requires @participant from before_action)
     team = participant_team
 
-    # Clean up the submitted hyperlink by stripping whitespace
-    submission = params[:submission].to_s.strip
+    # Extract and clean up the submitted hyperlink by stripping whitespace
+    submit_link = params[:submit_link].to_s.strip
 
     # Validate that the hyperlink is not blank
-    if submission.blank?
+    if submit_link.blank?
       return render_error('Hyperlink submission cannot be blank. Please provide a valid URL.', :bad_request)
     end
 
     # Check for duplicate hyperlinks in the team's existing submissions
-    if team.hyperlinks.include?(submission)
+    if team.hyperlinks.include?(submit_link)
       return render_error('You or your teammate(s) have already submitted the same hyperlink.', :conflict)
     end
 
     # Attempt to submit the hyperlink and record the submission
     begin
       # Add hyperlink to team's submission list (validates URL format)
-      team.submit_hyperlink(submission)
+      team.submit_hyperlink(submit_link)
 
       # Create a submission record for audit trail
-      create_submission_record_for('hyperlink', submission, 'Submit Hyperlink')
+      create_submission_record_for('hyperlink', submit_link, 'Submit Hyperlink')
 
       # Return success response
       render_success('The link has been successfully submitted.')
