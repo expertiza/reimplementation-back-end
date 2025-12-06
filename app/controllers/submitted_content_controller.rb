@@ -129,7 +129,7 @@ class SubmittedContentController < ApplicationController
     end
 
     # Validate file extension against allowed types
-    unless check_extension_integrity(uploaded_file_name(uploaded))
+    unless valid_file_extension?(uploaded_file_name(uploaded))
       return render_error('File extension not allowed. Supported extensions: pdf, png, jpeg, jpg, zip, tar, gz, 7z, odt, docx, md, rb, mp4, txt.', :bad_request)
     end
 

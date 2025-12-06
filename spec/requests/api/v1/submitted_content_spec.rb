@@ -536,7 +536,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         before do
           allow_any_instance_of(SubmittedContentController)
-            .to receive(:is_file_small_enough).and_return(false)
+            .to receive(:check_content_size).and_return(false)
         end
 
         it 'returns bad request for size limit' do
@@ -562,9 +562,9 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         before do
           allow_any_instance_of(SubmittedContentController)
-            .to receive(:is_file_small_enough).and_return(true)
+            .to receive(:check_content_size).and_return(true)
           allow_any_instance_of(SubmittedContentController)
-            .to receive(:check_extension_integrity).and_return(false)
+            .to receive(:valid_file_extension?).and_return(false)
         end
 
         it 'returns bad request for invalid extension' do
@@ -593,9 +593,9 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         before do
           allow_any_instance_of(SubmittedContentController)
-            .to receive(:is_file_small_enough).and_return(true)
+            .to receive(:check_content_size).and_return(true)
           allow_any_instance_of(SubmittedContentController)
-            .to receive(:check_extension_integrity).and_return(true)
+            .to receive(:valid_file_extension?).and_return(true)
           allow_any_instance_of(SubmittedContentController)
             .to receive(:create_submission_record_for).and_return(true)
         end
@@ -628,9 +628,9 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         before do
           allow_any_instance_of(SubmittedContentController)
-            .to receive(:is_file_small_enough).and_return(true)
+            .to receive(:check_content_size).and_return(true)
           allow_any_instance_of(SubmittedContentController)
-            .to receive(:check_extension_integrity).and_return(true)
+            .to receive(:valid_file_extension?).and_return(true)
           allow_any_instance_of(SubmittedContentController)
             .to receive(:file_type).and_return('zip')
           allow(SubmittedContentHelper).to receive(:unzip_file).and_return({ message: 'Unzipped successfully' })
@@ -701,7 +701,7 @@ RSpec.describe 'Submitted Content API', type: :request do
             .to receive(:participant_team).and_return(team)
           allow(team).to receive(:set_team_directory_num)
           allow_any_instance_of(SubmittedContentController)
-            .to receive(:check_extension_integrity).and_return(true)
+            .to receive(:valid_file_extension?).and_return(true)
           allow_any_instance_of(SubmittedContentController)
             .to receive(:create_submission_record_for).and_return(true)
         end
@@ -1100,7 +1100,7 @@ RSpec.describe 'Submitted Content API', type: :request do
       tempfile.write('hi')
       tempfile.rewind
       uploaded = ActionDispatch::Http::UploadedFile.new(tempfile: tempfile, filename: 'happy.txt', type: 'text/plain')
-      allow_any_instance_of(SubmittedContentController).to receive(:check_extension_integrity).and_return(true)
+      allow_any_instance_of(SubmittedContentController).to receive(:valid_file_extension?).and_return(true)
       allow_any_instance_of(SubmittedContentController).to receive(:create_submission_record_for).and_return(true)
       post '/submitted_content/submit_file',
            params: { id: participant.id, uploaded_file: uploaded, current_folder: { name: '' } },

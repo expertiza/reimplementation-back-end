@@ -88,7 +88,7 @@ module SubmittedContentHelper
   # Validates if a file has an allowed extension
   # @param original_filename [String] The filename to check
   # @return [Boolean] true if extension is allowed, false otherwise
-  def check_extension_integrity(original_filename)
+  def valid_file_extension?(original_filename)
     # Define list of allowed file extensions
     allowed_extensions = %w[pdf png jpeg jpg zip tar gz 7z odt docx md rb mp4 txt]
 
