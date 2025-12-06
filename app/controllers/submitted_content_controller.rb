@@ -158,9 +158,19 @@ class SubmittedContentController < ApplicationController
     # Write the file to disk in binary mode
     File.open(full_path, 'wb') { |f| f.write(file_bytes) }
 
-    # If unzip flag is set and file is a zip, extract contents
+    # If unzip flag is set and file is a zip, extract contents using rubyzip library
     if params[:unzip] && file_type(safe_filename) == 'zip'
-      SubmittedContentHelper.unzip_file(full_path, current_directory, true)
+      Zip::File.open(full_path) do |zip_file|
+        zip_file.each do |entry|
+          # Use only the filename to prevent directory traversal attacks
+          safe_entry_name = File.basename(entry.name).gsub(%r{[^\w\.\\_/]}, '_').tr("'", '_')
+          entry_path = File.join(current_directory, safe_entry_name)
+          FileUtils.mkdir_p(File.dirname(entry_path))
+          entry.extract(entry_path) { true } # true = overwrite if exists
+        end
+      end
+      # Delete the zip file after extraction
+      File.delete(full_path)
     end
 
     # Create submission record for audit trail
