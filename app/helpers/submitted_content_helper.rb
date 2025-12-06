@@ -134,8 +134,11 @@ module SubmittedContentHelper
 
     # Wrap the move operation with error handling
     handle_file_operation_error('moving') do
-      # Perform the file move using FileHelper
-      move_file(old_filename, new_location)
+      # Create destination directory if it doesn't exist using FileUtils
+      FileUtils.mkdir_p(new_location) unless File.exist?(new_location)
+
+      # Move file using FileUtils library
+      FileUtils.mv(old_filename, new_location)
 
       # Render success response
       render json: { message: "The file was successfully moved." }, status: :ok
@@ -248,8 +251,8 @@ module SubmittedContentHelper
 
     # Wrap the folder creation with error handling
     handle_file_operation_error('creating directory') do
-      # Create the directory (and any necessary parent directories)
-      create_directory_from_path(location)
+      # Create the directory and any necessary parent directories using FileUtils
+      FileUtils.mkdir_p(location)
 
       # Render success response with folder name
       render json: { message: "Directory '#{params[:faction][:create]}' created successfully." }, status: :created
