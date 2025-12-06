@@ -1,4 +1,4 @@
-class SubmittedContentController < ApplicationController
+class Api::V1::SubmittedContentController < ApplicationController
   include SubmittedContentHelper
   include FileHelper
 
@@ -6,21 +6,21 @@ class SubmittedContentController < ApplicationController
   before_action :set_participant, only: [:submit_hyperlink, :remove_hyperlink, :submit_file, :folder_action, :download, :list_files]
   before_action :ensure_participant_team, only: [:submit_hyperlink, :remove_hyperlink, :submit_file, :folder_action, :download, :list_files]
 
-  # GET /submitted_content
+  # GET /api/v1/submitted_content
   # Retrieves all submission records from the database
   def index
     # Return all submission records as JSON with 200 OK status
     render json: SubmissionRecord.all, status: :ok
   end
 
-  # GET /submitted_content/:id
+  # GET /api/v1/submitted_content/:id
   # Retrieves a specific submission record by ID (set by before_action)
   def show
     # @submission_record is set by set_submission_record before_action
     render json: @submission_record, status: :ok
   end
 
-  # POST /submitted_content
+  # POST /api/v1/submitted_content
   # Creates a new submission record with automatic type detection (hyperlink or file)
   def create
     # Get permitted parameters from request
@@ -40,8 +40,8 @@ class SubmittedContentController < ApplicationController
     end
   end
 
-  # POST /submitted_content/submit_hyperlink
-  # GET  /submitted_content/submit_hyperlink
+  # POST /api/v1/submitted_content/submit_hyperlink
+  # GET  /api/v1/submitted_content/submit_hyperlink
   # Validates and submits a hyperlink for the participant's team
   def submit_hyperlink
     # Get the participant's team (requires @participant from before_action)
@@ -76,8 +76,8 @@ class SubmittedContentController < ApplicationController
     end
   end
 
-  # POST /submitted_content/remove_hyperlink
-  # GET  /submitted_content/remove_hyperlink
+  # POST /api/v1/submitted_content/remove_hyperlink
+  # GET  /api/v1/submitted_content/remove_hyperlink
   # Removes a hyperlink at the specified index from the team's hyperlinks
   def remove_hyperlink
     # Get the participant's team
@@ -110,8 +110,8 @@ class SubmittedContentController < ApplicationController
     end
   end
 
-  # POST /submitted_content/submit_file
-  # GET  /submitted_content/submit_file
+  # POST /api/v1/submitted_content/submit_file
+  # GET  /api/v1/submitted_content/submit_file
   # Handles file upload for the participant's team with validation and optional unzipping
   def submit_file
     # Get the uploaded file from request parameters
@@ -124,7 +124,7 @@ class SubmittedContentController < ApplicationController
     file_size_limit_mb = 5
 
     # Validate file size against the limit
-    unless is_file_small_enough(uploaded, file_size_limit_mb)
+    unless check_content_size(uploaded, file_size_limit_mb)
       return render_error("File size must be smaller than #{file_size_limit_mb}MB", :bad_request)
     end
 
@@ -133,15 +133,8 @@ class SubmittedContentController < ApplicationController
       return render_error('File extension not allowed. Supported formats: pdf, png, jpeg, jpg, zip, tar, gz, 7z, odt, docx, md, rb, mp4, txt.', :bad_request)
     end
 
-    # Read the file contents into memory; support both uploaded IOs and plain strings
-    file_bytes =
-      if uploaded.respond_to?(:read)
-        uploaded.read
-      elsif uploaded.is_a?(String) && File.exist?(uploaded)
-        File.binread(uploaded)
-      else
-        uploaded.to_s
-      end
+    # Read the file contents into memory
+    file_bytes = uploaded.read
 
     # Get the current folder from params, default to root '/'
     current_folder = sanitize_folder(params.dig(:current_folder, :name) || '/')
@@ -151,7 +144,7 @@ class SubmittedContentController < ApplicationController
     team.set_student_directory_num
 
     # Build the full directory path where file will be saved
-    current_directory = File.join(@participant.team_path.to_s, current_folder)
+    current_directory = File.join(team.path.to_s, current_folder)
 
     # Create the directory if it doesn't exist
     FileUtils.mkdir_p(current_directory) unless File.exist?(current_directory)
@@ -177,12 +170,11 @@ class SubmittedContentController < ApplicationController
     render_success('The file has been submitted successfully.', :created)
   rescue StandardError => e
     # Handle any errors during file upload (disk space, permissions, corruption, etc.)
-    Rails.logger.error("submit_file failed: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}") if defined?(Rails)
     render_error("Failed to save file to server: #{e.message}. Please verify the file is not corrupted and try again.", :internal_server_error)
   end
 
-  # POST /submitted_content/folder_action
-  # GET  /submitted_content/folder_action
+  # POST /api/v1/submitted_content/folder_action
+  # GET  /api/v1/submitted_content/folder_action
   # Dispatches folder management actions based on the faction parameter
   def folder_action
     # Get the faction parameter (specifies which action to perform)
@@ -205,11 +197,11 @@ class SubmittedContentController < ApplicationController
     end
   end
 
-  # GET /submitted_content/download
+  # GET /api/v1/submitted_content/download
   # Validates and streams a file for download
   def download
     # Extract folder name and file name from params
-    folder_name_param = params.dig(:current_folder, :name) || params[:current_folder] || params[:name]
+    folder_name_param = params.dig(:current_folder, :name)
     file_name = params[:download]
 
     # Validate that folder name was provided
@@ -220,13 +212,16 @@ class SubmittedContentController < ApplicationController
       return render_error('File name is required. Please specify the file to download in the "download" parameter.', :bad_request)
     end
 
+    # Get the team and ensure it has a directory
+    team = participant_team
+    team.set_student_directory_num
+
     # Sanitize the folder name to prevent directory traversal attacks
     folder_name = sanitize_folder(folder_name_param)
-    relative_folder = folder_name.sub(/\A\//, '')
 
-    # Build the full path to the requested file using participant's team path
-    base_path = @participant.team_path.to_s
-    full_path = relative_folder.blank? ? base_path : File.join(base_path, relative_folder)
+    # Build the full path to the requested file using team path
+    base_path = team.path.to_s
+    full_path = folder_name == '/' ? base_path : File.join(base_path, folder_name)
     path = File.join(full_path, file_name)
 
     # Check if the path is a directory (cannot download directories)
@@ -240,12 +235,9 @@ class SubmittedContentController < ApplicationController
     # Stream the file to the client (disposition: 'inline' displays in browser if possible)
     # Note: send_file returns immediately, do NOT render after this line
     send_file(path, disposition: 'inline')
-  rescue StandardError => e
-    Rails.logger.error("download failed: #{e.class}: #{e.message}\n#{e.backtrace.join("\n")}") if defined?(Rails)
-    render_error("Failed to download file: #{e.message}", :not_found)
   end
 
-  # GET /submitted_content/list_files
+  # GET /api/v1/submitted_content/list_files
   # Lists all files and directories in the participant's submission folder
   def list_files
     # Get the team and ensure it has a directory
@@ -253,13 +245,12 @@ class SubmittedContentController < ApplicationController
     team.set_student_directory_num
 
     # Get the folder path from params, default to root
-    folder_param = params.dig(:folder, :name) || params[:folder] || params[:name] || '/'
+    folder_param = params.dig(:folder, :name) || params[:folder] || '/'
     folder_path = sanitize_folder(folder_param)
-    relative_folder = folder_path.sub(/\A\//, '')
 
     # Build the full directory path
-    base_path = @participant.team_path.to_s
-    full_path = relative_folder.blank? ? base_path : File.join(base_path, relative_folder)
+    base_path = team.path.to_s
+    full_path = folder_path == '/' ? base_path : File.join(base_path, folder_path)
 
     # Check if directory exists
     unless File.exist?(full_path)

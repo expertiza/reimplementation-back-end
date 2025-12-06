@@ -11,6 +11,9 @@ module FileHelper
     clean_path(just_filename)
   end
 
+  # Make methods available as module methods
+  module_function :clean_path, :sanitize_filename
+
   # Moves file from old location to a new location
   def move_file(old_loc, new_loc)
     new_dir, filename = File.split(new_loc)

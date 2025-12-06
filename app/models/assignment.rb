@@ -36,9 +36,9 @@ class Assignment < ApplicationRecord
     end
 
     path_text = if !course_id.nil? && course_id > 0
-                  "#{Rails.root}/pg_data/#{FileHelper.clean_path(instructor[:name])}/#{FileHelper.clean_path(course.directory_path)}/"
+                  "#{Rails.root}/pg_data/#{FileHelper.clean_path(instructor.name)}/#{FileHelper.clean_path(course.directory_path)}/"
                 else
-                  "#{Rails.root}/pg_data/#{FileHelper.clean_path(instructor[:name])}/"
+                  "#{Rails.root}/pg_data/#{FileHelper.clean_path(instructor.name)}/"
                 end
     path_text + FileHelper.clean_path(directory_path)
   end

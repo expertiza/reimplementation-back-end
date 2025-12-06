@@ -59,7 +59,7 @@ class AssignmentTeam < Team
   def set_student_directory_num
     return if directory_num && (directory_num >= 0)
 
-    max_num = AssignmentTeam.where(parent_id:).order('directory_num desc').first&.directory_num
+    max_num = AssignmentTeam.where(parent_id:).order('directory_num desc').first.directory_num
     dir_num = max_num ? max_num + 1 : 0
     update(directory_num: dir_num)
   end

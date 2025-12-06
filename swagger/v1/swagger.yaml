@@ -1508,7 +1508,7 @@ paths:
           description: participant not found
         '401':
           description: unauthorized request has error response
-  "/submitted_content":
+  "/api/v1/submitted_content":
     get:
       summary: list all submission records
       tags:
@@ -1552,7 +1552,7 @@ paths:
                   - team_id
                   - user
                   - assignment_id
-  "/submitted_content/{id}":
+  "/api/v1/submitted_content/{id}":
     get:
       summary: show a submission record
       tags:
@@ -1569,7 +1569,7 @@ paths:
           description: successful
         '404':
           description: not found
-  "/submitted_content/submit_hyperlink":
+  "/api/v1/submitted_content/submit_hyperlink":
     post:
       summary: submit hyperlink (swagger)
       tags:
@@ -1592,7 +1592,7 @@ paths:
       responses:
         '200':
           description: successful
-  "/submitted_content/remove_hyperlink":
+  "/api/v1/submitted_content/remove_hyperlink":
     post:
       summary: remove hyperlink (swagger)
       tags:
@@ -1615,7 +1615,7 @@ paths:
       responses:
         '204':
           description: removed
-  "/submitted_content/submit_file":
+  "/api/v1/submitted_content/submit_file":
     post:
       summary: submit file (swagger)
       tags:
@@ -1650,7 +1650,7 @@ paths:
                   type: string
                   format: binary
         required: true
-  "/submitted_content/folder_action":
+  "/api/v1/submitted_content/folder_action":
     post:
       summary: folder action (swagger)
       tags:
@@ -1677,21 +1677,18 @@ paths:
           application/json:
             schema:
               type: object
-  "/submitted_content/download":
+  "/api/v1/submitted_content/download":
     get:
       summary: download file
       tags:
       - SubmittedContent
       parameters:
-      - name: current_folder
+      - name: current_folder[name]
         in: query
+        required: true
         schema:
-          type: object
-          properties:
-            name:
-              type: string
-          required:
-          - name
+          type: string
+        description: Folder path (use "/" for root)
       - name: download
         in: query
         required: true
@@ -1709,7 +1706,7 @@ paths:
           description: file does not exist
         '200':
           description: file downloaded
-  "/submitted_content/list_files":
+  "/api/v1/submitted_content/list_files":
     get:
       summary: list files and hyperlinks
       tags:
