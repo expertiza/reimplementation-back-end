@@ -20,7 +20,8 @@ class Assignment < ApplicationRecord
   attr_accessor :title, :description, :has_badge, :enable_pair_programming, :is_calibrated, :staggered_deadline
 
   def review_questionnaire_id
-    Questionnaire.find_by_assignment_id id
+    aq = AssignmentQuestionnaire.find_by(assignment_id: id)
+    aq ? aq.questionnaire_id : nil
   end
 
   def teams?

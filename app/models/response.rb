@@ -73,4 +73,20 @@ class Response < ApplicationRecord
     # puts "total: #{total_weight * questionnaire.max_question_score} "
     total_weight * questionnaire.max_question_score
   end
+
+  def volume
+    text = (additional_comment || "")
+    scores.each do |s|
+      text += " " + (s.comments || "")
+    end
+    text.downcase.scan(/\b\w+\b/).uniq.count
+  end
+
+  def comment_count
+    count = 0
+    scores.each do |s|
+      count += 1 if s.comments.present?
+    end
+    count
+  end
 end
