@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 class Invitation < ApplicationRecord
-  after_initialize :set_defaults
+  attr_accessor :skip_validate_invitee_check # need to skip `validate invitee already part of team` check when retracting invitations
 
   belongs_to :to_participant, class_name: 'AssignmentParticipant', foreign_key: 'to_id', inverse_of: false
-  belongs_to :from_team, class_name: 'AssignmentTeam', foreign_key: 'from_id', inverse_of: false
+  belongs_to :from_participant, class_name: 'AssignmentParticipant', foreign_key: 'from_id'
+  # belongs_to :from_team, class_name: 'AssignmentTeam', foreign_key: 'from_id', inverse_of: false
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'assignment_id'
-  belongs_to :from_participant, class_name: 'AssignmentParticipant', foreign_key: 'participant_id'
 
   validates_with InvitationValidator
 
@@ -35,8 +35,8 @@ class Invitation < ApplicationRecord
   end
 
   # This method handles all that needs to be done upon a user accepting an invitation.
-  def accept_invitation
-    inviter_team = from_team
+  def accept
+    inviter_team = from_participant.team
     invitee_team = to_participant.team
 
     # Wrap in transaction to prevent partial updates and concurrency
@@ -70,12 +70,15 @@ class Invitation < ApplicationRecord
 
 
   # This method handles all that needs to be done upon an user declining an invitation.
-  def decline_invitation
+  def decline
     update(reply_status: InvitationValidator::DECLINED_STATUS)  
   end
 
   # This method handles all that need to be done upon an invitation retraction.
-  def retract_invitation
+  def retract
+    # Reason: whenever a participant accepts an invitation and becomes part of the inviter team, there might be some invitations sent to the any of the newly joined team members
+    # So, in order to retract those invitations, the invitee check needs to be skipped in order to not raise any errors.
+    self.skip_validate_invitee_check = true
     update(reply_status: InvitationValidator::RETRACT_STATUS)
   end
 
@@ -85,7 +88,13 @@ class Invitation < ApplicationRecord
                           only: %i[id reply_status created_at updated_at],
                           include: {
                             assignment: { only: %i[id name] },
-                            from_team: { only: %i[id name] },
+                            from_participant: { 
+                              only: %i[id],
+                              include: {
+                                user: { only: %i[id name full_name email] },
+                                team: {only: %i[id name]}
+                              }},
+                            # from_team: { only: %i[id name] },
                             to_participant: {    
                               only: [:id],
                               include: {
@@ -94,9 +103,5 @@ class Invitation < ApplicationRecord
                           }
                         })).tap do |hash|
     end
-  end
-
-  def set_defaults
-    self.reply_status ||= InvitationValidator::WAITING_STATUS
   end
 end

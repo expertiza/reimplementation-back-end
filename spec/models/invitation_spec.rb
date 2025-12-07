@@ -53,26 +53,26 @@ RSpec.describe Invitation, type: :model do
 
   it 'accepts invitation and change reply_status to Accept(A)' do
     invitation = Invitation.create(to_id: participant1.id, from_id: team2.id, assignment_id: assignment.id,  participant_id: participant2.id)
-    invitation.accept_invitation
+    invitation.accept
     expect(invitation.reply_status).to eq(InvitationValidator::ACCEPT_STATUS)
   end
 
   it 'accepts invitation and update invitee team' do
     invitation = Invitation.create(to_id: participant1.id, from_id: team2.id, assignment_id: assignment.id,  participant_id: participant2.id)
-    invitation.accept_invitation
+    invitation.accept
     participant1.reload
     expect(participant1.team_id).to eq(team2.id)
   end
 
   it 'rejects invitation and change reply_status to Decline(D)' do
     invitation = Invitation.create(to_id: participant1.id, from_id: team2.id, assignment_id: assignment.id,  participant_id: participant2.id)
-    invitation.decline_invitation
+    invitation.decline
     expect(invitation.reply_status).to eq(InvitationValidator::DECLINED_STATUS)
   end
 
   it 'retracts invitation' do
     invitation = Invitation.create(to_id: participant1.id, from_id: team2.id, assignment_id: assignment.id,  participant_id: participant2.id)
-    invitation.retract_invitation
+    invitation.retract
     expect(invitation.reply_status).to eq(InvitationValidator::RETRACT_STATUS)
   end
 

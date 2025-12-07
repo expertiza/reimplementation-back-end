@@ -1,5 +1,5 @@
 class ParticipantSerializer < ActiveModel::Serializer
-    attributes :id, :user, :parent_id, :user_id, :authorization
+    attributes :id, :user, :parent_id, :user_id, :authorization, :team
 
     def user
         {

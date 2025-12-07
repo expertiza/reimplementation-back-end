@@ -35,6 +35,7 @@ class InvitationsController < ApplicationController
 
   # POST /invitations/
   def create
+    params[:invitation][:reply_status] ||= InvitationValidator::WAITING_STATUS
     @invitation = Invitation.invitation_factory(invite_params)
     if @invitation.save
       @invitation.send_invite_email
@@ -62,7 +63,7 @@ class InvitationsController < ApplicationController
         render json: { error: "Sorry, the invitation is no longer valid" }, status: :unprocessable_entity
         return
       end
-      result = @invitation.accept_invitation
+      result = @invitation.accept
       if result[:success]
         render json: { success: true, message: result[:message], invitation: @invitation}, status: :ok
       else
@@ -72,13 +73,13 @@ class InvitationsController < ApplicationController
       unless current_user_can_respond_to_invitation?(@invitation)
         return render_forbidden
       end
-      @invitation.decline_invitation
+      @invitation.decline
       render json: { success: true, message: "Invitation rejected successfully", invitation: @invitation}, status: :ok
     when InvitationValidator::RETRACT_STATUS
       unless current_user_can_retract_invitation?(@invitation)
         return render_forbidden
       end
-      @invitation.retract_invitation
+      @invitation.retract
       render json: { success: true, message: "Invitation retracted successfully", invitation: @invitation}, status: :ok
     else
       render json: @invitation.errors, status: :unprocessable_entity
@@ -108,7 +109,7 @@ class InvitationsController < ApplicationController
 
   def invitations_sent_by_participant
     participant = AssignmentParticipant.find(params[:participant_id])
-    @invitations = Invitation.where(participant_id: participant.id, assignment_id: participant.parent_id)
+    @invitations = Invitation.where(from_id: participant.id, assignment_id: participant.parent_id)
     render json: @invitations, status: :ok
   end
 
@@ -117,7 +118,7 @@ class InvitationsController < ApplicationController
 
   # only allow a list of valid invite params
   def invite_params
-    params.require(:invitation).permit(:id, :assignment_id, :reply_status).merge(from_team: inviter_team, to_participant: invitee_participant, from_participant: inviter_participant)
+    params.require(:invitation).permit(:id, :assignment_id, :reply_status).merge(to_participant: invitee_participant, from_participant: inviter_participant)
   end
 
   # helper method used when invite is not found

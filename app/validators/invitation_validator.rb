@@ -15,7 +15,8 @@ class InvitationValidator < ActiveModel::Validator
   INVITEE_ALREADY_TEAMMATE_MSG = 'The person you are trying to invite is already in your team'.freeze
 
   def validate(record)
-    validate_invitee(record)
+    print record.skip_validate_invitee_check
+    validate_invitee(record) unless record.skip_validate_invitee_check
     validate_reply_status(record)
     validate_reply_status_inclusion(record)
     validate_duplicate_invitation(record)
@@ -26,11 +27,14 @@ class InvitationValidator < ActiveModel::Validator
 
   # validates if the invitee is participant of the assignment or not
   def validate_invitee(record)
-    participant = AssignmentParticipant.find_by(id: record.to_id, parent_id: record.assignment_id)
-    unless participant.present?
+    invitee = AssignmentParticipant.find_by(id: record.to_id, parent_id: record.assignment_id)
+    unless invitee.present?
       record.errors.add(:base, DIFFERENT_ASSIGNMENT_PARTICIPANT_MSG)
     end
-    is_teammate = TeamsParticipant.find_by(participant_id: participant.id)&.team_id == record.from_id
+    inviter_team_id = TeamsParticipant.find_by(participant_id: record.from_id)&.team_id
+    invitee_team_id = TeamsParticipant.find_by(participant_id: invitee.id)&.team_id
+    is_teammate =  inviter_team_id == invitee_team_id
+
     if is_teammate
       record.errors.add(:base, INVITEE_ALREADY_TEAMMATE_MSG)
     end
@@ -49,6 +53,7 @@ class InvitationValidator < ActiveModel::Validator
   end
 
   def validate_duplicate_invitation(record)
+    print record.attributes
     conditions = {
       # id: record&.id,
       to_id: record.to_id,
@@ -56,6 +61,7 @@ class InvitationValidator < ActiveModel::Validator
       assignment_id: record.assignment_id,
       reply_status: record.reply_status
     }
+    print Invitation.where(conditions).exists?
     if Invitation.where(conditions).exists?
       record.errors.add(:base, DUPLICATE_INVITATION_ERROR_MSG)
     end
