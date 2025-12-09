@@ -19,8 +19,11 @@ rake db:create
 echo "Step 4: Running database migrations..."
 rake db:migrate
 
-echo "Step 5: Seeding the database..." 
+echo "Step 5: Running schema transformations..."
+mysql -h db -uroot -pexpertiza reimplementation < /app/db/new_seed.sql
+
+echo "Step 6: Seeding the database..." 
 rake db:seed
 
-echo "Step 6: Starting the Rails server..."
+echo "Step 7: Starting the Rails server..."
 rails s -p 3002 -b '0.0.0.0'
