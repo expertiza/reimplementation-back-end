@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_01_034750) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -411,6 +411,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
     t.bigint "institution_id"
     t.bigint "role_id", null: false
     t.bigint "parent_id"
+    t.string "date_format_pref", default: "mm/dd/yyyy"
     t.index ["institution_id"], name: "index_users_on_institution_id"
     t.index ["parent_id"], name: "index_users_on_parent_id"
     t.index ["role_id"], name: "index_users_on_role_id"

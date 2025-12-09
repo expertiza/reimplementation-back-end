@@ -1,7 +1,7 @@
 class InstitutionsController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :institution_not_found
   def action_allowed?
-    has_role?('Instructor')
+    has_role?('Instructor') || has_role?('Administrator')
   end
   # GET /institutions
   def index

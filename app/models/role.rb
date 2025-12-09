@@ -5,12 +5,12 @@ class Role < ApplicationRecord
   belongs_to :parent, class_name: 'Role', optional: true
   has_many :users, dependent: :nullify
 
-  # Role IDs
-  STUDENT_ID = 1
-  TEACHING_ASSISTANT_ID = 2
+  # Role IDs (must match db/seeds.rb)
+  SUPER_ADMINISTRATOR_ID = 1
+  ADMINISTRATOR_ID = 2
   INSTRUCTOR_ID = 3
-  ADMINISTRATOR_ID = 4
-  SUPER_ADMINISTRATOR_ID = 5
+  TEACHING_ASSISTANT_ID = 4
+  STUDENT_ID = 5
 
   def super_administrator?
     name['Super Administrator']

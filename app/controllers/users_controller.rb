@@ -82,7 +82,7 @@ class UsersController < ApplicationController
   def user_params
     params.require(:user).permit(:id, :name, :role_id, :full_name, :email, :parent_id, :institution_id,
                                  :email_on_review, :email_on_submission, :email_on_review_of_review,
-                                 :handle, :copy_of_emails, :password, :password_confirmation)
+                                 :handle, :copy_of_emails, :password, :password_confirmation, :date_format_pref)
   end
 
   def user_not_found
