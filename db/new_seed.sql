@@ -1,4 +1,4 @@
-USE expertiza_anonymization;
+USE reimplementation;
 SET FOREIGN_KEY_CHECKS = 0;
 DELIMITER $$
 
@@ -322,3 +322,4 @@ CREATE TABLE IF NOT EXISTS questionnaire_types (
 );
 
 SET FOREIGN_KEY_CHECKS = 1;
+
