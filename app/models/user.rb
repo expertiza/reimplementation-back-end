@@ -21,11 +21,11 @@ class User < ApplicationRecord
   has_many :teams, through: :teams_users
   has_many :participants
 
-  scope :students, -> { where role_id: Role::STUDENT }
-  scope :tas, -> { where role_id: Role::TEACHING_ASSISTANT }
-  scope :instructors, -> { where role_id: Role::INSTRUCTOR }
-  scope :administrators, -> { where role_id: Role::ADMINISTRATOR }
-  scope :superadministrators, -> { where role_id: Role::SUPER_ADMINISTRATOR }
+  scope :students, -> { where role_id: Role::STUDENT_ID }
+  scope :tas, -> { where role_id: Role::TEACHING_ASSISTANT_ID }
+  scope :instructors, -> { where role_id: Role::INSTRUCTOR_ID }
+  scope :administrators, -> { where role_id: Role::ADMINISTRATOR_ID }
+  scope :superadministrators, -> { where role_id: Role::SUPER_ADMINISTRATOR_ID }
 
   delegate :student?, to: :role
   delegate :ta?, to: :role
@@ -34,17 +34,17 @@ class User < ApplicationRecord
   delegate :super_administrator?, to: :role
 
   def self.instantiate(record)
-    case record.role
-    when Role::TEACHING_ASSISTANT
+    case record.role_id
+    when Role::TEACHING_ASSISTANT_ID
       record.becomes(Ta)
-    when Role::INSTRUCTOR
+    when Role::INSTRUCTOR_ID
       record.becomes(Instructor)
-    when Role::ADMINISTRATOR
+    when Role::ADMINISTRATOR_ID
       record.becomes(Administrator)
-    when Role::SUPER_ADMINISTRATOR
+    when Role::SUPER_ADMINISTRATOR_ID
       record.becomes(SuperAdministrator)
     else
-      super
+      record
     end
   end
 
@@ -72,10 +72,10 @@ class User < ApplicationRecord
   # Get instructor_id of the user, if the user is TA,
   # return the id of the instructor else return the id of the user for superior roles
   def instructor_id
-    case role
-    when Role::INSTRUCTOR, Role::ADMINISTRATOR, Role::SUPER_ADMINISTRATOR
+    case role_id
+    when Role::INSTRUCTOR_ID, Role::ADMINISTRATOR_ID, Role::SUPER_ADMINISTRATOR_ID
       id
-    when Role::TEACHING_ASSISTANT
+    when Role::TEACHING_ASSISTANT_ID
       my_instructor
     else
       raise NotImplementedError, "Unknown role: #{role.name}"

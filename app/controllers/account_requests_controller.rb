@@ -76,7 +76,7 @@ class AccountRequestsController < ApplicationController
     elsif !['Approved', 'Rejected'].include?(params[:account_request][:status])
       raise StandardError, 'Status can only be Approved or Rejected'
     end
-    params.require(:account_request).permit(:username, :full_name, :email, :status, :introduction, :role_id, :institution_id)
+    params.require(:account_request).permit(:username, :full_name, :email, :status, :introduction, :role_id, :institution_id, :date_format_pref)
   end
 
   # Create a new user if account request is approved
