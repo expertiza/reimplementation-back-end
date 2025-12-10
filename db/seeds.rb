@@ -51,7 +51,7 @@ begin
       directory_path: Faker::File.dir(segment_count: 2),
       name: Faker::Company.industry,
       info: "A fake class",
-      private: false
+      is_private: false
     ).id
   end
 
