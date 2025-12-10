@@ -14,7 +14,7 @@ begin
 
   # Create an admin user
   User.create!(
-    name: 'admin',
+    username: 'admin',
     email: 'admin2@example.com',
     password: 'password123',
     full_name: 'admin admin',
@@ -33,7 +33,7 @@ begin
   instructor_user_ids = []
   num_instructors.times do
     instructor_user_ids << User.create(
-      name: Faker::Internet.unique.username,
+      username: Faker::Internet.unique.username,
       email: Faker::Internet.unique.email,
       password: "password",
       full_name: Faker::Name.name,
@@ -80,7 +80,7 @@ begin
   student_user_ids = []
   num_students.times do
     student_user_ids << User.create(
-      name: Faker::Internet.unique.username,
+      username: Faker::Internet.unique.username,
       email: Faker::Internet.unique.email,
       password: "password",
       full_name: Faker::Name.name,

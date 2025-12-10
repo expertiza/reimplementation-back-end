@@ -266,7 +266,8 @@ CALL drop_column_if_exists('users','master_permission_granted');
 CALL drop_column_if_exists('users','digital_certificate');
 CALL drop_column_if_exists('users','persistence_token');
 
-CALL modify_column_if_exists('participants','user_id','INT(10) FIRST');
+-- Keep user_id aligned with users.id (bigint) to satisfy FK constraints
+CALL modify_column_if_exists('participants','user_id','BIGINT FIRST');
 CALL drop_column_if_exists('participants','submitted_at');
 CALL drop_column_if_exists('participants','penalty_accumulated');
 CALL drop_column_if_exists('participants','time_stamp');

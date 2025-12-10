@@ -20,7 +20,8 @@ echo "Step 4: Running database migrations..."
 rake db:migrate
 
 echo "Step 5: Running schema transformations..."
-mysql -h db -uroot -pexpertiza reimplementation < /app/db/new_seed.sql
+# Disable SSL because the local MySQL instance uses a self-signed cert
+mysql --ssl=0 -h db -uroot -pexpertiza reimplementation < /app/db/new_seed.sql
 
 echo "Step 6: Seeding the database..." 
 rake db:seed
