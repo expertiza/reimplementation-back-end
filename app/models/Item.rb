@@ -20,6 +20,10 @@ class Item < ApplicationRecord
   def scorable?
     false
   end
+
+  def scored?
+    question_type.in?(%w[ScaleItem CriterionItem])
+  end
     
   def set_seq
     self.seq = questionnaire.items.size + 1
@@ -56,5 +60,23 @@ class Item < ApplicationRecord
   # Use strategy to validate the item
   def validate_item
     strategy.validate(self)
+  end
+
+  def max_score
+    weight
+  end
+
+  def self.for(record)
+    klass = case record.question_type
+            when 'Criterion'
+              Criterion
+            when 'Scale'
+              Scale
+            else
+              Item
+            end
+
+    # Cast the existing record to the desired subclass
+    klass.new(record.attributes)
   end
 end

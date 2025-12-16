@@ -90,8 +90,6 @@ Rails.application.routes.draw do
         end
       end
 
-
-
       resources :sign_up_topics do
         collection do
           get :filter
@@ -139,6 +137,16 @@ Rails.application.routes.draw do
           get :list_participants
           post :add_participant
           delete :delete_participants
+        end
+      end      
+      resources :grades do
+        collection do        
+          get '/:assignment_id/view_all_scores', to: 'grades#view_all_scores'
+          patch '/:participant_id/assign_grade', to: 'grades#assign_grade'
+          get '/:participant_id/edit', to: 'grades#edit'
+          get '/:assignment_id/view_our_scores', to: 'grades#view_our_scores'
+          get '/:assignment_id/view_my_scores', to: 'grades#view_my_scores'
+          get '/:participant_id/instructor_review', to: 'grades#instructor_review'
         end
       end
       resources :import, path: :import, only: [] do

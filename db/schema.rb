@@ -32,7 +32,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_29_040855) do
     t.text "comments"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["item_id"], name: "fk_score_questions"
+    t.index ["item_id"], name: "fk_score_items"
     t.index ["response_id"], name: "fk_score_response"
   end
 
@@ -43,6 +43,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_29_040855) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "used_in_round"
+    t.integer "questionnaire_weight"
     t.index ["assignment_id"], name: "fk_aq_assignments_id"
     t.index ["questionnaire_id"], name: "fk_aq_questionnaire_id"
   end
@@ -124,6 +125,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_29_040855) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "cakes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "courses", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -170,14 +176,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_29_040855) do
 
   create_table "invitations", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.integer "assignment_id"
-    t.integer "from_id"
-    t.integer "to_id"
     t.string "reply_status", limit: 1
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "from_id", null: false
+    t.bigint "to_id", null: false
+    t.bigint "participant_id", null: false
     t.index ["assignment_id"], name: "fk_invitation_assignments"
-    t.index ["from_id"], name: "fk_invitationfrom_users"
-    t.index ["to_id"], name: "fk_invitationto_users"
+    t.index ["from_id"], name: "index_invitations_on_from_id"
+    t.index ["participant_id"], name: "index_invitations_on_participant_id"
+    t.index ["to_id"], name: "index_invitations_on_to_id"
   end
 
   create_table "items", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -203,7 +211,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_29_040855) do
     t.integer "participant_id"
     t.integer "team_id"
     t.text "comments"
-    t.string "status"
+    t.string "reply_status"
   end
 
   create_table "nodes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -232,6 +240,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_29_040855) do
     t.string "authorization"
     t.integer "parent_id", null: false
     t.string "type", null: false
+    t.float "grade"
     t.index ["join_team_request_id"], name: "index_participants_on_join_team_request_id"
     t.index ["team_id"], name: "index_participants_on_team_id"
     t.index ["user_id"], name: "fk_participant_users"
@@ -286,6 +295,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_29_040855) do
     t.integer "reviewee_id", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "type"
     t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 
@@ -295,6 +305,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_29_040855) do
     t.boolean "is_submitted", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "round"
+    t.integer "version_num"
     t.index ["map_id"], name: "fk_response_response_map"
   end
 
@@ -330,6 +342,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_29_040855) do
     t.integer "preference_priority_number"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "comments_for_advertisement"
+    t.boolean "advertise_for_partner"
     t.index ["sign_up_topic_id"], name: "index_signed_up_teams_on_sign_up_topic_id"
     t.index ["team_id"], name: "index_signed_up_teams_on_team_id"
   end
@@ -347,15 +361,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_29_040855) do
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name", null: false
     t.string "type", null: false
-    t.integer "max_team_size", default: 5, null: false
-    t.bigint "user_id"
-    t.bigint "mentor_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "parent_id", null: false
-    t.index ["mentor_id"], name: "index_teams_on_mentor_id"
-    t.index ["type"], name: "index_teams_on_type"
-    t.index ["user_id"], name: "index_teams_on_user_id"
+    t.integer "grade_for_submission"
+    t.string "comment_for_submission"
   end
 
   create_table "teams_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -412,6 +422,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_29_040855) do
   add_foreign_key "assignments", "users", column: "instructor_id"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
+  add_foreign_key "invitations", "participants", column: "from_id"
+  add_foreign_key "invitations", "participants", column: "to_id"
   add_foreign_key "items", "questionnaires"
   add_foreign_key "participants", "join_team_requests"
   add_foreign_key "participants", "teams"
@@ -423,8 +435,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_29_040855) do
   add_foreign_key "signed_up_teams", "teams"
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
-  add_foreign_key "teams", "users"
-  add_foreign_key "teams", "users", column: "mentor_id"
   add_foreign_key "teams_participants", "participants"
   add_foreign_key "teams_participants", "teams"
   add_foreign_key "teams_users", "teams"

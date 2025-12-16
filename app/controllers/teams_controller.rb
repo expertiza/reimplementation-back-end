@@ -24,7 +24,6 @@ class TeamsController < ApplicationController
   # Creates a new team associated with the current user
   def create
     @team = Team.new(team_params)
-    @team.user = current_user
     if @team.save
       render json: @team, serializer: TeamSerializer, status: :created
     else
@@ -95,7 +94,7 @@ class TeamsController < ApplicationController
 
   # Whitelists the parameters allowed for team creation/updation
   def team_params
-    params.require(:team).permit(:name, :max_team_size, :type, :assignment_id)
+    params.require(:team).permit(:name, :type, :assignment_id)
   end
 
   # Whitelists parameters required to add a team member
