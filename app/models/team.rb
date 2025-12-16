@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 class Team < ApplicationRecord
+  extend ImportableExportableHelper
+  mandatory_fields :name, :type
+  external_classes ExternalClass.new(Assignment, true, false, :title),
+                   ExternalClass.new(Course, true, false, :name),
+                   ExternalClass.new(User, true, false, :name)
 
   # Core associations
   has_many :signed_up_teams, dependent: :destroy

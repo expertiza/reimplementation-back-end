@@ -1,8 +1,16 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
+  extend ImportableExportableHelper
+  mandatory_fields :name, :email, :password, :full_name
+  external_classes ExternalClass.new(Role, true, false, :name),
+                   ExternalClass.new(Institution, true, false, :name)
+  available_actions_on_duplicate SkipRecordAction.new, UpdateExistingRecordAction.new, ChangeOffendingFieldAction.new
+
+
   has_secure_password
   after_initialize :set_defaults
+
 
   # name must be lowercase and unique
   validates :name, presence: true, uniqueness: true, allow_blank: false
@@ -34,14 +42,14 @@ class User < ApplicationRecord
   delegate :super_administrator?, to: :role
 
   def self.instantiate(record)
-    case record.role
-    when Role::TEACHING_ASSISTANT
+    case record.role.id
+    when Role::TEACHING_ASSISTANT_ID
       record.becomes(Ta)
-    when Role::INSTRUCTOR
+    when Role::INSTRUCTOR_ID
       record.becomes(Instructor)
-    when Role::ADMINISTRATOR
+    when Role::ADMINISTRATOR_ID
       record.becomes(Administrator)
-    when Role::SUPER_ADMINISTRATOR
+    when Role::SUPER_ADMINISTRATOR_ID
       record.becomes(SuperAdministrator)
     else
       super

@@ -149,4 +149,16 @@ Rails.application.routes.draw do
           get '/:participant_id/instructor_review', to: 'grades#instructor_review'
         end
       end
+      resources :import, path: :import, only: [] do
+        collection do
+          get "/:class", to: "import#index"
+          post "/:class", to: "import#import"
+        end
+      end
+      resources :export, path: :export, only: [] do
+        collection do
+          get "/:class", to: "export#index"
+          post "/:class", to: "export#export"
+        end
+      end
 end
