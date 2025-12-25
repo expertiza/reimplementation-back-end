@@ -1,0 +1,53 @@
+<html>
+<head>
+  <title>Team Member Joined</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+    .header { background-color: #28a745; color: white; padding: 20px; border-radius: 5px 5px 0 0; text-align: center; }
+    .content { padding: 20px; background-color: #f9f9f9; }
+    .footer { background-color: #f0f0f0; padding: 10px; text-align: center; font-size: 12px; color: #666; border-radius: 0 0 5px 5px; }
+    .detail-row { margin: 10px 0; }
+    .label { font-weight: bold; color: #28a745; }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Team Member Joined!</h1>
+    </div>
+    
+    <div class="content">
+      <p>Hello Team Members,</p>
+      
+      <p><strong><%= @invitee.user.full_name %></strong> has accepted the team invitation and has been successfully added to your team!</p>
+      
+      <div class="detail-row">
+        <span class="label">New Team Member:</span> <%= @invitee.user.full_name %> (<%= @invitee.user.email %>)
+      </div>
+      
+      <div class="detail-row">
+        <span class="label">Team Name:</span> <%= @inviter_team.name %>
+      </div>
+      
+      <div class="detail-row">
+        <span class="label">Assignment:</span> <%= @assignment.name %>
+      </div>
+      
+      <div class="detail-row">
+        <span class="label">Date Joined:</span> <%= I18n.l(@invitation.updated_at, format: :long) %>
+      </div>
+      
+      <p>You can now start collaborating with your new team member. Looking forward to great work from your team!</p>
+      
+      <p>Best regards,<br>
+      <strong>Expertiza Team</strong></p>
+    </div>
+    
+    <div class="footer">
+      <p>This is an automated email. Please do not reply to this message.</p>
+    </div>
+  </div>
+</body>
+</html>

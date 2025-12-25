@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CourseTeam < Team
   #Each course team must belong to a course
   belongs_to :course, class_name: 'Course', foreign_key: 'parent_id'
@@ -41,4 +43,4 @@ class CourseTeam < Team
       errors.add(:type, 'must be CourseTeam')
     end
   end
-end 
+end

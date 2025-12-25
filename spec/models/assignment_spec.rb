@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 
 require 'rails_helper'
 
@@ -6,8 +8,8 @@ RSpec.describe Assignment, type: :model do
   let(:team) {Team.new}
   let(:assignment) { Assignment.new(id: 1, name: 'Test Assignment') }
   let(:review_response_map) { ReviewResponseMap.new(assignment: assignment, reviewee: team) }
-  let(:answer) { Answer.new(answer: 1, comments: 'Answer text', question_id: 1) }
-  let(:answer2) { Answer.new(answer: 1, comments: 'Answer text', question_id: 1) }
+  let(:answer) { Answer.new(answer: 1, comments: 'Answer text', item_id: 1) }
+  let(:answer2) { Answer.new(answer: 1, comments: 'Answer text', item_id: 1) }
 
   describe '.get_all_review_comments' do
     it 'returns concatenated review comments and # of reviews in each round' do
@@ -17,7 +19,7 @@ RSpec.describe Assignment, type: :model do
                                                                            .with(no_args).and_yield(review_response_map)
       response1 = double('Response', round: 1, additional_comment: '')
       response2 = double('Response', round: 2, additional_comment: 'LGTM')
-      allow(review_response_map).to receive(:response).and_return([response1, response2])
+      allow(review_response_map).to receive(:responses).and_return([response1, response2])
       allow(response1).to receive(:scores).and_return([answer])
       allow(response2).to receive(:scores).and_return([answer2])
       expect(assignment.get_all_review_comments(1)).to eq([[nil, 'Answer text', 'Answer textLGTM', ''], [nil, 1, 1, 0]])

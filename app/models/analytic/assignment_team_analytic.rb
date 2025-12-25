@@ -1,5 +1,5 @@
 # require 'analytic/response_analytic'
-module AssignmentTeamAnalytic
+module  Analytic::AssignmentTeamAnalytic
     #======= general ==========#
     def num_participants
       participants.count
@@ -104,5 +104,5 @@ module AssignmentTeamAnalytic
         list
       end
     end
-  end
+end
   

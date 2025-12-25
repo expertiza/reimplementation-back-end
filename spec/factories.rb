@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 FactoryBot.define do
   factory :student_task do
     assignment { nil }
@@ -28,6 +30,10 @@ FactoryBot.define do
 
     trait :instructor do
       role { create(:role, :instructor) }
+    end
+
+    trait :ta do
+      role { create(:role, :ta) }
     end
 
     trait :student do

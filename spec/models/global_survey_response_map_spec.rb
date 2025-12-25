@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 RSpec.describe GlobalSurveyResponseMap, type: :model do
     describe '#questionnaire' do
       it 'returns the questionnaire associated with the reviewed_object_id' do

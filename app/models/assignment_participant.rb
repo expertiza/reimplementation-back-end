@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class AssignmentParticipant < Participant
+  include ReviewAggregator
   has_many :sent_invitations, class_name: 'Invitation', foreign_key: 'participant_id'
   belongs_to :user
   validates :handle, presence: true
@@ -20,13 +21,7 @@ class AssignmentParticipant < Participant
     self.save
   end
 
-  def aggregate_teammate_review_grade(maps)
-    return 0 if maps.empty?
-    obtained_score = 0    
-    total_reviewers = maps.size
-    maps.each do |map|
-       obtained_score += map.review_grade
-    end
-     ((obtained_score/total_reviewers)*100).round(2)
+  def aggregate_teammate_review_grade(teammate_review_mappings)
+    compute_average_review_score(teammate_review_mappings)
   end
 end

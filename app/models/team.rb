@@ -1,23 +1,42 @@
+# frozen_string_literal: true
+
 class Team < ApplicationRecord
 
   # Core associations
   has_many :signed_up_teams, dependent: :destroy
-  has_many :teams_users, dependent: :destroy  
+  has_many :teams_users, dependent: :destroy
   has_many :teams_participants, dependent: :destroy
   has_many :users, through: :teams_participants
   has_many :participants, through: :teams_participants
+  has_many :join_team_requests, dependent: :destroy
 
   # The team is either an AssignmentTeam or a CourseTeam
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'parent_id', optional: true
   belongs_to :course, class_name: 'Course', foreign_key: 'parent_id', optional: true
   belongs_to :user, optional: true # Team creator
-  
+
   attr_accessor :max_participants
   validates :parent_id, presence: true
   validates :type, presence: true, inclusion: { in: %w[AssignmentTeam CourseTeam MentoredTeam], message: "must be 'Assignment' or 'Course' or 'Mentor'" }
 
   def has_member?(user)
     participants.exists?(user_id: user.id)
+  end
+  
+  # Returns the current number of team members
+  def team_size
+    users.count
+  end
+  
+  # Returns the maximum allowed team size
+  def max_size
+    if is_a?(AssignmentTeam) && assignment&.max_team_size
+      assignment.max_team_size
+    elsif is_a?(CourseTeam) && course&.max_team_size
+      course.max_team_size
+    else
+      nil
+    end
   end
   
   def full?

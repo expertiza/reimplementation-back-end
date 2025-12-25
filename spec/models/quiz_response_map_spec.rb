@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 RSpec.describe QuizResponseMap, type: :model do
     describe 'associations' do
       it 'belongs to quiz_questionnaire' do

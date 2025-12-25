@@ -60,6 +60,7 @@ class Response < ApplicationRecord
       sum += s.answer * item.weight unless s.answer.nil?  #|| !item.scorable?
     end
     # puts "sum: #{sum}"
+    # puts "sum: #{sum}"
     sum
   end
 

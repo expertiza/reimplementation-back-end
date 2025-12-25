@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Rails.application.routes.draw do
 
   mount Rswag::Api::Engine => 'api-docs'
@@ -7,8 +9,6 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "articles#index"
   post '/login', to: 'authentication#login'
-  namespace :api do
-    namespace :v1 do
       resources :institutions
       resources :roles do
         collection do
@@ -85,8 +85,14 @@ Rails.application.routes.draw do
       end
 
       resources :join_team_requests do
+        member do
+          patch 'accept', to: 'join_team_requests#accept'
+          patch 'decline', to: 'join_team_requests#decline'
+        end
         collection do
-          post 'decline/:id', to:'join_team_requests#decline'
+          get 'for_team/:team_id', to: 'join_team_requests#for_team'
+          get 'by_user/:user_id', to: 'join_team_requests#by_user'
+          get 'pending', to: 'join_team_requests#pending'
         end
       end
 
@@ -173,6 +179,5 @@ Rails.application.routes.draw do
           get '/:participant_id/instructor_review', to: 'grades#instructor_review'
         end
       end
-    end
   end
 end

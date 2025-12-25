@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Strategies
   class ScaleStrategy < ChoiceStrategy
     def render(item)

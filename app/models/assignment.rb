@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Assignment < ApplicationRecord
   include MetricHelper
   has_many :participants, class_name: 'AssignmentParticipant', foreign_key: 'parent_id', dependent: :destroy
@@ -193,6 +195,18 @@ class Assignment < ApplicationRecord
     # Check if any rubric has a specified round
     rubric_with_round.present?
   end
+
+  def review_rounds(questionnaireType)
+    review_rounds = []
+    if varying_rubrics_by_round?
+      all_questionnaires = AssignmentQuestionnaire.where(assignment_id: id).where.not(used_in_round: nil).all
+      all_questionnaires.each do |q|
+        review_rounds << q.used_in_round if q.questionnaire.questionnaire_type == "#{questionnaireType}Questionnaire"
+      end
+    end
+    review_rounds
+  end
+
 
   def review_rounds(questionnaireType)
     review_rounds = []

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Item < ApplicationRecord
   before_create :set_seq
   belongs_to :questionnaire # each item belongs to a specific questionnaire
@@ -11,6 +13,10 @@ class Item < ApplicationRecord
 
   def scorable?
     false
+  end
+
+  def scored?
+    question_type.in?(%w[ScaleItem CriterionItem])
   end
 
   def scored?
@@ -52,6 +58,24 @@ class Item < ApplicationRecord
   # Use strategy to validate the item
   def validate_item
     strategy.validate(self)
+  end
+
+  def max_score
+    weight
+  end
+
+  def self.for(record)
+    klass = case record.question_type
+            when 'Criterion'
+              Criterion
+            when 'Scale'
+              Scale
+            else
+              Item
+            end
+
+    # Cast the existing record to the desired subclass
+    klass.new(record.attributes)
   end
 
   def max_score

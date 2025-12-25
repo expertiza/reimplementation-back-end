@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class TeamSerializer < ActiveModel::Serializer
   attributes :id, :name, :type, :team_size, :signed_up_team, :sign_up_topic
   has_many :members, serializer: ParticipantSerializer

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class StudentTask
     attr_accessor :assignment, :current_stage, :participant, :stage_deadline, :topic, :permission_granted
 

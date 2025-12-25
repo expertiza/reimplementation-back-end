@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'active_support/core_ext/integer/time'
 
 Rails.application.configure do
@@ -63,4 +65,5 @@ Rails.application.configure do
   # config.action_cable.disable_request_forgery_protection = true
   config.hosts << 'localhost'
   config.hosts << "www.example.com"
+  config.hosts << "152.7.176.23"
 end
