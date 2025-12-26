@@ -7,7 +7,7 @@ RSpec.describe Item, type: :model do
   let(:role) { Role.create(name: 'Instructor', parent_id: nil, id: 2, default_page_id: nil) }
   let(:instructor) do
     Instructor.create(id: 1234, name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor',
-                      password: '123456', role:)
+                      password: '123456', role_id:role.id)
   end
   let(:questionnaire) do
     Questionnaire.new id: 1, name: 'abc', private: 0, min_question_score: 0, max_question_score: 10,

@@ -21,7 +21,7 @@ class StudentTeamsController < ApplicationController
     before_action :team, :student, only: %i[view update leave_team]
 
     def action_allowed?
-        # this can be accessed only by the student and so someone with atleast TA priviliges wont be able to access this controller
+        # this can be accessed only by the student and so someone with at least TA privileges won't be able to access this controller
         # also the current logged in user can view only its relevant team and not other student teams.      
         if current_user_has_ta_privileges? || student.nil? || !current_user_has_id?(student.user_id)
             render json: { error: "You do not have permission to perform this action." }, status: :forbidden

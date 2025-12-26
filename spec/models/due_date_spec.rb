@@ -5,7 +5,7 @@ require 'rails_helper'
 
 RSpec.describe DueDate, type: :model do
   let(:role) {Role.create(name: 'Instructor', parent_id: nil, id: 2, default_page_id: nil)}
-  let(:instructor) { Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role: role) }
+  let(:instructor) { Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role_id: role.id) }
 
   describe '.fetch_due_dates' do
     let(:assignment) { Assignment.create(id: 1, name: 'Test Assignment', instructor:) }

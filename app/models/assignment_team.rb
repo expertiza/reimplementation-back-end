@@ -153,6 +153,7 @@ class AssignmentTeam < Team
     
     # Update the participant's team_id column - will remove the team reference inside participants table later. keeping it for now
     # participant.update!(team_id: nil)
+  end
 
   # Use current object (AssignmentTeam) as reviewee and create the ReviewResponseMap record
   def assign_reviewer(reviewer)
