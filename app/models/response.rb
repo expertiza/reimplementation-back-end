@@ -14,6 +14,12 @@ class Response < ApplicationRecord
   def questionnaire
     response_assignment.assignment_questionnaires.find_by(used_in_round: self.round).questionnaire
   end
+  delegate :response_assignment, :reviewee, :reviewer, to: :map
+
+  # return the questionnaire that belongs to the response
+  def questionnaire
+    response_assignment.assignment_questionnaires.find_by(used_in_round: self.round).questionnaire
+  end
 
   def reportable_difference?
     map_class = map.class

@@ -34,9 +34,6 @@ class Invitation < ApplicationRecord
                         .deliver_later
   end
 
-  # After a participant accepts an invite, the teams_participant table needs to be updated.
-  def update_users_topic_after_invite_accept(_inviter_participant_id, _invited_participant_id, _assignment_id); end
-
   # This method handles all that needs to be done upon a user accepting an invitation.
   def accept_invitation
     inviter_team = from_team
@@ -61,6 +58,15 @@ class Invitation < ApplicationRecord
 
       # 4. Mark this invitation as accepted
       update!(reply_status: InvitationValidator::ACCEPT_STATUS)
+      
+      # 5. Send acceptance emails
+      InvitationMailer.with(invitation: self)
+                      .send_acceptance_email
+                      .deliver_now
+      
+      InvitationMailer.with(invitation: self)
+                      .send_team_acceptance_notification
+                      .deliver_now
     end
 
     { success: true, message: "Invitation accepted successfully." }
