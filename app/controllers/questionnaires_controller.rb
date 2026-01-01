@@ -49,30 +49,14 @@ end
   # Update method updates the questionnaire object with id - {:id} and returns the updated questionnaire JSON object
   # PUT on /questionnaires/:id
 
-  def update
+def update
   @questionnaire = Questionnaire.find(params[:id])
 
-  ActiveRecord::Base.transaction do
-    # Delete all existing items to avoid duplicate items
-    @questionnaire.items.destroy_all
-
-    # Update questionnaire attributes (excluding items)
-    if @questionnaire.update(questionnaire_params.except(:items_attributes))
-      
-      # Re-create (already existing ones are deleted) items from submitted params
-      if questionnaire_params[:items_attributes].present?
-        questionnaire_params[:items_attributes].each do |item_param|
-          @questionnaire.items.create!(item_param.except(:id, :_destroy))
-        end
-      end
-
-      render json: @questionnaire, status: :ok
-    else
-      render json: @questionnaire.errors.full_messages, status: :unprocessable_entity
-    end
+  if @questionnaire.update(questionnaire_params)
+    render json: @questionnaire, status: :ok
+  else
+    render json: { errors: @questionnaire.errors.full_messages }, status: :unprocessable_entity
   end
-rescue ActiveRecord::RecordInvalid => e
-  render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
 rescue ActiveRecord::RecordNotFound
   render json: { error: 'Questionnaire not found' }, status: :not_found
 end

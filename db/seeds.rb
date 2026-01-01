@@ -148,7 +148,7 @@ questionnaire_type_names.each do |type_name|
 end
 puts "Created questionnaire types: #{questionnaire_types.keys.join(', ')}"
 
-question_type_names = [
+item_type_names = [
   'Section header',
   'Table header',
   'Column header',
@@ -163,8 +163,8 @@ question_type_names = [
   'Upload',
 ]
 
-question_types = {}
-question_type_names.each do |type_name|
-  question_types[type_name] = QuestionType.find_or_create_by!(name: type_name)
+item_types = {}
+item_type_names.each do |type_name|
+  item_types[type_name] = ItemType.find_or_create_by!(name: type_name)
 end
-puts "Created item types: #{question_types.keys.join(', ')}"
+puts "Created item types: #{item_types.keys.join(', ')}"

@@ -72,7 +72,7 @@ Rails.application.routes.draw do
       resources :questionnaire_types, only: [:index] do
       end
 
-      resources :question_types, only: [:index] do
+      resources :item_types, only: [:index] do
       end
 
 
