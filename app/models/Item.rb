@@ -20,8 +20,13 @@ class Item < ApplicationRecord
   end
   
   def set_seq
-    self.seq = questionnaire.items.size + 1
+    if questionnaire
+      self.seq ||= questionnaire.items.size + 1
+    else
+      self.seq ||= 1
+    end
   end
+
 
   def as_json(options = {})
       super(options.merge({
