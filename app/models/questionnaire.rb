@@ -52,10 +52,10 @@ class Questionnaire < ApplicationRecord
       new_question.questionnaire_id = questionnaire.id
       new_question.size = '50,3' if (new_question.is_a?(Criterion) || new_question.is_a?(TextResponse)) && new_question.size.nil?
       new_question.save!
-      advices = QuestionAdvice.where(question_id: question.id)
-      next if advices.empty?
+      question_advice = QuestionAdvice.where(question_id: question.id)
+      next if question_advice.empty?
 
-      advices.each do |advice|
+      question_advice.each do |advice|
         new_advice = advice.dup
         new_advice.question_id = new_question.id
         new_advice.save!
