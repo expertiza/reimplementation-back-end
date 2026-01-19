@@ -126,7 +126,7 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
 
       it 'allows admin to view all join team requests' do
         join_team_request # Create the request
-        get '/api/v1/join_team_requests', headers: admin_headers
+        get '/join_team_requests', headers: admin_headers
         expect(response).to have_http_status(:ok)
       end
     end
@@ -136,7 +136,7 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
       let(:student_headers) { { 'Authorization' => "Bearer #{student_token}" } }
 
       it 'denies student access to index action' do
-        get '/api/v1/join_team_requests', headers: student_headers
+        get '/join_team_requests', headers: student_headers
         expect(response).to have_http_status(:forbidden)
       end
     end
@@ -147,7 +147,7 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
 
       it 'allows student to create a request' do
         participant2 # Ensure participant exists
-        post '/api/v1/join_team_requests',
+        post '/join_team_requests',
              params: {
                team_id: team1.id,
                assignment_id: assignment.id,
@@ -162,7 +162,7 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
         assignment.update!(max_team_size: 1)
         participant2 # Ensure participant exists
         
-        post '/api/v1/join_team_requests',
+        post '/join_team_requests',
              params: {
                team_id: team1.id,
                assignment_id: assignment.id,
@@ -186,19 +186,19 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
 
       it 'allows the request creator to view their own request' do
         participant2 # Ensure participant exists
-        get "/api/v1/join_team_requests/#{join_team_request.id}", headers: creator_headers
+        get "/join_team_requests/#{join_team_request.id}", headers: creator_headers
         expect(response).to have_http_status(:ok)
       end
 
       it 'allows team members to view requests to their team' do
         participant1 # Ensure participant exists
-        get "/api/v1/join_team_requests/#{join_team_request.id}", headers: team_member_headers
+        get "/join_team_requests/#{join_team_request.id}", headers: team_member_headers
         expect(response).to have_http_status(:ok)
       end
 
       it 'denies access to students not involved in the request' do
         participant3 # Ensure participant exists
-        get "/api/v1/join_team_requests/#{join_team_request.id}", headers: outsider_headers
+        get "/join_team_requests/#{join_team_request.id}", headers: outsider_headers
         expect(response).to have_http_status(:forbidden)
       end
     end
@@ -212,7 +212,7 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
 
       it 'allows the request creator to update their own request' do
         participant2 # Ensure participant exists
-        patch "/api/v1/join_team_requests/#{join_team_request.id}",
+        patch "/join_team_requests/#{join_team_request.id}",
               params: { join_team_request: { comments: 'Updated comment' } },
               headers: creator_headers
         expect(response).to have_http_status(:ok)
@@ -220,7 +220,7 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
 
       it 'denies team members from updating the request' do
         participant1 # Ensure participant exists
-        patch "/api/v1/join_team_requests/#{join_team_request.id}",
+        patch "/join_team_requests/#{join_team_request.id}",
               params: { join_team_request: { comments: 'Updated comment' } },
               headers: team_member_headers
         expect(response).to have_http_status(:forbidden)
@@ -236,13 +236,13 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
 
       it 'allows the request creator to delete their own request' do
         participant2 # Ensure participant exists
-        delete "/api/v1/join_team_requests/#{join_team_request.id}", headers: creator_headers
+        delete "/join_team_requests/#{join_team_request.id}", headers: creator_headers
         expect(response).to have_http_status(:ok)
       end
 
       it 'denies team members from deleting the request' do
         participant1 # Ensure participant exists
-        delete "/api/v1/join_team_requests/#{join_team_request.id}", headers: team_member_headers
+        delete "/join_team_requests/#{join_team_request.id}", headers: team_member_headers
         expect(response).to have_http_status(:forbidden)
       end
     end
@@ -259,20 +259,20 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
 
       it 'allows team members to decline a request' do
         participant1 # Ensure participant exists
-        patch "/api/v1/join_team_requests/#{join_team_request.id}/decline", headers: team_member_headers
+        patch "/join_team_requests/#{join_team_request.id}/decline", headers: team_member_headers
         expect(response).to have_http_status(:ok)
         expect(JSON.parse(response.body)['message']).to eq('Join team request declined successfully')
       end
 
       it 'denies the request creator from declining their own request' do
         participant2 # Ensure participant exists
-        patch "/api/v1/join_team_requests/#{join_team_request.id}/decline", headers: creator_headers
+        patch "/join_team_requests/#{join_team_request.id}/decline", headers: creator_headers
         expect(response).to have_http_status(:forbidden)
       end
 
       it 'denies outsiders from declining the request' do
         participant3 # Ensure participant exists
-        patch "/api/v1/join_team_requests/#{join_team_request.id}/decline", headers: outsider_headers
+        patch "/join_team_requests/#{join_team_request.id}/decline", headers: outsider_headers
         expect(response).to have_http_status(:forbidden)
       end
     end
@@ -286,7 +286,7 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
 
       it 'allows team members to accept a request' do
         participant1 # Ensure participant exists
-        patch "/api/v1/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
+        patch "/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
         expect(response).to have_http_status(:ok)
         expect(JSON.parse(response.body)['message']).to eq('Join team request accepted successfully')
         
@@ -296,7 +296,7 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
 
       it 'denies the request creator from accepting their own request' do
         participant2 # Ensure participant exists
-        patch "/api/v1/join_team_requests/#{join_team_request.id}/accept", headers: creator_headers
+        patch "/join_team_requests/#{join_team_request.id}/accept", headers: creator_headers
         expect(response).to have_http_status(:forbidden)
       end
 
@@ -305,7 +305,7 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
         assignment.update!(max_team_size: 1)
         participant1 # Ensure participant exists
         
-        patch "/api/v1/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
+        patch "/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
         expect(response).to have_http_status(:unprocessable_entity)
         expect(JSON.parse(response.body)['error']).to eq('Team is full')
       end
@@ -319,7 +319,7 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
         participant2 # Ensure participant exists
         join_team_request # Create the request
         
-        get "/api/v1/join_team_requests/for_team/#{team1.id}", headers: student_headers
+        get "/join_team_requests/for_team/#{team1.id}", headers: student_headers
         expect(response).to have_http_status(:ok)
         
         data = JSON.parse(response.body)
@@ -331,7 +331,7 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
         participant2 # Ensure participant exists
         join_team_request # Create the request
         
-        get "/api/v1/join_team_requests/by_user/#{student2.id}", headers: student_headers
+        get "/join_team_requests/by_user/#{student2.id}", headers: student_headers
         expect(response).to have_http_status(:ok)
         
         data = JSON.parse(response.body)
@@ -342,7 +342,7 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
         participant2 # Ensure participant exists
         join_team_request # Create the request
         
-        get "/api/v1/join_team_requests/pending", headers: student_headers
+        get "/join_team_requests/pending", headers: student_headers
         expect(response).to have_http_status(:ok)
         
         data = JSON.parse(response.body)
@@ -370,7 +370,7 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
       
       # We use deliver_now (synchronous) so we can't test job enqueueing
       # Instead, verify the request is accepted and status is updated
-      patch "/api/v1/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
+      patch "/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
       
       expect(response).to have_http_status(:ok)
       join_team_request.reload
@@ -381,7 +381,7 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
       participant1 # Ensure participant exists
       participant2 # Ensure participant exists
       
-      patch "/api/v1/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
+      patch "/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
       
       expect(response).to have_http_status(:ok)
       # Verify request was accepted (email is sent synchronously)
@@ -394,7 +394,7 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
       participant1 # Ensure participant exists
       participant2 # Ensure participant exists
       
-      patch "/api/v1/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
+      patch "/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
       
       # Request should fail with unprocessable_entity status
       expect(response).to have_http_status(:unprocessable_entity)
@@ -406,7 +406,7 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
       participant1 # Ensure participant exists
       participant2 # Ensure participant exists
       
-      patch "/api/v1/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
+      patch "/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
       
       join_team_request.reload
       expect(join_team_request.reply_status).to eq('ACCEPTED')
@@ -416,7 +416,7 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
       participant1 # Ensure participant exists
       participant2 # Ensure participant exists
       
-      patch "/api/v1/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
+      patch "/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
       
       expect(team1.participants.reload).to include(participant2)
     end

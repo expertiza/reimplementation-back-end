@@ -127,8 +127,8 @@ RSpec.describe 'Advertisements API', type: :request do
         signed_up_team # Create signed up team
         signed_up_team.update(advertise_for_partner: true, comments_for_advertisement: 'Looking for strong members!')
 
-        # Simulate endpoint: GET /api/v1/assignments/:id/sign_up_topics
-        get "/api/v1/sign_up_topics?assignment_id=#{assignment.id}", headers: student2_headers
+        # Simulate endpoint: GET /assignments/:id/sign_up_topics
+        get "/sign_up_topics?assignment_id=#{assignment.id}", headers: student2_headers
         
         expect(response).to have_http_status(:ok)
         body = JSON.parse(response.body)
@@ -141,7 +141,7 @@ RSpec.describe 'Advertisements API', type: :request do
         signed_up_team.update(advertise_for_partner: true, comments_for_advertisement: 'We need members!')
         participant2 # ensure exists
 
-        get "/api/v1/sign_up_topics?assignment_id=#{assignment.id}", headers: student2_headers
+        get "/sign_up_topics?assignment_id=#{assignment.id}", headers: student2_headers
         
         expect(response).to have_http_status(:ok)
         # The frontend will check signed_up_teams[].advertise_for_partner to render trumpet icon
@@ -152,7 +152,7 @@ RSpec.describe 'Advertisements API', type: :request do
         signed_up_team.update(advertise_for_partner: true, comments_for_advertisement: ad_text)
         participant2 # ensure exists
 
-        get "/api/v1/sign_up_topics?assignment_id=#{assignment.id}", headers: student2_headers
+        get "/sign_up_topics?assignment_id=#{assignment.id}", headers: student2_headers
         
         expect(response).to have_http_status(:ok)
         # Frontend will display comments_for_advertisement text
@@ -170,7 +170,7 @@ RSpec.describe 'Advertisements API', type: :request do
         participant1 # ensure team member exists
 
         # Update signed up team to create advertisement
-        patch "/api/v1/signed_up_teams/#{signed_up_team.id}",
+        patch "/signed_up_teams/#{signed_up_team.id}",
               params: {
                 signed_up_team: {
                   advertise_for_partner: true,
@@ -225,7 +225,7 @@ RSpec.describe 'Advertisements API', type: :request do
       it 'allows student to submit join request for advertising team' do
         participant2 # ensure exists
         
-        post '/api/v1/join_team_requests',
+        post '/join_team_requests',
              params: {
                team_id: team.id,
                assignment_id: assignment.id,
@@ -241,7 +241,7 @@ RSpec.describe 'Advertisements API', type: :request do
       it 'tracks which team the request is for' do
         participant2 # ensure exists
         
-        post '/api/v1/join_team_requests',
+        post '/join_team_requests',
              params: {
                team_id: team.id,
                assignment_id: assignment.id,
@@ -282,7 +282,7 @@ RSpec.describe 'Advertisements API', type: :request do
       it 'prevents new join requests when team is full' do
         assignment.update(max_team_size: 2)
         
-        post '/api/v1/join_team_requests',
+        post '/join_team_requests',
              params: {
                team_id: team.id,
                assignment_id: assignment.id,
@@ -305,7 +305,7 @@ RSpec.describe 'Advertisements API', type: :request do
         
         assignment.update(max_team_size: 2)
         
-        patch "/api/v1/join_team_requests/#{join_request.id}/accept",
+        patch "/join_team_requests/#{join_request.id}/accept",
               headers: student1_headers
         
         expect(response).to have_http_status(:unprocessable_entity)
@@ -334,7 +334,7 @@ RSpec.describe 'Advertisements API', type: :request do
       expect(signed_up_team.advertise_for_partner).to be true
       
       # Step 2: Another student sees advertisement and submits join request
-      post '/api/v1/join_team_requests',
+      post '/join_team_requests',
            params: {
              team_id: team.id,
              assignment_id: assignment.id,
@@ -347,7 +347,7 @@ RSpec.describe 'Advertisements API', type: :request do
       expect(join_request.team_id).to eq(team.id)
       
       # Step 3: Team member sees the request and accepts it
-      patch "/api/v1/join_team_requests/#{join_request.id}/accept",
+      patch "/join_team_requests/#{join_request.id}/accept",
             headers: student1_headers
       
       expect(response).to have_http_status(:ok)

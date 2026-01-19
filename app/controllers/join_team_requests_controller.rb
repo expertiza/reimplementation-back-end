@@ -16,6 +16,10 @@ class JoinTeamRequestsController < ApplicationController
   # Centralized authorization method
   def action_allowed?
     case params[:action]
+    when 'index'
+      # Only administrators can view all join team requests
+      current_user_has_admin_privileges?
+      
     when 'create'
       # Any student can create a join team request
       current_user_has_student_privileges?
@@ -51,13 +55,20 @@ class JoinTeamRequestsController < ApplicationController
     end
   end
 
-  # GET api/v1/join_team_requests/1
+  # GET /join_team_requests
+  # gets a list of all the join team requests
+  def index
+    join_team_requests = JoinTeamRequest.includes(:participant, :team).all
+    render json: join_team_requests, each_serializer: JoinTeamRequestSerializer, status: :ok
+  end
+
+  # GET /join_team_requests/1
   # show the join team request that is passed into the route
   def show
     render json: @join_team_request, serializer: JoinTeamRequestSerializer, status: :ok
   end
 
-  # GET api/v1/join_team_requests/for_team/:team_id
+  # GET /join_team_requests/for_team/:team_id
   # Get all join team requests for a specific team
   def for_team
     team = Team.find(params[:team_id])
@@ -67,7 +78,7 @@ class JoinTeamRequestsController < ApplicationController
     render json: { error: 'Team not found' }, status: :not_found
   end
 
-  # GET api/v1/join_team_requests/by_user/:user_id
+  # GET /join_team_requests/by_user/:user_id
   # Get all join team requests created by a specific user
   def by_user
     participant_ids = Participant.where(user_id: params[:user_id]).pluck(:id)
@@ -75,14 +86,14 @@ class JoinTeamRequestsController < ApplicationController
     render json: join_team_requests, each_serializer: JoinTeamRequestSerializer, status: :ok
   end
 
-  # GET api/v1/join_team_requests/pending
+  # GET /join_team_requests/pending
   # Get all pending join team requests
   def pending
     join_team_requests = JoinTeamRequest.where(reply_status: PENDING).includes(:participant, :team)
     render json: join_team_requests, each_serializer: JoinTeamRequestSerializer, status: :ok
   end
 
-  # POST api/v1/join_team_requests
+  # POST /join_team_requests
   # Creates a new join team request
   def create
     # Find participant object for the user who is requesting to join the team
@@ -130,7 +141,7 @@ class JoinTeamRequestsController < ApplicationController
     render json: { error: e.message }, status: :not_found
   end
 
-  # PATCH/PUT api/v1/join_team_requests/1
+  # PATCH/PUT /join_team_requests/1
   # Updates a join team request (comments only, not status)
   def update
     # Only allow updating comments
@@ -141,7 +152,7 @@ class JoinTeamRequestsController < ApplicationController
     end
   end
 
-  # DELETE api/v1/join_team_requests/1
+  # DELETE /join_team_requests/1
   # delete a join team request
   def destroy
     if @join_team_request.destroy
@@ -151,7 +162,7 @@ class JoinTeamRequestsController < ApplicationController
     end
   end
 
-  # PATCH api/v1/join_team_requests/1/accept
+  # PATCH /join_team_requests/1/accept
   # Accept a join team request and add the participant to the team
   def accept
     team = @join_team_request.team
@@ -194,7 +205,7 @@ class JoinTeamRequestsController < ApplicationController
     render json: { error: e.message }, status: :unprocessable_entity
   end
 
-  # PATCH api/v1/join_team_requests/1/decline
+  # PATCH /join_team_requests/1/decline
   # Decline a join team request
   def decline
     if @join_team_request.update(reply_status: DECLINED)

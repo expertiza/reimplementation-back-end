@@ -16,7 +16,7 @@ class GradesController < ApplicationController
         end
     end
 
-    # index (GET /api/v1/grades/:assignment_id/view_all_scores)
+    # index (GET /grades/:assignment_id/view_all_scores)
     # returns all review scores and computed heatmap data for the given assignment (instructor/TA view).
     def view_all_scores    
         @assignment = Assignment.find(params[:assignment_id])
@@ -38,7 +38,7 @@ class GradesController < ApplicationController
     end
 
 
-    # view_our_scores (GET /api/v1/grades/:assignment_id/view_our_scores)
+    # view_our_scores (GET /grades/:assignment_id/view_our_scores)
     # similar to view but scoped to the requesting student’s own team.
     # It returns the same heatmap data with reviewer identities removed, plus the list of review items.
     # renders JSON with scores, assignment, averages.
@@ -47,14 +47,14 @@ class GradesController < ApplicationController
         render json: get_our_scores_data(@team)
     end
 
-    # (GET /api/v1/grades/:assignment_id/view_my_scores)
+    # (GET /grades/:assignment_id/view_my_scores)
     # similar to view but scoped to the requesting student’s own scores given by its teammates and also .
     def view_my_scores
         render json: get_my_scores_data(@participant)
     end
 
 
-    # edit (GET /api/v1/grades/:participant_id/edit)
+    # edit (GET /grades/:participant_id/edit)
     # provides data for the grade-assignment interface.
     # Given an AssignmentParticipant ID, it looks up the participant and its assignment, gathers the full list of items 
     # (via a helper like list_questions(assignment)), and computes existing peer-review scores for those items.
@@ -74,7 +74,7 @@ class GradesController < ApplicationController
     end
 
 
-    # assign_grade (PATCH /api/v1/grades/:participant_id/assign_grade)
+    # assign_grade (PATCH /grades/:participant_id/assign_grade)
     # saves an instructor’s grade and feedback for a team submission.
     # The method sets team.grade_for_submission and team.comment_for_submission. 
     # This implements “assign score & give feedback” functionality for instructor.
@@ -90,7 +90,7 @@ class GradesController < ApplicationController
     end
 
 
-    # instructor_review (GET /api/v1/grades/:participant_id/instructor_review)
+    # instructor_review (GET /grades/:participant_id/instructor_review)
     # helps the instructor begin grading or re-grading a submission.
     # It finds or creates the appropriate review mapping for the given participant and returns JSON indicating whether to go to 
     # Response#new (no review exists yet) or Response#edit (review already exists).

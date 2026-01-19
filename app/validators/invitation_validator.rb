@@ -57,7 +57,7 @@ class InvitationValidator < ActiveModel::Validator
   end
 
   def validate_to_from_different(record)
-    if record.from_participant.id == record.to_id
+    if record.from_id == record.to_id
       record.errors.add(:base, TO_FROM_SAME_ERROR_MSG)
     end
   end
