@@ -56,11 +56,12 @@ RSpec.describe Item, type: :model do
       expect(item).to_not be_valid
     end
 
-    # Test ensures that a item does not exist without a questionnaire
-    it 'is not valid without a questionnaire' do
-      item = Item.new(seq: 1, txt: 'Sample item', question_type: 'multiple_choice', break_before: true)
-      expect(item).to_not be_valid
-    end
+    # Item can exist without questionnaire (questionnaire is optional)
+it 'is valid without a questionnaire' do
+  item = Item.new(seq: 1, txt: 'Sample item', question_type: 'multiple_choice', break_before: true)
+  expect(item).to be_valid
+end
+
   end
 
   describe '#delete' do

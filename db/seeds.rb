@@ -1,27 +1,32 @@
 # frozen_string_literal: true
 
-begin
-  # Create an instritution
-  inst_id = Institution.create!(
-    name: 'North Carolina State University'
-  ).id
+# Create an institution
+inst = Institution.find_or_create_by!(
+  name: 'North Carolina State University'
+)
+inst_id = inst.id
 
-  Role.create!(id: 1, name: 'Super Administrator')
-  Role.create!(id: 2, name: 'Administrator')
-  Role.create!(id: 3, name: 'Instructor')
-  Role.create!(id: 4, name: 'Teaching Assistant')
-  Role.create!(id: 5, name: 'Student')
+# Create Roles
+Role.find_or_create_by!(id: 1, name: 'Super Administrator')
+Role.find_or_create_by!(id: 2, name: 'Administrator')
+Role.find_or_create_by!(id: 3, name: 'Instructor')
+Role.find_or_create_by!(id: 4, name: 'Teaching Assistant')
+Role.find_or_create_by!(id: 5, name: 'Student')
 
-  # Create an admin user
-  User.create!(
-    name: 'admin',
-    email: 'admin2@example.com',
-    password: 'password123',
-    full_name: 'admin admin',
-    institution_id: 1,
-    role_id: 1
-  )
+# Create an admin user
+User.find_or_create_by!(name: 'admin') do |user|
+  user.email = 'admin2@example.com'
+  user.password = 'password123'
+  user.full_name = 'admin admin'
+  user.institution_id = 1
+  user.role_id = 1
+end
 
+# Check if we should generate random data
+# We assume if instructors exist, we've already seeded random data
+if User.where(role_id: 3).exists?
+  puts "Random data already seeded (Instructors found). Skipping..."
+else
   # Generate Random Users
   num_students = 48
   num_assignments = 8
@@ -122,7 +127,44 @@ begin
       team_id: team_ids[i%num_teams],
     ).id
   end
-
-rescue ActiveRecord::RecordInvalid => e
-  puts e, 'The db has already been seeded'
 end
+
+questionnaire_type_names = [
+  'Review',
+  'Author feedback',
+  'Teammate review',
+  'Survey',
+  'Quiz',
+  'Bookmark rating',
+  'Teammate review',
+  'Assignment survey',
+  'Course evaluation',
+  'Global survey'
+]
+
+questionnaire_types = {}
+questionnaire_type_names.each do |type_name|
+  questionnaire_types[type_name] = QuestionnaireType.find_or_create_by!(name: type_name)
+end
+puts "Created questionnaire types: #{questionnaire_types.keys.join(', ')}"
+
+item_type_names = [
+  'Section header',
+  'Table header',
+  'Column header',
+  'Criterion',
+  'Text field',
+  'Text area',
+  'Dropdown',
+  'Multiple choice',
+  'Scale',
+  'Grid',
+  'Checkbox',
+  'Upload',
+]
+
+item_types = {}
+item_type_names.each do |type_name|
+  item_types[type_name] = ItemType.find_or_create_by!(name: type_name)
+end
+puts "Created item types: #{item_types.keys.join(', ')}"
