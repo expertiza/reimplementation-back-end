@@ -55,11 +55,12 @@ def update
   if @questionnaire.update(questionnaire_params)
     render json: @questionnaire, status: :ok
   else
-    render json: { errors: @questionnaire.errors.full_messages }, status: :unprocessable_entity
+    render json: @questionnaire.errors.full_messages, status: :unprocessable_entity
   end
 rescue ActiveRecord::RecordNotFound
-  render json: { error: 'Questionnaire not found' }, status: :not_found
+  render json: $ERROR_INFO.to_s, status: :not_found
 end
+
 
   # Copy method creates a copy of questionnaire with id - {:id} and return its JSON object
   # POST on /questionnaires/copy/:id
