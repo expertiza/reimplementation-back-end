@@ -77,19 +77,19 @@ RSpec.describe 'Invitations API', type: :request do
   #
   let(:invitation) {
     Invitation.create!(
-      from_team: team1,
       from_participant: participant1,
       to_participant: participant2,
-      assignment: assignment
+      assignment: assignment,
+      reply_status: InvitationValidator::WAITING_STATUS
     )
   }
 
   let(:invitation2) {
     Invitation.create!(
-      from_team: team2,
       from_participant: participant2,
       to_participant: participant1,
-      assignment: assignment
+      assignment: assignment,
+      reply_status: InvitationValidator::WAITING_STATUS
     )
   }
 

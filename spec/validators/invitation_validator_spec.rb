@@ -25,7 +25,6 @@ RSpec.describe InvitationValidator do
     {
       from_participant: participant1,
       to_id: participant2.id,
-      from_team: team1,
       assignment_id: assignment.id,
       reply_status: 'W'
     }

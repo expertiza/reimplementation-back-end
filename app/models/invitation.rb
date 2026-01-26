@@ -13,18 +13,19 @@ class Invitation < ApplicationRecord
   # Return a new invitation
   # params = :assignment_id, :to_id, :from_id, :reply_status
   def self.invitation_factory(params)
+    params[:reply_status] ||= InvitationValidator::WAITING_STATUS
     Invitation.new(params)
   end
 
   # check if the participant is invited
-  def self.invited?(from_id, to_id, assignment_id)
+  def self.invited?(from_id, to_id, assignment_id, reply_status = InvitationValidator::WAITING_STATUS)
     conditions = {
       to_id:,
       from_id:,
       assignment_id:,
-      reply_status: InvitationValidator::WAITING_STATUS
+      reply_status:
     }
-    @invitations_exist = Invitation.where(conditions).exists?
+    Invitation.where(conditions).exists?
   end
 
   # send invite email

@@ -4,7 +4,12 @@
 </head>
 
 <body>
-  <h1>You have been invited to join <%= @from_team %></h1>
+  <h1>You have been invited to join <%= @from_team.name %></h1>
+  <p>Hello <%= @to_participant.user.full_name %>,</p>
+  <p><%= @from_participant.user.full_name %> has invited you to join their team for the assignment "<%= @assignment.name %>".</p>
+  <p>Please log in to your Expertiza account to accept or decline this invitation.</p>
+  <p>Best regards,<br/>
+     The Expertiza Team</p>
 </body>
 </html>
 

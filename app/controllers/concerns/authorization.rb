@@ -233,7 +233,7 @@ module Authorization
 
   # only sender or teammates of the sender can view the invitations
   def current_user_can_view_invitation?(invitation)
-    user_logged_in? && TeamsParticipant.where(team: invitation.from_team).pluck(:user_id).include?(current_user.id)
+    user_logged_in? && TeamsParticipant.where(team: invitation.from_participant.team).pluck(:user_id).include?(current_user.id)
   end
 
   # PRIVATE METHODS
