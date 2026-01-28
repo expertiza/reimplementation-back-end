@@ -2,12 +2,12 @@
 
 class AssignmentParticipant < Participant
   include ReviewAggregator
-  has_many :sent_invitations, class_name: 'Invitation', foreign_key: 'participant_id'
+  has_many :sent_invitations, class_name: 'Invitation', foreign_key: 'from_id'
   belongs_to :user
   validates :handle, presence: true
 
   def retract_sent_invitations
-    sent_invitations.each(&:retract_invitation)
+    sent_invitations.each(&:retract)
   end
 
   def set_handle

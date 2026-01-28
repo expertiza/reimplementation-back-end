@@ -24,7 +24,7 @@ class StudentTeamsController < ApplicationController
         # this can be accessed only by the student and so someone with at least TA privileges won't be able to access this controller
         # also the current logged in user can view only its relevant team and not other student teams.      
         if current_user_has_ta_privileges? || student.nil? || !current_user_has_id?(student.user_id)
-            render json: { error: "You do not have permission to perform this action." }, status: :forbidden
+            return false
         end        
         return true
     end
@@ -49,7 +49,7 @@ class StudentTeamsController < ApplicationController
             team = AssignmentTeam.new({ name: params[:team][:name], parent_id: params[:assignment_id]})
             if team.save
                 # adding the student as the participant for the student_team just created
-                team.add_participant(student)
+                team.add_member(student)
                 serialized_team = ActiveModelSerializers::SerializableResource.new(team, serializer: TeamSerializer).as_json
                 render json: serialized_team.merge({ message: "Team created successfully", success: true }), status: :ok
             else
@@ -85,7 +85,7 @@ class StudentTeamsController < ApplicationController
     # method to remove the student from the current team. 
     # PUT /student_teams/leave?student_id=${studentId}
     def leave_team
-        @team.remove_participant(@student)
+        @team.remove_member(@student)
         render json: { message: "Left the team successfully", success: true }, status: :ok
     end
 

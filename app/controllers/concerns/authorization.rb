@@ -221,6 +221,21 @@ module Authorization
     false
   end
 
+  # responding to an invitation i.e. accepting/declining the invitation is authorized only if they are recipient of that invitation
+  def current_user_can_respond_to_invitation?(invitation)
+    user_logged_in? && invitation.to_participant.user == current_user #to_participant refers to the participant class
+  end
+
+  # retracting an invitation is authorized only if they are sender of that invitation
+  def current_user_can_retract_invitation?(invitation)
+    user_logged_in? && invitation.from_participant.user == current_user #from_participant refers to the participant class
+  end
+
+  # only sender or teammates of the sender can view the invitations
+  def current_user_can_view_invitation?(invitation)
+    user_logged_in? && TeamsParticipant.where(team: invitation.from_participant.team).pluck(:user_id).include?(current_user.id)
+  end
+
   # PRIVATE METHODS
   private
 

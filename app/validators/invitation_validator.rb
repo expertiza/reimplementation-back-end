@@ -12,9 +12,11 @@ class InvitationValidator < ActiveModel::Validator
   REPLY_STATUS_ERROR_MSG = 'must be present and have a maximum length of 1'.freeze
   DIFFERENT_ASSIGNMENT_PARTICIPANT_MSG = "the participant is not part of this assignment".freeze
   REPLY_STATUS_INCLUSION_ERROR_MSG = "must be one of #{[ACCEPT_STATUS, DECLINED_STATUS, WAITING_STATUS, RETRACT_STATUS].to_sentence}".freeze
+  INVALID_ATTRIBUTES_ERROR_MSG = 'Invalid inviter, invitee, or assignment'.freeze
 
   def validate(record)
-    validate_invitee(record)
+    validate_attributes(record)
+    validate_invitee(record) unless record.skip_validate_invitee_check
     validate_reply_status(record)
     validate_reply_status_inclusion(record)
     validate_duplicate_invitation(record)
@@ -23,10 +25,21 @@ class InvitationValidator < ActiveModel::Validator
 
   private
 
+  # validates if the attributes refer to valid records
+  def validate_attributes(record)
+    inviter = AssignmentParticipant.find_by(id: record.from_id, parent_id: record.assignment_id)
+    invitee = AssignmentParticipant.find_by(id: record.to_id, parent_id: record.assignment_id)
+    assignment = Assignment.find_by(id: record.assignment_id)
+    unless inviter.present? && invitee.present? && assignment.present?
+      record.errors.add(:base, INVALID_ATTRIBUTES_ERROR_MSG)
+      return
+    end
+  end
+
   # validates if the invitee is participant of the assignment or not
   def validate_invitee(record)
-    participant = AssignmentParticipant.find_by(id: record.to_id, parent_id: record.assignment_id)
-    unless participant.present?
+    invitee = AssignmentParticipant.find_by(id: record.to_id, parent_id: record.assignment_id)
+    unless invitee.present?
       record.errors.add(:base, DIFFERENT_ASSIGNMENT_PARTICIPANT_MSG)
     end
   end
@@ -45,7 +58,7 @@ class InvitationValidator < ActiveModel::Validator
 
   def validate_duplicate_invitation(record)
     conditions = {
-      id: record&.id,
+      # id: record&.id,
       to_id: record.to_id,
       from_id: record.from_id,
       assignment_id: record.assignment_id,

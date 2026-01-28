@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 class TeamSerializer < ActiveModel::Serializer
-  attributes :id, :name, :type, :team_size, :signed_up_team, :sign_up_topic
+  attributes :id, :name, :type, :team_size
   has_many :members, serializer: ParticipantSerializer
+  has_many :users, serializer: UserSerializer
 
   def members
     # Use teams_participants association to get participants

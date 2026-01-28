@@ -63,6 +63,7 @@ class JoinTeamRequestsController < ApplicationController
   end
 
   # GET /join_team_requests/1
+  # GET /join_team_requests/1
   # show the join team request that is passed into the route
   def show
     render json: @join_team_request, serializer: JoinTeamRequestSerializer, status: :ok
@@ -152,6 +153,7 @@ class JoinTeamRequestsController < ApplicationController
     end
   end
 
+  # DELETE /join_team_requests/1
   # DELETE /join_team_requests/1
   # delete a join team request
   def destroy

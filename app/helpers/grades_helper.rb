@@ -178,7 +178,6 @@ module GradesHelper
     assignment = participant.try(:assignment)
     self_review_enabled = assignment.try(:is_selfreview_enabled)
     not_submitted = ResponseMap.self_review_pending?(participant.try(:id))
-    puts self_review_enabled
     if self_review_enabled
       !not_submitted
     else
@@ -295,7 +294,6 @@ module GradesHelper
   # Redirects the user if they are not on the correct team that provided the feedback.
   def redirect_if_not_on_correct_team(participant)
     team = participant.team
-    puts team.attributes
     if team.nil? || !team.user?(session[:user])
       flash[:error] = 'You are not on the team that wrote this feedback'
       redirect_to '/'
