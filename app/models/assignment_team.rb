@@ -55,42 +55,6 @@ class AssignmentTeam < Team
     compute_average_review_score(review_mappings)
   end
 
-  # Adds a participant to this team.
-  # - Update the participant's team_id (so their direct reference is consistent)
-  # - Ensure there is a TeamsParticipant join record connecting the participant and this team
-  def add_participant(participant)
-    # need to have a check if the team is full then it can not add participant to the team
-    raise TeamFullError, "Team is full." if full?
-
-    # Update the participant's team_id column - will remove the team reference inside participants table later. keeping it for now
-    participant.update!(team_id: id)
-
-    # Create or reuse the join record to maintain the association
-    TeamsParticipant.find_or_create_by!(participant_id: participant.id, team_id: id, user_id: participant.user_id)
-  end
-
-  # Removes a participant from this team.
-  # - Delete the TeamsParticipant join record
-  # - if the participant sent any invitations while being on the team, they all need to be retracted
-  # - If the team has no remaining members, destroy the team itself
-  def remove_participant(participant)
-    # retract all the invitations the participant sent (if any) while being on the this team
-    participant.retract_sent_invitations
-
-    # Remove the join record if it exists
-    tp = TeamsParticipant.find_by(team_id: id, participant_id: participant.id)
-    tp&.destroy
-    
-    # Update the participant's team_id column - will remove the team reference inside participants table later. keeping it for now
-    # this will remove the reference only if the participant's current team is the same team removing the participant
-    if participant.team_id==id
-      participant.update!(team_id: nil)
-    end
-
-    # If no participants remain after removal, delete the team
-    destroy if participants.empty?
-  end
-
   protected
 
   # Validates if a user is eligible to join the team

@@ -26,8 +26,8 @@ RSpec.describe Invitation, type: :model do
 
   before do
     # assign participants to teams
-    team1.add_participant(participant1)
-    team2.add_participant(participant2)
+    team1.add_member(participant1)
+    team2.add_member(participant2)
   end
 
   before(:each) do
@@ -62,7 +62,8 @@ RSpec.describe Invitation, type: :model do
     invitation = Invitation.create(to_id: participant1.id, from_id: participant2.id, assignment_id: assignment.id)
     invitation.accept
     participant1.reload
-    expect(participant1.team_id).to eq(team2.id)
+
+    expect(participant1.team.id).to eq(team2.id)
   end
 
   it 'rejects invitation and change reply_status to Decline(D)' do

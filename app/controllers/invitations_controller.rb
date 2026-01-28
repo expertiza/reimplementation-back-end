@@ -11,17 +11,17 @@ class InvitationsController < ApplicationController
       set_invitation
       current_user_can_view_invitation?(@invitation)
     when 'invitations_sent_to_participant', 'invitations_sent_by_participant'
-      @participant = AssignmentParticipant.find_by(id:params[:participant_id])
-      if @participant.nil? || !current_user_has_id?(@participant.user_id)
+      @participant = AssignmentParticipant.find_by(id:params[:participant_id], user_id: current_user.id)
+      if @participant.nil?
         return render_forbidden
       end
       return true 
     when 'invitations_sent_by_team'
-      @participant = AssignmentParticipant.find_by(team_id: params[:team_id])
-      if @participant.nil? || !current_user_has_id?(@participant.user_id)
+      @participant = TeamsParticipant.find_by(team_id: params[:team_id], user_id: current_user.id)&.participant
+      if @participant.nil?
         return render_forbidden
       end
-      return true 
+      return true
     else
       return true
     end

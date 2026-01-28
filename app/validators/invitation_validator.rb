@@ -32,6 +32,7 @@ class InvitationValidator < ActiveModel::Validator
     assignment = Assignment.find_by(id: record.assignment_id)
     unless inviter.present? && invitee.present? && assignment.present?
       record.errors.add(:base, INVALID_ATTRIBUTES_ERROR_MSG)
+      return
     end
   end
 

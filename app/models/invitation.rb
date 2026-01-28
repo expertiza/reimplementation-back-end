@@ -43,7 +43,7 @@ class Invitation < ApplicationRecord
     # Wrap in transaction to prevent partial updates and concurrency
     ActiveRecord::Base.transaction do
       # 1. Add the invitee to the inviter's team
-      inviter_team.add_participant(to_participant)
+      inviter_team.add_member(to_participant)
       
       # if participant is member of an existing team then only step 2 and 3 makes sense. otherwise just need to add the participant to the inviter team
       if invitee_team.present?
@@ -54,7 +54,7 @@ class Invitation < ApplicationRecord
         SignedUpTeam.update_topic_after_invite_accept(inviter_signed_up_team,invitee_signed_up_team)
   
         # 3. Remove participant from their old team
-        invitee_team.remove_participant(to_participant)
+        invitee_team.remove_member(to_participant)
       end
 
       # 4. Mark this invitation as accepted

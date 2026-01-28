@@ -55,8 +55,8 @@ RSpec.describe 'Student Teams API', type: :request do
   let(:team2) { AssignmentTeam.create!(name: "Team2", parent_id: assignment.id) }
 
   before do
-    team1.add_participant(participant1)
-    team2.add_participant(participant2)
+    team1.add_member(participant1)
+    team2.add_member(participant2)
   end
 
   #

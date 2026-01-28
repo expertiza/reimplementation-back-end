@@ -68,8 +68,8 @@ RSpec.describe 'Invitations API', type: :request do
 
   before do
     # assign participants to teams
-    team1.add_participant(participant1)
-    team2.add_participant(participant2)
+    team1.add_member(participant1)
+    team2.add_member(participant2)
   end
 
   #
@@ -281,6 +281,7 @@ RSpec.describe 'Invitations API', type: :request do
   path "/invitations/sent_by/team/{team_id}" do
     parameter name: "team_id", in: :path, type: :integer
     parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
+
 
     get("Show all invitations sent by team") do
       tags "Invitations"

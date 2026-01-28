@@ -49,7 +49,7 @@ class StudentTeamsController < ApplicationController
             team = AssignmentTeam.new({ name: params[:team][:name], parent_id: params[:assignment_id]})
             if team.save
                 # adding the student as the participant for the student_team just created
-                team.add_participant(student)
+                team.add_member(student)
                 serialized_team = ActiveModelSerializers::SerializableResource.new(team, serializer: TeamSerializer).as_json
                 render json: serialized_team.merge({ message: "Team created successfully", success: true }), status: :ok
             else
@@ -85,7 +85,7 @@ class StudentTeamsController < ApplicationController
     # method to remove the student from the current team. 
     # PUT /student_teams/leave?student_id=${studentId}
     def leave_team
-        @team.remove_participant(@student)
+        @team.remove_member(@student)
         render json: { message: "Left the team successfully", success: true }, status: :ok
     end
 
