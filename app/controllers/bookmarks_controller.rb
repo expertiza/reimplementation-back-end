@@ -2,7 +2,7 @@ class BookmarksController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :not_found
   
   def action_allowed?
-    has_privileges_of?('Student')
+    current_user_has_student_privileges?
   end
   # Index method returns the list of JSON objects of the bookmark
   # GET on /bookmarks
