@@ -85,8 +85,14 @@ Rails.application.routes.draw do
       end
 
       resources :join_team_requests do
+        member do
+          patch 'accept', to: 'join_team_requests#accept'
+          patch 'decline', to: 'join_team_requests#decline'
+        end
         collection do
-          post 'decline/:id', to:'join_team_requests#decline'
+          get 'for_team/:team_id', to: 'join_team_requests#for_team'
+          get 'by_user/:user_id', to: 'join_team_requests#by_user'
+          get 'pending', to: 'join_team_requests#pending'
         end
       end
 
@@ -123,6 +129,14 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :signed_up_teams do
+        member do
+          post :create_advertisement
+          patch :update_advertisement
+          delete :remove_advertisement
+        end
+      end
+      
       resources :student_teams, only: %i[create update] do
         collection do
           get :view          
