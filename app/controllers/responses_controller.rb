@@ -172,21 +172,6 @@ class ResponsesController < ApplicationController
     assignment && current_user_teaching_staff_of_assignment?(assignment.id)
   end
 
-  # Returns true if the current user is the parent (creator) of the instructor
-  # for the assignment associated with the current response (params[:id]).
-  def current_user_is_parent_of_assignment_instructor_for_response?
-    resp = Response.find_by(id: params[:id])
-    return false unless resp&.response_map
-
-    assignment = resp.response_map&.assignment
-    return false unless assignment
-
-    instructor = find_assignment_instructor(assignment)
-    return false unless instructor
-
-    user_logged_in? && instructor.parent_id == current_user.id
-  end
-
   # Variant helpers for parent-admin checks
   def parent_admin_for_response?(response)
     assignment = response&.response_map&.assignment
@@ -195,7 +180,7 @@ class ResponsesController < ApplicationController
 
   def parent_admin_for_assignment?(assignment)
     instructor = assignment && find_assignment_instructor(assignment)
-    user_logged_in? && current_user_is_a?('Administrator') && instructor && instructor.parent_id == current_user.id
+    user_logged_in? && current_user_is_a?('Administrator') && instructor && current_user_ancestor_of?(instructor)
   end
 
   def response_owner?(map)
