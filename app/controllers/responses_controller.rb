@@ -203,7 +203,7 @@ class ResponsesController < ApplicationController
   end
 
   # Returns the friendly label for the response's map type (e.g., "Review", "Assignment Survey")
-  # Falls back to a generic "Submission" if the label cannot be determined.
+  # Falls back to a generic "Response" if the label cannot be determined.
   def response_map_label
     return 'Response' unless @response&.response_map
 
