@@ -22,7 +22,7 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: Check spelling with codespell
         run: |
-          codespell  --skip="./db, ./config/name.yml, ./database_dump.sql,"
+          codespell  --skip="./db/migrate, ./config/name.yml"
 
   misspell:
     name: Check spelling all files in commit with misspell

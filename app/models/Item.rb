@@ -18,10 +18,6 @@ class Item < ApplicationRecord
   def scored?
     question_type.in?(%w[ScaleItem CriterionItem])
   end
-
-  def scored?
-    question_type.in?(%w[ScaleItem CriterionItem])
-  end
     
   def set_seq
     self.seq = questionnaire.items.size + 1
