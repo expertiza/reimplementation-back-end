@@ -7,23 +7,28 @@ class ResponsesController < ApplicationController
   def action_allowed?
     case action_name
     when 'create'
-      true
+      map_id = params[:response_map_id] || params[:map_id]
+      map = ResponseMap.find_by(id: map_id)
+      return false unless map
+
+      # Reviewer, teaching staff (instructor/TA), or admin who created the instructor
+      response_owner?(map) || teaching_staff_for_assignment?(map.assignment) || parent_admin_for_assignment?(map.assignment)
+
     when 'update', 'submit'
-      @response = Response.find(params[:id])
-      unless response_belongs_to? || current_user_is_parent_of_assignment_instructor_for_response? || 
-             current_user_is_teaching_staff_for_response_assignment?
-        render json: { error: 'forbidden' }, status: :forbidden
-      end
+      resp = Response.find_by(id: params[:id])
+      return false unless resp
+
+      response_belongs_to?(resp) || teaching_staff_for_response?(resp) || parent_admin_for_response?(resp)
+
     when 'unsubmit', 'destroy'
-      # Only allow if user is the instructor of the associated assignment or has admin privileges
-      unless current_user_is_parent_of_assignment_instructor_for_response? || 
-             current_user_is_teaching_staff_for_response_assignment?
-        render json: { error: 'forbidden' }, status: :forbidden
-      end
+      resp = Response.find_by(id: params[:id])
+      return false unless resp
+
+      teaching_staff_for_response?(resp) || parent_admin_for_response?(resp)
+
     else
-      render json: { error: 'forbidden' }, status: :forbidden
+      false
     end
-    true
   end
 
   # POST /responses
@@ -124,18 +129,10 @@ class ResponsesController < ApplicationController
     )
   end
 
-  def response_belongs_to?
-    # Member actions: we have @response from set_response
-    return @response.map&.reviewer&.id == current_user.id if @response&.map&.reviewer && current_user
+  def response_belongs_to?(resp = @response)
+    return false unless resp&.map && current_user
 
-    # Collection actions (create, next_action): check map ownership
-    map_id = params[:response_map_id] || params[:map_id]
-    return false if map_id.blank?
-
-    map = ResponseMap.find_by(id: map_id)
-    return false unless map
-
-    map.reviewer == current_user
+    resp.map.reviewer&.id == current_user.id
   end
 
   # Checks whether the current_user is the instructor for the assignment
@@ -165,6 +162,16 @@ class ResponsesController < ApplicationController
     current_user_teaching_staff_of_assignment?(assignment.id)
   end
 
+  # Variant that works when we already have the response object
+  def teaching_staff_for_response?(response)
+    assignment = response&.response_map&.assignment
+    assignment && current_user_teaching_staff_of_assignment?(assignment.id)
+  end
+
+  def teaching_staff_for_assignment?(assignment)
+    assignment && current_user_teaching_staff_of_assignment?(assignment.id)
+  end
+
   # Returns true if the current user is the parent (creator) of the instructor
   # for the assignment associated with the current response (params[:id]).
   def current_user_is_parent_of_assignment_instructor_for_response?
@@ -178,6 +185,21 @@ class ResponsesController < ApplicationController
     return false unless instructor
 
     user_logged_in? && instructor.parent_id == current_user.id
+  end
+
+  # Variant helpers for parent-admin checks
+  def parent_admin_for_response?(response)
+    assignment = response&.response_map&.assignment
+    parent_admin_for_assignment?(assignment)
+  end
+
+  def parent_admin_for_assignment?(assignment)
+    instructor = assignment && find_assignment_instructor(assignment)
+    user_logged_in? && current_user_is_a?('Administrator') && instructor && instructor.parent_id == current_user.id
+  end
+
+  def response_owner?(map)
+    user_logged_in? && map.reviewer&.id == current_user.id
   end
 
   # Returns the friendly label for the response's map type (e.g., "Review", "Assignment Survey")
