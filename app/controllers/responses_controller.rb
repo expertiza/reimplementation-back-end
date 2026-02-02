@@ -205,10 +205,10 @@ class ResponsesController < ApplicationController
   # Returns the friendly label for the response's map type (e.g., "Review", "Assignment Survey")
   # Falls back to a generic "Submission" if the label cannot be determined.
   def response_map_label
-    return 'Submission' unless @response&.response_map
+    return 'Response' unless @response&.response_map
 
     map_label = @response.response_map&.response_map_label
-    map_label.presence || 'Submission'
+    map_label.presence || 'Response'
   end
 
   # Returns true if the assignment's due date is in the future or no due date is set
