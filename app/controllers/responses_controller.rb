@@ -9,22 +9,27 @@ class ResponsesController < ApplicationController
     when 'create'
       map_id = params[:response_map_id] || params[:map_id]
       map = ResponseMap.find_by(id: map_id)
-      return false unless map
+      return false unless map && map.assignment
 
-      # Reviewer, teaching staff (instructor/TA), or admin who created the instructor
-      response_owner?(map) || teaching_staff_for_assignment?(map.assignment) || parent_admin_for_assignment?(map.assignment)
+      # Reviewer, teaching staff (instructor/TA), or admin ancestor of instructor
+      response_owner?(map) ||
+        current_user_teaching_staff_of_assignment?(map.assignment.id) ||
+        parent_admin_for_assignment?(map.assignment)
 
     when 'update', 'submit'
       resp = Response.find_by(id: params[:id])
-      return false unless resp
+      return false unless resp && resp.response_map&.assignment
 
-      response_belongs_to?(resp) || teaching_staff_for_response?(resp) || parent_admin_for_response?(resp)
+      response_belongs_to?(resp) ||
+        current_user_teaching_staff_of_assignment?(resp.response_map.assignment.id) ||
+        parent_admin_for_response?(resp)
 
     when 'unsubmit', 'destroy'
       resp = Response.find_by(id: params[:id])
-      return false unless resp
+      return false unless resp && resp.response_map&.assignment
 
-      teaching_staff_for_response?(resp) || parent_admin_for_response?(resp)
+      current_user_teaching_staff_of_assignment?(resp.response_map.assignment.id) ||
+        parent_admin_for_response?(resp)
 
     else
       false
@@ -147,29 +152,6 @@ class ResponsesController < ApplicationController
 
     # Delegate to the shared authorization helper
     current_user_instructs_assignment?(assignment)
-  end
-
-  # Returns true if current user is teaching staff for the assignment associated
-  # with the current response (instructor or TA mapped to the assignment's course)
-  def current_user_is_teaching_staff_for_response_assignment?
-    resp = Response.find_by(id: params[:id])
-    return false unless resp&.response_map
-
-    assignment = resp.response_map&.assignment
-    return false unless assignment
-
-    # Uses Authorization concern helper to check instructor OR TA mapping
-    current_user_teaching_staff_of_assignment?(assignment.id)
-  end
-
-  # Variant that works when we already have the response object
-  def teaching_staff_for_response?(response)
-    assignment = response&.response_map&.assignment
-    assignment && current_user_teaching_staff_of_assignment?(assignment.id)
-  end
-
-  def teaching_staff_for_assignment?(assignment)
-    assignment && current_user_teaching_staff_of_assignment?(assignment.id)
   end
 
   # Variant helpers for parent-admin checks
