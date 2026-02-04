@@ -25,8 +25,8 @@ class AssignmentTeam < Team
       end
     end
     course_team   # Returns the newly created course team object
-  end
-
+  end  
+  
   # Get the review response map
   def review_map_type
     'ReviewResponseMap'
@@ -57,7 +57,7 @@ class AssignmentTeam < Team
 
   protected
 
-    # Validates if a user is eligible to join the team
+  # Validates if a user is eligible to join the team
   # - Checks whether the user is a participant of the associated assignment
   def validate_membership(user)
     # Ensure user is enrolled in the assignment by checking AssignmentParticipant
@@ -71,6 +71,7 @@ class AssignmentTeam < Team
     unless self.kind_of?(AssignmentTeam)
       errors.add(:type, 'must be an AssignmentTeam or its subclass')
     end
-  end    
+  end
+end 
 
-end
+class TeamFullError < StandardError; end

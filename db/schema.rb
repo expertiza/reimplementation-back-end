@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_25_012619) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_26_161701) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -172,14 +172,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_25_012619) do
 
   create_table "invitations", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.integer "assignment_id"
-    t.integer "from_id"
-    t.integer "to_id"
     t.string "reply_status", limit: 1
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "from_id", null: false
+    t.bigint "to_id", null: false
     t.index ["assignment_id"], name: "fk_invitation_assignments"
-    t.index ["from_id"], name: "fk_invitationfrom_users"
-    t.index ["to_id"], name: "fk_invitationto_users"
+    t.index ["from_id"], name: "index_invitations_on_from_id"
+    t.index ["to_id"], name: "index_invitations_on_to_id"
   end
 
   create_table "items", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -350,18 +350,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_25_012619) do
   end
 
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.string "name", null: false
-    t.integer "parent_id"
-    t.string "type", null: false
-    t.boolean "advertise_for_partner", default: false, null: false
-    t.text "submitted_hyperlinks"
-    t.integer "directory_num"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "name", null: false
+    t.string "type", null: false
+    t.integer "parent_id", null: false
     t.integer "grade_for_submission"
     t.string "comment_for_submission"
-    t.index ["parent_id"], name: "index_teams_on_parent_id"
-    t.index ["type"], name: "index_teams_on_type"
   end
 
   create_table "teams_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|

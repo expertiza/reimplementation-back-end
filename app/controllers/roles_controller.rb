@@ -3,7 +3,7 @@ class RolesController < ApplicationController
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
   def action_allowed?
-    has_privileges_of?('Administrator')
+    current_user_has_admin_privileges?
   end
   
   # GET /roles
