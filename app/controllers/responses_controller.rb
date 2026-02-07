@@ -48,7 +48,7 @@ class ResponsesController < ApplicationController
     )
 
     if @response.save
-      render json: { message: "#{response_map_label} submission started successfully", response: @response }, status: :created
+      render json: { message: "#{response_map_label} started successfully", response: @response }, status: :created
     else
       render json: { error: @response.errors.full_messages.to_sentence }, status: :unprocessable_entity
     end
@@ -60,7 +60,7 @@ class ResponsesController < ApplicationController
     return render json: { error: 'forbidden' }, status: :forbidden if @response.is_submitted?
 
     if @response.update(response_params)
-      render json: { message: "#{response_map_label} submission saved successfully", response: @response }, status: :ok
+      render json: { message: "#{response_map_label} saved successfully", response: @response }, status: :ok
     else
       render json: { error: @response.errors.full_messages.to_sentence }, status: :unprocessable_entity
     end
@@ -192,12 +192,12 @@ class ResponsesController < ApplicationController
       return true if next_due.nil?
       return next_due.due_at > Time.current
     end
-    # Fallback to legacy `future?` if present
+    # Fall back to legacy `future?` if present
     if due_dates.respond_to?(:future?)
       return due_dates.first.future?
     end
 
-    # Fallback: compare timestamps
+    # Fall back: compare timestamps
     return true if due_dates.first.nil?
     
     due_dates.first.due_at > Time.current
