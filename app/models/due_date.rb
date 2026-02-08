@@ -2,6 +2,8 @@
 
 class DueDate < ApplicationRecord
   include Comparable
+  # Any due date with deadline_type_id == DueDate::REVIEW_DEADLINE_TYPE_ID (constant = 2) is treated as a review deadline and counts as a review round
+  REVIEW_DEADLINE_TYPE_ID = 2 
   # Named constants for teammate review statuses
   ALLOWED = 3
   LATE_ALLOWED = 2

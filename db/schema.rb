@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_26_161701) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -103,6 +103,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
     t.boolean "enable_pair_programming", default: false
     t.boolean "has_teams", default: false
     t.boolean "has_topics", default: false
+    t.boolean "vary_by_round", default: false, null: false
     t.index ["course_id"], name: "index_assignments_on_course_id"
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
@@ -121,11 +122,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
     t.text "description"
     t.integer "user_id"
     t.integer "topic_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "cakes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -181,10 +177,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
     t.datetime "updated_at", null: false
     t.bigint "from_id", null: false
     t.bigint "to_id", null: false
-    t.bigint "participant_id", null: false
     t.index ["assignment_id"], name: "fk_invitation_assignments"
     t.index ["from_id"], name: "index_invitations_on_from_id"
-    t.index ["participant_id"], name: "index_invitations_on_participant_id"
     t.index ["to_id"], name: "index_invitations_on_to_id"
   end
 
@@ -211,7 +205,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
     t.integer "participant_id"
     t.integer "team_id"
     t.text "comments"
-    t.string "reply_status"
+    t.string "status"
   end
 
   create_table "nodes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -295,7 +289,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
     t.integer "reviewee_id", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "type"
     t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 
@@ -342,8 +335,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
     t.integer "preference_priority_number"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.text "comments_for_advertisement"
-    t.boolean "advertise_for_partner"
     t.index ["sign_up_topic_id"], name: "index_signed_up_teams_on_sign_up_topic_id"
     t.index ["team_id"], name: "index_signed_up_teams_on_team_id"
   end
@@ -359,10 +350,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
   end
 
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.string "name", null: false
-    t.string "type", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "name", null: false
+    t.string "type", null: false
     t.integer "parent_id", null: false
     t.integer "grade_for_submission"
     t.string "comment_for_submission"
@@ -385,6 +376,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["team_id", "user_id"], name: "index_teams_users_on_team_id_and_user_id", unique: true
     t.index ["team_id"], name: "index_teams_users_on_team_id"
     t.index ["user_id"], name: "index_teams_users_on_user_id"
   end
@@ -422,8 +414,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
   add_foreign_key "assignments", "users", column: "instructor_id"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
-  add_foreign_key "invitations", "participants", column: "from_id"
-  add_foreign_key "invitations", "participants", column: "to_id"
   add_foreign_key "items", "questionnaires"
   add_foreign_key "participants", "join_team_requests"
   add_foreign_key "participants", "teams"

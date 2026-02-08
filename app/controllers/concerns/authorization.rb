@@ -17,7 +17,7 @@ module Authorization
 
   # Check if all actions are allowed
   def all_actions_allowed?
-    return true if has_privileges_of?('Super Administrator')
+    return true if current_user_has_super_admin_privileges?
     action_allowed?
   end
 
@@ -27,25 +27,13 @@ module Authorization
     true
   end
 
-  # Checks if current user has the required role or higher privileges
-  # @param required_role [Role, String] The minimum role required (can be Role object or role name)
-  # @return [Boolean] true if user has required role or higher privileges
-  # @example
-  #   has_privileges_of?('Administrator') # checks if user is an admin or higher
-  #   has_privileges_of?(Role::INSTRUCTOR) # checks if user is an instructor or higher
-  def has_privileges_of?(required_role)
-    required_role = Role.find_by_name(required_role) if required_role.is_a?(String)
-    current_user&.role&.all_privileges_of?(required_role) || false
-  end
-
-  # Unlike has_privileges_of? which checks for role hierarchy and privilege levels,
   # this method checks if the user has exactly the specified role
   # @param role_name [String, Role] The exact role to check for
   # @return [Boolean] true if user has exactly this role, false otherwise
   # @example
-  #   has_role?('Student') # true only if user is exactly a student
-  #   has_role?(Role::INSTRUCTOR) # true only if user is exactly an instructor
-  def has_role?(required_role)
+  #   current_user_has_role?('Student') # true only if user is exactly a student
+  #   current_user_has_role?(Role::INSTRUCTOR) # true only if user is exactly an instructor
+  def current_user_has_role?(required_role)
     required_role = required_role.name if required_role.is_a?(Role)
     current_user&.role&.name == required_role
   end
@@ -234,6 +222,21 @@ module Authorization
     false
   end
 
+  # responding to an invitation i.e. accepting/declining the invitation is authorized only if they are recipient of that invitation
+  def current_user_can_respond_to_invitation?(invitation)
+    user_logged_in? && invitation.to_participant.user == current_user #to_participant refers to the participant class
+  end
+
+  # retracting an invitation is authorized only if they are sender of that invitation
+  def current_user_can_retract_invitation?(invitation)
+    user_logged_in? && invitation.from_participant.user == current_user #from_participant refers to the participant class
+  end
+
+  # only sender or teammates of the sender can view the invitations
+  def current_user_can_view_invitation?(invitation)
+    user_logged_in? && TeamsParticipant.where(team: invitation.from_participant.team).pluck(:user_id).include?(current_user.id)
+  end
+
   # PRIVATE METHODS
   private
 
@@ -241,9 +244,6 @@ module Authorization
   # Let the Role model define this logic for the sake of DRY
   # If there is no currently logged-in user simply return false
   def current_user_has_privileges_of?(role_name)
-    # puts current_user_and_role_exist?
-    # puts current_user
-    # puts current_user.role.all_privileges_of?(Role.find_by(name: role_name))
     current_user_and_role_exist? && current_user.role.all_privileges_of?(Role.find_by(name: role_name))
   end
 
