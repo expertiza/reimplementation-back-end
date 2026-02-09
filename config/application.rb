@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'boot'
 require 'rails/all'
 if Gem::Version.new(Rails::VERSION::STRING) >= Gem::Version.new('8.0.0')

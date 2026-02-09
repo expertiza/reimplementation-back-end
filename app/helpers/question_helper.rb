@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module QuestionHelper
     def edit_common(label = nil,min_question_score = nil, max_question_score = nil, txt ,weight, type)
       {

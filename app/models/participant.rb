@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 class Participant < ApplicationRecord
   # Associations
   belongs_to :user
   has_many   :join_team_requests, dependent: :destroy
-  belongs_to :team, optional: true
+  # belongs_to :team, optional: true
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'parent_id', optional: true, inverse_of: :participants
   belongs_to :course, class_name: 'Course', foreign_key: 'parent_id', optional: true, inverse_of: :participants
 
@@ -11,11 +13,17 @@ class Participant < ApplicationRecord
   validates :parent_id, presence: true
   validates :type, presence: true, inclusion: { in: %w[AssignmentParticipant CourseParticipant], message: "must be either 'AssignmentParticipant' or 'CourseParticipant'" }
 
-  # Methods
-  def fullname
-    user.fullname
+  def retract_sent_invitations
+    # do nothing. Invitations are only sent by AssignmentParticipants only.
   end
 
+  # Methods
+  def fullname
+    user.full_name
+  end
 
+  def team
+    TeamsParticipant.where(participant: self).first&.team
+  end
 
 end

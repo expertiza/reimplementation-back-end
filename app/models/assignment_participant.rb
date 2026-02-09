@@ -1,9 +1,14 @@
 # frozen_string_literal: true
 
 class AssignmentParticipant < Participant
+  include ReviewAggregator
+  has_many :sent_invitations, class_name: 'Invitation', foreign_key: 'from_id'
   belongs_to :user
   validates :handle, presence: true
 
+  def retract_sent_invitations
+    sent_invitations.each(&:retract)
+  end
 
   def set_handle
     self.handle = if user.handle.nil? || (user.handle == '')
@@ -16,4 +21,7 @@ class AssignmentParticipant < Participant
     self.save
   end
 
+  def aggregate_teammate_review_grade(teammate_review_mappings)
+    compute_average_review_score(teammate_review_mappings)
+  end
 end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Rails.application.routes.draw do
 
   mount Rswag::Api::Engine => 'api-docs'
@@ -7,8 +9,6 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "articles#index"
   post '/login', to: 'authentication#login'
-  namespace :api do
-    namespace :v1 do
       resources :institutions
       resources :roles do
         collection do
@@ -90,8 +90,6 @@ Rails.application.routes.draw do
         end
       end
 
-
-
       resources :sign_up_topics do
         collection do
           get :filter
@@ -100,7 +98,11 @@ Rails.application.routes.draw do
       end
 
       resources :invitations do
-        get 'user/:user_id/assignment/:assignment_id/', on: :collection, action: :invitations_for_user_assignment
+        collection do
+          get '/sent_by/team/:team_id', to: 'invitations_sent_by_team'
+          get '/sent_by/participant/:participant_id', to: 'invitations_sent_by_participant'
+          get '/sent_to/:participant_id', to: 'invitations_sent_to_participant'
+        end
       end
 
       resources :account_requests do
@@ -126,6 +128,27 @@ Rails.application.routes.draw do
           delete '/:id', to: 'participants#destroy'
         end
       end
+
+      resources :student_teams, only: %i[create update] do
+        collection do
+          get :view          
+          get :mentor
+          get :remove_participant
+          put '/leave', to: 'student_teams#leave_team'        
+        end
+      end
+
+      resources :teams do
+        member do
+          get 'members'
+          post 'members', to: 'teams#add_member'
+          delete 'members/:user_id', to: 'teams#remove_member'
+
+          get 'join_requests'
+          post 'join_requests', to: 'teams#create_join_request'
+          put 'join_requests/:join_request_id', to: 'teams#update_join_request'
+        end
+      end
       resources :teams_participants, only: [] do
         collection do
           put :update_duty
@@ -135,7 +158,16 @@ Rails.application.routes.draw do
           post :add_participant
           delete :delete_participants
         end
+      end      
+      resources :grades do
+        collection do        
+          get '/:assignment_id/view_all_scores', to: 'grades#view_all_scores'
+          patch '/:participant_id/assign_grade', to: 'grades#assign_grade'
+          get '/:participant_id/edit', to: 'grades#edit'
+          get '/:assignment_id/:participant_id/get_review_tableau_data', to: 'grades#get_review_tableau_data'
+          get '/:assignment_id/view_our_scores', to: 'grades#view_our_scores'
+          get '/:assignment_id/view_my_scores', to: 'grades#view_my_scores'
+          get '/:participant_id/instructor_review', to: 'grades#instructor_review'
+        end
       end
-    end
-  end
 end

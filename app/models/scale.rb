@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Scale < ScoredItem
     include QuestionHelper
   
@@ -24,6 +26,10 @@ class Scale < ScoredItem
       else
         { message: 'Item not answered.' }.to_json
       end
+    end
+
+    def max_score
+      questionnaire.max_question_score * weight
     end
   
     private

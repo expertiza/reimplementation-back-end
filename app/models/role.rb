@@ -1,16 +1,16 @@
+# frozen_string_literal: true
+
 class Role < ApplicationRecord
   validates :name, presence: true, uniqueness: true, allow_blank: false
   belongs_to :parent, class_name: 'Role', optional: true
   has_many :users, dependent: :nullify
 
-  if Role.table_exists?
-    STUDENT = find_by_name('Student')
-    INSTRUCTOR = find_by_name('Instructor')
-    ADMINISTRATOR = find_by_name('Administrator')
-    TEACHING_ASSISTANT = find_by_name('Teaching Assistant')
-    SUPER_ADMINISTRATOR = find_by_name('Super Administrator')
-  end
-
+  # Role IDs
+  STUDENT_ID = 1
+  TEACHING_ASSISTANT_ID = 2
+  INSTRUCTOR_ID = 3
+  ADMINISTRATOR_ID = 4
+  SUPER_ADMINISTRATOR_ID = 5
 
   def super_administrator?
     name['Super Administrator']

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_26_161701) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -26,13 +26,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   end
 
   create_table "answers", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.integer "question_id", default: 0, null: false
+    t.integer "item_id", default: 0, null: false
     t.integer "response_id"
     t.integer "answer"
     t.text "comments"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["question_id"], name: "fk_score_questions"
+    t.index ["item_id"], name: "fk_score_items"
     t.index ["response_id"], name: "fk_score_response"
   end
 
@@ -43,6 +43,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "used_in_round"
+    t.integer "questionnaire_weight"
     t.index ["assignment_id"], name: "fk_aq_assignments_id"
     t.index ["questionnaire_id"], name: "fk_aq_questionnaire_id"
   end
@@ -102,6 +103,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
     t.boolean "enable_pair_programming", default: false
     t.boolean "has_teams", default: false
     t.boolean "has_topics", default: false
+    t.boolean "vary_by_round", default: false, null: false
     t.index ["course_id"], name: "index_assignments_on_course_id"
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
@@ -170,14 +172,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
 
   create_table "invitations", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.integer "assignment_id"
-    t.integer "from_id"
-    t.integer "to_id"
     t.string "reply_status", limit: 1
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "from_id", null: false
+    t.bigint "to_id", null: false
     t.index ["assignment_id"], name: "fk_invitation_assignments"
-    t.index ["from_id"], name: "fk_invitationfrom_users"
-    t.index ["to_id"], name: "fk_invitationto_users"
+    t.index ["from_id"], name: "index_invitations_on_from_id"
+    t.index ["to_id"], name: "index_invitations_on_to_id"
   end
 
   create_table "items", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -232,6 +234,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
     t.string "authorization"
     t.integer "parent_id", null: false
     t.string "type", null: false
+    t.float "grade"
     t.index ["join_team_request_id"], name: "index_participants_on_join_team_request_id"
     t.index ["team_id"], name: "index_participants_on_team_id"
     t.index ["user_id"], name: "fk_participant_users"
@@ -295,6 +298,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
     t.boolean "is_submitted", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "round"
+    t.integer "version_num"
     t.index ["map_id"], name: "fk_response_response_map"
   end
 
@@ -347,8 +352,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "parent_id", null: false
+    t.string "name", null: false
     t.string "type", null: false
+    t.integer "parent_id", null: false
+    t.integer "grade_for_submission"
+    t.string "comment_for_submission"
   end
 
   create_table "teams_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -368,6 +376,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_04_27_014225) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["team_id", "user_id"], name: "index_teams_users_on_team_id_and_user_id", unique: true
     t.index ["team_id"], name: "index_teams_users_on_team_id"
     t.index ["user_id"], name: "index_teams_users_on_user_id"
   end

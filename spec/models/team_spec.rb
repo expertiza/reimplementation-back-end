@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 # This spec exercises the Team model, covering:
@@ -49,6 +51,17 @@ RSpec.describe Team, type: :model do
     )
   end
 
+  let(:team_owner) do
+    User.create!(
+      name:            "team_owner",
+      full_name:       "Team Owner",
+      email:           "team_owner@example.com",
+      password_digest: "password",
+      role_id:          @roles[:student].id,
+      institution_id:  institution.id
+    )
+  end
+
   # Two assignments with explicit max_team_size values, for testing AssignmentTeam.full?
   let(:assignment)  { Assignment.create!(name: "Assignment 1", instructor_id: instructor.id, max_team_size: 3) }
   let(:assignment2) { Assignment.create!(name: "Assignment 2", instructor_id: instructor.id, max_team_size: 2) }
@@ -60,8 +73,19 @@ RSpec.describe Team, type: :model do
   # ------------------------------------------------------------------------
   # Create one team per context using STI subclasses
   # ------------------------------------------------------------------------
-  let(:assignment_team) { AssignmentTeam.create!(parent_id: assignment.id) }
-  let(:course_team)     { CourseTeam.create!(parent_id: course.id)     }
+  let(:assignment_team) do
+    AssignmentTeam.create!(
+      parent_id:      assignment.id,
+      name:           'team 1',
+    )
+  end
+
+  let(:course_team) do
+    CourseTeam.create!(
+      parent_id:      course.id,
+      name:           'team 2',
+    )
+  end
 
   # ------------------------------------------------------------------------
   # Validation Tests
@@ -87,7 +111,7 @@ RSpec.describe Team, type: :model do
       # An unsupported value for type should trigger an inclusion error.
       team = Team.new(parent_id: assignment.id, type: 'Team')
       expect(team).not_to be_valid
-      expect(team.errors[:type]).to include("must be 'Assignment' or 'Course'")
+      expect(team.errors[:type]).to include("must be 'Assignment' or 'Course' or 'Mentor'")
     end
 
     it 'is valid as AssignmentTeam' do
@@ -263,7 +287,7 @@ RSpec.describe Team, type: :model do
       it 'creates a TeamsParticipant record on success' do
         user        = create_student("cadd")
         participant = CourseParticipant.create!(parent_id: course.id, user: user, handle: user.name)
-
+        
         expect {
           course_team.add_member(participant)
         }.to change { TeamsParticipant.where(team_id: course_team.id).count }.by(1)

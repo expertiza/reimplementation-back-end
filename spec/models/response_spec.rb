@@ -1,17 +1,22 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 describe Response do
 
-  let(:user) { User.new(id: 1, role_id: 1, name: 'no name', full_name: 'no one') }
-  let(:team) {Team.new}
-  let(:participant) { Participant.new(id: 1, user: user) }
-  let(:assignment) { Assignment.new(id: 1, name: 'Test Assignment') }
-  let(:answer) { Answer.new(answer: 1, comments: 'Answer text', question_id: 1) }
-  let(:item) { ScoredItem.new(id: 1, weight: 2) }
-  let(:questionnaire) { Questionnaire.new(id: 1, items: [item], max_question_score: 5) }
-  let(:review_response_map) { ReviewResponseMap.new(assignment: assignment, reviewee: team) }
-  let(:response_map) { ResponseMap.new(assignment: assignment, reviewee: participant, reviewer: participant) }
-  let(:response) { Response.new(map_id: 1, response_map: review_response_map, scores: [answer]) }
+  let(:user) { create(:user, :student) }
+  let(:user2) { create(:user, :student) }
+  let(:assignment) { create(:assignment, name: 'Test Assignment') }
+  let(:team) {create(:team, :with_assignment, name: 'Test Team')}
+  let(:participant) { AssignmentParticipant.create!(assignment: assignment, user: user, handle: user.name) }
+  let(:participant2) { AssignmentParticipant.create!(assignment: assignment, user: user2, handle: user2.name) }
+  let(:item) { ScoredItem.new(weight: 2) }
+  let(:answer) { Answer.new(answer: 1, comments: 'Answer text', item:item) }
+  let(:questionnaire) { Questionnaire.new(items: [item], min_question_score: 0, max_question_score: 5) }
+  let(:assignment_questionnaire) { AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire, used_in_round: 1, notification_limit: 5.0)}
+  let(:review_response_map) { ReviewResponseMap.new(assignment: assignment, reviewee: team, reviewer: participant2) }
+  let(:response_map) { ResponseMap.new(assignment: assignment, reviewee: participant, reviewer: participant2) }
+  let(:response) { Response.new(map_id: review_response_map.id, response_map: review_response_map, round:1, scores: [answer]) }
 
   # Compare the current response score with other scores on the same artifact, and test if the difference is significant enough to notify
   # instructor.
@@ -32,7 +37,7 @@ describe Response do
           allow(response).to receive(:aggregate_questionnaire_score).and_return(93)
           allow(response).to receive(:maximum_score).and_return(100)
           allow(response).to receive(:questionnaire_by_answer).with(answer).and_return(questionnaire)
-          allow(AssignmentQuestionnaire).to receive(:find_by).with(assignment_id: 1, questionnaire_id: 1)
+          allow(AssignmentQuestionnaire).to receive(:find_by).with(assignment_id: assignment.id, questionnaire_id: questionnaire.id)
                                                              .and_return(double('AssignmentQuestionnaire', notification_limit: 5.0))
           expect(response.reportable_difference?).to be true
         end
@@ -41,14 +46,9 @@ describe Response do
   end
 
   # Calculate the total score of a review
-  describe '#calculate_total_score' do
+  describe '#aggregate_questionnaire_score' do
     it 'computes the total score of a review' do
-      question2 = double('ScoredItem', weight: 2)
-      arr_question2 = [question2]
-      allow(Item).to receive(:find_with_order).with([1]).and_return(arr_question2)
-      allow(question2).to receive(:scorable?).and_return(true)
-      allow(question2).to receive(:answer).and_return(answer)
-      expect(response.calculate_total_score).to eq(2)
+      expect(response.aggregate_questionnaire_score).to eq(2)
     end
   end
 
@@ -73,42 +73,45 @@ describe Response do
   # Returns the maximum possible score for this response - only count the scorable questions, only when the answer is not nil (we accept nil as
   # answer for scorable questions, and they will not be counted towards the total score)
   describe '#maximum_score' do
-    it 'returns the maximum possible score for current response' do
-      question2 = double('ScoredItem', weight: 2)
-      arr_question2 = [question2]
-      allow(Item).to receive(:find_with_order).with([1]).and_return(arr_question2)
-      allow(question2).to receive(:scorable?).and_return(true)
-      allow(response).to receive(:questionnaire_by_answer).with(answer).and_return(questionnaire)
-      allow(questionnaire).to receive(:max_question_score).and_return(5)
-      expect(response.maximum_score).to eq(10)
+    before do
+      allow(response.response_assignment)
+        .to receive_message_chain(:assignment_questionnaires, :find_by)
+        .with(used_in_round: 1)
+        .and_return(assignment_questionnaire)
+    end
+    context 'when answers are present and scorable' do
+      it 'returns weight * max_question_score' do
+        # item.weight = 2, max_question_score = 5 → 10        
+        expect(response.maximum_score).to eq(10)
+      end
     end
 
-    it 'returns the maximum possible score for current response without score' do
-      response.scores = []
-      allow(response).to receive(:questionnaire_by_answer).with(nil).and_return(questionnaire)
-      allow(questionnaire).to receive(:max_question_score).and_return(5)
-      expect(response.maximum_score).to eq(0)
+    context 'when answer is nil' do
+      before { answer.answer = nil }
+
+      it 'does not count that answer' do        
+        expect(response.maximum_score).to eq(0)
+      end
     end
 
-    # Expects to return the participant's assignment for a ResponseMap object
-    it 'returns the appropriate assignment for ResponseMap' do
-      allow(Participant).to receive(:find).and_return(participant)
-      allow(participant).to receive(:assignment).and_return(assignment)
+    context 'when there are no scores' do
+      before { response.scores = [] }
 
+      it 'returns 0' do
+        # allow(AssignmentQuestionnaire).to receive(:find_by).with(assignment_id: assignment.id, questionnaire_id: questionnaire.id)
+        #                                                      .and_return(double('AssignmentQuestionnaire', notification_limit: 5.0))
+        expect(response.maximum_score).to eq(0)
+      end
+    end
+  end
+
+  describe '#response_assignment' do
+    it 'returns assignment for ResponseMap' do
       expect(response_map.response_assignment).to eq(assignment)
     end
 
-    # Expects to return ResponseMap's assignment
-    it 'returns the appropriate assignment for ReviewResponseMap' do
-      question2 = double('ScoredItem', weight: 2)
-      arr_question2 = [question2]
-      allow(Item).to receive(:find_with_order).with([1]).and_return(arr_question2)
-      allow(question2).to receive(:scorable?).and_return(true)
-      allow(questionnaire).to receive(:max_question_score).and_return(5)
-      allow(review_response_map).to receive(:assignment).and_return(assignment)
-
+    it 'returns assignment for ReviewResponseMap' do
       expect(review_response_map.response_assignment).to eq(assignment)
-
     end
   end
 end

@@ -7,312 +7,336 @@ RSpec.describe 'Invitations API', type: :request do
     @roles = create_roles_hierarchy
   end
 
-  let(:student) {
-    User.create(
-      name: "studenta",
+  #
+  # --- USERS ---
+  #
+
+  let(:ta) do
+    User.create!(
+      name: "ta",
+      password_digest: "password",
+      role_id: @roles[:ta].id,
+      full_name: "Teaching Assistant",
+      email: "ta@example.com"
+    )
+  end
+
+  let(:user1) do
+    User.create!(
+      name: "student",
       password_digest: "password",
       role_id: @roles[:student].id,
-      full_name: "student A",
-      email: "testuser@example.com",
-      mru_directory_path: "/home/testuser",
-      )
-  }
+      full_name: "Student Name",
+      email: "student@example.com"
+    )
+  end
+
+  let(:user2) do
+    User.create!(
+      name: "student2",
+      password_digest: "password",
+      role_id: @roles[:student].id,
+      full_name: "Student Two",
+      email: "student2@example.com"
+    )
+  end
 
   let(:prof) {
-    User.create(
-      name: "profa",
-      password_digest: "password",
-      role_id: @roles[:instructor].id,
-      full_name: "Prof A",
-      email: "testuser@example.com",
-      mru_directory_path: "/home/testuser",
-      )
+    create(:user,
+           role_id: @roles[:instructor].id,
+           name: "profa",
+           full_name: "Prof A",
+           email: "profa@example.com")
   }
 
-  let(:token) { JsonWebToken.encode({id: student.id}) }
+  #
+  # --- ASSIGNMENT + PARTICIPANTS + TEAMS ---
+  #
+  let(:assignment) { Assignment.create!(name: "Test Assignment", instructor_id: prof.id) }
+
+  let(:token) { JsonWebToken.encode({ id: user1.id }) }
   let(:Authorization) { "Bearer #{token}" }
-  let(:user1) { create :user, name: 'rohitgeddam', role_id: @roles[:student].id }
-  let(:user2) { create :user, name: 'superman', role_id: @roles[:student].id }
-  let(:invalid_user) { build :user, name: 'INVALID', role_id: nil }
-  let(:assignment) { Assignment.create!(id: 1, name: 'Test Assignment', instructor_id: prof.id) }
-  let(:invitation) { Invitation.create!(from_user: user1, to_user: user2, assignment: assignment) }
 
-  path '/api/v1/invitations' do
+  let(:ta_token) { JsonWebToken.encode({ id: ta.id }) }
 
-    get('list invitations') do
-      tags 'Invitations'
-      produces 'application/json'
-      response(200, 'Success') do
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
+  let(:team1) { AssignmentTeam.create!(name: "Team1", parent_id: assignment.id) }
+  let(:team2) { AssignmentTeam.create!(name: "Team2", parent_id: assignment.id) }
+
+  let(:participant1) { AssignmentParticipant.create!(user: user1, parent_id: assignment.id, handle: 'user1_handle') }
+  let(:participant2) { AssignmentParticipant.create!(user: user2, parent_id: assignment.id, handle: 'user2_handle') }
+
+
+  before do
+    # assign participants to teams
+    team1.add_member(participant1)
+    team2.add_member(participant2)
+  end
+
+  #
+  # Existing invitation instance
+  #
+  let(:invitation) {
+    Invitation.create!(
+      from_participant: participant1,
+      to_participant: participant2,
+      assignment: assignment,
+      reply_status: InvitationValidator::WAITING_STATUS
+    )
+  }
+
+  let(:invitation2) {
+    Invitation.create!(
+      from_participant: participant2,
+      to_participant: participant1,
+      assignment: assignment,
+      reply_status: InvitationValidator::WAITING_STATUS
+    )
+  }
+
+  #
+  # --- TESTS ---
+  #
+  path "/invitations" do
+    get("list invitations") do
+      tags "Invitations"
+      produces "application/json"
+      parameter name: 'Authorization', in: :header, type: :string, required: true
+      let(:Authorization) { "Bearer #{ta_token}" }
+      response(200, "Success") do
         run_test!
       end
     end
+  end
 
-    post('create invitation') do
-      tags 'Invitations'
-      consumes 'application/json'
+  path "/invitations" do
+    #
+    # POST /invitations
+    #
+    post("create invitation") do
+      tags "Invitations"
+      consumes "application/json"
+      parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
+
       parameter name: :invitation, in: :body, schema: {
         type: :object,
         properties: {
           assignment_id: { type: :integer },
-          from_id: { type: :integer },
-          to_id: { type: :integer },
-          reply_status: { type: :string }
+          username: { type: :string }, 
         },
-        required: %w[assignment_id from_id to_id]
+        required: %w[assignment_id username]
       }
 
-      response(201, 'Create successful') do
-        let(:invitation) { { to_id: user1.id, from_id: user2.id, assignment_id: assignment.id } }
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
+      #
+      # SUCCESS CASE
+      #
+      response(201, "Create successful") do
+        let(:invitation) {
+          {
+            assignment_id: assignment.id,
+            username: user2.name
           }
-        end
+        }
+
         run_test!
       end
 
-      response(422, 'Invalid request') do
-        let(:invitation) { { to_id: invalid_user.id, from_id: user2.id, assignment_id: assignment.id } }
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
+      #
+      # Invalid — user not found
+      #
+      response(404, "User not found") do
+        let(:invitation) {
+          {
+            assignment_id: assignment.id,
+            username: "UNKNOWN_USER"
           }
-        end
+        }
+
         run_test!
       end
 
-      response(422, 'Invalid request') do
-        let(:invitation) { { to_id: user1.id, from_id: invalid_user.id, assignment_id: assignment.id } }
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
-        run_test!
-      end
+      #
+      # Invalid — user exists but not participant
+      #
+      response(404, "Participant not found") do
+        let(:non_participant_user) { create(:user, name: "randomuser") }
 
-      response(422, 'Invalid request') do
-        let(:invitation) { { to_id: user1.id, from_id: user2.id, assignment_id: nil } }
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
+        let(:invitation) {
+          {
+            assignment_id: assignment.id,
+            username: non_participant_user.name
           }
-        end
-        run_test!
-      end
+        }
 
-      response(422, 'Invalid request') do
-        let(:invitation) { { to_id: user1.id, from_id: user2.id, assignment_id: assignment.id, reply_status: 'I' } }
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
-        run_test!
-      end
-
-      response(422, 'Invalid request') do
-        let(:invitation) { { to_id: user1.id, from_id: user1.id, assignment_id: assignment.id } }
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
         run_test!
       end
     end
   end
 
-  path '/api/v1/invitations/{id}' do
-    parameter name: 'id', in: :path, type: :integer, description: 'id of the invitation'
-    get('show invitation') do
-      tags 'Invitations'
-      response(200, 'Show invitation') do
+  #
+  # CRUD Operation on /invitations/:id
+  #
+  path "/invitations/{id}" do
+    parameter name: "id", in: :path, type: :integer
+    parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
+    
+    # GET /invitations/:id
+    get("show invitation") do
+      tags "Invitations"
+      response(200, "Show invitation") do
         let(:id) { invitation.id }
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
         run_test!
       end
 
-      response(404, 'Not found') do
-        let(:id) { 'INVALID' }
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
+      response(403, "Cannot see other's invitations") do
+        let(:id) { invitation2.id }
         run_test!
       end
     end
 
-    patch('update invitation') do
-      tags 'Invitations'
-      consumes 'application/json'
+    # PATCH /invitations/:id
+    patch("update invitation") do
+      tags "Invitations"
+      consumes "application/json"
+
       parameter name: :invitation_status, in: :body, schema: {
         type: :object,
         properties: {
           reply_status: { type: :string }
-        },
-        required: %w[]
+        }
       }
 
-      response(200, 'Update successful') do
+      # Accept invitation
+      response(200, "Acceptance successful") do
+        let(:id) { invitation2.id }
+        let(:invitation_status) { { reply_status: InvitationValidator::ACCEPT_STATUS } }
+        run_test!
+      end
+
+      response(403, "Cannot accept other's invitations") do
         let(:id) { invitation.id }
         let(:invitation_status) { { reply_status: InvitationValidator::ACCEPT_STATUS } }
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
         run_test!
       end
 
-      response(200, 'Update successful') do
+      # Decline invitation
+      response(200, "Decline successful") do
+        let(:id) { invitation2.id }
+        let(:invitation_status) { { reply_status: InvitationValidator::DECLINED_STATUS } }
+        run_test!
+      end
+
+      response(403, "Cannot decline other's invitations") do
         let(:id) { invitation.id }
-        let(:invitation_status) { { reply_status: InvitationValidator::REJECT_STATUS } }
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
+        let(:invitation_status) { { reply_status: InvitationValidator::DECLINED_STATUS } }
         run_test!
       end
 
-      response(422, 'Invalid request') do
+      # Retract invitation
+      response(200, "Retraction successful") do
         let(:id) { invitation.id }
-        let(:invitation_status) { { reply_status: 'Z' } }
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
+        let(:invitation_status) { { reply_status: InvitationValidator::RETRACT_STATUS } }
         run_test!
       end
 
-      response(404, 'Not found') do
-        let(:id) { invitation.id + 10 }
-        let(:invitation_status) { { reply_status: 'A' } }
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
+      response(403, "Cannot retract other's invitations") do
+        let(:id) { invitation2.id }
+        let(:invitation_status) { { reply_status: InvitationValidator::RETRACT_STATUS } }
         run_test!
       end
 
-      delete('Delete invitation') do
-        tags 'Invitations'
-        response(204, 'Delete successful') do
-          let(:id) { invitation.id }
-          run_test!
-        end
+      # Invalid status
+      response(422, "Invalid request") do
+        let(:id) { invitation.id }
+        let(:invitation_status) { { reply_status: "Z" } }
+        run_test!
+      end
+    end
 
-        response(404, 'Not found') do
-          let(:id) { invitation.id + 100 }
+    # DELETE /invitations/:id
+    delete("Delete invitation") do
+      tags "Invitations"
+      parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
 
-          after do |example|
-            example.metadata[:response][:content] = {
-              'application/json' => {
-                example: JSON.parse(response.body, symbolize_names: true)
-              }
-            }
-          end
-          run_test!
-        end
+      response(403, "Student cannot delete invitations") do
+        let(:id) { invitation2.id }
+        run_test!
+      end
+    end
+
+    delete("Delete invitation") do
+      tags "Invitations"
+      parameter name: 'Authorization', in: :header, type: :string, required: true
+      let(:Authorization) { "Bearer #{ta_token}" }
+
+      response(200, "Delete successful") do
+        let(:id) { invitation.id }
+        run_test!
       end
     end
   end
 
-  path '/api/v1/invitations/user/{user_id}/assignment/{assignment_id}' do
-    parameter name: 'user_id', in: :path, type: :integer, description: 'id of user'
-    parameter name: 'assignment_id', in: :path, type: :integer, description: 'id of assignment'
-    get('Show all invitation for the given user and assignment') do
-      tags 'Invitations'
-      response(200, 'Show all invitations for the user for an assignment') do
-        let(:user_id) { user1.id }
-        let(:assignment_id) { assignment.id }
+  #
+  # GET invitations sent by a team 
+  #
+  path "/invitations/sent_by/team/{team_id}" do
+    parameter name: "team_id", in: :path, type: :integer
+    parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
 
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
+
+    get("Show all invitations sent by team") do
+      tags "Invitations"
+
+      response(200, "OK") do
+        let(:team_id) { team1.id }
         run_test!
       end
-
-      response(404, 'Not found') do
-        let(:user_id) { 'INVALID' }
-        let(:assignment_id) { assignment.id }
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
+      
+      response(403, "Not allowed") do
+        let(:team_id) {team2.id}
         run_test!
       end
+    end
+  end
 
-      response(404, 'Not found') do
-        let(:user_id) { user1.id }
-        let(:assignment_id) { 'INVALID' }
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
+  #
+  # GET invitations sent by a participant
+  #
+  path "/invitations/sent_by/participant/{participant_id}" do
+    parameter name: "participant_id", in: :path, type: :integer
+    parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
+
+    get("Show all invitations sent by participant") do
+      tags "Invitations"
+
+      response(200, "OK") do
+        let(:participant_id) { participant1.id }
         run_test!
       end
+      
+      response(403, "Not allowed") do
+        let(:participant_id) {participant2.id}
+        run_test!
+      end
+    end
+  end
 
-      response(404, 'Not found') do
-        let(:user_id) { 'INVALID' }
-        let(:assignment_id) { 'INVALID' }
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
+  #
+  # GET invitations sent to a participant
+  #
+  path "/invitations/sent_to/{participant_id}" do
+    parameter name: "participant_id", in: :path, type: :integer
+    parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
+
+    get("Show all invitations sent to participant") do
+      tags "Invitations"
+
+      response(200, "OK") do
+        let(:participant_id) { participant1.id }
+        run_test!
+      end
+      
+      response(403, "Not allowed") do
+        let(:participant_id) {participant2.id}
         run_test!
       end
     end

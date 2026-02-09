@@ -1,4 +1,7 @@
-# Dangerfile
+# Helper to safely read files in UTF-8 and avoid "invalid byte sequence" errors
+def safe_read(path)
+  File.read(path, encoding: "UTF-8", invalid: :replace, undef: :replace)
+end
 
 # --- PR Size Checks ---
 warn("Pull request is too big (more than 500 LoC).") if git.lines_of_code > 500
@@ -14,7 +17,7 @@ warn("Pull request has duplicated commit messages.") if duplicated_commits.any?
 
 # --- TODO/FIXME Checks ---
 todo_fixme = (git.modified_files + git.added_files).any? do |file|
-  File.read(file).match?(/\b(TODO|FIXME)\b/i)
+  File.exist?(file) && safe_read(file).match?(/\b(TODO|FIXME)\b/i)
 end
 warn("Pull request contains TODO or FIXME comments.") if todo_fixme
 
@@ -24,7 +27,6 @@ warn("Pull request includes temp, tmp, or cache files.") if temp_files
 
 # --- Missing Test Checks ---
 warn("There are no test changes in this PR.") if (git.modified_files + git.added_files).none? { |f| f.include?('spec/') || f.include?('test/') }
-
 
 # --- .md File Changes ---
 md_changes = git.modified_files.any? { |file| file.end_with?('.md') }
@@ -49,11 +51,9 @@ config_files = %w[
 changed_config_files = git.modified_files.select { |file| config_files.include?(file) }
 warn("Pull request modifies config or setup files: #{changed_config_files.join(', ')}.") if changed_config_files.any?
 
-
 # --- Shallow Tests (RSpec) ---
-# (Rules 37-41 — Shallow tests — assuming you want them included)
 shallow_test_files = git.modified_files.select { |file| file.include?('spec/') }
 shallow_test_warning = shallow_test_files.any? do |file|
-  File.read(file).match?(/\bit\b|\bspecify\b/)
+  File.exist?(file) && safe_read(file).match?(/\bit\b|\bspecify\b/)
 end
 warn("RSpec tests seem shallow (single `it` blocks or no context). Consider improving test structure.") if shallow_test_warning

@@ -1,4 +1,4 @@
-# spec/requests/api/v1/assignment_controller_spec.rb
+# spec/requests/assignment_controller_spec.rb
 
 require 'swagger_helper'
 require 'rails_helper'
@@ -33,17 +33,18 @@ RSpec.describe 'Assignments API', type: :request do
   end
 
   let!(:prof) do
-    User.create!(
+    Instructor.create!(
       name: "profa",
       password_digest: "password",
       role_id: @roles[:instructor].id,
       full_name: "Prof A",
       email: "testuser@example.com",
-      mru_directory_path: "/home/testuser"
+      mru_directory_path: "/home/testuser",
+      institution: institution
     )
   end
 
-  # Create two assignments so the "GET /api/v1/assignments" test expects 2
+  # Create two assignments so the "GET /assignments" test expects 2
   let!(:assignment1) { Assignment.create!(name: 'Test Assignment 1', instructor_id: prof.id) }
   let!(:assignment2) { Assignment.create!(name: 'Test Assignment 2', instructor_id: prof.id) }
 
@@ -62,10 +63,21 @@ RSpec.describe 'Assignments API', type: :request do
   let(:token) { JsonWebToken.encode({ id: prof.id }) }
   let(:Authorization) { "Bearer #{token}" }
 
+  let!(:questionnaire) do
+    Questionnaire.create!(
+      name: "Review Rubric",
+      instructor: prof,
+      private: false,
+      min_question_score: 0,
+      max_question_score: 10,
+      questionnaire_type: "ReviewQuestionnaire"
+    )
+  end
+
   # -------------------------------------------------------------------------
-  # GET /api/v1/assignments  (Get assignments)
+  # GET /assignments  (Get assignments)
   # -------------------------------------------------------------------------
-  path '/api/v1/assignments' do
+  path '/assignments' do
     get 'Get assignments' do
       tags "Get All Assignments"
       produces 'application/json'
@@ -83,9 +95,60 @@ RSpec.describe 'Assignments API', type: :request do
   end
 
   # -------------------------------------------------------------------------
-  # POST /api/v1/assignments/{assignment_id}/add_participant/{user_id}
+  # GET /assignments/{id} (Show assignment)
   # -------------------------------------------------------------------------
-  path '/api/v1/assignments/{assignment_id}/add_participant/{user_id}' do
+  path '/assignments/{id}' do
+    parameter name: 'id', in: :path, type: :integer, description: 'Assignment ID'
+
+    get 'Show assignment details with rubrics and due dates' do
+      tags 'Assignments'
+      produces 'application/json'
+      parameter name: 'Content-Type', in: :header, type: :string
+      let('Content-Type') { 'application/json' }
+
+      response '200', 'assignment found' do
+        let(:id) { assignment.id }
+
+        before do
+          assignment.update!(vary_by_round: true)
+          AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire, used_in_round: 1)
+          AssignmentDueDate.create!(
+            parent: assignment,
+            due_at: Time.zone.now + 1.day,
+            deadline_type_id: DueDate::REVIEW_DEADLINE_TYPE_ID,
+            submission_allowed_id: 1,
+            review_allowed_id: 1,
+            round: 1
+          )
+        end
+
+        run_test! do
+          data = JSON.parse(response.body)
+
+          expect(data['id']).to eq(assignment.id)
+          expect(data['assignment_questionnaires'].first['questionnaire']['id']).to eq(questionnaire.id)
+          expect(data['due_dates'].length).to eq(1)
+          expect(data['num_review_rounds']).to eq(1)
+          expect(data['varying_rubrics_by_round']).to eq(true)
+        end
+      end
+
+      response '404', 'assignment not found' do
+        let(:id) { 999 }
+
+        run_test! do
+          data = JSON.parse(response.body)
+          expect(response).to have_http_status(:not_found)
+          expect(data['error']).to eq('Assignment not found')
+        end
+      end
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # POST /assignments/{assignment_id}/add_participant/{user_id}
+  # -------------------------------------------------------------------------
+  path '/assignments/{assignment_id}/add_participant/{user_id}' do
     parameter name: 'assignment_id', in: :path, type: :string
     parameter name: 'user_id', in: :path, type: :string
 
@@ -119,9 +182,9 @@ RSpec.describe 'Assignments API', type: :request do
   end
 
   # -------------------------------------------------------------------------
-  # DELETE /api/v1/assignments/{assignment_id}/remove_participant/{user_id}
+  # DELETE /assignments/{assignment_id}/remove_participant/{user_id}
   # -------------------------------------------------------------------------
-  path '/api/v1/assignments/{assignment_id}/remove_participant/{user_id}' do
+  path '/assignments/{assignment_id}/remove_participant/{user_id}' do
     parameter name: 'assignment_id', in: :path, type: :string
     parameter name: 'user_id', in: :path, type: :string
 
@@ -157,9 +220,9 @@ RSpec.describe 'Assignments API', type: :request do
   end
 
   # -------------------------------------------------------------------------
-  # PATCH /api/v1/assignments/{assignment_id}/assign_course/{course_id}
+  # PATCH /assignments/{assignment_id}/assign_course/{course_id}
   # -------------------------------------------------------------------------
-  path '/api/v1/assignments/{assignment_id}/assign_course/{course_id}' do
+  path '/assignments/{assignment_id}/assign_course/{course_id}' do
     parameter name: 'assignment_id', in: :path, type: :string
     parameter name: 'course_id', in: :path, type: :string
 
@@ -193,9 +256,9 @@ RSpec.describe 'Assignments API', type: :request do
   end
 
   # -------------------------------------------------------------------------
-  # PATCH /api/v1/assignments/{assignment_id}/remove_assignment_from_course
+  # PATCH /assignments/{assignment_id}/remove_assignment_from_course
   # -------------------------------------------------------------------------
-  path '/api/v1/assignments/{assignment_id}/remove_assignment_from_course' do
+  path '/assignments/{assignment_id}/remove_assignment_from_course' do
     patch 'Removes assignment from course' do
       tags 'Assignments'
       produces 'application/json'
@@ -228,9 +291,9 @@ RSpec.describe 'Assignments API', type: :request do
   end
 
   # -------------------------------------------------------------------------
-  # POST /api/v1/assignments/{assignment_id}/copy_assignment
+  # POST /assignments/{assignment_id}/copy_assignment
   # -------------------------------------------------------------------------
-  path '/api/v1/assignments/{assignment_id}/copy_assignment' do
+  path '/assignments/{assignment_id}/copy_assignment' do
     parameter name: 'assignment_id', in: :path, type: :string
 
     post 'Copy an existing assignment' do
@@ -261,9 +324,9 @@ RSpec.describe 'Assignments API', type: :request do
   end
 
   # -------------------------------------------------------------------------
-  # DELETE /api/v1/assignments/{id}
+  # DELETE /assignments/{id}
   # -------------------------------------------------------------------------
-  path '/api/v1/assignments/{id}' do
+  path '/assignments/{id}' do
     parameter name: 'id', in: :path, type: :integer, description: 'Assignment ID'
 
     delete('Delete an assignment') do
@@ -294,9 +357,9 @@ RSpec.describe 'Assignments API', type: :request do
   end
 
   # -------------------------------------------------------------------------
-  # GET /api/v1/assignments/{assignment_id}/has_topics
+  # GET /assignments/{assignment_id}/has_topics
   # -------------------------------------------------------------------------
-  path '/api/v1/assignments/{assignment_id}/has_topics' do
+  path '/assignments/{assignment_id}/has_topics' do
     parameter name: 'assignment_id', in: :path, type: :integer, description: 'Assignment ID'
 
     get('Check if an assignment has topics') do
@@ -326,9 +389,9 @@ RSpec.describe 'Assignments API', type: :request do
   end
 
   # -------------------------------------------------------------------------
-  # GET /api/v1/assignments/{assignment_id}/team_assignment
+  # GET /assignments/{assignment_id}/team_assignment
   # -------------------------------------------------------------------------
-  path '/api/v1/assignments/{assignment_id}/team_assignment' do
+  path '/assignments/{assignment_id}/team_assignment' do
     parameter name: 'assignment_id', in: :path, type: :integer, description: 'Assignment ID'
 
     get('Check if an assignment is a team assignment') do
@@ -358,9 +421,9 @@ RSpec.describe 'Assignments API', type: :request do
   end
 
   # -------------------------------------------------------------------------
-  # GET /api/v1/assignments/{assignment_id}/valid_num_review/{review_type}
+  # GET /assignments/{assignment_id}/valid_num_review/{review_type}
   # -------------------------------------------------------------------------
-  path '/api/v1/assignments/{assignment_id}/valid_num_review/{review_type}' do
+  path '/assignments/{assignment_id}/valid_num_review/{review_type}' do
     parameter name: 'assignment_id', in: :path, type: :integer, description: 'Assignment ID'
     parameter name: 'review_type', in: :path, type: :string, description: 'Review Type'
 
@@ -393,9 +456,9 @@ RSpec.describe 'Assignments API', type: :request do
   end
 
   # -------------------------------------------------------------------------
-  # GET /api/v1/assignments/{assignment_id}/has_teams
+  # GET /assignments/{assignment_id}/has_teams
   # -------------------------------------------------------------------------
-  path '/api/v1/assignments/{assignment_id}/has_teams' do
+  path '/assignments/{assignment_id}/has_teams' do
     parameter name: 'assignment_id', in: :path, type: :integer, description: 'Assignment ID'
 
     get('Check if an assignment has teams') do
@@ -425,9 +488,9 @@ RSpec.describe 'Assignments API', type: :request do
   end
 
   # -------------------------------------------------------------------------
-  # GET /api/v1/assignments/{id}/show_assignment_details
+  # GET /assignments/{id}/show_assignment_details
   # -------------------------------------------------------------------------
-  path '/api/v1/assignments/{id}/show_assignment_details' do
+  path '/assignments/{id}/show_assignment_details' do
     parameter name: 'id', in: :path, type: :integer, description: 'Assignment ID'
 
     get('Retrieve assignment details') do

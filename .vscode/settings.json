@@ -1,0 +1,17 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "0.0.0.0",
+            "port": 3307,
+            "driver": "MySQL",
+            "database": "reimplementation_development",
+            "username": "root",
+            "name": "devexpertiza"
+        }
+    ]
+}
