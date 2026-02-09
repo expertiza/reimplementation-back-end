@@ -2,7 +2,7 @@ name: CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, check_tests ]
   pull_request:
     branches: [ main ]
 
@@ -65,6 +65,14 @@ jobs:
           bundle config set --local without ''
           bundle config set --local force_ruby_platform true
           bundle install --verbose
+          
+      - name: Wait for MySQL to be ready
+        run: |
+          while ! nc -z localhost 3306; do
+            echo "Waiting for MySQL..."
+            sleep 3
+          done
+          echo "MySQL is ready."
           
       - name: Setup database
         run: |
@@ -144,19 +152,26 @@ jobs:
 
 
   publish_code_coverage:
-    needs: test  # Ensures this job runs after the test job
+    needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # Only run when there's a push to main branch
-
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # No secret check here!
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions/download-artifact@v4
         with:
           name: code-coverage-artifacts
           path: coverage/
 
-      - name: Upload code-coverage report to code-climate
+      - name: Upload code-coverage report to Code Climate
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
         run: |
+          if [ -z "$CC_TEST_REPORTER_ID" ]; then
+            echo "Secret CC_TEST_REPORTER_ID not set. Skipping code coverage upload."
+            exit 0
+          fi
+
           export GIT_BRANCH="${GITHUB_REF/refs\/heads\//}"
           gem install codeclimate-test-reporter
           cc-test-reporter sum-coverage coverage/codeclimate.*.json 
