@@ -4,6 +4,7 @@ class Team < ApplicationRecord
 
   # Core associations
   has_many :signed_up_teams, dependent: :destroy
+  has_many :project_topics, through: :signed_up_teams
   has_many :teams_users, dependent: :destroy
   has_many :teams_participants, dependent: :destroy
   has_many :users, through: :teams_participants
@@ -14,9 +15,10 @@ class Team < ApplicationRecord
   belongs_to :course, class_name: 'Course', foreign_key: 'parent_id', optional: true
   belongs_to :user, optional: true # Team creator
 
-  attr_accessor :max_participants
   validates :parent_id, presence: true
   validates :type, presence: true, inclusion: { in: %w[AssignmentTeam CourseTeam MentoredTeam], message: "must be 'Assignment' or 'Course' or 'Mentor'" }
+
+  after_update :release_topics_if_empty
 
   def has_member?(user)
     participants.exists?(user_id: user.id)
@@ -136,5 +138,12 @@ class Team < ApplicationRecord
     # All checks passed; participant is eligible to join the team
     { success: true }
 
+  end
+
+  private
+
+  def release_topics_if_empty
+    return unless participants.empty?
+    project_topics.each { |topic| topic.drop_team(self) }
   end
 end

@@ -4,6 +4,7 @@
 FactoryBot.define do
   factory :assignment do
     sequence(:name) { |n| "Assignment #{n}" }
+    microtask { false }
     directory_path { "assignment_#{name.downcase.gsub(/\s+/, '_')}" }
 
     # Required associations
