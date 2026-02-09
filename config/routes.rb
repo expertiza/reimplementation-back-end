@@ -90,10 +90,10 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :sign_up_topics do
+      resources :project_topics do
         collection do
           get :filter
-          delete '/', to: 'sign_up_topics#destroy'
+          delete '/', to: 'project_topics#destroy'
         end
       end
 

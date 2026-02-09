@@ -1038,54 +1038,54 @@ paths:
       responses:
         '204':
           description: successful
-  "/sign_up_topics":
+  "/project_topics":
     get:
-      summary: Get sign-up topics
+      summary: Get project topics
       parameters:
-      - name: assignment_id
-        in: query
-        description: Assignment ID
-        required: true
-        schema:
-          type: integer
-      - name: topic_ids
-        in: query
-        description: Topic Identifier
-        required: false
-        schema:
-          type: string
+        - name: assignment_id
+          in: query
+          description: Assignment ID
+          required: true
+          schema:
+            type: integer
+        - name: topic_ids
+          in: query
+          description: Topic Identifier
+          required: false
+          schema:
+            type: string
       tags:
-      - SignUpTopic
+        - ProjectTopic
       responses:
         '200':
           description: successful
     delete:
-      summary: Delete sign-up topics
+      summary: Delete project topics
       parameters:
-      - name: assignment_id
-        in: query
-        description: Assignment ID
-        required: true
-        schema:
-          type: integer
-      - name: topic_ids
-        in: query
-        items:
-          type: string
-        description: Topic Identifiers to delete
-        required: false
-        schema:
-          type: array
+        - name: assignment_id
+          in: query
+          description: Assignment ID
+          required: true
+          schema:
+            type: integer
+        - name: topic_ids
+          in: query
+          items:
+            type: string
+          description: Topic Identifiers to delete
+          required: false
+          schema:
+            type: array
       tags:
-      - SignUpTopic
+        - ProjectTopic
       responses:
         '200':
           description: successful
     post:
       summary: create a new topic in the sheet
       tags:
-      - SignUpTopic
-      parameters: []
+        - ProjectTopic
+      parameters: [ ]
       responses:
         '201':
           description: Success
@@ -1108,25 +1108,25 @@ paths:
                 micropayment:
                   type: integer
               required:
-              - topic_identifier
-              - topic_name
-              - max_choosers
-              - category
-              - assignment_id
-              - micropayment
-  "/sign_up_topics/{id}":
+                - topic_identifier
+                - topic_name
+                - max_choosers
+                - category
+                - assignment_id
+                - micropayment
+  "/project_topics/{id}":
     parameters:
-    - name: id
-      in: path
-      description: id of the sign up topic
-      required: true
-      schema:
-        type: integer
+      - name: id
+        in: path
+        description: id of the sign up topic
+        required: true
+        schema:
+          type: integer
     put:
       summary: update a new topic in the sheet
       tags:
-      - SignUpTopic
-      parameters: []
+        - ProjectTopic
+      parameters: [ ]
       responses:
         '200':
           description: successful

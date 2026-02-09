@@ -138,12 +138,12 @@ RSpec.describe DueDate, type: :model do
       end
     end
 
-    context 'when parent_type is SignUpTopic' do
+    context 'when parent_type is ProjectTopic' do
       let!(:assignment) { Assignment.create!(id: 2, name: 'Test Assignment', instructor:) }
       let!(:assignment2) { Assignment.create(id: 6, name: 'Test Assignment2', instructor:) }
-      let!(:topic1) { SignUpTopic.create!(id: 2, topic_name: 'Test Topic', assignment:) }
-      let!(:topic2) { SignUpTopic.create(id: 4, topic_name: 'Test Topic2', assignment: assignment2) }
-      let!(:topic3) { SignUpTopic.create(id: 5, topic_name: 'Test Topic2', assignment: assignment2) }
+      let!(:topic1) { ProjectTopic.create!(id: 2, topic_name: 'Test Topic', assignment:) }
+      let!(:topic2) { ProjectTopic.create(id: 4, topic_name: 'Test Topic2', assignment: assignment2) }
+      let!(:topic3) { ProjectTopic.create(id: 5, topic_name: 'Test Topic2', assignment: assignment2) }
       let!(:topic_due_date1) do
         DueDate.create(parent: topic1, due_at: 2.days.from_now, submission_allowed_id: 3, review_allowed_id: 3,
                        deadline_type_id: 3, type: 'TopicDueDate')
