@@ -1,6 +1,17 @@
 class AssignmentsController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :not_found
 
+  # Authorization: restrict view_submissions to teaching staff (instructors/TAs),
+  # allow all other actions by default (existing behavior).
+  def action_allowed?
+    case params[:action]
+    when 'view_submissions'
+      current_user_teaching_staff_of_assignment?(params[:assignment_id])
+    else
+      true
+    end
+  end
+
   # GET /assignments
   def index
     assignments = Assignment.all
@@ -217,7 +228,58 @@ class AssignmentsController < ApplicationController
       end
     end
   end
-  
+
+  # GET /assignments/:assignment_id/view_submissions
+  # Returns all teams for an assignment with their members, topics, and grade info.
+  # Used by the instructor-facing "View Submissions" page.
+  def view_submissions
+    assignment = Assignment.find_by(id: params[:assignment_id])
+    if assignment.nil?
+      render json: { error: "Assignment not found" }, status: :not_found
+      return
+    end
+
+    teams = assignment.teams
+                      .includes(
+                        teams_participants: { participant: :user },
+                        signed_up_teams: :sign_up_topic
+                      )
+
+    submissions = teams.map do |team|
+      signed_up = team.signed_up_teams.reject(&:is_waitlisted).first
+      topic = signed_up&.sign_up_topic
+
+      {
+        id: team.id,
+        name: team.name,
+        grade_for_submission: team.grade_for_submission,
+        comment_for_submission: team.comment_for_submission,
+        members: team.teams_participants.map do |tp|
+          user = tp.participant&.user
+          next nil unless user
+          {
+            id: user.id,
+            name: user.name,
+            full_name: user.full_name,
+            email: user.email
+          }
+        end.compact,
+        topic: topic ? {
+          id: topic.id,
+          topic_name: topic.topic_name,
+          topic_identifier: topic.topic_identifier,
+          link: topic.link
+        } : nil
+      }
+    end
+
+    render json: {
+      assignment_id: assignment.id,
+      assignment_name: assignment.name,
+      submissions: submissions
+    }, status: :ok
+  end
+
   private
   # Only allow a list of trusted parameters through.
   def assignment_params

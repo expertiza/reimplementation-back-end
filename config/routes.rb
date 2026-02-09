@@ -34,6 +34,7 @@ Rails.application.routes.draw do
           get '/:assignment_id/show_assignment_details',action: :show_assignment_details
           get '/:assignment_id/team_assignment', action: :team_assignment
           get '/:assignment_id/has_teams', action: :has_teams
+          get '/:assignment_id/view_submissions', action: :view_submissions
           get '/:assignment_id/valid_num_review/:review_type', action: :valid_num_review
           get '/:assignment_id/varying_rubrics_by_round', action: :varying_rubrics_by_round?
           post '/:assignment_id/create_node',action: :create_node
