@@ -69,13 +69,13 @@ class ResponsesController < ApplicationController
   # PATCH /responses/:id/submit
   # Lock the response and calculate final score
   def submit
-    return render json: { error: 'Submission not found' }, status: :not_found unless @response
+    return render json: { error: "#{response_map_label} not found" }, status: :not_found unless @response
     if @response.is_submitted?
-      return render json: { error: 'Submission has already been locked' }, status: :unprocessable_entity
+      return render json: { error: "#{response_map_label} has already been submitted" }, status: :unprocessable_entity
     end
     # Check deadline
-    unless submission_window_open?(@response)
-      return render json: { error: 'Submission deadline has passed' }, status: :forbidden
+    unless response_deadline_open?(@response)
+      return render json: { error: "#{response_map_label} deadline has passed" }, status: :forbidden
     end
 
     # Lock response
@@ -86,7 +86,7 @@ class ResponsesController < ApplicationController
 
     if @response.save
       render json: {
-        message: "#{response_map_label} submission locked and scored successfully",
+        message: "#{response_map_label} submitted and scored successfully",
         response: @response,
         total_score: total_score
       }, status: :ok
@@ -98,20 +98,20 @@ class ResponsesController < ApplicationController
   # PATCH /responses/:id/unsubmit
   # Instructor/Admin reopens a submitted response for further editing
   def unsubmit
-    return render json: { error: "#{response_map_label} submission not found" }, status: :not_found unless @response
+    return render json: { error: "#{response_map_label} not found" }, status: :not_found unless @response
 
     if @response.is_submitted?
       @response.update(is_submitted: false)
-      render json: { message: "#{response_map_label} submission reopened for edits. The reviewer can now make changes.", response: @response }, status: :ok
+      render json: { message: "#{response_map_label} reopened for edits. The reviewer can now make changes.", response: @response }, status: :ok
     else
-      render json: { error: "This #{response_map_label.downcase} submission is not locked, so it cannot be reopened" }, status: :unprocessable_entity
+      render json: { error: "This #{response_map_label.downcase} is not submitted, so it cannot be reopened" }, status: :unprocessable_entity
     end
   end
 
   # DELETE /responses/:id
   # Instructor/Admin deletes invalid/test response
   def destroy
-    return render json: { error: 'Submission not found' }, status: :not_found unless @response
+    return render json: { error: "#{response_map_label} not found" }, status: :not_found unless @response
 
     @response.destroy
     head :no_content
@@ -164,8 +164,8 @@ class ResponsesController < ApplicationController
     map_label.presence || 'Response'
   end
 
-  # Returns true if the assignment's due date is in the future or no due date is set
-  def submission_window_open?(response)
+  # Returns true when the assignment still allows this response to be submitted.
+  def response_deadline_open?(response)
     assignment = response&.response_map&.assignment
     return true if assignment.nil?
     return true if assignment.due_dates.nil?
