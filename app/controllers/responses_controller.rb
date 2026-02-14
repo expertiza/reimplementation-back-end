@@ -140,20 +140,6 @@ class ResponsesController < ApplicationController
     resp.map.reviewer&.id == current_user.id
   end
 
-  # Checks whether the current_user is the instructor for the assignment
-  # associated with the response identified by params[:id].
-  # Uses the shared authorization method from Authorization concern.
-  def current_user_instructs_response_assignment?
-    resp = Response.find_by(id: params[:id])
-    return false unless resp&.response_map
-
-    assignment = resp.response_map&.assignment
-    return false unless assignment
-
-    # Delegate to the shared authorization helper
-    current_user_instructs_assignment?(assignment)
-  end
-
   # Variant helpers for parent-admin checks
   def parent_admin_for_response?(response)
     assignment = response&.response_map&.assignment
