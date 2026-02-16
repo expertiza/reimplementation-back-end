@@ -163,7 +163,7 @@ RSpec.describe ResponsesController, type: :controller do
     context 'when rubric incomplete' do
       before do
         allow(response_double).to receive(:is_submitted?).and_return(false)
-        allow(controller).to receive(:submission_window_open?).with(response_double).and_return(true)
+        allow(controller).to receive(:response_deadline_open?).with(response_double).and_return(true)
         allow(response_double).to receive(:scores).and_return([double('Score', answer: nil)])
       end
 
@@ -178,7 +178,7 @@ RSpec.describe ResponsesController, type: :controller do
     context 'when deadline has passed' do
       before do
         allow(response_double).to receive(:is_submitted?).and_return(false)
-        allow(controller).to receive(:submission_window_open?).with(response_double).and_return(false)
+        allow(controller).to receive(:response_deadline_open?).with(response_double).and_return(false)
       end
 
       it 'returns forbidden with deadline message' do
@@ -192,7 +192,7 @@ RSpec.describe ResponsesController, type: :controller do
     context 'when submitting twice (duplicate submission)' do
       before do
         # first call: not submitted, second call: already submitted
-        allow(controller).to receive(:submission_window_open?).with(response_double).and_return(true)
+        allow(controller).to receive(:response_deadline_open?).with(response_double).and_return(true)
         allow(response_double).to receive(:is_submitted?).and_return(false, true)
         allow(response_double).to receive(:scores).and_return([])
         allow(response_double).to receive(:aggregate_questionnaire_score).and_return(42)

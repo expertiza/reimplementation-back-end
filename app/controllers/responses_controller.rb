@@ -170,16 +170,16 @@ class ResponsesController < ApplicationController
     return true if assignment.nil?
     return true if assignment.due_dates.nil?
     
-    # Check if due_date has a future? method, otherwise compare timestamps
+    # Support both modern and legacy due date collections.
     due_dates = assignment.due_dates
-    # Prefer the `upcoming` API if available 
-    if due_dates.respond_to?(:upcoming)
+    # Prefer the scoped API when this relation supports it.
+    if due_dates_support_upcoming_scope?(due_dates)
       next_due = due_dates.upcoming.first
       return true if next_due.nil?
       return next_due.due_at > Time.current
     end
-    # Fall back to legacy `future?` if present
-    if due_dates.respond_to?(:future?)
+    # Fall back to legacy API used in older code paths.
+    if due_dates_support_legacy_future_check?(due_dates)
       return due_dates.first.future?
     end
 
@@ -187,5 +187,13 @@ class ResponsesController < ApplicationController
     return true if due_dates.first.nil?
     
     due_dates.first.due_at > Time.current
+  end
+
+  def due_dates_support_upcoming_scope?(due_dates)
+    due_dates.respond_to?(:upcoming)
+  end
+
+  def due_dates_support_legacy_future_check?(due_dates)
+    due_dates.respond_to?(:future?)
   end
 end
