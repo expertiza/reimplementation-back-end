@@ -125,10 +125,8 @@ Rails.application.routes.draw do
 
       resources :student_teams, only: %i[create update] do
         collection do
-          get :view          
-          get :mentor
-          get :remove_participant
-          put '/leave', to: 'student_teams#leave_team'        
+          get :view
+          put '/leave', to: 'student_teams#leave_team'
         end
       end
 
@@ -152,7 +150,7 @@ Rails.application.routes.draw do
           post :add_participant
           delete :delete_participants
         end
-      end      
+      end
       resources :grades do
         collection do        
           get '/:assignment_id/view_all_scores', to: 'grades#view_all_scores'
@@ -161,6 +159,15 @@ Rails.application.routes.draw do
           get '/:assignment_id/view_our_scores', to: 'grades#view_our_scores'
           get '/:assignment_id/view_my_scores', to: 'grades#view_my_scores'
           get '/:participant_id/instructor_review', to: 'grades#instructor_review'
+        end
+      end
+      resources :review_reports, only: [] do
+        collection do
+          get ':assignment_id/export', action: :export, defaults: { format: :csv }
+          get ':assignment_id', action: :index
+        end
+        member do
+          patch 'update_grade', action: :update_grade
         end
       end
 end
