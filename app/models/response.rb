@@ -16,14 +16,13 @@ class Response < ApplicationRecord
     response_assignment.assignment_questionnaires.find_by(used_in_round: self.round).questionnaire
   end
 
-  # returns a string of response name, needed so the front end can tell students which rubric they are filling out
+  # Backward-compatible wrapper around ResponseMap#response_map_label.
+  # Keep this on Response so callers do not need to dereference map directly.
   def rubric_label
     return 'Response' if map.nil?
 
-    if map.respond_to?(:response_map_label)
-      label = map.response_map_label
-      return label if label.present?
-    end
+    label = map.response_map_label
+    return label if label.present?
 
     # response type doesn't exist
     'Unknown Type'
