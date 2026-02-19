@@ -8,7 +8,6 @@ Rails.application.routes.draw do
   # root "articles#index"
   post '/login', to: 'authentication#login'
 
-  # Remove URL prefix while still using Api:: controllers
   scope module: :api do
     resources :institutions
 

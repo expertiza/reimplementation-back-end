@@ -21,7 +21,7 @@ RSpec.describe 'Account Requests API', type: :request do
   let(:Authorization) { "Bearer #{token}" }
   let(:institution) { Institution.create(name: "NC State") }
 
-  path '/api/account_requests/pending' do
+  path '/account_requests/pending' do
     # List all Pending Account Requests
     get('List all Pending Account Requests') do
       tags 'Account Requests'
@@ -40,7 +40,7 @@ RSpec.describe 'Account Requests API', type: :request do
     end
   end
 
-  path '/api/account_requests/processed' do
+  path '/account_requests/processed' do
     # List all Processed Account Requests
     get('List all Processed Account Requests') do
       tags 'Account Requests'
@@ -59,7 +59,7 @@ RSpec.describe 'Account Requests API', type: :request do
     end
   end
 
-  path '/api/account_requests' do
+  path '/account_requests' do
     post('Create Account Request') do
       tags 'Account Requests'
       consumes 'application/json'
@@ -167,7 +167,7 @@ RSpec.describe 'Account Requests API', type: :request do
       end
     end
 
-    path '/api/account_requests/{id}' do
+    path '/account_requests/{id}' do
       parameter name: 'id', in: :path, type: :integer, description: 'id of the Account Request'
       
       let(:account_request) do

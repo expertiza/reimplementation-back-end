@@ -4,11 +4,11 @@ require "rails_helper"
 RSpec.describe Api::SignedUpTeamsController, type: :routing do
   describe "routing" do
     it "routes to #index" do
-      expect(get: "/api/signed_up_teams").to route_to("api/signed_up_teams#index")
+      expect(get: "/signed_up_teams").to route_to(controller: described_class.controller_path, action: "index")
     end
 
     it "routes to #show" do
-      expect(get: "/api/signed_up_teams/1").to route_to("api/signed_up_teams#show", id: "1")
+      expect(get: "/signed_up_teams/1").to route_to(controller: described_class.controller_path, action: "show", id: "1")
     end
   end
 end
@@ -19,11 +19,11 @@ require "rails_helper"
 RSpec.describe Api::StudentTasksController, type: :routing do
   describe "routing" do
     it "routes to #index" do
-      expect(get: "/api/student_tasks").to route_to("api/student_tasks#index")
+      expect(get: "/student_tasks").to route_to(controller: described_class.controller_path, action: "index")
     end
 
     it "routes to #show" do
-      expect(get: "/api/student_tasks/1").to route_to("api/student_tasks#show", id: "1")
+      expect(get: "/student_tasks/1").to route_to(controller: described_class.controller_path, action: "show", id: "1")
     end
   end
 end

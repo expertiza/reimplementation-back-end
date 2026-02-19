@@ -15,7 +15,7 @@ class Api::JoinTeamRequestsController < ApplicationController
     @current_user.student?
   end
 
-  # GET api/join_team_requests
+  # GET /join_team_requests
   # gets a list of all the join team requests
   def index
     unless @current_user.administrator?
@@ -31,7 +31,7 @@ class Api::JoinTeamRequestsController < ApplicationController
     render json: @join_team_request, status: :ok
   end
 
-  # POST api/join_team_requests
+  # POST /join_team_requests
   # Creates a new join team request
   def create
     join_team_request = JoinTeamRequest.new
@@ -55,7 +55,7 @@ class Api::JoinTeamRequestsController < ApplicationController
     end
   end
 
-  # PATCH/PUT api/join_team_requests/1
+  # PATCH/PUT /join_team_requests/1
   # Updates a join team request
   def update
     if @join_team_request.update(join_team_request_params)
@@ -65,7 +65,7 @@ class Api::JoinTeamRequestsController < ApplicationController
     end
   end
 
-  # DELETE api/join_team_requests/1
+  # DELETE /join_team_requests/1
   # delete a join team request
   def destroy
     if @join_team_request.destroy

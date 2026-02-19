@@ -16,7 +16,7 @@ RSpec.describe 'Institutions API', type: :request do
 
     let(:token) { JsonWebToken.encode({id: prof.id}) }
     let(:Authorization) { "Bearer #{token}" }
-  path '/api/institutions' do
+  path '/institutions' do
     get('list institutions') do
       tags 'Institutions'
       produces 'application/json'
@@ -73,7 +73,7 @@ RSpec.describe 'Institutions API', type: :request do
     end
   end
 
-  path '/api/institutions/{id}' do
+  path '/institutions/{id}' do
     parameter name: 'id', in: :path, type: :integer, description: 'id of the institution'
 
     let(:institution) { Institution.create(name: 'Test institution') }

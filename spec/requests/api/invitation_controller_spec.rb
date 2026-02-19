@@ -37,7 +37,7 @@ RSpec.describe 'Invitations API', type: :request do
   let(:assignment) { Assignment.create!(id: 1, name: 'Test Assignment', instructor_id: prof.id) }
   let(:invitation) { Invitation.create!(from_user: user1, to_user: user2, assignment: assignment) }
 
-  path '/api/invitations' do
+  path '/invitations' do
 
     get('list invitations') do
       tags 'Invitations'
@@ -142,7 +142,7 @@ RSpec.describe 'Invitations API', type: :request do
     end
   end
 
-  path '/api/invitations/{id}' do
+  path '/invitations/{id}' do
     parameter name: 'id', in: :path, type: :integer, description: 'id of the invitation'
     get('show invitation') do
       tags 'Invitations'
@@ -258,7 +258,7 @@ RSpec.describe 'Invitations API', type: :request do
     end
   end
 
-  path '/api/invitations/user/{user_id}/assignment/{assignment_id}' do
+  path '/invitations/user/{user_id}/assignment/{assignment_id}' do
     parameter name: 'user_id', in: :path, type: :integer, description: 'id of user'
     parameter name: 'assignment_id', in: :path, type: :integer, description: 'id of assignment'
     get('Show all invitation for the given user and assignment') do

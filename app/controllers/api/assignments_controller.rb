@@ -1,19 +1,19 @@
 class Api::AssignmentsController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :not_found
 
-  # GET /api/assignments
+  # GET /assignments
   def index
     assignments = Assignment.all
     render json: assignments
   end
 
-  # GET /api/assignments/:id
+  # GET /assignments/:id
   def show
     assignment = Assignment.find(params[:id])
     render json: assignment
   end
 
-  # POST /api/assignments
+  # POST /assignments
   def create
     assignment = Assignment.new(assignment_params)
     if assignment.save
@@ -23,7 +23,7 @@ class Api::AssignmentsController < ApplicationController
     end
   end
 
-  # PATCH/PUT /api/assignments/:id
+  # PATCH/PUT /assignments/:id
   def update
     assignment = Assignment.find(params[:id])
     if assignment.update(assignment_params)
@@ -37,7 +37,7 @@ class Api::AssignmentsController < ApplicationController
     render json: { error: "Assignment not found" }, status: :not_found
   end
 
-  # DELETE /api/assignments/:id
+  # DELETE /assignments/:id
   def destroy
     assignment = Assignment.find_by(id: params[:id])
     if assignment

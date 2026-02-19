@@ -1,13 +1,13 @@
 class Api::InvitationsController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :invite_not_found
 
-  # GET /api/invitations
+  # GET /invitations
   def index
     @invitations = Invitation.all
     render json: @invitations, status: :ok
   end
 
-  # POST /api/invitations/
+  # POST /invitations/
   def create
     params[:invitation][:reply_status] ||= InvitationValidator::WAITING_STATUS
     @invitation = Invitation.invitation_factory(invite_params)
@@ -19,13 +19,13 @@ class Api::InvitationsController < ApplicationController
     end
   end
 
-  # GET /api/invitations/:id
+  # GET /invitations/:id
   def show
     @invitation = Invitation.find(params[:id])
     render json: @invitation, status: :ok
   end
 
-  # PATCH /api/invitations/:id
+  # PATCH /invitations/:id
   def update
     @invitation = Invitation.find(params[:id])
     case params[:reply_status]
@@ -41,7 +41,7 @@ class Api::InvitationsController < ApplicationController
 
   end
 
-  # DELETE /api/invitations/:id
+  # DELETE /invitations/:id
   def destroy
     @invitation = Invitation.find(params[:id])
     @invitation.retract_invitation(nil)

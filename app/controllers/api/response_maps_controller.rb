@@ -1,38 +1,38 @@
-# app/controllers/api/response_maps_controller.rb
+# app/controllers/response_maps_controller.rb
 # Handles CRUD operations and special actions for ResponseMaps
 # ResponseMaps represent the relationship between a reviewer and reviewee
 class Api::ResponseMapsController < ApplicationController
   before_action :set_response_map, only: [:show, :update, :destroy, :submit_response]
 
   # Lists all response maps in the system
-  # GET /api/response_maps
+  # GET /response_maps
   def index
     @response_maps = ResponseMap.all
     render json: @response_maps
   end
 
   # Retrieves a specific response map by ID
-  # GET /api/response_maps/:id
+  # GET /response_maps/:id
   def show
     render json: @response_map
   end
 
   # Creates a new response map with the provided parameters
-  # POST /api/response_maps
+  # POST /response_maps
   def create
     @response_map = ResponseMap.new(response_map_params)
     persist_and_respond(@response_map, :created)
   end
 
   # Updates an existing response map with new attributes
-  # PATCH/PUT /api/response_maps/:id
+  # PATCH/PUT /response_maps/:id
   def update
     @response_map.assign_attributes(response_map_params)
     persist_and_respond(@response_map, :ok)
   end
 
   # Removes a response map from the system
-  # DELETE /api/response_maps/:id
+  # DELETE /response_maps/:id
   def destroy
     @response_map.destroy
     head :no_content
@@ -40,7 +40,7 @@ class Api::ResponseMapsController < ApplicationController
 
   # Handles the submission of a response associated with a response map
   # This also triggers email notifications if configured
-  # POST /api/response_maps/:id/submit_response
+  # POST /response_maps/:id/submit_response
   def submit_response
     @response = @response_map.responses.find_or_initialize_by(id: params[:response_id])
     @response.assign_attributes(response_params)
@@ -68,7 +68,7 @@ class Api::ResponseMapsController < ApplicationController
 
   # Generates a report of responses for a specific assignment
   # Can be filtered by type and grouped by rounds if applicable
-  # GET /api/response_maps/response_report/:assignment_id
+  # GET /response_maps/response_report/:assignment_id
   def response_report
     assignment_id = params[:assignment_id]
     report = ResponseMap.response_report(assignment_id, params[:type])
