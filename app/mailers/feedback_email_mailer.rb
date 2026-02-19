@@ -13,12 +13,8 @@ class FeedbackEmailMailer < ApplicationMailer
   private
 
   def build_defn
-    # find the original review response
-    response = Response.find(@response_map.reviewed_object_id)
-    # find the ResponseMap that created that review
-    original_map = ResponseMap.find(response.map_id)
-    # find the participant who wrote that review
-    participant = AssignmentParticipant.find(original_map.reviewer_id)
+    reviewee_id = Response.find(@response_map.reviewee_id)
+    participant = AssignmentParticipant.find(reviewee_id)
     user        = User.find(participant.user_id)
 
     {
