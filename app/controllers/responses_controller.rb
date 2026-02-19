@@ -48,7 +48,7 @@ class ResponsesController < ApplicationController
     )
 
     if @response.save
-      render json: { message: "#{response_map_label} started successfully", response: @response }, status: :created
+      render json: { message: "#{response_label} started successfully", response: @response }, status: :created
     else
       render json: { error: @response.errors.full_messages.to_sentence }, status: :unprocessable_entity
     end
@@ -60,7 +60,7 @@ class ResponsesController < ApplicationController
     return render json: { error: 'forbidden' }, status: :forbidden if @response.is_submitted?
 
     if @response.update(response_params)
-      render json: { message: "#{response_map_label} saved successfully", response: @response }, status: :ok
+      render json: { message: "#{response_label} saved successfully", response: @response }, status: :ok
     else
       render json: { error: @response.errors.full_messages.to_sentence }, status: :unprocessable_entity
     end
@@ -69,13 +69,13 @@ class ResponsesController < ApplicationController
   # PATCH /responses/:id/submit
   # Lock the response and calculate final score
   def submit
-    return render json: { error: "#{response_map_label} not found" }, status: :not_found unless @response
+    return render json: { error: "#{response_label} not found" }, status: :not_found unless @response
     if @response.is_submitted?
-      return render json: { error: "#{response_map_label} has already been submitted" }, status: :unprocessable_entity
+      return render json: { error: "#{response_label} has already been submitted" }, status: :unprocessable_entity
     end
     # Check deadline
     unless response_deadline_open?(@response)
-      return render json: { error: "#{response_map_label} deadline has passed" }, status: :forbidden
+      return render json: { error: "#{response_label} deadline has passed" }, status: :forbidden
     end
 
     # Lock response
@@ -86,7 +86,7 @@ class ResponsesController < ApplicationController
 
     if @response.save
       render json: {
-        message: "#{response_map_label} submitted and scored successfully",
+        message: "#{response_label} submitted and scored successfully",
         response: @response,
         total_score: total_score
       }, status: :ok
@@ -98,20 +98,20 @@ class ResponsesController < ApplicationController
   # PATCH /responses/:id/unsubmit
   # Instructor/Admin reopens a submitted response for further editing
   def unsubmit
-    return render json: { error: "#{response_map_label} not found" }, status: :not_found unless @response
+    return render json: { error: "#{response_label} not found" }, status: :not_found unless @response
 
     if @response.is_submitted?
       @response.update(is_submitted: false)
-      render json: { message: "#{response_map_label} reopened for edits. The reviewer can now make changes.", response: @response }, status: :ok
+      render json: { message: "#{response_label} reopened for edits. The reviewer can now make changes.", response: @response }, status: :ok
     else
-      render json: { error: "This #{response_map_label.downcase} is not submitted, so it cannot be reopened" }, status: :unprocessable_entity
+      render json: { error: "This #{response_label.downcase} is not submitted, so it cannot be reopened" }, status: :unprocessable_entity
     end
   end
 
   # DELETE /responses/:id
   # Instructor/Admin deletes invalid/test response
   def destroy
-    return render json: { error: "#{response_map_label} not found" }, status: :not_found unless @response
+    return render json: { error: "#{response_label} not found" }, status: :not_found unless @response
 
     @response.destroy
     head :no_content
@@ -155,12 +155,11 @@ class ResponsesController < ApplicationController
     user_logged_in? && map.reviewer&.id == current_user.id
   end
 
-  # Returns the friendly label for the response's map type (e.g., "Review", "Assignment Survey")
-  # Falls back to a generic "Response" if the label cannot be determined.
-  def response_map_label
-    return 'Response' unless @response&.response_map
+  # Controller-level message helper that delegates label lookup to model methods.
+  def response_label
+    return @response.rubric_label if @response
 
-    map_label = @response.response_map&.response_map_label
+    map_label = @response_map&.response_map_label
     map_label.presence || 'Response'
   end
 
