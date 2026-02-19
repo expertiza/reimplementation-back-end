@@ -1,7 +1,7 @@
 require 'rails_helper'
 
-RSpec.describe "Api::V1::ResponseMaps", type: :request do
-  controller_class = Api::V1::ResponseMapsController
+RSpec.describe "Api::ResponseMaps", type: :request do
+  controller_class = Api::ResponseMapsController
 
   before(:each) do
     # Skip any authentication callbacks for testing
@@ -73,11 +73,11 @@ RSpec.describe "Api::V1::ResponseMaps", type: :request do
   let!(:reviewer) { Participant.create!(handle: "rev", user: reviewer_user, assignment: assignment) }
   let!(:reviewee) { Participant.create!(handle: "ree", user: reviewee_user, assignment: assignment) }
 
-  describe "GET /api/v1/response_maps" do
+  describe "GET /api/response_maps" do
     it "returns all response maps" do
       ResponseMap.create!(reviewer: reviewer, reviewee: reviewee, assignment: assignment)
 
-      get "/api/v1/response_maps"
+      get "/api/response_maps"
 
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body) rescue []
@@ -85,11 +85,11 @@ RSpec.describe "Api::V1::ResponseMaps", type: :request do
     end
   end
 
-  describe "GET /api/v1/response_maps/:id" do
+  describe "GET /api/response_maps/:id" do
     it "returns the requested response map or 'null' if not found" do
       response_map = ResponseMap.create!(reviewer: reviewer, reviewee: reviewee, assignment: assignment)
 
-      get "/api/v1/response_maps/#{response_map.id}"
+      get "/api/response_maps/#{response_map.id}"
 
       expect(response).to have_http_status(:ok)
 
@@ -102,12 +102,12 @@ RSpec.describe "Api::V1::ResponseMaps", type: :request do
       end
     end
   end
-  describe "POST /api/v1/response_maps" do
+  describe "POST /api/response_maps" do
     it "creates a new response map and returns it" do
       ResponseMap.class_eval { def is_submitted?; false; end }
       allow_any_instance_of(ResponseMap).to receive(:assignment).and_return(assignment)
   
-      post "/api/v1/response_maps", params: {
+      post "/api/response_maps", params: {
         response_map: {
           reviewer_id: reviewer.id,
           reviewee_id: reviewee.id,

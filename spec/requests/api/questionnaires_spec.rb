@@ -2,7 +2,7 @@ require 'swagger_helper'
 require 'json_web_token'
 
 # Rspec test for Questionnaires Controller
-RSpec.describe 'api/v1/questionnaires', type: :request do
+RSpec.describe 'api/questionnaires', type: :request do
 
   before(:all) do
     @roles = create_roles_hierarchy
@@ -22,7 +22,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
   let(:token) { JsonWebToken.encode({id: prof.id}) }
   let(:Authorization) { "Bearer #{token}" }
 
-  path '/api/v1/questionnaires' do
+  path '/api/questionnaires' do
     let(:questionnaire1) do
       instructor
       Questionnaire.create(
@@ -47,7 +47,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
       )
     end
 
-    # get request on /api/v1/questionnaires return list of questionnaires with response 200
+    # get request on /api/questionnaires return list of questionnaires with response 200
     get('list questionnaires') do
       tags 'Questionnaires'
       produces 'application/json'
@@ -96,7 +96,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
         required: %w[id name questionnaire_type private min_question_score max_question_score instructor_id]
       }
 
-      # post request on /api/v1/questionnaires creates questionnaire with response 201 when correct params are passed
+      # post request on /api/questionnaires creates questionnaire with response 201 when correct params are passed
       response(201, 'created') do
         let(:questionnaire) do
           prof
@@ -107,7 +107,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
         end
       end
 
-      # post request on /api/v1/questionnaires returns 422 response - unprocessable entity when wrong params is passed to create questionnaire
+      # post request on /api/questionnaires returns 422 response - unprocessable entity when wrong params is passed to create questionnaire
       response(422, 'unprocessable entity') do
         let(:questionnaire) do
           prof
@@ -119,7 +119,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
 
   end
 
-  path '/api/v1/questionnaires/{id}' do
+  path '/api/questionnaires/{id}' do
     parameter name: 'id', in: :path, type: :integer
     let(:valid_questionnaire_params) do
       {
@@ -142,7 +142,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
       questionnaire.id
     end
 
-    # Get request on /api/v1/questionnaires/{id} returns the response 200 successful - questionnaire with id = {id} when correct id is passed which is in the database
+    # Get request on /api/questionnaires/{id} returns the response 200 successful - questionnaire with id = {id} when correct id is passed which is in the database
     get('show questionnaire') do
       tags 'Questionnaires'
       produces 'application/json'
@@ -152,7 +152,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
         end
       end
 
-      # Get request on /api/v1/questionnaires/{id} returns the response 404 not found - questionnaire with id = {id} when correct id is passed which is not present in the database
+      # Get request on /api/questionnaires/{id} returns the response 404 not found - questionnaire with id = {id} when correct id is passed which is not present in the database
       response(404, 'not_found') do
         let(:id) { 'invalid' }
         run_test! do
@@ -173,7 +173,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
         }
       }
 
-      # put request on /api/v1/questionnaires/{id} returns 200 response successful when questionnaire id is present in the database and correct valid params are passed
+      # put request on /api/questionnaires/{id} returns 200 response successful when questionnaire id is present in the database and correct valid params are passed
       response(200, 'successful') do
         let(:body_params) do
           {
@@ -185,7 +185,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
         end
       end
 
-      # put request on /api/v1/questionnaires/{id} returns 404 not found when id is not present in the database which questionnaire needs to be updated
+      # put request on /api/questionnaires/{id} returns 404 not found when id is not present in the database which questionnaire needs to be updated
       response(404, 'not found') do
         let(:id) { 0 }
         let(:body_params) do
@@ -198,7 +198,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
         end
       end
 
-      # put request on /api/v1/questionnaires/{id} returns 422 response unprocessable entity when correct parameters for the questionnaire to be updated are not passed
+      # put request on /api/questionnaires/{id} returns 422 response unprocessable entity when correct parameters for the questionnaire to be updated are not passed
       response(422, 'unprocessable entity') do
         let(:body_params) do
           {
@@ -224,7 +224,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
         }
       }
 
-      # patch request on /api/v1/questionnaires/{id} returns 200 response successful when questionnaire id is present in the database and correct valid params are passed
+      # patch request on /api/questionnaires/{id} returns 200 response successful when questionnaire id is present in the database and correct valid params are passed
       response(200, 'successful') do
         let(:body_params) do
           {
@@ -236,7 +236,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
         end
       end
 
-      # patch request on /api/v1/questionnaires/{id} returns 404 not found when id is not present in the database which questionnaire needs to be updated
+      # patch request on /api/questionnaires/{id} returns 404 not found when id is not present in the database which questionnaire needs to be updated
       response(404, 'not found') do
         let(:id) { 0 }
         let(:body_params) do
@@ -249,7 +249,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
         end
       end
 
-      # patch request on /api/v1/questionnaires/{id} returns 422 response unprocessable entity when correct parameters for the questionnaire to be updated are not passed
+      # patch request on /api/questionnaires/{id} returns 422 response unprocessable entity when correct parameters for the questionnaire to be updated are not passed
       response(422, 'unprocessable entity') do
         let(:body_params) do
           {
@@ -266,14 +266,14 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
     delete('delete questionnaire') do
       tags 'Questionnaires'
       produces 'application/json'
-      # delete request on /api/v1/questionnaires/{id} returns 204 successful response when questionnaire with id present in the database is successfully deleted
+      # delete request on /api/questionnaires/{id} returns 204 successful response when questionnaire with id present in the database is successfully deleted
       response(204, 'successful') do
         run_test! do
           expect(Questionnaire.exists?(id)).to eq(false)
         end
       end
 
-      # delete request on /api/v1/questionnaires/{id} returns 404 not found response when questionnaire id is not present in the database
+      # delete request on /api/questionnaires/{id} returns 404 not found response when questionnaire id is not present in the database
       response(404, 'not found') do
         let(:id) { 0 }
         run_test! do
@@ -283,7 +283,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
     end
   end
 
-  path '/api/v1/questionnaires/toggle_access/{id}' do
+  path '/api/questionnaires/toggle_access/{id}' do
     parameter name: 'id', in: :path, type: :integer
     let(:valid_questionnaire_params) do
       {
@@ -311,14 +311,14 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
       tags 'Questionnaires'
       produces 'application/json'
 
-      # get request on /api/v1/questionnaires/toggle_access/{id} returns 200 successful response when correct id is passed and toggles the private variable
+      # get request on /api/questionnaires/toggle_access/{id} returns 200 successful response when correct id is passed and toggles the private variable
       response(200, 'successful') do
         run_test! do
           expect(response.body).to include(" has been successfully made private. ")
         end
       end
 
-      # get request on /api/v1/questionnaires/toggle_access/{id} returns 404 not found response when questionnaire id is not present in the database
+      # get request on /api/questionnaires/toggle_access/{id} returns 404 not found response when questionnaire id is not present in the database
       response(404, 'not found') do
         let(:id) { 0 }
         run_test! do
@@ -328,7 +328,7 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
     end
   end
 
-  path '/api/v1/questionnaires/copy/{id}' do
+  path '/api/questionnaires/copy/{id}' do
     parameter name: 'id', in: :path, type: :integer
     let(:valid_questionnaire_params) do
       {
@@ -356,14 +356,14 @@ RSpec.describe 'api/v1/questionnaires', type: :request do
       consumes 'application/json'
       produces 'application/json'
 
-      # post request on /api/v1/questionnaires/copy/{id} returns 200 successful response when request returns copied questionnaire with questionnaire id is present in the database
+      # post request on /api/questionnaires/copy/{id} returns 200 successful response when request returns copied questionnaire with questionnaire id is present in the database
       response(200, 'successful') do
         run_test! do
           expect(response.body).to include('"name":"Copy of Test Questionnaire"')
         end
       end
 
-      # post request on /api/v1/questionnaires/copy/{id} returns 404 not found response when questionnaire id is not present in the database
+      # post request on /api/questionnaires/copy/{id} returns 404 not found response when questionnaire id is not present in the database
       response(404, 'not found') do
         let(:id) { 0 }
         run_test! do

@@ -1,4 +1,4 @@
-class Api::V1::ParticipantsController < ApplicationController
+class Api::ParticipantsController < ApplicationController
   include ParticipantsHelper
 
   # Return a list of participants for a given user

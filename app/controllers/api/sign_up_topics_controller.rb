@@ -1,7 +1,7 @@
-class Api::V1::SignUpTopicsController < ApplicationController
+class Api::SignUpTopicsController < ApplicationController
   before_action :set_sign_up_topic, only: %i[ show update ]
 
-  # GET /api/v1/sign_up_topics?assignment_id=&topic_ids[]=
+  # GET /api/sign_up_topics?assignment_id=&topic_ids[]=
   # Retrieve SignUpTopics by two query parameters - assignment_id (compulsory) and an array of topic_ids (optional)
   def index
     if params[:assignment_id].nil?

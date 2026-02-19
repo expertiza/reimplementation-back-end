@@ -1,8 +1,8 @@
 ---
 openapi: 3.0.1
 info:
-  title: EXPERTIZA API V1
-  version: v1
+  title: EXPERTIZA API
+  version: 1.0.0
 components:
   securitySchemes:
     bearerAuth:
@@ -12,7 +12,7 @@ components:
 security:
 - bearerAuth: []
 paths:
-  "/api/v1/account_requests/pending":
+  "/api/account_requests/pending":
     get:
       summary: List all Pending Account Requests
       tags:
@@ -20,7 +20,7 @@ paths:
       responses:
         '200':
           description: List Pending Account Requests
-  "/api/v1/account_requests/processed":
+  "/api/account_requests/processed":
     get:
       summary: List all Processed Account Requests
       tags:
@@ -28,7 +28,7 @@ paths:
       responses:
         '200':
           description: List Processed Account Requests
-  "/api/v1/account_requests":
+  "/api/account_requests":
     post:
       summary: Create Account Request
       tags:
@@ -66,7 +66,7 @@ paths:
               - introduction
               - role_id
               - institution_id
-  "/api/v1/account_requests/{id}":
+  "/api/account_requests/{id}":
     parameters:
     - name: id
       in: path
@@ -130,7 +130,7 @@ paths:
       responses:
         '204':
           description: successful
-  "/api/v1/bookmarks":
+  "/api/bookmarks":
     get:
       summary: list bookmarks
       tags:
@@ -170,7 +170,7 @@ paths:
               - description
               - topic_id
               - rating
-  "/api/v1/bookmarks/{id}":
+  "/api/bookmarks/{id}":
     parameters:
     - name: id
       in: path
@@ -219,7 +219,7 @@ paths:
           description: successful
         '404':
           description: not found
-  "/api/v1/bookmarks/{id}/bookmarkratings":
+  "/api/bookmarks/{id}/bookmarkratings":
     parameters:
     - name: id
       in: path
@@ -253,7 +253,7 @@ paths:
           description: successful
         '404':
           description: not found
-  "/api/v1/courses/{id}/add_ta/{ta_id}":
+  "/api/courses/{id}/add_ta/{ta_id}":
     parameters:
     - name: id
       in: path
@@ -272,7 +272,7 @@ paths:
       responses:
         '201':
           description: successful
-  "/api/v1/courses/{id}/tas":
+  "/api/courses/{id}/tas":
     parameters:
     - name: id
       in: path
@@ -287,7 +287,7 @@ paths:
       responses:
         '200':
           description: successful
-  "/api/v1/courses/{id}/remove_ta/{ta_id}":
+  "/api/courses/{id}/remove_ta/{ta_id}":
     parameters:
     - name: id
       in: path
@@ -308,7 +308,7 @@ paths:
       responses:
         '200':
           description: successful
-  "/api/v1/courses/{id}/copy":
+  "/api/courses/{id}/copy":
     parameters:
     - name: id
       in: path
@@ -323,7 +323,7 @@ paths:
       responses:
         '200':
           description: successful
-  "/api/v1/courses":
+  "/api/courses":
     get:
       summary: list courses
       tags:
@@ -360,7 +360,7 @@ paths:
               - directory_path
               - institution_id
               - instructor_id
-  "/api/v1/courses/{id}":
+  "/api/courses/{id}":
     parameters:
     - name: id
       in: path
@@ -432,7 +432,7 @@ paths:
       responses:
         '204':
           description: successful
-  "/api/v1/institutions":
+  "/api/institutions":
     get:
       summary: list institutions
       tags:
@@ -460,7 +460,7 @@ paths:
                   type: string
               required:
               - name
-  "/api/v1/institutions/{id}":
+  "/api/institutions/{id}":
     parameters:
     - name: id
       in: path
@@ -522,7 +522,7 @@ paths:
       responses:
         '200':
           description: successful
-  "/api/v1/invitations":
+  "/api/invitations":
     get:
       summary: list invitations
       tags:
@@ -558,7 +558,7 @@ paths:
               - assignment_id
               - from_id
               - to_id
-  "/api/v1/invitations/{id}":
+  "/api/invitations/{id}":
     parameters:
     - name: id
       in: path
@@ -605,7 +605,7 @@ paths:
           description: Delete successful
         '404':
           description: Not found
-  "/api/v1/invitations/user/{user_id}/assignment/{assignment_id}":
+  "/api/invitations/user/{user_id}/assignment/{assignment_id}":
     parameters:
     - name: user_id
       in: path
@@ -628,7 +628,7 @@ paths:
           description: Show all invitations for the user for an assignment
         '404':
           description: Not found
-  "/api/v1/questionnaires":
+  "/api/questionnaires":
     get:
       summary: list questionnaires
       tags:
@@ -672,7 +672,7 @@ paths:
               - min_question_score
               - max_question_score
               - instructor_id
-  "/api/v1/questionnaires/{id}":
+  "/api/questionnaires/{id}":
     parameters:
     - name: id
       in: path
@@ -745,7 +745,7 @@ paths:
           description: successful
         '404':
           description: not found
-  "/api/v1/questionnaires/toggle_access/{id}":
+  "/api/questionnaires/toggle_access/{id}":
     parameters:
     - name: id
       in: path
@@ -761,7 +761,7 @@ paths:
           description: successful
         '404':
           description: not found
-  "/api/v1/questionnaires/copy/{id}":
+  "/api/questionnaires/copy/{id}":
     parameters:
     - name: id
       in: path
@@ -777,7 +777,7 @@ paths:
           description: successful
         '404':
           description: not found
-  "/api/v1/questions":
+  "/api/questions":
     get:
       summary: list questions
       tags:
@@ -819,7 +819,7 @@ paths:
               - break_before
               - txt
               - question_type
-  "/api/v1/questions/{id}":
+  "/api/questions/{id}":
     parameters:
     - name: id
       in: path
@@ -896,7 +896,7 @@ paths:
           description: successful
         '404':
           description: not found
-  "/api/v1/questions/delete_all/questionnaire/{id}":
+  "/api/questions/delete_all/questionnaire/{id}":
     parameters:
     - name: id
       in: path
@@ -912,7 +912,7 @@ paths:
           description: successful
         '404':
           description: not found
-  "/api/v1/questions/show_all/questionnaire/{id}":
+  "/api/questions/show_all/questionnaire/{id}":
     parameters:
     - name: id
       in: path
@@ -928,7 +928,7 @@ paths:
           description: successful
         '404':
           description: not found
-  "/api/v1/questions/types":
+  "/api/questions/types":
     get:
       summary: item types
       tags:
@@ -936,7 +936,7 @@ paths:
       responses:
         '200':
           description: successful
-  "/api/v1/roles":
+  "/api/roles":
     get:
       summary: list roles
       tags:
@@ -968,7 +968,7 @@ paths:
                   type: integer
               required:
               - name
-  "/api/v1/roles/{id}":
+  "/api/roles/{id}":
     parameters:
     - name: id
       in: path
@@ -1038,7 +1038,7 @@ paths:
       responses:
         '204':
           description: successful
-  "/api/v1/sign_up_topics":
+  "/api/sign_up_topics":
     get:
       summary: Get sign-up topics
       parameters:
@@ -1114,7 +1114,7 @@ paths:
               - category
               - assignment_id
               - micropayment
-  "/api/v1/sign_up_topics/{id}":
+  "/api/sign_up_topics/{id}":
     parameters:
     - name: id
       in: path
@@ -1153,7 +1153,7 @@ paths:
               - topic_name
               - category
               - assignment_id
-  "/api/v1/signed_up_teams/sign_up":
+  "/api/signed_up_teams/sign_up":
     post:
       summary: Creates a signed up team
       tags:
@@ -1177,7 +1177,7 @@ paths:
               required:
               - team_id
               - topic_id
-  "/api/v1/signed_up_teams/sign_up_student":
+  "/api/signed_up_teams/sign_up_student":
     parameters:
     - name: user_id
       in: query
@@ -1205,7 +1205,7 @@ paths:
                   type: integer
               required:
               - topic_id
-  "/api/v1/signed_up_teams":
+  "/api/signed_up_teams":
     parameters:
     - name: topic_id
       in: query
@@ -1243,7 +1243,7 @@ paths:
                 - preference_priority_number
         '404':
           description: signed up teams not found
-  "/api/v1/signed_up_teams/{id}":
+  "/api/signed_up_teams/{id}":
     parameters:
     - name: id
       in: path
@@ -1303,7 +1303,7 @@ paths:
               required:
               - user_name
               - password
-  /api/v1/student_tasks/list:
+  /api/student_tasks/list:
       get:
         summary: List all Student Tasks
         tags:
@@ -1311,7 +1311,7 @@ paths:
         responses:
           '200':
             description: An array of student tasks
-  /api/v1/student_tasks/view:
+  /api/student_tasks/view:
     get:
       summary: View a student task
       tags:
@@ -1326,7 +1326,7 @@ paths:
       responses:
         '200':
           description: A specific student task
-  "/api/v1/feedback_response_maps":
+  "/api/feedback_response_maps":
     get:
       summary: List all feedback response maps
       tags:
@@ -1364,7 +1364,7 @@ paths:
                   - reviewer_id
                   - reviewed_object_id
 
-  "/api/v1/feedback_response_maps/{id}":
+  "/api/feedback_response_maps/{id}":
     parameters:
     - name: id
       in: path
@@ -1417,7 +1417,7 @@ paths:
         '404':
           description: not found
 
-  "/api/v1/feedback_response_maps/response_report/{assignment_id}":
+  "/api/feedback_response_maps/response_report/{assignment_id}":
     parameters:
     - name: assignment_id
       in: path

@@ -1,4 +1,4 @@
-class Api::V1::AccountRequestsController < ApplicationController
+class Api::AccountRequestsController < ApplicationController
 
   # GET /account_requests/pending
   def pending_requests

@@ -1,24 +1,28 @@
 require 'swagger_helper'
 require 'json_web_token'
-RSpec.describe 'Institutions API', type: :request do
-    before(:all) do
-      @roles = create_roles_hierarchy
-    end
 
-    let(:prof) { User.create(
-      name: "profa",
+RSpec.describe 'Roles API', type: :request do
+  before(:all) do
+    @roles = create_roles_hierarchy
+  end
+
+  let(:adm) {
+    User.create(
+      name: "adma",
       password_digest: "password",
-      role_id: @roles[:instructor].id,
-      full_name: "Prof A",
+      role_id: @roles[:admin].id,
+      full_name: "Admin A",
       email: "testuser@example.com",
       mru_directory_path: "/home/testuser",
-      ) }
+      )
+  }
 
-    let(:token) { JsonWebToken.encode({id: prof.id}) }
-    let(:Authorization) { "Bearer #{token}" }
-  path '/api/v1/institutions' do
-    get('list institutions') do
-      tags 'Institutions'
+  let(:token) { JsonWebToken.encode({id: adm.id}) }
+  let(:Authorization) { "Bearer #{token}" }
+
+  path '/api/roles' do
+    get('list roles') do
+      tags 'Roles'
       produces 'application/json'
 
       response(200, 'successful') do
@@ -34,19 +38,21 @@ RSpec.describe 'Institutions API', type: :request do
       end
     end
 
-    post('create institution') do
-      tags 'Institutions'
+    post('create role') do
+      tags 'Roles'
       consumes 'application/json'
-      parameter name: :institution, in: :body, schema: {
+      parameter name: :role, in: :body, schema: {
         type: :object,
         properties: {
-          name: { type: :string }
+          name: { type: :string },
+          parent_id: { type: :integer },
+          default_page_id: { type: :integer }
         },
         required: [ 'name' ]
       }
 
-      response(201, 'Created a institution') do
-        let(:institution) { { name: 'institution 1' } }
+      response(201, 'Created a role') do
+        let(:role) { { name: 'Role 1' } }
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -59,9 +65,12 @@ RSpec.describe 'Institutions API', type: :request do
       end
 
       response(422, 'invalid request') do
-        let(:institution) { { name: '' } }
+        let(:role) { { name: '' } }
 
         after do |example|
+          puts "Response status: #{response.status}" if response
+          puts "Response body: #{response.body}" if response&.body
+
           example.metadata[:response][:content] = {
             'application/json' => {
               example: JSON.parse(response.body, symbolize_names: true)
@@ -73,14 +82,14 @@ RSpec.describe 'Institutions API', type: :request do
     end
   end
 
-  path '/api/v1/institutions/{id}' do
-    parameter name: 'id', in: :path, type: :integer, description: 'id of the institution'
+  path '/api/roles/{id}' do
+    parameter name: 'id', in: :path, type: :integer, description: 'id of the role'
 
-    let(:institution) { Institution.create(name: 'Test institution') }
-    let(:id) { institution.id }
+    let(:role) { Role.create(name: 'Test Role') }
+    let(:id) { role.id }
 
-    get('show institution') do
-      tags 'Institutions'
+    get('show role') do
+      tags 'Roles'
       response(200, 'successful') do
 
         after do |example|
@@ -94,51 +103,15 @@ RSpec.describe 'Institutions API', type: :request do
       end
     end
 
-    patch('update institution') do
-      tags 'Institutions'
+    patch('update role') do
+      tags 'Roles'
       consumes 'application/json'
-      parameter name: :institution, in: :body, schema: {
+      parameter name: :role, in: :body, schema: {
         type: :object,
         properties: {
-          name: { type: :string }
-        },
-        required: [ 'name' ]
-      }
-      
-      response(200, 'successful') do
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
-        run_test!
-      end
-
-      response(422, 'invalid request') do
-        let(:institution) { { name: '' } }
-        let(:id) { Institution.create(name: 'Test institution').id }
-
-        after do |example|
-          example.metadata[:response][:content] = {
-            'application/json' => {
-              example: JSON.parse(response.body, symbolize_names: true)
-            }
-          }
-        end
-        run_test!
-      end
-    end
-
-    put('update institution') do 
-      tags 'Institutions'
-      consumes 'application/json'
-      parameter name: :institution, in: :body, schema: {
-        type: :object,
-        properties: {
-          name: { type: :string }
+          name: { type: :string },
+          parent_id: { type: :integer },
+          default_page_id: { type: :integer }
         },
         required: [ 'name' ]
       }
@@ -156,8 +129,8 @@ RSpec.describe 'Institutions API', type: :request do
       end
 
       response(422, 'invalid request') do
-        let(:institution) { { name: '' } }
-        let(:id) { Institution.create(name: 'Test institution').id }
+        let(:role) { { name: '' } }
+        let(:id) { Role.create(name: 'Test Role').id }
 
         after do |example|
           example.metadata[:response][:content] = {
@@ -170,14 +143,56 @@ RSpec.describe 'Institutions API', type: :request do
       end
     end
 
-    delete('delete institution') do
-      tags 'Institutions'
+    put('update role') do
+      tags 'Roles'
+      consumes 'application/json'
+      parameter name: :role, in: :body, schema: {
+        type: :object,
+        properties: {
+          name: { type: :string },
+          parent_id: { type: :integer },
+          default_page_id: { type: :integer }
+        },
+        required: [ 'name' ]
+      }
+
       response(200, 'successful') do
 
         after do |example|
           example.metadata[:response][:content] = {
             'application/json' => {
               example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+
+      response(422, 'invalid request') do
+        let(:role) { { name: '' } }
+        let(:id) { Role.create(name: 'Test Role').id }
+
+        after do |example|
+          puts "Response status: #{response.status}" if response
+          puts "Response body: #{response.body}" if response&.body
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: JSON.parse(response.body, symbolize_names: true)
+            }
+          }
+        end
+        run_test!
+      end
+    end
+
+    delete('delete role') do
+      tags 'Roles'
+      response(204, 'successful') do
+
+        after do |example|
+          example.metadata[:response][:content] = {
+            'application/json' => {
+              example: ''
             }
           }
         end

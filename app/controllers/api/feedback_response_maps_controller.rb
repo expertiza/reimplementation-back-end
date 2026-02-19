@@ -1,5 +1,5 @@
 module Api
-  module V1
+  
     # Handles operations specific to feedback response maps
     # Inherits from ResponseMapsController to leverage common functionality
     # while providing specialized behavior for feedback
@@ -15,7 +15,7 @@ module Api
 
       # Retrieves all feedback response maps for a specific assignment
       # Useful for instructors to monitor feedback activity
-      # GET /api/v1/feedback_response_maps/assignment/:assignment_id
+      # GET /api/feedback_response_maps/assignment/:assignment_id
       def assignment_feedback
         @feedback_maps = FeedbackResponseMap
           .joins(:assignment)
@@ -25,7 +25,7 @@ module Api
 
       # Gets all feedback maps for a specific reviewer
       # Includes the associated responses for comprehensive feedback history
-      # GET /api/v1/feedback_response_maps/reviewer/:reviewer_id
+      # GET /api/feedback_response_maps/reviewer/:reviewer_id
       def reviewer_feedback
         @feedback_maps = FeedbackResponseMap
           .where(reviewer_id: params[:reviewer_id])
@@ -35,7 +35,7 @@ module Api
 
       # Calculates and returns feedback response statistics for an assignment
       # Includes total maps, completed maps, and response rate percentage
-      # GET /api/v1/feedback_response_maps/response_rate/:assignment_id
+      # GET /api/feedback_response_maps/response_rate/:assignment_id
       def feedback_response_rate
         assignment_id = params[:assignment_id]
         total_maps = FeedbackResponseMap
@@ -68,7 +68,7 @@ module Api
 
       # Ensures that we create a FeedbackResponseMap instance
       # instead of a base ResponseMap
-      # POST /api/v1/feedback_response_maps
+      # POST /api/feedback_response_maps
       def create
         @response_map = FeedbackResponseMap.new(response_map_params)
         persist_and_respond(@response_map, :created)
