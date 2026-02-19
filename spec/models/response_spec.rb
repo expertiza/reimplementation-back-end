@@ -74,7 +74,7 @@ describe Response do
   # answer for scorable questions, and they will not be counted towards the total score)
   describe '#maximum_score' do
     before do
-      allow(response.response_assignment)
+      allow(response.reviewer_assignment)
         .to receive_message_chain(:assignment_questionnaires, :find_by)
         .with(used_in_round: 1)
         .and_return(assignment_questionnaire)
@@ -105,13 +105,19 @@ describe Response do
     end
   end
 
-  describe '#response_assignment' do
+  describe '#reviewer_assignment' do
     it 'returns assignment for ResponseMap' do
-      expect(response_map.response_assignment).to eq(assignment)
+      expect(response_map.reviewer_assignment).to eq(assignment)
     end
 
     it 'returns assignment for ReviewResponseMap' do
-      expect(review_response_map.response_assignment).to eq(assignment)
+      expect(review_response_map.reviewer_assignment).to eq(assignment)
+    end
+  end
+
+  describe '#response_assignment (compatibility alias)' do
+    it 'delegates to reviewer_assignment for ResponseMap' do
+      expect(response_map.response_assignment).to eq(response_map.reviewer_assignment)
     end
   end
 end

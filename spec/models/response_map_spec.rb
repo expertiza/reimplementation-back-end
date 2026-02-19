@@ -109,6 +109,20 @@ RSpec.describe ResponseMap, type: :model do
       expect(response_map.needs_update_link?).to be true
     end
 
+    it 'returns true when teams_participants updates after the last submitted response' do
+      Response.create!(map_id: response_map.id, is_submitted: true, created_at: response_time, updated_at: response_time)
+      teams_participant_record.update_column(:updated_at, response_time + 2.days)
+
+      expect(response_map.needs_update_link?).to be true
+    end
+
+    it 'ignores newer drafts when deciding update vs edit' do
+      Response.create!(map_id: response_map.id, is_submitted: true, created_at: response_time, updated_at: response_time, round: 1)
+      Response.create!(map_id: response_map.id, is_submitted: false, created_at: response_time + 2.days, updated_at: response_time + 2.days, round: 1)
+
+      expect(response_map.needs_update_link?).to be false
+    end
+
     it 'returns true when a later review round has passed since the last response' do
       Response.create!(map_id: response_map.id, is_submitted: true, created_at: response_time, updated_at: response_time)
 

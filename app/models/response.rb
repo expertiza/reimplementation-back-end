@@ -9,11 +9,11 @@ class Response < ApplicationRecord
   accepts_nested_attributes_for :scores
 
   alias map response_map
-  delegate :response_assignment, :reviewee, :reviewer, to: :map
+  delegate :reviewer_assignment, :response_assignment, :reviewee, :reviewer, to: :map
 
   # return the questionnaire that belongs to the response
   def questionnaire
-    response_assignment.assignment_questionnaires.find_by(used_in_round: self.round).questionnaire
+    reviewer_assignment.assignment_questionnaires.find_by(used_in_round: self.round).questionnaire
   end
 
   # Backward-compatible wrapper around ResponseMap#response_map_label.
