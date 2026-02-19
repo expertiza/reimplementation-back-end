@@ -29,23 +29,25 @@ class Response < ApplicationRecord
   end
 
   # Returns true if this response's score differs from peers by more than the assignment notification limit
+  # This comparison is response-specific (uses per-response max score and questionnaire settings),
+  # so it stays on Response instead of the generic ReviewAggregator mixin.
   def reportable_difference?
     map_class = map.class
     # gets all responses made by a reviewee
     existing_responses = map_class.assessments_for(map.reviewee)
 
-  count = 0
-  total_numerator = BigDecimal('0')
-  total_denominator = BigDecimal('0')
+    count = 0
+    total_numerator = BigDecimal('0')
+    total_denominator = BigDecimal('0')
     # gets the sum total percentage scores of all responses that are not this response
     # (each response can omit questions, so maximum_score may differ and we normalize before averaging)
-    existing_responses.each do |response|
-      unless id == response.id # the current_response is also in existing_responses array
-        count += 1
-        # Accumulate raw sums and divide once to minimize rounding error
-        total_numerator += BigDecimal(response.aggregate_questionnaire_score.to_s)
-        total_denominator += BigDecimal(response.maximum_score.to_s)
-      end
+    existing_responses.each do |peer_response|
+      next if id == peer_response.id # this response may also be present in existing_responses
+
+      count += 1
+      # Accumulate raw sums and divide once to minimize rounding error
+      total_numerator += BigDecimal(peer_response.aggregate_questionnaire_score.to_s)
+      total_denominator += BigDecimal(peer_response.maximum_score.to_s)
     end
 
     # if this response is the only response by the reviewee, there's no grade conflict
