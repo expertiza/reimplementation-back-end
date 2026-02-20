@@ -37,7 +37,6 @@ RSpec.describe ResponseMap, type: :model do
       AssignmentTeam.create!(
         name: "Team #{SecureRandom.hex(4)}",
         type: 'AssignmentTeam',
-        max_team_size: 5,
         parent_id: assignment.id
       )
     end
