@@ -51,6 +51,24 @@ class DueDate < ApplicationRecord
     due_dates.find { |due_date| due_date.due_at > Time.zone.now }
   end
 
+  # Determines the current round for a parent (assignment/topic) using one consistent rule:
+  # - If any round-based due dates are in the past, use the latest past due date's round.
+  # - Otherwise, use the earliest upcoming due date's round.
+  # - If no round-based due dates exist, return 0.
+  def self.current_round_for(parent, reference_time: Time.current)
+    return 0 unless parent&.id
+
+    scoped = where(parent: parent).where.not(round: nil, due_at: nil)
+
+    latest_past = scoped.where('due_at <= ?', reference_time).order(due_at: :desc).first
+    return latest_past.round.to_i if latest_past
+
+    earliest_upcoming = scoped.where('due_at > ?', reference_time).order(due_at: :asc).first
+    return earliest_upcoming.round.to_i if earliest_upcoming
+
+    0
+  end
+
   # Creates duplicate due dates and assigns them to a new assignment
   def copy(new_assignment_id)
     new_due_date = dup

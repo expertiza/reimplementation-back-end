@@ -103,26 +103,9 @@ class ResponseMap < ApplicationRecord
     candidates.compact.max
   end
 
-  # Infer the current review round from due dates when the assignment doesn’t provide it directly.
+  # Delegate round inference to DueDate to keep one consistent rule in one class.
   def current_round_from_due_dates
-    return 0 unless assignment
-
-    # Gather all due dates with round and due_at
-
-    due_dates = Array(assignment.due_dates).select { |due_date| due_date_has_round_and_due_at?(due_date) }
-    return 0 if due_dates.empty?
-
-    # Find the latest due date that is in the past (or the earliest if none are in the past)
-    past = due_dates.select { |d| d.due_at <= Time.current }
-
-    # Use the latest past due date if available, otherwise the earliest future due date
-    reference =
-      if past.any?
-        past.sort_by(&:due_at).last
-      else
-        due_dates.sort_by(&:due_at).first
-      end
-    reference.round.to_i
+    DueDate.current_round_for(assignment)
   end
 
   private
@@ -145,8 +128,4 @@ class ResponseMap < ApplicationRecord
     team_record.respond_to?(:teams_participants)
   end
 
-  def due_date_has_round_and_due_at?(due_date)
-    due_date.respond_to?(:round) && due_date.round.present? &&
-      due_date.respond_to?(:due_at) && due_date.due_at.present?
-  end
 end
