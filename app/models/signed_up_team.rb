@@ -43,17 +43,7 @@ class SignedUpTeam < ApplicationRecord
     signed_up_team.team.try(:users).to_a
   end
 
-  # Returns project topic the given user signed up for
-  def self.find_user_project_topic(user_id)
-    user = User.find_by(id: user_id)
-    return [] unless user
-
-    ProjectTopic.joins(:signed_up_teams)
-                .where(signed_up_teams: { team_id: user.teams.pluck(:id) })
-                .distinct.to_a
-  end
-
-    # Case 1: If participant joins a team without a topic and participant has a topic, the team gets participant's topic.
+  # Case 1: If participant joins a team without a topic and participant has a topic, the team gets participant's topic.
   # Case 2: If participant joins a team with a topic and participant doesn’t have a topic, participant get the team’s topic.
   # Case 3: If participant joins a team with a topic and participant has a topic, participant is warned & participant lose its topic and get the team’s topic.
   def self.update_topic_after_invite_accept(inviter_signed_up_team, invitee_signed_up_team)

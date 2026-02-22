@@ -53,7 +53,7 @@ class GradesController < ApplicationController
         render json: get_my_scores_data(@participant)
     end
 
-    # (GET /api/v1/grades/:assignment_id/:participant_id/get_review_tableau_data)
+    # (GET /grades/:assignment_id/:participant_id/get_review_tableau_data)
     # Given an AssignmentParticipant ID, gather and return all reviews completed by that participant for the corresponding assignment.
     def get_review_tableau_data
         responses_by_round = {}
@@ -152,7 +152,7 @@ class GradesController < ApplicationController
     end
 
 
-    # edit (GET /api/v1/grades/:participant_id/edit)
+    # edit (GET /grades/:participant_id/edit)
     # provides data for the grade-assignment interface.
     # Given an AssignmentParticipant ID, it looks up the participant and its assignment, gathers the full list of items 
     # (via a helper like list_questions(assignment)), and computes existing peer-review scores for those items.

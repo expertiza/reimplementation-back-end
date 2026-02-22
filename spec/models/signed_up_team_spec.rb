@@ -18,7 +18,7 @@ RSpec.describe SignedUpTeam, type: :model do
 
   let!(:assignment) { Assignment.create!(name: "Test Assignment", instructor: instructor) }
   let!(:project_topic) { ProjectTopic.create!(topic_name: "Test Topic", assignment: assignment) }
-  let!(:team) { Team.create!(assignment: assignment) }
+  let!(:team) { AssignmentTeam.create!(name: "Team", assignment: assignment) }
 
   describe 'validations' do
     # Ensure a project_topic is mandatory
@@ -47,7 +47,7 @@ RSpec.describe SignedUpTeam, type: :model do
   describe 'scopes' do
     # Create one confirmed and one waitlisted signup for testing scopes
     let!(:confirmed_signup) { SignedUpTeam.create!(project_topic: project_topic, team: team, is_waitlisted: false) }
-    let!(:waitlisted_signup) { SignedUpTeam.create!(project_topic: project_topic, team: Team.create!(assignment: assignment), is_waitlisted: true) }
+    let!(:waitlisted_signup) { SignedUpTeam.create!(project_topic: project_topic, team: AssignmentTeam.create!(name: "Waitlisted Team", assignment: assignment), is_waitlisted: true) }
 
     # Scope should only return confirmed signups
     it 'returns confirmed signups' do
@@ -93,7 +93,7 @@ RSpec.describe SignedUpTeam, type: :model do
 
     # Should not error if team has no signups
     it 'does not raise error if team has no signups' do
-      new_team = Team.create!(assignment: assignment)
+      new_team = AssignmentTeam.create!(name: "New Team", assignment: assignment)
       expect { SignedUpTeam.remove_team_signups(new_team) }.not_to raise_error
     end
   end
@@ -118,10 +118,16 @@ RSpec.describe SignedUpTeam, type: :model do
         email: "bob@example.com",
         role: student_role
       )
-    end
+    end    
+    let(:participant1) { AssignmentParticipant.create!(user: user1, parent_id: assignment.id, handle: 'user1_handle') }
+    let(:participant2) { AssignmentParticipant.create!(user: user2, parent_id: assignment.id, handle: 'user2_handle') }
 
     before do
-      team.users << [user1, user2]
+      # assign participants to teams
+      team.add_member(participant1)
+      team.add_member(user1)
+      team.add_member(participant2)
+      team.add_member(user2)
     end
 
     describe '.find_team_participants' do
@@ -138,7 +144,7 @@ RSpec.describe SignedUpTeam, type: :model do
 
       # Team with no users should return []
       it 'returns empty array when team exists but has no users' do
-        new_team = Team.create!(assignment: assignment)
+        new_team = AssignmentTeam.create!(name: "New Team", assignment: assignment)
         expect(SignedUpTeam.find_team_participants(new_team.id)).to eq([])
       end
     end
@@ -154,40 +160,13 @@ RSpec.describe SignedUpTeam, type: :model do
 
       # Should return [] if team is not signed up to a topic
       it 'returns empty array if no signed up team found' do
-        new_team = Team.create!(assignment: assignment)
+        new_team = AssignmentTeam.create!(name: "New Team", assignment: assignment)
         expect(SignedUpTeam.find_project_topic_team_users(new_team.id)).to eq([])
       end
 
       # Gracefully handle nil
       it 'handles nil team_id gracefully' do
         expect(SignedUpTeam.find_project_topic_team_users(nil)).to eq([])
-      end
-    end
-
-    describe '.find_user_project_topic' do
-      let!(:sut) { SignedUpTeam.create!(project_topic: project_topic, team: team) }
-
-      # Returns project topic the user signed up for
-      it 'returns project topic signed up by user' do
-        topics = SignedUpTeam.find_user_project_topic(user1.id)
-        expect(topics).to include(project_topic)
-      end
-
-      # Should return empty array for unknown user
-      it 'returns empty array if user has no teams or no signups' do
-        unknown = User.create!(
-          name: "Ghost",
-          full_name: "Ghost User",
-          password: "password",
-          email: "ghost@example.com",
-          role: student_role
-        )
-        expect(SignedUpTeam.find_user_project_topic(unknown.id)).to eq([])
-      end
-
-      # Gracefully handle nil user_id
-      it 'handles nil user_id gracefully' do
-        expect(SignedUpTeam.find_user_project_topic(nil)).to eq([])
       end
     end
   end
@@ -225,7 +204,7 @@ RSpec.describe SignedUpTeam, type: :model do
       confirmed = SignedUpTeam.create!(project_topic: project_topic, team: team, is_waitlisted: false)
       waitlisted = SignedUpTeam.create!(
         project_topic: ProjectTopic.create!(topic_name: "Waitlist Topic", assignment: assignment),
-        team: Team.create!(assignment: assignment),
+        team: AssignmentTeam.create!(name: "Waitlisted Team", assignment: assignment),
         is_waitlisted: true
       )
       expect(SignedUpTeam.confirmed).to include(confirmed)

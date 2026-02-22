@@ -1,7 +1,7 @@
 class ProjectTopicsController < ApplicationController
   before_action :set_project_topic, only: %i[ show update ]
 
-  # GET /api/v1/project_topics?assignment_id=&topic_ids[]=
+  # GET /project_topics?assignment_id=&topic_ids[]=
   # Retrieve ProjectTopics by two query parameters - assignment_id (compulsory) and an array of topic_ids (optional)
   def index
     if params[:assignment_id].nil?
@@ -21,24 +21,35 @@ class ProjectTopicsController < ApplicationController
   # params[:project_topic][:topic_identifier] follows a json format
   # The method takes inputs and outputs the if the topic creation was successful.
   def create
-    @project_topic = ProjectTopic.new(project_topic_params)
-    @assignment = Assignment.find(params[:project_topic][:assignment_id])
-    @project_topic.micropayment = params[:micropayment] if @assignment.microtask?
-    if @project_topic.save
-      # undo_link "The topic: \"#{@project_topic.topic_name}\" has been created successfully. "
-      render json: { message: "The topic: \"#{@project_topic.topic_name}\" has been created successfully. " }, status: :created
-    else
-      render json: { message: @project_topic.errors }, status: :unprocessable_entity
+    project_topic = ProjectTopic.new(project_topic_params)
+
+    assignment = Assignment.find_by(id: project_topic.assignment_id)
+
+    if assignment&.microtask?
+      project_topic.micropayment = params[:project_topic][:micropayment]
     end
+    if project_topic.save
+      render json: { message: "The topic: \"#{project_topic.topic_name}\" has been created successfully." }, status: :created
+    else
+      render json: { message: project_topic.errors }, status: :unprocessable_entity
+    end
+  rescue => e
+      render json: { error: "Unexpected error: #{e.message}" }, status: :internal_server_error
   end
 
   # PATCH/PUT /project_topics/1
   # updates parameters present in project_topic_params.
   def update
+    assignment = Assignment.find_by(id: @project_topic.assignment_id)
+
+    if assignment&.microtask?
+      @project_topic.micropayment = params[:project_topic][:micropayment]
+    end
+
     if @project_topic.update(project_topic_params)
-      render json: { message: "The topic: \"#{@project_topic.topic_name}\" has been updated successfully. " }, status: 200
+      render json: { message: "The topic: \"#{@project_topic.topic_name}\" has been updated successfully." }, status: 200
     else
-      render json: @project_topic.errors, status: :unprocessable_entity
+      render json:{ message: @project_topic.errors }, status: :unprocessable_entity
     end
   end
 
@@ -51,11 +62,11 @@ class ProjectTopicsController < ApplicationController
   # assignment_id is compulsory.
   # topic_ids[] is optional
   def destroy
-    # render json: {message: @sign_up_topic}
     # filters topics based on assignment id (required) and topic identifiers (optional)
-    if params[:assignment_id].nil?
+    if params[:assignment_id].blank?
       render json: { message: 'Assignment ID is required!' }, status: :unprocessable_entity
-    elsif params[:topic_ids].nil?
+      return
+    elsif params[:topic_ids].blank?
       @project_topics = ProjectTopic.where(assignment_id: params[:assignment_id])
       # render json: @project_topics, status: :ok
     else

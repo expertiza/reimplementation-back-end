@@ -15,6 +15,7 @@ class Team < ApplicationRecord
   belongs_to :course, class_name: 'Course', foreign_key: 'parent_id', optional: true
   belongs_to :user, optional: true # Team creator
 
+  attr_accessor :max_participants
   validates :parent_id, presence: true
   validates :type, presence: true, inclusion: { in: %w[AssignmentTeam CourseTeam MentoredTeam], message: "must be 'Assignment' or 'Course' or 'Mentor'" }
 
