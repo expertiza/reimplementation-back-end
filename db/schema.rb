@@ -126,6 +126,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_26_161701) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "cakes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "courses", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -205,7 +210,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_26_161701) do
     t.integer "participant_id"
     t.integer "team_id"
     t.text "comments"
-    t.string "status"
+    t.string "reply_status"
   end
 
   create_table "nodes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -289,6 +294,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_26_161701) do
     t.integer "reviewee_id", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "type"
     t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 
@@ -335,6 +341,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_26_161701) do
     t.integer "preference_priority_number"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "comments_for_advertisement"
+    t.boolean "advertise_for_partner"
     t.index ["sign_up_topic_id"], name: "index_signed_up_teams_on_sign_up_topic_id"
     t.index ["team_id"], name: "index_signed_up_teams_on_team_id"
   end
@@ -376,7 +384,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_26_161701) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["team_id", "user_id"], name: "index_teams_users_on_team_id_and_user_id", unique: true
     t.index ["team_id"], name: "index_teams_users_on_team_id"
     t.index ["user_id"], name: "index_teams_users_on_user_id"
   end
@@ -414,6 +421,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_26_161701) do
   add_foreign_key "assignments", "users", column: "instructor_id"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
+  add_foreign_key "invitations", "participants", column: "from_id"
+  add_foreign_key "invitations", "participants", column: "to_id"
   add_foreign_key "items", "questionnaires"
   add_foreign_key "participants", "join_team_requests"
   add_foreign_key "participants", "teams"

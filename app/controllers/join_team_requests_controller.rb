@@ -21,7 +21,7 @@ class JoinTeamRequestsController < ApplicationController
       current_user_has_admin_privileges?
       
     when 'create'
-      # Any student who is the partcipant of an assignment can create a join team request
+      # Any student who is the participant of an assignment can create a join team request
       current_user_is_assignment_participant?(params[:assignment_id])
     
     when 'show'
