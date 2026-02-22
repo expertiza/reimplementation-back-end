@@ -21,8 +21,8 @@ class JoinTeamRequestsController < ApplicationController
       current_user_has_admin_privileges?
       
     when 'create'
-      # Any student can create a join team request
-      current_user_has_student_privileges?
+      # Any student who is the partcipant of an assignment can create a join team request
+      current_user_is_assignment_participant?(params[:assignment_id])
     
     when 'show'
       # The participant who made the request OR any team member can view it
@@ -62,7 +62,6 @@ class JoinTeamRequestsController < ApplicationController
     render json: join_team_requests, each_serializer: JoinTeamRequestSerializer, status: :ok
   end
 
-  # GET /join_team_requests/1
   # GET /join_team_requests/1
   # show the join team request that is passed into the route
   def show
@@ -153,7 +152,6 @@ class JoinTeamRequestsController < ApplicationController
     end
   end
 
-  # DELETE /join_team_requests/1
   # DELETE /join_team_requests/1
   # delete a join team request
   def destroy
