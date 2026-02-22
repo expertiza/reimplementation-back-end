@@ -97,6 +97,7 @@ class GradesController < ApplicationController
                     # Record this response's values and comments, one pair for each item in the corresponding questionnaire.
                     responses_by_round[round_id].each_key do |item_id|
                         response_answer = Answer.find_by(item_id: item_id, response_id: response_id)
+                        next unless response_answer
                         responses_by_round[round_id][item_id][:answers][:values].append(response_answer[:answer])
                         responses_by_round[round_id][item_id][:answers][:comments].append(response_answer[:comments])
                     end
@@ -125,7 +126,7 @@ class GradesController < ApplicationController
         rescue ActiveRecord::RecordNotFound
           render json: { error: "Participant or assignment not found" }, status: :not_found
         rescue StandardError => e
-          render json: { error: "Internal server error" }, status: :internal_server_error
+          render json: { error: e.message }, status: :internal_server_error
         end
     end
 
