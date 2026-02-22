@@ -82,6 +82,11 @@ Rails.application.routes.draw do
           post '/sign_up', to: 'signed_up_teams#sign_up'
           post '/sign_up_student', to: 'signed_up_teams#sign_up_student'
         end
+         member do
+          post :create_advertisement
+          patch :update_advertisement
+          delete :remove_advertisement
+        end
       end
 
       resources :join_team_requests do
@@ -129,14 +134,6 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :signed_up_teams do
-        member do
-          post :create_advertisement
-          patch :update_advertisement
-          delete :remove_advertisement
-        end
-      end
-      
       resources :student_teams, only: %i[create update] do
         collection do
           get :view          
@@ -157,6 +154,7 @@ Rails.application.routes.draw do
           put 'join_requests/:join_request_id', to: 'teams#update_join_request'
         end
       end
+  
       resources :teams_participants, only: [] do
         collection do
           put :update_duty
@@ -166,12 +164,14 @@ Rails.application.routes.draw do
           post :add_participant
           delete :delete_participants
         end
-      end      
+      end     
+  
       resources :grades do
         collection do        
           get '/:assignment_id/view_all_scores', to: 'grades#view_all_scores'
           patch '/:participant_id/assign_grade', to: 'grades#assign_grade'
           get '/:participant_id/edit', to: 'grades#edit'
+          get '/:assignment_id/:participant_id/get_review_tableau_data', to: 'grades#get_review_tableau_data'
           get '/:assignment_id/view_our_scores', to: 'grades#view_our_scores'
           get '/:assignment_id/view_my_scores', to: 'grades#view_my_scores'
           get '/:participant_id/instructor_review', to: 'grades#instructor_review'
