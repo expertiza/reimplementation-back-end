@@ -9,6 +9,29 @@ class Response < ApplicationRecord
 
   alias map response_map
   delegate :response_assignment, :reviewee, :reviewer, to: :map
+  # Delegate common methods to response_map for easier access
+  delegate :questionnaire, :reviewee, :reviewer, to: :map
+
+  validates :map_id, presence: true
+
+  # Callback to handle any post-submission actions
+  after_save :handle_response_submission
+
+  # Marks the response as submitted
+  # @return [Boolean] success of the submission update
+  def submit
+    update(is_submitted: true)
+  end
+
+  # Handles any necessary actions after a response is submitted
+  # Currently focuses on email notifications
+  # Only triggers when is_submitted changes from false to true
+  def handle_response_submission
+    return unless is_submitted_changed? && is_submitted?
+
+    # Send email notification through the response map
+    send_notification_email
+  end
 
   # return the questionnaire that belongs to the response
   def questionnaire
@@ -72,5 +95,32 @@ class Response < ApplicationRecord
     end
     # puts "total: #{total_weight * questionnaire.max_question_score} "
     total_weight * questionnaire.max_question_score
+  end
+
+  # Sends notification emails when appropriate
+  # Currently handles feedback response notifications
+  def send_notification_email
+    return unless map.assignment.present?
+
+    if map.is_a?(FeedbackResponseMap)
+      FeedbackEmailMailer.new(map, map.assignment).call
+    end
+    # Add other response map type email services as needed
+  end
+
+  # Gets all active questions that can be scored
+  # @return [Array<Question>] list of active scored questions
+  def active_scored_questions
+    return [] if scores.empty?
+
+    questionnaire = questionnaire_by_answer(scores.first)
+    questionnaire.items.select(&:scorable?)
+  end
+
+  # Retrieves the questionnaire associated with an answer
+  # @param answer [Answer] the answer to find the questionnaire for
+  # @return [Questionnaire] the associated questionnaire
+  def questionnaire_by_answer(answer)
+    answer&.question&.questionnaire
   end
 end
