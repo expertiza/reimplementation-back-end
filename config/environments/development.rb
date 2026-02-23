@@ -32,6 +32,9 @@ Rails.application.configure do
     config.cache_store = :null_store
   end
 
+  # Override the cache store in development to avoid credentials issues
+  config.cache_store = :null_store
+
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 
@@ -65,4 +68,7 @@ Rails.application.configure do
   # config.action_cable.disable_request_forgery_protection = true
   config.hosts << 'localhost'
   config.hosts << "www.example.com"
+
+  # Add this line to your development.rb
+  config.require_master_key = false
 end
