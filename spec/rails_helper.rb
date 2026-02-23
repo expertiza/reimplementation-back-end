@@ -271,7 +271,6 @@ at_exit do
       end
     end
   end
-end
 
 Shoulda::Matchers.configure do |config|
   config.integrate do |with|
