@@ -57,7 +57,7 @@ RSpec.describe 'Advertisements API', type: :request do
     )
   }
 
-  let(:sign_up_topic) {
+  let(:project_topic) {
     ProjectTopic.create!(
       topic_name: 'Test Topic',
       assignment_id: assignment.id,
@@ -102,7 +102,7 @@ RSpec.describe 'Advertisements API', type: :request do
 
   let(:signed_up_team) {
     SignedUpTeam.create!(
-      sign_up_topic_id: sign_up_topic.id,
+      project_topic_id: project_topic.id,
       team_id: team.id,
       is_waitlisted: false
     )
@@ -127,8 +127,8 @@ RSpec.describe 'Advertisements API', type: :request do
         signed_up_team # Create signed up team
         signed_up_team.update(advertise_for_partner: true, comments_for_advertisement: 'Looking for strong members!')
 
-        # Simulate endpoint: GET /assignments/:id/sign_up_topics
-        get "/sign_up_topics?assignment_id=#{assignment.id}", headers: student2_headers
+        # Simulate endpoint: GET /assignments/:id/project_topics
+        get "/project_topics?assignment_id=#{assignment.id}", headers: student2_headers
         
         expect(response).to have_http_status(:ok)
         body = JSON.parse(response.body)
@@ -141,7 +141,7 @@ RSpec.describe 'Advertisements API', type: :request do
         signed_up_team.update(advertise_for_partner: true, comments_for_advertisement: 'We need members!')
         participant2 # ensure exists
 
-        get "/sign_up_topics?assignment_id=#{assignment.id}", headers: student2_headers
+        get "/project_topics?assignment_id=#{assignment.id}", headers: student2_headers
         
         expect(response).to have_http_status(:ok)
         # The frontend will check signed_up_teams[].advertise_for_partner to render trumpet icon
@@ -152,7 +152,7 @@ RSpec.describe 'Advertisements API', type: :request do
         signed_up_team.update(advertise_for_partner: true, comments_for_advertisement: ad_text)
         participant2 # ensure exists
 
-        get "/sign_up_topics?assignment_id=#{assignment.id}", headers: student2_headers
+        get "/project_topics?assignment_id=#{assignment.id}", headers: student2_headers
         
         expect(response).to have_http_status(:ok)
         # Frontend will display comments_for_advertisement text

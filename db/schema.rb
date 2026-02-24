@@ -258,7 +258,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_26_161701) do
     t.string "link"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["assignment_id"], name: "fk_sign_up_categories_sign_up_topics"
     t.index ["assignment_id"], name: "index_project_topics_on_assignment_id"
   end
 

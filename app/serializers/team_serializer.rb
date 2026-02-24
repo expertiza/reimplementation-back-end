@@ -15,7 +15,7 @@ class TeamSerializer < ActiveModel::Serializer
   end
 
   def sign_up_topic
-    signed_up_team&.sign_up_topic
+    signed_up_team&.project_topic
   end
 
   def signed_up_team

@@ -6,14 +6,14 @@ class SignedUpTeamsController < ApplicationController
     if params[:assignment_id].present?
       # Get all signed up teams for an assignment (across all topics)
       topic_ids = ProjectTopic.where(assignment_id: params[:assignment_id]).pluck(:id)
-      @signed_up_teams = SignedUpTeam.where(sign_up_topic_id: topic_ids)
-                                      .includes(team: :users, sign_up_topic: :assignment)
-      render json: @signed_up_teams, include: { team: { methods: [:team_size, :max_size] }, sign_up_topic: {} }
+      @signed_up_teams = SignedUpTeam.where(project_topic_id: topic_ids)
+                                      .includes(team: :users, project_topic: :assignment)
+      render json: @signed_up_teams, include: { team: { methods: [:team_size, :max_size] }, project_topic: {} }
     elsif params[:topic_id].present?
       # Get signed up teams for a specific topic with their participants
-      @signed_up_teams = SignedUpTeam.where(sign_up_topic_id: params[:topic_id])
-                                      .includes(team: :users, sign_up_topic: :assignment)
-      render json: @signed_up_teams, include: { team: { include: :users, methods: [:team_size, :max_size] }, sign_up_topic: {} }
+      @signed_up_teams = SignedUpTeam.where(project_topic_id: params[:topic_id])
+                                      .includes(team: :users, project_topic: :assignment)
+      render json: @signed_up_teams, include: { team: { include: :users, methods: [:team_size, :max_size] }, project_topic: {} }
     else
       render json: { error: 'Either assignment_id or topic_id parameter is required' }, status: :bad_request
     end

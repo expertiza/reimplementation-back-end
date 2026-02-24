@@ -178,7 +178,7 @@ end
 # Team 1 signs up for Topic 1 and advertises for partners
 signed_up_team1 = SignedUpTeam.find_or_create_by!(
   team_id: team1.id,
-  sign_up_topic_id: topics[0].id
+  project_topic_id: topics[0].id
 ) do |sut|
   sut.is_waitlisted = false
   sut.preference_priority_number = 1
@@ -191,7 +191,7 @@ puts "Team #{team1.name} signed up for topic '#{topics[0].topic_name}' WITH adve
 if team2
   signed_up_team2 = SignedUpTeam.find_or_create_by!(
     team_id: team2.id,
-    sign_up_topic_id: topics[1].id
+    project_topic_id: topics[1].id
   ) do |sut|
     sut.is_waitlisted = false
     sut.preference_priority_number = 1
@@ -205,7 +205,7 @@ end
 if team3
   signed_up_team3 = SignedUpTeam.find_or_create_by!(
     team_id: team3.id,
-    sign_up_topic_id: topics[2].id
+    project_topic_id: topics[2].id
   ) do |sut|
     sut.is_waitlisted = false
     sut.preference_priority_number = 1
@@ -227,7 +227,7 @@ if user2 && team2
   # Sign up on waitlist with advertisement
   SignedUpTeam.find_or_create_by!(
     team_id: team4.id,
-    sign_up_topic_id: topics[0].id
+    project_topic_id: topics[0].id
   ) do |sut|
     sut.is_waitlisted = true
     sut.preference_priority_number = 2
@@ -244,7 +244,7 @@ puts "Assignment ID: #{assignment.id}"
 puts "Assignment Name: #{assignment.name}"
 puts "\nTopics created:"
 topics.each do |topic|
-  signed_teams = SignedUpTeam.where(sign_up_topic_id: topic.id)
+  signed_teams = SignedUpTeam.where(project_topic_id: topic.id)
   advertising_teams = signed_teams.where(advertise_for_partner: true)
   puts "  - #{topic.topic_name} (ID: #{topic.id})"
   puts "    Max choosers: #{topic.max_choosers}"
