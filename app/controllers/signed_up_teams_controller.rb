@@ -5,7 +5,7 @@ class SignedUpTeamsController < ApplicationController
   def index
     if params[:assignment_id].present?
       # Get all signed up teams for an assignment (across all topics)
-      topic_ids = SignUpTopic.where(assignment_id: params[:assignment_id]).pluck(:id)
+      topic_ids = ProjectTopic.where(assignment_id: params[:assignment_id]).pluck(:id)
       @signed_up_teams = SignedUpTeam.where(sign_up_topic_id: topic_ids)
                                       .includes(team: :users, sign_up_topic: :assignment)
       render json: @signed_up_teams, include: { team: { methods: [:team_size, :max_size] }, sign_up_topic: {} }
@@ -17,11 +17,6 @@ class SignedUpTeamsController < ApplicationController
     else
       render json: { error: 'Either assignment_id or topic_id parameter is required' }, status: :bad_request
     end
-  end
-
-  def show
-    @signed_up_team = SignedUpTeam.find_by(id:params[:id])
-    render json: @signed_up_team
   end
 
   def show

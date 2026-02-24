@@ -101,10 +101,10 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :sign_up_topics do
+      resources :project_topics do
         collection do
           get :filter
-          delete '/', to: 'sign_up_topics#destroy'
+          delete '/', to: 'project_topics#destroy'
         end
       end
 
@@ -154,7 +154,6 @@ Rails.application.routes.draw do
           put 'join_requests/:join_request_id', to: 'teams#update_join_request'
         end
       end
-  
       resources :teams_participants, only: [] do
         collection do
           put :update_duty
@@ -164,8 +163,7 @@ Rails.application.routes.draw do
           post :add_participant
           delete :delete_participants
         end
-      end     
-  
+      end      
       resources :grades do
         collection do        
           get '/:assignment_id/view_all_scores', to: 'grades#view_all_scores'
