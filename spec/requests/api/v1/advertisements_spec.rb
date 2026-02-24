@@ -58,7 +58,7 @@ RSpec.describe 'Advertisements API', type: :request do
   }
 
   let(:sign_up_topic) {
-    SignUpTopic.create!(
+    ProjectTopic.create!(
       topic_name: 'Test Topic',
       assignment_id: assignment.id,
       max_choosers: 2

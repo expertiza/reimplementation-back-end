@@ -64,7 +64,7 @@ topics_data = [
 
 topics = []
 topics_data.each_with_index do |topic_data, index|
-  topic = SignUpTopic.find_or_create_by!(
+  topic = ProjectTopic.find_or_create_by!(
     topic_name: topic_data[:name],
     assignment_id: assignment.id
   ) do |t|

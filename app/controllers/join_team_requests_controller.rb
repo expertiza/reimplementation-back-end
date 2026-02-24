@@ -142,7 +142,7 @@ class JoinTeamRequestsController < ApplicationController
   end
 
   # PATCH/PUT /join_team_requests/1
-  # Updates a join team request (comments only, not status)
+  # Updates a join team request (only comments can be updated)
   def update
     # Only allow updating comments
     if @join_team_request.update(comments: params[:comments])
