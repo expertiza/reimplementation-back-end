@@ -485,8 +485,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_004501) do
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
   add_foreign_key "duties", "users", column: "instructor_id"
-  add_foreign_key "invitations", "participants", column: "to_id"
-  add_foreign_key "invitations", "teams", column: "from_id"
   add_foreign_key "items", "questionnaires"
   add_foreign_key "participants", "duties"
   add_foreign_key "participants", "join_team_requests"
