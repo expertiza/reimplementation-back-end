@@ -1,5 +1,5 @@
 class AssignmentsDutiesController < ApplicationController
-  include AuthorizationHelper
+  include Authorization
   #before_action :authenticate_user!
   before_action :action_allowed!, only: [:create, :destroy]
   # GET /assignments/:assignment_id/duties

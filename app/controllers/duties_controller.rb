@@ -1,5 +1,5 @@
 class DutiesController < ApplicationController
-  include AuthorizationHelper
+  include Authorization
   #before_action :authenticate_user!
   before_action :action_allowed!, only: [:index, :show, :create, :update, :destroy]
   before_action :set_duty, only: [:show, :update, :destroy]
