@@ -81,4 +81,35 @@ class FeedbackResponseMap < ResponseMap
     FeedbackEmailMailer.new(self, assignment).call
   end
 
+  # Return feedback maps for an assignment
+  def self.for_assignment(assignment_id)
+    joins(:assignment).where(assignments: { id: assignment_id })
+  end
+
+  # Return feedback maps for a reviewer and eager-load responses
+  def self.for_reviewer_with_responses(reviewer_id)
+    where(reviewer_id: reviewer_id).includes(:responses)
+  end
+
+  # Compute response statistics for an assignment
+  def self.response_rate_for_assignment(assignment_id)
+    total_maps = for_assignment(assignment_id).count
+
+    completed_maps = for_assignment(assignment_id)
+                     .joins(:responses)
+                     .where(responses: { is_submitted: true })
+                     .distinct
+                     .count
+
+    {
+      total_feedback_maps: total_maps,
+      completed_feedback_maps: completed_maps,
+      response_rate: total_maps > 0 ? (completed_maps.to_f / total_maps * 100).round(2) : 0
+    }
+  end
+
+  # Build a new instance from controller params (keeps creation details centralized)
+  def self.build_from_params(params)
+    new(params)
+  end
 end

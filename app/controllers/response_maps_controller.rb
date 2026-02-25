@@ -75,6 +75,27 @@ class ResponseMapsController < ApplicationController
     render json: report
   end
 
+  # Retrieves all feedback response maps for a specific assignment
+  # GET /response_maps/assignment/:assignment_id
+  def assignment_feedback
+    @feedback_maps = ResponseMap.for_assignment(params[:assignment_id])
+    render json: @feedback_maps
+  end
+
+  # Gets all feedback maps for a specific reviewer (includes responses)
+  # GET /response_maps/reviewer/:reviewer_id
+  def reviewer_feedback
+    @feedback_maps = ResponseMap.for_reviewer_with_responses(params[:reviewer_id])
+    render json: @feedback_maps, include: :responses
+  end
+
+  # Calculates and returns feedback response statistics for an assignment
+  # GET /response_maps/response_rate/:assignment_id
+  def feedback_response_rate
+    stats = ResponseMap.response_rate_for_assignment(params[:assignment_id])
+    render json: stats
+  end
+
   private
 
   # Locates the response map by ID and sets it as an instance variable
