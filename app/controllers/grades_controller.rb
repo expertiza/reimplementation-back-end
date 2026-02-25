@@ -6,7 +6,7 @@ class GradesController < ApplicationController
         when 'view_our_scores','view_my_scores'
             set_participant_and_team_via_assignment
             current_user_is_assignment_participant?(params[:assignment_id])
-        when 'view_all_scores'
+        when 'view_all_scores', 'get_review_tableau_data'
             current_user_teaching_staff_of_assignment?(params[:assignment_id])
         when 'edit', 'assign_grade', 'instructor_review'
             set_team_and_assignment_via_participant
@@ -51,6 +51,105 @@ class GradesController < ApplicationController
     # similar to view but scoped to the requesting student’s own scores given by its teammates and also .
     def view_my_scores
         render json: get_my_scores_data(@participant)
+    end
+
+    # (GET /grades/:assignment_id/:participant_id/get_review_tableau_data)
+    # Given an AssignmentParticipant ID, gather and return all reviews completed by that participant for the corresponding assignment.
+    def get_review_tableau_data
+        responses_by_round = {}
+        begin
+            # Determine all questionnaires used as part of this assignment, grouped by the round in which they are used.
+            AssignmentQuestionnaire.where("assignment_id = " + params[:assignment_id]).find_each do |pairing|
+                round_id = pairing[:used_in_round]
+                rubric_id = pairing[:questionnaire_id]
+
+                # If this round has not been recorded yet, record it.
+                if !responses_by_round.key?(round_id)
+                    responses_by_round[round_id] = {}
+                end
+                # If this questionnaire has not been recorded yet, record it.
+                if !responses_by_round[round_id].key?(rubric_id)
+                    # Items (the "questions") are always the same across responses of the same rubric.
+                    # Initialize them into a hash using a helper function.
+                    responses_by_round[round_id] = get_items_from_questionnaire(rubric_id)
+                end
+            end
+
+            response_mapping_condition = "reviewed_object_id = " + params[:assignment_id] + " AND reviewer_id = " + params[:participant_id]
+            ReviewResponseMap.where(response_mapping_condition).find_each do |mapping|
+                Response.where("map_id = " + mapping[:id].to_s).find_each do |response|
+
+                    # response = Response.find_by(map_id: mapping[:id])
+
+                    if response == nil
+                        # If, for some reason, there is no response with this mapping id, move on to the next mapping id.
+                        next
+                    end
+
+                    response_id = response[:id]
+                    round_id = response[:round]
+
+                    if !responses_by_round.key?(round_id)
+                        # If, for some reason, there is no questionnaire associated with the given round, move on to the next mapping id.
+                        next
+                    end
+
+                    # Record this response's values and comments, one pair for each item in the corresponding questionnaire.
+                    responses_by_round[round_id].each_key do |item_id|
+                        response_answer = Answer.find_by(item_id: item_id, response_id: response_id)
+                        next unless response_answer
+                        responses_by_round[round_id][item_id][:answers][:values].append(response_answer[:answer])
+                        responses_by_round[round_id][item_id][:answers][:comments].append(response_answer[:comments])
+                    end
+                end
+            end
+
+            # Get participant and user information for the response
+            participant = AssignmentParticipant.find(params[:participant_id])
+            assignment = Assignment.find(params[:assignment_id])
+
+            # Return JSON containing all answer values and comments associated with this reviewer and for this assignment.
+            render json: {
+                responses_by_round: responses_by_round,
+                participant: {
+                    id: participant.id,
+                    user_id: participant.user_id,
+                    user_name: participant.user.name,
+                    full_name: participant.user.full_name,
+                    handle: participant.handle
+                },
+                assignment: {
+                    id: assignment.id,
+                    name: assignment.name
+                }
+            }
+        rescue ActiveRecord::RecordNotFound
+          render json: { error: "Participant or assignment not found" }, status: :not_found
+        rescue StandardError => e
+          render json: { error: e.message }, status: :internal_server_error
+        end
+    end
+
+    # A helper function which, given a questionnaire id, returns a hash keyed by the ids of that questionnaire's items.
+    # The values of the hash include the description (usually a question) of the item, and an empty hash for including responses.
+    def get_items_from_questionnaire(questionnaire_id)
+        questionnaire = Questionnaire.find_by(id: questionnaire_id)
+        item_data = {
+            min_answer_value: questionnaire[:min_question_score],
+            max_answer_value: questionnaire[:max_question_score],
+            items: {}
+        }
+        Item.where("questionnaire_id = " + questionnaire_id.to_s).find_each do |item|
+            item_data[:items][item[:id]] = {
+                description: item[:txt],
+                question_type: item[:question_type],
+                answers: {
+                    values: [],
+                    comments: []
+                }
+            }
+        end
+        return item_data
     end
 
 

@@ -90,10 +90,10 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :sign_up_topics do
+      resources :project_topics do
         collection do
           get :filter
-          delete '/', to: 'sign_up_topics#destroy'
+          delete '/', to: 'project_topics#destroy'
         end
       end
 
@@ -158,6 +158,7 @@ Rails.application.routes.draw do
           get '/:assignment_id/view_all_scores', to: 'grades#view_all_scores'
           patch '/:participant_id/assign_grade', to: 'grades#assign_grade'
           get '/:participant_id/edit', to: 'grades#edit'
+          get '/:assignment_id/:participant_id/get_review_tableau_data', to: 'grades#get_review_tableau_data'
           get '/:assignment_id/view_our_scores', to: 'grades#view_our_scores'
           get '/:assignment_id/view_my_scores', to: 'grades#view_my_scores'
           get '/:participant_id/instructor_review', to: 'grades#instructor_review'
