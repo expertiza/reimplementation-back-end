@@ -175,4 +175,12 @@ Rails.application.routes.draw do
           get '/:participant_id/instructor_review', to: 'grades#instructor_review'
         end
       end
+      resources :duties do
+        collection do
+          get :accessible_duties
+        end
+      end
+      resources :assignments do
+        resources :duties, controller: 'assignments_duties', only: [:index, :create, :destroy]
+      end
 end

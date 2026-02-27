@@ -4,6 +4,7 @@ class AssignmentParticipant < Participant
   include ReviewAggregator
   has_many :sent_invitations, class_name: 'Invitation', foreign_key: 'from_id'
   belongs_to :user
+  belongs_to :duty, optional: true
   validates :handle, presence: true
 
   def retract_sent_invitations
