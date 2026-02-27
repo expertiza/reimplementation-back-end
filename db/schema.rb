@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_09_004501) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_26_161701) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -104,58 +104,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_004501) do
     t.boolean "has_teams", default: false
     t.boolean "has_topics", default: false
     t.boolean "vary_by_round", default: false, null: false
-    t.boolean "show_template_review", default: false, null: false
-    t.boolean "show_teammate_review", default: false, null: false
-    t.boolean "is_pair_programming", default: false, null: false
-    t.boolean "has_mentors", default: false, null: false
-    t.boolean "auto_assign_mentors", default: false, null: false
-    t.integer "maximum_number_of_reviews_per_submission"
-    t.string "review_strategy"
-    t.boolean "review_rubric_varies_by_round", default: false, null: false
-    t.boolean "review_rubric_varies_by_topic", default: false, null: false
-    t.boolean "review_rubric_varies_by_role", default: false, null: false
-    t.boolean "has_max_review_limit", default: false, null: false
-    t.integer "set_allowed_number_of_reviews_per_reviewer"
-    t.integer "set_required_number_of_reviews_per_reviewer"
-    t.boolean "is_review_anonymous", default: false, null: false
-    t.boolean "is_review_done_by_teams", default: false, null: false
-    t.boolean "allow_self_reviews", default: false, null: false
-    t.boolean "reviews_visible_to_other_reviewers", default: false, null: false
-    t.integer "number_of_review_rounds"
-    t.boolean "has_quizzes", default: false, null: false
-    t.boolean "calibration_for_training", default: false, null: false
-    t.boolean "use_signup_deadline", default: false, null: false
-    t.boolean "use_drop_topic_deadline", default: false, null: false
-    t.boolean "use_team_formation_deadline", default: false, null: false
-    t.boolean "staggered_deadline_assignment", default: false, null: false
-    t.json "weights"
-    t.json "notification_limits"
-    t.json "use_date_updater"
-    t.json "submission_allowed"
-    t.json "review_allowed"
-    t.json "teammate_allowed"
-    t.json "metareview_allowed"
-    t.json "reminder"
-    t.boolean "allow_tag_prompts", default: false, null: false
-    t.boolean "available_to_students", default: false, null: false
-    t.boolean "allow_topic_suggestion_from_students", default: false, null: false
-    t.boolean "enable_bidding_for_topics", default: false, null: false
-    t.boolean "enable_bidding_for_reviews", default: false, null: false
-    t.boolean "enable_authors_to_review_other_topics", default: false, null: false
-    t.boolean "allow_reviewer_to_choose_topic_to_review", default: false, null: false
-    t.boolean "allow_participants_to_create_bookmarks", default: false, null: false
-    t.boolean "apply_late_policy", default: false, null: false
     t.index ["course_id"], name: "index_assignments_on_course_id"
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
-  end
-
-  create_table "assignments_duties", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.bigint "assignment_id", null: false
-    t.bigint "duty_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["assignment_id"], name: "index_assignments_duties_on_assignment_id"
-    t.index ["duty_id"], name: "index_assignments_duties_on_duty_id"
   end
 
   create_table "bookmark_ratings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -172,11 +122,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_004501) do
     t.text "description"
     t.integer "user_id"
     t.integer "topic_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "cakes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -217,15 +162,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_004501) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["parent_type", "parent_id"], name: "index_due_dates_on_parent"
-  end
-
-  create_table "duties", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.string "name"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.bigint "instructor_id", null: false
-    t.boolean "private", default: false
-    t.index ["instructor_id"], name: "index_duties_on_instructor_id"
   end
 
   create_table "institutions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -269,7 +205,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_004501) do
     t.integer "participant_id"
     t.integer "team_id"
     t.text "comments"
-    t.string "reply_status"
+    t.string "status"
   end
 
   create_table "nodes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -299,8 +235,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_004501) do
     t.integer "parent_id", null: false
     t.string "type", null: false
     t.float "grade"
-    t.bigint "duty_id"
-    t.index ["duty_id"], name: "index_participants_on_duty_id"
     t.index ["join_team_request_id"], name: "index_participants_on_join_team_request_id"
     t.index ["team_id"], name: "index_participants_on_team_id"
     t.index ["user_id"], name: "fk_participant_users"
@@ -371,7 +305,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_004501) do
     t.integer "reviewee_id", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "type"
     t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 
@@ -402,8 +335,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_004501) do
     t.integer "preference_priority_number"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.text "comments_for_advertisement"
-    t.boolean "advertise_for_partner"
     t.index ["project_topic_id"], name: "index_signed_up_teams_on_project_topic_id"
     t.index ["team_id"], name: "index_signed_up_teams_on_team_id"
   end
@@ -419,10 +350,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_004501) do
   end
 
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.string "name", null: false
-    t.string "type", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "name", null: false
+    t.string "type", null: false
     t.integer "parent_id", null: false
     t.integer "grade_for_submission"
     t.string "comment_for_submission"
@@ -445,6 +376,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_004501) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["team_id", "user_id"], name: "index_teams_users_on_team_id_and_user_id", unique: true
     t.index ["team_id"], name: "index_teams_users_on_team_id"
     t.index ["user_id"], name: "index_teams_users_on_user_id"
   end
@@ -480,13 +412,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_004501) do
   add_foreign_key "account_requests", "roles"
   add_foreign_key "assignments", "courses"
   add_foreign_key "assignments", "users", column: "instructor_id"
-  add_foreign_key "assignments_duties", "assignments"
-  add_foreign_key "assignments_duties", "duties"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
-  add_foreign_key "duties", "users", column: "instructor_id"
   add_foreign_key "items", "questionnaires"
-  add_foreign_key "participants", "duties"
   add_foreign_key "participants", "join_team_requests"
   add_foreign_key "participants", "teams"
   add_foreign_key "participants", "users"
