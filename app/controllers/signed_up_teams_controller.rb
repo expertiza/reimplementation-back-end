@@ -1,11 +1,26 @@
 class SignedUpTeamsController < ApplicationController
 
-  # Returns signed up topics using sign_up_topic assignment id
-  # Retrieves sign_up_topic using topic_id as a parameter
+  # Returns signed up teams
+  # Can query by topic_id or assignment_id
   def index
-    # puts params[:topic_id]
-    @project_topic = ProjectTopic.find(params[:topic_id])
-    @signed_up_team = SignedUpTeam.find_team_participants(@project_topic.assignment_id)
+    if params[:assignment_id].present?
+      # Get all signed up teams for an assignment (across all topics)
+      topic_ids = ProjectTopic.where(assignment_id: params[:assignment_id]).pluck(:id)
+      @signed_up_teams = SignedUpTeam.where(project_topic_id: topic_ids)
+                                      .includes(team: :users, project_topic: :assignment)
+      render json: @signed_up_teams, include: { team: { methods: [:team_size, :max_size] }, project_topic: {} }
+    elsif params[:topic_id].present?
+      # Get signed up teams for a specific topic with their participants
+      @signed_up_teams = SignedUpTeam.where(project_topic_id: params[:topic_id])
+                                      .includes(team: :users, project_topic: :assignment)
+      render json: @signed_up_teams, include: { team: { include: :users, methods: [:team_size, :max_size] }, project_topic: {} }
+    else
+      render json: { error: 'Either assignment_id or topic_id parameter is required' }, status: :bad_request
+    end
+  end
+
+  def show
+    @signed_up_team = SignedUpTeam.find_by(id:params[:id])
     render json: @signed_up_team
   end
 
@@ -64,10 +79,33 @@ class SignedUpTeamsController < ApplicationController
     end
   end
 
-  private
-
-  def signed_up_teams_params
-    params.require(:signed_up_team).permit(:topic_id, :team_id, :is_waitlisted, :preference_priority_number)
+  def create_advertisement
+    params[:signed_up_team] = { advertise_for_partner: true, comments_for_advertisement: params[:comments_for_advertisement] }
+    update_custom_message("Advertisement created successfully.")
   end
 
+  def update_advertisement
+    params[:signed_up_team] = { comments_for_advertisement: params[:comments_for_advertisement] }
+    update_custom_message("Advertisement updated successfully.")
+  end
+
+  def remove_advertisement
+    params[:signed_up_team] = { advertise_for_partner: false, comments_for_advertisement: nil }
+    update_custom_message("Advertisement removed successfully.")
+  end
+
+  private
+
+  def update_custom_message(message)
+    @signed_up_team = SignedUpTeam.find(params[:id])
+    if @signed_up_team.update(signed_up_teams_params)
+      render json: { success: true, message: message }, status: :ok
+    else
+      render json: {message: @signed_up_team.errors.first, success:false}, status: :unprocessable_entity
+    end
+  end
+
+  def signed_up_teams_params
+    params.require(:signed_up_team).permit(:topic_id, :team_id, :is_waitlisted, :preference_priority_number, :comments_for_advertisement, :advertise_for_partner)
+  end
 end

@@ -151,7 +151,7 @@ class AssignmentsController < ApplicationController
   end
 
   # check if assignment has topics
-  # has_topics is set to true if there is SignUpTopic corresponding to the input assignment id 
+  # has_topics is set to true if there is ProjectTopic corresponding to the input assignment id 
   def has_topics
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
@@ -221,7 +221,7 @@ class AssignmentsController < ApplicationController
     topic_id = SignedUpTeam
                .joins(team: :teams_users)
                .where(teams_users: { user_id: current_user.id, team_id: Team.where(parent_id: assignment.id).pluck(:id) })
-               .pluck(:sign_up_topic_id)
+               .pluck(:project_topic_id)
                .first
 
     assignment.staggered_and_no_topic?(topic_id)

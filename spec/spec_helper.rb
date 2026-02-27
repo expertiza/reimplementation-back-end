@@ -18,14 +18,17 @@
 require 'simplecov'
 require 'coveralls'
 require "simplecov_json_formatter"
-Coveralls.wear! 'rails'
+# Coveralls.wear! 'rails'
 SimpleCov.formatter = SimpleCov::Formatter::JSONFormatter
 # SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
 #                                                                  SimpleCov::Formatter::HTMLFormatter,
 #                                                                  Coveralls::SimpleCov::Formatter
 #                                                                ])
 
-SimpleCov.start 'rails'
+if !ENV['COVERAGE_STARTED']
+  SimpleCov.start 'rails'
+  ENV['COVERAGE_STARTED'] = 'true'
+end
 
 RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate

@@ -73,4 +73,22 @@ class Item < ApplicationRecord
     # Cast the existing record to the desired subclass
     klass.new(record.attributes)
   end
+
+  def max_score
+    weight
+  end
+
+  def self.for(record)
+    klass = case record.question_type
+            when 'Criterion'
+              Criterion
+            when 'Scale'
+              Scale
+            else
+              Item
+            end
+
+    # Cast the existing record to the desired subclass
+    klass.new(record.attributes)
+  end
 end

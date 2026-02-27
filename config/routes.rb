@@ -82,11 +82,22 @@ Rails.application.routes.draw do
           post '/sign_up', to: 'signed_up_teams#sign_up'
           post '/sign_up_student', to: 'signed_up_teams#sign_up_student'
         end
+         member do
+          post :create_advertisement
+          patch :update_advertisement
+          delete :remove_advertisement
+        end
       end
 
       resources :join_team_requests do
+        member do
+          patch 'accept', to: 'join_team_requests#accept'
+          patch 'decline', to: 'join_team_requests#decline'
+        end
         collection do
-          post 'decline/:id', to:'join_team_requests#decline'
+          get 'for_team/:team_id', to: 'join_team_requests#for_team'
+          get 'by_user/:user_id', to: 'join_team_requests#by_user'
+          get 'pending', to: 'join_team_requests#pending'
         end
       end
 
