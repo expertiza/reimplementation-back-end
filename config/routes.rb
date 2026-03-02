@@ -48,6 +48,7 @@ Rails.application.routes.draw do
       end
       resources :response_maps, only: [:index, :show, :create] do
         collection do
+          post '/:id/submit_response', to: 'response_maps#submit_response'
           get 'response_report/:assignment_id', to: 'response_maps#response_report'
           get 'assignment/:assignment_id',      to: 'response_maps#assignment_feedback'
           get 'reviewer/:reviewer_id',          to: 'response_maps#reviewer_feedback'

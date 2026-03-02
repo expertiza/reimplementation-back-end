@@ -48,8 +48,6 @@ class ResponseMapsController < ApplicationController
 
     if @response.save
       # send feedback email now that it’s marked submitted
-      FeedbackEmailMailer.new(@response_map, @response_map.assignment).call
-      render json: { message: 'Response submitted successfully, email sent' }, status: :ok
       handle_submission(@response_map)
     else
       render json: { errors: @response.errors }, status: :unprocessable_entity
