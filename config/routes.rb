@@ -46,7 +46,14 @@ Rails.application.routes.draw do
           post 'bookmarkratings', to: 'bookmarks#save_bookmark_rating_score'
         end
       end
-      resources :response_maps, only: [:index, :show, :create]
+      resources :response_maps, only: [:index, :show, :create] do
+        collection do
+          get 'response_report/:assignment_id', to: 'response_maps#response_report'
+          get 'assignment/:assignment_id',      to: 'response_maps#assignment_feedback'
+          get 'reviewer/:reviewer_id',          to: 'response_maps#reviewer_feedback'
+          get 'response_rate/:assignment_id',   to: 'response_maps#response_rate'
+        end
+      end
       resources :student_tasks do
         collection do
           get :list, action: :list
@@ -163,14 +170,6 @@ Rails.application.routes.draw do
           get '/:assignment_id/view_our_scores', to: 'grades#view_our_scores'
           get '/:assignment_id/view_my_scores', to: 'grades#view_my_scores'
           get '/:participant_id/instructor_review', to: 'grades#instructor_review'
-        end
-      end
-      resources :feedback_response_maps do
-        collection do
-          get 'response_report/:assignment_id', action: :response_report
-          get 'assignment/:assignment_id', action: :assignment_feedback
-          get 'reviewer/:reviewer_id', action: :reviewer_feedback
-          get 'response_rate/:assignment_id', action: :feedback_response_rate
         end
       end
 end
