@@ -1,4 +1,4 @@
-class Api::V1::PasswordsController < ApplicationController
+class PasswordsController < ApplicationController
     before_action :find_user_by_email, only: [:create]
     before_action :find_user_by_token, only: [:update]
     skip_before_action :authenticate_request!, only: [:create, :update]

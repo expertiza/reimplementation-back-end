@@ -48,6 +48,10 @@ class User < ApplicationRecord
     end
   end
 
+  generates_token_for :password_reset, expires_in: 15.minutes do
+    password_salt&.last(10)
+  end
+
   # Welcome email to be sent to the user after they sign up
   def welcome_email; end
 
