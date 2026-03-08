@@ -89,7 +89,6 @@ RSpec.describe 'Submitted Content API', type: :request do
     AssignmentTeam.create!(
       parent_id: assignment.id,
       name: 'Team 1',
-      user_id: student.id
     )
   end
 
