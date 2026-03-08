@@ -91,14 +91,12 @@ RSpec.describe 'teams_participants', type: :request do
     AssignmentTeam.create!(
       parent_id:      assignment.id,
       name:           'team 1',
-      user_id:        team_owner.id
     )
   end
   let(:team_with_course) do
     CourseTeam.create!(
       parent_id:      course.id,
       name:           'team 2',
-      user_id:        team_owner.id
     )
   end
 
@@ -356,7 +354,6 @@ RSpec.describe 'teams_participants', type: :request do
         AssignmentTeam.create!(
           parent_id:      assignment.id,
           name:           'team 1',
-          user_id:        team_owner.id
         )
       end
       let(:assignment_participant1) { AssignmentParticipant.create!(parent_id: assignment.id, user: student_user, handle: student_user.name) }
@@ -369,7 +366,6 @@ RSpec.describe 'teams_participants', type: :request do
         CourseTeam.create!(
           parent_id:      course.id,
           name:           'team 2',
-          user_id:        team_owner.id
         )
       end
       let(:course_participant1) { CourseParticipant.create!(parent_id: course.id, user: student_user, handle: student_user.name) }

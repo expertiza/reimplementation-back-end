@@ -65,7 +65,6 @@ RSpec.describe AssignmentTeam, type: :model do
     AssignmentTeam.create!(
       parent_id:      assignment.id,
       name:           'team 1',
-      user_id:        team_owner.id
     )
   end
 
@@ -111,7 +110,6 @@ RSpec.describe AssignmentTeam, type: :model do
 
   describe 'associations' do
     it { should belong_to(:assignment) }
-    it { should belong_to(:user).optional }
     it { should have_many(:teams_participants).dependent(:destroy) }
     it { should have_many(:users).through(:teams_participants) }
   end

@@ -1,0 +1,3 @@
+2025-04-16T04:36:19.538819Z mysqld_safe Logging to '/var/log/mysql/error.log'.
+2025-04-16T04:36:19.556429Z mysqld_safe Starting mysqld daemon with databases from /var/lib/mysql
+2025-04-16T04:36:56.271171Z mysqld_safe mysqld from pid file /var/lib/mysql/DESKTOP-JM8MLSR.pid ended

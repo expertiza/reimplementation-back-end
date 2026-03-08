@@ -81,7 +81,6 @@ RSpec.describe TeamsController, type: :request do
     CourseTeam.create!(
       parent_id:      course.id,
       name:           'team 2',
-      user_id:        team_owner.id
     )
   end
   
@@ -89,7 +88,6 @@ RSpec.describe TeamsController, type: :request do
     AssignmentTeam.create!(
       parent_id:      assignment.id,
       name:           'team 1',
-      user_id:        team_owner.id
     )
   end
 

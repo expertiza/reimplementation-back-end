@@ -82,6 +82,39 @@ class User < ApplicationRecord
     end
   end
 
+  def can_impersonate?(user)
+    return true if role.super_admin?
+    return true if teaching_assistant_for?(user)
+    return true if recursively_parent_of(user)
+
+    false
+  end
+
+  def recursively_parent_of(user)
+    p = user.parent
+    return false if p.nil?
+    return true if p == self
+    return false if p.role.super_admin?
+
+    recursively_parent_of(p)
+  end
+
+  def teaching_assistant_for?(student)
+    return false unless teaching_assistant?
+    return false unless student.role.name == 'Student'
+
+    # We have to use the Ta object instead of User object
+    # because single table inheritance is not currently functioning
+    ta = Ta.find(id)
+    return true if ta.courses_assisted_with.any? do |c|
+      c.assignments.map(&:participants).flatten.map(&:user_id).include? student.id
+    end
+  end
+
+  def teaching_assistant?
+    true if role.ta?
+  end
+
   def self.from_params(params)
     user = params[:user_id] ? User.find(params[:user_id]) : User.find_by(name: params[:user][:name])
     raise "User #{params[:user_id] || params[:user][:name]} not found" if user.nil?

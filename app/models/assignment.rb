@@ -10,8 +10,10 @@ class Assignment < ApplicationRecord
   has_many :questionnaires, through: :assignment_questionnaires
   has_many :response_maps, foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
-  has_many :sign_up_topics , class_name: 'SignUpTopic', foreign_key: 'assignment_id', dependent: :destroy
-  has_many :due_dates, as: :parent, class_name: 'DueDate', dependent: :destroy
+  has_many :project_topics , class_name: 'ProjectTopic', foreign_key: 'assignment_id', dependent: :destroy
+  has_many :due_dates,as: :parent, class_name: 'DueDate',  dependent: :destroy
+  has_many :assignments_duties, dependent: :destroy
+  has_many :duties, through: :assignments_duties
   belongs_to :course, optional: true
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments
 
@@ -26,7 +28,8 @@ class Assignment < ApplicationRecord
     @has_teams ||= teams.any?
   end
   def num_review_rounds
-    rounds_of_reviews
+    review_rounds = due_dates.where(deadline_type_id: DueDate::REVIEW_DEADLINE_TYPE_ID).count
+    review_rounds.positive? ? review_rounds : (rounds_of_reviews || 0)
   end
 
   # Initializes the directory path for
@@ -154,7 +157,7 @@ class Assignment < ApplicationRecord
   #This method return the value of the has_topics field for the given assignment object.
   # has_topics is of boolean type and is set true if there is any topic associated with the assignment.
   def topics?
-    @has_topics ||= sign_up_topics.any?
+    @has_topics ||= project_topics.any?
   end
 
   #This method return if the given assignment is a team assignment.
@@ -205,8 +208,22 @@ class Assignment < ApplicationRecord
   # Checks if for the given assignment any questionnaire is present with used_in_round field not nil.
   # Returns a boolean value whether such questionnaire is present.
   def varying_rubrics_by_round?
+    return false unless vary_by_round
+
     rubric_with_round = AssignmentQuestionnaire.where(assignment_id: id).where.not(used_in_round: nil).first
     # Check if any rubric has a specified round
     rubric_with_round.present?
   end
+
+  def review_rounds(questionnaireType)
+    review_rounds = []
+    if varying_rubrics_by_round?
+      all_questionnaires = AssignmentQuestionnaire.where(assignment_id: id).where.not(used_in_round: nil).all
+      all_questionnaires.each do |q|
+        review_rounds << q.used_in_round if q.questionnaire.questionnaire_type == "#{questionnaireType}Questionnaire"
+      end
+    end
+    review_rounds
+  end
+
 end
