@@ -30,4 +30,12 @@
 # available at https://guides.rubyonrails.org/i18n.html.
 
 en:
-  hello: "Hello world"
+  user:
+    errors:
+      password_short: "Password is too short (minimum is 6 characters)"
+  password_reset:
+    email_subject: "Expertiza password reset"
+    email_sent: "If the email exists, a reset link has been sent."
+    updated: "Password successfully updated."
+    errors:
+      token_expired: "The token has expired or is invalid."

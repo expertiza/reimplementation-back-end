@@ -11,13 +11,13 @@ class PasswordsController < ApplicationController
     end
 
     # Always return a 200 OK to prevent email enumeration attacks
-    render json: { message: "If the email exists, a reset link has been sent." }, status: :ok
+    render json: { message: I18n.t('password_reset.email_sent') }, status: :ok
   end
 
   # PATCH/PUT /password_resets/:token
   def update
     if @user.update(password_params)
-      render json: { message: "Password successfully updated." }, status: :ok
+      render json: { message: I18n.t('password_reset.updated') }, status: :ok
     else
       render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
     end
@@ -33,7 +33,7 @@ class PasswordsController < ApplicationController
     @user = User.find_by_token_for(:password_reset, params[:token])
 
     unless @user
-      render json: { error: "The token has expired or is invalid." }, status: :unprocessable_entity
+      render json: { error: I18n.t('password_reset.errors.token_expired') }, status: :unprocessable_entity
     end
   end
 
