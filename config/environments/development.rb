@@ -59,14 +59,12 @@ Rails.application.configure do
   config.action_mailer.perform_deliveries = true
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.smtp_settings = {
-    address: 'smtp.gmail.com',
+    address: ENV['MAILER_SERVER'],
     port: 587,
     domain: 'localhost',
-    user_name: 'expertiza.mailer@gmail.com',
-    password: 'xdgmnehqevkevkqy',  # This password should come from a .env file
-    authentication: 'plain',
-    enable_starttls_auto: true
-  } 
+    user_name: ENV['MAILER_USER'],
+    password: ENV['MAILER_PASSWORD']
+  }
   config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
 
   # Raises error for missing translations.
