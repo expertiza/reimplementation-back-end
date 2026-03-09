@@ -7,7 +7,7 @@ class PasswordsController < ApplicationController
   def create
     if @user
       token = @user.generate_token_for(:password_reset)
-      UserMailer.send_password_reset_email(token).deliver_later
+      UserMailer.send_password_reset_email(@user, token).deliver_later
     end
 
     # Always return a 200 OK to prevent email enumeration attacks
