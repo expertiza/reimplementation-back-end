@@ -78,6 +78,20 @@ RSpec.describe PasswordsController, type: :controller do
           expect(JSON.parse(response.body)['errors']).to include(I18n.t('user.errors.password_short'))
         end
       end
+
+      context 'when the token has expired' do
+        before do
+          token = user.generate_token_for(:password_reset)
+          travel_to Time.current + 16.minutes do
+            put :update, params: { token: token }.merge(valid_password_params)
+          end
+        end
+
+        it 'returns invalid token' do
+          expect(response).to have_http_status(:unprocessable_entity)
+          expect(JSON.parse(response.body)['error']).to eq(I18n.t('password_reset.errors.token_expired'))
+        end
+      end
     end
   end
 end
