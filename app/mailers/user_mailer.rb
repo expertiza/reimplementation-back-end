@@ -5,6 +5,6 @@ class UserMailer < ApplicationMailer
     frontend_url = ENV.fetch('FRONTEND_URL', 'http://localhost:3000')
     @user = user
     @reset_url = "#{frontend_url}/password_edit/check_reset_url?token=#{token}"
-    mail(to: @user.email, subject: I18n.t('password_edit.subject'))
+    mail(to: @user.email, subject: I18n.t('password_reset.email_subject'))
   end
 end
