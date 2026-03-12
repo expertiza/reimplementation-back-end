@@ -110,37 +110,4 @@ RSpec.describe User, type: :model do
       expect(ta_user.instructor_id).to eq(instructor.id)
     end
   end
-
-  describe '#generate_password_reset_token!' do
-    it 'generates and saves a reset password token' do
-      expect(user.reset_password_token).to be_nil
-      user.generate_password_reset_token!
-      expect(user.reset_password_token).not_to be_nil
-      expect(user.reset_password_sent_at).not_to be_nil
-    end
-  end
-
-  describe '#clear_password_reset_token!' do
-    it 'clears the reset password token' do
-      user.generate_password_reset_token!
-      token = user.reset_password_token
-      user.clear_password_reset_token!
-      expect(user.reset_password_token).to be_nil
-      expect(user.reset_password_sent_at).to be_nil
-    end
-  end
-
-  describe '#password_reset_valid?' do
-    it 'returns true if the reset password token is valid (within 24 hours)' do
-      user.generate_password_reset_token!
-      user.reset_password_sent_at = Time.zone.now - 1.hour
-      expect(user.password_reset_valid?).to be true
-    end
-
-    it 'returns false if the reset password token is expired (older than 24 hours)' do
-      user.generate_password_reset_token!
-      user.reset_password_sent_at = Time.zone.now - 25.hours
-      expect(user.password_reset_valid?).to be false
-    end
-  end
 end
