@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_27_203258) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -389,6 +389,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_27_203258) do
     t.integer "parent_id", null: false
     t.integer "grade_for_submission"
     t.string "comment_for_submission"
+    t.text "submitted_hyperlinks"
+    t.integer "directory_num"
   end
 
   create_table "teams_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|

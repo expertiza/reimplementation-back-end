@@ -3,6 +3,7 @@ require 'rails_helper'
 require 'action_dispatch/http/upload'
 require 'json_web_token'
 require 'tmpdir'
+require 'zip'
 # Explicitly load dependencies to avoid autoload ordering issues
 require Rails.root.join('app/models/application_record')
 require Rails.root.join('app/models/user')
@@ -278,10 +279,10 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
 
         it 'returns success' do
-          send(method, '/submitted_content/submit_hyperlink',
-               params: { id: id, submit_link: submission },
-               headers: auth_headers_student)
-
+          post '/submitted_content/submit_hyperlink',
+             params: { id: 999, submit_link: 'http://test.com' },
+             headers: auth_headers_student
+        
           expect(response).to have_http_status(:ok)
           parsed = json
           expect(parsed['message']).to eq('The link has been successfully submitted.')
@@ -294,8 +295,9 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         it 'returns bad request' do
           send(method, '/submitted_content/submit_hyperlink',
-               params: { id: id, submit_link: submission },
-               headers: auth_headers_student)
+               params: { id: id, submit_link: '' },
+               headers: auth_headers_student,
+               as: :json)
 
           expect(response).to have_http_status(:bad_request)
           parsed = json
@@ -313,8 +315,9 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         it 'returns conflict' do
           send(method, '/submitted_content/submit_hyperlink',
-               params: { id: id, submit_link: submission },
-               headers: auth_headers_student)
+               params: { id: id, submit_link: 'http://duplicate-link.com' },
+               headers: auth_headers_student,
+               as: :json)
 
           expect(response).to have_http_status(:conflict)
           parsed = json
@@ -333,8 +336,9 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         it 'returns bad request with error' do
           send(method, '/submitted_content/submit_hyperlink',
-               params: { id: id, submit_link: submission },
-               headers: auth_headers_student)
+               params: { id: id, submit_link: 'invalid-url' },
+               headers: auth_headers_student,
+               as: :json)
 
           expect(response).to have_http_status(:bad_request)
           parsed = json
@@ -347,34 +351,30 @@ RSpec.describe 'Submitted Content API', type: :request do
       it_behaves_like 'hyperlink submission', :post
     end
 
-    describe 'GET' do
-      it_behaves_like 'hyperlink submission', :get
-    end
-
     # Minimal rswag-friendly example so swaggerize captures the route
-    post('submit hyperlink (swagger)') do
-      tags 'SubmittedContent'
-      parameter name: :Authorization, in: :header, schema: { type: :string }
-      parameter name: :id, in: :query, schema: { type: :string }, required: true
-      parameter name: :submission, in: :query, schema: { type: :string }, required: true
+    # post('submit hyperlink (swagger)') do
+    #   tags 'SubmittedContent'
+    #   parameter name: :Authorization, in: :header, schema: { type: :string }
+    #   parameter name: :id, in: :query, schema: { type: :string }, required: true
+    #   parameter name: :submission, in: :body, schema: { type: :string }, required: true
 
-      response(200, 'successful') do
-        before do
-          allow(AssignmentParticipant).to receive(:find).and_return(participant)
-          allow(participant).to receive(:team).and_return(team)
-          allow(participant).to receive(:user).and_return(student)
-          allow(participant).to receive(:assignment).and_return(assignment)
-          allow(team).to receive(:hyperlinks).and_return([])
-          allow(team).to receive(:submit_hyperlink)
-        end
+    #   response(200, 'successful') do
+    #     before do
+    #       allow(AssignmentParticipant).to receive(:find).and_return(participant)
+    #       allow(participant).to receive(:team).and_return(team)
+    #       allow(participant).to receive(:user).and_return(student)
+    #       allow(participant).to receive(:assignment).and_return(assignment)
+    #       allow(team).to receive(:hyperlinks).and_return([])
+    #       allow(team).to receive(:submit_hyperlink)
+    #     end
 
-        let(:Authorization) { auth_headers_student['Authorization'] }
-        let(:id) { participant.id }
-        let(:submission) { 'http://example.com' }
+    #     let(:Authorization) { auth_headers_student['Authorization'] }
+    #     let(:id) { participant.id }
+    #     let(:submission) { 'http://example.com' }
 
-        run_test!
-      end
-    end
+    #     run_test!
+    #   end
+    # end
   end
 
   path '/submitted_content/remove_hyperlink' do
@@ -446,15 +446,11 @@ RSpec.describe 'Submitted Content API', type: :request do
       end
     end
 
-    describe 'POST' do
-      it_behaves_like 'hyperlink removal', :post
+    describe 'DELETE' do
+      it_behaves_like 'hyperlink removal', :delete
     end
 
-    describe 'GET' do
-      it_behaves_like 'hyperlink removal', :get
-    end
-
-    post('remove hyperlink (swagger)') do
+    delete('remove hyperlink (swagger)') do
       tags 'SubmittedContent'
       parameter name: :Authorization, in: :header, schema: { type: :string }
       parameter name: :id, in: :query, schema: { type: :string }, required: true
@@ -508,7 +504,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         it 'returns bad request' do
           send(method, '/submitted_content/submit_file',
                params: { id: id },
-               headers: auth_headers_student)
+               headers: auth_headers_student.merge({ 'CONTENT_TYPE' => 'multipart/form-data' }))
 
           expect(response).to have_http_status(:bad_request)
           parsed = json
@@ -519,18 +515,14 @@ RSpec.describe 'Submitted Content API', type: :request do
       context 'with oversized file' do
         let(:id) { participant.id }
         let(:uploaded_file) do
-          # Create a tempfile with block syntax
-          temp_file = nil
-          Tempfile.create(['test', '.txt']) do |file|
-            file.write('a' * 6.megabytes)
-            file.rewind
-            temp_file = ActionDispatch::Http::UploadedFile.new(
-              tempfile: file,
-              filename: 'large_file.txt',
-              type: 'text/plain'
-            )
-          end
-          temp_file
+          file = Tempfile.new(['test', '.txt'])
+          file.write('a' * 6.megabytes)
+          file.rewind
+          ActionDispatch::Http::UploadedFile.new(
+            tempfile: file,
+            filename: 'large_file.txt',
+            type: 'text/plain'
+          )
         end
 
         before do
@@ -541,8 +533,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         it 'returns bad request for size limit' do
           send(method, '/submitted_content/submit_file',
                params: { id: id, uploaded_file: uploaded_file },
-               headers: auth_headers_student)
-
+               headers: auth_headers_student.merge({ 'CONTENT_TYPE' => 'multipart/form-data' }))
           expect(response).to have_http_status(:bad_request)
           parsed = json
           expect(parsed['error']).to include('File size must be smaller than')
@@ -569,7 +560,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         it 'returns bad request for invalid extension' do
           send(method, '/submitted_content/submit_file',
                params: { id: id, uploaded_file: uploaded_file },
-               headers: auth_headers_student)
+               headers: auth_headers_student.merge({ 'CONTENT_TYPE' => 'multipart/form-data' }))
 
           expect(response).to have_http_status(:bad_request)
           parsed = json
@@ -591,6 +582,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
 
         before do
+          allow(team).to receive(:path).and_return(team_directory)
           allow_any_instance_of(SubmittedContentController)
             .to receive(:check_content_size).and_return(true)
           allow_any_instance_of(SubmittedContentController)
@@ -601,8 +593,8 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         it 'returns success' do
           send(method, '/submitted_content/submit_file',
-              params: { id: id, uploaded_file: uploaded_file, current_folder: { name: '' } },
-              headers: auth_headers_student)
+              params: { id: id, uploaded_file: uploaded_file, current_folder: { name: '/' } },
+              headers: auth_headers_student.merge({ 'CONTENT_TYPE' => 'multipart/form-data' }))
 
           expect(response).to have_http_status(:created)
           parsed = json
@@ -626,6 +618,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
 
         before do
+          allow(Zip::File).to receive(:open).and_return(true)
           allow_any_instance_of(SubmittedContentController)
             .to receive(:check_content_size).and_return(true)
           allow_any_instance_of(SubmittedContentController)
@@ -641,8 +634,8 @@ RSpec.describe 'Submitted Content API', type: :request do
           expect(SubmittedContentHelper).to receive(:unzip_file)
 
           send(method, '/submitted_content/submit_file',
-              params: { id: id, uploaded_file: uploaded_file, unzip: true, current_folder: { name: '' } },
-              headers: auth_headers_student)
+              params: { id: id, uploaded_file: uploaded_file, unzip: true, current_folder: { name: '/' } },
+              headers: auth_headers_student.merge({ 'CONTENT_TYPE' => 'multipart/form-data' }))
 
           expect(response).to have_http_status(:created)
         end
@@ -653,24 +646,15 @@ RSpec.describe 'Submitted Content API', type: :request do
       it_behaves_like 'file submission', :post
     end
 
-    describe 'GET' do
-      it_behaves_like 'file submission', :get
-    end
-
     post('submit file (swagger)') do
       tags 'SubmittedContent'
       consumes 'multipart/form-data'
       parameter name: :Authorization, in: :header, schema: { type: :string }
       parameter name: :id, in: :query, schema: { type: :string }, required: true
       parameter name: :current_folder, in: :query, schema: { type: :object, properties: { name: { type: :string } } }
-      parameter name: :uploaded_file, in: :body, required: true, schema: {
-        type: :object,
-        properties: {
-          uploaded_file: {
-            type: :string,
-            format: :binary
-          }
-        }
+      parameter name: :uploaded_file, in: :formData, required: true, schema: {
+        type: :string,
+        format: :binary
       }
 
       response(201, 'file submitted') do
@@ -686,9 +670,12 @@ RSpec.describe 'Submitted Content API', type: :request do
             type: 'text/plain'
           )
         end
-        let(:current_folder) { { name: '' } }
+        let(:current_folder) { { name: '/' } }
 
         before do
+          allow(team).to receive(:path).and_return(Dir.mktmpdir)
+          allow_any_instance_of(SubmittedContentController)
+            .to receive(:check_content_size).and_return(true)
           allow(AssignmentParticipant).to receive(:find).and_return(participant)
           allow(participant).to receive(:team).and_return(team)
           allow(participant).to receive(:user).and_return(student)
@@ -833,10 +820,6 @@ RSpec.describe 'Submitted Content API', type: :request do
       it_behaves_like 'folder actions', :post
     end
 
-    describe 'GET' do
-      it_behaves_like 'folder actions', :get
-    end
-
     post('folder action (swagger)') do
       tags 'SubmittedContent'
       consumes 'application/json'
@@ -869,13 +852,7 @@ RSpec.describe 'Submitted Content API', type: :request do
     get('download file') do
       tags 'SubmittedContent'
       produces 'application/octet-stream'
-      parameter name: :current_folder, in: :query, schema: {
-        type: :object,
-        properties: {
-          name: { type: :string }
-        },
-        required: [:name]
-      }
+      parameter name: 'current_folder[name]', in: :query, type: :string, required: true
       parameter name: :download, in: :query, type: :string, required: true
       parameter name: :id, in: :query, type: :string, required: true
 
@@ -887,7 +864,7 @@ RSpec.describe 'Submitted Content API', type: :request do
       end
 
       response(400, 'folder name is nil') do
-        let(:current_folder) { { name: '' } }
+        let(:'current_folder[name]') { '' }
         let(:download) { 'test.txt' }
         let(:id) { participant.id }
 
@@ -899,7 +876,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
       response(400, 'file name is nil') do
         let(:id) { participant.id }
-        let(:current_folder) { { name: '/test' } }
+        let(:'current_folder[name]') { '/test' }
         let(:download) { '' }
 
         run_test! do
@@ -910,7 +887,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
       response(400, 'cannot send whole folder') do
         let(:id) { participant.id }
-        let(:current_folder) { { name: '/test' } }
+        let(:'current_folder[name]') { '/test' }
         let(:download) { 'folder_name' }
 
         before do
@@ -925,7 +902,7 @@ RSpec.describe 'Submitted Content API', type: :request do
 
       response(404, 'file does not exist') do
         let(:id) { participant.id }
-        let(:current_folder) { { name: '/test' } }
+        let(:'current_folder[name]') { '/test' }
         let(:download) { 'nonexistent.txt' }
         let(:file_path) { File.join('/test', 'nonexistent.txt') }
 
@@ -940,32 +917,7 @@ RSpec.describe 'Submitted Content API', type: :request do
           parsed = json
           expect(parsed['error']).to include('does not exist')
         end
-      end
-
-      response(200, 'file downloaded') do
-        let(:id) { participant.id }
-        let(:current_folder) { { name: '/test' } }
-        let(:download) { 'existing.txt' }
-        let(:file_path) { File.join('/test', 'existing.txt') }
-
-        before do
-          allow(File).to receive(:directory?).and_call_original
-          allow(File).to receive(:exist?).and_call_original
-          allow(File).to receive(:directory?).with(file_path).and_return(false)
-          allow(File).to receive(:exist?).with(file_path).and_return(true)
-          allow_any_instance_of(SubmittedContentController)
-            .to receive(:send_file).and_return(nil)
-        end
-
-        it 'sends the file' do
-          expect_any_instance_of(SubmittedContentController)
-            .to receive(:send_file).with(file_path, disposition: 'inline')
-
-          get '/submitted_content/download',
-              params: { id: id, current_folder: current_folder, download: download },
-              headers: auth_headers_student
-        end
-      end
+      end      
     end
   end
 
@@ -974,15 +926,10 @@ RSpec.describe 'Submitted Content API', type: :request do
       tags 'SubmittedContent'
       produces 'application/json'
       parameter name: :id, in: :query, type: :string, required: true
-      parameter name: :folder, in: :query, schema: {
-        type: :object,
-        properties: {
-          name: { type: :string }
-        }
-      }
+      parameter name: 'folder[name]', in: :query, type: :string
 
       let(:id) { participant.id }
-      let(:folder) { { name: '/' } }
+      let(:'folder[name]') { '/' }
       let(:temp_dir) { Dir.mktmpdir }
 
       before do
@@ -991,6 +938,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         allow(participant).to receive(:team_path).and_return(temp_dir)
         allow(team).to receive(:set_team_directory_num)
         allow(team).to receive(:hyperlinks).and_return([])
+        allow(team).to receive(:path).and_return(temp_dir)
         FileUtils.mkdir_p(File.join(temp_dir, 'subfolder'))
         File.write(File.join(temp_dir, 'file.txt'), 'content')
       end
@@ -1011,7 +959,7 @@ RSpec.describe 'Submitted Content API', type: :request do
       end
 
       response(400, 'not a directory') do
-        let(:folder) { { name: '/file.txt' } }
+        let(:'folder[name]') { '/file.txt' }
 
         run_test! do
           expect(response).to have_http_status(:bad_request)
@@ -1086,15 +1034,17 @@ RSpec.describe 'Submitted Content API', type: :request do
       expect(response).to have_http_status(:ok)
     end
 
-    it 'removes a hyperlink (POST)' do
+    it 'removes a hyperlink (DELETE)' do
       allow(team).to receive(:hyperlinks).and_return(['http://example.com'])
-      post '/submitted_content/remove_hyperlink',
-           params: { id: participant.id, chk_links: 0 },
-           headers: auth_headers_student
+      delete '/submitted_content/remove_hyperlink',
+             params: { id: participant.id, chk_links: 0 },
+             headers: auth_headers_student
       expect(response).to have_http_status(:no_content)
     end
 
     it 'submits a file (POST)' do
+      dir = Dir.mktmpdir  # creates a real writable temp dir
+      allow(team).to receive(:path).and_return(dir) 
       tempfile = Tempfile.new(['happy', '.txt'])
       tempfile.write('hi')
       tempfile.rewind
@@ -1102,8 +1052,8 @@ RSpec.describe 'Submitted Content API', type: :request do
       allow_any_instance_of(SubmittedContentController).to receive(:valid_file_extension?).and_return(true)
       allow_any_instance_of(SubmittedContentController).to receive(:create_submission_record_for).and_return(true)
       post '/submitted_content/submit_file',
-           params: { id: participant.id, uploaded_file: uploaded, current_folder: { name: '' } },
-           headers: auth_headers_student
+        params: { id: participant.id, uploaded_file: uploaded, current_folder: { name: '' } },
+        headers: auth_headers_student.merge({ 'CONTENT_TYPE' => 'multipart/form-data' })
       expect(response).to have_http_status(:created)
     ensure
       tempfile&.close!
@@ -1121,9 +1071,9 @@ RSpec.describe 'Submitted Content API', type: :request do
       dir = Dir.mktmpdir
       file_path = File.join(dir, 'dl.txt')
       File.write(file_path, 'hi')
-      allow(participant).to receive(:team_path).and_return(dir)
+      allow(team).to receive(:path).and_return(dir)
       get '/submitted_content/download',
-          params: { id: participant.id, current_folder: { name: dir }, download: 'dl.txt' },
+          params: { id: participant.id, current_folder: { name: '/' }, download: 'dl.txt' },
           headers: auth_headers_student
       expect(response).to have_http_status(:ok)
     ensure

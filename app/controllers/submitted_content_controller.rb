@@ -9,21 +9,21 @@ class SubmittedContentController < ApplicationController
   before_action :set_participant, only: [:submit_hyperlink, :remove_hyperlink, :submit_file, :folder_action, :download, :list_files]
   before_action :ensure_participant_team, only: [:submit_hyperlink, :remove_hyperlink, :submit_file, :folder_action, :download, :list_files]
 
-  # GET /api/v1/submitted_content
+  # GET /submitted_content
   # Retrieves all submission records from the database
   def index
     # Return all submission records as JSON with 200 OK status
     render json: SubmissionRecord.all, status: :ok
   end
 
-  # GET /api/v1/submitted_content/:id
+  # GET /submitted_content/:id
   # Retrieves a specific submission record by ID (set by before_action)
   def show
     # @submission_record is set by set_submission_record before_action
     render json: @submission_record, status: :ok
   end
 
-  # POST /api/v1/submitted_content
+  # POST /submitted_content
   # Creates a new submission record with automatic type detection (hyperlink or file)
   def create
     # Get permitted parameters from request
@@ -43,8 +43,7 @@ class SubmittedContentController < ApplicationController
     end
   end
 
-  # POST /api/v1/submitted_content/submit_hyperlink
-  # GET  /api/v1/submitted_content/submit_hyperlink
+  # POST /submitted_content/submit_hyperlink
   # Validates and submits a hyperlink for the participant's team
   def submit_hyperlink
     # Get the participant's team (requires @participant from before_action)
@@ -79,8 +78,7 @@ class SubmittedContentController < ApplicationController
     end
   end
 
-  # POST /api/v1/submitted_content/remove_hyperlink
-  # GET  /api/v1/submitted_content/remove_hyperlink
+  # DELETE /submitted_content/remove_hyperlink
   # Removes a hyperlink at the specified index from the team's hyperlinks
   def remove_hyperlink
     # Get the participant's team
@@ -113,8 +111,7 @@ class SubmittedContentController < ApplicationController
     end
   end
 
-  # POST /api/v1/submitted_content/submit_file
-  # GET  /api/v1/submitted_content/submit_file
+  # POST /submitted_content/submit_file
   # Handles file upload for the participant's team with validation and optional unzipping
   def submit_file
     # Get the uploaded file from request parameters
@@ -159,17 +156,9 @@ class SubmittedContentController < ApplicationController
     File.open(full_path, 'wb') { |f| f.write(file_bytes) }
 
     # If unzip flag is set and file is a zip, extract contents using rubyzip library
+    # In controller, replace the inline Zip::File.open block with:
     if params[:unzip] && file_type(safe_filename) == 'zip'
-      Zip::File.open(full_path) do |zip_file|
-        zip_file.each do |entry|
-          # Use only the filename to prevent directory traversal attacks
-          safe_entry_name = File.basename(entry.name).gsub(%r{[^\w\.\\_/]}, '_').tr("'", '_')
-          entry_path = File.join(current_directory, safe_entry_name)
-          FileUtils.mkdir_p(File.dirname(entry_path))
-          entry.extract(entry_path) { true } # true = overwrite if exists
-        end
-      end
-      # Delete the zip file after extraction
+      SubmittedContentHelper.unzip_file(full_path, current_directory, true)
       File.delete(full_path)
     end
 
@@ -183,8 +172,7 @@ class SubmittedContentController < ApplicationController
     render_error("Failed to save file to server: #{e.message}. Please verify the file is not corrupted and try again.", :internal_server_error)
   end
 
-  # POST /api/v1/submitted_content/folder_action
-  # GET  /api/v1/submitted_content/folder_action
+  # POST /submitted_content/folder_action
   # Dispatches folder management actions based on the faction parameter
   def folder_action
     # Get the faction parameter (specifies which action to perform)
@@ -207,7 +195,7 @@ class SubmittedContentController < ApplicationController
     end
   end
 
-  # GET /api/v1/submitted_content/download
+  # GET /submitted_content/download
   # Validates and streams a file for download
   def download
     # Extract folder name and file name from params
@@ -247,7 +235,7 @@ class SubmittedContentController < ApplicationController
     send_file(path, disposition: 'inline')
   end
 
-  # GET /api/v1/submitted_content/list_files
+  # GET /submitted_content/list_files
   # Lists all files and directories in the participant's submission folder
   def list_files
     # Get the team and ensure it has a directory

@@ -134,16 +134,12 @@ Rails.application.routes.draw do
   
       resources :submitted_content do
         collection do
-          get :download
-          get :list_files
-          get :folder_action
-          post :folder_action
-          get :remove_hyperlink
-          post :remove_hyperlink
-          get :submit_file
-          post :submit_file
-          get :submit_hyperlink
-          post :submit_hyperlink
+          get    :download
+          get    :list_files
+          delete :remove_hyperlink
+          post   :submit_file
+          post   :submit_hyperlink
+          post   :folder_action
         end
       end
 
