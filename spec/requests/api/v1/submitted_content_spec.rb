@@ -618,6 +618,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
 
         before do
+          allow(team).to receive(:path).and_return(team_directory)
           allow(Zip::File).to receive(:open).and_return(true)
           allow_any_instance_of(SubmittedContentController)
             .to receive(:check_content_size).and_return(true)
@@ -636,7 +637,7 @@ RSpec.describe 'Submitted Content API', type: :request do
           send(method, '/submitted_content/submit_file',
               params: { id: id, uploaded_file: uploaded_file, unzip: true, current_folder: { name: '/' } },
               headers: auth_headers_student.merge({ 'CONTENT_TYPE' => 'multipart/form-data' }))
-
+          puts "RESPONSE BODY: #{response.body}" 
           expect(response).to have_http_status(:created)
         end
       end
