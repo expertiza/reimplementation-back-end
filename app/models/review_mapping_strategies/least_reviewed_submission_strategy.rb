@@ -16,7 +16,7 @@ module ReviewMappingStrategies
 
     private
 
-    # Excludes the team reviewer is on aand the teams 
+    # Excludes the team reviewer is on and the teams 
     # that the reviewer has already reviewed
     def teams_eligible_for_review(reviewer)
       @assignment.teams.reject do |team|
