@@ -283,7 +283,7 @@ RSpec.describe 'Participants API', type: :request do
 
         run_test! do |response|
           data = JSON.parse(response.body)
-          expect(data['user_id']).to eq(studentb.id)
+          expect(data['user']['id']).to eq(studentb.id)
           expect(data['parent_id']).to eq(assignment2.id)
           expect(data['authorization']).to eq('mentor')
         end
