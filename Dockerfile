@@ -21,4 +21,4 @@ RUN bundle install
 EXPOSE 3002 
 
 # Set the entry point
-ENTRYPOINT ["/app/setup.sh"]
+ENTRYPOINT ["./setup.sh"]
