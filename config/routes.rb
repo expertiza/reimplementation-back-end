@@ -108,6 +108,17 @@ Rails.application.routes.draw do
           delete :remove_advertisement
         end
       end
+  
+      resources :submitted_content do
+        collection do
+          get    :download
+          get    :list_files
+          delete :remove_hyperlink
+          post   :submit_file
+          post   :submit_hyperlink
+          post   :folder_action
+        end
+      end
 
       resources :join_team_requests do
         member do

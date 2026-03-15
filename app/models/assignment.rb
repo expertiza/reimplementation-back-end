@@ -32,6 +32,20 @@ class Assignment < ApplicationRecord
     review_rounds.positive? ? review_rounds : (rounds_of_reviews || 0)
   end
 
+  # Initializes the directory path for
+  def path
+    if course_id.nil? && instructor_id.nil?
+      raise 'The path cannot be created. The assignment must be associated with either a course or an instructor.'
+    end
+
+    path_text = if !course_id.nil? && course_id > 0
+                  "#{Rails.root}/pg_data/#{FileHelper.clean_path(instructor.name)}/#{FileHelper.clean_path(course.directory_path)}/"
+                else
+                  "#{Rails.root}/pg_data/#{FileHelper.clean_path(instructor.name)}/"
+                end
+    path_text + FileHelper.clean_path(directory_path)
+  end
+
   # Add a participant to the assignment based on the provided user_id.
   # This method first finds the User with the given user_id. If the user does not exist, it raises an error.
   # It then checks if the user is already a participant in the assignment. If so, it raises an error.
