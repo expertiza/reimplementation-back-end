@@ -191,14 +191,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_27_203258) do
 
   create_table "invitations", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.integer "assignment_id"
+    t.bigint "from_id"
+    t.integer "to_id"
     t.string "reply_status", limit: 1
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "from_id", null: false
-    t.bigint "to_id", null: false
     t.index ["assignment_id"], name: "fk_invitation_assignments"
-    t.index ["from_id"], name: "index_invitations_on_from_id"
-    t.index ["to_id"], name: "index_invitations_on_to_id"
+    t.index ["from_id"], name: "fk_invitationfrom_users"
+    t.index ["to_id"], name: "fk_invitationto_users"
   end
 
   create_table "items", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -224,7 +224,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_27_203258) do
     t.integer "participant_id"
     t.integer "team_id"
     t.text "comments"
-    t.string "status"
+    t.string "reply_status"
   end
 
   create_table "nodes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -260,22 +260,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_27_203258) do
     t.index ["team_id"], name: "index_participants_on_team_id"
     t.index ["user_id"], name: "fk_participant_users"
     t.index ["user_id"], name: "index_participants_on_user_id"
-  end
-
-  create_table "project_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.text "topic_name", null: false
-    t.bigint "assignment_id", null: false
-    t.integer "max_choosers", default: 0, null: false
-    t.text "category"
-    t.string "topic_identifier", limit: 10
-    t.integer "micropayment", default: 0
-    t.integer "private_to"
-    t.text "description"
-    t.string "link"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["assignment_id"], name: "fk_sign_up_categories_sign_up_topics"
-    t.index ["assignment_id"], name: "index_project_topics_on_assignment_id"
   end
 
   create_table "question_advices", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -349,6 +333,22 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_27_203258) do
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
   end
 
+  create_table "sign_up_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.text "topic_name", null: false
+    t.bigint "assignment_id", null: false
+    t.integer "max_choosers", default: 0, null: false
+    t.text "category"
+    t.string "topic_identifier", limit: 10
+    t.integer "micropayment", default: 0
+    t.integer "private_to"
+    t.text "description"
+    t.string "link"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "fk_sign_up_categories_sign_up_topics"
+    t.index ["assignment_id"], name: "index_sign_up_topics_on_assignment_id"
+  end
+
   create_table "signed_up_teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "project_topic_id", null: false
     t.bigint "team_id", null: false
@@ -371,13 +371,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_27_203258) do
   end
 
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "name", null: false
+    t.integer "parent_id"
+    t.string "type", null: false
+    t.text "submitted_hyperlinks"
+    t.integer "directory_num"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "name", null: false
-    t.string "type", null: false
-    t.integer "parent_id", null: false
     t.integer "grade_for_submission"
     t.string "comment_for_submission"
+    t.index ["parent_id"], name: "index_teams_on_parent_id"
+    t.index ["type"], name: "index_teams_on_type"
   end
 
   create_table "teams_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -438,15 +442,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_27_203258) do
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
   add_foreign_key "duties", "users", column: "instructor_id"
+  add_foreign_key "invitations", "teams", column: "from_id"
   add_foreign_key "items", "questionnaires"
   add_foreign_key "participants", "duties"
   add_foreign_key "participants", "join_team_requests"
   add_foreign_key "participants", "teams"
   add_foreign_key "participants", "users"
-  add_foreign_key "project_topics", "assignments"
   add_foreign_key "question_advices", "items"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
-  add_foreign_key "signed_up_teams", "project_topics"
+  add_foreign_key "sign_up_topics", "assignments"
+  add_foreign_key "signed_up_teams", "sign_up_topics", column: "project_topic_id"
   add_foreign_key "signed_up_teams", "teams"
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
