@@ -2,6 +2,7 @@
 
 class AssignmentParticipant < Participant
   include ReviewAggregator
+  has_many :sent_invitations, class_name: 'Invitation', foreign_key: 'from_id'
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewee_id'
   has_many :response_maps, foreign_key: 'reviewee_id'
   has_many :sent_invitations, class_name: 'Invitation', foreign_key: 'from_id'
@@ -28,6 +29,10 @@ class AssignmentParticipant < Participant
   # Gets the student directory path
   def path
     "#{assignment.path}/#{team.directory_num}"
+  end
+    
+  def retract_sent_invitations
+    sent_invitations.each(&:retract)
   end
 
   def set_handle
