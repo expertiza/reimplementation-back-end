@@ -151,7 +151,7 @@ class AssignmentsController < ApplicationController
   end
 
   # check if assignment has topics
-  # has_topics is set to true if there is SignUpTopic corresponding to the input assignment id 
+  # has_topics is set to true if there is ProjectTopic corresponding to the input assignment id 
   def has_topics
     assignment = Assignment.find_by(id: params[:assignment_id])
     if assignment.nil?
@@ -213,7 +213,54 @@ class AssignmentsController < ApplicationController
   private
   # Only allow a list of trusted parameters through.
   def assignment_params
-    params.require(:assignment).permit(:title, :description)
+    params.require(:assignment).permit(
+      :name,
+      :title,
+      :description,
+      :directory_path,
+      :spec_location,
+      :private,
+      :show_template_review,
+      :require_quiz,
+      :has_badge,
+      :staggered_deadline,
+      :is_calibrated,
+      :has_teams,
+      :max_team_size,
+      :show_teammate_review,
+      :is_pair_programming,
+      :has_mentors,
+      :has_topics,
+      :review_topic_threshold,
+      :maximum_number_of_reviews_per_submission,
+      :review_strategy,
+      :review_rubric_varies_by_round,
+      :review_rubric_varies_by_topic,
+      :review_rubric_varies_by_role,
+      :has_max_review_limit,
+      :set_allowed_number_of_reviews_per_reviewer,
+      :set_required_number_of_reviews_per_reviewer,
+      :is_review_anonymous,
+      :is_review_done_by_teams,
+      :allow_self_reviews,
+      :reviews_visible_to_other_reviewers,
+      :number_of_review_rounds,
+      :days_between_submissions,
+      :late_policy_id,
+      :is_penalty_calculated,
+      :calculate_penalty,
+      :use_signup_deadline,
+      :use_drop_topic_deadline,
+      :use_team_formation_deadline,
+      :use_date_updater,
+      :submission_allowed,
+      :review_allowed,
+      :teammate_allowed,
+      :metareview_allowed,
+      weights: [],
+      notification_limits: [],
+      reminder: []
+    )
   end
 
   # Helper method to determine staggered_and_no_topic for the assignment
@@ -221,7 +268,7 @@ class AssignmentsController < ApplicationController
     topic_id = SignedUpTeam
                .joins(team: :teams_users)
                .where(teams_users: { user_id: current_user.id, team_id: Team.where(parent_id: assignment.id).pluck(:id) })
-               .pluck(:sign_up_topic_id)
+               .pluck(:project_topic_id)
                .first
 
     assignment.staggered_and_no_topic?(topic_id)
