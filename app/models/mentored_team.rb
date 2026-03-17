@@ -2,33 +2,44 @@
 
 class MentoredTeam < AssignmentTeam
 
-  # Custom validation to ensure the team type is 'MentoredTeam'
-  validate :type_must_be_mentored_team
-
-  # adds members to the team who are not mentors
-  def add_member(user)
-    return false if user == mentor
-    super(user)
+  # Returns the participant on this team whose duty name is 'Mentor'
+  def mentor
+    participants.joins(:duty).find_by(duties: { name: 'Mentor' })
   end
 
-  # Assigning a user as mentor of the team 
-  # Validates if user has the role and permission to be a mentor
-  def assign_mentor(user)
-    return false unless user.role&.name&.downcase&.include?('mentor')
-    self.mentor = user
-    save
+  # Assigns a participant as mentor by setting their duty to the 'Mentor' duty.
+  # The participant must already be a member of this team.
+  def assign_mentor(participant)
+    mentor_duty = Duty.find_by(name: 'Mentor')
+    return false unless mentor_duty
+    return false unless participants.exists?(id: participant.id)
+
+    participant.update(duty_id: mentor_duty.id)
   end
 
-  # Unassigns mentor from team
+  # Clears the mentor duty from the current mentor participant.
   def remove_mentor
-    self.mentor = nil
-    save
+    mentor&.update(duty_id: nil)
+  end
+
+  # Prevents adding a participant who already holds the mentor duty on this team.
+  def add_member(participant_or_user)
+    participant = resolve_participant(participant_or_user)
+    return { success: false, error: 'Participant is already the mentor of this team' } if mentor_participant?(participant)
+
+    super(participant_or_user)
   end
 
   private
 
-  # Check if the team type is 'MentoredTeam'
-  def type_must_be_mentored_team
-    errors.add(:type, 'must be MentoredTeam') unless type == 'MentoredTeam'
+  def resolve_participant(participant_or_user)
+    return participant_or_user if participant_or_user.is_a?(Participant)
+
+    AssignmentParticipant.find_by(user_id: participant_or_user.id, parent_id: parent_id)
   end
-end 
+
+  def mentor_participant?(participant)
+    return false unless participant
+    mentor&.id == participant.id
+  end
+end
