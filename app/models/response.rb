@@ -15,7 +15,7 @@ class Response < ApplicationRecord
   validates :map_id, presence: true
 
   # Callback to handle any post-submission actions
-  after_save :handle_response_submission
+  after_save :after_submission_actions
 
   # Marks the response as submitted
   # @return [Boolean] success of the submission update
@@ -26,7 +26,7 @@ class Response < ApplicationRecord
   # Handles any necessary actions after a response is submitted
   # Currently focuses on email notifications
   # Only triggers when is_submitted changes from false to true
-  def handle_response_submission
+  def after_submission_actions
     return unless is_submitted_changed? && is_submitted?
 
     # Send email notification through the response map
