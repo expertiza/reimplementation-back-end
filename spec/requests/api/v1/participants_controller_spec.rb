@@ -173,12 +173,27 @@ RSpec.describe 'Participants API', type: :request do
     delete 'Delete a specific participant' do
       tags 'Participants'
       parameter name: :id, in: :path, type: :integer, description: 'ID of the participant'
+      parameter name: :assignment_id, in: :query, type: :integer, required: false, description: 'Assignment ID for delete context'
+      parameter name: :team_id, in: :query, type: :integer, required: false, description: 'Team ID for delete context'
 
       response '200', 'Participant deleted' do
         let(:id) { participant2.id }
 
         run_test! do |response|
           expect(JSON.parse(response.body)['message']).to include('Participant')
+        end
+      end
+
+      response '200', 'Participant deleted with team and assignment context' do
+        let(:id) { participant1.id }
+        let(:assignment_id) { assignment1.id }
+        let(:team_id) { 42 }
+
+        run_test! do |response|
+          message = JSON.parse(response.body)['message']
+          expect(message).to include("Participant #{participant1.id}")
+          expect(message).to include("Team #{team_id}")
+          expect(message).to include("Assignment #{assignment1.id}")
         end
       end
 
@@ -218,6 +233,18 @@ RSpec.describe 'Participants API', type: :request do
         run_test! do |response|
           data = JSON.parse(response.body)
           expect(data['authorization']).to eq('mentor')
+        end
+      end
+
+      response '200', 'Participant updated with mixed-case authorization' do
+        let(:id) { 2 }
+        let(:authorization) { 'MeNtOr' }
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['authorization']).to eq('mentor')
+          expect(data).not_to have_key('can_mentor')
+          expect(Participant.find(id).can_mentor).to eq(true)
         end
       end
 
@@ -286,6 +313,25 @@ RSpec.describe 'Participants API', type: :request do
           expect(data['user']['id']).to eq(studentb.id)
           expect(data['parent_id']).to eq(assignment2.id)
           expect(data['authorization']).to eq('mentor')
+        end
+      end
+
+      response '201', 'Participant successfully added with mixed-case authorization' do
+        let(:authorization) { 'ReViEwEr' }
+        let(:participant) { { user_id: studentb.id, assignment_id: assignment2.id } }
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['authorization']).to eq('reviewer')
+          expect(data).not_to have_key('can_review')
+          expect(data).not_to have_key('can_submit')
+
+          created_participant = Participant.find_by(user_id: studentb.id, parent_id: assignment2.id)
+          expect(created_participant).not_to be_nil
+          expect(created_participant.can_review).to eq(true)
+          expect(created_participant.can_submit).to eq(false)
+          expect(created_participant.can_take_quiz).to eq(false)
+          expect(created_participant.can_mentor).to eq(false)
         end
       end
 
