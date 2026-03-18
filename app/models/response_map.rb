@@ -157,7 +157,7 @@ class ResponseMap < ApplicationRecord
 
     # Return response maps for an assignment
   def self.for_assignment(assignment_id)
-    joins(:assignment).where(assignments: { id: assignment_id })
+    where(reviewed_object_id: assignment_id)
   end
 
   # Return response maps for a reviewer and eager-load responses

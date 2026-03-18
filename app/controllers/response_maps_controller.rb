@@ -75,19 +75,22 @@ class ResponseMapsController < ApplicationController
 
   # Retrieves all response maps for a specific assignment
   # GET /response_maps/assignment/:assignment_id
-  def assignment_feedback
+  def fetch_response_maps_by_assignment
     @response_maps = ResponseMap.for_assignment(params[:assignment_id])
     render json: @response_maps
   end
 
   # Gets all response maps for a specific reviewer (includes responses)
   # GET /response_maps/reviewer/:reviewer_id
-  def reviewer_feedback
+  def fetch_response_maps_by_reviewer
     @response_maps = ResponseMap.for_reviewer_with_responses(params[:reviewer_id])
     render json: @response_maps, include: :responses
   end
 
-  # Calculates and returns response statistics for an assignment
+  # Computes completion metrics for response maps in an assignment:
+  # - total_response_maps: all maps linked to the assignment
+  # - completed_response_maps: maps with at least one submitted response
+  # - response_rate: percentage of completed maps (0 if no maps exist)
   # GET /response_maps/response_rate/:assignment_id
   def response_rate
     stats = ResponseMap.response_rate_for_assignment(params[:assignment_id])
