@@ -60,7 +60,7 @@ class ParticipantsController < ApplicationController
     if participant.nil?
       render json: participant.errors, status: :unprocessable_entity
     else
-      render json: participant, status: :created
+      render json: participant, status: :ok
     end
   end
 
@@ -105,7 +105,7 @@ class ParticipantsController < ApplicationController
   # - id [Integer]: ID of the participant
   # - authorization [String]: New role to assign (reader, reviewer, submitter, mentor)
   # Returns:
-  # - 201 Created: Participant successfully updated
+  # - 200 OK: Participant successfully updated
   # - 401 Unauthorized: If the user is not authorized for the action
   # - 404 Not Found: If participant is not found
   # - 422 Unprocessable Entity: If the authorization is invalid or update fails
@@ -119,7 +119,7 @@ class ParticipantsController < ApplicationController
     assign_participant_permissions(authorization, participant)
 
     if participant.save
-      render json: participant, status: :created
+      render json: participant, status: :ok
     else
       render json: participant.errors, status: :unprocessable_entity
     end
