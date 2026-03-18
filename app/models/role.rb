@@ -12,7 +12,6 @@ class Role < ApplicationRecord
   ADMINISTRATOR_ID = 4
   SUPER_ADMINISTRATOR_ID = 5
 
-
   def super_administrator?
     name['Super Administrator']
   end
