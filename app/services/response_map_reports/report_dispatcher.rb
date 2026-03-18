@@ -4,9 +4,9 @@ module ResponseMapReports
   # Resolves report type and delegates report generation to visitor methods.
   class ReportDispatcher
     TYPE_MAP = {
-      'ReviewResponseMap' => ReviewResponseMap,
-      'FeedbackResponseMap' => FeedbackResponseMap,
-      'TeammateReviewResponseMap' => TeammateReviewResponseMap
+      'reviewresponsemap' => ReviewResponseMap,
+      'feedbackresponsemap' => FeedbackResponseMap,
+      'teammatereviewresponseMap' => TeammateReviewResponseMap
     }.freeze
 
     def initialize(visitor = ReportVisitor.new)
@@ -23,7 +23,7 @@ module ResponseMapReports
     def resolve_map_class(type)
       return ResponseMap if type.blank?
 
-      normalized_type = type.to_s.downcase.gsub(/\s+/, '').gsub(/::/, '').gsub('-', '_')
+      normalized_type = type.to_s.downcase
       TYPE_MAP[normalized_type] || ResponseMap
     end
   end
