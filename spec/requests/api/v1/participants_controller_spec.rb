@@ -142,7 +142,7 @@ RSpec.describe 'Participants API', type: :request do
 
       parameter name: :id, in: :path, type: :integer, description: 'ID of the participant'
 
-      response '201', 'Returns a participant' do
+      response '200', 'Returns a participant' do
         let(:id) { participant2.id }
 
         run_test! do |response|
@@ -211,7 +211,7 @@ RSpec.describe 'Participants API', type: :request do
       parameter name: :authorization, in: :path, type: :string, description: 'New authorization'
       parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
 
-      response '201', 'Participant updated' do
+      response '200', 'Participant updated' do
         let(:id) { 2 }
         let(:authorization) { 'mentor' }
 
