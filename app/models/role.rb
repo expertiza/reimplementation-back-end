@@ -56,6 +56,8 @@ class Role < ApplicationRecord
       'Super Administrator' => 5
     }
 
+    return false unless target_role && privileges[name] && privileges[target_role.name]
+
     privileges[name] >= privileges[target_role.name]
   end
 
