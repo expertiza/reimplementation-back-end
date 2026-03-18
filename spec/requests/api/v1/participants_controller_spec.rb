@@ -299,7 +299,6 @@ RSpec.describe 'Participants API', type: :request do
         let(:name) { User.find(participant[:user_id]).name }
 
         run_test! do |response|
-
           expect(JSON.parse(response.body)['exception']).to eq("#<RuntimeError: The user #{name} is already a participant.>")
         end
       end
@@ -337,6 +336,28 @@ RSpec.describe 'Participants API', type: :request do
 
         run_test! do |response|
           expect(JSON.parse(response.body)['error']).to include('authorization not valid')
+        end
+      end
+
+      # Test ID 24
+      response '404', 'Test ID 24: Missing user_id in request body' do
+        let(:authorization) { 'mentor' }
+        let(:participant) { { assignment_id: assignment1.id } }
+
+        run_test! do |response|
+          expect(response.status).to eq(404)
+          expect(JSON.parse(response.body)['error']).to eq('User not found')
+        end
+      end
+
+      # Test ID 25
+      response '404', 'Test ID 25: Missing assignment_id in request body' do
+        let(:authorization) { 'mentor' }
+        let(:participant) { { user_id: studentb.id } }
+
+        run_test! do |response|
+          expect(response.status).to eq(404)
+          expect(JSON.parse(response.body)['error']).to eq('Assignment not found')
         end
       end
     end
