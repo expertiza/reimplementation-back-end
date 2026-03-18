@@ -6,7 +6,7 @@ module ResponseMapReports
     TYPE_MAP = {
       'reviewresponsemap' => ReviewResponseMap,
       'feedbackresponsemap' => FeedbackResponseMap,
-      'teammatereviewresponseMap' => TeammateReviewResponseMap
+      'teammatereviewresponsemap' => TeammateReviewResponseMap
     }.freeze
 
     def initialize(visitor = ReportVisitor.new)
