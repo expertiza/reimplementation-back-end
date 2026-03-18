@@ -12,7 +12,7 @@ components:
 security:
 - bearerAuth: []
 paths:
-  /api/v1/participants/user/{user_id}:
+  /participants/user/{user_id}:
     get:
       summary: List all participants for a specific user
       tags:
@@ -29,7 +29,7 @@ paths:
         '404':
           description: User not found
 
-  /api/v1/participants/assignment/{assignment_id}:
+  /participants/assignment/{assignment_id}:
     get:
       summary: List all participants for a specific assignment
       tags:
@@ -46,7 +46,7 @@ paths:
         '404':
           description: Assignment not found
 
-  /api/v1/participants/{id}:
+  /participants/{id}:
     get:
       summary: Show a specific participant
       tags:
@@ -79,7 +79,7 @@ paths:
         '404':
           description: Participant not found
 
-  /api/v1/participants/{authorization}:
+  /participants/{authorization}:
     post:
       summary: Add a new participant with authorization
       tags:
@@ -103,7 +103,7 @@ paths:
         '422':
           description: Unprocessable Entity
 
-  /api/v1/participants/{id}/{authorization}:
+  /participants/{id}/{authorization}:
     patch:
       summary: Update a participant's authorization
       tags:
