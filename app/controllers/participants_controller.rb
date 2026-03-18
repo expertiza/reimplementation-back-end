@@ -41,7 +41,7 @@ class ParticipantsController < ApplicationController
     if participants.nil?
       render json: participants.errors, status: :unprocessable_entity
     else
-      render json: participants, status: :ok
+      render json: participants.as_json(include: { user: { include: %i[role parent] } }), status: :ok
     end
   end
 
@@ -60,7 +60,7 @@ class ParticipantsController < ApplicationController
     if participant.nil?
       render json: participant.errors, status: :unprocessable_entity
     else
-      render json: participant, status: :ok
+      render json: participant, status: :created
     end
   end
 
@@ -174,7 +174,7 @@ class ParticipantsController < ApplicationController
   # Filters participants based on the provided assignment
   # Returns participants ordered by their IDs
   def filter_participants_by_assignment(assignment)
-    participants = Participant.where(assignment_id: assignment.id) if assignment
+    participants = Participant.where(parent_id: assignment.id, type: 'AssignmentParticipant') if assignment
     participants.order(:id)
   end
 
