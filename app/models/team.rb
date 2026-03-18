@@ -4,10 +4,12 @@ class Team < ApplicationRecord
 
   # Core associations
   has_many :signed_up_teams, dependent: :destroy
+  has_many :project_topics, through: :signed_up_teams
   has_many :teams_users, dependent: :destroy
   has_many :teams_participants, dependent: :destroy
   has_many :users, through: :teams_participants
   has_many :participants, through: :teams_participants
+  has_many :join_team_requests, dependent: :destroy
 
   # The team is either an AssignmentTeam or a CourseTeam
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'parent_id', optional: true
@@ -18,10 +20,28 @@ class Team < ApplicationRecord
   validates :parent_id, presence: true
   validates :type, presence: true, inclusion: { in: %w[AssignmentTeam CourseTeam MentoredTeam], message: "must be 'Assignment' or 'Course' or 'Mentor'" }
 
+  after_update :release_topics_if_empty
+
   def has_member?(user)
     participants.exists?(user_id: user.id)
   end
-
+  
+  # Returns the current number of team members
+  def team_size
+    users.count
+  end
+  
+  # Returns the maximum allowed team size
+  def max_size
+    if is_a?(AssignmentTeam) && assignment&.max_team_size
+      assignment.max_team_size
+    elsif is_a?(CourseTeam) && course&.max_team_size
+      course.max_team_size
+    else
+      nil
+    end
+  end
+  
   def full?
     current_size = participants.count
 
@@ -136,5 +156,12 @@ class Team < ApplicationRecord
     # All checks passed; participant is eligible to join the team
     { success: true }
 
+  end
+
+  private
+
+  def release_topics_if_empty
+    return unless participants.empty?
+    project_topics.each { |topic| topic.drop_team(self) }
   end
 end

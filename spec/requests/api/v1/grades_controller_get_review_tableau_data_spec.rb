@@ -93,8 +93,18 @@ RSpec.describe GradesController, type: :controller do
     # Controller authorization stubs
     allow(controller).to receive(:authorize).and_return(true)
     allow(controller).to receive(:current_user).and_return(user)
-    allow(controller).to receive(:has_role?).and_return(true)
     allow(controller).to receive(:action_allowed?).and_return(true)
+
+    allow(controller).to receive(:get_items_from_questionnaire).and_return(
+      {
+        1 => {
+          answers: {
+            values: [],
+            comments: []
+          }
+        }
+      }
+    )
 
     # Stub JWT decoding (if using token auth)
     request.headers['Authorization'] = 'Bearer faketoken'

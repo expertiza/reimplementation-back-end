@@ -46,15 +46,6 @@ Rails.application.routes.draw do
           post 'bookmarkratings', to: 'bookmarks#save_bookmark_rating_score'
         end
       end
-      resources :response_maps, only: [:index, :show, :create] do
-        collection do
-          post '/:id/submit_response', to: 'response_maps#submit_response'
-          get 'response_report/:assignment_id', to: 'response_maps#response_report'
-          get 'assignment/:assignment_id',      to: 'response_maps#assignment_feedback'
-          get 'reviewer/:reviewer_id',          to: 'response_maps#reviewer_feedback'
-          get 'response_rate/:assignment_id',   to: 'response_maps#response_rate'
-        end
-      end
       resources :student_tasks do
         collection do
           get :list, action: :list
@@ -85,24 +76,66 @@ Rails.application.routes.draw do
           delete 'delete_all/questionnaire/:id', to:'questions#delete_all#questionnaire', as: 'delete_all'
         end
       end
+  
+  
+     resources :review_mappings, only: [] do
+          collection do
+            post :assign_round_robin
+            post :assign_random
+            post :assign_from_csv
+            post :request_review_fewest
+            post :assign_calibration
+            post :assign_quiz
+            delete :delete_all_for_reviewer
+          end
+
+          member do
+            patch :submit_review
+            patch :unsubmit_review
+            patch :grade_review
+            delete :delete_mapping
+          end
+      end
 
       resources :signed_up_teams do
         collection do
           post '/sign_up', to: 'signed_up_teams#sign_up'
           post '/sign_up_student', to: 'signed_up_teams#sign_up_student'
         end
+         member do
+          post :create_advertisement
+          patch :update_advertisement
+          delete :remove_advertisement
+        end
       end
-
-      resources :join_team_requests do
+  
+      resources :submitted_content do
         collection do
-          post 'decline/:id', to:'join_team_requests#decline'
+          get    :download
+          get    :list_files
+          delete :remove_hyperlink
+          post   :submit_file
+          post   :submit_hyperlink
+          post   :folder_action
         end
       end
 
-      resources :sign_up_topics do
+      resources :join_team_requests do
+        member do
+          patch 'accept', to: 'join_team_requests#accept'
+          patch 'decline', to: 'join_team_requests#decline'
+        end
+        collection do
+          get 'for_team/:team_id', to: 'join_team_requests#for_team'
+          get 'by_user/:user_id', to: 'join_team_requests#by_user'
+          get 'pending', to: 'join_team_requests#pending'
+        end
+      end
+
+      resources :project_topics do
         collection do
           get :filter
-          delete '/', to: 'sign_up_topics#destroy'
+          delete '/', to: 'project_topics#destroy'
         end
       end
 
@@ -171,6 +204,23 @@ Rails.application.routes.draw do
           get '/:assignment_id/view_our_scores', to: 'grades#view_our_scores'
           get '/:assignment_id/view_my_scores', to: 'grades#view_my_scores'
           get '/:participant_id/instructor_review', to: 'grades#instructor_review'
+        end
+      end
+      resources :duties do
+        collection do
+          get :accessible_duties
+        end
+      end
+      resources :assignments do
+        resources :duties, controller: 'assignments_duties', only: [:index, :create, :destroy]
+      end
+      resources :response_maps, only: [:index, :show, :create] do
+        collection do
+          post '/:id/submit_response', to: 'response_maps#submit_response'
+          get 'response_report/:assignment_id', to: 'response_maps#response_report'
+          get 'assignment/:assignment_id',      to: 'response_maps#assignment_feedback'
+          get 'reviewer/:reviewer_id',          to: 'response_maps#reviewer_feedback'
+          get 'response_rate/:assignment_id',   to: 'response_maps#response_rate'
         end
       end
 end

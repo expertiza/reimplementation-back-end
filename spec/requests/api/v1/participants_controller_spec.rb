@@ -50,7 +50,7 @@ RSpec.describe 'Participants API', type: :request do
     get 'Retrieve participants for a specific user' do
       tags 'Participants'
       produces 'application/json'
-
+ 
       parameter name: :user_id, in: :path, type: :integer, description: 'ID of the user'
 
       response '200', 'Returns participants' do

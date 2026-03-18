@@ -138,5 +138,4 @@ class Questionnaire < ApplicationRecord
                             .where('questionnaires.id = ?', id)
       results[0].max_score
     end
-
   end
