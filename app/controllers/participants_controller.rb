@@ -1,4 +1,4 @@
-class Api::V1::ParticipantsController < ApplicationController
+class ParticipantsController < ApplicationController
   include ParticipantsHelper
 
   # GET /participants/user/:user_id
