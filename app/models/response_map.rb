@@ -126,6 +126,13 @@ class ResponseMap < ApplicationRecord
     self.responses.where(is_submitted: true).exists?
   end
 
+  # Hook for map-type-specific notification side effects after response submission.
+  # Subclasses can override this and send emails/notifications as needed.
+  # @param _response [Response, nil] recently submitted response
+  def send_notification_email(_response = nil)
+    nil
+  end
+
   # Return response maps for an assignment
   def self.for_assignment(assignment_id)
     where(reviewed_object_id: assignment_id)

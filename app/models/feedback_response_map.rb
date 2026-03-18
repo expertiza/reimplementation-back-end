@@ -31,8 +31,15 @@ class FeedbackResponseMap < ResponseMap
     visitor.visit_feedback_response_map(assignment_id)
   end
 
-  def send_feedback_email(assignment)
+  # Sends feedback email notification for submitted feedback responses.
+  # Failures are logged and swallowed so submission flow is not interrupted.
+  # @param _response [Response, nil] recently submitted response (unused for now)
+  def send_notification_email(_response = nil)
+    return unless assignment.present?
+
     FeedbackEmailMailer.new(self, assignment).call
+  rescue StandardError => e
+    Rails.logger.error "FeedbackEmail failed for FeedbackResponseMap ##{id}: #{e.message}"
   end
 
   # Build a new instance from controller params (keeps creation details centralized)

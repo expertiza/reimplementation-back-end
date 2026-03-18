@@ -97,14 +97,9 @@ class Response < ApplicationRecord
   end
 
   # Sends notification emails when appropriate
-  # Currently handles feedback response notifications
+  # Delegates notification logic to the response map type (polymorphic).
   def send_notification_email
-    return unless map.assignment.present?
-
-    if map.is_a?(FeedbackResponseMap)
-      FeedbackEmailMailer.new(map, map.assignment).call
-    end
-    # Add other response map type email services as needed
+    map&.send_notification_email(self)
   end
 
   # Gets all active questions that can be scored

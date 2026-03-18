@@ -47,21 +47,10 @@ class ResponseMapsController < ApplicationController
     @response.is_submitted = true
 
     if @response.save
-      # send feedback email now that it’s marked submitted
-      handle_submission(@response_map)
+      render json: { message: 'Response submitted successfully' }, status: :ok
     else
       render json: { errors: @response.errors }, status: :unprocessable_entity
     end
-  end
-
-  # Processes the actual submission and handles email notifications
-  # @param map [ResponseMap] The response map being submitted
-  def handle_submission(map)
-    FeedbackEmailMailer.new(map, map.assignment).call
-    render json: { message: 'Response submitted successfully, email sent' }, status: :ok
-  rescue StandardError => e
-    Rails.logger.error "FeedbackEmail failed: #{e.message}"
-    render json: { message: 'Response submitted, but email failed' }, status: :ok
   end
 
   # Generates a report of responses for a specific assignment
@@ -131,7 +120,6 @@ class ResponseMapsController < ApplicationController
   # @param success_status [Symbol] HTTP status code for successful save
   def persist_and_respond(record, success_status)
     if record.save
-      handle_submission(record) if record.is_submitted?
       render json: record, status: success_status
     else
       render json: record.errors, status: :unprocessable_entity
