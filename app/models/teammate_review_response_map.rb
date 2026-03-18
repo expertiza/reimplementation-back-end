@@ -24,7 +24,8 @@ class TeammateReviewResponseMap < ResponseMap
     AssignmentParticipant.find(reviewer_id)
   end
 
-  def self.teammate_response_report(id)
-    TeammateReviewResponseMap.select('DISTINCT reviewer_id').where('reviewed_object_id = ?', id)
+  # Accepts a report visitor for double-dispatch report generation.
+  def self.accept_report_visitor(visitor, assignment_id)
+    visitor.visit_teammate_review_response_map(assignment_id)
   end
 end

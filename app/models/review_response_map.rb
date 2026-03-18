@@ -20,4 +20,9 @@ class ReviewResponseMap < ResponseMap
   def review_map_type
     'ReviewResponseMap'
   end
+
+  # Accepts a report visitor for double-dispatch report generation.
+  def self.accept_report_visitor(visitor, assignment_id)
+    visitor.visit_review_response_map(assignment_id)
+  end
 end

@@ -69,7 +69,7 @@ class ResponseMapsController < ApplicationController
   # GET /response_maps/response_report/:assignment_id
   def response_report
     assignment_id = params[:assignment_id]
-    report = ResponseMap.response_report(assignment_id, params[:type])
+    report = ResponseMapReports::ReportDispatcher.new.call(assignment_id:, type: params[:type])
     render json: report
   end
 

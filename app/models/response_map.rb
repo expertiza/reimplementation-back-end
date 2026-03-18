@@ -10,6 +10,12 @@ class ResponseMap < ApplicationRecord
 
   alias map_id id
 
+  # Accepts a report visitor for double-dispatch report generation.
+  # Subclasses can override to route to a specialized visitor method.
+  def self.accept_report_visitor(visitor, assignment_id)
+    visitor.visit_response_map(assignment_id)
+  end
+
   # Returns the title used for display - should be overridden by subclasses
   # Default implementation removes "ResponseMap" from the class name
   # @return [String] the display title for this type of response map
@@ -120,42 +126,7 @@ class ResponseMap < ApplicationRecord
     self.responses.where(is_submitted: true).exists?
   end
 
-  # Generate a report for responses grouped by rounds
-  # @param assignment_id [Integer] the ID of the assignment to report on
-  # @param type [String, nil] optional type filter for the report
-  # @return [Hash] the response report data
-  def self.response_report(assignment_id, type = nil)
-    responses = Response.joins(:response_map)
-                        .where(response_maps: { reviewed_object_id: assignment_id })
-                        .order(created_at: :desc)
-
-    if Assignment.find(assignment_id).varying_rubrics_by_round?
-      group_responses_by_round(responses)
-    else
-      group_latest_responses(responses)
-    end
-  end
-
-  private
-
-  # Groups responses by their round number
-  # @param responses [ActiveRecord::Relation] the responses to group
-  # @return [Hash] responses grouped by round number
-  def self.group_responses_by_round(responses)
-    responses.group_by(&:round)
-             .transform_values { |resps| resps.map(&:id) }
-  end
-
-  # Groups responses by map_id, keeping only the latest response
-  # @param responses [ActiveRecord::Relation] the responses to group
-  # @return [Array] array of the latest response IDs
-  def self.group_latest_responses(responses)
-    responses.group_by { |r| r.map_id }
-             .transform_values { |resps| resps.first.id }
-             .values
-  end
-
-    # Return response maps for an assignment
+  # Return response maps for an assignment
   def self.for_assignment(assignment_id)
     where(reviewed_object_id: assignment_id)
   end
