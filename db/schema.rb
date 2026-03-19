@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -116,6 +116,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
     t.boolean "enable_pair_programming", default: false
     t.boolean "has_teams", default: false
     t.boolean "has_topics", default: false
+    t.boolean "vary_by_round", default: false, null: false
     t.index ["course_id"], name: "index_assignments_on_course_id"
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
@@ -238,10 +239,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
     t.datetime "updated_at", null: false
     t.bigint "from_id", null: false
     t.bigint "to_id", null: false
-    t.bigint "participant_id", null: false
     t.index ["assignment_id"], name: "fk_invitation_assignments"
     t.index ["from_id"], name: "index_invitations_on_from_id"
-    t.index ["participant_id"], name: "index_invitations_on_participant_id"
     t.index ["to_id"], name: "index_invitations_on_to_id"
   end
 
@@ -328,6 +327,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
     t.integer "parent_id", null: false
     t.string "type", null: false
     t.float "grade"
+    t.bigint "duty_id"
+    t.index ["duty_id"], name: "index_participants_on_duty_id"
     t.index ["join_team_request_id"], name: "index_participants_on_join_team_request_id"
     t.index ["team_id"], name: "index_participants_on_team_id"
     t.index ["user_id"], name: "fk_participant_users"
@@ -485,7 +486,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
   end
 
   create_table "signed_up_teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.bigint "sign_up_topic_id", null: false
+    t.bigint "project_topic_id", null: false
     t.bigint "team_id", null: false
     t.boolean "is_waitlisted"
     t.integer "preference_priority_number"
@@ -493,7 +494,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
     t.datetime "updated_at", null: false
     t.text "comments_for_advertisement"
     t.boolean "advertise_for_partner"
-    t.index ["sign_up_topic_id"], name: "index_signed_up_teams_on_sign_up_topic_id"
+    t.index ["project_topic_id"], name: "index_signed_up_teams_on_project_topic_id"
     t.index ["team_id"], name: "index_signed_up_teams_on_team_id"
   end
 
@@ -569,13 +570,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
   end
 
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.string "name", null: false
-    t.string "type", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "name", null: false
+    t.string "type", null: false
     t.integer "parent_id", null: false
     t.integer "grade_for_submission"
     t.string "comment_for_submission"
+    t.text "submitted_hyperlinks"
+    t.integer "directory_num"
   end
 
   create_table "teams_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -662,11 +665,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
   add_foreign_key "duties", "assignments"
   add_foreign_key "invitations", "participants", column: "from_id"
   add_foreign_key "invitations", "participants", column: "to_id"
+  add_foreign_key "duties", "users", column: "instructor_id"
   add_foreign_key "items", "questionnaires"
   add_foreign_key "late_policies", "users", column: "instructor_id", name: "fk_instructor_id"
   add_foreign_key "participants", "join_team_requests"
   add_foreign_key "participants", "teams"
   add_foreign_key "participants", "users"
+  add_foreign_key "project_topics", "assignments"
   add_foreign_key "question_advices", "items", column: "question_id"
   add_foreign_key "resubmission_times", "participants", name: "fk_resubmission_times_participants"
   add_foreign_key "review_bids", "assignments"
@@ -676,8 +681,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_29_071649) do
   add_foreign_key "review_comment_paste_bins", "review_grades"
   add_foreign_key "review_grades", "participants"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
-  add_foreign_key "sign_up_topics", "assignments"
-  add_foreign_key "signed_up_teams", "sign_up_topics"
+  add_foreign_key "signed_up_teams", "project_topics"
   add_foreign_key "signed_up_teams", "teams"
   add_foreign_key "survey_deployments", "questionnaires"
   add_foreign_key "ta_mappings", "courses"

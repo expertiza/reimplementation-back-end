@@ -5,7 +5,7 @@ describe Questionnaire, type: :model do
 
   # Creating dummy objects for the test with the help of let statement
   let(:role) {Role.create(name: 'Instructor', parent_id: nil, id: 2, default_page_id: nil)}
-  let(:instructor) { Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role: role) }
+  let(:instructor) { Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role_id: role.id) }
   let(:questionnaire) do
     Questionnaire.create!(
       id: 1,

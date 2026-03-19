@@ -10,9 +10,10 @@ class Assignment < ApplicationRecord
   has_many :questionnaires, through: :assignment_questionnaires
   has_many :response_maps, foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
-  has_many :sign_up_topics , class_name: 'SignUpTopic', foreign_key: 'assignment_id', dependent: :destroy
+  has_many :project_topics , class_name: 'ProjectTopic', foreign_key: 'assignment_id', dependent: :destroy
   has_many :due_dates,as: :parent, class_name: 'DueDate',  dependent: :destroy
-  has_many :due_dates,as: :parent, class_name: 'DueDate',  dependent: :destroy
+  has_many :assignments_duties, dependent: :destroy
+  has_many :duties, through: :assignments_duties
   belongs_to :course, optional: true
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments
 
@@ -27,7 +28,22 @@ class Assignment < ApplicationRecord
     @has_teams ||= teams.any?
   end
   def num_review_rounds
-    rounds_of_reviews
+    review_rounds = due_dates.where(deadline_type_id: DueDate::REVIEW_DEADLINE_TYPE_ID).count
+    review_rounds.positive? ? review_rounds : (rounds_of_reviews || 0)
+  end
+
+  # Initializes the directory path for
+  def path
+    if course_id.nil? && instructor_id.nil?
+      raise 'The path cannot be created. The assignment must be associated with either a course or an instructor.'
+    end
+
+    path_text = if !course_id.nil? && course_id > 0
+                  "#{Rails.root}/pg_data/#{FileHelper.clean_path(instructor.name)}/#{FileHelper.clean_path(course.directory_path)}/"
+                else
+                  "#{Rails.root}/pg_data/#{FileHelper.clean_path(instructor.name)}/"
+                end
+    path_text + FileHelper.clean_path(directory_path)
   end
 
   # Add a participant to the assignment based on the provided user_id.
@@ -141,7 +157,7 @@ class Assignment < ApplicationRecord
   #This method return the value of the has_topics field for the given assignment object.
   # has_topics is of boolean type and is set true if there is any topic associated with the assignment.
   def topics?
-    @has_topics ||= sign_up_topics.any?
+    @has_topics ||= project_topics.any?
   end
 
   #This method return if the given assignment is a team assignment.
@@ -192,6 +208,8 @@ class Assignment < ApplicationRecord
   # Checks if for the given assignment any questionnaire is present with used_in_round field not nil.
   # Returns a boolean value whether such questionnaire is present.
   def varying_rubrics_by_round?
+    return false unless vary_by_round
+
     rubric_with_round = AssignmentQuestionnaire.where(assignment_id: id).where.not(used_in_round: nil).first
     # Check if any rubric has a specified round
     rubric_with_round.present?
