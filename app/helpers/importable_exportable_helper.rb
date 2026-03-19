@@ -163,7 +163,7 @@ module ImportableExportableHelper
   # Optional = internal fields - mandatory
   # --------------------------------------------------------------
   def optional_fields
-    internal_fields - mandatory_fields
+    internal_fields - (mandatory_fields || [])
   end
 
   # --------------------------------------------------------------
@@ -176,7 +176,7 @@ module ImportableExportableHelper
     if fields.any?
       @external_classes = fields
     else
-      @external_classes
+      @external_classes || []
     end
   end
 
@@ -190,7 +190,7 @@ module ImportableExportableHelper
     if fields.any?
       @available_actions_on_duplicate = fields
     else
-      @available_actions_on_duplicate
+      @available_actions_on_duplicate || []
     end
   end
 
@@ -326,11 +326,13 @@ module ImportableExportableHelper
     duplicate = save_object(created_object)
     return duplicate if duplicate && duplicate != true
 
-    return unless external_classes
+    return true if external_classes.empty?
 
     external_classes.each do |external_class|
       create_external_class(row_hash, external_class, created_object)
     end
+
+    true
 
   end
 
