@@ -4,6 +4,7 @@ class Questionnaire < ApplicationRecord
   extend ImportableExportableHelper
   mandatory_fields :name, :min_question_score, :max_question_score, :questionnaire_type, :display_type, :instruction_loc
   external_classes ExternalClass.new(User, true, false, :name)
+  available_actions_on_duplicate SkipRecordAction.new, UpdateExistingRecordAction.new, ChangeOffendingFieldAction.new
 
   belongs_to :instructor
   has_many :items, class_name: "Item", foreign_key: "questionnaire_id", dependent: :destroy # the collection of questions associated with this Questionnaire
