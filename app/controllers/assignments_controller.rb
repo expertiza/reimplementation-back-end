@@ -209,8 +209,94 @@ class AssignmentsController < ApplicationController
       end
     end
   end
-  
-  private
+
+  # GET /assignments/:assignment_id/calibration_data
+  # Returns a list of calibration participants (teams) and their submitted content.
+  def calibration_submissions
+    assignment = Assignment.find_by(id: params[:assignment_id])
+    if assignment.nil?
+      render json: { error: "Assignment not found" }, status: :not_found
+      return
+    end
+
+    # Find all ReviewResponseMaps that are flagged for calibration for this assignment.
+    calibration_maps = ReviewResponseMap.where(reviewed_object_id: assignment.id, calibration: true)
+
+    calibration_entries = calibration_maps.map do |map|
+      team = map.reviewee # The team being reviewed
+
+      # 1. Gather Submitted Content
+      hyperlinks = team.submitted_hyperlinks.present? ? JSON.parse(team.submitted_hyperlinks) : []
+
+      # 2. Gather Files
+      files = []
+      if File.exist?(team.path.to_s)
+        Dir.entries(team.path.to_s).each do |entry|
+          next if entry == '.' || entry == '..'
+          entry_path = File.join(team.path.to_s, entry)
+          unless File.directory?(entry_path)
+            files << {
+              name: entry,
+              size: File.size(entry_path),
+              modified_at: File.mtime(entry_path)
+            }
+          end
+        end
+      end
+
+      # 3. Gather Instructor Review
+      instructor_response = map.responses.last
+      instructor_review = instructor_response ? {
+        response_id: instructor_response.id,
+        status: instructor_response.is_submitted ? "Completed" : "In Progress",
+        updated_at: instructor_response.updated_at
+      } : nil
+
+      # 4. Gather Student Reviews (Other maps for the same team that are NOT for calibration)
+      student_maps = ReviewResponseMap.where(reviewee_id: team.id, reviewed_object_id: assignment.id, calibration: false)
+      student_reviews = student_maps.map do |sm|
+        resp = sm.responses.last
+        next unless resp # Skip if no response has been started
+        {
+          reviewer_name: sm.reviewer.fullname,
+          response_id: resp.id,
+          is_submitted: resp.is_submitted,
+          updated_at: resp.updated_at
+        }
+      end.compact
+
+      # 4. Gather Student Reviews (Logic is now correct and single-block)
+      student_maps = ReviewResponseMap.where(reviewee_id: team.id, reviewed_object_id: assignment.id, calibration: false)
+      student_reviews = student_maps.map do |sm|
+        resp = sm.responses.last
+        next unless resp # Skip if no response has been started
+        {
+          reviewer_name: sm.reviewer.fullname,
+          response_id: resp.id,
+          is_submitted: resp.is_submitted,
+          updated_at: resp.updated_at
+        }
+      end.compact
+
+      {
+        team_id: team.id,
+        team_name: team.name,
+        submitted_content: {
+          hyperlinks: hyperlinks,
+          files: files
+        },
+        instructor_review: instructor_review,
+        student_reviews: student_reviews
+      }
+    end
+
+    render json: {
+      assignment_id: assignment.id,
+      calibration_entries: calibration_entries
+    }, status: :ok
+  end
+
+    private
   # Only allow a list of trusted parameters through.
   def assignment_params
     params.require(:assignment).permit(
