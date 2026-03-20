@@ -3,7 +3,7 @@
 class User < ApplicationRecord
   has_secure_password
   after_initialize :set_defaults
-
+  alias_attribute :name, :username
   # name must be lowercase and unique
   validates :name, presence: true, uniqueness: true, allow_blank: false
                    # format: { with: /\A[a-z]+\z/, message: 'must be in lowercase' }
@@ -126,16 +126,15 @@ class User < ApplicationRecord
   # that only the id, name, and email attributes should be included when a User object is serialized.
   def as_json(options = {})
     super(options.merge({
-                          only: %i[id name email full_name email_on_review email_on_submission
-                                   email_on_review_of_review],
+                          only: %i[id username email full_name],
                           include:
                           {
                             role: { only: %i[id name] },
-                            parent: { only: %i[id name] },
+                            parent: { only: %i[id username] },
                             institution: { only: %i[id name] }
                           }
                         })).tap do |hash|
-      hash['parent'] ||= { id: nil, name: nil }
+      hash['parent'] ||= { id: nil, username: nil }
       hash['institution'] ||= { id: nil, name: nil }
     end
   end
@@ -143,9 +142,6 @@ class User < ApplicationRecord
   def set_defaults
     self.is_new_user = true
     self.copy_of_emails ||= false
-    self.email_on_review ||= false
-    self.email_on_submission ||= false
-    self.email_on_review_of_review ||= false
     self.etc_icons_on_homepage ||= true
   end
 
