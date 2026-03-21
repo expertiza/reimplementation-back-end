@@ -97,6 +97,13 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :project_topics, controller: :sign_up_topics do
+        collection do
+          get :filter
+          delete '/', action: :destroy
+        end
+      end
+
       resources :invitations do
         get 'user/:user_id/assignment/:assignment_id/', on: :collection, action: :invitations_for_user_assignment
       end
