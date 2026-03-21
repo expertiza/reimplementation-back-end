@@ -22,7 +22,7 @@ class SignUpTopicsController < ApplicationController
   # The method takes inputs and outputs the if the topic creation was successful.
   def create
     @sign_up_topic = SignUpTopic.new(sign_up_topic_params)
-    @assignment = Assignment.find(params[:sign_up_topic][:assignment_id])
+    @assignment = Assignment.find(topic_payload[:assignment_id])
     @sign_up_topic.micropayment = params[:micropayment] if @assignment.microtask?
     if @sign_up_topic.save
       # undo_link "The topic: \"#{@sign_up_topic.topic_name}\" has been created successfully. "
@@ -77,8 +77,16 @@ class SignUpTopicsController < ApplicationController
     @sign_up_topic = SignUpTopic.find(params[:id])
   end
 
+  # Temporary compatibility shim for legacy frontend naming.
+  # Remove once the frontend consistently submits `sign_up_topic`.
+  def topic_payload
+    params[:sign_up_topic] || params[:project_topic] || {}
+  end
+
   # Only allow a list of trusted parameters through.
   def sign_up_topic_params
-    params.require(:sign_up_topic).permit(:topic_identifier, :category, :topic_name, :max_choosers, :assignment_id)
+    ActionController::Parameters
+      .new(topic_payload)
+      .permit(:topic_identifier, :category, :topic_name, :max_choosers, :assignment_id, :description, :link)
   end
 end
