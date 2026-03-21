@@ -22,8 +22,14 @@ class SignUpTopicsController < ApplicationController
   # The method takes inputs and outputs the if the topic creation was successful.
   def create
     @sign_up_topic = SignUpTopic.new(sign_up_topic_params)
-    @assignment = Assignment.find(topic_payload[:assignment_id])
-    @sign_up_topic.micropayment = params[:micropayment] if @assignment.microtask?
+
+    @assignment = Assignment.find_by(id: @sign_up_topic.assignment_id)
+    if @sign_up_topic.assignment_id.blank? || @assignment.nil?
+      render json: { message: 'Assignment ID is invalid or missing.' }, status: :unprocessable_entity
+      return
+    end
+
+    @sign_up_topic.micropayment = micropayment_value if @assignment.microtask?
     if @sign_up_topic.save
       # undo_link "The topic: \"#{@sign_up_topic.topic_name}\" has been created successfully. "
       render json: { message: "The topic: \"#{@sign_up_topic.topic_name}\" has been created successfully. " }, status: :created
@@ -35,6 +41,9 @@ class SignUpTopicsController < ApplicationController
   # PATCH/PUT /sign_up_topics/1
   # updates parameters present in sign_up_topic_params.
   def update
+    assignment = Assignment.find_by(id: @sign_up_topic.assignment_id)
+    @sign_up_topic.micropayment = micropayment_value if assignment&.microtask?
+
     if @sign_up_topic.update(sign_up_topic_params)
       render json: { message: "The topic: \"#{@sign_up_topic.topic_name}\" has been updated successfully. " }, status: 200
     else
@@ -80,13 +89,23 @@ class SignUpTopicsController < ApplicationController
   # Temporary compatibility shim for legacy frontend naming.
   # Remove once the frontend consistently submits `sign_up_topic`.
   def topic_payload
-    params[:sign_up_topic] || params[:project_topic] || {}
+    params[:project_topic] || params[:sign_up_topic] || ActionController::Parameters.new
+  end
+
+  def micropayment_value
+    topic_payload[:micropayment] || params[:micropayment]
   end
 
   # Only allow a list of trusted parameters through.
   def sign_up_topic_params
-    ActionController::Parameters
-      .new(topic_payload)
-      .permit(:topic_identifier, :category, :topic_name, :max_choosers, :assignment_id, :description, :link)
+    topic_payload.permit(
+      :topic_identifier,
+      :category,
+      :topic_name,
+      :max_choosers,
+      :assignment_id,
+      :description,
+      :link
+    )
   end
 end
