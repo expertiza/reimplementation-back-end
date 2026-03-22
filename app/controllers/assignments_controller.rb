@@ -209,8 +209,168 @@ class AssignmentsController < ApplicationController
       end
     end
   end
-  
-  private
+
+  # GET /assignments/:assignment_id/calibration_data
+  # Returns a list of calibration participants (teams) and their submitted content.
+  def calibration_submissions
+    assignment = Assignment.find_by(id: params[:assignment_id])
+    if assignment.nil?
+      render json: { error: "Assignment not found" }, status: :not_found
+      return
+    end
+
+    # Find all ReviewResponseMaps that are flagged for calibration for this assignment.
+    calibration_maps = ReviewResponseMap.where(reviewed_object_id: assignment.id, calibration: true)
+
+    calibration_entries = calibration_maps.map do |map|
+      team = map.reviewee # The team being reviewed
+
+      # 1. Gather Submitted Content
+      hyperlinks = team.submitted_hyperlinks.present? ? JSON.parse(team.submitted_hyperlinks) : []
+
+      # 2. Gather Files
+      files = []
+      if File.exist?(team.path.to_s)
+        Dir.entries(team.path.to_s).each do |entry|
+          next if entry == '.' || entry == '..'
+          entry_path = File.join(team.path.to_s, entry)
+          unless File.directory?(entry_path)
+            files << {
+              name: entry,
+              size: File.size(entry_path),
+              modified_at: File.mtime(entry_path)
+            }
+          end
+        end
+      end
+
+      # 3. Gather Instructor Review
+      instructor_response = map.responses.last
+      instructor_review = instructor_response ? {
+        response_id: instructor_response.id,
+        status: instructor_response.is_submitted ? "Completed" : "In Progress",
+        updated_at: instructor_response.updated_at
+      } : nil
+
+      # 4. Gather Student Reviews (Other maps for the same team that are NOT for calibration)
+      student_maps = ReviewResponseMap.where(reviewee_id: team.id, reviewed_object_id: assignment.id, calibration: false)
+      student_reviews = student_maps.map do |sm|
+        resp = sm.responses.last
+        next unless resp # Skip if no response has been started
+        {
+          reviewer_name: sm.reviewer.fullname,
+          response_id: resp.id,
+          is_submitted: resp.is_submitted,
+          updated_at: resp.updated_at
+        }
+      end.compact
+
+      # 4. Gather Student Reviews (Logic is now correct and single-block)
+      student_maps = ReviewResponseMap.where(reviewee_id: team.id, reviewed_object_id: assignment.id, calibration: false)
+      student_reviews = student_maps.map do |sm|
+        resp = sm.responses.last
+        next unless resp # Skip if no response has been started
+        {
+          reviewer_name: sm.reviewer.fullname,
+          response_id: resp.id,
+          is_submitted: resp.is_submitted,
+          updated_at: resp.updated_at
+        }
+      end.compact
+
+      {
+        team_id: team.id,
+        team_name: team.name,
+        submitted_content: {
+          hyperlinks: hyperlinks,
+          files: files
+        },
+        instructor_review: instructor_review,
+        student_reviews: student_reviews
+      }
+    end
+
+    render json: {
+      assignment_id: assignment.id,
+      calibration_entries: calibration_entries
+    }, status: :ok
+  end
+
+  # app/controllers/assignments_controller.rb
+
+  # GET /assignments/:assignment_id/calibration_reviews/:team_id
+  # Returns instructor response, latest student responses, rubric metadata, and summary distribution.
+  def calibration_reviews
+    assignment = Assignment.find_by(id: params[:assignment_id])
+    team = AssignmentTeam.find_by(id: params[:team_id], parent_id: assignment&.id)
+
+    if assignment.nil? || team.nil?
+      render json: { error: "Assignment or Team not found" }, status: :not_found
+      return
+    end
+
+    # 1. Fetch Rubric Items (Questions)
+    # Fetch items from all associated ReviewQuestionnaires for this assignment.
+    questionnaires = assignment.assignment_questionnaires.joins(:questionnaire)
+                               .where(questionnaires: { questionnaire_type: 'ReviewQuestionnaire' })
+                               .map(&:questionnaire)
+
+    rubric_items = questionnaires.flat_map(&:items).sort_by(&:seq)
+
+    # 2. Fetch Instructor's Calibration Response (The "Gold Standard")
+    # This is the review for the team where calibration is true.
+    instructor_map = ReviewResponseMap.find_by(reviewed_object_id: assignment.id, reviewee_id: team.id, calibration: true)
+    instructor_response = instructor_map&.responses&.last
+    instructor_data = instructor_response ? {
+      response_id: instructor_response.id,
+      additional_comment: instructor_response.additional_comment,
+      answers: instructor_response.scores.map { |a| { item_id: a.item_id, answer: a.answer, comments: a.comments } }
+    } : nil
+
+    # 3. Fetch Student Responses for the same team
+    student_maps = ReviewResponseMap.where(reviewed_object_id: assignment.id, reviewee_id: team.id, calibration: false)
+    student_responses_data = student_maps.map do |sm|
+      resp = sm.responses.last
+      next unless resp
+      {
+        reviewer_name: sm.reviewer.fullname,
+        response_id: resp.id,
+        additional_comment: resp.additional_comment,
+        updated_at: resp.updated_at,
+        answers: resp.scores.map { |a| { item_id: a.item_id, answer: a.answer, comments: a.comments } }
+      }
+    end.compact
+
+    # 4. Calculate Per-Rubric-Item Summary Distribution across all student reviews
+    summary = rubric_items.each_with_object({}) do |item, hash|
+      next unless item.scored?
+
+      # Collect scores for this specific item from all student reviews
+      item_scores = student_responses_data.map do |sr|
+        sr[:answers].find { |a| a[:item_id] == item.id }&.[](:answer)
+      end.compact
+
+      # Create a distribution map: { score_value => count }
+      distribution = item_scores.each_with_object(Hash.new(0)) { |score, counts| counts[score] += 1 }
+
+      hash[item.id] = {
+        average: item_scores.empty? ? 0 : (item_scores.sum.to_f / item_scores.size).round(2),
+        distribution: distribution
+      }
+    end
+
+    render json: {
+      assignment_id: assignment.id,
+      team_id: team.id,
+      team_name: team.name,
+      rubric: rubric_items.as_json,
+      instructor_response: instructor_data,
+      student_responses: student_responses_data,
+      summary: summary
+    }, status: :ok
+  end
+
+    private
   # Only allow a list of trusted parameters through.
   def assignment_params
     params.require(:assignment).permit(
