@@ -32,6 +32,17 @@ module Reimplementation
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
-    config.cache_store = :redis_store, ENV['CACHE_STORE'], { expires_in: 3.days, raise_errors: false }
+
+    if ENV['CACHE_STORE_URL'].present?
+      begin
+        require 'redis'
+        require 'active_support/cache/redis_cache_store'
+        config.cache_store = :redis_cache_store, { url: ENV['CACHE_STORE_URL'], expires_in: 3.days, raise_errors: false }
+      rescue LoadError, Gem::LoadError
+        config.cache_store = :memory_store
+      end
+    else
+      config.cache_store = :memory_store
+    end
   end
 end

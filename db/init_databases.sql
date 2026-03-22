@@ -1,8 +1,11 @@
--- Create development database
-CREATE DATABASE reimplementation_development;
+CREATE DATABASE IF NOT EXISTS reimplementation_development
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
 
--- Create test database
-CREATE DATABASE reimplementation_test;
+CREATE DATABASE IF NOT EXISTS reimplementation_test
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
 
--- Create production database
-CREATE DATABASE reimplementation_production;
+CREATE DATABASE IF NOT EXISTS reimplementation_production
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
