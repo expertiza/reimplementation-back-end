@@ -130,7 +130,8 @@ RSpec.describe "Import API", type: :request do
               .with(
                 kind_of(ActionDispatch::Http::UploadedFile),
                 ["id"],
-                use_header: false
+                false,
+                {}
               )
     end
 

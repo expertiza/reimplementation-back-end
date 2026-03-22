@@ -31,11 +31,12 @@ class Import
   # @param mapping [FieldMapping, nil] optional mapping override
   # @param dup_action [DuplicateAction, nil] optional duplicate handler override
   #
-  def initialize(klass:, file:, headers: nil, dup_action: nil)
+  def initialize(klass:, file:, headers: nil, dup_action: nil, defaults: {})
     @klass = klass
     @file = file
     @headers = headers
     @duplicate_action = dup_action || DEFAULT_DUPLICATE_ACTION
+    @defaults = defaults || {}
   end
 
   # --------------------------------------------------------------
@@ -60,7 +61,8 @@ class Import
     dups = @klass.try_import_records(
       @file,
       @headers,
-      use_headers
+      use_headers,
+      @defaults
     )
 
     dups.each {|dup| duplicate_groups << normalize_duplicate(dup)}

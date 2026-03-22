@@ -253,7 +253,7 @@ module ImportableExportableHelper
   #
   # Duplicate objects are collected and returned.
   # --------------------------------------------------------------
-  def try_import_records(file, headers, use_header)
+  def try_import_records(file, headers, use_header, defaults = {})
     temp_file = 'output.csv'
     csv_file = CSV.read(file)
 
@@ -280,7 +280,7 @@ module ImportableExportableHelper
 
     ActiveRecord::Base.transaction do
       temp_contents.each do |row|
-        dup = import_row(row, mapping)
+        dup = import_row(row, mapping, defaults)
         duplicate_records << dup if dup && dup != true
       end
 
@@ -305,7 +305,7 @@ module ImportableExportableHelper
   #   • true if saved successfully
   #   • duplicate object if duplicate occurred
   # --------------------------------------------------------------
-  def import_row(row, mapping)
+  def import_row(row, mapping, defaults = {})
 
     # Build row_hash where each key maps to all found values
     row_hash = {}
@@ -317,6 +317,12 @@ module ImportableExportableHelper
     # Create object for this class
     current_class_attrs = row_hash.slice(*internal_fields)
     created_object = from_hash(current_class_attrs)
+    defaults.compact.each do |field, value|
+      next unless created_object.respond_to?(field)
+      next if created_object.public_send(field).present?
+
+      created_object.public_send("#{field}=", value)
+    end
 
     # for each external class, try to look them up
     external_classes&.each do |external_class|

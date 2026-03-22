@@ -45,11 +45,28 @@ RSpec.describe "Import/export entities", type: :request do
         %w[SkipRecordAction UpdateExistingRecordAction ChangeOffendingFieldAction]
       )
     end
+
+    it "returns role_name and institution_name as external fields for User import" do
+      Role.create!(name: "Super Administrator", parent_id: nil)
+
+      get "/import/User"
+
+      expect(response).to have_http_status(:ok)
+
+      json = JSON.parse(response.body)
+      expect(json["mandatory_fields"]).to include("name", "email", "password", "full_name")
+      expect(json["mandatory_fields"]).not_to include("role_id", "institution_id")
+      expect(json["external_fields"]).to include("role_name", "institution_name")
+    end
   end
 
   describe "POST /import/:class" do
-    let!(:role) do
+    let!(:instructor_role) do
       Role.create!(name: "Instructor", parent_id: nil)
+    end
+
+    let!(:student_role) do
+      Role.create!(name: "Student", parent_id: instructor_role.id)
     end
 
     let!(:institution) do
@@ -62,9 +79,15 @@ RSpec.describe "Import/export entities", type: :request do
         full_name: "Teacher Example",
         email: "teacher@example.com",
         password: "password",
-        role: role,
+        role: instructor_role,
         institution: institution
       )
+    end
+
+    before do
+      allow_any_instance_of(ImportController)
+        .to receive(:current_user)
+        .and_return(instructor)
     end
 
     let!(:assignment) do
@@ -100,6 +123,45 @@ RSpec.describe "Import/export entities", type: :request do
 
       expect(response).to have_http_status(:created)
       expect(SignUpTopic.find_by(topic_name: "Topic A", assignment_id: assignment.id)).to be_present
+    end
+
+    it "imports users with parent and institution defaults using role_name" do
+      file = uploaded_csv("name,email,password,full_name,role_name\nstudentone,student1@example.com,password,Student One,Student\n")
+
+      post "/import/User",
+           params: {
+             csv_file: file,
+             use_headers: true,
+             dup_action: "SkipRecordAction"
+           }
+
+      expect(response).to have_http_status(:created)
+
+      imported_user = User.find_by(email: "student1@example.com")
+      expect(imported_user).to be_present
+      expect(imported_user.parent_id).to eq(instructor.id)
+      expect(imported_user.institution_id).to eq(institution.id)
+      expect(imported_user.role_id).to eq(student_role.id)
+    end
+
+    it "imports users using role_name and institution_name" do
+      other_institution = Institution.create!(name: "Other School")
+      file = uploaded_csv("name,full_name,email,password,role_name,institution_name\nstudenttwo,Student Two,student2@example.com,password,Student,Other School\n")
+
+      post "/import/User",
+           params: {
+             csv_file: file,
+             use_headers: true,
+             dup_action: "SkipRecordAction"
+           }
+
+      expect(response).to have_http_status(:created)
+
+      imported_user = User.find_by(email: "student2@example.com")
+      expect(imported_user).to be_present
+      expect(imported_user.institution_id).to eq(other_institution.id)
+      expect(imported_user.parent_id).to eq(instructor.id)
+      expect(imported_user.role_id).to eq(student_role.id)
     end
   end
 
