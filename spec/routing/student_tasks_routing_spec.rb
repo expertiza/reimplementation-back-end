@@ -12,20 +12,16 @@ RSpec.describe StudentTasksController, type: :routing do
       expect(get: "/student_tasks/1").to route_to("student_tasks#show", id: "1")
     end
 
-    it "routes to #create" do
-      expect(post: "/student_tasks").to route_to("student_tasks#create")
+    it "routes to #list" do
+      expect(get: "/student_tasks/list").to route_to("student_tasks#list")
     end
 
-    it "routes to #update via PUT" do
-      expect(put: "/student_tasks/1").to route_to("student_tasks#update", id: "1")
+    it "routes to #view" do
+      expect(get: "/student_tasks/view").to route_to("student_tasks#view")
     end
 
-    it "routes to #update via PATCH" do
-      expect(patch: "/student_tasks/1").to route_to("student_tasks#update", id: "1")
-    end
-
-    it "routes to #destroy" do
-      expect(delete: "/student_tasks/1").to route_to("student_tasks#destroy", id: "1")
+    it "routes to #request_revision" do
+      expect(post: "/student_tasks/1/request_revision").to route_to("student_tasks#request_revision", id: "1")
     end
   end
 end
