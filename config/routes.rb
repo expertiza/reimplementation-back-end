@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 Rails.application.routes.draw do
 
   mount Rswag::Api::Engine => 'api-docs'
@@ -9,6 +7,8 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "articles#index"
   post '/login', to: 'authentication#login'
+  namespace :api do
+    namespace :v1 do
       resources :institutions
       resources :roles do
         collection do
@@ -46,7 +46,7 @@ Rails.application.routes.draw do
           post 'bookmarkratings', to: 'bookmarks#save_bookmark_rating_score'
         end
       end
-      resources :student_tasks do
+      resources :student_tasks, only: %i[index show] do
         collection do
           get :list, action: :list
           get :view
@@ -76,75 +76,31 @@ Rails.application.routes.draw do
           delete 'delete_all/questionnaire/:id', to:'questions#delete_all#questionnaire', as: 'delete_all'
         end
       end
-  
-  
-     resources :review_mappings, only: [] do
-          collection do
-            post :assign_round_robin
-            post :assign_random
-            post :assign_from_csv
-            post :request_review_fewest
-            post :assign_calibration
-            post :assign_quiz
-            delete :delete_all_for_reviewer
-          end
-
-          member do
-            patch :submit_review
-            patch :unsubmit_review
-            patch :grade_review
-            delete :delete_mapping
-          end
-      end
 
       resources :signed_up_teams do
         collection do
           post '/sign_up', to: 'signed_up_teams#sign_up'
           post '/sign_up_student', to: 'signed_up_teams#sign_up_student'
         end
-         member do
-          post :create_advertisement
-          patch :update_advertisement
-          delete :remove_advertisement
-        end
-      end
-  
-      resources :submitted_content do
-        collection do
-          get    :download
-          get    :list_files
-          delete :remove_hyperlink
-          post   :submit_file
-          post   :submit_hyperlink
-          post   :folder_action
-        end
       end
 
       resources :join_team_requests do
-        member do
-          patch 'accept', to: 'join_team_requests#accept'
-          patch 'decline', to: 'join_team_requests#decline'
-        end
         collection do
-          get 'for_team/:team_id', to: 'join_team_requests#for_team'
-          get 'by_user/:user_id', to: 'join_team_requests#by_user'
-          get 'pending', to: 'join_team_requests#pending'
+          post 'decline/:id', to:'join_team_requests#decline'
         end
       end
 
-      resources :project_topics do
+
+
+      resources :sign_up_topics do
         collection do
           get :filter
-          delete '/', to: 'project_topics#destroy'
+          delete '/', to: 'sign_up_topics#destroy'
         end
       end
 
       resources :invitations do
-        collection do
-          get '/sent_by/team/:team_id', to: 'invitations_sent_by_team'
-          get '/sent_by/participant/:participant_id', to: 'invitations_sent_by_participant'
-          get '/sent_to/:participant_id', to: 'invitations_sent_to_participant'
-        end
+        get 'user/:user_id/assignment/:assignment_id/', on: :collection, action: :invitations_for_user_assignment
       end
 
       resources :account_requests do
@@ -156,62 +112,14 @@ Rails.application.routes.draw do
 
       resources :participants do
         collection do
-          get '/user/:user_id', to: 'participants#list_user_participants'
-          get '/assignment/:assignment_id', to: 'participants#list_assignment_participants'
+          get '/user/:user_id', to: 'participants#user_index'
+          get '/assignment/:assignment_id', to: 'participants#assignment_index'
           get '/:id', to: 'participants#show'
           post '/:authorization', to: 'participants#add'
           patch '/:id/:authorization', to: 'participants#update_authorization'
           delete '/:id', to: 'participants#destroy'
         end
       end
-
-      resources :student_teams, only: %i[create update] do
-        collection do
-          get :view          
-          get :mentor
-          get :remove_participant
-          put '/leave', to: 'student_teams#leave_team'        
-        end
-      end
-
-      resources :teams do
-        member do
-          get 'members'
-          post 'members', to: 'teams#add_member'
-          delete 'members/:user_id', to: 'teams#remove_member'
-
-          get 'join_requests'
-          post 'join_requests', to: 'teams#create_join_request'
-          put 'join_requests/:join_request_id', to: 'teams#update_join_request'
-        end
-      end
-      resources :teams_participants, only: [] do
-        collection do
-          put :update_duty
-        end
-        member do
-          get :list_participants
-          post :add_participant
-          delete :delete_participants
-        end
-      end      
-      resources :grades do
-        collection do        
-          get '/:assignment_id/view_all_scores', to: 'grades#view_all_scores'
-          patch '/:participant_id/assign_grade', to: 'grades#assign_grade'
-          get '/:participant_id/edit', to: 'grades#edit'
-          get '/:assignment_id/:participant_id/get_review_tableau_data', to: 'grades#get_review_tableau_data'
-          get '/:assignment_id/view_our_scores', to: 'grades#view_our_scores'
-          get '/:assignment_id/view_my_scores', to: 'grades#view_my_scores'
-          get '/:participant_id/instructor_review', to: 'grades#instructor_review'
-        end
-      end
-      resources :duties do
-        collection do
-          get :accessible_duties
-        end
-      end
-      resources :assignments do
-        resources :duties, controller: 'assignments_duties', only: [:index, :create, :destroy]
-      end
+    end
+  end
 end
