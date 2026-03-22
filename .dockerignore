@@ -1,0 +1,11 @@
+.git
+.github
+.bundle
+.idea
+.vscode
+coverage
+log
+tmp
+vendor/bundle
+node_modules
+.DS_Store

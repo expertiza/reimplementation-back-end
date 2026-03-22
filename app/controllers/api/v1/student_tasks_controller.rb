@@ -1,22 +1,33 @@
 class Api::V1::StudentTasksController < ApplicationController
-  # List retrieves all student tasks associated with the current logged-in user.
+  before_action :set_student_task, only: %i[show view]
+
   def action_allowed?
     has_privileges_of?('Student')
   end
 
-  # Retrieves all tasks that belong to the current user.
+  def index
+    render json: StudentTask.from_user(current_user), status: :ok
+  end
+
   def list
-    @student_tasks = StudentTask.from_user(current_user)
-    render json: @student_tasks, status: :ok
+    index
   end
 
   def show
     render json: @student_task, status: :ok
   end
 
-  # The view function retrieves a student task based on a participant's ID.
   def view
-    @student_task = StudentTask.from_participant_id(params[:id])
-    render json: @student_task, status: :ok
+    show
+  end
+
+  private
+
+  def set_student_task
+    participant = Participant.includes(:team, assignment: :course).find_by(id: params[:id])
+    return render json: { error: 'Student task not found' }, status: :not_found unless participant
+    return render json: { error: 'You are not authorized to access this student task' }, status: :forbidden unless participant.user_id == current_user.id
+
+    @student_task = StudentTask.from_participant(participant)
   end
 end
