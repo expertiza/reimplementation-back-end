@@ -3,12 +3,6 @@
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 require 'spec_helper'
 ENV['RAILS_ENV'] ||= 'test'
-
-# Ensure DATABASE_URL is present before Rails loads database.yml (database.yml ERB can reference it).
-if ENV['RAILS_ENV'] == 'test'
-  ENV['DATABASE_URL'] ||= 'mysql2://root:expertiza@127.0.0.1:3307/reimplementation?'
-end
-
 require_relative '../config/environment'
 # Prevent database truncation if the environment is production
 abort('The Rails environment is running in production mode!') if Rails.env.production?
@@ -18,9 +12,7 @@ require 'factory_bot_rails'
 require 'database_cleaner/active_record'
 
 # Override DATABASE_URL for tests to prevent remote DB errors
-if Rails.env.test?
- ENV['DATABASE_URL'] = 'mysql2://root:expertiza@127.0.0.1:3307/reimplementation?'
-end
+ENV['DATABASE_URL'] = 'mysql2://root:expertiza@127.0.0.1/reimplementation_test' if Rails.env.test?
 
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
