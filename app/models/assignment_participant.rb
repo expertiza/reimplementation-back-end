@@ -6,6 +6,7 @@ class AssignmentParticipant < Participant
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewee_id'
   has_many :response_maps, foreign_key: 'reviewee_id'
   has_many :sent_invitations, class_name: 'Invitation', foreign_key: 'from_id'
+  has_many :revision_requests, foreign_key: 'participant_id', dependent: :destroy
   belongs_to :duty, optional: true
   belongs_to :user
   validates :handle, presence: true
