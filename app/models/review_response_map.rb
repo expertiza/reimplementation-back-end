@@ -22,6 +22,11 @@ class ReviewResponseMap < ResponseMap
   end
 
   # Accepts a report visitor for double-dispatch report generation.
+  # Builds a review-response report payload for an assignment.
+  # @param assignment_id [Integer] assignment identifier
+  # @return [Hash<Integer, Array<Integer>>|Array<Integer>]
+  #   - varying-rubrics assignments: { round_number => [response_ids...] }
+  #   - non-varying assignments: [latest_response_id_per_review_map...]
   def self.accept_report_visitor(visitor, assignment_id)
     visitor.visit_review_response_map(assignment_id)
   end

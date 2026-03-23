@@ -27,6 +27,14 @@ class FeedbackResponseMap < ResponseMap
   end
 
   # Accepts a report visitor for double-dispatch report generation.
+  # Builds the author-feedback report payload for an assignment.
+  # @param assignment_id [Integer] assignment identifier
+  # @return [Array]
+  #   Payload format:
+  #   - index 0: Array<AssignmentParticipant> authors
+  #   - indices 1..n: Array<Integer> response IDs
+  #     - varying rubrics: one response-id array per round (sorted by round)
+  #     - non-varying rubrics: single response-id array of latest response per review map
   def self.accept_report_visitor(visitor, assignment_id)
     visitor.visit_feedback_response_map(assignment_id)
   end
