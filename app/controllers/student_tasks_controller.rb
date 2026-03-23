@@ -11,6 +11,23 @@ class StudentTasksController < ApplicationController
     render json: @student_tasks, status: :ok
   end
 
+  def index
+    participant = AssignmentParticipant.find_by(
+      user_id: current_user.id,
+      parent_id: params[:assignment_id]
+    )
+
+    tasks = participant.respondable_tasks
+
+    render json: tasks.map do |t|
+      response = Response.where(map_id: t[:response_map_id]).order(:created_at).last
+      {
+        task_type: t[:task_type],
+        completed: response&.is_submitted || false
+      }
+    end
+  end
+
   def show
     render json: @student_task, status: :ok
   end
@@ -23,6 +40,31 @@ class StudentTasksController < ApplicationController
     @student_task = StudentTask.from_participant_id(params[:id])
     # Render the found student task as JSON.
     render json: @student_task, status: :ok
+  end
+
+  def next_task
+    participant = AssignmentParticipant.find_by(
+      user_id: current_user.id,
+      parent_id: params[:assignment_id]
+    )
+
+    tasks = participant.respondable_tasks
+
+    next_task = tasks.find do |t|
+      response = Response.where(map_id: t[:response_map_id]).order(:created_at).last
+      !(response&.is_submitted)
+    end
+
+    if next_task
+      response = Response.where(map_id: next_task[:response_map_id]).order(:created_at).last
+      render json: {
+        task_type: next_task[:task_type],
+        map_id: next_task[:response_map_id],
+        response_id: response&.id
+      }
+    else
+      render json: { message: "All tasks completed" }
+    end
   end
 
 end

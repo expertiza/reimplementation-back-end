@@ -62,4 +62,13 @@ class AssignmentParticipant < Participant
       review_map: review_map
     )
   end
+
+  def respondable_tasks
+    review_mappings.flat_map do |review_map|
+      assignment.respondable_task_ordering.tasks_for(
+        participant: self,
+        review_map: review_map
+      )
+    end
+  end
 end
