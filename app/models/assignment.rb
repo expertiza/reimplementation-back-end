@@ -20,8 +20,26 @@ class Assignment < ApplicationRecord
   #This method return the value of the has_badge field for the given assignment object.
   attr_accessor :title, :description, :has_badge, :enable_pair_programming, :is_calibrated, :staggered_deadline
 
+  # Returns the assignment-linked review questionnaire record.
+  # The assignment can be linked to many questionnaires via AssignmentQuestionnaire.
+  def review_questionnaire_for_review_flow
+    questionnaires.find_by(questionnaire_type: 'ReviewQuestionnaire')
+  end
+
   def review_questionnaire_id
     Questionnaire.find_by_assignment_id id
+  end
+
+  # Returns the ordering object used to build a strict task queue.
+  # Controllers ask this object for tasks instead of branching on quiz/review flags.
+  def respondable_task_ordering
+    RespondableTaskOrdering.new(self)
+  end
+
+  # Returns the quiz questionnaire used by the reviewer pre-check flow.
+  # If no quiz questionnaire is attached, the caller can skip quiz task creation.
+  def quiz_questionnaire_for_review_flow
+    questionnaires.find_by(questionnaire_type: 'QuizQuestionnaire')
   end
 
   def teams?
@@ -226,4 +244,91 @@ class Assignment < ApplicationRecord
     review_rounds
   end
 
+  # Queue-style ordering for reviewer respondable tasks.
+  # Placing this class in Assignment keeps task-order policy with assignment domain logic,
+  # without introducing another top-level folder dependency.
+  class RespondableTaskOrdering
+    def initialize(assignment)
+      @assignment = assignment
+    end
+
+    def tasks_for(participant:, review_map: nil)
+      queue = []
+      append_quiz_task(queue, participant: participant, review_map: review_map)
+      append_review_task(queue, participant: participant, review_map: review_map)
+      queue
+    end
+
+    private
+
+    # Quiz is append-only: if quiz is configured and questionnaire exists, queue it first.
+    def append_quiz_task(queue, participant:, review_map:)
+      return unless @assignment.require_quiz
+      return if review_map.nil?
+
+      quiz_questionnaire = @assignment.quiz_questionnaire_for_review_flow
+      return if quiz_questionnaire.nil?
+
+      quiz_map = find_or_create_quiz_map(
+        participant: participant,
+        review_map: review_map,
+        quiz_questionnaire: quiz_questionnaire
+      )
+
+      queue << {
+        task_type: :quiz,
+        assignment_id: @assignment.id,
+        response_map_id: quiz_map.id,
+        response_map_type: quiz_map.type,
+        review_map_id: review_map.id,
+        reviewee_id: review_map.reviewee_id,
+        questionnaire_id: quiz_questionnaire.id,
+        participant_id: participant.id
+      }
+    end
+
+    # Review is append-only: it appears when a review mapping exists.
+    # This supports quiz-only contexts where no review map has been assigned yet.
+    def append_review_task(queue, participant:, review_map:)
+      return if review_map.nil?
+
+      queue << {
+        task_type: :review,
+        assignment_id: @assignment.id,
+        response_map_id: review_map.id,
+        # Reuse domain method from ReviewResponseMap when available.
+        response_map_type: review_map.respond_to?(:review_map_type) ? review_map.review_map_type : review_map.type,
+        review_map_id: review_map.id,
+        reviewee_id: review_map.reviewee_id,
+        questionnaire_id: nil,
+        participant_id: participant.id
+      }
+    end
+
+    # Reuses existing model methods to keep map lookup logic centralized in map models:
+    # - QuizResponseMap.mappings_for_reviewer(participant_id)
+    # - QuizQuestionnaire#taken_by?(participant)
+    def find_or_create_quiz_map(participant:, review_map:, quiz_questionnaire:)
+      existing = nil
+
+      if quiz_questionnaire.taken_by?(participant)
+        existing = QuizResponseMap
+          .mappings_for_reviewer(participant.id)
+          .find_by(
+            reviewed_object_id: quiz_questionnaire.id,
+            reviewee_id: review_map.reviewee_id
+          )
+      end
+
+      return existing if existing.present?
+
+      # find_or_create_by! keeps this idempotent across repeated "start task" calls.
+      QuizResponseMap.find_or_create_by!(
+        reviewer_id: participant.id,
+        reviewee_id: review_map.reviewee_id,
+        reviewed_object_id: quiz_questionnaire.id,
+        type: 'QuizResponseMap'
+      )
+    end
+  end
 end
