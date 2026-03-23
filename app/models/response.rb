@@ -102,15 +102,6 @@ class Response < ApplicationRecord
     map&.send_notification_email(self)
   end
 
-  # Gets all active questions that can be scored
-  # @return [Array<Question>] list of active scored questions
-  def active_scored_questions
-    return [] if scores.empty?
-
-    questionnaire = questionnaire_by_answer(scores.first)
-    questionnaire.items.select(&:scorable?)
-  end
-
   # Retrieves the questionnaire associated with an answer
   # @param answer [Answer] the answer to find the questionnaire for
   # @return [Questionnaire] the associated questionnaire
