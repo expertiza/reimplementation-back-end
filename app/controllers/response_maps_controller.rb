@@ -14,14 +14,22 @@ class ResponseMapsController < ApplicationController
   # POST /response_maps
   def create
     @response_map = ResponseMap.new(response_map_params)
-    persist_and_respond(@response_map, :created)
+    if @response_map.save
+      render json: record, status: :created
+    else
+      render json: record.errors, status: :unprocessable_entity
+    end
   end
 
   # Updates an existing response map with new attributes
   # PATCH/PUT /response_maps/:id
   def update
     @response_map.assign_attributes(response_map_params)
-    persist_and_respond(@response_map, :ok)
+    if @response_map.save
+      render json: record, status: :ok
+    else
+      render json: record.errors, status: :unprocessable_entity
+    end
   end
 
   # Removes a response map from the system
@@ -90,17 +98,5 @@ class ResponseMapsController < ApplicationController
       :is_submitted,
       scores_attributes: [:answer, :comments, :question_id]
     )
-  end
-
-  # Common method to persist records and generate appropriate responses
-  # Handles submission processing if the record is marked as submitted
-  # @param record [ActiveRecord::Base] The record to save
-  # @param success_status [Symbol] HTTP status code for successful save
-  def persist_and_respond(record, success_status)
-    if record.save
-      render json: record, status: success_status
-    else
-      render json: record.errors, status: :unprocessable_entity
-    end
   end
 end
