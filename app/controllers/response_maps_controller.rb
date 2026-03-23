@@ -2,14 +2,7 @@
 # Handles CRUD operations and special actions for ResponseMaps
 # ResponseMaps represent the relationship between a reviewer and reviewee
 class ResponseMapsController < ApplicationController
-  before_action :set_response_map, only: [:show, :update, :destroy, :submit_response]
-
-  # Lists all response maps in the system
-  # GET /response_maps
-  def index
-    @response_maps = ResponseMap.all
-    render json: @response_maps
-  end
+  before_action :set_response_map, only: [:show, :update, :destroy]
 
   # Retrieves a specific response map by ID
   # GET /response_maps/:id
@@ -36,21 +29,6 @@ class ResponseMapsController < ApplicationController
   def destroy
     @response_map.destroy
     head :no_content
-  end
-
-  # Handles the submission of a response associated with a response map
-  # This also triggers email notifications if configured
-  # POST /response_maps/:id/submit_response
-  def submit_response
-    @response = @response_map.responses.find_or_initialize_by(id: params[:response_id])
-    @response.assign_attributes(response_params)
-    @response.is_submitted = true
-
-    if @response.save
-      render json: { message: 'Response submitted successfully' }, status: :ok
-    else
-      render json: { errors: @response.errors }, status: :unprocessable_entity
-    end
   end
 
   # Generates a report of responses for a specific assignment
