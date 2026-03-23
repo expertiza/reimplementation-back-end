@@ -7,16 +7,14 @@ class FeedbackEmailMailer < ApplicationMailer
 
   # Public API method to trigger the email send
   def call
-    Mailer.sync_message(build_defn).deliver
+    Mailer.sync_message(create_definition_payload).deliver
   end
 
   private
 
-  def build_defn
-    # find the original review response
-    response = Response.find(@response_map.reviewed_object_id)
+  def create_definition_payload
     # find the ResponseMap that created that review
-    original_map = ResponseMap.find(response.map_id)
+    original_map = ResponseMap.find(@response_map.reviewed_object_id)
     # find the participant who wrote that review
     participant = AssignmentParticipant.find(original_map.reviewer_id)
     user        = User.find(participant.user_id)
@@ -25,7 +23,7 @@ class FeedbackEmailMailer < ApplicationMailer
       to: user.email,
       body: {
         type:       'Author Feedback',
-        first_name: user.fullname,
+        name: user.name,
         obj_name:   @assignment.name
       }
     }
