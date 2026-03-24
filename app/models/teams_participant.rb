@@ -5,7 +5,7 @@ class TeamsParticipant < ApplicationRecord
   belongs_to :team
   belongs_to :user
 
-  validates :participant_id, uniqueness: { scope: :team_id }
+  validates :participant_id, uniqueness: true
   validates :user_id, presence: true
 
 end
