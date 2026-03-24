@@ -166,45 +166,51 @@ class JoinTeamRequestsController < ApplicationController
   # Accept a join team request and add the participant to the team
   def accept
     team = @join_team_request.team
-    if team.full?
-      return render json: { error: 'Team is full' }, status: :unprocessable_entity
-    end
+  participant = @join_team_request.participant
 
-    participant = @join_team_request.participant
-
-    # Use a transaction to ensure both removal and addition happen atomically
-    ActiveRecord::Base.transaction do
-      # Find and remove participant from their old team (if any)
-      old_team_participant = TeamsParticipant.find_by(participant_id: participant.id)
-      if old_team_participant
-        old_team = old_team_participant.team
-        old_team_participant.destroy!
-        
-        # If the old team is now empty, optionally clean up (but keep the team for now)
-        Rails.logger.info "Removed participant #{participant.id} from old team #{old_team&.id}"
+  ActiveRecord::Base.transaction do
+    team.with_lock do
+      # Re-check while holding the lock (race-safe)
+      if team.full?
+        tp = TeamsParticipant.new(team: team, participant: participant, user_id: participant.user_id)
+        tp.errors.add(:base, 'Team is full')
+        raise ActiveRecord::RecordInvalid, tp
       end
 
-      # Add participant to the new team
-      TeamsParticipant.create!(
-        participant_id: participant.id,
-        team_id: team.id,
-        user_id: participant.user_id
-      )
+      # Remove participant from their old team (if any)
+      old_team_participant = TeamsParticipant.find_by(participant_id: participant.id)
+      if old_team_participant && old_team_participant.team_id != team.id
+        old_team_participant.destroy!
+      end
 
-      # Update the request status
-      @join_team_request.update!(reply_status: ACCEPTED)
-
-      render json: { 
-        message: 'Join team request accepted successfully', 
-        join_team_request: JoinTeamRequestSerializer.new(@join_team_request).as_json
-      }, status: :ok
+      # Add participant to the new team (uses Team#add_member capacity check + MentoredTeam override)
+      result = team.add_member(participant)
+      unless result[:success]
+        tp = TeamsParticipant.new(team: team, participant: participant, user_id: participant.user_id)
+        tp.errors.add(:base, result[:error].presence || 'Unable to add participant to team')
+        raise ActiveRecord::RecordInvalid, tp
+      end
     end
-  rescue ActiveRecord::RecordInvalid => e
-    render json: { error: e.message }, status: :unprocessable_entity
-  rescue StandardError => e
-    render json: { error: e.message }, status: :unprocessable_entity
-  end
 
+    # Update the request status (only after successful add)
+    @join_team_request.update!(reply_status: ACCEPTED)
+
+    render json: {
+      message: 'Join team request accepted successfully',
+      join_team_request: JoinTeamRequestSerializer.new(@join_team_request).as_json
+    }, status: :ok
+  end
+rescue ActiveRecord::RecordInvalid => e
+  msg =
+    if e.record&.errors&.any?
+      e.record.errors.full_messages.join(', ')
+    else
+      e.message
+    end
+  render json: { error: msg }, status: :unprocessable_entity
+rescue StandardError => e
+  render json: { error: e.message }, status: :unprocessable_entity
+end
   # PATCH /join_team_requests/1/decline
   # Decline a join team request
   def decline
