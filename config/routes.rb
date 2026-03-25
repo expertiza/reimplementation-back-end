@@ -217,8 +217,8 @@ Rails.application.routes.draw do
       resources :response_maps, only: [:show, :create, :update, :destroy] do
         collection do
           get 'response_report/:assignment_id', to: 'response_maps#response_report'
-          get 'assignment/:assignment_id',      to: 'response_maps#fetch_response_maps_by_assignment'
-          get 'reviewer/:reviewer_id',          to: 'response_maps#fetch_response_maps_by_reviewer'
+          get 'assignment/:assignment_id',      to: 'response_maps#fetch_response_maps_for_assignment'
+          get 'reviewer/:reviewer_id',          to: 'response_maps#fetch_response_maps_for_reviewer'
           get 'response_rate/:assignment_id',   to: 'response_maps#response_rate'
         end
       end

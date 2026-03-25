@@ -50,14 +50,14 @@ class ResponseMapsController < ApplicationController
 
   # Retrieves all response maps for a specific assignment
   # GET /response_maps/assignment/:assignment_id
-  def fetch_response_maps_by_assignment
+  def fetch_response_maps_for_assignment
     @response_maps = ResponseMap.for_assignment(params[:assignment_id])
     render json: @response_maps
   end
 
   # Gets all response maps for a specific reviewer (includes responses)
   # GET /response_maps/reviewer/:reviewer_id
-  def fetch_response_maps_by_reviewer
+  def fetch_response_maps_for_reviewer
     @response_maps = ResponseMap.for_reviewer_with_responses(params[:reviewer_id])
     render json: @response_maps, include: :responses
   end

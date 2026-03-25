@@ -23,6 +23,12 @@ class Response < ApplicationRecord
     update(is_submitted: true)
   end
 
+  # Marks the response as unsubmitted
+  # @return [Boolean] success of the submission update
+  def unsubmit
+    update(is_submitted: false)
+  end
+
   # Handles any necessary actions after a response is submitted
   # Currently focuses on email notifications
   # Only triggers when is_submitted changes from false to true
@@ -61,7 +67,7 @@ class Response < ApplicationRecord
 
     # This score has already skipped the unfilled scorable item(s)
     score = aggregate_questionnaire_score.to_f / maximum_score
-    questionnaire = questionnaire_by_answer(scores.first)
+    questionnaire = questionnaire_for_answer(scores.first)
     assignment = map.assignment
     assignment_questionnaire = AssignmentQuestionnaire.find_by(assignment_id: assignment.id, questionnaire_id: questionnaire.id)
 
@@ -105,7 +111,7 @@ class Response < ApplicationRecord
   # Retrieves the questionnaire associated with an answer
   # @param answer [Answer] the answer to find the questionnaire for
   # @return [Questionnaire] the associated questionnaire
-  def questionnaire_by_answer(answer)
+  def questionnaire_for_answer(answer)
     answer&.question&.questionnaire
   end
 end

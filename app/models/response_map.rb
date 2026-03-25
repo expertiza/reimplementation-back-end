@@ -10,12 +10,6 @@ class ResponseMap < ApplicationRecord
 
   alias map_id id
 
-  # Accepts a report visitor for double-dispatch report generation.
-  # Subclasses can override to route to a specialized visitor method.
-  def self.accept_report_visitor(visitor, assignment_id)
-    visitor.visit_response_map(assignment_id)
-  end
-
   # Returns the title used for display - should be overridden by subclasses
   # Default implementation removes "ResponseMap" from the class name
   # @return [String] the display title for this type of response map
@@ -107,13 +101,6 @@ class ResponseMap < ApplicationRecord
     self.reviewee
   end
 
-  # Returns the round number of the latest response
-  # Used for tracking multiple rounds of review
-  # @return [Integer, nil] the round number or nil if no responses
-  def round
-    self.responses.order(created_at: :desc).first&.round
-  end
-
   # Returns the latest response for this map
   # @return [Response, nil] the most recent response or nil if none exist
   def latest_response
@@ -122,7 +109,7 @@ class ResponseMap < ApplicationRecord
 
   # Checks if this map has any submitted responses
   # @return [Boolean] true if there are any submitted responses
-  def has_submitted_response?
+  def has_a_response_submitted?
     self.responses.where(is_submitted: true).exists?
   end
 
