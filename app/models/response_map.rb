@@ -10,6 +10,13 @@ class ResponseMap < ApplicationRecord
 
   alias map_id id
 
+  # Returns the title used for display - should be overridden by subclasses
+  # Default implementation removes "ResponseMap" from the class name
+  # @return [String] the display title for this type of response map
+  def title
+    self.class.name.sub("ResponseMap", "")
+  end
+
   def questionnaire
     Questionnaire.find_by(id: reviewed_object_id)
   end
@@ -85,5 +92,54 @@ class ResponseMap < ApplicationRecord
 
     # Return the normalized score (as a float), or 0 if no valid total score
     total_score > 0 ? (response_score.to_f / total_score) : 0
+  end
+
+  # Returns the original contributor (typically the reviewee)
+  # Can be overridden by subclasses for different contributor types
+  # @return [Participant] the participant being reviewed
+  def contributor
+    self.reviewee
+  end
+
+  # Returns the latest response for this map
+  # @return [Response, nil] the most recent response or nil if none exist
+  def latest_response
+    self.responses.order(created_at: :desc).first
+  end
+
+  # Checks if this map has any submitted responses
+  # @return [Boolean] true if there are any submitted responses
+  def has_a_response_submitted?
+    self.responses.where(is_submitted: true).exists?
+  end
+
+  # Hook for map-type-specific notification side effects after response submission.
+  # Subclasses can override this and send emails/notifications as needed.
+  # @param _response [Response, nil] recently submitted response
+  def send_notification_email(_response = nil)
+    nil
+  end
+
+  # Return response maps for an assignment
+  scope :for_assignment, ->(assignment_id) { where(reviewed_object_id: assignment_id) }
+
+  # Return response maps for a reviewer and eager-load responses
+  scope :for_reviewer_with_responses, ->(reviewer_id) { where(reviewer_id: reviewer_id).includes(:responses) }
+
+  # Compute response statistics for an assignment
+  def self.response_rate_for_assignment(assignment_id)
+    total_maps = for_assignment(assignment_id).count
+
+    completed_maps = for_assignment(assignment_id)
+                     .joins(:responses)
+                     .where(responses: { is_submitted: true })
+                     .distinct
+                     .count
+
+    {
+      total_response_maps: total_maps,
+      completed_response_maps: completed_maps,
+      response_rate: total_maps > 0 ? (completed_maps.to_f / total_maps * 100).round(2) : 0
+    }
   end
 end
