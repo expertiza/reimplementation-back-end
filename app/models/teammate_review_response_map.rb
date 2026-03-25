@@ -23,4 +23,8 @@ class TeammateReviewResponseMap < ResponseMap
   def get_reviewer
     AssignmentParticipant.find(reviewer_id)
   end
+
+  def self.teammate_response_report(id)
+    TeammateReviewResponseMap.select('DISTINCT reviewer_id').where('reviewed_object_id = ?', id)
+  end
 end
