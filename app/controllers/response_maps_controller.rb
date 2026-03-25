@@ -78,16 +78,4 @@ class ResponseMapsController < ApplicationController
   def response_map_params
     params.require(:response_map).permit(:reviewee_id, :reviewer_id, :reviewed_object_id)
   end
-
-  # Defines permitted parameters for response submission
-  # Includes nested attributes for scores
-  # @return [ActionController::Parameters] Whitelisted parameters
-  def response_params
-    params.require(:response).permit(
-      :additional_comment,
-      :round,
-      :is_submitted,
-      scores_attributes: [:answer, :comments, :question_id]
-    )
-  end
 end
