@@ -39,15 +39,6 @@ class ResponseMapsController < ApplicationController
     head :no_content
   end
 
-  # Generates a report of responses for a specific assignment
-  # Can be filtered by type and grouped by rounds if applicable
-  # GET /response_maps/response_report/:assignment_id
-  def response_report
-    assignment_id = params[:assignment_id]
-    report = ResponseMapReports::ReportDispatcher.new.call(assignment_id:, type: params[:type])
-    render json: report
-  end
-
   # Retrieves all response maps for a specific assignment
   # GET /response_maps/assignment/:assignment_id
   def fetch_response_maps_for_assignment
