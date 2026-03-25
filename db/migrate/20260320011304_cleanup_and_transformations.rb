@@ -5,15 +5,21 @@ class CleanupAndTransformations < ActiveRecord::Migration[8.0]
     # -------------------------
     rename_column :users, :name, :username if column_exists?(:users, :name)
     rename_column :users, :full_name, :name if column_exists?(:users, :full_name)
-    rename_column :users, :timezonepref, :time_zone_pref if column_exists?(:users, :timezonepref)
-
+    if column_exists?(:users, "timeZonePref")
+      rename_column :users, "timeZonePref", :time_zone_pref
+    else
+      # This will print in your terminal during migrate so you know what happened
+      say "WARNING: timeZonePref not found in users table!", true 
+    end
     remove_column :users, :mru_directory_path if column_exists?(:users, :mru_directory_path)
     remove_column :users, :email_on_review if column_exists?(:users, :email_on_review)
     remove_column :users, :email_on_review_of_review if column_exists?(:users, :email_on_review_of_review)
     remove_column :users, :master_permission_granted if column_exists?(:users, :master_permission_granted)
     remove_column :users, :digital_certificate if column_exists?(:users, :digital_certificate)
     remove_column :users, :persistence_token if column_exists?(:users, :persistence_token)
-
+    add_column :users, :public_key, :text unless column_exists?(:users, :public_key)
+    add_column :users, :private_by_default, :boolean unless column_exists?(:users, :private_by_default)
+    add_column :users, :password_salt, :text unless column_exists?(:users, :password_salt)
     # -------------------------
     # ASSIGNMENTS TABLE
     # -------------------------
@@ -28,7 +34,14 @@ class CleanupAndTransformations < ActiveRecord::Migration[8.0]
     remove_column :assignments, :simicheck_threshold if column_exists?(:assignments, :simicheck_threshold)
     remove_column :assignments, :has_badge if column_exists?(:assignments, :has_badge)
     remove_column :assignments, :is_conference_assignment if column_exists?(:assignments, :is_conference_assignment)
-
+    add_column :assignments, :vary_by_topic?, :boolean unless column_exists?(:assignments, :vary_by_topic?)
+    add_column :assignments, :vary_by_round?, :boolean unless column_exists?(:assignments, :vary_by_round?)
+    add_column :assignments, :team_reviewing_enabled, :boolean unless column_exists?(:assignments, :team_reviewing_enabled)
+    add_column :assignments, :bidding_for_reviews_enabled, :boolean unless column_exists?(:assignments, :bidding_for_reviews_enabled)
+    add_column :assignments, :auto_assign_mentor, :boolean unless column_exists?(:assignments, :auto_assign_mentor)
+    add_column :assignments, :team_members_have_duty, :boolean unless column_exists?(:assignments, :team_members_have_duty)
+    add_column :assignments, :vary_by_duty?, :boolean unless column_exists?(:assignments, :vary_by_duty?)    
+    
     # -------------------------
     # PARTICIPANTS TABLE
     # -------------------------
@@ -75,7 +88,7 @@ class CleanupAndTransformations < ActiveRecord::Migration[8.0]
     # -------------------------
     rename_column :courses, :private, :is_private if column_exists?(:courses, :private)
     rename_column :courses, :institutions_id, :institution_id if column_exists?(:courses, :institutions_id)
-    rename_column :courses, :locale, :language if column_exists?(:courses, :locale)
+    add_column :courses, :language, :text unless column_exists?(:courses, :language)
 
     # -------------------------
     # DUE DATES
@@ -86,6 +99,65 @@ class CleanupAndTransformations < ActiveRecord::Migration[8.0]
     # RESPONSES
     # -------------------------
     rename_column :responses, :map_id, :response_map_id if column_exists?(:responses, :map_id)
+
+    # -------------------------
+    # QUIZ_QUESTION_CHOICES
+    # -------------------------
+    rename_column :quiz_question_choices, :iscorrect, :is_correct if column_exists?(:quiz_question_choices, :iscorrect)
+    
+    # -------------------------
+    # ASSIGNMENT_QUESTIONNAIRES
+    # -------------------------
+    rename_column :assignment_questionnaires, :notification_limit, :notification_threshold if column_exists?(:assignment_questionnaires, :notification_limit)
+    add_column :assignment_questionnaires, :dropdown, :boolean unless column_exists?(:survey_deployments, :dropdown)
+    add_column :assignment_questionnaires, :topic_id, :bigint unless column_exists?(:survey_deployments, :topic_id)
+    add_column :assignment_questionnaires, :duty_id, :bigint unless column_exists?(:survey_deployments, :duty_id)
+    
+    # -------------------------
+    # SURVEY_DEPLOYMENTS
+    # -------------------------
+    add_column :survey_deployments, :type, :text unless column_exists?(:survey_deployments, :type)
+    
+    # -------------------------
+    # ROLES
+    # -------------------------
+    add_column :roles, :description, :text unless column_exists?(:roles, :description)
+    
+    # -------------------------
+    # RESPONSES
+    # -------------------------
+    add_column :responses, :visibility, :text unless column_exists?(:responses, :visibility)
+    
+    # -------------------------
+    # RESPONSES
+    # -------------------------
+    add_column :response_maps, :for_calibration, :boolean unless column_exists?(:response_maps, :for_calibration)
+    
+    # -------------------------
+    # ITEMS
+    # -------------------------
+    add_column :items, :type, :text unless column_exists?(:items, :type)
+
+    # -------------------------
+    # QUESTIONNAIRES
+    # -------------------------
+    add_column :questionnaires, :type, :text unless column_exists?(:questionnaires, :type)
+    
+    # -------------------------
+    # QUESTION_TYPES
+    # -------------------------
+    add_column :question_types, :type, :text unless column_exists?(:question_types, :type)
+
+    # -------------------------
+    # JOIN_TEAM_REQUESTS
+    # -------------------------
+    add_column :join_team_requests, :status, :text unless column_exists?(:join_team_requests, :status)
+
+    # -------------------------
+    # DUTIES
+    # -------------------------
+    add_column :duties, :assignment_id, :bigint unless column_exists?(:duties, :assignment_id)
+    
 
     # -------------------------
     # TABLE RENAMES

@@ -3,7 +3,17 @@
 class User < ApplicationRecord
   has_secure_password
   after_initialize :set_defaults
-  alias_attribute :name, :username
+  alias_attribute :full_name, :name
+
+  # 2. Instead of alias_attribute for 'name', use explicit methods 
+  # This prevents 'full_name' from accidentally following the 'name' alias
+  def name
+    self[:username]
+  end
+
+  def name=(value)
+    self[:username] = value
+  end
   # name must be lowercase and unique
   validates :name, presence: true, uniqueness: true, allow_blank: false
                    # format: { with: /\A[a-z]+\z/, message: 'must be in lowercase' }

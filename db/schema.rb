@@ -52,11 +52,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_20_011304) do
   create_table "assignment_questionnaires", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.integer "assignment_id"
     t.integer "questionnaire_id"
-    t.integer "notification_limit", default: 15, null: false
+    t.integer "notification_threshold", default: 15, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "used_in_round"
     t.integer "questionnaire_weight"
+    t.boolean "dropdown"
+    t.bigint "topic_id"
+    t.bigint "duty_id"
     t.index ["assignment_id"], name: "fk_aq_assignments_id"
     t.index ["questionnaire_id"], name: "fk_aq_questionnaire_id"
   end
@@ -112,6 +115,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_20_011304) do
     t.boolean "has_teams", default: false
     t.boolean "has_topics", default: false
     t.boolean "vary_by_round", default: false, null: false
+    t.boolean "vary_by_topic?"
+    t.boolean "vary_by_round?"
+    t.boolean "team_reviewing_enabled"
+    t.boolean "bidding_for_reviews_enabled"
+    t.boolean "auto_assign_mentor"
+    t.boolean "team_members_have_duty"
+    t.boolean "vary_by_duty?"
     t.index ["course_id"], name: "index_assignments_on_course_id"
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
@@ -157,6 +167,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_20_011304) do
     t.datetime "updated_at", null: false
     t.bigint "instructor_id", null: false
     t.bigint "institution_id", null: false
+    t.text "language"
     t.index ["institution_id"], name: "index_courses_on_institution_id"
     t.index ["instructor_id"], name: "fk_course_users"
     t.index ["instructor_id"], name: "index_courses_on_instructor_id"
@@ -201,6 +212,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_20_011304) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "max_members_for_duty"
+    t.bigint "assignment_id"
     t.index ["instructor_id"], name: "index_duties_on_instructor_id"
   end
 
@@ -235,6 +247,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_20_011304) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "questionnaire_id", null: false
+    t.text "type"
     t.index ["questionnaire_id"], name: "fk_question_questionnaires"
     t.index ["questionnaire_id"], name: "index_items_on_questionnaire_id"
   end
@@ -246,6 +259,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_20_011304) do
     t.integer "team_id"
     t.text "comments"
     t.string "reply_status"
+    t.text "status"
   end
 
   create_table "languages", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -334,6 +348,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_20_011304) do
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "type"
   end
 
   create_table "questionnaire_types", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -353,12 +368,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_20_011304) do
     t.text "instruction_loc"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "type"
   end
 
   create_table "quiz_question_choices", id: :integer, charset: "latin1", force: :cascade do |t|
     t.integer "question_id"
     t.text "txt"
-    t.boolean "iscorrect", default: false
+    t.boolean "is_correct", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -370,6 +386,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_20_011304) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "type"
+    t.boolean "for_calibration"
     t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 
@@ -381,6 +398,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_20_011304) do
     t.datetime "updated_at", null: false
     t.integer "round"
     t.integer "version_num"
+    t.text "visibility"
     t.index ["response_map_id"], name: "fk_response_response_map"
   end
 
@@ -427,6 +445,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_20_011304) do
     t.integer "default_page_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "description"
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
   end
 
@@ -492,6 +511,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_20_011304) do
     t.integer "parent_id", default: 0
     t.integer "global_survey_id"
     t.string "deployment_type"
+    t.text "type"
     t.index ["questionnaire_id"], name: "fk_rails_7c62b6ef2b"
   end
 
@@ -591,12 +611,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_20_011304) do
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "password_digest"
-    t.string "full_name"
+    t.string "name"
     t.string "email"
     t.boolean "email_on_submission", default: false
     t.boolean "is_new_user", default: true
     t.string "handle"
-    t.string "timeZonePref"
+    t.string "time_zone_pref"
     t.boolean "copy_of_emails", default: false
     t.boolean "etc_icons_on_homepage", default: false
     t.integer "locale"
@@ -605,6 +625,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_20_011304) do
     t.bigint "institution_id"
     t.bigint "role_id", null: false
     t.bigint "parent_id"
+    t.text "public_key"
+    t.boolean "private_by_default"
+    t.text "password_salt"
     t.index ["institution_id"], name: "index_users_on_institution_id"
     t.index ["parent_id"], name: "index_users_on_parent_id"
     t.index ["role_id"], name: "index_users_on_role_id"
