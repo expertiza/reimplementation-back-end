@@ -121,14 +121,10 @@ class ResponseMap < ApplicationRecord
   end
 
   # Return response maps for an assignment
-  def self.for_assignment(assignment_id)
-    where(reviewed_object_id: assignment_id)
-  end
+  scope :for_assignment, ->(assignment_id) { where(reviewed_object_id: assignment_id) }
 
   # Return response maps for a reviewer and eager-load responses
-  def self.for_reviewer_with_responses(reviewer_id)
-    where(reviewer_id: reviewer_id).includes(:responses)
-  end
+  scope :for_reviewer_with_responses, ->(reviewer_id) { where(reviewer_id: reviewer_id).includes(:responses) }
 
   # Compute response statistics for an assignment
   def self.response_rate_for_assignment(assignment_id)
