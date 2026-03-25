@@ -54,21 +54,4 @@ class AssignmentParticipant < Participant
     compute_average_review_score(teammate_review_mappings)
   end
 
-  # Returns a strict ordered queue of tasks for the current participant context.
-  # Each queued task is backed by an existing ResponseMap subtype.
-  def respondable_task_blueprint_for(review_map: nil)
-    assignment.respondable_task_ordering.tasks_for(
-      participant: self,
-      review_map: review_map
-    )
-  end
-
-  def respondable_tasks
-    review_mappings.flat_map do |review_map|
-      assignment.respondable_task_ordering.tasks_for(
-        participant: self,
-        review_map: review_map
-      )
-    end
-  end
 end

@@ -11,23 +11,6 @@ class StudentTasksController < ApplicationController
     render json: @student_tasks, status: :ok
   end
 
-  def index
-    participant = AssignmentParticipant.find_by(
-      user_id: current_user.id,
-      parent_id: params[:assignment_id]
-    )
-
-    tasks = participant.respondable_tasks
-
-    render json: tasks.map do |t|
-      response = Response.where(map_id: t[:response_map_id]).order(:created_at).last
-      {
-        task_type: t[:task_type],
-        completed: response&.is_submitted || false
-      }
-    end
-  end
-
   def show
     render json: @student_task, status: :ok
   end
@@ -42,29 +25,80 @@ class StudentTasksController < ApplicationController
     render json: @student_task, status: :ok
   end
 
+  # Returns ordered list of respondable tasks (quiz, review)
+  # GET /student_tasks/:assignment_id/queue
+  def queue
+    queue = build_queue_for_user(params[:assignment_id])
+    return render json: { error: "Not authorized or not found" }, status: :not_found unless queue
+
+    queue.ensure_response_objects!
+
+    render json: queue.tasks.map(&:to_task_hash), status: :ok
+  end
+
+  # GET /student_tasks/:participant_id/next_task
+  # Returns the next incomplete task in the sequence
   def next_task
-    participant = AssignmentParticipant.find_by(
-      user_id: current_user.id,
-      parent_id: params[:assignment_id]
-    )
+    queue = build_queue_for_user(params[:assignment_id])
+    return render json: { error: "Not authorized or not found" }, status: :not_found unless queue
 
-    tasks = participant.respondable_tasks
+    queue.ensure_response_objects!
 
-    next_task = tasks.find do |t|
-      response = Response.where(map_id: t[:response_map_id]).order(:created_at).last
-      !(response&.is_submitted)
-    end
+    next_task = queue.tasks.find { |t| !t.completed? }
 
     if next_task
-      response = Response.where(map_id: next_task[:response_map_id]).order(:created_at).last
-      render json: {
-        task_type: next_task[:task_type],
-        map_id: next_task[:response_map_id],
-        response_id: response&.id
-      }
+      render json: next_task.to_task_hash, status: :ok
     else
-      render json: { message: "All tasks completed" }
+      render json: { message: "All tasks completed" }, status: :ok
     end
+  end
+
+  # POST /student_tasks/start_task
+  # Ensures task can be started (order enforcement)
+  def start_task
+    map = ResponseMap.find_by(id: params[:response_map_id])
+    return render json: { error: "ResponseMap not found" }, status: :not_found unless map
+
+    participant = map.reviewer
+    if participant.user_id != current_user.id
+      return render json: { error: "Unauthorized" }, status: :forbidden
+    end
+
+    team_participant = TeamsParticipant.find_by(participant_id: participant.id)
+    assignment = participant.assignment
+
+    queue = TaskOrdering::TaskQueue.new(assignment, team_participant)
+    tasks = queue.tasks
+
+    current_task = tasks.find { |t| t.response_map.id == map.id }
+    previous_tasks = tasks.take_while { |t| t != current_task }
+
+    # Enforce ordering: all previous tasks must be completed
+    if previous_tasks.any? { |t| !t.completed? }
+      return render json: { error: "Complete previous task first" }, status: :forbidden
+    end
+
+    # Ensure response exists
+    current_task.ensure_response!
+
+    render json: {
+      message: "Task started",
+      task: current_task.to_task_hash
+    }, status: :ok
+  end
+
+  def build_queue_for_user(assignment_id)
+    participant = Participant.find_by(
+      user_id: current_user.id,
+      parent_id: assignment_id
+    )
+
+    return nil unless participant
+
+    team_participant = TeamsParticipant.find_by(participant_id: participant.id)
+    return nil unless team_participant
+
+    TaskOrdering::TaskQueue.new(participant.assignment, team_participant)
   end
 
 end
