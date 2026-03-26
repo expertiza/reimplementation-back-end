@@ -15,7 +15,7 @@ WORKDIR /app
 COPY . .
 
 # Install Ruby dependencies
-RUN gem update --system && gem install bundler:2.4.7
+RUN gem update --system && gem install bundler:
 RUN bundle install
 
 EXPOSE 3002 
