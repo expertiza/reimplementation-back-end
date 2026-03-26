@@ -88,15 +88,6 @@ RSpec.describe User, type: :model do
     end
   end
 
-  describe '#reset_password' do
-    it 'resets the password and saves the user' do
-      old_password_digest = user.password_digest
-      user.reset_password
-      expect(user.password_digest).not_to eq(old_password_digest)
-      expect(user.save).to be_truthy
-    end
-  end
-
   describe '#instructor_id' do
     it 'returns the user id if the user is an instructor' do
       user.update(role: create(:role, :instructor))

@@ -68,13 +68,6 @@ class User < ApplicationRecord
     user
   end
 
-  # Reset the password for the user
-  def reset_password
-    random_password = SecureRandom.alphanumeric(10)
-    user.password_digest = BCrypt::Password.create(random_password)
-    user.save
-  end
-
   # Get instructor_id of the user, if the user is TA,
   # return the id of the instructor else return the id of the user for superior roles
   def instructor_id
