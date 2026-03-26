@@ -30,8 +30,8 @@ class CourseTeam < Team
   protected
 
   def validate_membership(user)
-    # Check if user is enrolled in any assignment in the course
-    course.assignments.any? { |assignment| assignment.participants.exists?(user: user) }
+    # Verify user is enrolled in a course (E2610)
+    CourseParticipant.exists?(user_id: user.id, parent_id: course.id)
   end
 
   private

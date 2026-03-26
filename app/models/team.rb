@@ -35,8 +35,6 @@ class Team < ApplicationRecord
   def max_size
     if is_a?(AssignmentTeam) && assignment&.max_team_size
       assignment.max_team_size
-    elsif is_a?(CourseTeam) && course&.max_team_size
-      course.max_team_size
     else
       nil
     end
