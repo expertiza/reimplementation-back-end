@@ -3,9 +3,7 @@
 class Item < ApplicationRecord
   extend ImportableExportableHelper
   mandatory_fields :txt, :weight, :seq, :question_type, :break_before
-  external_classes ExternalClass.new(Questionnaire, true, false, :name),
-                   ExternalClass.new(QuestionAdvice, false, true)
-
+  external_classes ExternalClass.new(Questionnaire, true, false, :name)
 
   before_create :set_seq
   belongs_to :questionnaire # each item belongs to a specific questionnaire

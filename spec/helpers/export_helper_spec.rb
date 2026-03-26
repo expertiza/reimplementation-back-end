@@ -5,51 +5,168 @@ require 'csv'
 require 'json'
 
 RSpec.describe ExportHelper, type: :helper do
-  describe '.build_has_many_graph' do
-    it 'captures ExternalClass relation and infers question_advices from belongs_to :item' do
-      graph = described_class.build_has_many_graph(Questionnaire)
-
-      puts "\nExport Graph:"
-      puts JSON.pretty_generate(graph)
-
-      expect(graph[:class_name]).to eq('Questionnaire')
-
-      items_node = graph[:has_many].find { |node| node[:association] == 'items' }
-      expect(items_node).to be_present
-      expect(items_node[:association_type]).to eq('has_many')
-
-      item_graph = items_node[:graph]
-      relation = item_graph[:parent_external_relation]
-
-      expect(item_graph[:class_name]).to eq('Item')
-      expect(relation).to be_present
-      expect(relation[:ref_class]).to eq('Questionnaire')
-      expect(relation[:fields]).to include('questionnaire_name')
-
-      question_advices_node = item_graph[:has_many].find { |node| node[:association] == 'question_advices' }
-      expect(question_advices_node).to be_present
-      expect(question_advices_node[:association_type]).to eq('inferred_has_many_from_belongs_to')
-      expect(question_advices_node[:inferred_from]).to eq('item')
-      expect(question_advices_node[:graph][:class_name]).to eq('QuestionAdvice')
-    end
-  end
-
   describe '.export_has_many_graph' do
-    it 'uses mandatory fields and includes inferred QuestionAdvice export' do
-      calls = {}
+    it 'returns a minimal class/header graph and exports real db records' do
+      role = create(:role, :instructor)
+      institution = create(:institution)
+      instructor = Instructor.create!(
+        name: 'exportinstructor',
+        email: 'exportinstructor@example.com',
+        full_name: 'Export Instructor',
+        password: 'password',
+        role: role,
+        institution: institution
+      )
 
-      allow(Export).to receive(:perform) do |klass, headers|
-        calls[klass.name] = headers
-        CSV.generate do |csv|
-          csv << headers
-          csv << headers.map { |header| "#{klass.name.downcase}_#{header}" }
-        end
-      end
+      questionnaire_record = Questionnaire.create!(
+        name: 'Graph Export Questionnaire',
+        instructor: instructor,
+        private: false,
+        min_question_score: 0,
+        max_question_score: 10,
+        questionnaire_type: 'ReviewQuestionnaire',
+        display_type: 'Likert',
+        instruction_loc: 'instructions'
+      )
+
+      item_record = Item.create!(
+        questionnaire: questionnaire_record,
+        txt: 'How clear was the design?',
+        weight: 5,
+        seq: 1,
+        question_type: 'Scale',
+        break_before: true
+      )
+
+      advice_record = QuestionAdvice.create!(
+        item: item_record,
+        score: 4,
+        advice: 'Add concrete examples to improve clarity.'
+      )
+
+      assignment_record = create(:assignment, instructor: instructor)
+      reviewer_participant = create(:assignment_participant, assignment: assignment_record)
+      reviewee_participant = create(:assignment_participant, assignment: assignment_record)
+
+      response_map_record = ResponseMap.create!(
+        reviewer_id: reviewer_participant.id,
+        reviewee_id: reviewee_participant.id,
+        reviewed_object_id: assignment_record.id
+      )
+
+      response_record = Response.create!(
+        map_id: response_map_record.id,
+        additional_comment: 'response comment'
+      )
+
+      answer_record = Answer.create!(
+        item: item_record,
+        response: response_record,
+        answer: 3,
+        comments: 'Strong rationale.'
+      )
+
+      questionnaire_external = Item.external_classes.find { |ext| ext.ref_class == Questionnaire }
+      allow(Item).to receive(:external_classes).and_return([questionnaire_external].compact)
 
       result = described_class.export_has_many_graph(Questionnaire)
 
       puts "\nExport Graph (from export_has_many_graph):"
       puts JSON.pretty_generate(result[:graph])
+
+      expect(result).to have_key(:graph)
+      expect(result[:graph]).to be_a(Hash)
+      expect(result[:graph][:class_name]).to eq('Questionnaire')
+      expect(result[:graph][:headers]).to match_array(Questionnaire.mandatory_fields.map(&:to_s))
+
+      class_names = []
+      stack = [result[:graph]]
+      until stack.empty?
+        node = stack.pop
+        class_names << node[:class_name]
+        stack.concat(node[:has_many] || [])
+      end
+
+      expect(class_names).to include('Item')
+      expect(class_names).to include('QuestionAdvice')
+      expect(class_names).to include('Answer')
+
+      expect(result).to have_key(:exports)
+      expect(result[:exports]).to include('Questionnaire', 'Item', 'QuestionAdvice', 'Answer')
+
+      questionnaire_rows = CSV.parse(result[:exports]['Questionnaire'], headers: true)
+      item_rows = CSV.parse(result[:exports]['Item'], headers: true)
+      advice_rows = CSV.parse(result[:exports]['QuestionAdvice'], headers: true)
+      answer_rows = CSV.parse(result[:exports]['Answer'], headers: true)
+
+      expect(questionnaire_rows.map { |row| row['name'] }).to include(questionnaire_record.name)
+      expect(item_rows.map { |row| row['txt'] }).to include(item_record.txt)
+      expect(advice_rows.map { |row| row['advice'] }).to include(advice_record.advice)
+      expect(answer_rows.map { |row| row['comments'] }).to include(answer_record.comments)
+      expect(answer_rows.map { |row| row['answer'] }).to include(answer_record.answer.to_s)
+    end
+
+    it 'exports csv and prints each class csv output' do
+      role = create(:role, :instructor)
+      institution = create(:institution)
+      instructor = Instructor.create!(
+        name: 'csvprintinstructor',
+        email: 'csvprintinstructor@example.com',
+        full_name: 'CSV Print Instructor',
+        password: 'password',
+        role: role,
+        institution: institution
+      )
+
+      questionnaire_record = Questionnaire.create!(
+        name: 'CSV Print Questionnaire',
+        instructor: instructor,
+        private: false,
+        min_question_score: 0,
+        max_question_score: 10,
+        questionnaire_type: 'ReviewQuestionnaire',
+        display_type: 'Likert',
+        instruction_loc: 'instructions'
+      )
+
+      item_record = Item.create!(
+        questionnaire: questionnaire_record,
+        txt: 'What should improve?',
+        weight: 2,
+        seq: 1,
+        question_type: 'Scale',
+        break_before: true
+      )
+
+      QuestionAdvice.create!(
+        item: item_record,
+        score: 2,
+        advice: 'Consider edge cases.'
+      )
+
+      assignment_record = create(:assignment, instructor: instructor)
+      reviewer_participant = create(:assignment_participant, assignment: assignment_record)
+      reviewee_participant = create(:assignment_participant, assignment: assignment_record)
+      response_map_record = ResponseMap.create!(
+        reviewer_id: reviewer_participant.id,
+        reviewee_id: reviewee_participant.id,
+        reviewed_object_id: assignment_record.id
+      )
+      response_record = Response.create!(
+        map_id: response_map_record.id,
+        additional_comment: 'print response comment'
+      )
+      Answer.create!(
+        item: item_record,
+        response: response_record,
+        answer: 1,
+        comments: 'Needs work.'
+      )
+
+      questionnaire_external = Item.external_classes.find { |ext| ext.ref_class == Questionnaire }
+      allow(Item).to receive(:external_classes).and_return([questionnaire_external].compact)
+
+      result = described_class.export_has_many_graph(Questionnaire)
 
       puts "\nCSV Exports:"
       result[:exports].each do |klass_name, csv_text|
@@ -57,21 +174,11 @@ RSpec.describe ExportHelper, type: :helper do
         puts csv_text
       end
 
-      expect(result).to have_key(:graph)
-      expect(result).to have_key(:exports)
-      expect(result[:exports]).to include('Questionnaire')
-      expect(result[:exports]).to include('Item')
-      expect(result[:exports]).to include('QuestionAdvice')
-
-      expect(Questionnaire.mandatory_fields - calls['Questionnaire']).to be_empty
-      expect(calls['Questionnaire']).not_to include('id')
-
-      expect(Item.mandatory_fields - calls['Item']).to be_empty
-      expect(calls['Item']).to include('questionnaire_name')
-      expect(calls['Item']).not_to include('id')
-
-      expect(QuestionAdvice.mandatory_fields - calls['QuestionAdvice']).to be_empty
-      expect(calls['QuestionAdvice']).not_to include('id')
+      expect(result[:exports]).to include('Questionnaire', 'Item', 'QuestionAdvice', 'Answer')
+      expect(result[:exports]['Questionnaire']).to include('name')
+      expect(result[:exports]['Item']).to include('txt')
+      expect(result[:exports]['QuestionAdvice']).to include('advice')
+      expect(result[:exports]['Answer']).to include('comments')
     end
   end
 end
