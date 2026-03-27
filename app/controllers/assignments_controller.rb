@@ -210,6 +210,38 @@ class AssignmentsController < ApplicationController
     end
   end
   
+  # GET /assignments/:id/view_submissions
+  def view_submissions
+    assignment = Assignment.find_by(id: params[:id])
+    return render json: { error: "Assignment not found" }, status: :not_found if assignment.nil?
+
+    submissions = assignment.teams.map do |team|
+      members = team.teams_users.includes(:user).map do |tu|
+        user = tu.user
+        {
+          full_name: user&.full_name,
+          github: "",
+          email: user&.email
+        }
+      end
+
+      {
+        id: team.id,
+        team_id: team.id,
+        team_name: team.name,
+        members: members,
+        links: [],
+        files: []
+      }
+    end
+
+    render json: {
+      assignment_id: assignment.id,
+      assignment_name: assignment.name,
+      submissions: submissions
+    }, status: :ok
+  end
+
   private
   # Only allow a list of trusted parameters through.
   def assignment_params
