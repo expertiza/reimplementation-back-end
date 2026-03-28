@@ -33,5 +33,15 @@ module Reimplementation
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
     config.cache_store = :redis_store, ENV['CACHE_STORE'], { expires_in: 3.days, raise_errors: false }
+
+    config.action_mailer.smtp_settings = {
+      address: ENV['MAILER_SERVER'],
+      port: ENV['MAILER_SERVER_PORT'].to_i.nonzero? || 587,
+      domain: ENV['MAILER_DOMAIN'] || 'localhost',
+      user_name: ENV['MAILER_USER'],
+      password: ENV['MAILER_PASSWORD'],
+      authentication: :plain,
+      enable_starttls_auto: true
+    }
   end
 end
