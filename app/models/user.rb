@@ -48,6 +48,12 @@ class User < ApplicationRecord
     end
   end
 
+  # Built-in Rails 7.1+ token generator. Token invalidates if password_salt or updated_at changes.
+  # https://api.rubyonrails.org/classes/ActiveRecord/TokenFor/ClassMethods.html
+  generates_token_for :password_reset, expires_in: 15.minutes do
+    password_salt&.last(10) || updated_at.to_s
+  end
+
   # Welcome email to be sent to the user after they sign up
   def welcome_email; end
 
@@ -60,13 +66,6 @@ class User < ApplicationRecord
       user = user_list.first if user_list.one?
     end
     user
-  end
-
-  # Reset the password for the user
-  def reset_password
-    random_password = SecureRandom.alphanumeric(10)
-    user.password_digest = BCrypt::Password.create(random_password)
-    user.save
   end
 
   # Get instructor_id of the user, if the user is TA,
