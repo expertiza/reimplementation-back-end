@@ -12,7 +12,8 @@ RSpec.describe Assignment, type: :model do
   include RolesHelper
   before(:all) { @roles = create_roles_hierarchy } # Create the full roles hierarchy once for creating the instructor role later
   let(:institution) { Institution.create!(name: "NC State") } # All users belong to the same institution to satisfy foreign key constraints.
-  let(:instructor) { User.create!(name: "instructor", full_name: "Instructor User", email: "instructor@example.com", password_digest: "password", role_id: @roles[:instructor].id, institution_id: institution.id) }
+  let(:instructor_user) { User.create!(name: "instructor", full_name: "Instructor User", email: "instructor@example.com", password_digest: "password", role_id: @roles[:instructor].id, institution_id: institution.id) }
+  let(:instructor) { Instructor.find(instructor_user.id) }
 
   describe '#num_review_rounds' do
     it 'counts review due dates to determine the number of rounds' do
@@ -56,6 +57,81 @@ RSpec.describe Assignment, type: :model do
       AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire, used_in_round: 1)
 
       expect(assignment.varying_rubrics_by_round?).to be true
+    end
+  end
+
+  describe '#questionnaire_for' do
+    let(:assignment) { Assignment.create!(name: 'Rubric Resolution', instructor:, vary_by_round:, vary_by_topic:) }
+    let(:vary_by_round) { false }
+    let(:vary_by_topic) { false }
+    let(:default_rubric) do
+      Questionnaire.create!(name: 'Default Review', instructor:, questionnaire_type: 'ReviewQuestionnaire',
+                            display_type: 'Review', min_question_score: 0, max_question_score: 5)
+    end
+    let(:round_rubric) do
+      Questionnaire.create!(name: 'Round Review', instructor:, questionnaire_type: 'ReviewQuestionnaire',
+                            display_type: 'Review', min_question_score: 0, max_question_score: 5)
+    end
+    let(:topic_rubric) do
+      Questionnaire.create!(name: 'Topic Review', instructor:, questionnaire_type: 'ReviewQuestionnaire',
+                            display_type: 'Review', min_question_score: 0, max_question_score: 5)
+    end
+    let(:project_topic) { ProjectTopic.create!(topic_name: 'Topic 1', assignment:) }
+
+    before do
+      AssignmentQuestionnaire.create!(assignment:, questionnaire: default_rubric, used_in_round: default_round)
+    end
+
+    context 'when rubrics do not vary by round or topic' do
+      let(:default_round) { nil }
+
+      it 'returns the assignment default rubric' do
+        expect(assignment.questionnaire_for(questionnaire_type: 'ReviewQuestionnaire')).to eq(default_rubric)
+      end
+    end
+
+    context 'when rubrics vary by round only' do
+      let(:vary_by_round) { true }
+      let(:default_round) { 1 }
+
+      before do
+        AssignmentQuestionnaire.create!(assignment:, questionnaire: round_rubric, used_in_round: 2)
+      end
+
+      it 'returns the round-specific default rubric' do
+        expect(assignment.questionnaire_for(questionnaire_type: 'ReviewQuestionnaire', round: 1)).to eq(default_rubric)
+        expect(assignment.questionnaire_for(questionnaire_type: 'ReviewQuestionnaire', round: 2)).to eq(round_rubric)
+      end
+    end
+
+    context 'when rubrics vary by topic only' do
+      let(:vary_by_topic) { true }
+      let(:default_round) { nil }
+
+      before do
+        AssignmentQuestionnaire.create!(assignment:, questionnaire: topic_rubric, topic_id: project_topic.id)
+      end
+
+      it 'returns the topic-specific rubric and falls back to the assignment default' do
+        expect(assignment.questionnaire_for(questionnaire_type: 'ReviewQuestionnaire', topic: project_topic)).to eq(topic_rubric)
+        expect(assignment.questionnaire_for(questionnaire_type: 'ReviewQuestionnaire', topic_id: project_topic.id + 100)).to eq(default_rubric)
+      end
+    end
+
+    context 'when rubrics vary by topic and round' do
+      let(:vary_by_round) { true }
+      let(:vary_by_topic) { true }
+      let(:default_round) { 1 }
+
+      before do
+        AssignmentQuestionnaire.create!(assignment:, questionnaire: round_rubric, used_in_round: 2)
+        AssignmentQuestionnaire.create!(assignment:, questionnaire: topic_rubric, topic_id: project_topic.id, used_in_round: 1)
+      end
+
+      it 'uses the most specific rubric before falling back to the round default' do
+        expect(assignment.questionnaire_for(questionnaire_type: 'ReviewQuestionnaire', round: 1, topic: project_topic)).to eq(topic_rubric)
+        expect(assignment.questionnaire_for(questionnaire_type: 'ReviewQuestionnaire', round: 2, topic: project_topic)).to eq(round_rubric)
+      end
     end
   end
 
