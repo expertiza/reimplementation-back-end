@@ -148,7 +148,6 @@ module ImportableExportableHelper
   end
 
   ## Provide filter_proc with a custom method to aggregare records and spoof nonexistent models.
-  #
   ##
   def filter(filter_proc = nil)
     @filter_method = filter_proc if filter_proc
