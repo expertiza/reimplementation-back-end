@@ -49,11 +49,6 @@ class User < ApplicationRecord
     end
   end
 
-  # Override the email getter to return a normalized email address.
-  def email
-    super.to_s.strip.downcase
-  end
-
   # Built-in Rails 7.1+ token generator. Token invalidates if password_salt or updated_at changes.
   # https://api.rubyonrails.org/classes/ActiveRecord/TokenFor/ClassMethods.html
   generates_token_for :password_reset, expires_in: 15.minutes do
@@ -145,8 +140,14 @@ class User < ApplicationRecord
     end
   end
 
+  # Override the email getter to return a normalized email address.
+  def email
+    super.to_s.strip.downcase
+  end
+  # This may seem redundant, but this is specifically used for the before_save callback.
+  #Note: If a task is added to the DB to normalize emails, this method can be removed.
   def normalize_email
-    self.email = email.to_s.strip.downcase
+    self.email = email
   end
 
   def set_defaults
