@@ -50,8 +50,13 @@ Rails.application.routes.draw do
         collection do
           get :list, action: :list
           get :view
+          get :queue
+          get :next_task
+          post :start_task
         end
       end
+
+      resources :responses, only: %i[show create update]
 
       resources :courses do
         collection do

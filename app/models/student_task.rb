@@ -1,50 +1,66 @@
 # frozen_string_literal: true
 
 class StudentTask
-    attr_accessor :assignment, :current_stage, :participant, :stage_deadline, :topic, :permission_granted
+  attr_accessor :assignment, :assignment_id, :current_stage, :participant, :stage_deadline, :topic, :permission_granted
 
-    # Initializes a new instance of the StudentTask class
-    def initialize(args)
-      @assignment = args[:assignment]
-      @current_stage = args[:current_stage]
-      @participant = args[:participant]
-      @stage_deadline = args[:stage_deadline]
-      @topic = args[:topic]
-      @permission_granted = args[:permission_granted]
-    end
+  def initialize(args)
+    @assignment = args[:assignment]
+    @assignment_id = args[:assignment_id]
+    @current_stage = args[:current_stage]
+    @participant = args[:participant]
+    @stage_deadline = args[:stage_deadline]
+    @topic = args[:topic]
+    @permission_granted = args[:permission_granted]
+  end
 
-    # create a new StudentTask instance from a Participant object.cccccccc
-    def self.create_from_participant(participant)
-      new(
-        assignment: participant.assignment.name,                          # Name of the assignment associated with the student task
-        topic: participant.topic,                                         # Current stage of the assignment process
-        current_stage: participant.current_stage,                         # Participant object
-        stage_deadline: parse_stage_deadline(participant.stage_deadline), # Deadline for the current stage of the assignment
-        permission_granted: participant.permission_granted,               # Topic of the assignment
-        participant: participant                                          # Boolean indicating if Publishing Rights is enabled
-      )
-    end
+  def self.create_from_participant(participant)
+    new(
+      assignment: participant.assignment&.name,
+      assignment_id: participant.parent_id,
+      topic: participant.topic,
+      current_stage: participant.current_stage,
+      stage_deadline: send(:parse_stage_deadline, participant.stage_deadline),
+      permission_granted: participant.permission_granted,
+      participant: participant
+    )
+  end
 
+  def self.from_user(user)
+    Participant.where(user_id: user.id)
+               .map { |p| create_from_participant(p) }
+               .sort_by(&:stage_deadline)
+  end
 
-    # create an array of StudentTask instances for all participants linked to a user, sorted by deadline.
-    def self.from_user(user)
-      Participant.where(user_id: user.id)
-                 .map { |participant| StudentTask.create_from_participant(participant) }
-                 .sort_by(&:stage_deadline)
-    end
+  def self.from_participant_id(id)
+    part = Participant.find_by(id: id)
+    return nil unless part
 
-    # create a StudentTask instance from a participant of the provided id
-    def self.from_participant_id(id)
-      create_from_participant(Participant.find_by(id: id))
-    end
-  
+    create_from_participant(part)
+  end
+
+  def as_json(*)
+    {
+      assignment_id: assignment_id,
+      participant_id: participant&.id,
+      assignment: assignment,
+      topic: topic,
+      current_stage: current_stage,
+      stage_deadline: stage_deadline,
+      permission_granted: permission_granted
+    }
+  end
+
+  class << self
     private
 
-    # Parses a date string to a Time object, if parsing fails, set the time to be one year after current
-    def self.parse_stage_deadline(date_string)
-      Time.parse(date_string)
+    def parse_stage_deadline(value)
+      return Time.current + 1.year if value.nil?
+
+      return value if value.is_a?(Time) || value.is_a?(ActiveSupport::TimeWithZone)
+
+      Time.zone.parse(value.to_s)
     rescue StandardError
-      Time.now + 1.year
+      Time.current + 1.year
     end
-  
+  end
 end
