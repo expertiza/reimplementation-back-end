@@ -158,6 +158,10 @@ class Team < ApplicationRecord
 
   end
 
+  def current_project_topic
+    signed_up_teams.includes(:project_topic).find_by(is_waitlisted: false)&.project_topic || project_topics.first
+  end
+
   private
 
   def release_topics_if_empty

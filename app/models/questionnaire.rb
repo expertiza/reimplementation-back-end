@@ -5,6 +5,8 @@ class Questionnaire < ApplicationRecord
   has_many :items, class_name: "Item", foreign_key: "questionnaire_id", dependent: :destroy # the collection of items associated with this Questionnaire
   before_destroy :check_for_question_associations
 
+  scope :for_questionnaire_type, ->(questionnaire_type) { where(questionnaire_type:) }
+
   validate :validate_questionnaire
   validates :name, presence: true
   validates :max_question_score, :min_question_score, numericality: true 
@@ -137,5 +139,23 @@ class Questionnaire < ApplicationRecord
                             .select('SUM(items.weight) * questionnaires.max_question_score as max_score')
                             .where('questionnaires.id = ?', id)
       results[0].max_score
+    end
+
+    def self.accessible_for_assignment(user:, assignment:, questionnaire_type:)
+      rubrics = for_questionnaire_type(questionnaire_type)
+
+      return rubrics.where(private: false).order(:name) unless user
+
+      instructor_ids = [user.id]
+      if assignment&.instructor_id.present? &&
+         (assignment.instructor_id == user.id ||
+          (assignment.course_id.present? && TaMapping.exists?(user_id: user.id, course_id: assignment.course_id)))
+        instructor_ids << assignment.instructor_id
+      end
+
+      rubrics
+        .where(private: false)
+        .or(rubrics.where(instructor_id: instructor_ids.compact.uniq))
+        .order(:name)
     end
   end
