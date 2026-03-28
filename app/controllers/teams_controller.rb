@@ -6,9 +6,21 @@ class TeamsController < ApplicationController
   before_action :validate_team_type, only: [:create]
 
   # GET /teams
-  # Fetches all teams and renders them using TeamSerializer
+  # Fetches teams for a hierarchy context (assignment/course) and renders them using TeamSerializer
   def index
-    @teams = Team.all
+    @teams = Team.includes(:users, { teams_participants: :participant })
+
+    if params[:parent_id].present?
+      @teams = @teams.where(parent_id: params[:parent_id])
+    end
+
+    if params[:types].present?
+      requested_types = params[:types].is_a?(Array) ? params[:types] : params[:types].to_s.split(',')
+      normalized_types = requested_types.map(&:strip).reject(&:blank?)
+      @teams = @teams.where(type: normalized_types) if normalized_types.any?
+    end
+
+    @teams = @teams.order(:name, :id)
     render json: @teams, each_serializer: TeamSerializer
   end
 
@@ -94,7 +106,11 @@ class TeamsController < ApplicationController
 
   # Whitelists the parameters allowed for team creation/updation
   def team_params
-    params.require(:team).permit(:name, :type, :assignment_id)
+    permitted = params.require(:team).permit(:name, :type, :parent_id, :assignment_id)
+
+    # Backward compatibility for clients still sending assignment_id.
+    permitted[:parent_id] = permitted[:assignment_id] if permitted[:parent_id].blank? && permitted[:assignment_id].present?
+    permitted.except(:assignment_id)
   end
 
   # Whitelists parameters required to add a team member

@@ -10,8 +10,8 @@ class CoursesController < ApplicationController
   # GET /courses
   # List all the courses
   def index
-    courses = Course.all
-    render json: courses, status: :ok
+    courses = Course.includes(:assignments).all
+    render json: courses.as_json(include: :assignments), status: :ok
   end
 
   # GET /courses/1

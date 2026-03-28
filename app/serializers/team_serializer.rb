@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class TeamSerializer < ActiveModel::Serializer
-  attributes :id, :name, :type, :team_size
+  attributes :id, :name, :type, :parent_id, :team_size
   has_many :members, serializer: ParticipantSerializer
   has_many :users, serializer: UserSerializer
 
