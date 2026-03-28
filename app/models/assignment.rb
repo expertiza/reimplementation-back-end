@@ -30,10 +30,9 @@ class Assignment < ApplicationRecord
     Questionnaire.find_by_assignment_id id
   end
 
-  # Returns the ordering object used to build a strict task queue.
-  # Controllers ask this object for tasks instead of branching on quiz/review flags.
-  def respondable_task_ordering
-    RespondableTaskOrdering.new(self)
+  # Builds a TaskQueue for a TeamsParticipant row (duty + structural task list).
+  def respondable_task_queue(team_participant)
+    TaskOrdering::TaskQueue.new(self, team_participant)
   end
 
   # Returns the quiz questionnaire used by the reviewer pre-check flow.

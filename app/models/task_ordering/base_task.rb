@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module TaskOrdering
   class BaseTask
     attr_reader :assignment, :team_participant, :review_map
@@ -8,7 +10,10 @@ module TaskOrdering
       @review_map = review_map
     end
 
-    # Must be implemented by subclasses
+    def participant
+      team_participant.participant
+    end
+
     def response_map
       raise NotImplementedError
     end
@@ -17,13 +22,13 @@ module TaskOrdering
       response_map
     end
 
-    # Create response if none exists
     def ensure_response!
       map = response_map
       return if map.nil?
 
       Response.find_or_create_by!(
-        map_id: map.id
+        map_id: map.id,
+        round: 1
       ) do |resp|
         resp.is_submitted = false
       end
@@ -36,7 +41,6 @@ module TaskOrdering
       Response.where(map_id: map.id, is_submitted: true).exists?
     end
 
-    # Structure returned to controller
     def to_task_hash
       map = response_map
       {

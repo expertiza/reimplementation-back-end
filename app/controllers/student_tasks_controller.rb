@@ -1,32 +1,24 @@
 class StudentTasksController < ApplicationController
-
-  # List retrieves all student tasks associated with the current logged-in user.
   def action_allowed?
     current_user_has_student_privileges?
   end
+
   def list
-    # Retrieves all tasks that belong to the current user.
     @student_tasks = StudentTask.from_user(current_user)
-    # Render the list of student tasks as JSON.
-    render json: @student_tasks, status: :ok
+    render json: @student_tasks.map(&:as_json), status: :ok
   end
 
   def show
     render json: @student_task, status: :ok
   end
 
-  # The view function retrieves a student task based on a participant's ID.
-  # It is meant to provide an endpoint where tasks can be queried based on participant ID.
   def view
-    # Retrieves the student task where the participant's ID matches the provided parameter.
-    # This function will be used for clicking on a specific student task to "view" its details.
     @student_task = StudentTask.from_participant_id(params[:id])
-    # Render the found student task as JSON.
-    render json: @student_task, status: :ok
+    return render json: { error: "Participant not found" }, status: :not_found unless @student_task
+
+    render json: @student_task.as_json, status: :ok
   end
 
-  # Returns ordered list of respondable tasks (quiz, review)
-  # GET /student_tasks/:assignment_id/queue
   def queue
     queue = build_queue_for_user(params[:assignment_id])
     return render json: { error: "Not authorized or not found" }, status: :not_found unless queue
@@ -36,8 +28,6 @@ class StudentTasksController < ApplicationController
     render json: queue.tasks.map(&:to_task_hash), status: :ok
   end
 
-  # GET /student_tasks/:participant_id/next_task
-  # Returns the next incomplete task in the sequence
   def next_task
     queue = build_queue_for_user(params[:assignment_id])
     return render json: { error: "Not authorized or not found" }, status: :not_found unless queue
@@ -53,8 +43,6 @@ class StudentTasksController < ApplicationController
     end
   end
 
-  # POST /student_tasks/start_task
-  # Ensures task can be started (order enforcement)
   def start_task
     map = ResponseMap.find_by(id: params[:response_map_id])
     return render json: { error: "ResponseMap not found" }, status: :not_found unless map
@@ -70,15 +58,15 @@ class StudentTasksController < ApplicationController
     queue = TaskOrdering::TaskQueue.new(assignment, team_participant)
     tasks = queue.tasks
 
-    current_task = tasks.find { |t| t.response_map.id == map.id }
+    current_task = tasks.find { |t| (rm = t.response_map) && rm.id == map.id }
+    return render json: { error: "Task not in respondable queue" }, status: :not_found unless current_task
+
     previous_tasks = tasks.take_while { |t| t != current_task }
 
-    # Enforce ordering: all previous tasks must be completed
     if previous_tasks.any? { |t| !t.completed? }
       return render json: { error: "Complete previous task first" }, status: :forbidden
     end
 
-    # Ensure response exists
     current_task.ensure_response!
 
     render json: {
@@ -100,5 +88,4 @@ class StudentTasksController < ApplicationController
 
     TaskOrdering::TaskQueue.new(participant.assignment, team_participant)
   end
-
 end
