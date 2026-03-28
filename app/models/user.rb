@@ -2,6 +2,7 @@
 
 class User < ApplicationRecord
   has_secure_password
+  before_save :normalize_email
   after_initialize :set_defaults
 
   # name must be lowercase and unique
@@ -142,6 +143,10 @@ class User < ApplicationRecord
       hash['parent'] ||= { id: nil, name: nil }
       hash['institution'] ||= { id: nil, name: nil }
     end
+  end
+
+  def normalize_email
+    self.email = email.to_s.strip.downcase
   end
 
   def set_defaults
