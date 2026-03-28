@@ -41,7 +41,8 @@ class SignUpTopicsController < ApplicationController
   # PATCH/PUT /sign_up_topics/1
   # updates parameters present in sign_up_topic_params.
   def update
-    assignment = Assignment.find_by(id: @sign_up_topic.assignment_id)
+    assignment_id = sign_up_topic_params[:assignment_id] || @sign_up_topic.assignment_id
+    assignment = Assignment.find_by(id: assignment_id)
     @sign_up_topic.micropayment = micropayment_value if assignment&.microtask?
 
     if @sign_up_topic.update(sign_up_topic_params)

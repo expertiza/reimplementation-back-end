@@ -59,11 +59,11 @@ class ImportController < ApplicationController
     defaults = import_defaults_for(klass)
 
     # Load the chosen duplicate action (Skip, Update, Change)
-    dup_action = params[:dup_action].constantize
+    dup_action = params[:dup_action]&.constantize
 
     pp dup_action
 
-    importService = Import.new(klass: klass, file: uploaded_file, headers: ordered_fields, dup_action: dup_action.new, defaults: defaults)
+    importService = Import.new(klass: klass, file: uploaded_file, headers: ordered_fields, dup_action: dup_action&.new, defaults: defaults)
     result = importService.perform(use_headers)
 
     # If no exceptions occur, return success
