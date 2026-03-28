@@ -42,7 +42,7 @@ class Export
       csv << ordered_headers
 
       # Insert each row in order, using the values of the hash
-      export_class.all.each do |record|
+      export_class.filter.call.each do |record|
         row = class_fields.map{|f| record.send(f)}
 
         export_class.external_classes.each do |external_class|

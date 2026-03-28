@@ -6,6 +6,7 @@ class Answer < ApplicationRecord
     external_classes ExternalClass.new(Item, true, false, :txt),
                     ExternalClass.new(Response, true, false, :additional_comment)
 
+    filter nil
     belongs_to :response
     belongs_to :item
 end

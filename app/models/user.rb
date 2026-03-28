@@ -6,7 +6,7 @@ class User < ApplicationRecord
   external_classes ExternalClass.new(Role, true, false, :name),
                    ExternalClass.new(Institution, true, false, :name)
   available_actions_on_duplicate SkipRecordAction.new, UpdateExistingRecordAction.new, ChangeOffendingFieldAction.new
-
+  filter nil
 
   has_secure_password
   after_initialize :set_defaults

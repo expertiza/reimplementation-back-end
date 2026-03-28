@@ -147,6 +147,14 @@ module ImportableExportableHelper
     end
   end
 
+  ## Provide filter_proc with a custom method to aggregare records and spoof nonexistent models.
+  #
+  ##
+  def filter(filter_proc = nil)
+    @filter_method = filter_proc if filter_proc
+    @filter_method || -> { all }
+  end
+
   # --------------------------------------------------------------
   # Define or retrieve mandatory fields.
   # These must be present in the CSV.

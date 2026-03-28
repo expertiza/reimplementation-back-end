@@ -5,7 +5,7 @@ class QuestionAdvice < ApplicationRecord
   mandatory_fields :score, :advice
 
   external_classes ExternalClass.new(Item, true, false, :txt)
-  
+  filter nil
   belongs_to :item
   def self.export_fields(_options)
     QuestionAdvice.columns.map(&:name)

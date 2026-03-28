@@ -6,7 +6,7 @@ class Team < ApplicationRecord
   external_classes ExternalClass.new(Assignment, true, false, :title),
                    ExternalClass.new(Course, true, false, :name),
                    ExternalClass.new(User, true, false, :name)
-
+  filter nil
   # Core associations
   has_many :signed_up_teams, dependent: :destroy
   has_many :teams_users, dependent: :destroy
