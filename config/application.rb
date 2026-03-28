@@ -37,7 +37,7 @@ module Reimplementation
     config.action_mailer.smtp_settings = {
       address: ENV['MAILER_SERVER'],
       port: ENV['MAILER_SERVER_PORT'].to_i.nonzero? || 587,
-      domain: ENV['MAILER_DOMAIN'] || 'localhost',
+      domain: ENV['MAILER_DOMAIN'],
       user_name: ENV['MAILER_USER'],
       password: ENV['MAILER_PASSWORD'],
       authentication: :plain,
