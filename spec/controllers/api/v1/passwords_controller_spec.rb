@@ -9,13 +9,13 @@ RSpec.describe PasswordsController, type: :controller do
     describe '#create' do
       context 'when the email exists' do
         before do
-          allow(UserMailer).to receive_message_chain(:send_password_reset_email, :deliver_later)
+          allow(UserMailer).to receive_message_chain(:password_reset_email, :deliver_later)
           post :create, params: { email: user.email }
         end
 
         it 'sends a password reset email' do
           # second parameter we're checking for it the token
-          expect(UserMailer).to have_received(:send_password_reset_email).with(user, a_string_matching(/[a-zA-Z0-9]+={2}-{2}[a-z0-9]+/))
+          expect(UserMailer).to have_received(:password_reset_email).with(user, a_string_matching(/[a-zA-Z0-9]+={2}-{2}[a-z0-9]+/))
         end
 
         it 'returns a success message' do
