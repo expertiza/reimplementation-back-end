@@ -1,6 +1,6 @@
 class PasswordResetsController < ApplicationController
   before_action :find_user_by_email, only: [:create]
-  before_action :find_user_by_token, only: [:update]
+  before_action :load_user_by_token, only: [:update]
   skip_before_action :authenticate_request!, only: [:create, :update]
 
   # POST /password_resets
@@ -29,12 +29,13 @@ class PasswordResetsController < ApplicationController
     @user = User.find_by(email: params[:email].to_s.strip.downcase)
   end
 
-  def find_user_by_token
+  def load_user_by_token
     @user = User.find_by_token_for(:password_reset, params[:token])
+    render_invalid_token_response unless @user
+  end
 
-    unless @user
-      render json: { error: I18n.t('password_reset.errors.token_expired') }, status: :unprocessable_entity
-    end
+  def render_invalid_token_response
+    render json: { error: I18n.t('password_reset.errors.token_expired') }, status: :unprocessable_entity
   end
 
   def password_params
