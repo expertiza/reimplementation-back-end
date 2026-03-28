@@ -13,6 +13,16 @@ class AddVaryByTopicAndTopicIdToAssignmentQuestionnaires < ActiveRecord::Migrati
     end
 
     add_index :assignment_questionnaires, :topic_id unless index_exists?(:assignment_questionnaires, :topic_id)
-    add_foreign_key :assignment_questionnaires, :project_topics, column: :topic_id unless foreign_key_exists?(:assignment_questionnaires, :project_topics, column: :topic_id)
+
+    topic_table =
+      if table_exists?(:project_topics)
+        :project_topics
+      elsif table_exists?(:sign_up_topics)
+        :sign_up_topics
+      end
+
+    if topic_table && !foreign_key_exists?(:assignment_questionnaires, topic_table, column: :topic_id)
+      add_foreign_key :assignment_questionnaires, topic_table, column: :topic_id
+    end
   end
 end
