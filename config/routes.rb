@@ -213,5 +213,9 @@ Rails.application.routes.draw do
       end
       resources :assignments do
         resources :duties, controller: 'assignments_duties', only: [:index, :create, :destroy]
+        member do
+          get 'topics/rubrics', to: 'assignments_topics#rubrics'
+          patch 'topics/rubrics', to: 'assignments_topics#rubrics'
+        end
       end
 end

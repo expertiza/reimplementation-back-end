@@ -231,6 +231,8 @@ class AssignmentsController < ApplicationController
       :is_pair_programming,
       :has_mentors,
       :has_topics,
+      :vary_by_topic,
+      :vary_by_round,
       :review_topic_threshold,
       :maximum_number_of_reviews_per_submission,
       :review_strategy,
