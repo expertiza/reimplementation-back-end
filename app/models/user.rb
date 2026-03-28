@@ -142,12 +142,13 @@ class User < ApplicationRecord
 
   # Override the email getter to return a normalized email address.
   def email
-    super.to_s.strip.downcase
+    raw = super
+    raw&.strip&.downcase
   end
   # This may seem redundant, but this is specifically used for the before_save callback.
-  #Note: If a task is added to the DB to normalize emails, this method can be removed.
+  # Note: If a task is added to the DB to normalize emails, this method can be removed.
   def normalize_email
-    self.email = email
+    self.email = email if self.email.present?
   end
 
   def set_defaults
