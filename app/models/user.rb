@@ -48,6 +48,11 @@ class User < ApplicationRecord
     end
   end
 
+  # Override the email getter to return a normalized email address.
+  def email
+    super.to_s.strip.downcase
+  end
+
   # Built-in Rails 7.1+ token generator. Token invalidates if password_salt or updated_at changes.
   # https://api.rubyonrails.org/classes/ActiveRecord/TokenFor/ClassMethods.html
   generates_token_for :password_reset, expires_in: 15.minutes do
