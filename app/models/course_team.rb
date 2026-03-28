@@ -15,13 +15,13 @@ class CourseTeam < Team
   # - Copies team members from the assignment team to the course team
   def copy_to_assignment_team(assignment)
     assignment_team = AssignmentTeam.new(
-      name: "#{name} (Assignment)",             # Appends "(Assignment)" to the team name
-      max_team_size: max_team_size,             # Preserves original max team size
-      assignment: assignment                    # Associates the course team with an assignment
+      name: "#{name} (Assignment)",
+      parent_id: assignment.id
     )
     if assignment_team.save
-      team_members.each do |member|
-        assignment_team.add_member(member.user) # Copies each member to the new assignment team
+      participants.each do |participant|
+        a_participant = AssignmentParticipant.find_by(user_id: participant.user_id, parent_id: assignment.id)
+        assignment_team.add_member(a_participant) if a_participant
       end
     end
     assignment_team       # Returns the newly created assignment team object

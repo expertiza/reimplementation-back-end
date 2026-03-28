@@ -2,44 +2,50 @@
 
 class MentoredTeam < AssignmentTeam
 
-  # Returns the participant on this team whose duty name is 'Mentor'
-  def mentor
-    participants.joins(:duty).find_by(duties: { name: 'Mentor' })
+  # adds members to the team who are not mentors
+  def add_member(user)
+    return false if user == mentor
+    super(user)
   end
 
-  # Assigns a participant as mentor by setting their duty to the 'Mentor' duty.
-  # The participant must already be a member of this team.
-  def assign_mentor(participant)
+  # Assigning a participant as mentor of the team
+  # Validates if participant has the duty of mentor
+  def assign_mentor(user)
     mentor_duty = Duty.find_by(name: 'Mentor')
     return false unless mentor_duty
-    return false unless participants.exists?(id: participant.id)
+
+    participant = AssignmentParticipant.find_by(user_id: user.id, parent_id: parent_id)
+    return false unless participant
 
     participant.update(duty_id: mentor_duty.id)
   end
 
-  # Clears the mentor duty from the current mentor participant.
+  # Unassigns mentor from team
   def remove_mentor
-    mentor&.update(duty_id: nil)
-  end
+    mentor_duty = Duty.find_by(name: 'Mentor')
+    return unless mentor_duty
 
-  # Prevents adding a participant who already holds the mentor duty on this team.
-  def add_member(participant_or_user)
-    participant = resolve_participant(participant_or_user)
-    return { success: false, error: 'Participant is already the mentor of this team' } if mentor_participant?(participant)
-
-    super(participant_or_user)
+    mentor_participant = AssignmentParticipant
+                           .joins('INNER JOIN teams_participants ON teams_participants.participant_id = participants.id')
+                           .where('teams_participants.team_id = ? AND participants.duty_id = ?', id, mentor_duty.id)
+                           .first
+    mentor_participant&.update(duty_id: nil)
   end
 
   private
 
-  def resolve_participant(participant_or_user)
-    return participant_or_user if participant_or_user.is_a?(Participant)
-
-    AssignmentParticipant.find_by(user_id: participant_or_user.id, parent_id: parent_id)
+  # Check if the team type is 'MentoredTeam'
+  def type_must_be_mentored_team
+    errors.add(:type, 'must be MentoredTeam') unless type == 'MentoredTeam'
   end
 
-  def mentor_participant?(participant)
-    return false unless participant
-    mentor&.id == participant.id
+  def mentor
+    mentor_duty = Duty.find_by(name: 'Mentor')
+    return nil unless mentor_duty
+
+    AssignmentParticipant
+      .joins('INNER JOIN teams_participants ON teams_participants.participant_id = participants.id')
+      .where('teams_participants.team_id = ? AND participants.duty_id = ?', id, mentor_duty.id)
+      .first&.user
   end
 end

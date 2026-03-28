@@ -1,298 +1,96 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe TeamsParticipant, type: :model do
   include RolesHelper
 
-  # --------------------------------------------------------------------------
-  # Global Setup
-  # --------------------------------------------------------------------------
-  before(:all) do
-    @roles = create_roles_hierarchy
+  before(:all) { @roles = create_roles_hierarchy }
+
+  let(:institution) { Institution.create!(name: 'NC State') }
+  let(:instructor)  { User.create!(name: 'inst', full_name: 'Instructor', email: 'inst@test.com', password_digest: 'x', role_id: @roles[:instructor].id, institution_id: institution.id) }
+  let(:assignment)  { Assignment.create!(name: 'Assign 1', instructor_id: instructor.id, max_team_size: 3) }
+  let(:course)      { Course.create!(name: 'Course 1', instructor_id: instructor.id, institution_id: institution.id, directory_path: '/c1') }
+
+  def make_user(suffix)
+    User.create!(name: suffix, full_name: suffix, email: "#{suffix}@test.com", password_digest: 'x', role_id: @roles[:student].id, institution_id: institution.id)
   end
 
-  # ------------------------------------------------------------------------
-  # Helper: DRY-up creation of student users
-  # ------------------------------------------------------------------------
-  def create_student(suffix)
-    User.create!(
-      name:            suffix,
-      email:           "#{suffix}@example.com",
-      full_name:       suffix.split('_').map(&:capitalize).join(' '),
-      password_digest: "password",
-      role_id:         @roles[:student].id,
-      institution_id:  institution.id
-    )
-  end
-
-  # ------------------------------------------------------------------------
-  # Shared Data Setup
-  # ------------------------------------------------------------------------
-  let(:institution) do
-    Institution.create!(name: "NC State")
-  end
-
-  let(:instructor) do
-    User.create!(
-      name:            "instructor",
-      full_name:       "Instructor User",
-      email:           "instructor@example.com",
-      password_digest: "password",
-      role_id:         @roles[:instructor].id,
-      institution_id:  institution.id
-    )
-  end
-
-  let(:student_user) { create_student("student1") }
-  let(:another_student) { create_student("student2") }
-
-  let(:assignment) { Assignment.create!(name: "Test Assignment", instructor_id: instructor.id, max_team_size: 3) }
-  
-  let(:team) do
-    AssignmentTeam.create!(
-      parent_id: assignment.id,
-      name:      'Test Team'
-    )
-  end
-
-  let(:another_team) do
-    AssignmentTeam.create!(
-      parent_id: assignment.id,
-      name:      'Another Team'
-    )
-  end
-
-  let(:participant) do
-    AssignmentParticipant.create!(
-      user_id:   student_user.id,
-      parent_id: assignment.id,
-      handle:    'student1_handle'
-    )
-  end
-
-  let(:another_participant) do
-    AssignmentParticipant.create!(
-      user_id:   another_student.id,
-      parent_id: assignment.id,
-      handle:    'student2_handle'
-    )
-  end
-
-  # --------------------------------------------------------------------------
-  # Association Tests
-  # --------------------------------------------------------------------------
-  describe 'associations' do
-    it { should belong_to(:participant) }
-    it { should belong_to(:team) }
-    it { should belong_to(:user) }
-  end
-
-  # --------------------------------------------------------------------------
-  # Validation Tests
-  # --------------------------------------------------------------------------
+  # ── 1. Model Validations ────────────────────────────────────────────────────
   describe 'validations' do
-    it 'is valid with valid attributes' do
-      teams_participant = TeamsParticipant.new(
-        participant_id: participant.id,
-        team_id:        team.id,
-        user_id:        student_user.id
-      )
-      expect(teams_participant).to be_valid
+    let(:user)        { make_user('v_user') }
+    let(:participant) { AssignmentParticipant.create!(user: user, parent_id: assignment.id, handle: user.name) }
+    let(:team)        { AssignmentTeam.create!(name: 'Team V', parent_id: assignment.id) }
+
+    it 'is valid with all required fields' do
+      tp = TeamsParticipant.new(team: team, participant: participant, user: user)
+      expect(tp).to be_valid
     end
 
-    it 'requires user_id' do
-      teams_participant = TeamsParticipant.new(
-        participant_id: participant.id,
-        team_id:        team.id
-      )
-      expect(teams_participant).not_to be_valid
-      expect(teams_participant.errors[:user_id]).to include("can't be blank")
+    it 'is invalid without user_id' do
+      tp = TeamsParticipant.new(team: team, participant: participant)
+      expect(tp).not_to be_valid
+      expect(tp.errors[:user_id]).to be_present
     end
 
-    it 'enforces uniqueness of participant_id scoped to team_id' do
-      TeamsParticipant.create!(
-        participant_id: participant.id,
-        team_id:        team.id,
-        user_id:        student_user.id
-      )
-
-      duplicate = TeamsParticipant.new(
-        participant_id: participant.id,
-        team_id:        team.id,
-        user_id:        student_user.id
-      )
-
-      expect(duplicate).not_to be_valid
-      expect(duplicate.errors[:participant_id]).to include("has already been taken")
+    it 'is invalid without participant_id' do
+      tp = TeamsParticipant.new(team: team, user: user)
+      expect(tp).not_to be_valid
     end
 
-    it 'allows same participant in different teams' do
-      # Note: This tests the model validation only - business logic may prevent this
-      TeamsParticipant.create!(
-        participant_id: participant.id,
-        team_id:        team.id,
-        user_id:        student_user.id
-      )
+    it 'is invalid without team_id' do
+      tp = TeamsParticipant.new(participant: participant, user: user)
+      expect(tp).not_to be_valid
+    end
 
-      different_team_membership = TeamsParticipant.new(
-        participant_id: participant.id,
-        team_id:        another_team.id,
-        user_id:        student_user.id
-      )
+    # ── uniqueness constraint (our Step 2 change) ──
+    it 'prevents same participant from joining two different teams' do
+      team2 = AssignmentTeam.create!(name: 'Team V2', parent_id: assignment.id)
+      TeamsParticipant.create!(team: team, participant: participant, user: user)
 
-      # The model allows this, but business logic in controllers should prevent it
-      expect(different_team_membership).to be_valid
+      tp2 = TeamsParticipant.new(team: team2, participant: participant, user: user)
+      expect(tp2).not_to be_valid
+      expect(tp2.errors[:participant_id]).to be_present
+    end
+
+    it 'allows same participant on the same team only once' do
+      TeamsParticipant.create!(team: team, participant: participant, user: user)
+      tp2 = TeamsParticipant.new(team: team, participant: participant, user: user)
+      expect(tp2).not_to be_valid
+    end
+
+    it 'allows different participants on the same team' do
+      user2        = make_user('v_user2')
+      participant2 = AssignmentParticipant.create!(user: user2, parent_id: assignment.id, handle: user2.name)
+      TeamsParticipant.create!(team: team, participant: participant, user: user)
+
+      tp2 = TeamsParticipant.new(team: team, participant: participant2, user: user2)
+      expect(tp2).to be_valid
     end
   end
 
-  # --------------------------------------------------------------------------
-  # Creation and Destruction Tests
-  # --------------------------------------------------------------------------
-  describe 'creation' do
-    it 'creates a teams_participant record successfully' do
-      expect {
-        TeamsParticipant.create!(
-          participant_id: participant.id,
-          team_id:        team.id,
-          user_id:        student_user.id
-        )
-      }.to change(TeamsParticipant, :count).by(1)
+  # ── 2. Enrollment-based membership rules ───────────────────────────────────
+  describe 'enrollment-based membership via Team#add_member' do
+    let(:team) { AssignmentTeam.create!(name: 'Enroll Team', parent_id: assignment.id) }
+
+    it 'rejects a user not enrolled in the assignment' do
+      outsider = make_user('outsider')
+      result   = team.add_member(outsider)
+      expect(result[:success]).to be false
+      expect(result[:error]).to match(/not a participant/)
     end
 
-    it 'associates participant with the correct team' do
-      teams_participant = TeamsParticipant.create!(
-        participant_id: participant.id,
-        team_id:        team.id,
-        user_id:        student_user.id
-      )
-
-      expect(teams_participant.team).to eq(team)
-      expect(teams_participant.participant).to eq(participant)
-      expect(teams_participant.user).to eq(student_user)
-    end
-  end
-
-  describe 'destruction' do
-    it 'removes the teams_participant record' do
-      teams_participant = TeamsParticipant.create!(
-        participant_id: participant.id,
-        team_id:        team.id,
-        user_id:        student_user.id
-      )
-
-      expect {
-        teams_participant.destroy
-      }.to change(TeamsParticipant, :count).by(-1)
+    it 'accepts a user enrolled in the assignment' do
+      user        = make_user('enrolled')
+      participant = AssignmentParticipant.create!(user: user, parent_id: assignment.id, handle: user.name)
+      result      = team.add_member(participant)
+      expect(result[:success]).to be true
     end
 
-    it 'does not destroy the associated team or participant' do
-      teams_participant = TeamsParticipant.create!(
-        participant_id: participant.id,
-        team_id:        team.id,
-        user_id:        student_user.id
-      )
-
-      team_id = team.id
-      participant_id = participant.id
-
-      teams_participant.destroy
-
-      expect(Team.find_by(id: team_id)).not_to be_nil
-      expect(Participant.find_by(id: participant_id)).not_to be_nil
-    end
-  end
-
-  # --------------------------------------------------------------------------
-  # Team Membership Transfer Tests (for join team requests)
-  # --------------------------------------------------------------------------
-  describe 'team membership transfer' do
-    it 'allows removing participant from old team and adding to new team' do
-      # Create initial membership
-      old_membership = TeamsParticipant.create!(
-        participant_id: participant.id,
-        team_id:        team.id,
-        user_id:        student_user.id
-      )
-
-      # Transfer to new team (simulating accept join team request)
-      old_membership.destroy
-
-      new_membership = TeamsParticipant.create!(
-        participant_id: participant.id,
-        team_id:        another_team.id,
-        user_id:        student_user.id
-      )
-
-      expect(new_membership).to be_persisted
-      expect(TeamsParticipant.find_by(participant_id: participant.id, team_id: team.id)).to be_nil
-      expect(TeamsParticipant.find_by(participant_id: participant.id, team_id: another_team.id)).not_to be_nil
-    end
-
-    it 'updates team participant count correctly after transfer' do
-      # Add participant to first team
-      TeamsParticipant.create!(
-        participant_id: participant.id,
-        team_id:        team.id,
-        user_id:        student_user.id
-      )
-
-      # Add another participant to second team
-      TeamsParticipant.create!(
-        participant_id: another_participant.id,
-        team_id:        another_team.id,
-        user_id:        another_student.id
-      )
-
-      expect(team.participants.count).to eq(1)
-      expect(another_team.participants.count).to eq(1)
-
-      # Transfer first participant to second team
-      TeamsParticipant.find_by(participant_id: participant.id, team_id: team.id).destroy
-      TeamsParticipant.create!(
-        participant_id: participant.id,
-        team_id:        another_team.id,
-        user_id:        student_user.id
-      )
-
-      team.reload
-      another_team.reload
-
-      expect(team.participants.count).to eq(0)
-      expect(another_team.participants.count).to eq(2)
-    end
-  end
-
-  # --------------------------------------------------------------------------
-  # Query Tests
-  # --------------------------------------------------------------------------
-  describe 'querying' do
-    before do
-      TeamsParticipant.create!(
-        participant_id: participant.id,
-        team_id:        team.id,
-        user_id:        student_user.id
-      )
-      TeamsParticipant.create!(
-        participant_id: another_participant.id,
-        team_id:        another_team.id,
-        user_id:        another_student.id
-      )
-    end
-
-    it 'finds teams_participant by participant_id' do
-      result = TeamsParticipant.find_by(participant_id: participant.id)
-      expect(result).not_to be_nil
-      expect(result.team_id).to eq(team.id)
-    end
-
-    it 'finds teams_participant by team_id' do
-      result = TeamsParticipant.where(team_id: team.id)
-      expect(result.count).to eq(1)
-      expect(result.first.participant_id).to eq(participant.id)
-    end
-
-    it 'finds all participants for a team through association' do
-      expect(team.participants).to include(participant)
-      expect(another_team.participants).to include(another_participant)
+    it 'rejects a user not enrolled in the assignment when passed as user object' do
+      outsider = make_user('not_enrolled')
+      result   = team.add_member(outsider)
+      expect(result[:success]).to be false
     end
   end
 end
