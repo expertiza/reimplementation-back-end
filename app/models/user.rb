@@ -140,8 +140,6 @@ class User < ApplicationRecord
     end
   end
 
-
-
   def set_defaults
     self.is_new_user = true
     self.copy_of_emails ||= false
