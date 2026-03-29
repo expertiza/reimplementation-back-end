@@ -56,13 +56,14 @@ class ImportController < ApplicationController
 
     # Dynamically load the model class (e.g., "User", "Team", etc.)
     klass = params[:class].constantize
+    defaults = import_defaults_for(klass)
 
     # Load the chosen duplicate action (Skip, Update, Change)
-    dup_action = params[:dup_action].constantize
+    dup_action = params[:dup_action]&.constantize
 
     pp dup_action
 
-    importService = Import.new(klass: klass, file: uploaded_file, headers: ordered_fields, dup_action: dup_action.new)
+    importService = Import.new(klass: klass, file: uploaded_file, headers: ordered_fields, dup_action: dup_action&.new, defaults: defaults)
     result = importService.perform(use_headers)
 
     # If no exceptions occur, return success
@@ -82,5 +83,14 @@ class ImportController < ApplicationController
   #
   def import_params
     params.permit(:csv_file, :use_headers, :class, :ordered_fields, :dup_action)
+  end
+
+  def import_defaults_for(klass)
+    return {} unless klass == User && current_user.present?
+
+    {
+      parent_id: current_user.id,
+      institution_id: current_user.institution_id
+    }
   end
 end
