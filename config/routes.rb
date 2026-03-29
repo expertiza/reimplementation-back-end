@@ -214,5 +214,5 @@ Rails.application.routes.draw do
       resources :assignments do
         resources :duties, controller: 'assignments_duties', only: [:index, :create, :destroy]
       end
-      resources :password_resets, only: [:create, :update], controller: "passwords", param: :token
+      resources :password_resets, only: [:create, :update], param: :token
 end

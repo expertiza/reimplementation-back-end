@@ -1,11 +1,11 @@
 require 'rails_helper'
 
-RSpec.describe PasswordsController, type: :controller do
+RSpec.describe PasswordResetsController, type: :controller do
   let(:user) { create(:password_reset_user) }
   let(:valid_password_params) { { user: { password: 'newpassword123', password_confirmation: 'newpassword123' } } }
   let(:invalid_password_params) { { user: { password: 'short', password_confirmation: 'short' } } }
 
-  describe 'PasswordsController' do
+  describe 'PasswordResetsController' do
     describe '#create' do
       context 'when the email exists' do
         before do
@@ -13,9 +13,11 @@ RSpec.describe PasswordsController, type: :controller do
           post :create, params: { email: user.email }
         end
 
-        it 'sends a password reset email' do
-          # second parameter we're checking for it the token
-          expect(UserMailer).to have_received(:password_reset_email).with(user, a_string_matching(/[a-zA-Z0-9]+={2}-{2}[a-z0-9]+/))
+        it 'sends a password reset email with a token accepted by User.find_by_token_for' do
+          expect(UserMailer).to have_received(:password_reset_email) do |received_user, token|
+            expect(received_user).to eq(user)
+            expect(User.find_by_token_for(:password_reset, token)).to eq(user)
+          end
         end
 
         it 'returns a success message' do
