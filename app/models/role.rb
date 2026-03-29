@@ -12,13 +12,6 @@ class Role < ApplicationRecord
   ADMINISTRATOR_ID = 4
   SUPER_ADMINISTRATOR_ID = 5
 
-  # Aliases used by User scopes and comparisons (same values as *_ID)
-  STUDENT = STUDENT_ID
-  TEACHING_ASSISTANT = TEACHING_ASSISTANT_ID
-  INSTRUCTOR = INSTRUCTOR_ID
-  ADMINISTRATOR = ADMINISTRATOR_ID
-  SUPER_ADMINISTRATOR = SUPER_ADMINISTRATOR_ID
-
   def super_administrator?
     name['Super Administrator']
   end

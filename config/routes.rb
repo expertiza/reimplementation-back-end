@@ -35,15 +35,12 @@ Rails.application.routes.draw do
       get '/:assignment_id/has_teams', action: :has_teams
       get '/:assignment_id/valid_num_review/:review_type', action: :valid_num_review
       get '/:assignment_id/varying_rubrics_by_round', action: :varying_rubrics_by_round?
-      get '/:assignment_id/calibration_submissions', action: :calibration_submissions
-      get '/:assignment_id/calibration_data', action: :calibration_submissions
-      get '/:assignment_id/calibration_reports/:id', to: 'assignments#calibration_reviews' # Route for CalibrationReview.tsx
-      get '/:assignment_id/calibration_reviews/:team_id', action: :calibration_reviews # Keep for compatibility if needed
+      get '/:assignment_id/calibration_data', action: :calibration_data
+      get '/:assignment_id/calibration_reviews/:team_id', action: :calibration_reviews # Updated line
       post '/:assignment_id/create_node', action: :create_node
       post '/:assignment_id/calibration_response_maps', to: 'calibration_response_maps#create'
       get  '/:assignment_id/calibration_response_maps', to: 'calibration_response_maps#index'
       post '/:assignment_id/calibration_response_maps/:id/begin', to: 'calibration_response_maps#begin'
-      delete '/:assignment_id/calibration_response_maps/:id', to: 'calibration_response_maps#destroy'
       # Back-compat alias used by some clients:
       post '/:assignment_id/add_calibration_participant', to: 'calibration_response_maps#create'
     end

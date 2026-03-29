@@ -6,9 +6,8 @@ class Assignment < ApplicationRecord
   has_many :users, through: :participants, inverse_of: :assignment
   has_many :teams, class_name: 'AssignmentTeam', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :assignment
   has_many :invitations, class_name: 'Invitation', foreign_key: 'assignment_id', dependent: :destroy # , inverse_of: :assignment
-  has_many :assignment_questionnaires, dependent: :destroy, inverse_of: :assignment
+  has_many :assignment_questionnaires, dependent: :destroy
   has_many :questionnaires, through: :assignment_questionnaires
-  accepts_nested_attributes_for :assignment_questionnaires, allow_destroy: true, update_only: true
   has_many :response_maps, foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :project_topics , class_name: 'ProjectTopic', foreign_key: 'assignment_id', dependent: :destroy
@@ -18,9 +17,8 @@ class Assignment < ApplicationRecord
   belongs_to :course, optional: true
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments
 
-  # Attributes handled by database: is_calibrated, has_badge, staggered_deadline
-  # Attributes handled as virtual or for specific logic: title, description, show_template_review, show_teammate_review, is_pair_programming, has_mentors, has_quizzes, calibration_for_training, available_to_students, allow_topic_suggestion_from_students, enable_bidding_for_topics, enable_bidding_for_reviews, enable_authors_to_review_other_topics, allow_reviewer_to_choose_topic_to_review, allow_participants_to_create_bookmarks, auto_assign_mentors, staggered_deadline_assignment, maximum_number_of_reviews_per_submission, review_strategy, review_rubric_varies_by_round, review_rubric_varies_by_topic, review_rubric_varies_by_role, has_max_review_limit, set_allowed_number_of_reviews_per_reviewer, set_required_number_of_reviews_per_reviewer, is_review_anonymous, is_review_done_by_teams, allow_self_reviews, reviews_visible_to_other_reviewers, number_of_review_rounds, allow_tag_prompts, use_signup_deadline, use_drop_topic_deadline, use_team_formation_deadline, weights, notification_limits, use_date_updater, submission_allowed, review_allowed, teammate_allowed, metareview_allowed, reminder, review_topic_threshold, days_between_submissions, late_policy_id, is_penalty_calculated, calculate_penalty, apply_late_policy
-  attr_accessor :title, :description, :show_template_review, :show_teammate_review, :is_pair_programming, :has_mentors, :has_quizzes, :calibration_for_training, :available_to_students, :allow_topic_suggestion_from_students, :enable_bidding_for_topics, :enable_bidding_for_reviews, :enable_authors_to_review_other_topics, :allow_reviewer_to_choose_topic_to_review, :allow_participants_to_create_bookmarks, :auto_assign_mentors, :staggered_deadline_assignment, :maximum_number_of_reviews_per_submission, :review_strategy, :review_rubric_varies_by_round, :review_rubric_varies_by_topic, :review_rubric_varies_by_role, :has_max_review_limit, :set_allowed_number_of_reviews_per_reviewer, :set_required_number_of_reviews_per_reviewer, :is_review_anonymous, :is_review_done_by_teams, :allow_self_reviews, :reviews_visible_to_other_reviewers, :number_of_review_rounds, :allow_tag_prompts, :use_signup_deadline, :use_drop_topic_deadline, :use_team_formation_deadline, :weights, :notification_limits, :use_date_updater, :submission_allowed, :review_allowed, :teammate_allowed, :metareview_allowed, :reminder, :review_topic_threshold, :days_between_submissions, :late_policy_id, :is_penalty_calculated, :calculate_penalty, :apply_late_policy
+  #This method return the value of the has_badge field for the given assignment object.
+  attr_accessor :title, :description, :has_badge, :enable_pair_programming, :is_calibrated, :staggered_deadline
 
   def review_questionnaire_id
     Questionnaire.find_by_assignment_id id

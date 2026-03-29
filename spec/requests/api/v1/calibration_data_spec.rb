@@ -2,13 +2,12 @@
 
 require 'swagger_helper'
 require 'rails_helper'
-require 'json_web_token'
 
 RSpec.describe 'Calibration API', type: :request do
-  let!(:instructor) { User.find_by(name: 'instr_unique') || create(:user, name: 'instr_unique', role: Role.find_by(name: 'instructor') || create(:role, name: 'instructor')) }
-  let!(:assignment) { create(:assignment, name: "Calibration Assignment #{Time.now.to_i}", instructor: instructor, course: create(:course, directory_path: "path_#{Time.now.to_i}")) }
+  let!(:instructor) { create(:user, role: create(:role, name: 'instructor')) }
+  let!(:assignment) { create(:assignment, name: 'Calibration Assignment', instructor: instructor) }
   let!(:team) { create(:assignment_team, name: 'Calibration Team 1', assignment: assignment) }
-  let!(:participant) { create(:assignment_participant, user: instructor, assignment: assignment) }
+  let!(:participant) { create(:participant, user: instructor, assignment: assignment) }
   
   # Create a ReviewResponseMap for calibration (instructor's review)
   let!(:calibration_map) do
@@ -16,7 +15,7 @@ RSpec.describe 'Calibration API', type: :request do
       reviewed_object_id: assignment.id,
       reviewer_id: participant.id,
       reviewee_id: team.id,
-      for_calibration: true
+      calibration: true
     )
   end
 
@@ -29,11 +28,11 @@ RSpec.describe 'Calibration API', type: :request do
   end
 
   let(:token) { JsonWebToken.encode({ id: instructor.id }) }
-  let(:auth_header) { "Bearer #{token}" }
+  let(:Authorization) { "Bearer #{token}" }
 
-  describe 'GET /assignments/:assignment_id/calibration_data' do
+  describe 'GET /assignments/:assignment_id/calibration_submissions' do
     it 'returns a list of calibration submissions' do
-      get "/assignments/#{assignment.id}/calibration_data", headers: { 'Authorization' => auth_header }
+      get "/assignments/#{assignment.id}/calibration_submissions", headers: { 'Authorization' => Authorization }
       
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
@@ -44,7 +43,7 @@ RSpec.describe 'Calibration API', type: :request do
 
   describe 'GET /assignments/:assignment_id/calibration_reviews/:team_id' do
     it 'returns comparison data between instructor and student reviews' do
-      get "/assignments/#{assignment.id}/calibration_reviews/#{team.id}", headers: { 'Authorization' => auth_header }
+      get "/assignments/#{assignment.id}/calibration_reviews/#{team.id}", headers: { 'Authorization' => Authorization }
       
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)

@@ -9,12 +9,13 @@ class QuestionnairesController < ApplicationController
   
   # Show method returns the JSON object of questionnaire with id = {:id}
   # GET on /questionnaires/:id
-  # Includes nested +items+ (rubric lines) so the SPA can edit without a separate GET .../items route.
   def show
-    @questionnaire = Questionnaire.includes(:items).find(params[:id])
-    render json: questionnaire_show_json(@questionnaire), status: :ok
-  rescue ActiveRecord::RecordNotFound
-    render json: $ERROR_INFO.to_s, status: :not_found
+    begin
+      @questionnaire = Questionnaire.find(params[:id])
+      render json: @questionnaire, status: :ok and return
+    rescue ActiveRecord::RecordNotFound
+      render json: $ERROR_INFO.to_s, status: :not_found and return
+    end
   end
   
   # Create method creates a questionnaire and returns the JSON object of the created questionnaire
@@ -26,10 +27,8 @@ class QuestionnairesController < ApplicationController
       @questionnaire.display_type = sanitize_display_type(@questionnaire.questionnaire_type)
       @questionnaire.save!
       render json: @questionnaire, status: :created and return
-    rescue ActiveRecord::RecordInvalid => e
-      render json: { error: e.message }, status: :unprocessable_entity
-    rescue StandardError => e
-      render json: { error: e.message }, status: :internal_server_error
+    rescue ActiveRecord::RecordInvalid
+      render json: $ERROR_INFO.to_s, status: :unprocessable_entity
     end
   end
 
@@ -87,28 +86,12 @@ class QuestionnairesController < ApplicationController
 
   private
 
-  # Builds the show payload: same fields as Questionnaire#as_json plus ordered items for the editor.
-  def questionnaire_show_json(questionnaire)
-    questionnaire.as_json.tap do |data|
-      data['items'] = questionnaire.items.order(:seq).map { |item| item_json_for_api(item) }
-    end
-  end
-
-  def item_json_for_api(item)
-    item.attributes.slice(
-      'id', 'questionnaire_id', 'txt', 'weight', 'seq', 'question_type', 'size', 'alternatives',
-      'break_before', 'min_label', 'max_label', 'created_at', 'updated_at'
-    )
-  end
-
   def questionnaire_params
-    params.require(:questionnaire).permit(:name, :questionnaire_type, :private, :min_question_score, :max_question_score, :instructor_id,
-                                          items_attributes: %i[id txt weight seq question_type size alternatives break_before min_label max_label _destroy])
+    params.require(:questionnaire).permit(:name, :questionnaire_type, :private, :min_question_score, :max_question_score, :instructor_id)
   end
 
   def sanitize_display_type(type)
     display_type = type.split('Questionnaire')[0]
-    display_type = 'Review' if display_type == 'Review rubric'
     if %w[AuthorFeedback CourseSurvey TeammateReview GlobalSurvey AssignmentSurvey BookmarkRating].include?(display_type)
       display_type = (display_type.split(/(?=[A-Z])/)).join('%')
     end
