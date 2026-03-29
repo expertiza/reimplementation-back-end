@@ -2,7 +2,7 @@
 
 class User < ApplicationRecord
   has_secure_password
-  before_save :normalize_email
+  normalizes :email, with: ->(email) { email.strip.downcase }
   after_initialize :set_defaults
 
   # name must be lowercase and unique
@@ -60,7 +60,7 @@ class User < ApplicationRecord
 
   # Return a user object if the user is found in the database, the input can be either email or name
   def self.login_user(login)
-    user = User.find_by_normalized_email(login)
+    user = User.find_by(email: login)
     if user.nil?
       short_name = login.split('@').first
       user_list = User.where(name: short_name)
@@ -140,24 +140,7 @@ class User < ApplicationRecord
     end
   end
 
-  def self.normalize_email_string(str)
-    str&.strip&.downcase
-  end
-  # Use this helper for any email-based lookup to ensure consistent normalization.
-  def self.find_by_normalized_email(email)
-    normalized = normalize_email_string(email)
-    return nil if normalized.blank?
-    find_by(email: normalized)
-  end
-  # Override the email getter to return a normalized email address.
-  def email
-    self.class.normalize_email_string(super)
-  end
-  # This may seem redundant, but this is specifically used for the before_save callback.
-  # Note: If a task is added to the DB to normalize emails, this method can be removed.
-  def normalize_email
-    self[:email] = self.class.normalize_email_string(self[:email])
-  end
+
 
   def set_defaults
     self.is_new_user = true

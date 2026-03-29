@@ -23,7 +23,7 @@ module ReviewMappingStrategies
     private
 
     def find_participant_by_email(email)
-      user = User.find_by_normalized_email(email)
+      user = User.find_by(email: email)
       AssignmentParticipant.find_by(user: user, parent_id: @assignment.id)
     end
 

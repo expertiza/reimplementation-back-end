@@ -88,23 +88,20 @@ RSpec.describe User, type: :model do
     end
   end
 
-  describe '.find_by_normalized_email' do
+  describe 'email normalization via normalizes :email' do
     it 'finds a user with a mixed-case email' do
       user # ensure persisted
-      expect(User.find_by_normalized_email(user.email.upcase)).to eq(user)
+      expect(User.find_by(email: user.email.upcase)).to eq(user)
     end
 
     it 'finds a user with padded whitespace in the email' do
       user # ensure persisted
-      expect(User.find_by_normalized_email("  #{user.email}  ")).to eq(user)
+      expect(User.find_by(email: "  #{user.email}  ")).to eq(user)
     end
 
-    it 'returns nil for a blank input' do
-      expect(User.find_by_normalized_email('   ')).to be_nil
-    end
-
-    it 'returns nil for a nil input' do
-      expect(User.find_by_normalized_email(nil)).to be_nil
+    it 'stores the email downcased and stripped' do
+      user # ensure persisted
+      expect(user.reload.email).to eq(user.email.strip.downcase)
     end
   end
 

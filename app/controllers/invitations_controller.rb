@@ -146,7 +146,7 @@ class InvitationsController < ApplicationController
   end
 
   def invitee_participant
-    invitee_user = User.find_by(name: params[:username]) || User.find_by_normalized_email(params[:username])
+    invitee_user = User.find_by(name: params[:username]) || User.find_by(email: params[:username])
     unless invitee_user
       render json: { error: "Participant with username #{params[:username]} not found" }, status: :not_found
       return
