@@ -64,4 +64,12 @@ Rails.application.configure do
   # config.action_view.annotate_rendered_view_with_filenames = true
   config.hosts << 'localhost'
   config.hosts << "www.example.com"
+
+  # ── Frontend URL Configuration ──
+  # we use config.before_initialize to ensure this gets picked up by environment.rb
+  # Set defaults for tests (can be overridden via .env or test setup)
+  config.before_initialize do
+    ENV['FRONTEND_DOMAIN'] ||= 'localhost'
+    ENV['FRONTEND_PORT'] ||= '3000'
+  end
 end

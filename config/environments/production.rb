@@ -87,4 +87,13 @@ Rails.application.configure do
 
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
+
+  # ── Frontend URL Configuration ──
+  # we use config.before_initialize to ensure this gets picked up by environment.rb
+  # Set defaults for production (can be overridden via .env)
+  config.before_initialize do
+    ENV['FRONTEND_SCHEME'] ||= 'https://'
+    ENV['FRONTEND_DOMAIN'] ||= 'expertiza.ncsu.com'
+    ENV['FRONTEND_PORT'] ||= '443'
+  end
 end
