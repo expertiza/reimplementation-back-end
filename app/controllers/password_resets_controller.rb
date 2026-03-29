@@ -1,6 +1,7 @@
 class PasswordResetsController < ApplicationController
   before_action :find_user_by_email, only: [:create]
   before_action :load_user_by_token, only: [:update]
+  before_action :require_valid_token!, only: [:update]
   skip_before_action :authenticate_request!, only: [:create, :update]
 
   # POST /password_resets
@@ -31,6 +32,9 @@ class PasswordResetsController < ApplicationController
 
   def load_user_by_token
     @user = User.find_by_token_for(:password_reset, params[:token])
+  end
+
+  def require_valid_token!
     render_invalid_token_response unless @user
   end
 
