@@ -41,8 +41,8 @@ Before running the application, you need to configure environment variables:
    
    **Example for local development** (overriding defaults via .env):
    ```env
-   FRONTEND_SCHEME='http://'
-   FRONTEND_DOMAIN='localhost'
+   FRONTEND_SCHEME=http://
+   FRONTEND_DOMAIN=localhost
    FRONTEND_PORT=3000
    ```
    
