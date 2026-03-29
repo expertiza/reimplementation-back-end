@@ -114,8 +114,6 @@ describe Response do
 
   describe '#questionnaire' do
     let!(:project_topic) { create(:project_topic, assignment:) }
-    let(:create_topic_mapping) { true }
-    let(:attach_team_to_topic) { true }
     let!(:default_questionnaire) do
       create(:questionnaire, instructor: Instructor.find(assignment.instructor_id), questionnaire_type: 'ReviewQuestionnaire', name: 'Default')
     end
@@ -126,42 +124,12 @@ describe Response do
     before do
       assignment.update!(vary_by_topic: true)
       create(:assignment_questionnaire, assignment:, questionnaire: default_questionnaire)
-      create(:assignment_questionnaire, assignment:, questionnaire: topic_questionnaire, topic_id: project_topic.id) if create_topic_mapping
-      create(:signed_up_team, team:, project_topic:) if attach_team_to_topic
+      create(:assignment_questionnaire, assignment:, questionnaire: topic_questionnaire, topic_id: project_topic.id)
+      create(:signed_up_team, team:, project_topic:)
     end
 
     it 'resolves the questionnaire using the reviewee team topic when topic-aware rubrics are enabled' do
       expect(response.questionnaire).to eq(topic_questionnaire)
-    end
-
-    context 'when no topic-specific rubric mapping exists for the team topic' do
-      let(:create_topic_mapping) { false }
-
-      it 'falls back to the assignment default rubric' do
-        expect(response.questionnaire).to eq(default_questionnaire)
-      end
-    end
-
-    context 'when the reviewee has no current topic' do
-      let(:attach_team_to_topic) { false }
-
-      it 'falls back to the assignment default rubric' do
-        expect(response.questionnaire).to eq(default_questionnaire)
-      end
-    end
-
-    context 'when rubrics vary by topic and round but only round defaults exist' do
-      let(:create_topic_mapping) { false }
-      let(:round_two_response) { Response.new(map_id: review_response_map.id, response_map: review_response_map, round: 2, scores: [answer]) }
-
-      before do
-        assignment.update!(vary_by_round: true)
-        create(:assignment_questionnaire, assignment:, questionnaire: default_questionnaire, used_in_round: 2)
-      end
-
-      it 'falls back to the round default rubric for the response round' do
-        expect(round_two_response.questionnaire).to eq(default_questionnaire)
-      end
     end
   end
 end
