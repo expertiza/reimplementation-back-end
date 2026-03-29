@@ -12,8 +12,17 @@ RSpec.describe UserMailer, type: :mailer do
       expect(email.to).to include(user.email)
       expect(email.subject).to eq(I18n.t('password_reset.email_subject'))
       expect(email.body.encoded).to include('Expertiza password reset')
-      expect(email.body.encoded).to include(FRONTEND_URL)
       expect(email.body.encoded).to include("?token=#{token}")
+    end
+
+    it 'builds reset link from configured frontend base URL' do
+      # Verify FRONTEND_URL constant is properly configured (defaults from config/environments/test.rb)
+      expect(FRONTEND_URL).to be_present
+      expect(FRONTEND_URL).to match(%r{^https?://})
+
+      email = UserMailer.password_reset_email(user, token).deliver_now
+      expected_reset_url_pattern = %r{#{Regexp.escape(FRONTEND_URL)}/[a-z_/]+\?token=#{token}}
+      expect(email.body.encoded).to match(expected_reset_url_pattern)
     end
   end
 end
