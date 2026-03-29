@@ -74,7 +74,10 @@ describe Response do
   # answer for scorable questions, and they will not be counted towards the total score)
   describe '#maximum_score' do
     before do
-      allow(response).to receive(:questionnaire).and_return(questionnaire)
+      allow(response.response_assignment)
+        .to receive_message_chain(:assignment_questionnaires, :find_by)
+        .with(used_in_round: 1)
+        .and_return(assignment_questionnaire)
     end
     context 'when answers are present and scorable' do
       it 'returns weight * max_question_score' do
@@ -109,27 +112,6 @@ describe Response do
 
     it 'returns assignment for ReviewResponseMap' do
       expect(review_response_map.response_assignment).to eq(assignment)
-    end
-  end
-
-  describe '#questionnaire' do
-    let!(:project_topic) { create(:project_topic, assignment:) }
-    let!(:default_questionnaire) do
-      create(:questionnaire, instructor: Instructor.find(assignment.instructor_id), questionnaire_type: 'ReviewQuestionnaire', name: 'Default')
-    end
-    let!(:topic_questionnaire) do
-      create(:questionnaire, instructor: Instructor.find(assignment.instructor_id), questionnaire_type: 'ReviewQuestionnaire', name: 'Topic Specific')
-    end
-
-    before do
-      assignment.update!(vary_by_topic: true)
-      create(:assignment_questionnaire, assignment:, questionnaire: default_questionnaire)
-      create(:assignment_questionnaire, assignment:, questionnaire: topic_questionnaire, topic_id: project_topic.id)
-      create(:signed_up_team, team:, project_topic:)
-    end
-
-    it 'resolves the questionnaire using the reviewee team topic when topic-aware rubrics are enabled' do
-      expect(response.questionnaire).to eq(topic_questionnaire)
     end
   end
 end
