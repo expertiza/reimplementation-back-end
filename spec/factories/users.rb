@@ -23,10 +23,6 @@ FactoryBot.define do
     trait :administrator do
       role { create(:role, :administrator) }
     end
-
-    trait :admin do
-      role { create(:role, :administrator) }
-    end
   end
 
   factory :password_reset_user, parent: :user, class: 'User' do

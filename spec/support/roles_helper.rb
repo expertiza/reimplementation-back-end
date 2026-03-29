@@ -25,7 +25,7 @@ module RolesHelper
 
     {
       super_admin: super_admin,
-      admin: admin,
+      administrator: admin,
       instructor: instructor,
       ta: ta,
       student: student
