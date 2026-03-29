@@ -7,11 +7,11 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
     @roles = create_roles_hierarchy
   end
 
-  let(:admin) {
+  let(:administrator) {
     User.create!(
       name: "admin_user",
       password_digest: BCrypt::Password.create("password"),
-      role_id: @roles[:admin].id,
+      role_id: @roles[:administrator].id,
       full_name: "Admin User",
       email: "admin@example.com"
     )

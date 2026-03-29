@@ -20,7 +20,7 @@ FactoryBot.define do
       role { create(:role, :student) }
     end
 
-    trait :admin do
+    trait :administrator do
       role { create(:role, :administrator) }
     end
   end

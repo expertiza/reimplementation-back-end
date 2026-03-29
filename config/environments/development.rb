@@ -37,8 +37,13 @@ Rails.application.configure do
 
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = false
-
   config.action_mailer.perform_caching = false
+  config.action_mailer.delivery_method = :smtp
+
+  # Prevent actual emails from being sent in development.
+  # Emails will still be processed and logged, but never leave the server.
+  # Set to true (and configure SMTP env vars) if you need to test real delivery locally.
+  config.action_mailer.perform_deliveries = false
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
@@ -54,21 +59,6 @@ Rails.application.configure do
 
   # Highlight code that triggered database queries in logs.
   config.active_record.verbose_query_logs = true
-
-  if ENV['MAILER_USER'].present?
-    config.action_mailer.delivery_method = :smtp
-    config.action_mailer.perform_deliveries = true
-    config.action_mailer.raise_delivery_errors = true
-    config.action_mailer.smtp_settings = {
-      address: ENV['MAILER_SERVER'],
-      port: ENV['MAILER_SERVER_PORT']&.to_i || 587,
-      domain: ENV['MAILER_DOMAIN'] || 'localhost',
-      user_name: ENV['MAILER_USER'],
-      password: ENV['MAILER_PASSWORD'],
-      authentication: :plain,
-      enable_starttls_auto: true
-    }
-  end
 
   # Raises error for missing translations.
   # config.i18n.raise_on_missing_translations = true

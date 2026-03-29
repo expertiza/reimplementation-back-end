@@ -12,7 +12,7 @@ RSpec.describe 'Roles API', type: :request do
     User.create(
       name: "adma",
       password_digest: "password",
-      role_id: @roles[:admin].id,
+      role_id: @roles[:administrator].id,
       full_name: "Admin A",
       email: "testuser@example.com",
       mru_directory_path: "/home/testuser",
