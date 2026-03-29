@@ -39,6 +39,10 @@ Rails.application.configure do
   config.action_mailer.raise_delivery_errors = false
   config.action_mailer.perform_caching = false
   config.action_mailer.delivery_method = :smtp
+
+  # Prevent actual emails from being sent in development.
+  # Emails will still be processed and logged, but never leave the server.
+  # Set to true (and configure SMTP env vars) if you need to test real delivery locally.
   config.action_mailer.perform_deliveries = false
 
   # Print deprecation notices to the Rails logger.
