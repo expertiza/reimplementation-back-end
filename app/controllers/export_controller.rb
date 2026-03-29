@@ -5,11 +5,7 @@ class ExportController < ApplicationController
   def index
     klass = params[:class].constantize
 
-    render json: {
-      mandatory_fields: klass.mandatory_fields,
-      optional_fields: klass.optional_fields,
-      external_fields: klass.external_fields
-    }, status: :ok
+    render json: export_metadata_for(klass), status: :ok
   rescue StandardError => e
     render json: { error: e.message }, status: :unprocessable_entity
   end
@@ -26,7 +22,13 @@ class ExportController < ApplicationController
 
     klass = params[:class].constantize
 
-    csv_file = Export.perform(klass, ordered_fields)
+    csv_file = if klass == Team
+                 Team.with_assignment_context(params[:assignment_id]) do
+                   Export.perform(klass, ordered_fields)
+                 end
+               else
+                 Export.perform(klass, ordered_fields)
+               end
 
     render json: {
       message: "#{params[:class]} has been exported!",
@@ -40,6 +42,24 @@ class ExportController < ApplicationController
   private
 
   def export_params
-    params.permit(:class, :ordered_fields)
+    params.permit(:class, :ordered_fields, :assignment_id)
+  end
+
+  def export_metadata_for(klass)
+    if klass == Team
+      Team.with_assignment_context(params[:assignment_id]) do
+        return {
+          mandatory_fields: klass.mandatory_fields,
+          optional_fields: klass.optional_fields,
+          external_fields: klass.external_fields
+        }
+      end
+    end
+
+    {
+      mandatory_fields: klass.mandatory_fields,
+      optional_fields: klass.optional_fields,
+      external_fields: klass.external_fields
+    }
   end
 end

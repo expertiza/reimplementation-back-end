@@ -24,12 +24,13 @@ RSpec.describe "Import/export requests", type: :request do
   describe "GET /import/:class" do
     context "metadata responses" do
       it "returns metadata for Team" do
-        get "/import/Team"
+        get "/import/Team", params: { assignment_id: 1 }
 
         expect(response).to have_http_status(:ok)
 
         json = JSON.parse(response.body)
-        expect(json["mandatory_fields"]).to include("name", "type", "parent_id")
+        expect(json["mandatory_fields"]).to eq(["name"])
+        expect(json["optional_fields"]).to include("participant_1")
         expect(json["available_actions_on_dup"]).to match_array(
           %w[SkipRecordAction UpdateExistingRecordAction ChangeOffendingFieldAction]
         )
@@ -101,17 +102,29 @@ RSpec.describe "Import/export requests", type: :request do
 
     context "team imports" do
       it "imports teams" do
-        file = uploaded_csv("name,parent_id,type\nTeam Alpha,#{assignment.id},AssignmentTeam\n")
+        student = User.create!(
+          name: "student_team_import",
+          full_name: "Student Team Import",
+          email: "student_team_import@example.com",
+          password: "password",
+          role: student_role,
+          institution: institution
+        )
+        participant = AssignmentParticipant.create!(user: student, parent_id: assignment.id)
+        file = uploaded_csv("name,participant_1\nTeam Alpha,#{participant.id}\n")
 
         post "/import/Team",
              params: {
                csv_file: file,
                use_headers: true,
-               dup_action: "SkipRecordAction"
+               dup_action: "SkipRecordAction",
+               assignment_id: assignment.id
              }
 
         expect(response).to have_http_status(:created)
-        expect(AssignmentTeam.find_by(name: "Team Alpha", parent_id: assignment.id)).to be_present
+        imported_team = AssignmentTeam.find_by(name: "Team Alpha", parent_id: assignment.id)
+        expect(imported_team).to be_present
+        expect(imported_team.participants).to include(participant)
       end
     end
 
@@ -217,13 +230,26 @@ RSpec.describe "Import/export requests", type: :request do
 
     context "team exports" do
       it "exports teams" do
-        post "/export/Team", params: { ordered_fields: %w[name parent_id type].to_json }
+        participant_user = User.create!(
+          name: "student_team_export",
+          full_name: "Student Team Export",
+          email: "student_team_export@example.com",
+          password: "password",
+          role: role,
+          institution: institution
+        )
+        participant_role = Role.find_or_create_by!(name: "Student", parent_id: role.id)
+        participant_user.update!(role: participant_role)
+        participant = AssignmentParticipant.create!(user: participant_user, parent_id: assignment.id)
+        team.add_member(participant)
+
+        post "/export/Team", params: { ordered_fields: %w[name participant_1].to_json, assignment_id: assignment.id }
 
         expect(response).to have_http_status(:ok)
 
         json = JSON.parse(response.body)
-        expect(json["file"]).to include("name,parent_id,type")
-        expect(json["file"]).to include("Export Team")
+        expect(json["file"]).to include("name,participant_1")
+        expect(json["file"]).to include("Export Team,#{participant.id}")
       end
     end
 
