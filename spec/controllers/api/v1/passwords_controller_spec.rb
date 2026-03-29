@@ -13,9 +13,11 @@ RSpec.describe PasswordsController, type: :controller do
           post :create, params: { email: user.email }
         end
 
-        it 'sends a password reset email' do
-          # second parameter we're checking for it the token
-          expect(UserMailer).to have_received(:password_reset_email).with(user, a_string_matching(/[a-zA-Z0-9]+={2}-{2}[a-z0-9]+/))
+        it 'sends a password reset email with a token accepted by User.find_by_token_for' do
+          expect(UserMailer).to have_received(:password_reset_email) do |received_user, token|
+            expect(received_user).to eq(user)
+            expect(User.find_by_token_for(:password_reset, token)).to eq(user)
+          end
         end
 
         it 'returns a success message' do
