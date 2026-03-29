@@ -67,6 +67,30 @@ begin
     ).id
   end
 
+  puts "creating project topics"
+  project_topic_ids = []
+  assignment_ids.each_with_index do |assignment_id, assignment_index|
+    3.times do |topic_index|
+      topic_number = assignment_index * 3 + topic_index + 1
+      project_topic = ProjectTopic.create(
+        assignment_id: assignment_id,
+        topic_identifier: "T#{topic_number}",
+        topic_name: "Project Topic #{topic_number}",
+        category: ["Design", "Implementation", "Testing"].sample,
+        max_choosers: rand(1..3),
+        description: "Seeded project topic #{topic_number} for assignment #{assignment_id}",
+        link: "https://example.com/project_topics/#{topic_number}"
+      )
+
+      if project_topic.persisted?
+        project_topic_ids << project_topic.id
+        puts "Created ProjectTopic with ID: #{project_topic.id}"
+      else
+        puts "Failed to create ProjectTopic: #{project_topic.errors.full_messages.join(', ')}"
+      end
+    end
+  end
+
   puts "creating teams"
   team_ids = []
   num_teams.times do |i|
