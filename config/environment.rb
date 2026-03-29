@@ -19,5 +19,6 @@ is_standard_port = (frontend_scheme == 'http://' && frontend_port.to_i == 80) ||
                    (frontend_scheme == 'https://' && frontend_port.to_i == 443)
 port_string = !frontend_port.blank? && !is_standard_port ? ":#{frontend_port}" : ''
 
-Object.const_set(:FRONTEND_URL, "#{frontend_scheme}#{frontend_domain}#{port_string}")
-
+unless Object.const_defined?(:FRONTEND_URL)
+  FRONTEND_URL = "#{frontend_scheme}#{frontend_domain}#{port_string}"
+end
