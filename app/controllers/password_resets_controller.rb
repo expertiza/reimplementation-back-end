@@ -26,7 +26,7 @@ class PasswordResetsController < ApplicationController
   private
 
   def find_user_by_email
-    @user = User.find_by(email: params[:email].to_s.strip.downcase)
+    @user = User.find_by_normalized_email(params[:email])
   end
 
   def load_user_by_token

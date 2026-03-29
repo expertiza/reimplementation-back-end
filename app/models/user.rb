@@ -60,7 +60,7 @@ class User < ApplicationRecord
 
   # Return a user object if the user is found in the database, the input can be either email or name
   def self.login_user(login)
-    user = User.find_by(email: login)
+    user = User.find_by_normalized_email(login)
     if user.nil?
       short_name = login.split('@').first
       user_list = User.where(name: short_name)
@@ -138,6 +138,13 @@ class User < ApplicationRecord
       hash['parent'] ||= { id: nil, name: nil }
       hash['institution'] ||= { id: nil, name: nil }
     end
+  end
+
+  # Use this helper for any email-based lookup to ensure consistent normalization.
+  def self.find_by_normalized_email(email)
+    normalized = email&.strip&.downcase
+    return nil if normalized.blank?
+    find_by(email: normalized)
   end
 
   # Override the email getter to return a normalized email address.
