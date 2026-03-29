@@ -45,8 +45,6 @@ module Reimplementation
       domain: ENV.fetch('MAILER_DOMAIN', 'localhost'),
 
       # Only include credentials when they're actually provided.
-      # This avoids sending an empty username/password to servers
-      # that don't require (or reject) authentication.
       user_name: ENV['MAILER_USER'].presence,
       password: ENV['MAILER_PASSWORD'].presence,
 
