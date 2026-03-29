@@ -1,4 +1,3 @@
-# test/fixtures/assignments.yml
 assignment_one:
   id: 1
   name: "UniqueAssignmentOne"

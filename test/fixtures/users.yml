@@ -1,10 +1,9 @@
-# test/fixtures/users.yml
 super_admin:
   id: 1
   name: "superadmin"
   full_name: "Super Admin"
   email: "superadmin@example.com"
-  password_digest: "$2a$12$KIXiOCX9JfnZZbROx9VLcOczHjw2h5ZdYzz9yZ3hZ0EmUf1E6P0V6"  # password123
+  password_digest: "$2a$12$KIXiOCX9JfnZZbROx9VLcOczHjw2h5ZdYzz9yZ3hZ0EmUf1E6P0V6"
   role_id: 1
 
 postman_flow_mentor:
@@ -13,7 +12,7 @@ postman_flow_mentor:
   full_name: "Postman Mentor"
   email: "postman_flow_mentor@example.com"
   password_digest: "$2a$12$KIXiOCX9JfnZZbROx9VLcOczHjw2h5ZdYzz9yZ3hZ0EmUf1E6P0V6"
-  role_id: 2
+  role_id: 3
 
 postman_flow_reviewer:
   id: 3
@@ -21,4 +20,4 @@ postman_flow_reviewer:
   full_name: "Postman Reviewer"
   email: "postman_flow_reviewer@example.com"
   password_digest: "$2a$12$KIXiOCX9JfnZZbROx9VLcOczHjw2h5ZdYzz9yZ3hZ0EmUf1E6P0V6"
-  role_id: 3
+  role_id: 6

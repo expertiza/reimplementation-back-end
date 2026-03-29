@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
+  require 'json_web_token'
   has_secure_password
   after_initialize :set_defaults
 
@@ -149,8 +150,8 @@ class User < ApplicationRecord
     self.etc_icons_on_homepage ||= true
   end
 
-  def generate_jwt
-    JWT.encode({ id: id, exp: 60.days.from_now.to_i }, Rails.application.credentials.secret_key_base)
+ def generate_jwt
+   JsonWebToken.encode({ id: id })
   end
 
 end
