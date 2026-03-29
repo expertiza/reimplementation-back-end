@@ -22,7 +22,7 @@ RSpec.describe "Import API", type: :request do
   before do
     stub_const("FakeModel", Class.new do
       class << self
-        attr_accessor :mandatory_fields, :optional_fields, :external_fields
+        attr_accessor :mandatory_fields, :optional_fields, :external_fields, :available_actions_on_duplicate
       end
 
       def self.try_import_records(*args); end
@@ -31,7 +31,8 @@ RSpec.describe "Import API", type: :request do
     allow(FakeModel).to receive(:mandatory_fields).and_return(["id", "name"])
     allow(FakeModel).to receive(:optional_fields).and_return(["email"])
     allow(FakeModel).to receive(:external_fields).and_return(["mentor_id"])
-    allow(FakeModel).to receive(:try_import_records)
+    allow(FakeModel).to receive(:available_actions_on_duplicate).and_return([])
+    allow(FakeModel).to receive(:try_import_records).and_return([])
   end
 
   #
@@ -130,7 +131,8 @@ RSpec.describe "Import API", type: :request do
               .with(
                 kind_of(ActionDispatch::Http::UploadedFile),
                 ["id"],
-                use_header: false
+                false,
+                {}
               )
     end
 
