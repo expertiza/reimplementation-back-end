@@ -1,11 +1,11 @@
 require 'rails_helper'
 
-RSpec.describe PasswordsController, type: :controller do
+RSpec.describe PasswordResetsController, type: :controller do
   let(:user) { create(:password_reset_user) }
   let(:valid_password_params) { { user: { password: 'newpassword123', password_confirmation: 'newpassword123' } } }
   let(:invalid_password_params) { { user: { password: 'short', password_confirmation: 'short' } } }
 
-  describe 'PasswordsController' do
+  describe 'PasswordResetsController' do
     describe '#create' do
       context 'when the email exists' do
         before do

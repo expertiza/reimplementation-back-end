@@ -2,6 +2,7 @@
 
 class User < ApplicationRecord
   has_secure_password
+  normalizes :email, with: ->(email) { email.strip.downcase }
   after_initialize :set_defaults
 
   # name must be lowercase and unique
