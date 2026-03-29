@@ -12,6 +12,7 @@ RSpec.describe UserMailer, type: :mailer do
       expect(email.to).to include(user.email)
       expect(email.subject).to eq(I18n.t('password_reset.email_subject'))
       expect(email.body.encoded).to include('Expertiza password reset')
+      expect(email.body.encoded).to include(FRONTEND_URL)
       expect(email.body.encoded).to include("?token=#{token}")
     end
   end
