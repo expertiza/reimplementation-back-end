@@ -88,6 +88,13 @@ RSpec.describe MentoredTeam, type: :model do
       expect(result).to be false
     end
 
+    it 'does not add unenrolled user' do
+      unenrolled = make_user('unenrolled_m')
+      result = team.add_member(unenrolled)
+      expect(result[:success]).to be false
+      expect(result[:error]).to eq("#{unenrolled.name} is not a participant in this assignment")
+    end
+
     it 'allows adding a non-mentor participant' do
       participant = make_participant('regular_member')
       result      = team.add_member(participant)
