@@ -71,6 +71,43 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe 'email normalization' do
+    it 'downcases the email on save' do
+      user.update!(email: 'User@Example.COM')
+      expect(user.reload[:email]).to eq('user@example.com')
+    end
+
+    it 'strips whitespace from the email on save' do
+      user.update!(email: '  user@example.com  ')
+      expect(user.reload[:email]).to eq('user@example.com')
+    end
+
+    it 'returns a normalized value from the email getter without saving' do
+      user[:email] = '  Mixed@CASE.com  '
+      expect(user.email).to eq('mixed@case.com')
+    end
+  end
+
+  describe '.find_by_normalized_email' do
+    it 'finds a user with a mixed-case email' do
+      user # ensure persisted
+      expect(User.find_by_normalized_email(user.email.upcase)).to eq(user)
+    end
+
+    it 'finds a user with padded whitespace in the email' do
+      user # ensure persisted
+      expect(User.find_by_normalized_email("  #{user.email}  ")).to eq(user)
+    end
+
+    it 'returns nil for a blank input' do
+      expect(User.find_by_normalized_email('   ')).to be_nil
+    end
+
+    it 'returns nil for a nil input' do
+      expect(User.find_by_normalized_email(nil)).to be_nil
+    end
+  end
+
   describe '#login_user' do
     it 'returns a user when login is email' do
       result = User.login_user(user.email)
