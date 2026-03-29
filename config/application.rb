@@ -40,9 +40,9 @@ module Reimplementation
     # Delivery will simply fail at send-time if credentials are missing,
     # rather than blowing up on boot.
     config.action_mailer.smtp_settings = {
-      address: ENV.fetch('MAILER_SERVER', 'localhost'),
-      port: ENV.fetch('MAILER_SERVER_PORT', 587).to_i,
-      domain: ENV.fetch('MAILER_DOMAIN', 'localhost'),
+      address: ENV['MAILER_SERVER'].presence || 'localhost',
+      port: (ENV['MAILER_SERVER_PORT'].presence || '587').to_i,
+      domain: ENV['MAILER_DOMAIN'].presence || 'localhost',
 
       # Only include credentials when they're actually provided.
       user_name: ENV['MAILER_USER'].presence,
