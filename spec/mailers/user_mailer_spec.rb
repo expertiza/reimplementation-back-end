@@ -21,7 +21,7 @@ RSpec.describe UserMailer, type: :mailer do
       expect(FRONTEND_URL).to match(%r{^https?://})
 
       email = UserMailer.password_reset_email(user, token).deliver_now
-      expected_reset_url_pattern = %r{#{Regexp.escape(FRONTEND_URL)}/[a-z_/]+\?token=#{token}}
+      expected_reset_url_pattern = %r{#{Regexp.escape(FRONTEND_URL)}/[a-z_/]+\?token=#{Regexp.escape(token)}}
       expect(email.body.encoded).to match(expected_reset_url_pattern)
     end
   end
