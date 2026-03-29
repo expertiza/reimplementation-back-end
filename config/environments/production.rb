@@ -89,11 +89,9 @@ Rails.application.configure do
   config.active_record.dump_schema_after_migration = false
 
   # ── Frontend URL Configuration ──
-  # we use config.before_initialize to ensure this gets picked up by environment.rb
-  # Set defaults for production (can be overridden via .env)
-  config.before_initialize do
-    ENV['FRONTEND_SCHEME'] ||= 'https://'
-    ENV['FRONTEND_DOMAIN'] ||= 'expertiza.ncsu.com'
-    ENV['FRONTEND_PORT'] ||= '443'
-  end
+  # Set defaults for production (can be overridden via environment variables)
+  # Rails convention recommends config.x.* for custom settings
+  config.x.frontend_scheme = ENV.fetch('FRONTEND_SCHEME', 'https://')
+  config.x.frontend_domain = ENV.fetch('FRONTEND_DOMAIN', 'expertiza.ncsu.com')
+  config.x.frontend_port = ENV.fetch('FRONTEND_PORT', nil)
 end

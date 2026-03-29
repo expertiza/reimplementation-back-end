@@ -72,10 +72,9 @@ Rails.application.configure do
   config.hosts << "www.example.com"
 
   # ── Frontend URL Configuration ──
-  # we use config.before_initialize to ensure this gets picked up by environment.rb
-  # Set defaults for local development (can be overridden via .env)
-  config.before_initialize do
-    ENV['FRONTEND_DOMAIN'] ||= 'localhost'
-    ENV['FRONTEND_PORT'] ||= '3000'
-  end
+  # Set defaults for local development (can be overridden via environment variables)
+  # Rails convention recommends config.x.* for custom settings
+  config.x.frontend_scheme = ENV.fetch('FRONTEND_SCHEME', 'http://')
+  config.x.frontend_domain = ENV.fetch('FRONTEND_DOMAIN', 'localhost')
+  config.x.frontend_port = ENV.fetch('FRONTEND_PORT', '3000')
 end
