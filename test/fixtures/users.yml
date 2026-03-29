@@ -1,43 +1,24 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
-
-one:
-  name: MyString
-  password_digest: MyString
+# test/fixtures/users.yml
+super_admin:
+  id: 1
+  name: "superadmin"
+  full_name: "Super Admin"
+  email: "superadmin@example.com"
+  password_digest: "$2a$12$KIXiOCX9JfnZZbROx9VLcOczHjw2h5ZdYzz9yZ3hZ0EmUf1E6P0V6"  # password123
   role_id: 1
-  fullname: MyString
-  email: MyString
-  parent_id: 1
-  mru_directory_path: MyString
-  email_on_review: false
-  email_on_submission: false
-  email_on_review_of_review: false
-  is_new_user: false
-  master_permission_granted: false
-  handle: MyString
-  persistence_token: MyString
-  timezonepref: MyString
-  copy_of_emails: false
-  institution_id: 1
-  etc_icons_on_homepage: false
-  locale: 1
 
-two:
-  name: MyString
-  password_digest: MyString
-  role_id: 1
-  fullname: MyString
-  email: MyString
-  parent_id: 1
-  mru_directory_path: MyString
-  email_on_review: false
-  email_on_submission: false
-  email_on_review_of_review: false
-  is_new_user: false
-  master_permission_granted: false
-  handle: MyString
-  persistence_token: MyString
-  timezonepref: MyString
-  copy_of_emails: false
-  institution_id: 1
-  etc_icons_on_homepage: false
-  locale: 1
+postman_flow_mentor:
+  id: 2
+  name: "mentor"
+  full_name: "Postman Mentor"
+  email: "postman_flow_mentor@example.com"
+  password_digest: "$2a$12$KIXiOCX9JfnZZbROx9VLcOczHjw2h5ZdYzz9yZ3hZ0EmUf1E6P0V6"
+  role_id: 2
+
+postman_flow_reviewer:
+  id: 3
+  name: "reviewer"
+  full_name: "Postman Reviewer"
+  email: "postman_flow_reviewer@example.com"
+  password_digest: "$2a$12$KIXiOCX9JfnZZbROx9VLcOczHjw2h5ZdYzz9yZ3hZ0EmUf1E6P0V6"
+  role_id: 3
