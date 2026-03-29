@@ -141,4 +141,76 @@ describe Questionnaire, type: :model do
     end
   end
 
+  describe '.accessible_for_assignment' do
+    let!(:assignment_instructor_user) { create(:user, :instructor) }
+    let!(:assignment_instructor) { Instructor.find(assignment_instructor_user.id) }
+    let!(:other_instructor_user) { create(:user, :instructor) }
+    let!(:other_instructor) { Instructor.find(other_instructor_user.id) }
+    let!(:ta_user) { create(:user, :ta) }
+    let!(:course) { create(:course, instructor: assignment_instructor) }
+    let!(:assignment) { create(:assignment, instructor: assignment_instructor, course: course) }
+    let!(:public_review_rubric) do
+      create(:questionnaire,
+             instructor: assignment_instructor,
+             questionnaire_type: 'ReviewQuestionnaire',
+             name: 'Public review rubric',
+             private: false)
+    end
+    let!(:private_assignment_rubric) do
+      create(:questionnaire,
+             instructor: assignment_instructor,
+             questionnaire_type: 'ReviewQuestionnaire',
+             name: 'Instructor private rubric',
+             private: true)
+    end
+    let!(:private_other_rubric) do
+      create(:questionnaire,
+             instructor: other_instructor,
+             questionnaire_type: 'ReviewQuestionnaire',
+             name: 'Other private rubric',
+             private: true)
+    end
+    let!(:public_non_review_rubric) do
+      create(:questionnaire,
+             instructor: assignment_instructor,
+             questionnaire_type: 'MetareviewQuestionnaire',
+             name: 'Public metareview rubric',
+             private: false)
+    end
+
+    it 'returns only public rubrics of the requested type when user is nil' do
+      rubrics = described_class.accessible_for_assignment(
+        user: nil,
+        assignment: assignment,
+        questionnaire_type: 'ReviewQuestionnaire'
+      )
+
+      expect(rubrics).to match_array([public_review_rubric])
+    end
+
+    it 'includes assignment instructor private rubrics for the assignment instructor' do
+      rubrics = described_class.accessible_for_assignment(
+        user: assignment_instructor,
+        assignment: assignment,
+        questionnaire_type: 'ReviewQuestionnaire'
+      )
+
+      expect(rubrics).to include(public_review_rubric, private_assignment_rubric)
+      expect(rubrics).not_to include(private_other_rubric, public_non_review_rubric)
+    end
+
+    it 'includes assignment instructor private rubrics for a mapped TA' do
+      TaMapping.create!(course: course, user_id: ta_user.id)
+
+      rubrics = described_class.accessible_for_assignment(
+        user: ta_user,
+        assignment: assignment,
+        questionnaire_type: 'ReviewQuestionnaire'
+      )
+
+      expect(rubrics).to include(public_review_rubric, private_assignment_rubric)
+      expect(rubrics).not_to include(private_other_rubric, public_non_review_rubric)
+    end
+  end
+
 end
