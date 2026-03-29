@@ -41,10 +41,11 @@ end
   end
 
   test "should destroy assignment" do
+    assignment_to_delete = assignments(:destroyable_assignment)
     assert_difference('Assignment.count', -1) do
-      delete assignment_url(@assignment), headers: @headers
+      delete assignment_url(assignment_to_delete), headers: @headers
     end
     assert_response :ok
-    assert_includes @response.body, "deleted successfully"
+    assert_includes @response.body, 'deleted successfully'
   end
 end

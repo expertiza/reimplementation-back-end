@@ -1,0 +1,6 @@
+student_response_map:
+  id: 1
+  reviewed_object_id: 1
+  reviewer_id: 1
+  reviewee_id: 1
+  type: "ReviewResponseMap"
