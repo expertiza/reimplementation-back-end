@@ -68,6 +68,41 @@ RSpec.describe TeamsParticipant, type: :model do
       expect(tp2).to be_valid
     end
   end
+  # Verifies TeamsParticipant (join table) cannot bypass team capacity; creation must fail once AssignmentTeam reaches assignment.max_team_size.
+    describe 'capacity validation (team_not_full)' do
+    it 'is invalid when team is already at capacity' do
+      assignment.update!(max_team_size: 1)
+      team = AssignmentTeam.create!(name: 'Cap Team', parent_id: assignment.id)
+
+      u1 = make_user('cap_u1')
+      p1 = AssignmentParticipant.create!(user: u1, parent_id: assignment.id, handle: u1.name)
+      TeamsParticipant.create!(team: team, participant: p1, user: u1)
+
+      u2 = make_user('cap_u2')
+      p2 = AssignmentParticipant.create!(user: u2, parent_id: assignment.id, handle: u2.name)
+      tp2 = TeamsParticipant.new(team: team, participant: p2, user: u2)
+
+      expect(tp2).not_to be_valid
+      expect(tp2.errors.full_messages.join(', ')).to match(/full capacity/i)
+    end
+
+    it 'raises when creating beyond capacity' do
+      assignment.update!(max_team_size: 1)
+      team = AssignmentTeam.create!(name: 'Cap Team2', parent_id: assignment.id)
+
+      u1 = make_user('cap2_u1')
+      p1 = AssignmentParticipant.create!(user: u1, parent_id: assignment.id, handle: u1.name)
+      TeamsParticipant.create!(team: team, participant: p1, user: u1)
+
+      u2 = make_user('cap2_u2')
+      p2 = AssignmentParticipant.create!(user: u2, parent_id: assignment.id, handle: u2.name)
+
+      expect {
+        TeamsParticipant.create!(team: team, participant: p2, user: u2)
+      }.to raise_error(ActiveRecord::RecordInvalid)
+    end
+  end
+
 
   # ── 2. Enrollment-based membership rules ───────────────────────────────────
   describe 'enrollment-based membership via Team#add_member' do

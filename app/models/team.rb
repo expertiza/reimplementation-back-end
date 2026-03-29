@@ -41,16 +41,11 @@ class Team < ApplicationRecord
   end
   
   def full?
-    current_size = participants.count
+    max = max_size
+  return false if max.blank?
 
-    # assignment teams use the column max_team_size
-    if is_a?(AssignmentTeam) && assignment&.max_team_size
-      return current_size >= assignment.max_team_size
-    end
-
-    # course teams never fill up by default
-    false
-  end
+  participants.count >= max
+end
 
   # Checks if the given participant is already on any team for the associated assignment or course.
   def participant_on_team?(participant)
