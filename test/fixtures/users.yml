@@ -21,3 +21,11 @@ postman_flow_reviewer:
   email: "postman_flow_reviewer@example.com"
   password_digest: "$2a$12$KIXiOCX9JfnZZbROx9VLcOczHjw2h5ZdYzz9yZ3hZ0EmUf1E6P0V6"
   role_id: 6
+
+student_user:
+  id: 4
+  name: "student"
+  full_name: "Test Student"
+  email: "student@example.com"
+  password_digest: "$2a$12$KIXiOCX9JfnZZbROx9VLcOczHjw2h5ZdYzz9yZ3hZ0EmUf1E6P0V6"
+  role_id: 5

@@ -1,0 +1,11 @@
+duty_one:
+  id: 1
+  name: "Test Duty One"
+  private: false
+  instructor_id: 2
+
+private_duty:
+  id: 2
+  name: "Private Duty"
+  private: true
+  instructor_id: 1
