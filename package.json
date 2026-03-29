@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "bootstrap": "^5.3.8",
+    "recharts": "^3.8.0",
+    "sass-embedded": "^1.98.0"
+  }
+}

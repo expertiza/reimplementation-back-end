@@ -16,7 +16,7 @@
 #
 # See https://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 require 'simplecov'
-require 'coveralls'
+# require 'coveralls'
 require "simplecov_json_formatter"
 # Coveralls.wear! 'rails'
 SimpleCov.formatter = SimpleCov::Formatter::JSONFormatter
