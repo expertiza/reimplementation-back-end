@@ -52,7 +52,9 @@ module Reimplementation
       # but skip authentication entirely when no user is configured.
       authentication: ENV['MAILER_USER'].present? ? :plain : nil,
 
-      enable_starttls_auto: ENV.fetch('MAILER_ENABLE_STARTTLS', 'true') == 'true'
+      enable_starttls_auto: ActiveModel::Type::Boolean.new.cast(
+        ENV['MAILER_ENABLE_STARTTLS'].presence || 'true'
+      )
     }
   end
 end
