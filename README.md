@@ -49,6 +49,10 @@ Before running the application, you need to configure environment variables:
    **Note:** `FRONTEND_DOMAIN` must be explicitly configured via `.env` in staging environments. In production, it defaults to `expertiza.ncsu.com` but can be overridden if needed. The application will fail to start if `FRONTEND_DOMAIN` is not set in staging.
 
 3. **Load environment variables** (optional, only needed if running outside of Docker):
+   > **Note:**
+   > 
+   > If you're using Docker Compose, the `.env` file is automatically loaded, so you don't need to source it manually.
+
    
    When running the Rails server outside of Docker (e.g., `rails s`), you may need to source the `.env` file to load environment variables:
    
@@ -63,14 +67,6 @@ Before running the application, you need to configure environment variables:
    Get-Content .env | ForEach-Object { if ($_ -and !$_.StartsWith("#")) { $key, $value = $_ -split '=', 2; [Environment]::SetEnvironmentVariable($key, $value) } }
    rails s
    ```
-   
-   **Windows (Command Prompt):**
-   ```cmd
-   for /f "tokens=1,2 delims==" %a in (type .env) do @if not "%a"=="" if not "%a:~0,1%"=="#" set %a=%b
-   rails s
-   ```
-   
-   > **Note:** If you're using Docker Compose, the `.env` file is automatically loaded, so you don't need to source it manually.
 
 ---
 
