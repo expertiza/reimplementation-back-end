@@ -41,3 +41,7 @@ node_modules/
 .DS_Store
 git-credentials.txt
 node_modules
+TEMPORARY_CALIBRATION_MOCKS.md
+db_check.rb
+package.json
+package-lock.json
