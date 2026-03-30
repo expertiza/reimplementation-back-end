@@ -17,55 +17,97 @@ class StudentTasksController < ApplicationController
     render json: @student_task, status: :ok
   end
 
+
   def queue
-    assignment = Assignment.find_by(id: params[:assignment_id])
-    return render json: { error: 'Assignment not found' }, status: :not_found unless assignment
+    # Build the task queue for the current user and assignment.
+    # Returns nil if the user is not a participant in the assignment.
+    queue = build_queue_for_user(params[:assignment_id])
 
-    participant = Participant.find_by(user_id: current_user.id, parent_id: assignment.id)
-    return render json: { error: 'Participant not found' }, status: :not_found unless participant
+    # If no queue is found, the user is either not authorized or not associated with the assignment.
+    return render json: { error: "Not authorized or not found" }, status: :not_found unless queue
 
-    teams_participant = TeamsParticipant.find_by(participant_id: participant.id)
-    return render json: { error: 'TeamsParticipant not found' }, status: :not_found unless teams_participant
+    # Ensure all ResponseMaps and Responses exist before returning tasks.
+    queue.ensure_response_objects!
 
-    queue = TaskOrdering::TaskQueue.new(assignment, teams_participant)
-    maps = ResponseMap.where(id: queue.map_ids)
-    render json: maps, status: :ok
+    render json: queue.tasks.map(&:to_task_hash), status: :ok
   end
 
   def next_task
-    assignment = Assignment.find_by(id: params[:assignment_id])
-    return render json: { error: 'Assignment not found' }, status: :not_found unless assignment
+    # Build the task queue for the current user and assignment.
+    queue = build_queue_for_user(params[:assignment_id])
+    return render json: { error: "Not authorized or not found" }, status: :not_found unless queue
 
-    participant = Participant.find_by(user_id: current_user.id, parent_id: assignment.id)
-    return render json: { error: 'Participant not found' }, status: :not_found unless participant
+    # Ensure response objects exist before checking completion status.
+    queue.ensure_response_objects!
 
-    teams_participant = TeamsParticipant.find_by(participant_id: participant.id)
-    return render json: { error: 'TeamsParticipant not found' }, status: :not_found unless teams_participant
+    # Find the first task in the queue that has not been completed.
+    next_task = queue.tasks.find { |t| !t.completed? }
 
-    queue = TaskOrdering::TaskQueue.new(assignment, teams_participant)
-    next_map_id = queue.map_ids.find { |id| !Response.where(map_id: id).any?(&:is_submitted) }
-
-    if next_map_id
-      render json: ResponseMap.find(next_map_id), status: :ok
+    if next_task
+      # Return the next incomplete task.
+      render json: next_task.to_task_hash, status: :ok
     else
-      render json: { message: 'All tasks complete' }, status: :ok
+      # If all tasks are completed, return completion message.
+      render json: { message: "All tasks completed" }, status: :ok
     end
   end
 
   def start_task
+    # Find the ResponseMap associated with the task being started.
     map = ResponseMap.find_by(id: params[:response_map_id])
-    return render json: { error: 'ResponseMap not found' }, status: :not_found unless map
+    return render json: { error: "ResponseMap not found" }, status: :not_found unless map
 
+    # Ensure the current user is the reviewer assigned to this ResponseMap.
     participant = map.reviewer
-    return render json: { error: 'Unauthorized' }, status: :forbidden unless participant.user_id == current_user.id
+    if participant.user_id != current_user.id
+      return render json: { error: "Unauthorized" }, status: :forbidden
+    end
 
-    teams_participant = TeamsParticipant.find_by(participant_id: participant.id)
-    return render json: { error: 'TeamsParticipant not found' }, status: :forbidden unless teams_participant
+    # Build the task queue for this participant and assignment.
+    team_participant = TeamsParticipant.find_by(participant_id: participant.id)
+    assignment = participant.assignment
 
-    queue = TaskOrdering::TaskQueue.new(participant.assignment, teams_participant)
-    return render json: { error: 'Map not in queue' }, status: :forbidden unless queue.map_in_queue?(map.id)
-    return render json: { error: 'Complete previous task first' }, status: :forbidden unless queue.prior_tasks_complete_for?(map.id)
+    queue = TaskOrdering::TaskQueue.new(assignment, team_participant)
+    # Retrieve all tasks in the queue.
+    tasks = queue.tasks
 
-    render json: map, status: :ok
+    # Find the current task corresponding to the ResponseMap.
+    current_task = tasks.find { |t| (rm = t.response_map) && rm.id == map.id }
+    return render json: { error: "Task not in respondable queue" }, status: :not_found unless current_task
+
+    # Get all tasks that appear before the current task in the queue.
+    previous_tasks = tasks.take_while { |t| t != current_task }
+
+    # Ensure all previous tasks are completed before starting this one.
+    if previous_tasks.any? { |t| !t.completed? }
+      return render json: { error: "Complete previous task first" }, status: :forbidden
+    end
+
+    # Ensure a Response record exists for this task.
+    current_task.ensure_response!
+
+    # Return confirmation that the task has started.
+    render json: {
+      message: "Task started",
+      task: current_task.to_task_hash
+    }, status: :ok
+  end
+
+  def build_queue_for_user(assignment_id)
+    # Find the participant record for the current user in the assignment.
+    participant = Participant.find_by(
+      user_id: current_user.id,
+      parent_id: assignment_id
+    )
+
+    # Return nil if the user is not a participant in the assignment.
+    return nil unless participant
+
+    # Find the TeamsParticipant record associated with the participant.
+    team_participant = TeamsParticipant.find_by(participant_id: participant.id)
+    return nil unless team_participant
+
+    # Build and return the task queue for this participant.
+    TaskOrdering::TaskQueue.new(participant.assignment, team_participant)
   end
 end
