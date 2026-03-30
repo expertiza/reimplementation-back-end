@@ -21,6 +21,7 @@ class Grades
   extend ImportableExportableHelper
 
   mandatory_fields :assignment_name, :team_name, :participant_name
+  # hidden_fields :id, :created_at, :updated_at
   filter -> { aggregate_grades }
 
   # Spoof a table-backed model so ImportableExportableHelper can treat

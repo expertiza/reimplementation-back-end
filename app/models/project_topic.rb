@@ -1,6 +1,7 @@
 class ProjectTopic < ApplicationRecord
   extend ImportableExportableHelper
   mandatory_fields :topic_name, :assignment_id
+  hidden_fields :id, :created_at, :updated_at
   available_actions_on_duplicate SkipRecordAction.new, UpdateExistingRecordAction.new, ChangeOffendingFieldAction.new
 
   has_many :signed_up_teams, dependent: :destroy
