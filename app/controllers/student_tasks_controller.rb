@@ -14,8 +14,13 @@ class StudentTasksController < ApplicationController
 
   def view
     @student_task = StudentTask.from_participant_id(params[:id])
-    render json: @student_task, status: :ok
+    if @student_task.nil?
+      render json: { error: "Participant not found" }, status: :internal_server_error
+    else
+      render json: @student_task, status: :ok
+    end
   end
+  
 
 
   def queue

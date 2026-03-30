@@ -1,6 +1,0 @@
-response_one:
-  id: 1
-  map_id: 1
-  additional_comment: "Test comment"
-  is_submitted: false
-  round: 1

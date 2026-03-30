@@ -5,17 +5,18 @@ application up and running.
 
 Things you may want to cover:
 
-* Ruby version - 3.4.5
+- Ruby version - 3.4.5
 
 ## Development Environment
 
 ### Prerequisites
+
 - Verify that [Docker Desktop](https://www.docker.com/products/docker-desktop/) is installed and running.
 - [Download](https://www.jetbrains.com/ruby/download/) RubyMine
 - Make sure that the Docker plugin [is enabled](https://www.jetbrains.com/help/ruby/docker.html#enable_docker).
 
-
 ### Instructions
+
 Tutorial: [Docker Compose as a remote interpreter](https://www.jetbrains.com/help/ruby/using-docker-compose-as-a-remote-interpreter.html)
 
 ### Video Tutorial
@@ -25,5 +26,6 @@ Tutorial: [Docker Compose as a remote interpreter](https://www.jetbrains.com/hel
 alt="IMAGE ALT TEXT HERE" width="560" height="315" border="10" /></a>
 
 ### Database Credentials
+
 - username: root
 - password: expertiza
