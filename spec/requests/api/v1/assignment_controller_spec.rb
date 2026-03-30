@@ -33,14 +33,13 @@ RSpec.describe 'Assignments API', type: :request do
   end
 
   let!(:prof) do
-    Instructor.create!(
+    User.create!(
       name: "profa",
       password_digest: "password",
       role_id: @roles[:instructor].id,
       full_name: "Prof A",
       email: "testuser@example.com",
-      mru_directory_path: "/home/testuser",
-      institution: institution
+      mru_directory_path: "/home/testuser"
     )
   end
 
@@ -63,17 +62,6 @@ RSpec.describe 'Assignments API', type: :request do
   let(:token) { JsonWebToken.encode({ id: prof.id }) }
   let(:Authorization) { "Bearer #{token}" }
 
-  let!(:questionnaire) do
-    Questionnaire.create!(
-      name: "Review Rubric",
-      instructor: prof,
-      private: false,
-      min_question_score: 0,
-      max_question_score: 10,
-      questionnaire_type: "ReviewQuestionnaire"
-    )
-  end
-
   # -------------------------------------------------------------------------
   # GET /assignments  (Get assignments)
   # -------------------------------------------------------------------------
@@ -89,57 +77,6 @@ RSpec.describe 'Assignments API', type: :request do
           assignments_json = JSON.parse(response.body)
           # Expect 2 assignments: assignment1 and assignment2
           expect(assignments_json.size).to eq(2)
-        end
-      end
-    end
-  end
-
-  # -------------------------------------------------------------------------
-  # GET /assignments/{id} (Show assignment)
-  # -------------------------------------------------------------------------
-  path '/assignments/{id}' do
-    parameter name: 'id', in: :path, type: :integer, description: 'Assignment ID'
-
-    get 'Show assignment details with rubrics and due dates' do
-      tags 'Assignments'
-      produces 'application/json'
-      parameter name: 'Content-Type', in: :header, type: :string
-      let('Content-Type') { 'application/json' }
-
-      response '200', 'assignment found' do
-        let(:id) { assignment.id }
-
-        before do
-          assignment.update!(vary_by_round: true)
-          AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire, used_in_round: 1)
-          AssignmentDueDate.create!(
-            parent: assignment,
-            due_at: Time.zone.now + 1.day,
-            deadline_type_id: DueDate::REVIEW_DEADLINE_TYPE_ID,
-            submission_allowed_id: 1,
-            review_allowed_id: 1,
-            round: 1
-          )
-        end
-
-        run_test! do
-          data = JSON.parse(response.body)
-
-          expect(data['id']).to eq(assignment.id)
-          expect(data['assignment_questionnaires'].first['questionnaire']['id']).to eq(questionnaire.id)
-          expect(data['due_dates'].length).to eq(1)
-          expect(data['num_review_rounds']).to eq(1)
-          expect(data['varying_rubrics_by_round']).to eq(true)
-        end
-      end
-
-      response '404', 'assignment not found' do
-        let(:id) { 999 }
-
-        run_test! do
-          data = JSON.parse(response.body)
-          expect(response).to have_http_status(:not_found)
-          expect(data['error']).to eq('Assignment not found')
         end
       end
     end

@@ -14,4 +14,12 @@ class TeamSerializer < ActiveModel::Serializer
     object.teams_participants.count
   end
 
+  def sign_up_topic
+    signed_up_team&.project_topic
+  end
+
+  def signed_up_team
+    SignedUpTeam.find_by(team_id: object.id)
+  end
+
 end
