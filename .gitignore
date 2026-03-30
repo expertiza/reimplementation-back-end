@@ -32,3 +32,11 @@
 coverage/
 rsa_keys.yml
 pg_data/
+
+# Ignore .env files
+# .env files should never be committed to prevent sensitive information from being exposed.
+# Each environment can have its own .env file, and .env.* covers all of them.
+# .env.* covers .env.development .env.test, etc
+# ** ensures that .env files are ignored regardless of their location in the directory structure.
+**/.env
+**/.env.*

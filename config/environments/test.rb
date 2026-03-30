@@ -44,6 +44,8 @@ Rails.application.configure do
   # The :test delivery method accumulates sent emails in the
   # ActionMailer::Base.deliveries array.
   config.action_mailer.delivery_method = :test
+  config.action_mailer.perform_deliveries = true
+
   # This line let us to use expect(...).to have_enqueued_job.on_queue('mailers')
   config.active_job.queue_adapter = :test
   # Print deprecation notices to the stderr.
@@ -62,4 +64,11 @@ Rails.application.configure do
   # config.action_view.annotate_rendered_view_with_filenames = true
   config.hosts << 'localhost'
   config.hosts << "www.example.com"
+
+  # ── Frontend URL Configuration ──
+  # Set defaults for tests (can be overridden via environment variables)
+  # Rails convention recommends config.x.* for custom settings
+  config.x.frontend_scheme = ENV.fetch('FRONTEND_SCHEME', 'http')
+  config.x.frontend_domain = ENV.fetch('FRONTEND_DOMAIN', 'localhost')
+  config.x.frontend_port = ENV.fetch('FRONTEND_PORT', '3000')
 end

@@ -58,6 +58,8 @@ Rails.application.configure do
   # config.active_job.queue_name_prefix = "reimplementation_production"
 
   config.action_mailer.perform_caching = false
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.perform_deliveries = true
 
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
@@ -85,4 +87,11 @@ Rails.application.configure do
 
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
+
+  # ── Frontend URL Configuration ──
+  # Set defaults for production (can be overridden via environment variables)
+  # Rails convention recommends config.x.* for custom settings
+  config.x.frontend_scheme = ENV.fetch('FRONTEND_SCHEME', 'https')
+  config.x.frontend_domain = ENV.fetch('FRONTEND_DOMAIN', 'expertiza.ncsu.com')
+  config.x.frontend_port = ENV.fetch('FRONTEND_PORT', nil)
 end
