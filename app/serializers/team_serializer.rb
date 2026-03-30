@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class TeamSerializer < ActiveModel::Serializer
-  attributes :id, :name, :type, :team_size
+  attributes :id, :name, :type, :team_size, :parent_id, :assignment_id
   has_many :members, serializer: ParticipantSerializer
   has_many :users, serializer: UserSerializer
 
@@ -12,6 +12,10 @@ class TeamSerializer < ActiveModel::Serializer
 
   def team_size
     object.teams_participants.count
+  end
+
+  def assignment_id
+    object.parent_id if object.is_a?(AssignmentTeam)
   end
 
   def sign_up_topic
