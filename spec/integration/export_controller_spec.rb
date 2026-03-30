@@ -41,10 +41,10 @@ RSpec.describe "Export API", type: :request do
   describe "POST /export/:class" do
     it "returns 200 and calls Export.perform with ordered fields" do
       ordered_fields = ["id", "name"]
-      export_return = "fake_csv_data"
+      export_return = [{ name: "FakeModel", contents: "fake_csv_data" }]
 
       expect(Export).to receive(:perform)
-                          .with(FakeModel, ordered_fields)
+                          .with(FakeModel, ordered_fields, graph_export: false)
                           .and_return(export_return)
 
       post "/export/FakeModel", params: {
@@ -55,21 +55,38 @@ RSpec.describe "Export API", type: :request do
       json = JSON.parse(response.body)
 
       expect(json["message"]).to eq("FakeModel has been exported!")
-      expect(json["file"]).to eq("fake_csv_data")
+      expect(json["file"]).to eq([{ "name" => "FakeModel", "contents" => "fake_csv_data" }])
     end
 
     it "passes nil ordered_fields when none are provided" do
-      export_return = "csv_without_ordering"
+      export_return = [{ name: "FakeModel", contents: "csv_without_ordering" }]
 
       expect(Export).to receive(:perform)
-                          .with(FakeModel, nil)
+                          .with(FakeModel, nil, graph_export: false)
                           .and_return(export_return)
 
       post "/export/FakeModel"
 
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
-      expect(json["file"]).to eq("csv_without_ordering")
+      expect(json["file"]).to eq([{ "name" => "FakeModel", "contents" => "csv_without_ordering" }])
+    end
+
+    it "passes graph_export when requested" do
+      export_return = [{ name: "FakeModel", contents: "graph_csv_data" }]
+
+      expect(Export).to receive(:perform)
+                          .with(FakeModel, ["id"], graph_export: true)
+                          .and_return(export_return)
+
+      post "/export/FakeModel", params: {
+        ordered_fields: ["id"].to_json,
+        graph_export: "true"
+      }
+
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json["file"]).to eq([{ "name" => "FakeModel", "contents" => "graph_csv_data" }])
     end
 
     it "returns 422 if constantize fails" do

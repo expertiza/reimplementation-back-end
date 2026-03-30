@@ -6,7 +6,7 @@ module ExportHelper
   module_function
 
   # Builds a minimal recursive graph with only class names and headers,
-  # then runs Export.perform for each unique class in that graph.
+  # then returns one export payload per unique class in that graph.
   def export_has_many_graph(root_class)
     graph = build_export_graph(root_class)
 
@@ -17,12 +17,12 @@ module ExportHelper
       headers_by_class[class_name] |= headers_for_export
     end
 
-    exports = {}
+    exports = []
     headers_by_class.each do |class_name, headers|
-      exports[class_name] = Export.perform(class_name.constantize, headers)
+      exports.concat(Export.perform(class_name.constantize, headers, graph_export: false))
     end
 
-    { graph: graph, exports: exports }
+    exports
   end
 
   def build_export_graph(root_class, visited = Set.new)

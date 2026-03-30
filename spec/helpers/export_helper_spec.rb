@@ -2,11 +2,10 @@
 
 require 'rails_helper'
 require 'csv'
-require 'json'
 
 RSpec.describe ExportHelper, type: :helper do
   describe '.export_has_many_graph' do
-    it 'returns a minimal class/header graph and exports real db records' do
+    it 'returns export payloads for each class in the graph with real db records' do
       role = create(:role, :instructor)
       institution = create(:institution)
       instructor = Instructor.create!(
@@ -70,34 +69,15 @@ RSpec.describe ExportHelper, type: :helper do
       allow(Item).to receive(:external_classes).and_return([questionnaire_external].compact)
 
       result = described_class.export_has_many_graph(Questionnaire)
+      exports_by_class = result.index_by { |entry| entry[:name] }
 
-      puts "\nExport Graph (from export_has_many_graph):"
-      puts JSON.pretty_generate(result[:graph])
+      expect(result).to all(include(:name, :contents))
+      expect(exports_by_class.keys).to include('Questionnaire', 'Item', 'QuestionAdvice', 'Answer')
 
-      expect(result).to have_key(:graph)
-      expect(result[:graph]).to be_a(Hash)
-      expect(result[:graph][:class_name]).to eq('Questionnaire')
-      expect(result[:graph][:headers]).to match_array(Questionnaire.mandatory_fields.map(&:to_s))
-
-      class_names = []
-      stack = [result[:graph]]
-      until stack.empty?
-        node = stack.pop
-        class_names << node[:class_name]
-        stack.concat(node[:has_many] || [])
-      end
-
-      expect(class_names).to include('Item')
-      expect(class_names).to include('QuestionAdvice')
-      expect(class_names).to include('Answer')
-
-      expect(result).to have_key(:exports)
-      expect(result[:exports]).to include('Questionnaire', 'Item', 'QuestionAdvice', 'Answer')
-
-      questionnaire_rows = CSV.parse(result[:exports]['Questionnaire'], headers: true)
-      item_rows = CSV.parse(result[:exports]['Item'], headers: true)
-      advice_rows = CSV.parse(result[:exports]['QuestionAdvice'], headers: true)
-      answer_rows = CSV.parse(result[:exports]['Answer'], headers: true)
+      questionnaire_rows = CSV.parse(exports_by_class['Questionnaire'][:contents], headers: true)
+      item_rows = CSV.parse(exports_by_class['Item'][:contents], headers: true)
+      advice_rows = CSV.parse(exports_by_class['QuestionAdvice'][:contents], headers: true)
+      answer_rows = CSV.parse(exports_by_class['Answer'][:contents], headers: true)
 
       expect(questionnaire_rows.map { |row| row['name'] }).to include(questionnaire_record.name)
       expect(item_rows.map { |row| row['txt'] }).to include(item_record.txt)
@@ -167,18 +147,19 @@ RSpec.describe ExportHelper, type: :helper do
       allow(Item).to receive(:external_classes).and_return([questionnaire_external].compact)
 
       result = described_class.export_has_many_graph(Questionnaire)
+      exports_by_class = result.index_by { |entry| entry[:name] }
 
       puts "\nCSV Exports:"
-      result[:exports].each do |klass_name, csv_text|
-        puts "--- #{klass_name} ---"
-        puts csv_text
+      result.each do |export_entry|
+        puts "--- #{export_entry[:name]} ---"
+        puts export_entry[:contents]
       end
 
-      expect(result[:exports]).to include('Questionnaire', 'Item', 'QuestionAdvice', 'Answer')
-      expect(result[:exports]['Questionnaire']).to include('name')
-      expect(result[:exports]['Item']).to include('txt')
-      expect(result[:exports]['QuestionAdvice']).to include('advice')
-      expect(result[:exports]['Answer']).to include('comments')
+      expect(exports_by_class.keys).to include('Questionnaire', 'Item', 'QuestionAdvice', 'Answer')
+      expect(exports_by_class['Questionnaire'][:contents]).to include('name')
+      expect(exports_by_class['Item'][:contents]).to include('txt')
+      expect(exports_by_class['QuestionAdvice'][:contents]).to include('advice')
+      expect(exports_by_class['Answer'][:contents]).to include('comments')
     end
   end
 end
