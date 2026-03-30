@@ -1929,7 +1929,6 @@ paths:
               required:
               - user_name
               - password
-  
 servers:
 - url: http://{defaultHost}
   variables:
