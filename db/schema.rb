@@ -349,6 +349,22 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_28_170000) do
     t.index ["parent_id"], name: "fk_rails_4404228d2f"
   end
 
+  create_table "sign_up_topics", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.text "topic_name", null: false
+    t.bigint "assignment_id", null: false
+    t.integer "max_choosers", default: 0, null: false
+    t.text "category"
+    t.string "topic_identifier", limit: 10
+    t.integer "micropayment", default: 0
+    t.integer "private_to"
+    t.text "description"
+    t.string "link"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "fk_sign_up_categories_sign_up_topics"
+    t.index ["assignment_id"], name: "index_sign_up_topics_on_assignment_id"
+  end
+
   create_table "signed_up_teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "project_topic_id", null: false
     t.bigint "team_id", null: false
@@ -463,7 +479,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_28_170000) do
   add_foreign_key "project_topics", "assignments"
   add_foreign_key "question_advices", "items"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
-  add_foreign_key "signed_up_teams", "project_topics"
+  add_foreign_key "sign_up_topics", "assignments"
+  add_foreign_key "signed_up_teams", "sign_up_topics", column: "project_topic_id"
   add_foreign_key "signed_up_teams", "teams"
   add_foreign_key "ta_mappings", "courses"
   add_foreign_key "ta_mappings", "users"
