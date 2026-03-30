@@ -37,3 +37,7 @@
 coverage/
 rsa_keys.yml
 pg_data/
+node_modules/
+.DS_Store
+git-credentials.txt
+node_modules
