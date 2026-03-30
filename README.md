@@ -57,7 +57,10 @@ Before running the application, you need to configure environment variables:
    When running the Rails server outside of Docker (e.g., `rails s`), you may need to source the `.env` file to load environment variables:
    
    **Linux/macOS:**
-   
+   ```
+   set -a   # automatically export all variables
+   source .env
+   set +a   # stop automatically exporting
    rails s
    ```
    
