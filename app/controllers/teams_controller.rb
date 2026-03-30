@@ -1,6 +1,6 @@
 class TeamsController < ApplicationController
   # Set the @team instance variable before executing actions except index and create
-  prepend_before_action :set_team, except: [:index, :create]
+  before_action :set_team, except: [:index, :create]
 
   # Validate team type only during team creation
   before_action :validate_team_type, only: [:create]
@@ -15,7 +15,7 @@ class TeamsController < ApplicationController
     when 'index'
       false
     when 'show', 'members'
-      current_user_member_of_team?(@team)
+      @team&.has_member?(current_user)
     when 'create', 'add_member', 'remove_member'
       false
     else
@@ -108,12 +108,6 @@ class TeamsController < ApplicationController
     @team = Team.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     render json: { error: 'Team not found' }, status: :not_found
-  end
-
-  def current_user_member_of_team?(team)
-    return false unless team && current_user
-
-    team.participants.exists?(user_id: current_user.id)
   end
 
   # Whitelists the parameters allowed for team creation/updation

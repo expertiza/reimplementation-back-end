@@ -37,12 +37,13 @@ RSpec.describe 'Subclass conversion behavior', type: :model do
 
     it 'copies members to the new assignment team' do
       user        = make_user('conv_user1')
-      participant = CourseParticipant.create!(user: user, parent_id: course.id, handle: user.name)
-      course_team.add_member(participant)
-
+      # Create assignment participant first so copy_to_assignment_team can find them
       a_participant = AssignmentParticipant.create!(user: user, parent_id: assignment.id, handle: user.name)
-      result        = course_team.copy_to_assignment_team(assignment)
+      # Add to course team via course participant
+      c_participant = CourseParticipant.create!(user: user, parent_id: course.id, handle: user.name)
+      course_team.add_member(c_participant)
 
+      result = course_team.copy_to_assignment_team(assignment)
       expect(result.users).to include(user)
     end
   end
@@ -68,12 +69,13 @@ RSpec.describe 'Subclass conversion behavior', type: :model do
 
     it 'copies members to the new course team' do
       user          = make_user('conv_user2')
+      # Create course participant first so copy_to_course_team can find them
+      c_participant = CourseParticipant.create!(user: user, parent_id: course.id, handle: user.name)
+      # Add to assignment team via assignment participant
       a_participant = AssignmentParticipant.create!(user: user, parent_id: assignment.id, handle: user.name)
       assignment_team.add_member(a_participant)
 
-      c_participant = CourseParticipant.create!(user: user, parent_id: course.id, handle: user.name)
-      result        = assignment_team.copy_to_course_team(course)
-
+      result = assignment_team.copy_to_course_team(course)
       expect(result.users).to include(user)
     end
   end

@@ -25,6 +25,8 @@ class MentoredTeam < AssignmentTeam
     mentor_duty = Duty.find_by(name: 'Mentor')
     return unless mentor_duty
 
+    # Use raw SQL join because AssignmentParticipant has no has_many :teams_participants association.
+    # duty_id lives on participants table; team scoping is done via teams_participants.team_id.
     mentor_participant = AssignmentParticipant
                            .joins('INNER JOIN teams_participants ON teams_participants.participant_id = participants.id')
                            .where('teams_participants.team_id = ? AND participants.duty_id = ?', id, mentor_duty.id)
@@ -43,6 +45,8 @@ class MentoredTeam < AssignmentTeam
     mentor_duty = Duty.find_by(name: 'Mentor')
     return nil unless mentor_duty
 
+    # Use raw SQL join because AssignmentParticipant has no has_many :teams_participants association.
+    # duty_id lives on participants table; team scoping is done via teams_participants.team_id.
     AssignmentParticipant
       .joins('INNER JOIN teams_participants ON teams_participants.participant_id = participants.id')
       .where('teams_participants.team_id = ? AND participants.duty_id = ?', id, mentor_duty.id)

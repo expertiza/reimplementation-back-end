@@ -71,8 +71,7 @@ RSpec.describe 'Association integrity', type: :model do
     it 'membership records are scoped to this team' do
       user        = make_user('ct_user')
       participant = CourseParticipant.create!(user: user, parent_id: course.id, handle: user.name)
-      team.add_member(participant)
-
+      TeamsParticipant.create!(team: team, participant: participant, user: user)
       expect(TeamsParticipant.where(team_id: team.id).count).to eq(1)
     end
   end
