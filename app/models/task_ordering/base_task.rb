@@ -18,10 +18,14 @@ module TaskOrdering
       raise NotImplementedError
     end
 
+    # Ensures the ResponseMap exists.
+    # Implementations of response_map may lazily create maps.
     def ensure_response_map!
       response_map
     end
 
+    # Ensures a Response record exists for this map.
+    # Creates an unsubmitted response if none exists.
     def ensure_response!
       map = response_map
       return if map.nil?
@@ -34,6 +38,7 @@ module TaskOrdering
       end
     end
 
+    # A task is considered completed when a submitted Response exists.
     def completed?
       map = response_map
       return false if map.nil?
@@ -41,6 +46,7 @@ module TaskOrdering
       Response.where(map_id: map.id, is_submitted: true).exists?
     end
 
+    # Converts task into a serializable hash used by controllers responses.
     def to_task_hash
       map = response_map
       {

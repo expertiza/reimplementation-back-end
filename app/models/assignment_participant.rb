@@ -53,5 +53,4 @@ class AssignmentParticipant < Participant
   def aggregate_teammate_review_grade(teammate_review_mappings)
     compute_average_review_score(teammate_review_mappings)
   end
-
 end
