@@ -1,136 +1,164 @@
 # frozen_string_literal: true
 
-RSpec.describe FeedbackResponseMap, type: :model do 
-    describe '#assignment' do
-      it 'returns the assignment associated with this FeedbackResponseMap' do
-        assignment = instance_double('Assignment')
-        allow(Assignment).to receive(:find).with(1).and_return(assignment)
-        feedback_response_map = FeedbackResponseMap.new(reviewed_object_id: 1) 
-        allow(feedback_response_map).to receive(:assignment).and_return(assignment)
-        expect(feedback_response_map.assignment).to eq(assignment)
-      end
-    end
-  
-    describe '#questionnaire' do
-      it 'returns an AuthorFeedbackQuestionnaire' do
-        questionnaire = instance_double('Questionnaire')
-        allow(questionnaire).to receive(:questionnaire_type).and_return('AuthorFeedbackQuestionnaire')
-        allow(Questionnaire).to receive(:find_by).with(id: 1).and_return(questionnaire)
-        feedback_response_map = FeedbackResponseMap.new(reviewed_object_id: 1) 
-        allow(feedback_response_map).to receive(:questionnaire).and_return(questionnaire)
-        expect(questionnaire.questionnaire_type).to eq('AuthorFeedbackQuestionnaire')
-      end
-    end
+require 'rails_helper'
 
-    describe '#get_title' do
-      it 'returns the correct title constant' do
-        feedback_response_map = FeedbackResponseMap.new 
-        expect(feedback_response_map.get_title).to eq(ResponseMapSubclassTitles::FEEDBACK_RESPONSE_MAP_TITLE)
-      end
+# rubocop:disable Metrics/BlockLength
+RSpec.describe FeedbackResponseMap, type: :model do
+  subject(:frm) { FeedbackResponseMap.new }
+
+  # ─── #title ─────────────────────────────────────────────────────────────────
+
+  describe '#title' do
+    it 'returns "Feedback"' do
+      expect(frm.title).to eq('Feedback')
+    end
+  end
+
+  # ─── #get_title ──────────────────────────────────────────────────────────────
+
+  describe '#get_title' do
+    it 'returns the FEEDBACK_RESPONSE_MAP_TITLE constant value' do
+      expect(frm.get_title).to eq(ResponseMapSubclassTitles::FEEDBACK_RESPONSE_MAP_TITLE)
     end
 
-    let(:questionnaire1) { Questionnaire.new(id: 1, questionnaire_type: 'AuthorFeedbackQuestionnaire') }
-    let(:questionnaire2) { Questionnaire.new(id: 2, questionnaire_type: 'MetareviewQuestionnaire') }
-    let(:participant) { Participant.new(id: 1) }
-    let(:assignment) { Assignment.new(id: 1) }
-    let(:team) { Team.new(id: 1) }
-    let(:assignment_participant) { Participant.new(id: 2, assignment: assignment) }
-    let(:feedback_response_map) { FeedbackResponseMap.new }
-    let(:review_response_map) { ReviewResponseMap.new(id: 2, assignment: assignment, reviewer: participant, reviewee: team) }
-    let(:answer) { Answer.new(answer: 1, comments: 'Answer text', question_id: 1) }
-    let(:response) { Response.new(id: 1, map_id: 1, response_map: review_response_map, scores: [answer]) }
-    let(:user1) { User.new(name: 'abc', full_name: 'abc bbc', email: 'abcbbc@gmail.com', password: '123456789', password_confirmation: '123456789') }
+    it 'equals "Feedback"' do
+      expect(frm.get_title).to eq('Feedback')
+    end
+  end
 
-    before(:each) do
-      questionnaires = [questionnaire1, questionnaire2]
-      allow(feedback_response_map).to receive(:reviewee).and_return(participant)
-      allow(feedback_response_map).to receive(:review).and_return(response)
-      allow(feedback_response_map).to receive(:reviewer).and_return(assignment_participant)
-      allow(response).to receive(:map).and_return(review_response_map)
-      allow(response).to receive(:reviewee).and_return(assignment_participant)
-      allow(review_response_map).to receive(:assignment).and_return(assignment)
-      allow(feedback_response_map).to receive(:assignment).and_return(assignment)
-      allow(assignment).to receive(:questionnaires).and_return(questionnaires)
+  # ─── #questionnaire_type ─────────────────────────────────────────────────────
+
+  describe '#questionnaire_type' do
+    it 'returns "AuthorFeedback"' do
+      expect(frm.questionnaire_type).to eq('AuthorFeedback')
+    end
+  end
+
+  # ─── #survey? ────────────────────────────────────────────────────────────────
+
+  describe '#survey?' do
+    it 'returns false' do
+      expect(frm.survey?).to be false
+    end
+  end
+
+  # ─── #assignment ─────────────────────────────────────────────────────────────
+
+  describe '#assignment' do
+    it 'returns the assignment via review.map.assignment' do
+      assignment = instance_double('Assignment')
+      map        = instance_double('ResponseMap')
+      review     = instance_double('Response')
+      allow(frm).to receive(:review).and_return(review)
+      allow(review).to receive(:map).and_return(map)
+      allow(map).to receive(:assignment).and_return(assignment)
+      expect(frm.assignment).to eq(assignment)
+    end
+  end
+
+  # ─── #questionnaire ──────────────────────────────────────────────────────────
+
+  describe '#questionnaire' do
+    it 'returns the questionnaire matching reviewed_object_id' do
+      questionnaire = instance_double('Questionnaire')
+      frm_with_id   = FeedbackResponseMap.new(reviewed_object_id: 1)
+      allow(Questionnaire).to receive(:find_by).with(id: 1).and_return(questionnaire)
+      expect(frm_with_id.questionnaire).to eq(questionnaire)
     end
 
-    describe '#assignment' do
-      it 'returns the assignment associated with this FeedbackResponseMap' do
-        expect(feedback_response_map.assignment).to eq(assignment)
+    it 'returns nil when no questionnaire matches reviewed_object_id' do
+      frm_with_id = FeedbackResponseMap.new(reviewed_object_id: 99_999)
+      allow(Questionnaire).to receive(:find_by).with(id: 99_999).and_return(nil)
+      expect(frm_with_id.questionnaire).to be_nil
+    end
+  end
+
+  # ─── #contributor ────────────────────────────────────────────────────────────
+
+  describe '#contributor' do
+    it 'returns the reviewee' do
+      reviewee = instance_double('Participant')
+      allow(frm).to receive(:reviewee).and_return(reviewee)
+      expect(frm.contributor).to eq(reviewee)
+    end
+  end
+
+  # ─── #send_notification_email ────────────────────────────────────────────────
+
+  describe '#send_notification_email' do
+    let(:assignment) { instance_double('Assignment') }
+    let(:mailer)     { instance_double(FeedbackEmailMailer) }
+
+    context 'when assignment is present' do
+      before do
+        allow(frm).to receive(:assignment).and_return(assignment)
+        allow(assignment).to receive(:present?).and_return(true)
+        allow(FeedbackEmailMailer).to receive(:new).with(frm, assignment).and_return(mailer)
+        allow(mailer).to receive(:call)
+      end
+
+      it 'initialises FeedbackEmailMailer with self and the assignment' do
+        expect(FeedbackEmailMailer).to receive(:new).with(frm, assignment).and_return(mailer)
+        frm.send_notification_email
+      end
+
+      it 'calls the mailer' do
+        expect(mailer).to receive(:call)
+        frm.send_notification_email
       end
     end
 
-    describe '#title' do
-      it 'returns "Feedback"' do
-        expect(feedback_response_map.title).to eq('Feedback')
+    context 'when assignment is not present' do
+      before { allow(frm).to receive(:assignment).and_return(nil) }
+
+      it 'does not instantiate the mailer' do
+        expect(FeedbackEmailMailer).not_to receive(:new)
+        frm.send_notification_email
+      end
+
+      it 'returns without raising' do
+        expect { frm.send_notification_email }.not_to raise_error
       end
     end
 
-    describe '#questionnaire' do
-      it 'returns an AuthorFeedbackQuestionnaire' do
-        expect(feedback_response_map.questionnaire).to eq([questionnaire1, questionnaire2])
+    context 'when the mailer raises a StandardError' do
+      before do
+        allow(frm).to receive(:assignment).and_return(assignment)
+        allow(assignment).to receive(:present?).and_return(true)
+        allow(FeedbackEmailMailer).to receive(:new).and_return(mailer)
+        allow(mailer).to receive(:call).and_raise(StandardError, 'smtp failure')
+      end
+
+      it 'does not propagate the error' do
+        expect { frm.send_notification_email }.not_to raise_error
+      end
+
+      it 'logs the error' do
+        expect(Rails.logger).to receive(:error).with(/FeedbackEmail failed/)
+        frm.send_notification_email
       end
     end
+  end
 
-    describe '#contributor' do
-      it 'returns the reviewee' do
-        expect(feedback_response_map.contributor).to eq(participant)
-      end
+  # ─── .build_from_params ──────────────────────────────────────────────────────
+
+  describe '.build_from_params' do
+    let(:params) { { reviewer_id: 1, reviewee_id: 2, reviewed_object_id: 3 } }
+
+    it 'returns a FeedbackResponseMap instance' do
+      expect(FeedbackResponseMap.build_from_params(params)).to be_a(FeedbackResponseMap)
     end
 
-    describe '#reviewer' do
-      it 'returns the reviewer' do
-        expect(feedback_response_map.reviewer).to eq(assignment_participant)
-      end
+    it 'returns an unsaved record' do
+      expect(FeedbackResponseMap.build_from_params(params)).to be_new_record
     end
 
-    describe '#round' do
-      it 'returns the round number of the original review' do
-        # Mock the response round number
-        allow(feedback_response_map).to receive(:round).and_return(1)
-        expect(feedback_response_map.round).to eq(1)
-      end
-
-      it 'returns nil if the round number is not present' do
-        allow(feedback_response_map).to receive(:round).and_return(nil)
-        expect(feedback_response_map.round).to be_nil
-      end
+    it 'assigns the provided attributes' do
+      built = FeedbackResponseMap.build_from_params(params)
+      expect(built.reviewer_id).to eq(1)
+      expect(built.reviewee_id).to eq(2)
+      expect(built.reviewed_object_id).to eq(3)
     end
-
-    # describe '#feedback_response_report' do
-    #   it 'returns a report' do
-    #     maps = [review_response_map]
-    #     allow(ReviewResponseMap).to receive(:where).with(['reviewed_object_id = ?', 1]).and_return(maps)
-    #     allow(maps).to receive(:pluck).with('id').and_return(review_response_map.id)
-    #     allow(Team).to receive_message_chain(:includes, :where).and_return([team])
-    #     allow(team).to receive(:users).and_return([user1])
-    #     allow(user1).to receive(:id).and_return(1)
-    #     allow(AssignmentParticipant).to receive(:where).with(parent_id: 1, user_id: 1).and_return([participant])
-
-    #     response1 = instance_double('Response', round: 1, additional_comment: '')
-    #     response2 = instance_double('Response', round: 2, additional_comment: 'LGTM')
-    #     response3 = instance_double('Response', round: 3, additional_comment: 'Bad')
-    #     rounds = [response1, response2, response3]
-
-    #     # Mock `Response.where` to return rounds
-    #     allow(Response).to receive(:where).with(['map_id IN (?)', 2]).and_return(rounds)
-    #     allow(Response).to receive_message_chain(:where, :order).with(['map_id IN (?)', 2], 'created_at DESC').and_return(['map_id IN (?)', 2])
-    #     allow(Assignment).to receive(:find).with(1).and_return(assignment)
-    #     # allow(assignment).to receive(:varying_rubrics_by_round).and_return(true)
-
-    #     # Mock necessary methods for `response` objects
-    #     allow(response1).to receive(:map_id).and_return(1)
-    #     allow(response2).to receive(:map_id).and_return(2)
-    #     allow(response3).to receive(:map_id).and_return(3)
-    #     allow(response1).to receive(:id).and_return(1)
-    #     allow(response2).to receive(:id).and_return(2)
-    #     allow(response3).to receive(:id).and_return(3)
-
-    #     report = FeedbackResponseMap.feedback_response_report(1, nil)
-    #     expect(report[0]).to eq([participant])
-    #     expect(report[1]).to eq([1, 2, 3])
-    #     expect(report[2]).to eq(nil)
-    #     expect(report[3]).to eq(nil)
-    #   end
-    # end
-
+  end
 end
+# rubocop:enable Metrics/BlockLength
