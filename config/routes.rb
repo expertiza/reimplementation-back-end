@@ -109,6 +109,12 @@ Rails.application.routes.draw do
         end
       end
   
+      resources :student_review, only: [] do
+        collection do
+          get :list
+        end
+      end
+  
       resources :submitted_content do
         collection do
           get    :download

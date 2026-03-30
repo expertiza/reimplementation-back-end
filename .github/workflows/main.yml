@@ -144,10 +144,10 @@ jobs:
 
 
   publish_code_coverage:
-    needs: test  # Ensures this job runs after the test job
+    needs: test # Ensures this job runs after the test job
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # Only run when there's a push to main branch
-
+    
     steps:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v4
@@ -155,8 +155,15 @@ jobs:
           name: code-coverage-artifacts
           path: coverage/
 
-      - name: Upload code-coverage report to code-climate
+      - name: Upload code-coverage report to Code Climate
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
         run: |
+          if [ -z "$CC_TEST_REPORTER_ID" ]; then
+            echo "Secret CC_TEST_REPORTER_ID not set. Skipping code coverage upload."
+            exit 0
+          fi
+          
           export GIT_BRANCH="${GITHUB_REF/refs\/heads\//}"
           gem install codeclimate-test-reporter
           cc-test-reporter sum-coverage coverage/codeclimate.*.json 
