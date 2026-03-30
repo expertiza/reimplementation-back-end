@@ -83,4 +83,39 @@ RSpec.describe Assignment, type: :model do
       expect(assignment.volume_of_review_comments(1)).to eq([1, 2, 2, 0])
     end
   end
+
+  describe '#review_rubric_questionnaire' do
+    let(:q1) do
+      Questionnaire.create!(name: 'R1', instructor_id: instructor.id, questionnaire_type: 'ReviewQuestionnaire',
+                            display_type: 'Review', min_question_score: 0, max_question_score: 5)
+    end
+    let(:q2) do
+      Questionnaire.create!(name: 'R2', instructor_id: instructor.id, questionnaire_type: 'ReviewQuestionnaire',
+                            display_type: 'Review', min_question_score: 0, max_question_score: 5)
+    end
+
+    it 'returns nil when no questionnaires linked' do
+      a = Assignment.create!(name: 'No rubric', instructor: instructor)
+      expect(a.review_rubric_questionnaire).to be_nil
+    end
+
+    it 'prefers round 1 when multiple links exist' do
+      a = Assignment.create!(name: 'Multi', instructor: instructor)
+      AssignmentQuestionnaire.create!(assignment: a, questionnaire: q2, used_in_round: 2)
+      AssignmentQuestionnaire.create!(assignment: a, questionnaire: q1, used_in_round: 1)
+      expect(a.review_rubric_questionnaire.id).to eq(q1.id)
+    end
+
+    it 'uses lowest defined round when round 1 missing' do
+      a = Assignment.create!(name: 'No r1', instructor: instructor)
+      AssignmentQuestionnaire.create!(assignment: a, questionnaire: q2, used_in_round: 2)
+      expect(a.review_rubric_questionnaire.id).to eq(q2.id)
+    end
+
+    it 'accepts link with nil used_in_round' do
+      a = Assignment.create!(name: 'Nil round', instructor: instructor)
+      AssignmentQuestionnaire.create!(assignment: a, questionnaire: q1, used_in_round: nil)
+      expect(a.review_rubric_questionnaire.id).to eq(q1.id)
+    end
+  end
 end

@@ -5,6 +5,13 @@ require 'active_support/core_ext/integer/time'
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
+  # Use env when not using `config/credentials.yml.enc` + RAILS_MASTER_KEY (e.g. Docker on VCL).
+  secret = ENV['SECRET_KEY_BASE'].to_s.strip
+  if secret.empty?
+    raise ArgumentError, 'SECRET_KEY_BASE missing or empty. Add it to `.env` in the backend repo root (same folder as docker-compose.prod.yml), then recreate the app container.'
+  end
+  config.secret_key_base = secret
+
   # Code is not reloaded between requests.
   config.cache_classes = true
 

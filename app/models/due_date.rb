@@ -16,7 +16,13 @@ class DueDate < ApplicationRecord
   attr_accessor :teammate_review_allowed, :submission_allowed, :review_allowed
 
   def due_at_is_valid_datetime
-    errors.add(:due_at, 'must be a valid datetime') unless due_at.is_a?(Time)
+    return if due_at.blank?
+
+    # Rails casts datetimes to ActiveSupport::TimeWithZone; that is not a Time subclass.
+    ok = due_at.is_a?(Time) ||
+         due_at.is_a?(DateTime) ||
+         (defined?(ActiveSupport::TimeWithZone) && due_at.is_a?(ActiveSupport::TimeWithZone))
+    errors.add(:due_at, 'must be a valid datetime') unless ok
   end
 
   # Method to compare due dates

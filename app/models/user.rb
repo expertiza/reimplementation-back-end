@@ -34,18 +34,32 @@ class User < ApplicationRecord
   delegate :super_administrator?, to: :role
 
   def self.instantiate(record)
-    case record.role
-    when Role::TEACHING_ASSISTANT
+    case record.role_id
+    when Role::TEACHING_ASSISTANT_ID
       record.becomes(Ta)
-    when Role::INSTRUCTOR
+    when Role::INSTRUCTOR_ID
       record.becomes(Instructor)
-    when Role::ADMINISTRATOR
+    when Role::ADMINISTRATOR_ID
       record.becomes(Administrator)
-    when Role::SUPER_ADMINISTRATOR
+    when Role::SUPER_ADMINISTRATOR_ID
       record.becomes(SuperAdministrator)
     else
-      super
+      # Legacy seeds/DBs may use different role.id values than Role::*_ID; map by role name.
+      r = record.role
+      return record if r.blank? || r.student?
+
+      return record.becomes(SuperAdministrator) if r.super_administrator?
+      return record.becomes(Administrator) if r.administrator? && !r.super_administrator?
+      return record.becomes(Ta) if r.ta?
+      return record.becomes(Instructor) if r.instructor?
+
+      record
     end
+  end
+
+  # Subclasses (Instructor, Ta, Administrator, SuperAdministrator) override this.
+  def managed_users
+    []
   end
 
   # Welcome email to be sent to the user after they sign up
@@ -72,10 +86,10 @@ class User < ApplicationRecord
   # Get instructor_id of the user, if the user is TA,
   # return the id of the instructor else return the id of the user for superior roles
   def instructor_id
-    case role
-    when Role::INSTRUCTOR, Role::ADMINISTRATOR, Role::SUPER_ADMINISTRATOR
+    case role_id
+    when Role::INSTRUCTOR_ID, Role::ADMINISTRATOR_ID, Role::SUPER_ADMINISTRATOR_ID
       id
-    when Role::TEACHING_ASSISTANT
+    when Role::TEACHING_ASSISTANT_ID
       my_instructor
     else
       raise NotImplementedError, "Unknown role: #{role.name}"
@@ -125,16 +139,15 @@ class User < ApplicationRecord
   # This will override the default as_json method in the ApplicationRecord class and specify
   # that only the id, name, and email attributes should be included when a User object is serialized.
   def as_json(options = {})
-    super(options.merge({
-                          only: %i[id name email full_name email_on_review email_on_submission
-                                   email_on_review_of_review],
-                          include:
-                          {
-                            role: { only: %i[id name] },
-                            parent: { only: %i[id name] },
-                            institution: { only: %i[id name] }
-                          }
-                        })).tap do |hash|
+    super({
+      only: %i[id name email full_name email_on_review email_on_submission
+               email_on_review_of_review],
+      include: {
+        role: { only: %i[id name] },
+        parent: { only: %i[id name] },
+        institution: { only: %i[id name] }
+      }
+    }.merge(options || {})).tap do |hash|
       hash['parent'] ||= { id: nil, name: nil }
       hash['institution'] ||= { id: nil, name: nil }
     end
@@ -150,7 +163,8 @@ class User < ApplicationRecord
   end
 
   def generate_jwt
-    JWT.encode({ id: id, exp: 60.days.from_now.to_i }, Rails.application.credentials.secret_key_base)
+    jwt_secret = ENV['JWT_SECRET_KEY'].presence || Rails.application.credentials.secret_key_base
+    JWT.encode({ id: id, exp: 60.days.from_now.to_i }, jwt_secret)
   end
 
 end

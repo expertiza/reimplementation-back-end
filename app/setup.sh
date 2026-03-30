@@ -19,12 +19,8 @@ rake db:create
 echo "Step 4: Running database migrations..."
 rake db:migrate
 
-if [ "${RUN_DB_SEED}" = "true" ]; then
-  echo "Step 5: Seeding the database..."
-  rake db:seed
-else
-  echo "Step 5: Skipping seed (set RUN_DB_SEED=true to enable)."
-fi
+echo "Step 5: Seeding the database..." 
+rake db:seed
 
 echo "Step 6: Starting the Rails server..."
 rails s -p 3002 -b '0.0.0.0'

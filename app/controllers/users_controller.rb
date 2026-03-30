@@ -61,8 +61,8 @@ class UsersController < ApplicationController
       return
     end
     parent = User.instantiate(parent)
-    users = parent.managed_users
-    render json: users, status: :ok
+    users = Array(parent.managed_users)
+    render json: users.map(&:as_json), status: :ok
   end
 
   # Get role based users
