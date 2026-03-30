@@ -42,10 +42,10 @@ class Team < ApplicationRecord
   
   def full?
     max = max_size
-  return false if max.blank?
+    return false if max.blank?
 
-  participants.count >= max
-end
+    participants.count >= max
+  end
 
   # Checks if the given participant is already on any team for the associated assignment or course.
   def participant_on_team?(participant)
