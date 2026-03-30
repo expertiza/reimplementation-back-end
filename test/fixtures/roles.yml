@@ -1,11 +1,41 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+super_admin_role:
+  id: 1
+  name: "Super Administrator"
 
-one:
-  name: MyString
-  parent_id: 1
-  default_page_id: 1
+admin_role:
+  id: 2
+  name: "Administrator"
 
-two:
-  name: MyString
-  parent_id: 1
-  default_page_id: 1
+instructor_role:
+  id: 3
+  name: "Instructor"
+
+ta_role:
+  id: 4
+  name: "Teaching Assistant"
+
+student_role:
+  id: 5
+  name: "Student"
+
+reviewer_role:
+  id: 6
+  name: "Reviewer"
+
+deletable_role:
+  id: 7
+  name: "Deletable Role"
+
+parent_role:
+  id: 8
+  name: "Parent Role"
+
+child_role1:
+  id: 9
+  name: "Child Role 1"
+  parent_id: 8
+
+child_role2:
+  id: 10
+  name: "Child Role 2"
+  parent_id: 8

@@ -116,6 +116,14 @@ class Assignment < ApplicationRecord
     self
   end
 
+  def quiz_questionnaire_for_review_flow
+  assignment_questionnaires
+    .joins(:questionnaire)
+    .where(questionnaires: { questionnaire_type: 'QuizQuestionnaire' })
+    .first
+    &.questionnaire
+  end
+
 
 
  # Assign a course to the assignment based on the provided course_id.

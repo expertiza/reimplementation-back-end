@@ -1,0 +1,5 @@
+team_one:
+  id: 1
+  name: "Team One"
+  parent_id: 1
+  type: "AssignmentTeam"

@@ -12,37 +12,36 @@ class Role < ApplicationRecord
   ADMINISTRATOR_ID = 4
   SUPER_ADMINISTRATOR_ID = 5
 
-  def super_administrator?
-    name['Super Administrator']
+  def super_admin?
+    name == 'Super Administrator'
   end
 
-  def administrator?
-    name['Administrator'] || super_administrator?
+  def admin?
+    name == 'Administrator' || super_admin?
   end
 
   def instructor?
-    name['Instructor']
+    name == 'Instructor'
   end
 
   def ta?
-    name['Teaching Assistant']
+    name == 'Teaching Assistant'
   end
 
   def student?
-    name['Student']
+    name == 'Student'
   end
-
   # returns an array of ids of all roles that are below the current role
   def subordinate_roles
-    role = Role.find_by(parent_id: id)
-    return [] unless role
+    children = Role.where(parent_id: id)
+    return [] if children.empty?
 
-    [role] + role.subordinate_roles
+    children.flat_map { |child| [child.id] + child.subordinate_roles }
   end
 
   # returns an array of ids of all roles that are below the current role and includes the current role
   def subordinate_roles_and_self
-    [self] + subordinate_roles
+    [id] + subordinate_roles
   end
 
   # checks if the current role has all the privileges of the target role

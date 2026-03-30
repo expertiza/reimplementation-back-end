@@ -1,0 +1,5 @@
+course1:
+  id: 1
+  name: "Math 101"
+  instructor_id: 1
+  institution_id: 1
