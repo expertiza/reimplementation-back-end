@@ -91,7 +91,7 @@ Rails.application.configure do
   # ── Frontend URL Configuration ──
   # Set defaults for production (can be overridden via environment variables)
   # Rails convention recommends config.x.* for custom settings
-  config.x.frontend_scheme = ENV.fetch('FRONTEND_SCHEME', 'https://')
+  config.x.frontend_scheme = ENV.fetch('FRONTEND_SCHEME', 'https')
   config.x.frontend_domain = ENV.fetch('FRONTEND_DOMAIN', 'expertiza.ncsu.com')
   config.x.frontend_port = ENV.fetch('FRONTEND_PORT', nil)
 end

@@ -68,7 +68,7 @@ Rails.application.configure do
   # ── Frontend URL Configuration ──
   # Set defaults for tests (can be overridden via environment variables)
   # Rails convention recommends config.x.* for custom settings
-  config.x.frontend_scheme = ENV.fetch('FRONTEND_SCHEME', 'http://')
+  config.x.frontend_scheme = ENV.fetch('FRONTEND_SCHEME', 'http')
   config.x.frontend_domain = ENV.fetch('FRONTEND_DOMAIN', 'localhost')
   config.x.frontend_port = ENV.fetch('FRONTEND_PORT', '3000')
 end

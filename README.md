@@ -22,7 +22,7 @@ Before running the application, you need to configure environment variables:
    
    Edit the `.env` file and set the following frontend variables based on your environment. These settings will override the defaults defined in `config/environments/(development|test|production).rb`:
    
-   - **`FRONTEND_SCHEME`**: Should be `http://` for development/test or `https://` for production
+   - **`FRONTEND_SCHEME`**: Should be `http` for development/test or `https` for production
    - **`FRONTEND_DOMAIN`**: The domain where your frontend is hosted
      - **Development/Test**: Defaults to `localhost` if not set (configured in `config/environments/development.rb` and `config/environments/test.rb`)
      - **Staging**: Requires explicit configuration via `.env`
@@ -35,13 +35,13 @@ Before running the application, you need to configure environment variables:
    **Example for local development** (using defaults, no .env needed):
    ```bash
    # No need to set anything - defaults will be used
-   # FRONTEND_DOMAIN defaults to 'localhost'
+   # FRONTEND_DOMAIN defaults to localhost
    # FRONTEND_PORT defaults to 3000
    ```
    
    **Example for local development** (overriding defaults via .env):
    ```env
-   FRONTEND_SCHEME=http://
+   FRONTEND_SCHEME=http
    FRONTEND_DOMAIN=localhost
    FRONTEND_PORT=3000
    ```
