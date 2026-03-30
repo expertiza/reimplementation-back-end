@@ -8,9 +8,11 @@ class ProjectTopicsController < ApplicationController
       render json: { message: 'Assignment ID is required!' }, status: :unprocessable_entity
     elsif params[:topic_ids].nil?
       @project_topics = ProjectTopic.where(assignment_id: params[:assignment_id])
+                                   .includes(signed_up_teams: { team: :users })
       render json: @project_topics, status: :ok
     else
       @project_topics = ProjectTopic.where(assignment_id: params[:assignment_id], topic_identifier: params[:topic_ids])
+                                   .includes(signed_up_teams: { team: :users })
       render json: @project_topics, status: :ok
     end
     # render json: {message: 'All selected topics have been loaded successfully.', project_topics: @stopics}, status: 200
@@ -85,11 +87,11 @@ class ProjectTopicsController < ApplicationController
 
   # Use callbacks to share common setup or constraints between actions.
   def set_project_topic
-    @project_topic = ProjectTopic.find(params[:id])
+    @project_topic = ProjectTopic.includes(signed_up_teams: { team: :users }).find(params[:id])
   end
 
   # Only allow a list of trusted parameters through.
   def project_topic_params
-    params.require(:project_topic).permit(:topic_identifier, :category, :topic_name, :max_choosers, :assignment_id)
+    params.require(:project_topic).permit(:topic_identifier, :category, :topic_name, :max_choosers, :assignment_id, :description, :link)
   end
 end
