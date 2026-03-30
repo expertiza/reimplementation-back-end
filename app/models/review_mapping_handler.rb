@@ -71,7 +71,7 @@ class ReviewMappingHandler
           reviewer: reviewer,
           reviewee: team,
           reviewed_object_id: @assignment.id,
-          for_calibration: true
+          calibration: true
         )
       end
     end
@@ -79,7 +79,7 @@ class ReviewMappingHandler
 
 
   def calibration_reviews_for(reviewer)
-    ReviewResponseMap.where(reviewer: reviewer, for_calibration: true)
+    ReviewResponseMap.where(reviewer: reviewer, calibration: true)
   end
 
   # ===== OUTSTANDING REVIEWS =====

@@ -29,6 +29,11 @@
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
+
+# Docker Compose / VCL secrets (do not commit)
+.env
+.env.production
+.env.local
 coverage/
 rsa_keys.yml
 pg_data/

@@ -18,66 +18,67 @@ RSpec.describe 'CalibrationResponseMaps', type: :request do
 
   let(:instructor) do
     User.create!(
-      name: "instructor_#{Time.now.to_i}_#{rand(1000)}",
+      name: 'instructor1',
       password: 'password',
       role_id: @roles[:instructor].id,
       full_name: 'Instructor One',
-      email: "instructor_#{Time.now.to_i}_#{rand(1000)}@example.com",
+      email: 'instructor1@example.com',
       institution: @institution
     )
   end
 
   let(:assignment) do
     Assignment.create!(
-      name: "A1_#{Time.now.to_i}_#{rand(1000)}",
+      name: 'A1',
       instructor_id: instructor.id,
-      course: Course.create!(name: "C1_#{Time.now.to_i}_#{rand(1000)}", instructor: instructor, institution: @institution, directory_path: "c1_dir_#{Time.now.to_i}_#{rand(1000)}"),
-      directory_path: "a1_dir_#{Time.now.to_i}_#{rand(1000)}",
+      directory_path: 'a1_dir',
       rounds_of_reviews: 1,
       max_team_size: 3
     )
   end
 
+  let(:questionnaire) do
+    Questionnaire.create!(name: 'Cal Q', min_question_score: 0, max_question_score: 5)
+  end
+
+  let!(:rubric_item_one) do
+    Item.create!(
+      questionnaire: questionnaire,
+      txt: 'Q1',
+      weight: 1,
+      seq: 1,
+      question_type: 'scale',
+      break_before: true
+    )
+  end
+
+  let!(:rubric_item_two) do
+    Item.create!(
+      questionnaire: questionnaire,
+      txt: 'Q2',
+      weight: 1,
+      seq: 2,
+      question_type: 'scale',
+      break_before: true
+    )
+  end
+
+  before do
+    AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire, used_in_round: 1)
+  end
+
   let(:student) do
     User.create!(
-      name: "student_#{Time.now.to_i}_#{rand(1000)}",
+      name: 'student1',
       password: 'password',
       role_id: @roles[:student].id,
       full_name: 'Student One',
-      email: "student_#{Time.now.to_i}_#{rand(1000)}@example.com",
+      email: 'student1@example.com',
       institution: @institution
     )
   end
 
-  it 'automatically creates a team of 1 for a student not on a team' do
-    headers = auth_headers_for(instructor)
-    # Student exists as a user, but NOT as a participant or team member yet
-    # Actually, CalibrationResponseMapsController#create finds or creates the participant.
-    
-    expect do
-      post "/assignments/#{assignment.id}/calibration_response_maps",
-           params: { username: student.name },
-           headers: headers
-    end.to change(AssignmentTeam, :count).by(1)
-      .and change(TeamsParticipant, :count).by(1)
-
-    expect(response).to have_http_status(:created)
-    body = JSON.parse(response.body)
-    expect(body['team']).to be_present
-    expect(body['team']['id']).to be_present
-    
-    # Verify the participant is in the team
-    participant_id = body['participant']['id']
-    team_id = body['team']['id']
-    expect(TeamsParticipant.exists?(participant_id: participant_id, team_id: team_id)).to be true
-  end
-
   it 'creates (or reuses) participant and creates a for_calibration response map (201)' do
-    # Create a team for the student
-    team = AssignmentTeam.create!(name: 'Team1', parent_id: assignment.id)
-    AssignmentParticipant.create!(parent_id: assignment.id, user_id: student.id, type: 'AssignmentParticipant', handle: student.name)
-    TeamsParticipant.create!(user_id: student.id, team_id: team.id, participant_id: AssignmentParticipant.last.id)
-
     post "/assignments/#{assignment.id}/calibration_response_maps",
          params: { username: student.name },
          headers: auth_headers_for(instructor)
@@ -95,24 +96,18 @@ RSpec.describe 'CalibrationResponseMaps', type: :request do
 
     # Some clients expect a team-like payload with hyperlinks always present.
     expect(body['team']).to be_present
-    # Mock submission will add a hyperlink
-    expect(body['team']['hyperlinks']).to include('https://github.com/expertiza/reimplementation')
+    expect(body['team']['hyperlinks']).to eq([])
   end
 
   it 'is idempotent for participant and response_map' do
     headers = auth_headers_for(instructor)
-    # Create a team for the student
-    team = AssignmentTeam.create!(name: 'Team1', parent_id: assignment.id)
-    # Important: the user must be on the team!
-    AssignmentParticipant.create!(parent_id: assignment.id, user_id: student.id, type: 'AssignmentParticipant', handle: student.name)
-    TeamsParticipant.create!(user_id: student.id, team_id: team.id, participant_id: AssignmentParticipant.last.id)
-    
+
     expect do
       post "/assignments/#{assignment.id}/calibration_response_maps",
            params: { username: student.name },
            headers: headers
-    end.to change(AssignmentParticipant, :count).by(1) # only instructor participant needs to be created, student already exists
-                                               .and change(ResponseMap, :count).by(1)
+    end.to change(AssignmentParticipant, :count).by(2) # student + instructor participant
+                                                .and change(ResponseMap, :count).by(1)
 
     expect do
       post "/assignments/#{assignment.id}/calibration_response_maps",
@@ -145,11 +140,19 @@ RSpec.describe 'CalibrationResponseMaps', type: :request do
     expect(response).to have_http_status(:forbidden)
   end
 
+  it 'GET index creates instructor participant if missing (200, empty list)' do
+    headers = auth_headers_for(instructor)
+    expect(AssignmentParticipant.where(parent_id: assignment.id, user_id: instructor.id)).not_to exist
+
+    get "/assignments/#{assignment.id}/calibration_response_maps", headers: headers
+    expect(response).to have_http_status(:ok)
+    expect(JSON.parse(response.body)).to eq([])
+
+    expect(AssignmentParticipant.find_by(parent_id: assignment.id, user_id: instructor.id)).to be_present
+  end
+
   it 'lists calibration response maps for the instructor (200)' do
     headers = auth_headers_for(instructor)
-    team = AssignmentTeam.create!(name: 'Team1', parent_id: assignment.id)
-    AssignmentParticipant.create!(parent_id: assignment.id, user_id: student.id, type: 'AssignmentParticipant', handle: student.name)
-    TeamsParticipant.create!(user_id: student.id, team_id: team.id, participant_id: AssignmentParticipant.last.id)
 
     post "/assignments/#{assignment.id}/calibration_response_maps",
          params: { username: student.name },
@@ -163,19 +166,19 @@ RSpec.describe 'CalibrationResponseMaps', type: :request do
     expect(body).to be_an(Array)
     expect(body.length).to eq(1)
     expect(body.first['for_calibration']).to eq(true)
-    expect(body.first.dig('reviewee', 'users', 0, 'name')).to eq(student.name)
+    expect(body.first.dig('reviewee', 'user', 'name')).to eq(student.name)
+    expect(body.first['participant_name']).to eq(student.full_name)
+    expect(body.first['submitted_content']).to be_a(Hash)
+    expect(body.first['submitted_content']['hyperlinks']).to eq([])
+    expect(body.first['review_status']).to eq('not_started')
   end
 
   it 'returns routing info for begin (200)' do
     headers = auth_headers_for(instructor)
-    team = AssignmentTeam.create!(name: 'Team1', parent_id: assignment.id)
-    AssignmentParticipant.create!(parent_id: assignment.id, user_id: student.id, type: 'AssignmentParticipant', handle: student.name)
-    TeamsParticipant.create!(user_id: student.id, team_id: team.id, participant_id: AssignmentParticipant.last.id)
 
     post "/assignments/#{assignment.id}/calibration_response_maps",
          params: { username: student.name },
          headers: headers
-    expect(response).to have_http_status(:created)
     created = JSON.parse(response.body)
     map_id = created.dig('response_map', 'id')
     expect(map_id).to be_present
@@ -184,29 +187,34 @@ RSpec.describe 'CalibrationResponseMaps', type: :request do
     expect(response).to have_http_status(:ok)
     body = JSON.parse(response.body)
     expect(body['map_id']).to eq(map_id)
-    # The mock will now automatically create a response if none exists, leading to the calibration view.
-    expect(body['redirect_to']).to eq("/assignments/edit/#{assignment.id}/calibration/#{map_id}")
+    expect(body['redirect_to']).to eq("/assignments/edit/#{assignment.id}/calibration/#{map_id}/review")
   end
 
-  it 'returns edit routing info for begin when response exists (200)' do
-    headers = auth_headers_for(instructor)
-    team = AssignmentTeam.create!(name: 'Team1', parent_id: assignment.id)
-    AssignmentParticipant.create!(parent_id: assignment.id, user_id: student.id, type: 'AssignmentParticipant', handle: student.name)
-    TeamsParticipant.create!(user_id: student.id, team_id: team.id, participant_id: AssignmentParticipant.last.id)
-
+  it 'saves instructor_response JSON with distinct scores per item and submits (200)' do
     post "/assignments/#{assignment.id}/calibration_response_maps",
          params: { username: student.name },
-         headers: headers
+         headers: auth_headers_for(instructor)
     expect(response).to have_http_status(:created)
-    created = JSON.parse(response.body)
-    map_id = created.dig('response_map', 'id')
+    map_id = JSON.parse(response.body).dig('response_map', 'id')
 
-    # Create a response for the map
-    Response.create!(map_id: map_id, is_submitted: false)
+    payload = {
+      answers: [
+        { item_id: rubric_item_one.id, answer: 4, comments: 'a' },
+        { item_id: rubric_item_two.id, answer: 2, comments: 'b' }
+      ],
+      additional_comment: 'overall',
+      is_submitted: true
+    }
 
-    post "/assignments/#{assignment.id}/calibration_response_maps/#{map_id}/begin", headers: headers
+    post "/assignments/#{assignment.id}/calibration_response_maps/#{map_id}/instructor_response",
+         params: payload.to_json,
+         headers: auth_headers_for(instructor).merge('Content-Type' => 'application/json')
+
     expect(response).to have_http_status(:ok)
     body = JSON.parse(response.body)
-    expect(body['redirect_to']).to eq("/assignments/edit/#{assignment.id}/calibration/#{map_id}")
+    expect(body['is_submitted']).to eq(true)
+    by_item = body['answers'].to_h { |x| [x['item_id'], x] }
+    expect(by_item[rubric_item_one.id]['answer']).to eq(4)
+    expect(by_item[rubric_item_two.id]['answer']).to eq(2)
   end
 end

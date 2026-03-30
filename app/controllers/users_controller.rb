@@ -60,10 +60,9 @@ class UsersController < ApplicationController
       render json: { error: 'Students do not manage any users' }, status: :unprocessable_entity
       return
     end
-    # Use the User model's managed_users method directly, or cast if behavior is different
-    # But as we added it to User, it should work.
-    users = parent.managed_users
-    render json: users, status: :ok
+    parent = User.instantiate(parent)
+    users = Array(parent.managed_users)
+    render json: users.map(&:as_json), status: :ok
   end
 
   # Get role based users

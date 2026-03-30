@@ -8,19 +8,20 @@ class Assignment < ApplicationRecord
   has_many :invitations, class_name: 'Invitation', foreign_key: 'assignment_id', dependent: :destroy # , inverse_of: :assignment
   has_many :assignment_questionnaires, dependent: :destroy, inverse_of: :assignment
   has_many :questionnaires, through: :assignment_questionnaires
-  accepts_nested_attributes_for :assignment_questionnaires, allow_destroy: true, update_only: true
+  has_many :due_dates, as: :parent, class_name: 'DueDate', dependent: :destroy
+
+  accepts_nested_attributes_for :assignment_questionnaires, allow_destroy: true
+  accepts_nested_attributes_for :due_dates, allow_destroy: true
   has_many :response_maps, foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :project_topics , class_name: 'ProjectTopic', foreign_key: 'assignment_id', dependent: :destroy
-  has_many :due_dates,as: :parent, class_name: 'DueDate',  dependent: :destroy
   has_many :assignments_duties, dependent: :destroy
   has_many :duties, through: :assignments_duties
   belongs_to :course, optional: true
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments
 
-  # Attributes handled by database: is_calibrated, has_badge, staggered_deadline
-  # Attributes handled as virtual or for specific logic: title, description, show_template_review, show_teammate_review, is_pair_programming, has_mentors, has_quizzes, calibration_for_training, available_to_students, allow_topic_suggestion_from_students, enable_bidding_for_topics, enable_bidding_for_reviews, enable_authors_to_review_other_topics, allow_reviewer_to_choose_topic_to_review, allow_participants_to_create_bookmarks, auto_assign_mentors, staggered_deadline_assignment, maximum_number_of_reviews_per_submission, review_strategy, review_rubric_varies_by_round, review_rubric_varies_by_topic, review_rubric_varies_by_role, has_max_review_limit, set_allowed_number_of_reviews_per_reviewer, set_required_number_of_reviews_per_reviewer, is_review_anonymous, is_review_done_by_teams, allow_self_reviews, reviews_visible_to_other_reviewers, number_of_review_rounds, allow_tag_prompts, use_signup_deadline, use_drop_topic_deadline, use_team_formation_deadline, weights, notification_limits, use_date_updater, submission_allowed, review_allowed, teammate_allowed, metareview_allowed, reminder, review_topic_threshold, days_between_submissions, late_policy_id, is_penalty_calculated, calculate_penalty, apply_late_policy
-  attr_accessor :title, :description, :show_template_review, :show_teammate_review, :is_pair_programming, :has_mentors, :has_quizzes, :calibration_for_training, :available_to_students, :allow_topic_suggestion_from_students, :enable_bidding_for_topics, :enable_bidding_for_reviews, :enable_authors_to_review_other_topics, :allow_reviewer_to_choose_topic_to_review, :allow_participants_to_create_bookmarks, :auto_assign_mentors, :staggered_deadline_assignment, :maximum_number_of_reviews_per_submission, :review_strategy, :review_rubric_varies_by_round, :review_rubric_varies_by_topic, :review_rubric_varies_by_role, :has_max_review_limit, :set_allowed_number_of_reviews_per_reviewer, :set_required_number_of_reviews_per_reviewer, :is_review_anonymous, :is_review_done_by_teams, :allow_self_reviews, :reviews_visible_to_other_reviewers, :number_of_review_rounds, :allow_tag_prompts, :use_signup_deadline, :use_drop_topic_deadline, :use_team_formation_deadline, :weights, :notification_limits, :use_date_updater, :submission_allowed, :review_allowed, :teammate_allowed, :metareview_allowed, :reminder, :review_topic_threshold, :days_between_submissions, :late_policy_id, :is_penalty_calculated, :calculate_penalty, :apply_late_policy
+  #This method return the value of the has_badge field for the given assignment object.
+  attr_accessor :title, :description, :has_badge, :enable_pair_programming, :is_calibrated, :staggered_deadline
 
   def review_questionnaire_id
     Questionnaire.find_by_assignment_id id
@@ -73,10 +74,28 @@ class Assignment < ApplicationRecord
                                             user_id: user.id)
     # Set the participant's handle
     new_part.set_handle
+    # SubmittedContentController requires a team; for non-team assignments, use a one-person team per student.
+    ensure_solo_submission_team!(new_part)
     # Return the newly created AssignmentParticipant
     new_part
   end
 
+  # When has_teams is false, each student submitter still needs an AssignmentTeam + TeamsParticipant row
+  # so submit_file / submit_hyperlink can resolve participant.team (see SubmittedContentController#ensure_participant_team).
+  def ensure_solo_submission_team!(participant)
+    return if has_teams
+    return unless participant.is_a?(AssignmentParticipant)
+    return unless participant.user&.student?
+    return if AssignmentTeam.team(participant).present?
+
+    team = AssignmentTeam.create!(name: "Team #{participant.user.name}", parent_id: id)
+    team.set_team_directory_num
+    result = team.add_member(participant)
+    return if result[:success]
+
+    team.destroy
+    raise "Could not place student on solo team: #{result[:error]}"
+  end
 
   # Remove a participant from the assignment based on the provided user_id.
   # This method finds the AssignmentParticipant with the given assignment_id and user_id,
@@ -226,6 +245,27 @@ class Assignment < ApplicationRecord
       end
     end
     review_rounds
+  end
+
+  # Review rubric used for calibration gold-standard and reports: prefers round 1, then any linked
+  # ReviewQuestionnaire, then any linked questionnaire (handles missing or unset used_in_round).
+  def review_rubric_questionnaire
+    aqs = assignment_questionnaires.includes(:questionnaire).select { |aq| aq.questionnaire.present? }
+    return nil if aqs.empty?
+
+    round1 = aqs.find { |aq| aq.used_in_round == 1 }&.questionnaire
+    return round1 if round1
+
+    prefer_review = aqs.select { |aq| aq.questionnaire.questionnaire_type.to_s == 'ReviewQuestionnaire' }
+    pool = prefer_review.presence || aqs
+    pool.min_by { |aq| [aq.used_in_round.nil? ? 1 : 0, aq.used_in_round || 9_999_999] }&.questionnaire
+  end
+
+  def review_round_for_rubric(questionnaire)
+    return 1 unless questionnaire
+
+    row = assignment_questionnaires.find_by(questionnaire_id: questionnaire.id)
+    row&.used_in_round.presence || 1
   end
 
 end

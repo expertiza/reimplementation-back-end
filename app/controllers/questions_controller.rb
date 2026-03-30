@@ -53,16 +53,16 @@ class QuestionsController < ApplicationController
 
     # Add attributes based on the item type
     case item.question_type
-    when 'Scale', 'scale'
+    when 'Scale'
       item.weight = params[:weight]
       item.max_label = 'Strongly agree'
       item.min_label = 'Strongly disagree'
       item.max_value = params[:max_value] || 5
-    when 'Dropdown', 'dropdown'
+    when 'Dropdown'
       item.alternatives = '0|1|2|3|4|5'
-    when 'TextArea', 'TextAreaItem'
+    when 'TextArea'
       item.size = '60, 5'
-    when 'TextField', 'TextFieldItem'
+    when 'TextField'
       item.size = '30'
     end
 
@@ -103,7 +103,7 @@ class QuestionsController < ApplicationController
   end
 
   def types
-    types = %w[Scale Dropdown TextArea TextField Criterion]
+    types = Item.pluck(:question_type).uniq
     render json: types, status: :ok
   end
 

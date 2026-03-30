@@ -13,7 +13,12 @@ class AssignmentTeam < Team
   delegate :path, to: :assignment, prefix: true
 
   def hyperlinks
-    submitted_hyperlinks.blank? ? [] : YAML.safe_load(submitted_hyperlinks)
+    return [] if submitted_hyperlinks.blank?
+
+    YAML.safe_load(submitted_hyperlinks)
+  rescue Psych::Exception, StandardError => e
+    Rails.logger.warn("[AssignmentTeam#hyperlinks] team_id=#{id}: #{e.class}: #{e.message}")
+    []
   end
 
   def submit_hyperlink(hyperlink)
@@ -50,22 +55,24 @@ class AssignmentTeam < Team
     return nil unless teams_participants
 
     teams_participants.each do |teams_participant|
-      if teams_participant.team_id.nil?
-        next
-      end
-      team = AssignmentTeam.find(teams_participant.team_id)
-      return team if team.parent_id == participant.parent_id
+      next if teams_participant.team_id.nil?
+
+      team = Team.find_by(id: teams_participant.team_id)
+      next unless team.is_a?(AssignmentTeam)
+      next unless team.parent_id == participant.parent_id
+
+      return team
     end
     nil
   end
 
   # Set the directory num for this team
   def set_team_directory_num
-    return if directory_num && (directory_num >= 0)
+    return if directory_num.present? && directory_num >= 0
 
-    max_num = AssignmentTeam.where(parent_id:).order('directory_num desc').first.directory_num
-    dir_num = max_num ? max_num + 1 : 0
-    update(directory_num: dir_num)
+    max_num = AssignmentTeam.where(parent_id: parent_id).where.not(id: id).where.not(directory_num: nil).maximum(:directory_num)
+    dir_num = max_num.nil? ? 0 : max_num + 1
+    update!(directory_num: dir_num)
   end
 
   # Gets the team directory path
@@ -151,6 +158,60 @@ class AssignmentTeam < Team
     destroy if participants.empty?
   end
 
+  # Get the review response map
+  def review_map_type
+    'ReviewResponseMap'
+  end
+  
+  # Adds a participant to this team.
+  # - Update the participant's team_id (so their direct reference is consistent)
+  # - Ensure there is a TeamsParticipant join record connecting the participant and this team
+  def add_participant(participant)
+    # need to have a check if the team is full then it can not add participant to the team
+    raise TeamFullError, "Team is full." if full?
+
+    # Update the participant's team_id column - will remove the team reference inside participants table later. keeping it for now
+    # participant.update!(team_id: id)
+
+    # Create or reuse the join record to maintain the association
+    TeamsParticipant.find_or_create_by!(participant_id: participant.id, team_id: id, user_id: participant.user_id)
+  end
+  
+  # Removes a participant from this team.
+  # - Delete the TeamsParticipant join record
+  # - if the participant sent any invitations while being on the team, they all need to be retracted
+  # - If the team has no remaining members, destroy the team itself
+  def remove_participant(participant)
+    # retract all the invitations the participant sent (if any) while being on the this team
+    participant.retract_sent_invitations
+
+    # Remove the join record if it exists
+    tp = TeamsParticipant.find_by(team_id: id, participant_id: participant.id)
+    tp&.destroy
+    
+    # Update the participant's team_id column - will remove the team reference inside participants table later. keeping it for now
+    # participant.update!(team_id: nil)
+  end
+
+  # Use current object (AssignmentTeam) as reviewee and create the ReviewResponseMap record
+  def assign_reviewer(reviewer)
+    assignment = Assignment.find(parent_id)
+    raise 'The assignment cannot be found.' if assignment.nil?
+
+    ReviewResponseMap.create(reviewee_id: id, reviewer_id: reviewer.get_reviewer.id, reviewed_object_id: assignment.id, team_reviewing_enabled: assignment.team_reviewing_enabled)
+  end
+
+  # Whether the team has submitted work or not
+  def has_submissions?
+    submitted_files.any? || submitted_hyperlinks.present?
+  end
+
+  # Computes the average review grade for an assignment team.
+  # This method aggregates scores from all ReviewResponseMaps (i.e., all reviewers of the team).
+  def aggregate_review_grade
+    compute_average_review_score(review_mappings)
+  end
+
   protected
 
   # Validates if a user is eligible to join the team
@@ -168,6 +229,6 @@ class AssignmentTeam < Team
       errors.add(:type, 'must be an AssignmentTeam or its subclass')
     end
   end
-end
+end 
 
 class TeamFullError < StandardError; end

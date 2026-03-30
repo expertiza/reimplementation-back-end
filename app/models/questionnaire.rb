@@ -2,7 +2,9 @@
 
 class Questionnaire < ApplicationRecord
   belongs_to :instructor
-  has_many :items, class_name: "Item", foreign_key: "questionnaire_id", dependent: :destroy, inverse_of: :questionnaire # the collection of items associated with this Questionnaire
+  has_many :items, class_name: "Item", foreign_key: "questionnaire_id", dependent: :destroy # the collection of items associated with this Questionnaire
+  # Allow the frontend to submit `items_attributes` as part of the questionnaire
+  # create/update request (used by QuestionnaireEditor).
   accepts_nested_attributes_for :items, allow_destroy: true
   before_destroy :check_for_question_associations
 
@@ -11,8 +13,7 @@ class Questionnaire < ApplicationRecord
   validates :max_question_score, :min_question_score, numericality: true 
   
 
-  has_many :assignment_questionnaires, dependent: :destroy, inverse_of: :questionnaire
-  has_many :assignments, through: :assignment_questionnaires
+  # after_initialize :post_initialization
     # @print_name = 'Review Rubric'
   
     # class << self
@@ -24,12 +25,7 @@ class Questionnaire < ApplicationRecord
     # end
   
     def symbol
-      case questionnaire_type
-      when 'Review rubric', 'ReviewQuestionnaire'
-        :review
-      else
-        'review'.to_sym
-      end
+      'review'.to_sym
     end
   
     def get_assessments_for(participant)
@@ -93,8 +89,7 @@ class Questionnaire < ApplicationRecord
     DEFAULT_MIN_QUESTION_SCORE = 0  # The lowest score that a reviewer can assign to any questionnaire question
     DEFAULT_MAX_QUESTION_SCORE = 5  # The highest score that a reviewer can assign to any questionnaire question
     DEFAULT_QUESTIONNAIRE_URL = 'http://www.courses.ncsu.edu/csc517'.freeze
-    QUESTIONNAIRE_TYPES = ['Review rubric',
-                          'ReviewQuestionnaire',
+    QUESTIONNAIRE_TYPES = ['ReviewQuestionnaire',
                           'MetareviewQuestionnaire',
                           'Author FeedbackQuestionnaire',
                           'AuthorFeedbackQuestionnaire',

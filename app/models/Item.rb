@@ -2,33 +2,31 @@
 
 class Item < ApplicationRecord
   before_create :set_seq
-  belongs_to :questionnaire, inverse_of: :items # each item belongs to a specific questionnaire
+  belongs_to :questionnaire # each item belongs to a specific questionnaire
   has_many :answers, dependent: :destroy, foreign_key: 'item_id'
   attr_accessor :choice_strategy
   
+  validates :seq, presence: true, numericality: true # sequence must be numeric
   validates :txt, length: { minimum: 0, allow_nil: false, message: "can't be nil" } # text content must be provided
   validates :question_type, presence: true # user must define the item type
-  validates :break_before, inclusion: { in: [true, false] }
-  validates :seq, presence: true, numericality: true, on: :update # sequence must be numeric
-    
+  validates :break_before, presence: true
+
   def scorable?
     false
   end
 
   def scored?
-    question_type&.downcase&.include?('scale') || question_type&.downcase&.include?('criterion')
+    question_type.in?(%w[ScaleItem CriterionItem])
   end
     
   def set_seq
-    if questionnaire
-      # Using items.size + 1 might be risky if items are not yet saved. 
-      # Better to use a safe default if it's nil.
-      self.seq ||= questionnaire.items.size + 1
-    end
+    self.seq = questionnaire.items.size + 1
   end
 
   def as_json(options = {})
-    super(options.merge({
+      super(options.merge({
+                            # Include id so callers (e.g. calibration_reports) can merge `only: [:id, ...]`
+                            # without this list overwriting and dropping id — all rubric rows need distinct ids.
                             only: %i[id txt weight seq question_type size alternatives break_before min_label max_label created_at updated_at],
                             include: {
                               questionnaire: { only: %i[name id] }
@@ -58,6 +56,24 @@ class Item < ApplicationRecord
   # Use strategy to validate the item
   def validate_item
     strategy.validate(self)
+  end
+
+  def max_score
+    weight
+  end
+
+  def self.for(record)
+    klass = case record.question_type
+            when 'Criterion'
+              Criterion
+            when 'Scale'
+              Scale
+            else
+              Item
+            end
+
+    # Cast the existing record to the desired subclass
+    klass.new(record.attributes)
   end
 
   def max_score

@@ -33,10 +33,7 @@ class User < ApplicationRecord
   delegate :administrator?, to: :role
   delegate :super_administrator?, to: :role
 
-  # Cast to Ta/Instructor/... for behavior; +case record.role+ with role id constants never
-  # matched (Integer#=== on a Role), and +super+ incorrectly called ActiveRecord::Base.instantiate
-  # with a User (expects an attributes Hash), which led to NoMethodError on +fetch+.
-  def self.cast_by_role(record)
+  def self.instantiate(record)
     case record.role_id
     when Role::TEACHING_ASSISTANT_ID
       record.becomes(Ta)
@@ -47,8 +44,22 @@ class User < ApplicationRecord
     when Role::SUPER_ADMINISTRATOR_ID
       record.becomes(SuperAdministrator)
     else
+      # Legacy seeds/DBs may use different role.id values than Role::*_ID; map by role name.
+      r = record.role
+      return record if r.blank? || r.student?
+
+      return record.becomes(SuperAdministrator) if r.super_administrator?
+      return record.becomes(Administrator) if r.administrator? && !r.super_administrator?
+      return record.becomes(Ta) if r.ta?
+      return record.becomes(Instructor) if r.instructor?
+
       record
     end
+  end
+
+  # Subclasses (Instructor, Ta, Administrator, SuperAdministrator) override this.
+  def managed_users
+    []
   end
 
   # Welcome email to be sent to the user after they sign up
@@ -81,7 +92,7 @@ class User < ApplicationRecord
     when Role::TEACHING_ASSISTANT_ID
       my_instructor
     else
-      raise NotImplementedError, "Unknown role: #{role&.name}"
+      raise NotImplementedError, "Unknown role: #{role.name}"
     end
   end
 
@@ -127,18 +138,16 @@ class User < ApplicationRecord
 
   # This will override the default as_json method in the ApplicationRecord class and specify
   # that only the id, name, and email attributes should be included when a User object is serialized.
-  def as_json(options = nil)
-    options = {} if options.nil? || options.is_a?(ActiveRecord::Base)
-    super(options.merge({
-                          only: %i[id name email full_name email_on_review email_on_submission
-                                   email_on_review_of_review],
-                          include:
-                          {
-                            role: { only: %i[id name] },
-                            parent: { only: %i[id name] },
-                            institution: { only: %i[id name] }
-                          }
-                        })).tap do |hash|
+  def as_json(options = {})
+    super({
+      only: %i[id name email full_name email_on_review email_on_submission
+               email_on_review_of_review],
+      include: {
+        role: { only: %i[id name] },
+        parent: { only: %i[id name] },
+        institution: { only: %i[id name] }
+      }
+    }.merge(options || {})).tap do |hash|
       hash['parent'] ||= { id: nil, name: nil }
       hash['institution'] ||= { id: nil, name: nil }
     end
@@ -154,21 +163,8 @@ class User < ApplicationRecord
   end
 
   def generate_jwt
-    JWT.encode({ id: id, exp: 60.days.from_now.to_i }, Rails.application.credentials.secret_key_base)
-  end
-
-  def managed_users
-    # This method should be implemented in subclasses
-    # However, to avoid NoMethodError when casting fails or returns a User instance:
-    if super_administrator?
-      User.all.to_a
-    elsif administrator?
-      User.where(institution_id:).where.not(id:).to_a
-    elsif instructor? || ta?
-      User.where(parent_id: id).to_a
-    else
-      []
-    end
+    jwt_secret = ENV['JWT_SECRET_KEY'].presence || Rails.application.credentials.secret_key_base
+    JWT.encode({ id: id, exp: 60.days.from_now.to_i }, jwt_secret)
   end
 
 end
