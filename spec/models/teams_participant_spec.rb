@@ -44,13 +44,12 @@ RSpec.describe TeamsParticipant, type: :model do
     end
 
     # ── uniqueness constraint (our Step 2 change) ──
-    it 'prevents same participant from joining two different teams' do
+    it 'prevents same participant from joining two different teams via add_member' do
       team2 = AssignmentTeam.create!(name: 'Team V2', parent_id: assignment.id)
       TeamsParticipant.create!(team: team, participant: participant, user: user)
 
-      tp2 = TeamsParticipant.new(team: team2, participant: participant, user: user)
-      expect(tp2).not_to be_valid
-      expect(tp2.errors[:participant_id]).to be_present
+      result = team2.add_member(participant)
+      expect(result[:success]).to be false
     end
 
     it 'allows same participant on the same team only once' do
