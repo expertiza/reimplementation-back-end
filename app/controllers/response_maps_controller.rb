@@ -15,9 +15,9 @@ class ResponseMapsController < ApplicationController
   def create
     @response_map = ResponseMap.new(response_map_params)
     if @response_map.save
-      render json: record, status: :created
+      render json: @response_map, status: :created
     else
-      render json: record.errors, status: :unprocessable_entity
+      render json: @response_map.errors, status: :unprocessable_entity
     end
   end
 
@@ -26,9 +26,9 @@ class ResponseMapsController < ApplicationController
   def update
     @response_map.assign_attributes(response_map_params)
     if @response_map.save
-      render json: record, status: :ok
+      render json: @response_map, status: :ok
     else
-      render json: record.errors, status: :unprocessable_entity
+      render json: @response_map.errors, status: :unprocessable_entity
     end
   end
 
