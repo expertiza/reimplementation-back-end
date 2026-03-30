@@ -70,4 +70,11 @@ Rails.application.configure do
   # config.action_cable.disable_request_forgery_protection = true
   config.hosts << 'localhost'
   config.hosts << "www.example.com"
+
+  # ── Frontend URL Configuration ──
+  # Set defaults for local development (can be overridden via environment variables)
+  # Rails convention recommends config.x.* for custom settings
+  config.x.frontend_scheme = ENV.fetch('FRONTEND_SCHEME', 'http')
+  config.x.frontend_domain = ENV.fetch('FRONTEND_DOMAIN', 'localhost')
+  config.x.frontend_port = ENV.fetch('FRONTEND_PORT', '3000')
 end
