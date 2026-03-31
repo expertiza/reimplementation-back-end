@@ -64,8 +64,12 @@ Rails.application.routes.draw do
 
       resources :questionnaires do
         collection do
+          get 'hierarchical', to: 'questionnaires#hierarchical', as: 'hierarchical'
           post 'copy/:id', to: 'questionnaires#copy', as: 'copy'
           get 'toggle_access/:id', to: 'questionnaires#toggle_access', as: 'toggle_access'
+        end
+        member do
+          get :items
         end
       end
 

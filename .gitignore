@@ -32,3 +32,8 @@
 coverage/
 rsa_keys.yml
 pg_data/
+
+# Ignore ruby version
+.ruby-version
+Gemfile
+Gemfile.lock
