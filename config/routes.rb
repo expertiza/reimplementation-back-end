@@ -9,6 +9,8 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "articles#index"
   post '/login', to: 'authentication#login'
+      get '/questionnaire_types', to: 'questionnaires#types'
+      get '/item_types', to: 'questions#types'
       resources :institutions
       resources :roles do
         collection do
@@ -61,11 +63,13 @@ Rails.application.routes.draw do
           get ':id/copy', action: :copy
         end
       end
-
       resources :questionnaires do
         collection do
           post 'copy/:id', to: 'questionnaires#copy', as: 'copy'
           get 'toggle_access/:id', to: 'questionnaires#toggle_access', as: 'toggle_access'
+        end
+        member do
+          get 'items', to: 'questions#show_all'
         end
       end
 
@@ -213,5 +217,9 @@ Rails.application.routes.draw do
       end
       resources :assignments do
         resources :duties, controller: 'assignments_duties', only: [:index, :create, :destroy]
+        member do
+          get 'topics/rubrics', to: 'assignments_topics#rubrics'
+          patch 'topics/rubrics', to: 'assignments_topics#rubrics'
+        end
       end
 end

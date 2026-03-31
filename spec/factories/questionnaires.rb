@@ -8,7 +8,6 @@ FactoryBot.define do
     min_question_score { 0 }
     max_question_score { 10 }
     association :instructor
-    association :assignment
 
     # Trait for questionnaire with questions
     trait :with_questions do

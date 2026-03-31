@@ -3,8 +3,8 @@
 require 'rails_helper'
 
 describe Course, type: :model do
-  let(:role) {Role.create(name: 'Instructor', parent_id: nil, id: 2, default_page_id: nil)}
-  let(:instructor) { Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role_id: role.id) }
+  let(:role) { Role.find_or_create_by(name: 'Instructor') }
+  let(:instructor) { Instructor.create!(name: "testinstructor_#{SecureRandom.hex(4)}", email: "test#{SecureRandom.hex(4)}@test.com", full_name: 'Test Instructor', password: '123456', role_id: role.id) }
   let(:institution) { create(:institution, id: 1) }
   let(:course) { create(:course, id: 1, name: 'ECE517', instructor: instructor, institution: institution) }
   let(:user1) { create(:user, name: 'abcdef', full_name:'abc bbc', email: 'abcbbc@gmail.com', password: '123456789', password_confirmation: '123456789', role: role) }

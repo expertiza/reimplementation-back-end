@@ -12,7 +12,15 @@ class Response < ApplicationRecord
 
   # return the questionnaire that belongs to the response
   def questionnaire
-    response_assignment.assignment_questionnaires.find_by(used_in_round: self.round).questionnaire
+    resolved_questionnaire = response_assignment.questionnaire_for(
+      questionnaire_type: "#{map.questionnaire_type}Questionnaire",
+      round: round,
+      topic: map.reviewee.respond_to?(:current_project_topic) ? map.reviewee.current_project_topic : nil
+    )
+
+    return resolved_questionnaire if resolved_questionnaire
+
+    response_assignment.assignment_questionnaires.find_by(used_in_round: self.round)&.questionnaire
   end
 
   def reportable_difference?
