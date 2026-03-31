@@ -63,9 +63,6 @@ Rails.application.routes.draw do
           get ':id/copy', action: :copy
         end
       end
-
-      get '/questionnaire_types', to: 'questionnaires#types'
-
       resources :questionnaires do
         collection do
           post 'copy/:id', to: 'questionnaires#copy', as: 'copy'
