@@ -1,4 +1,14 @@
 class QuestionnairesController < ApplicationController
+  QUESTIONNAIRE_TYPE_OPTIONS = [
+    'Author feedback',
+    'Teammate Review',
+    'Survey',
+    'Assignment survey',
+    'Global survey',
+    'Course survey',
+    'Bookmark rating',
+    'Quiz'
+  ].freeze
   
   # Index method returns the list of JSON objects of the questionnaire
   # GET on /questionnaires
@@ -84,10 +94,34 @@ class QuestionnairesController < ApplicationController
     end
   end
 
+  def types
+    render json: QUESTIONNAIRE_TYPE_OPTIONS, status: :ok
+  end
+
   private
 
   def questionnaire_params
-    params.require(:questionnaire).permit(:name, :questionnaire_type, :private, :min_question_score, :max_question_score, :instructor_id)
+    params.require(:questionnaire).permit(
+      :name,
+      :questionnaire_type,
+      :private,
+      :min_question_score,
+      :max_question_score,
+      :instructor_id,
+      items_attributes: %i[
+        id
+        txt
+        weight
+        seq
+        question_type
+        size
+        alternatives
+        break_before
+        max_label
+        min_label
+        _destroy
+      ]
+    )
   end
 
   def sanitize_display_type(type)
