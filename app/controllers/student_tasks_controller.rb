@@ -24,6 +24,7 @@ class StudentTasksController < ApplicationController
     # Render the found student task as JSON.
     render json: @student_task, status: :ok
   end
+  
 
 
   def queue

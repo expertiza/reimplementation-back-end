@@ -10,14 +10,19 @@ module TaskOrdering
       assignment.quiz_questionnaire_for_review_flow
     end
 
-    # QuizResponseMap stores the quiz questionnaire id in reviewed_object_id; 
-    # the base ResponseMap association expects an assignment id, so model validation would fail.
-    # Persist without validations (quiz_response_map.rb unchanged).
     def response_map
-      return nil if questionnaire.nil?
       return @response_map if @response_map
 
-      # QuizResponseMap is uniquely identified by reviewer, reviewee, and questionnaire id.
+      # First: check if a QuizResponseMap already exists for this reviewer/reviewee
+      existing = QuizResponseMap.find_by(
+        reviewer_id: team_participant.participant_id,
+        reviewee_id: review_map&.reviewee_id || 0
+      )
+      return @response_map = existing if existing
+
+      # Second: if no existing map, create one — but only if a questionnaire exists
+      return nil if questionnaire.nil?
+
       attrs = {
         reviewer_id: team_participant.participant_id,
         reviewee_id: review_map&.reviewee_id || 0,
@@ -25,13 +30,7 @@ module TaskOrdering
         type: "QuizResponseMap"
       }
 
-      @response_map = QuizResponseMap.find_by(attrs) || begin
-        m = QuizResponseMap.new(attrs)
-        # Validation is skipped because QuizResponseMap uses questionnaire id
-        # instead of assignment id, which would fail ResponseMap validation.
-        m.save!(validate: false)
-        m
-      end
+      @response_map = QuizResponseMap.new(attrs).tap { |m| m.save!(validate: false) }
     end
   end
 end
