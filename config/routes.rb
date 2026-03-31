@@ -9,6 +9,8 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "articles#index"
   post '/login', to: 'authentication#login'
+      get '/questionnaire_types', to: 'questionnaires#types'
+      get '/item_types', to: 'questions#types'
       resources :institutions
       resources :roles do
         collection do
@@ -66,6 +68,9 @@ Rails.application.routes.draw do
         collection do
           post 'copy/:id', to: 'questionnaires#copy', as: 'copy'
           get 'toggle_access/:id', to: 'questionnaires#toggle_access', as: 'toggle_access'
+        end
+        member do
+          get 'items', to: 'questions#show_all'
         end
       end
 

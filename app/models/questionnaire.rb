@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 class Questionnaire < ApplicationRecord
-  belongs_to :instructor
-  has_many :items, class_name: "Item", foreign_key: "questionnaire_id", dependent: :destroy # the collection of items associated with this Questionnaire
+  belongs_to :instructor, class_name: 'User', foreign_key: 'instructor_id'
+  has_many :items, class_name: "Item", foreign_key: "questionnaire_id", dependent: :destroy, inverse_of: :questionnaire # the collection of items associated with this Questionnaire
+  accepts_nested_attributes_for :items, allow_destroy: true
   before_destroy :check_for_question_associations
 
   scope :for_questionnaire_type, ->(questionnaire_type) { where(questionnaire_type:) }
