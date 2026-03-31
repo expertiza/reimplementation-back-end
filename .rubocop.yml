@@ -13,19 +13,19 @@ Style/FrozenStringLiteralComment:
 Metrics/BlockLength:
   Max: 120
   Exclude:
-    - 'db/**/*.rb'
+    - "db/**/*.rb"
 
 Metrics/MethodLength:
-    Max: 20
-    Exclude:
-      - 'db/**/*.rb'
+  Max: 20
+  Exclude:
+    - "db/**/*.rb"
 
 Metrics/AbcSize:
   Max: 20
   Exclude:
-    - 'db/**/*.rb'
+    - "db/**/*.rb"
 Style/StringLiterals:
   Enabled: true
   EnforcedStyle: single_quotes
   Exclude:
-      - 'db/**/*.rb'
+    - "db/**/*.rb"
