@@ -2,7 +2,7 @@
 
 class Item < ApplicationRecord
   before_create :set_seq
-  belongs_to :questionnaire # each item belongs to a specific questionnaire
+  belongs_to :questionnaire, inverse_of: :items # each item belongs to a specific questionnaire
   has_many :answers, dependent: :destroy, foreign_key: 'item_id'
   attr_accessor :choice_strategy
   

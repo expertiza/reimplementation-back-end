@@ -5,9 +5,9 @@ require 'rails_helper'
 RSpec.describe JoinTeamRequest, type: :model do
   include ActiveJob::TestHelper
 
-  let(:role) { Role.create(name: 'Instructor', parent_id: nil, id: 3, default_page_id: nil) }
-  let(:student_role) { Role.create(name: 'Student', parent_id: nil, id: 5, default_page_id: nil) }
-  let(:instructor) { Instructor.create(name: 'testinstructor', email: 'instructor@test.com', full_name: 'Test Instructor', password: '123456', role: role) }
+  let(:role) { Role.find_or_create_by(name: 'Instructor') }
+  let(:student_role) { Role.find_or_create_by(name: 'Student') }
+  let(:instructor) { Instructor.create!(name: "testinstructor_#{SecureRandom.hex(4)}", email: "test#{SecureRandom.hex(4)}@test.com", full_name: 'Test Instructor', password: '123456', role: role) }
   let(:requester) { create :user, name: 'requester_user', role: student_role, email: 'requester@test.com' }
   let(:team_member) { create :user, name: 'team_member_user', role: student_role, email: 'team_member@test.com' }
   let(:another_user) { create :user, name: 'another_user', role: student_role, email: 'another@test.com' }
