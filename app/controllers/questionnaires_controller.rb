@@ -1,4 +1,15 @@
 class QuestionnairesController < ApplicationController
+  QUESTIONNAIRE_TYPE_OPTIONS = [
+    'Review',
+    'Author feedback',
+    'Teammate Review',
+    'Survey',
+    'Assignment survey',
+    'Global survey',
+    'Course survey',
+    'Bookmark rating',
+    'Quiz'
+  ].freeze
   
   # Index method returns the list of JSON objects of the questionnaire
   # GET on /questionnaires
@@ -82,6 +93,10 @@ class QuestionnairesController < ApplicationController
     rescue ActiveRecord::RecordInvalid
       render json: $ERROR_INFO.to_s, status: :unprocessable_entity
     end
+  end
+
+  def types
+    render json: QUESTIONNAIRE_TYPE_OPTIONS, status: :ok
   end
 
   private
