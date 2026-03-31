@@ -3,8 +3,8 @@ default: &default
   encoding: utf8mb4
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   port: 3306
-  username: mihir
-  password: mihir
+  username: root
+  password: expertiza
   socket: /var/run/mysqld/mysqld.sock
 
 development:
