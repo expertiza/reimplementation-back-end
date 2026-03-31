@@ -5,6 +5,7 @@ class Team < ApplicationRecord
   TEAM_PARTICIPANT_COLUMN_PREFIX = 'participant_'
   DEFAULT_TEAM_IMPORT_EXPORT_PARTICIPANT_COLUMNS = 10
   mandatory_fields :name
+  hidden_fields :id, :created_at, :updated_at
   filter -> { export_rows }
 
   TeamExportRow = Struct.new(:team, :participants) do

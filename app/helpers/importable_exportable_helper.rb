@@ -160,9 +160,17 @@ module ImportableExportableHelper
   # --------------------------------------------------------------
   def mandatory_fields(*fields)
     if fields.any?
-      @mandatory_fields = fields.map(&:to_s)
+      @mandatory_fields = fields.map(&:to_s) - hidden_fields
     else
       @mandatory_fields
+    end
+  end
+
+  def hidden_fields(*fields)
+    if fields.any?
+      @hidden_fields = fields.map(&:to_s)
+    else
+      @hidden_fields || []
     end
   end
 
@@ -170,7 +178,11 @@ module ImportableExportableHelper
   # Optional = internal fields - mandatory
   # --------------------------------------------------------------
   def optional_fields
-    internal_fields - (mandatory_fields || [])
+    unhidden_fields - (mandatory_fields || [])
+  end
+
+  def unhidden_fields
+    internal_fields - (hidden_fields || [])
   end
 
   # --------------------------------------------------------------

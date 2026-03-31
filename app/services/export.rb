@@ -31,11 +31,11 @@ class Export
   #   1,Team 1,Alice; Bob
   #   2,Team 2,Carol; Dan
   #
-  def self.perform(export_class, ordered_headers)
+  def self.export_csv(export_class, ordered_headers)
     ordered_headers ||= export_class.internal_and_external_fields
     mapping = FieldMapping.from_header(export_class, ordered_headers)
 
-    CSV.generate do |csv|
+    csv_contents = CSV.generate do |csv|
       class_fields = mapping.ordered_fields.select{ |ele| export_class.internal_fields.include?(ele) }
 
 
@@ -57,6 +57,14 @@ class Export
         csv << row
       end
     end
+
+    [{ name: export_class.name, contents: csv_contents }]
+  end
+
+  def self.perform(export_class, ordered_headers = nil, graph_export: false)
+    return ExportHelper.export_has_many_graph(export_class) if graph_export
+
+    export_csv(export_class, ordered_headers)
   end
 
 end

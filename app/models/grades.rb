@@ -10,7 +10,6 @@ class Grades
     participant_name
     participant_email
     submission_grade
-    submission_comment
     review_grade
     teammate_review_grade
     author_feedback_grade
@@ -21,6 +20,7 @@ class Grades
   extend ImportableExportableHelper
 
   mandatory_fields :assignment_name, :team_name, :participant_name
+  # hidden_fields :id, :created_at, :updated_at
   filter -> { aggregate_grades }
 
   # Spoof a table-backed model so ImportableExportableHelper can treat
@@ -35,9 +35,12 @@ class Grades
       team = participant.team
       next if assignment.nil? || team.nil?
 
+      teammate_ids = team.participants.where.not(id: participant.id).pluck(:id)
+
       reviews_of_me_maps = TeammateReviewResponseMap.where(
         reviewed_object_id: assignment.id,
-        reviewee_id: participant.id
+        reviewee_id: participant.id,
+        reviewer_id: teammate_ids
       ).to_a
 
       reviews_by_me_maps = TeammateReviewResponseMap.where(
@@ -63,7 +66,6 @@ class Grades
         participant_name: participant.user_name,
         participant_email: participant.user&.email,
         submission_grade: team.grade_for_submission,
-        submission_comment: team.comment_for_submission,
         review_grade: team.aggregate_review_grade,
         teammate_review_grade: participant.aggregate_teammate_review_grade(reviews_of_me_maps),
         author_feedback_grade: participant.aggregate_teammate_review_grade(feedback_from_my_reviewees_maps)

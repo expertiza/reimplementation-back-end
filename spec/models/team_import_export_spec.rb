@@ -17,9 +17,10 @@ RSpec.describe Team, type: :model do
       expect(team.add_member(participant_one)[:success]).to be(true)
       expect(team.add_member(participant_two)[:success]).to be(true)
 
-      csv_text = Team.with_assignment_context(assignment.id) do
+      export_payload = Team.with_assignment_context(assignment.id) do
         Export.perform(Team, %w[name participant_1 participant_2 participant_3])
       end
+      csv_text = export_payload.first[:contents]
 
       rows = CSV.parse(csv_text, headers: true)
       exported_row = rows.find { |row| row['name'] == 'Export Team' }
