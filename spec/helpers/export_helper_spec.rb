@@ -4,7 +4,7 @@ require 'rails_helper'
 require 'csv'
 
 RSpec.describe ExportHelper, type: :helper do
-  describe '.export_has_many_graph' do
+  describe 'graph export via Export.perform' do
     it 'returns export payloads for each class in the graph with real db records' do
       role = create(:role, :instructor)
       institution = create(:institution)
@@ -68,7 +68,7 @@ RSpec.describe ExportHelper, type: :helper do
       questionnaire_external = Item.external_classes.find { |ext| ext.ref_class == Questionnaire }
       allow(Item).to receive(:external_classes).and_return([questionnaire_external].compact)
 
-      result = described_class.export_has_many_graph(Questionnaire)
+      result = Export.perform(Questionnaire, nil, graph_export: true)
       exports_by_class = result.index_by { |entry| entry[:name] }
 
       expect(result).to all(include(:name, :contents))
@@ -84,6 +84,9 @@ RSpec.describe ExportHelper, type: :helper do
       expect(advice_rows.map { |row| row['advice'] }).to include(advice_record.advice)
       expect(answer_rows.map { |row| row['comments'] }).to include(answer_record.comments)
       expect(answer_rows.map { |row| row['answer'] }).to include(answer_record.answer.to_s)
+      expect(answer_rows.headers.length).to eq(
+        answer_rows.first&.fields&.length || answer_rows.headers.length
+      )
     end
 
     it 'exports csv and prints each class csv output' do
@@ -146,7 +149,7 @@ RSpec.describe ExportHelper, type: :helper do
       questionnaire_external = Item.external_classes.find { |ext| ext.ref_class == Questionnaire }
       allow(Item).to receive(:external_classes).and_return([questionnaire_external].compact)
 
-      result = described_class.export_has_many_graph(Questionnaire)
+      result = Export.perform(Questionnaire, nil, graph_export: true)
       exports_by_class = result.index_by { |entry| entry[:name] }
 
       puts "\nCSV Exports:"
@@ -160,6 +163,11 @@ RSpec.describe ExportHelper, type: :helper do
       expect(exports_by_class['Item'][:contents]).to include('txt')
       expect(exports_by_class['QuestionAdvice'][:contents]).to include('advice')
       expect(exports_by_class['Answer'][:contents]).to include('comments')
+
+      answer_rows = CSV.parse(exports_by_class['Answer'][:contents], headers: true)
+      expect(answer_rows.headers.length).to eq(
+        answer_rows.first&.fields&.length || answer_rows.headers.length
+      )
     end
   end
 end

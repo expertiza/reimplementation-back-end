@@ -101,7 +101,10 @@ module ExportHelper
     return if seen.include?(graph[:class_name])
 
     seen.add(graph[:class_name])
-    headers_for_export = remove_identifier_fields(Array(graph[:headers]) + Array(inherited_headers))
+    headers_for_export = filter_headers_for_class(
+      graph[:class_name],
+      remove_identifier_fields(Array(graph[:headers]) + Array(inherited_headers))
+    )
     block.call(graph, headers_for_export)
 
     prefixed_parent_headers = prefix_headers_with_class_name(graph[:headers], graph[:class_name])
@@ -135,6 +138,20 @@ module ExportHelper
     raise ArgumentError, "No export headers available for #{klass.name}"
   end
   private_class_method :mandatory_headers_for
+
+  def filter_headers_for_class(class_name, headers)
+    klass = normalize_class(class_name)
+    exportable_headers = if klass.respond_to?(:internal_and_external_fields)
+                           remove_identifier_fields(klass.internal_and_external_fields.map(&:to_s))
+                         elsif klass.respond_to?(:column_names)
+                           remove_identifier_fields(klass.column_names)
+                         else
+                           []
+                         end
+
+    Array(headers).select { |header| exportable_headers.include?(header) }
+  end
+  private_class_method :filter_headers_for_class
 
   def remove_identifier_fields(fields)
     Array(fields).map(&:to_s).uniq.reject { |field| field == 'id' || field.end_with?('_id') }
