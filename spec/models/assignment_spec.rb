@@ -17,11 +17,13 @@ RSpec.describe Assignment, type: :model do
   describe '#num_review_rounds' do
     it 'counts review due dates to determine the number of rounds' do
       assignment = Assignment.create!(name: 'Round Count', instructor: instructor, vary_by_round: true)
-      AssignmentDueDate.create!(parent: assignment, due_at: 1.day.from_now,
+      AssignmentDueDate.create!(assignment: assignment, due_at: 1.day.from_now,
                                 deadline_type_id: DueDate::REVIEW_DEADLINE_TYPE_ID,
+                                parent_type: 'Assignment',
                                 submission_allowed_id: 3, review_allowed_id: 3)
-      AssignmentDueDate.create!(parent: assignment, due_at: 2.days.from_now,
+      AssignmentDueDate.create!(assignment: assignment, due_at: 2.days.from_now,
                                 deadline_type_id: DueDate::REVIEW_DEADLINE_TYPE_ID,
+                                parent_type: 'Assignment',
                                 submission_allowed_id: 3, review_allowed_id: 3)
 
       expect(assignment.num_review_rounds).to eq(2)
@@ -29,10 +31,10 @@ RSpec.describe Assignment, type: :model do
 
     it 'ignores non-review deadlines when counting rounds' do
       assignment = Assignment.create!(name: 'Mixed Deadlines', instructor: instructor, vary_by_round: true)
-      AssignmentDueDate.create!(parent: assignment, due_at: 1.day.from_now,
-                                deadline_type_id: 99,
+      AssignmentDueDate.create!(assignment: assignment, due_at: 1.day.from_now,
+                                deadline_type_id: 99, parent_type: 'Assignment',
                                 submission_allowed_id: 3, review_allowed_id: 3)
-      AssignmentDueDate.create!(parent: assignment, due_at: 2.days.from_now,
+      AssignmentDueDate.create!(assignment: assignment, due_at: 2.days.from_now, parent_type: 'Assignment',
                                 deadline_type_id: DueDate::REVIEW_DEADLINE_TYPE_ID,
                                 submission_allowed_id: 3, review_allowed_id: 3)
 
