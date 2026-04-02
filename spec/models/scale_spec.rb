@@ -8,7 +8,7 @@ RSpec.describe Scale, type: :model do
 
   before do
     subject.txt = "Rate your experience"
-    subject.type = "Scale"
+    subject.question_type = "Scale"
     subject.weight = 1
     subject.min_label = "Poor"
     subject.max_label = "Excellent"
@@ -20,7 +20,7 @@ RSpec.describe Scale, type: :model do
   describe "#edit" do
 
     it 'returns a JSON object with item text, type, weight, and score range' do
-      scale = Scale.new(txt: 'Scale Item', type: 'scale', weight: 2, min_question_score: 0, max_question_score: 10)
+      scale = Scale.new(txt: 'Scale Item', question_type: 'scale', weight: 2, min_question_score: 0, max_question_score: 10)
 
       json_result = scale.edit
 
