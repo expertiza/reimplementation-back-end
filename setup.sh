@@ -1,26 +1,30 @@
 #!/bin/bash
 
-until nc -z -v -w30 db 3306 
-do
-  echo "Waiting for database connection..."
+set -e
+
+DB_HOST="${DB_HOST:-db}"
+DB_PORT="${DB_PORT:-3306}"
+
+until nc -z "${DB_HOST}" "${DB_PORT}"; do
+  echo "Waiting for database connection at ${DB_HOST}:${DB_PORT}..."
   sleep 5
 done
 
-echo "=== Running commands in the 'app' terminal ==="
-echo "Step 1: Removing existing server PID file if any..."
+echo "Removing existing server PID file if any..."
 rm -f /app/tmp/pids/server.pid
 
-echo "Step 2: Bundling dependencies..."
-bundle install
-  
-echo "Step 3: Creating the database..."
-rake db:create
- 
-echo "Step 4: Running database migrations..."
-rake db:migrate
+echo "Checking Ruby dependencies..."
+bundle check || bundle install
 
-echo "Step 5: Seeding the database..." 
-rake db:seed
+echo "Creating the database if needed..."
+bin/rails db:create
 
-echo "Step 6: Starting the Rails server..."
-rails s -p 3002 -b '0.0.0.0'
+echo "Running database migrations..."
+bin/rails db:migrate
+
+if [ "${SEED_DB:-false}" = "true" ]; then
+  echo "Seeding the database..."
+  bin/rails db:seed
+fi
+
+exec "$@"

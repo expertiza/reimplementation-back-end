@@ -8,6 +8,7 @@ class AssignmentTeam < Team
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewee_id'
   has_many :review_response_maps, foreign_key: 'reviewee_id'
   has_many :responses, through: :review_response_maps, foreign_key: 'map_id'
+  has_many :revision_requests, foreign_key: 'team_id', dependent: :destroy
 
   # Delegation to avoid Law of Demeter violations
   delegate :path, to: :assignment, prefix: true

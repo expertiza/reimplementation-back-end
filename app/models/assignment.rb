@@ -14,6 +14,7 @@ class Assignment < ApplicationRecord
   has_many :due_dates,as: :parent, class_name: 'DueDate',  dependent: :destroy
   has_many :assignments_duties, dependent: :destroy
   has_many :duties, through: :assignments_duties
+  has_many :revision_requests, dependent: :destroy
   belongs_to :course, optional: true
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments
 
