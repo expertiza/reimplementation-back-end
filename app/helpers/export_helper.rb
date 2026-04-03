@@ -20,7 +20,7 @@ module ExportHelper
 
     exports = []
     headers_by_class.each do |class_name, headers|
-      exports.concat(Export.perform(class_name.constantize, headers, graph_export: false))
+      exports.concat(Export.export_csv(class_name.constantize, headers))
     end
 
     exports

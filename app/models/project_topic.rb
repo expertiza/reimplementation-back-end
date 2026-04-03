@@ -9,6 +9,8 @@ class ProjectTopic < ApplicationRecord
   has_many :assignment_questionnaires, class_name: 'AssignmentQuestionnaire', foreign_key: 'topic_id', dependent: :destroy
   has_many :due_dates, as: :parent, class_name: 'DueDate', dependent: :destroy
   belongs_to :assignment
+  export_submodels false
+
 
   # Ensures the number of max choosers is non-negative
   validates :max_choosers, numericality: {

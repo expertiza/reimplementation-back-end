@@ -7,6 +7,7 @@ class Answer < ApplicationRecord
     external_classes ExternalClass.new(Item, true, false, :seq),
                     ExternalClass.new(Response, true, false, :additional_comment)
 
+    export_submodels nil
     filter nil
     belongs_to :response
     belongs_to :item

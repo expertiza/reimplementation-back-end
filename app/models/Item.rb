@@ -6,6 +6,8 @@ class Item < ApplicationRecord
   hidden_fields :id, :created_at, :updated_at
   external_classes ExternalClass.new(Questionnaire, true, false, :name)
   filter nil
+  export_submodels false
+
   before_create :set_seq
   belongs_to :questionnaire # each item belongs to a specific questionnaire
   has_many :answers, dependent: :destroy, foreign_key: 'item_id'

@@ -8,6 +8,7 @@ class User < ApplicationRecord
                    ExternalClass.new(Institution, true, false, :name)
   available_actions_on_duplicate SkipRecordAction.new, UpdateExistingRecordAction.new, ChangeOffendingFieldAction.new
   filter nil
+  export_submodels false
 
   has_secure_password
   after_initialize :set_defaults

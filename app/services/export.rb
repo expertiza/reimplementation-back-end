@@ -61,8 +61,8 @@ class Export
     [{ name: export_class.name, contents: csv_contents }]
   end
 
-  def self.perform(export_class, ordered_headers = nil, graph_export: false)
-    return ExportHelper.export_has_many_graph(export_class) if graph_export
+  def self.perform(export_class, ordered_headers = nil)
+    return ExportHelper.export_has_many_graph(export_class) if export_class.export_submodels
 
     export_csv(export_class, ordered_headers)
   end

@@ -68,7 +68,7 @@ RSpec.describe ExportHelper, type: :helper do
       questionnaire_external = Item.external_classes.find { |ext| ext.ref_class == Questionnaire }
       allow(Item).to receive(:external_classes).and_return([questionnaire_external].compact)
 
-      result = Export.perform(Questionnaire, nil, graph_export: true)
+      result = Export.perform(Questionnaire, nil)
       exports_by_class = result.index_by { |entry| entry[:name] }
 
       expect(result).to all(include(:name, :contents))
@@ -149,7 +149,7 @@ RSpec.describe ExportHelper, type: :helper do
       questionnaire_external = Item.external_classes.find { |ext| ext.ref_class == Questionnaire }
       allow(Item).to receive(:external_classes).and_return([questionnaire_external].compact)
 
-      result = Export.perform(Questionnaire, nil, graph_export: true)
+      result = Export.perform(Questionnaire, nil)
       exports_by_class = result.index_by { |entry| entry[:name] }
 
       puts "\nCSV Exports:"

@@ -21,14 +21,13 @@ class ExportController < ApplicationController
       end
 
     klass = params[:class].constantize
-    graph_export = ActiveModel::Type::Boolean.new.cast(params[:graph_export])
 
     csv_file = if klass == Team
                  Team.with_assignment_context(params[:assignment_id]) do
-                   Export.perform(klass, ordered_fields, graph_export: graph_export)
+                   Export.perform(klass, ordered_fields)
                  end
                else
-                 Export.perform(klass, ordered_fields, graph_export: graph_export)
+                 Export.perform(klass, ordered_fields)
                end
 
     render json: {
@@ -43,7 +42,7 @@ class ExportController < ApplicationController
   private
 
   def export_params
-    params.permit(:class, :ordered_fields, :assignment_id, :graph_export)
+    params.permit(:class, :ordered_fields, :assignment_id)
   end
 
   def export_metadata_for(klass)
