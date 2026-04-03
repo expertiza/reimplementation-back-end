@@ -2,7 +2,7 @@
 
 class Item < ApplicationRecord
   extend ImportableExportableHelper
-  mandatory_fields :txt, :weight, :seq, :question_type, :break_before
+  mandatory_fields :txt, :weight, :seq, :question_type, :break_before, :questionnaire_name
   hidden_fields :id, :created_at, :updated_at
   external_classes ExternalClass.new(Questionnaire, true, false, :name)
   filter nil

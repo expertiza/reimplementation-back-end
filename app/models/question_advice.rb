@@ -2,10 +2,10 @@
 
 class QuestionAdvice < ApplicationRecord
   extend ImportableExportableHelper
-  mandatory_fields :score, :advice
+  mandatory_fields :score, :advice, :item_seq
   hidden_fields :id, :created_at, :updated_at
 
-  external_classes ExternalClass.new(Item, true, false, :txt)
+  external_classes ExternalClass.new(Item, true, false, :seq)
   filter nil
   belongs_to :item
   def self.export_fields(_options)
