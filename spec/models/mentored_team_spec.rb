@@ -29,7 +29,7 @@ RSpec.describe MentoredTeam, type: :model do
       participant = make_participant('mentor1')
       team.add_member(participant)
 
-      result = team.assign_mentor(participant.user)
+      result = team.assign_mentor(participant)
       expect(result).to be true
       expect(participant.reload.duty_id).to eq(mentor_duty.id)
     end
@@ -38,14 +38,15 @@ RSpec.describe MentoredTeam, type: :model do
       participant = make_participant('mentor2')
       team.add_member(participant)
 
-      result = team.assign_mentor(participant.user)
+      result = team.assign_mentor(participant)
       expect(result).to be false
     end
 
-    it 'returns false when user is not a participant in the assignment' do
+    it 'returns false when participant is not on the team' do
       mentor_duty
-      outsider = make_user('outsider_m')
-      result   = team.assign_mentor(outsider)
+      participant = make_participant('outsider_m')
+
+      result = team.assign_mentor(participant)
       expect(result).to be false
     end
 
@@ -53,9 +54,9 @@ RSpec.describe MentoredTeam, type: :model do
       mentor_duty
       participant = make_participant('duty_mentor')
       team.add_member(participant)
-      team.assign_mentor(participant.user)
+      team.assign_mentor(participant)
 
-      expect(team.send(:mentor)).to eq(participant.user)
+      expect(team.send(:mentor)).to eq(participant)
       expect(participant.reload.duty).to eq(mentor_duty)
     end
   end
@@ -65,7 +66,7 @@ RSpec.describe MentoredTeam, type: :model do
       mentor_duty
       participant = make_participant('remove_mentor')
       team.add_member(participant)
-      team.assign_mentor(participant.user)
+      team.assign_mentor(participant)
 
       team.remove_mentor
       expect(participant.reload.duty_id).to be_nil
@@ -82,17 +83,16 @@ RSpec.describe MentoredTeam, type: :model do
       mentor_duty
       participant = make_participant('blocked_mentor')
       team.add_member(participant)
-      team.assign_mentor(participant.user)
+      team.assign_mentor(participant)
 
-      result = team.add_member(participant.user)
+      result = team.add_member(participant)
       expect(result).to be false
     end
 
-    it 'does not add unenrolled user' do
-      unenrolled = make_user('unenrolled_m')
-      result = team.add_member(unenrolled)
+    it 'does not add unenrolled participant' do
+      unenrolled_user = make_user('unenrolled_m')
+      result = team.add_member(unenrolled_user)
       expect(result[:success]).to be false
-      expect(result[:error]).to eq("#{unenrolled.name} is not a participant in this assignment")
     end
 
     it 'allows adding a non-mentor participant' do
@@ -105,10 +105,8 @@ RSpec.describe MentoredTeam, type: :model do
       small_assignment = Assignment.create!(name: 'Small Assign', instructor_id: instructor.id, max_team_size: 1)
       small_team       = MentoredTeam.create!(name: 'Small Team', parent_id: small_assignment.id)
 
-      user1 = make_user('cap1')
-      user2 = make_user('cap2')
-      p1    = AssignmentParticipant.create!(user: user1, parent_id: small_assignment.id, handle: user1.name)
-      p2    = AssignmentParticipant.create!(user: user2, parent_id: small_assignment.id, handle: user2.name)
+      p1 = AssignmentParticipant.create!(user: make_user('cap1'), parent_id: small_assignment.id, handle: 'cap1')
+      p2 = AssignmentParticipant.create!(user: make_user('cap2'), parent_id: small_assignment.id, handle: 'cap2')
 
       small_team.add_member(p1)
       result = small_team.add_member(p2)

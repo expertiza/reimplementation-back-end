@@ -3,19 +3,17 @@
 class MentoredTeam < AssignmentTeam
 
   # adds members to the team who are not mentors
-  def add_member(user)
-    return false if user == mentor
-    super(user)
+  def add_member(participant)
+    return false if participant == mentor
+    super(participant)
   end
 
   # Assigning a participant as mentor of the team
   # Validates if participant has the duty of mentor
-  def assign_mentor(user)
+  def assign_mentor(participant)
     mentor_duty = Duty.find_by(name: 'Mentor')
     return false unless mentor_duty
-
-    participant = AssignmentParticipant.find_by(user_id: user.id, parent_id: parent_id)
-    return false unless participant
+    return false unless participants.exists?(id: participant.id)
 
     participant.update(duty_id: mentor_duty.id)
   end
@@ -41,6 +39,7 @@ class MentoredTeam < AssignmentTeam
     errors.add(:type, 'must be MentoredTeam') unless type == 'MentoredTeam'
   end
 
+  # Returns the participant on this team who has the Mentor duty
   def mentor
     mentor_duty = Duty.find_by(name: 'Mentor')
     return nil unless mentor_duty
@@ -50,6 +49,6 @@ class MentoredTeam < AssignmentTeam
     AssignmentParticipant
       .joins('INNER JOIN teams_participants ON teams_participants.participant_id = participants.id')
       .where('teams_participants.team_id = ? AND participants.duty_id = ?', id, mentor_duty.id)
-      .first&.user
+      .first
   end
 end
