@@ -2,7 +2,7 @@ default: &default
   adapter: mysql2
   encoding: utf8mb4
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  host: <%= ENV.fetch("DB_HOST", "127.0.0.1") %>
+  host: <%= ENV.fetch("DB_HOST", "db") %>
   port: <%= ENV.fetch("DB_PORT", 3306) %>
   username: <%= ENV.fetch("DB_USERNAME", "root") %>
   password: <%= ENV.fetch("DB_PASSWORD", "expertiza") %>
@@ -10,14 +10,11 @@ default: &default
 development:
   <<: *default
   database: <%= ENV.fetch("DB_NAME", "reimplementation_development") %>
-  url: <%= ENV["DATABASE_URL"] if ENV["DATABASE_URL"].present? %>
 
 test:
   <<: *default
   database: <%= ENV.fetch("DB_TEST_NAME", "reimplementation_test") %>
-  url: <%= ENV["DATABASE_URL"] if ENV["DATABASE_URL"].present? %>
 
 production:
   <<: *default
   database: <%= ENV.fetch("DB_PRODUCTION_NAME", "reimplementation_production") %>
-  url: <%= ENV["DATABASE_URL"] if ENV["DATABASE_URL"].present? %>
