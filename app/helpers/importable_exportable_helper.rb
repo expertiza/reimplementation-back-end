@@ -303,7 +303,8 @@ module ImportableExportableHelper
         duplicate_records << dup if dup && dup != true
       end
 
-      rescue StandardError
+      rescue StandardError => e
+        puts e.message
         raise ActiveRecord::Rollback
     end
 
