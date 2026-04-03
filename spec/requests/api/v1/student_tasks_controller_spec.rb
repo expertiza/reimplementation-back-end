@@ -5,6 +5,11 @@ require 'json_web_token'
 
 RSpec.describe 'StudentTasks API', type: :request do
   include RolesHelper
+  include ActiveSupport::Testing::TimeHelpers
+
+  around do |example|
+    travel_to(Time.zone.parse('2026-03-31 12:00:00')) { example.run }
+  end
 
   let!(:roles) { create_roles_hierarchy }
   let!(:institution) { Institution.create!(name: 'NC State') }
