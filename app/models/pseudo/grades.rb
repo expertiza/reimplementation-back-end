@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+module Pseudo
 class Grades
   COLUMN_NAMES = %w[
     assignment_id
@@ -74,4 +75,5 @@ class Grades
       )
     end.compact
   end
+end
 end

@@ -2,9 +2,21 @@
 class ExportController < ApplicationController
   before_action :export_params
 
-  def index
-    klass = params[:class].constantize
+  def resolve_export_class(name)
+  # Try top-level first
+    return name.constantize
+  rescue NameError
+    # Try Pseudo namespace
+    begin
+      "Pseudo::#{name}".constantize
+    rescue NameError
+      nil
+    end
+  end
 
+  def index
+    klass = resolve_export_class(params[:class])
+    
     render json: export_metadata_for(klass), status: :ok
   rescue StandardError => e
     render json: { error: e.message }, status: :unprocessable_entity
@@ -20,8 +32,8 @@ class ExportController < ApplicationController
         return
       end
 
-    klass = params[:class].constantize
-
+    klass = resolve_export_class(params[:class])
+    
     csv_file = if klass == Team
                  Team.with_assignment_context(params[:assignment_id]) do
                    Export.perform(klass, ordered_fields)

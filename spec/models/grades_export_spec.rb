@@ -3,7 +3,7 @@
 require 'rails_helper'
 require 'csv'
 
-RSpec.describe Grades, type: :model do
+RSpec.describe Pseudo::Grades, type: :model do
   describe 'grade export' do
     def create_scored_response(map:, item:, score:, comments:, round: 1)
       response = Response.create!(
@@ -180,7 +180,7 @@ RSpec.describe Grades, type: :model do
       create_scored_response(map: feedback_map_for_a1, item: item, score: 3, comments: 'Feedback for Team One reviewer')
       create_scored_response(map: feedback_map_for_b1, item: item, score: 8, comments: 'Feedback for Team Two reviewer')
 
-      export_payload = Export.perform(Grades)
+      export_payload = Export.perform(Pseudo::Grades)
       csv_text = export_payload.first[:contents]
 
       puts "\nGrades export CSV:"
@@ -188,7 +188,7 @@ RSpec.describe Grades, type: :model do
 
       rows = CSV.parse(csv_text, headers: true)
 
-      expect(rows.headers).to eq(Grades::COLUMN_NAMES)
+      expect(rows.headers).to eq(Pseudo::Grades::COLUMN_NAMES)
       expect(rows.size).to eq(4)
 
       row_by_participant = rows.index_by { |row| row['participant_name'] }
