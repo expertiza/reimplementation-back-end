@@ -4,7 +4,7 @@ require 'json'
 
 class MultipleChoiceCheckbox < QuizItem
   def edit
-    quiz_question_choices = QuizQuestionChoice.where(question_id: id)
+    quiz_question_choices = QuizQuestionChoice.where(item_id: id)
 
     data = {
       id: id,
@@ -24,7 +24,7 @@ class MultipleChoiceCheckbox < QuizItem
   end
 
   def complete
-    quiz_question_choices = QuizQuestionChoice.where(question_id: id)
+    quiz_question_choices = QuizQuestionChoice.where(item_id: id)
 
     data = {
       id: id,
@@ -38,7 +38,7 @@ class MultipleChoiceCheckbox < QuizItem
   end
 
   def view_completed_item(user_answer)
-    quiz_question_choices = QuizQuestionChoice.where(question_id: id)
+    quiz_question_choices = QuizQuestionChoice.where(item_id: id)
 
     data = {
       question_choices: quiz_question_choices.map do |choice|

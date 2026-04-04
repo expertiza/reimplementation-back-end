@@ -1,10 +1,16 @@
 # frozen_string_literal: true
 
 class Questionnaire < ApplicationRecord
+  extend ImportableExportableHelper
+  mandatory_fields :name, :min_question_score, :max_question_score, :questionnaire_type, :display_type, :instruction_loc, :instructor_name
+  hidden_fields :id, :created_at, :updated_at
+  external_classes ExternalClass.new(Instructor, true, false, :name)
+  available_actions_on_duplicate SkipRecordAction.new, UpdateExistingRecordAction.new, ChangeOffendingFieldAction.new
+  filter nil
   belongs_to :instructor
   has_many :items, class_name: "Item", foreign_key: "questionnaire_id", dependent: :destroy # the collection of items associated with this Questionnaire
   before_destroy :check_for_question_associations
-
+  export_submodels true
   validate :validate_questionnaire
   validates :name, presence: true
   validates :max_question_score, :min_question_score, numericality: true 
