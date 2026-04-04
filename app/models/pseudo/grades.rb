@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+module Pseudo
 class Grades
   COLUMN_NAMES = %w[
     assignment_id
@@ -18,6 +19,8 @@ class Grades
   Row = Struct.new(*COLUMN_NAMES.map(&:to_sym), keyword_init: true)
 
   extend ImportableExportableHelper
+
+  export_submodels false
 
   mandatory_fields :assignment_name, :team_name, :participant_name
   # hidden_fields :id, :created_at, :updated_at
@@ -72,4 +75,5 @@ class Grades
       )
     end.compact
   end
+end
 end

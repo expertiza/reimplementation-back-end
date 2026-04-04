@@ -4,6 +4,7 @@ class QuestionAdvice < ApplicationRecord
   extend ImportableExportableHelper
   mandatory_fields :score, :advice, :item_seq
   hidden_fields :id, :created_at, :updated_at
+  export_submodels false
 
   external_classes ExternalClass.new(Item, true, false, :seq)
   filter nil

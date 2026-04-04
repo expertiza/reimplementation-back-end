@@ -44,7 +44,7 @@ RSpec.describe "Export API", type: :request do
       export_return = [{ name: "FakeModel", contents: "fake_csv_data" }]
 
       expect(Export).to receive(:perform)
-                          .with(FakeModel, ordered_fields, graph_export: false)
+                          .with(FakeModel, ordered_fields)
                           .and_return(export_return)
 
       post "/export/FakeModel", params: {

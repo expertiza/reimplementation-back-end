@@ -147,6 +147,15 @@ module ImportableExportableHelper
     end
   end
 
+  # set submodel export
+  def export_submodels(bool_export = nil)
+    if bool_export.nil?
+      @class_bool_export
+    else
+      @class_bool_export = bool_export
+    end
+  end
+
   ## Provide filter_proc with a custom method to aggregare records and spoof nonexistent models.
   ##
   def filter(filter_proc = nil)
