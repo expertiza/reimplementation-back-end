@@ -11,18 +11,18 @@ RSpec.describe DueDate, type: :model do
     let(:assignment) { Assignment.create(id: 1, name: 'Test Assignment', instructor:) }
 
     it 'fetches all the due_dates from a due_date\'s parent' do
-      due_date1 = DueDate.create(parent: assignment, due_at: 2.days.from_now, submission_allowed_id: 3,
-                                 review_allowed_id: 3, deadline_type_id: 3)
-      due_date2 = DueDate.create(parent: assignment, due_at: 3.days.from_now, submission_allowed_id: 3,
-                                 review_allowed_id: 3, deadline_type_id: 3)
-      due_date3 = DueDate.create(parent: assignment, due_at: 4.days.from_now, submission_allowed_id: 3,
-                                 review_allowed_id: 3, deadline_type_id: 3)
-      due_date4 = DueDate.create(parent: assignment, due_at: 2.days.ago, submission_allowed_id: 3,
-                                 review_allowed_id: 3, deadline_type_id: 3)
-      due_date5 = DueDate.create(parent: assignment, due_at: 3.days.ago, submission_allowed_id: 3,
-                                 review_allowed_id: 3, deadline_type_id: 3)
+      due_date1 = DueDate.create(assignment: assignment, due_at: 2.days.from_now, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
+      due_date2 = DueDate.create(assignment: assignment, due_at: 3.days.from_now, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
+      due_date3 = DueDate.create(assignment: assignment, due_at: 4.days.from_now, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
+      due_date4 = DueDate.create(assignment: assignment, due_at: 2.days.ago, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
+      due_date5 = DueDate.create(assignment: assignment, due_at: 3.days.ago, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
       due_dates = [due_date1, due_date2, due_date3, due_date4, due_date5]
-      fetched_due_dates = DueDate.fetch_due_dates(due_date3.parent_id)
+      fetched_due_dates = DueDate.fetch_due_dates(due_date3.assignment_id)
 
       fetched_due_dates.each { |due_date| expect(due_dates).to include(due_date) }
     end
@@ -31,16 +31,16 @@ RSpec.describe DueDate, type: :model do
   describe '.sort_due_dates' do
     let(:assignment) { Assignment.create(id: 1, name: 'Test Assignment', instructor:) }
     it 'sorts a list of due dates from earliest to latest' do
-      due_date1 = DueDate.create(parent: assignment, due_at: 2.days.from_now, submission_allowed_id: 3,
-                                 review_allowed_id: 3, deadline_type_id: 3)
-      due_date2 = DueDate.create(parent: assignment, due_at: 3.days.from_now, submission_allowed_id: 3,
-                                 review_allowed_id: 3, deadline_type_id: 3)
-      due_date3 = DueDate.create(parent: assignment, due_at: 4.days.from_now, submission_allowed_id: 3,
-                                 review_allowed_id: 3, deadline_type_id: 3)
-      due_date4 = DueDate.create(parent: assignment, due_at: 2.days.ago, submission_allowed_id: 3,
-                                 review_allowed_id: 3, deadline_type_id: 3)
-      due_date5 = DueDate.create(parent: assignment, due_at: 3.days.ago, submission_allowed_id: 3,
-                                 review_allowed_id: 3, deadline_type_id: 3)
+      due_date1 = DueDate.create(assignment: assignment, due_at: 2.days.from_now, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
+      due_date2 = DueDate.create(assignment: assignment, due_at: 3.days.from_now, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
+      due_date3 = DueDate.create(assignment: assignment, due_at: 4.days.from_now, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
+      due_date4 = DueDate.create(assignment: assignment, due_at: 2.days.ago, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
+      due_date5 = DueDate.create(assignment: assignment, due_at: 3.days.ago, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
       sorted_dates = DueDate.sort_due_dates([due_date1, due_date2, due_date3, due_date4, due_date5])
 
       expect(sorted_dates).to eq([due_date5, due_date4, due_date1, due_date2, due_date3])
@@ -50,23 +50,23 @@ RSpec.describe DueDate, type: :model do
   describe '.any_future_due_dates?' do
     let(:assignment) { Assignment.create(id: 1, name: 'Test Assignment', instructor:) }
     it 'returns true when a future due date exists' do
-      due_date1 = DueDate.create(parent: assignment, due_at: 2.days.from_now, submission_allowed_id: 3,
-                                 review_allowed_id: 3, deadline_type_id: 3)
-      due_date2 = DueDate.create(parent: assignment, due_at: 3.days.from_now, submission_allowed_id: 3,
-                                 review_allowed_id: 3, deadline_type_id: 3)
-      due_date3 = DueDate.create(parent: assignment, due_at: 4.days.from_now, submission_allowed_id: 3,
-                                 review_allowed_id: 3, deadline_type_id: 3)
+      due_date1 = DueDate.create(assignment: assignment, due_at: 2.days.from_now, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
+      due_date2 = DueDate.create(assignment: assignment, due_at: 3.days.from_now, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
+      due_date3 = DueDate.create(assignment: assignment, due_at: 4.days.from_now, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
       due_dates = [due_date1, due_date2, due_date3]
       expect(DueDate.any_future_due_dates?(due_dates)).to(be true)
     end
 
     it 'returns true when a no future due dates exist' do
-      due_date1 = DueDate.create(parent: assignment, due_at: 2.days.ago, submission_allowed_id: 3,
-                                 review_allowed_id: 3, deadline_type_id: 3)
-      due_date2 = DueDate.create(parent: assignment, due_at: 3.days.ago, submission_allowed_id: 3,
-                                 review_allowed_id: 3, deadline_type_id: 3)
-      due_date3 = DueDate.create(parent: assignment, due_at: 4.days.ago, submission_allowed_id: 3,
-                                 review_allowed_id: 3, deadline_type_id: 3)
+      due_date1 = DueDate.create(assignment: assignment, due_at: 2.days.ago, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
+      due_date2 = DueDate.create(assignment: assignment, due_at: 3.days.ago, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
+      due_date3 = DueDate.create(assignment: assignment, due_at: 4.days.ago, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
       due_dates = [due_date1, due_date2, due_date3]
       expect(DueDate.any_future_due_dates?(due_dates)).to(be false)
     end
@@ -76,16 +76,16 @@ RSpec.describe DueDate, type: :model do
     let(:assignment) { Assignment.create(id: 1, name: 'Test Assignment', instructor:) }
     let(:assignment2) { Assignment.create(id: 2, name: 'Test Assignment2', instructor:) }
     it 'returns true when a future due date exists' do
-      due_date = DueDate.create(parent: assignment, due_at: 2.days.from_now, submission_allowed_id: 3,
-                                review_allowed_id: 3, deadline_type_id: 3)
+      due_date = DueDate.create(assignment: assignment, due_at: 2.days.from_now, submission_allowed_id: 3,
+                                review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
       expect(due_date.deadline_type_id).to(be 3)
-      expect(due_date.parent).to(be assignment)
+      expect(due_date.parent).to eq(assignment)
       expect(due_date.round).to(be nil)
 
       due_date.set(1, assignment2.id, 1)
 
       expect(due_date.deadline_type_id).to(be 1)
-      expect(due_date.parent).to eq(assignment2)
+      expect(due_date.assignment).to eq(assignment2)
       expect(due_date.round).to(be 1)
     end
   end
@@ -94,18 +94,19 @@ RSpec.describe DueDate, type: :model do
     let(:assignment) { Assignment.create(id: 1, name: 'Test Assignment', instructor:) }
     let(:assignment2) { Assignment.create(id: 2, name: 'Test Assignment2', instructor:) }
     it 'copies the due dates from one assignment to another' do
-      due_date1 = DueDate.create(parent: assignment, due_at: 2.days.from_now, submission_allowed_id: 3,
-                                 review_allowed_id: 3, deadline_type_id: 3)
-      due_date2 = DueDate.create(parent: assignment, due_at: 3.days.from_now, submission_allowed_id: 3,
-                                 review_allowed_id: 3, deadline_type_id: 3)
-      due_date3 = DueDate.create(parent: assignment, due_at: 3.days.ago, submission_allowed_id: 3,
-                                 review_allowed_id: 3, deadline_type_id: 3)
+      due_date1 = DueDate.create(assignment: assignment, due_at: 2.days.from_now, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
+      due_date2 = DueDate.create(assignment: assignment, due_at: 3.days.from_now, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
+      due_date3 = DueDate.create(assignment: assignment, due_at: 3.days.ago, submission_allowed_id: 3,
+                                 review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
 
       assign1_due_dates = DueDate.fetch_due_dates(assignment.id)
       assign1_due_dates.each { |due_date| due_date.copy(assignment2.id) }
       assign2_due_dates = DueDate.fetch_due_dates(assignment2.id)
 
-      excluded_attributes = %w[id created_at updated_at parent parent_id]
+      # Add 'assignment_id' to the list of ignored keys
+      excluded_attributes = %w[id created_at updated_at parent parent_id assignment_id]
 
       assign1_due_dates.zip(assign2_due_dates).each do |original, copy|
         original_attributes = original.attributes.except(*excluded_attributes)
@@ -120,16 +121,16 @@ RSpec.describe DueDate, type: :model do
     context 'when parent_type is Assignment' do
       let(:assignment) { Assignment.create(id: 1, name: 'Test Assignment', instructor:) }
       let!(:assignment_due_date1) do
-        DueDate.create(parent: assignment, due_at: 2.days.from_now,
-                       submission_allowed_id: 3, review_allowed_id: 3, deadline_type_id: 3)
+        DueDate.create(assignment: assignment, due_at: 2.days.from_now,
+                       submission_allowed_id: 3, review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
       end
       let!(:assignment_due_date2) do
-        DueDate.create(parent: assignment, due_at: 3.days.from_now,
-                       submission_allowed_id: 3, review_allowed_id: 3, deadline_type_id: 3)
+        DueDate.create(assignment: assignment, due_at: 3.days.from_now,
+                       submission_allowed_id: 3, review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
       end
       let!(:assignment_past_due_date) do
-        DueDate.create(parent: assignment, due_at: 1.day.ago,
-                       submission_allowed_id: 3, review_allowed_id: 3, deadline_type_id: 3)
+        DueDate.create(assignment: assignment, due_at: 1.day.ago,
+                       submission_allowed_id: 3, review_allowed_id: 3, deadline_type_id: 3, parent_type: 'Assignment')
       end
 
       it 'returns the next upcoming due date' do
@@ -146,23 +147,23 @@ RSpec.describe DueDate, type: :model do
       let!(:topic3) { ProjectTopic.create(id: 5, topic_name: 'Test Topic2', assignment: assignment2) }
       let!(:topic_due_date1) do
         DueDate.create(parent: topic1, due_at: 2.days.from_now, submission_allowed_id: 3, review_allowed_id: 3,
-                       deadline_type_id: 3, type: 'TopicDueDate')
+                       deadline_type_id: 3, parent_type: 'ProjectTopic')
       end
       let!(:topic_due_date2) do
         DueDate.create(parent: topic1, due_at: 3.days.from_now, submission_allowed_id: 3, review_allowed_id: 3,
-                       deadline_type_id: 3, type: 'TopicDueDate')
+                       deadline_type_id: 3, parent_type: 'ProjectTopic')
       end
       let!(:past_topic_due_date) do
         DueDate.create(parent: topic1, due_at: 1.day.ago, submission_allowed_id: 3, review_allowed_id: 3,
-                       deadline_type_id: 3, type: 'TopicDueDate')
+                       deadline_type_id: 3, parent_type: 'ProjectTopic')
       end
       let!(:past_topic_due_date2) do
         DueDate.create(parent: topic2, due_at: 2.day.ago, submission_allowed_id: 3, review_allowed_id: 3,
-                       deadline_type_id: 3, type: 'TopicDueDate')
+                       deadline_type_id: 3, parent_type: 'ProjectTopic')
       end
       let!(:assignment_due_date) do
-        DueDate.create(parent: assignment2, due_at: 2.days.from_now, submission_allowed_id: 3, review_allowed_id: 3,
-                       deadline_type_id: 3, type: 'AssignmentDueDate')
+        DueDate.create(assignment: assignment2, due_at: 2.days.from_now, submission_allowed_id: 3, review_allowed_id: 3,
+                       deadline_type_id: 3, parent_type: 'Assignment')
       end
 
       it 'calls TopicDueDate.next_due_date' do
