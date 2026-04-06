@@ -35,7 +35,7 @@ class Team < ApplicationRecord
   def max_size
     if is_a?(AssignmentTeam) && assignment&.max_team_size
       assignment.max_team_size
-    elsif is_a?(CourseTeam) && course&.max_team_size
+    elsif is_a?(CourseTeam) && course&.respond_to?(:max_team_size) && course&.max_team_size
       course.max_team_size
     else
       nil
@@ -43,15 +43,10 @@ class Team < ApplicationRecord
   end
   
   def full?
-    current_size = participants.count
+    max = max_size
+    return false if max.blank?
 
-    # assignment teams use the column max_team_size
-    if is_a?(AssignmentTeam) && assignment&.max_team_size
-      return current_size >= assignment.max_team_size
-    end
-
-    # course teams never fill up by default
-    false
+    participants.count >= max
   end
 
   # Checks if the given participant is already on any team for the associated assignment or course.
