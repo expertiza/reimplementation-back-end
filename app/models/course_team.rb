@@ -5,9 +5,9 @@ class CourseTeam < Team
   belongs_to :course, class_name: 'Course', foreign_key: 'parent_id'
 
   #adds members to the course team post validation
-  def add_member(user)
+  def add_member(participant)
     # return false unless validate_membership(user)
-    super(user)
+    super(participant)
   end
 
   # Copies the current course team to an assignment team
@@ -29,9 +29,9 @@ class CourseTeam < Team
 
   protected
 
-  def validate_membership(user)
+  def validate_membership(participant)
     # Verify user is enrolled in a course (E2610)
-    CourseParticipant.exists?(user_id: user.id, parent_id: course.id)
+    CourseParticipant.exists?(user_id: participant.id, parent_id: course.id)
   end
 
   private
