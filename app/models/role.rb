@@ -5,13 +5,6 @@ class Role < ApplicationRecord
   belongs_to :parent, class_name: 'Role', optional: true
   has_many :users, dependent: :nullify
 
-  # Role Names
-  STUDENT = 'Student'
-  TEACHING_ASSISTANT = 'Teaching Assistant'
-  INSTRUCTOR = 'Instructor'
-  ADMINISTRATOR = 'Administrator'
-  SUPER_ADMINISTRATOR = 'Super Administrator'
-
   # Role IDs
   STUDENT_ID = 1
   TEACHING_ASSISTANT_ID = 2

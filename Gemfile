@@ -32,7 +32,7 @@ gem 'psych', '~> 5.2'  # Ensure compatible psych version for Ruby 3.4.5
 # gem "jbuilder"
 
 # Use Redis adapter to run Action Cable in production
-gem "redis", "~> 5.0"
+# gem "redis", "~> 4.0"
 
 # Use Kredis to get higher-level data types in Redis [https://github.com/rails/kredis]
 # gem "kredis"
@@ -57,9 +57,12 @@ gem 'find_with_order'
 
 # For handling zip file uploads and extraction
 gem 'rubyzip'
-gem 'faker'
 
 group :development, :test do
+  gem 'debug', platforms: %i[mri mingw x64_mingw]
+  gem 'factory_bot_rails'
+  gem 'database_cleaner-active_record'
+  gem 'faker'
   gem 'rspec-rails'
   gem 'rswag-specs'
   gem 'rubocop'
