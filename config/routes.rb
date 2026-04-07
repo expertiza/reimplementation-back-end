@@ -218,5 +218,4 @@ Rails.application.routes.draw do
     get  "auth/providers",     to: "oidc_login#providers"
     post "auth/client-select", to: "oidc_login#client_select"
     post "auth/callback",      to: "oidc_login#callback"
-    get  "auth/callback",      to: "oidc_login#callback"  # temporary: for direct IdP redirect during testing
 end
