@@ -87,42 +87,6 @@ class OidcLoginController < ApplicationController
     render json: { error: "Token verification failed: #{e.message}" }, status: :unauthorized
   end
 
-  # Temporary: handle IdP redirect directly instead of via frontend
-  def callback_redirect
-    auth_request = AuthRequest
-                     .where("created_at > ?", 5.minutes.ago)
-                     .find_by!(state: params[:state])
-    auth_request.destroy!
-
-    provider = OidcConfig.find(auth_request.provider)
-    client   = build_client(provider)
-
-    client.authorization_code = params[:code]
-    access_token = client.access_token!(
-      code_verifier: auth_request.code_verifier
-    )
-
-    discovery = discover(provider)
-    id_token  = OpenIDConnect::ResponseObject::IdToken.decode(
-      access_token.id_token,
-      discovery.jwks
-    )
-    id_token.verify!(
-      issuer:    discovery.issuer,
-      client_id: provider["client_id"],
-      nonce:     auth_request.nonce
-    )
-
-    email = id_token.raw_attributes["email"]
-    user  = User.find_by(email: email)
-
-    if user
-      render json: { user: user.as_json, session_token: issue_jwt(user) }
-    else
-      render json: { error: "No account found for #{email}", email: email }, status: :not_found
-    end
-  end
-
   private
 
   def build_client(provider)
