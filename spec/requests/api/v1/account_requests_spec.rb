@@ -10,12 +10,12 @@ RSpec.describe 'Account Requests API', type: :request do
 
   let(:prof) {
     User.create(
-      name: "profa",
+      username: "profa",
       password_digest: "password",
       role_id: @roles[:instructor].id,
       full_name: "Prof A",
       email: "testuser@example.com",
-      mru_directory_path: "/home/testuser",
+      # mru_directory_path: "/home/testuser",
       )
   }
 

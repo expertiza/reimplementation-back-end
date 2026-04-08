@@ -16,6 +16,11 @@ class AccountRequestsController < ApplicationController
   def create
     @account_request = AccountRequest.new(account_request_params)
     if @account_request.save
+      # Check if username already exists in Users table
+      if User.exists?(username: @account_request.username)
+        render json: { error: 'Username already exists in the system' }, status: :unprocessable_entity
+        return
+      end
       response = { account_request: @account_request }
       if User.find_by(email: @account_request.email)
         response[:warnings] = 'WARNING: User with this email already exists!'
@@ -81,11 +86,16 @@ class AccountRequestsController < ApplicationController
 
   # Create a new user if account request is approved
   def create_approved_user
+    # Check for BOTH email and username duplicates in the Users table
     if User.exists?(email: @account_request.email)
-      render json: { error: 'A user with this email already exists. Cannot approve the account request.' }, status: :unprocessable_entity
+      render json: { error: 'A user with this email already exists.' }, status: :unprocessable_entity
       return
     end
-    @new_user = User.new(name: @account_request.username, role_id: @account_request.role_id, institution_id: @account_request.institution_id, full_name: @account_request.full_name, email: @account_request.email, password: 'password')
+    if User.exists?(username: @account_request.username)
+      render json: { error: 'A user with this username already exists.' }, status: :unprocessable_entity
+      return
+    end
+    @new_user = User.new(username: @account_request.username, role_id: @account_request.role_id, institution_id: @account_request.institution_id, full_name: @account_request.full_name, email: @account_request.email, password: 'password')
     if @new_user.save
       render json: { success: 'Account Request Approved and User successfully created.', user: @new_user}, status: :ok
     else

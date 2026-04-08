@@ -34,12 +34,12 @@ RSpec.describe 'Assignments API', type: :request do
 
   let!(:prof) do
     User.create!(
-      name: "profa",
+      username: "profa",
       password_digest: "password",
       role_id: @roles[:instructor].id,
       full_name: "Prof A",
       email: "testuser@example.com",
-      mru_directory_path: "/home/testuser"
+      # mru_directory_path: "/home/testuser"
     )
   end
 
