@@ -10,7 +10,7 @@ RSpec.describe 'Participants API', type: :request do
 
   let(:studenta) do
     User.create!(
-      name: "studenta",
+      username: "studenta",
       password_digest: "password",
       role_id: @roles[:student].id,
       full_name: "Student A",
@@ -20,7 +20,7 @@ RSpec.describe 'Participants API', type: :request do
 
   let(:studentb) do
     User.create!(
-      name: "studentb",
+      username: "studentb",
       password_digest: "password",
       role_id: @roles[:student].id,
       full_name: "Student B",
@@ -30,7 +30,7 @@ RSpec.describe 'Participants API', type: :request do
 
   let!(:instructor) do
     User.create!(
-      name: "Instructor",
+      username: "Instructor",
       password_digest: "password",
       role_id: @roles[:instructor].id,
       full_name: "Instructor Name",

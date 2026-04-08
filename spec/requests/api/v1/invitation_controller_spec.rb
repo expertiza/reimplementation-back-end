@@ -13,7 +13,7 @@ RSpec.describe 'Invitations API', type: :request do
 
   let(:ta) do
     User.create!(
-      name: "ta",
+      username: "ta",
       password_digest: "password",
       role_id: @roles[:ta].id,
       full_name: "Teaching Assistant",
@@ -21,9 +21,9 @@ RSpec.describe 'Invitations API', type: :request do
     )
   end
 
-  let(:user1) do
+  let!(:user1) do
     User.create!(
-      name: "student",
+      username: "student",
       password_digest: "password",
       role_id: @roles[:student].id,
       full_name: "Student Name",
@@ -31,9 +31,9 @@ RSpec.describe 'Invitations API', type: :request do
     )
   end
 
-  let(:user2) do
+  let!(:user2) do
     User.create!(
-      name: "student2",
+      username: "student2",
       password_digest: "password",
       role_id: @roles[:student].id,
       full_name: "Student Two",
@@ -44,7 +44,7 @@ RSpec.describe 'Invitations API', type: :request do
   let(:prof) {
     create(:user,
            role_id: @roles[:instructor].id,
-           name: "profa",
+           username: "profa",
            full_name: "Prof A",
            email: "profa@example.com")
   }
@@ -133,7 +133,7 @@ RSpec.describe 'Invitations API', type: :request do
         let(:invitation) {
           {
             assignment_id: assignment.id,
-            username: user2.name
+            username: user2.username
           }
         }
 
@@ -163,7 +163,7 @@ RSpec.describe 'Invitations API', type: :request do
         let(:invitation) {
           {
             assignment_id: assignment.id,
-            username: non_participant_user.name
+            username: non_participant_user.username
           }
         }
 

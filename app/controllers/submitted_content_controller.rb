@@ -39,7 +39,7 @@ class SubmittedContentController < ApplicationController
     if record.save
       render json: record, status: :created
     else
-      render json: record.errors, status: :unprocessable_content
+      render json: record.errors, status: :unprocessable_entity
     end
   end
 
@@ -342,7 +342,7 @@ class SubmittedContentController < ApplicationController
   end
 
   # Renders an error response with the given message and HTTP status
-  def render_error(message, status = :unprocessable_content)
+  def render_error(message, status = :unprocessable_entity)
     # Render JSON error response with specified status code
     render json: { error: message }, status: status
   end
