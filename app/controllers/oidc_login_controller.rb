@@ -102,7 +102,7 @@ class OidcLoginController < ApplicationController
   end
 
   def discover(provider)
-    # Cache discovery per provider at app level
+    # Avoid duplicate discovery calls within the same request
     @discoveries ||= {}
     @discoveries[provider["issuer"]] ||=
       OpenIDConnect::Discovery::Provider::Config.discover!(provider["issuer"])
