@@ -150,6 +150,7 @@ class User < ApplicationRecord
     self.etc_icons_on_homepage ||= true
   end
 
+  # Return a signed jwt with a payload for frontend session creation
   def generate_jwt(expiry = 24.hours.from_now)
     payload = {
       id: id,
