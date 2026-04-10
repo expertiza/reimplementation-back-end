@@ -76,7 +76,7 @@ class OidcLoginController < ApplicationController
 
     if user
       token = issue_jwt(user)
-      render json: { user: user.as_json, session_token: token }
+      render json: { token: }, status: :ok
     else
       render json: { error: "No account found for #{email}" }, status: :not_found
     end
