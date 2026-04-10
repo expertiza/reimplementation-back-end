@@ -6,7 +6,6 @@ providers:
     client_secret: <%= ENV['GOOG_CLIENT_SECRET'] %>
     redirect_uri: http://localhost:3000/auth/callback
     scopes: openid email profile
-    discovery: true
 
 # Add more providers here:
   # okta:
@@ -17,4 +16,3 @@ providers:
   #   client_secret: <%= ENV['OKTA_OIDC_CLIENT_SECRET'] %>
   #   redirect_uri: <%= ENV['OKTA_OIDC_REDIRECT_URI'] %>
   #   scopes: openid email profile
-  #   discovery: true
