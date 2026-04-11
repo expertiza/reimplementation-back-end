@@ -4,7 +4,7 @@ require 'swagger_helper'
 require 'json_web_token'
 
 RSpec.describe OidcLoginController, type: :request do
-  before(:all) do
+  before(:each) do
     @roles = create_roles_hierarchy
     @institution = Institution.first || Institution.create!(name: "Test Institution")
   end
@@ -132,13 +132,9 @@ RSpec.describe OidcLoginController, type: :request do
       response '200', 'authenticated user with session token' do
         schema type: :object,
                properties: {
-                 user: {
-                   type: :object,
-                   description: 'Serialized user record'
-                 },
-                 session_token: { type: :string, description: 'JWT session token' }
+                 token: { type: :string, description: 'JWT session token' }
                },
-               required: %w[user session_token]
+               required: %w[token]
 
         let(:user) do
           User.create!(
@@ -203,8 +199,7 @@ RSpec.describe OidcLoginController, type: :request do
 
         run_test! do |response|
           json = JSON.parse(response.body)
-          expect(json["session_token"]).to be_present
-          expect(json["user"]).to be_present
+          expect(json["token"]).to be_present
         end
       end
 
@@ -284,6 +279,65 @@ RSpec.describe OidcLoginController, type: :request do
         run_test! do |response|
           json = JSON.parse(response.body)
           expect(json["error"]).to eq("Invalid or expired login request")
+        end
+      end
+
+      # ── 401 — token verification failed ──
+
+      response '401', 'token verification failed' do
+        schema type: :object,
+               properties: {
+                 error: { type: :string, example: 'Token verification failed: invalid signature' }
+               },
+               required: %w[error]
+
+        let(:auth_request) do
+          AuthRequest.create!(
+            state:         "state-bad-token",
+            nonce:         "nonce-bad-token",
+            code_verifier: "verifier-bad-token",
+            provider:      "google-ncsu"
+          )
+        end
+
+        let(:body) { { state: auth_request.state, code: "authorization-code" } }
+
+        before do
+          provider_cfg = {
+            "display_name"  => "Google NCSU",
+            "issuer"        => "https://accounts.google.com",
+            "client_id"     => "test-client-id",
+            "client_secret" => "test-client-secret",
+            "redirect_uri"  => "http://localhost:3000/auth/callback",
+            "scopes"        => "openid email profile"
+          }
+          allow(OidcConfig).to receive(:find).with("google-ncsu").and_return(provider_cfg)
+
+          discovery = instance_double(
+            OpenIDConnect::Discovery::Provider::Config::Response,
+            authorization_endpoint: "https://accounts.google.com/o/oauth2/v2/auth",
+            token_endpoint:         "https://oauth2.googleapis.com/token",
+            userinfo_endpoint:      "https://openidconnect.googleapis.com/v1/userinfo",
+            issuer:                 "https://accounts.google.com",
+            jwks:                   instance_double(JSON::JWK::Set)
+          )
+          allow(OpenIDConnect::Discovery::Provider::Config).to receive(:discover!)
+            .with("https://accounts.google.com").and_return(discovery)
+
+          fake_access_token = instance_double(
+            OpenIDConnect::AccessToken,
+            id_token: "fake.id.token"
+          )
+          allow_any_instance_of(OpenIDConnect::Client).to receive(:access_token!)
+            .and_return(fake_access_token)
+
+          allow(OpenIDConnect::ResponseObject::IdToken).to receive(:decode)
+            .and_raise(OpenIDConnect::ResponseObject::IdToken::InvalidToken.new("invalid signature"))
+        end
+
+        run_test! do |response|
+          json = JSON.parse(response.body)
+          expect(json["error"]).to match(/Token verification failed/)
         end
       end
     end
