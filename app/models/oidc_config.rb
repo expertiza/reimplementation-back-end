@@ -7,9 +7,8 @@ class OidcConfig
   def self.providers
     @providers ||= begin
                      yaml = ERB.new(File.read(CONFIG_FILE)).result
-                     parsed = YAML.safe_load(yaml, permitted_classes: [], aliases: true) || {}
-                     raw = parsed.fetch("providers", nil) || {}
-                     validate!(raw)
+                     parsed = YAML.safe_load(yaml, permitted_classes: [], aliases: true)
+                     validate!(parsed&.dig("providers") || {})
                    end
   end
 
@@ -35,14 +34,13 @@ class OidcConfig
   private
 
   def self.validate!(providers)
-    invalid_keys = providers.each_with_object([]) do |(key, cfg), keys|
+    providers.reject! do |key, cfg|
       missing = REQUIRED_KEYS.select { |k| cfg[k].blank? }
       if missing.any?
         Rails.logger.warn("OIDC provider '#{key}' skipped: missing #{missing.join(', ')}")
-        keys << key
+        true
       end
     end
-    invalid_keys.each { |key| providers.delete(key) }
     providers
   end
 
