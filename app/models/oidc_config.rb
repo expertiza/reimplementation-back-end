@@ -36,7 +36,9 @@ class OidcConfig
     providers.each do |key, cfg|
       missing = REQUIRED_KEYS.select { |k| cfg[k].blank? }
       if missing.any?
-        raise "OIDC provider '#{key}' is missing required config: #{missing.join(', ')}"
+        Rails.logger.warn("OIDC provider '#{key}' skipped: missing #{missing.join(', ')}")
+        providers.delete(key)
+        next
       end
     end
     providers

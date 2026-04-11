@@ -1,5 +1,3 @@
-require 'json_web_token'
-
 class OidcLoginController < ApplicationController
   skip_before_action :authenticate_request!
 
@@ -75,8 +73,8 @@ class OidcLoginController < ApplicationController
     user  = User.find_by(email: email)
 
     if user
-      token = issue_jwt(user)
-      render json: { user: user.as_json, session_token: token }
+      token = user.generate_jwt
+      render json: { token: }, status: :ok
     else
       render json: { error: "No account found for #{email}" }, status: :not_found
     end
@@ -106,17 +104,5 @@ class OidcLoginController < ApplicationController
     @discoveries ||= {}
     @discoveries[provider["issuer"]] ||=
       OpenIDConnect::Discovery::Provider::Config.discover!(provider["issuer"])
-  end
-
-  # Note this is the same as authentication_controller, could combine into the user model
-  def issue_jwt(user)
-    payload = {
-      id: user.id,
-      name: user.name,
-      full_name: user.full_name,
-      role: user.role.name,
-      institution_id: user.institution.id
-    }
-    JsonWebToken.encode(payload, 24.hours.from_now)
   end
 end
