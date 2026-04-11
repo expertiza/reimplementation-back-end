@@ -76,27 +76,8 @@ RSpec.describe OidcLoginController, type: :request do
         let(:body) { { provider: "google-ncsu" } }
 
         before do
-          provider_cfg = {
-            "display_name"  => "Google NCSU",
-            "issuer"        => "https://accounts.google.com",
-            "client_id"     => "test-client-id",
-            "client_secret" => "test-client-secret",
-            "redirect_uri"  => "http://localhost:3000/auth/callback",
-            "scopes"        => "openid email profile"
-          }
-          allow(OidcConfig).to receive(:find).with("google-ncsu").and_return(provider_cfg)
-
-          discovery = instance_double(
-            OpenIDConnect::Discovery::Provider::Config::Response,
-            authorization_endpoint: "https://accounts.google.com/o/oauth2/v2/auth",
-            token_endpoint:         "https://oauth2.googleapis.com/token",
-            userinfo_endpoint:      "https://openidconnect.googleapis.com/v1/userinfo"
-          )
-          allow(OpenIDConnect::Discovery::Provider::Config).to receive(:discover!)
-            .with("https://accounts.google.com").and_return(discovery)
-
-          allow_any_instance_of(OpenIDConnect::Client).to receive(:authorization_uri)
-            .with(hash_including(scope: %i[openid email profile]))
+          allow(OidcRequest).to receive(:authorization_uri_for!)
+            .with(provider_key: "google-ncsu")
             .and_return("https://accounts.google.com/o/oauth2/v2/auth?scope=openid+email+profile")
         end
 

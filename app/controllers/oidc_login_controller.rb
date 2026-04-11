@@ -12,11 +12,7 @@ class OidcLoginController < ApplicationController
 
   # POST /auth/client-select
   def client_select
-    provider = OidcConfig.find(params[:provider])
-    authorization_uri = OidcRequest.authorization_uri_for!(
-      provider_key: params[:provider],
-      provider: provider
-    )
+    authorization_uri = OidcRequest.authorization_uri_for!(provider_key: params[:provider])
 
     render json: { redirect_uri: authorization_uri }
   end

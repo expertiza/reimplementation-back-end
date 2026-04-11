@@ -9,7 +9,8 @@ class OidcRequest < ApplicationRecord
     end
   end
 
-  def self.authorization_uri_for!(provider_key:, provider:)
+  def self.authorization_uri_for!(provider_key:)
+    provider = OidcConfig.find(provider_key)
     discovery = OpenIDConnect::Discovery::Provider::Config.discover!(provider["issuer"])
     client = new_client(provider, discovery: discovery)
 

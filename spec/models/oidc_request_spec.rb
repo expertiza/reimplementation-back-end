@@ -72,26 +72,29 @@ RSpec.describe OidcRequest, type: :model do
   end
 
   describe '.authorization_uri_for!' do
+    before do
+      allow(OidcConfig).to receive(:find).with('google-ncsu').and_return(provider)
+    end
+
     it 'creates auth request and returns provider authorization URI' do
       allow(client).to receive(:authorization_uri)
         .with(hash_including(scope: %i[openid email profile], code_challenge_method: 'S256'))
         .and_return('https://accounts.google.com/o/oauth2/v2/auth?scope=openid+email+profile')
 
       expect do
-        uri = described_class.authorization_uri_for!(provider_key: 'google-ncsu', provider: provider)
+        uri = described_class.authorization_uri_for!(provider_key: 'google-ncsu')
         expect(uri).to include('scope=openid+email+profile')
       end.to change(described_class, :count).by(1)
     end
 
     it 'uses default scopes when provider scopes are missing' do
+      allow(OidcConfig).to receive(:find).with('google-ncsu')
+        .and_return(provider.merge('scopes' => nil))
       allow(client).to receive(:authorization_uri)
         .with(hash_including(scope: %i[openid email profile], code_challenge_method: 'S256'))
         .and_return('https://accounts.google.com/o/oauth2/v2/auth?scope=openid+email+profile')
 
-      described_class.authorization_uri_for!(
-        provider_key: 'google-ncsu',
-        provider: provider.merge('scopes' => nil)
-      )
+      described_class.authorization_uri_for!(provider_key: 'google-ncsu')
     end
   end
 
