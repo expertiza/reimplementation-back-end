@@ -208,94 +208,90 @@ RSpec.describe OidcLoginController, type: :request do
         end
       end
 
-      # ── 404 — no account for the email ──
+      # ── 404 — no matching account or unknown provider ──
 
-      response '404', 'no account found for the email' do
+      response '404', 'no account found or unknown provider' do
         schema type: :object,
                properties: {
                  error: { type: :string, example: 'No account found for unknown@example.com' }
                },
                required: %w[error]
 
-        let(:auth_request) do
-          OidcRequest.create!(
-            state:         "state-no-user",
-            nonce:         "nonce-no-user",
-            code_verifier: "verifier-no-user",
-            provider:      "google-ncsu"
-          )
+        context 'when no user exists for the email' do
+          let(:auth_request) do
+            OidcRequest.create!(
+              state:         "state-no-user",
+              nonce:         "nonce-no-user",
+              code_verifier: "verifier-no-user",
+              provider:      "google-ncsu"
+            )
+          end
+
+          let(:body) { { state: auth_request.state, code: "authorization-code" } }
+
+          before do
+            provider_cfg = {
+              "display_name"  => "Google NCSU",
+              "issuer"        => "https://accounts.google.com",
+              "client_id"     => "test-client-id",
+              "client_secret" => "test-client-secret",
+              "redirect_uri"  => "http://localhost:3000/auth/callback",
+              "scopes"        => "openid email profile"
+            }
+            allow(OidcConfig).to receive(:find).with("google-ncsu").and_return(provider_cfg)
+
+            discovery = instance_double(
+              OpenIDConnect::Discovery::Provider::Config::Response,
+              authorization_endpoint: "https://accounts.google.com/o/oauth2/v2/auth",
+              token_endpoint:         "https://oauth2.googleapis.com/token",
+              userinfo_endpoint:      "https://openidconnect.googleapis.com/v1/userinfo",
+              issuer:                 "https://accounts.google.com",
+              jwks:                   instance_double(JSON::JWK::Set)
+            )
+            allow(OpenIDConnect::Discovery::Provider::Config).to receive(:discover!)
+                                                                   .with("https://accounts.google.com").and_return(discovery)
+
+            fake_access_token = instance_double(
+              OpenIDConnect::AccessToken,
+              id_token: "fake.id.token"
+            )
+            allow_any_instance_of(OpenIDConnect::Client).to receive(:access_token!)
+                                                              .and_return(fake_access_token)
+
+            id_token_obj = instance_double(OpenIDConnect::ResponseObject::IdToken,
+                                           raw_attributes: { "email" => "unknown@example.com" })
+            allow(id_token_obj).to receive(:verify!).and_return(true)
+            allow(OpenIDConnect::ResponseObject::IdToken).to receive(:decode)
+                                                               .and_return(id_token_obj)
+          end
+
+          run_test! do |response|
+            json = JSON.parse(response.body)
+            expect(json["error"]).to match(/No account found/)
+          end
         end
 
-        let(:body) { { state: auth_request.state, code: "authorization-code" } }
+        context 'when the stored provider no longer exists' do
+          let(:auth_request) do
+            OidcRequest.create!(
+              state:         "state-missing-provider",
+              nonce:         "nonce-missing-provider",
+              code_verifier: "verifier-missing-provider",
+              provider:      "deleted-provider"
+            )
+          end
 
-        before do
-          provider_cfg = {
-            "display_name"  => "Google NCSU",
-            "issuer"        => "https://accounts.google.com",
-            "client_id"     => "test-client-id",
-            "client_secret" => "test-client-secret",
-            "redirect_uri"  => "http://localhost:3000/auth/callback",
-            "scopes"        => "openid email profile"
-          }
-          allow(OidcConfig).to receive(:find).with("google-ncsu").and_return(provider_cfg)
+          let(:body) { { state: auth_request.state, code: "authorization-code" } }
 
-          discovery = instance_double(
-            OpenIDConnect::Discovery::Provider::Config::Response,
-            authorization_endpoint: "https://accounts.google.com/o/oauth2/v2/auth",
-            token_endpoint:         "https://oauth2.googleapis.com/token",
-            userinfo_endpoint:      "https://openidconnect.googleapis.com/v1/userinfo",
-            issuer:                 "https://accounts.google.com",
-            jwks:                   instance_double(JSON::JWK::Set)
-          )
-          allow(OpenIDConnect::Discovery::Provider::Config).to receive(:discover!)
-            .with("https://accounts.google.com").and_return(discovery)
+          before do
+            allow(OidcConfig).to receive(:find).with("deleted-provider")
+                                               .and_raise(OidcConfig::ProviderNotFound, "Unknown OIDC provider: deleted-provider")
+          end
 
-          fake_access_token = instance_double(
-            OpenIDConnect::AccessToken,
-            id_token: "fake.id.token"
-          )
-          allow_any_instance_of(OpenIDConnect::Client).to receive(:access_token!)
-            .and_return(fake_access_token)
-
-          id_token_obj = instance_double(OpenIDConnect::ResponseObject::IdToken,
-                                         raw_attributes: { "email" => "unknown@example.com" })
-          allow(id_token_obj).to receive(:verify!).and_return(true)
-          allow(OpenIDConnect::ResponseObject::IdToken).to receive(:decode)
-            .and_return(id_token_obj)
-        end
-
-        run_test! do |response|
-          json = JSON.parse(response.body)
-          expect(json["error"]).to match(/No account found/)
-        end
-      end
-
-      response '404', 'unknown OIDC provider for stored login request' do
-        schema type: :object,
-               properties: {
-                 error: { type: :string, example: 'Unknown OIDC provider: deleted-provider' }
-               },
-               required: %w[error]
-
-        let(:auth_request) do
-          OidcRequest.create!(
-            state:         "state-missing-provider",
-            nonce:         "nonce-missing-provider",
-            code_verifier: "verifier-missing-provider",
-            provider:      "deleted-provider"
-          )
-        end
-
-        let(:body) { { state: auth_request.state, code: "authorization-code" } }
-
-        before do
-          allow(OidcConfig).to receive(:find).with("deleted-provider")
-            .and_raise(OidcConfig::ProviderNotFound, "Unknown OIDC provider: deleted-provider")
-        end
-
-        run_test! do |response|
-          json = JSON.parse(response.body)
-          expect(json["error"]).to eq("Unknown OIDC provider: deleted-provider")
+          run_test! do |response|
+            json = JSON.parse(response.body)
+            expect(json["error"]).to eq("Unknown OIDC provider: deleted-provider")
+          end
         end
       end
 

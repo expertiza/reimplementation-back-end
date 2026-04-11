@@ -2436,7 +2436,7 @@ paths:
                 required:
                 - token
         '404':
-          description: unknown OIDC provider for stored login request
+          description: no account found or unknown provider
           content:
             application/json:
               schema:
@@ -2444,7 +2444,7 @@ paths:
                 properties:
                   error:
                     type: string
-                    example: 'Unknown OIDC provider: deleted-provider'
+                    example: No account found for unknown@example.com
                 required:
                 - error
         '422':
