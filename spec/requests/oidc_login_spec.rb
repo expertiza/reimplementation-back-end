@@ -97,7 +97,7 @@ RSpec.describe OidcLoginController, type: :request do
         let(:body) { { provider: "nonexistent" } }
 
         before do
-          allow(OidcConfig).to receive(:find).with("nonexistent")
+          allow(OidcRequest).to receive(:authorization_uri_for!).with(provider_key: "nonexistent")
             .and_raise(OidcConfig::ProviderNotFound, "Unknown OIDC provider: nonexistent")
         end
 
@@ -267,6 +267,35 @@ RSpec.describe OidcLoginController, type: :request do
         run_test! do |response|
           json = JSON.parse(response.body)
           expect(json["error"]).to match(/No account found/)
+        end
+      end
+
+      response '404', 'unknown OIDC provider for stored login request' do
+        schema type: :object,
+               properties: {
+                 error: { type: :string, example: 'Unknown OIDC provider: deleted-provider' }
+               },
+               required: %w[error]
+
+        let(:auth_request) do
+          OidcRequest.create!(
+            state:         "state-missing-provider",
+            nonce:         "nonce-missing-provider",
+            code_verifier: "verifier-missing-provider",
+            provider:      "deleted-provider"
+          )
+        end
+
+        let(:body) { { state: auth_request.state, code: "authorization-code" } }
+
+        before do
+          allow(OidcConfig).to receive(:find).with("deleted-provider")
+            .and_raise(OidcConfig::ProviderNotFound, "Unknown OIDC provider: deleted-provider")
+        end
+
+        run_test! do |response|
+          json = JSON.parse(response.body)
+          expect(json["error"]).to eq("Unknown OIDC provider: deleted-provider")
         end
       end
 
