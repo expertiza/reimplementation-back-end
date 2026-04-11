@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'json_web_token'
 
 class User < ApplicationRecord
   has_secure_password
@@ -149,8 +150,16 @@ class User < ApplicationRecord
     self.etc_icons_on_homepage ||= true
   end
 
-  def generate_jwt
-    JWT.encode({ id: id, exp: 60.days.from_now.to_i }, Rails.application.credentials.secret_key_base)
+  # Return a signed jwt with a payload for frontend session creation
+  def generate_jwt(expiry = 24.hours.from_now)
+    payload = {
+      id: id,
+      name: name,
+      full_name: full_name,
+      role: role.name,
+      institution_id: institution.id
+    }
+    JsonWebToken.encode(payload, expiry)
   end
 
 end
