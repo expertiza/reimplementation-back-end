@@ -117,6 +117,20 @@ RSpec.describe OidcConfig, type: :model do
       expect(described_class.providers).to eq({})
     end
 
+    it 'returns an empty hash when YAML is empty (safe_load returns nil)' do
+      allow(File).to receive(:read).and_call_original
+      allow(File).to receive(:read).with(described_class::CONFIG_FILE).and_return('')
+
+      expect(described_class.providers).to eq({})
+    end
+
+    it 'returns an empty hash when providers key is null' do
+      allow(File).to receive(:read).and_call_original
+      allow(File).to receive(:read).with(described_class::CONFIG_FILE).and_return("providers: null\n")
+
+      expect(described_class.providers).to eq({})
+    end
+
     it 'supports YAML aliases in provider definitions' do
       yaml = <<~YAML
         providers:
