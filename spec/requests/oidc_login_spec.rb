@@ -54,7 +54,7 @@ RSpec.describe OidcLoginController, type: :request do
       security []
       description <<~DESC
         Accepts a provider key, performs OIDC discovery, generates PKCE and state parameters,
-        persists an AuthRequest for later verification, and returns the provider's authorization URL
+        persists an OidcRequest for later verification, and returns the provider's authorization URL
         that the front end should redirect the user to.
       DESC
 
@@ -94,11 +94,35 @@ RSpec.describe OidcLoginController, type: :request do
           )
           allow(OpenIDConnect::Discovery::Provider::Config).to receive(:discover!)
             .with("https://accounts.google.com").and_return(discovery)
+
+          allow_any_instance_of(OpenIDConnect::Client).to receive(:authorization_uri)
+            .with(hash_including(scope: %i[openid email profile]))
+            .and_return("https://accounts.google.com/o/oauth2/v2/auth?scope=openid+email+profile")
         end
 
         run_test! do |response|
           json = JSON.parse(response.body)
           expect(json["redirect_uri"]).to be_present
+        end
+      end
+
+      response '404', 'unknown OIDC provider' do
+        schema type: :object,
+               properties: {
+                 error: { type: :string, example: 'Unknown OIDC provider: nonexistent' }
+               },
+               required: %w[error]
+
+        let(:body) { { provider: "nonexistent" } }
+
+        before do
+          allow(OidcConfig).to receive(:find).with("nonexistent")
+            .and_raise(OidcConfig::ProviderNotFound, "Unknown OIDC provider: nonexistent")
+        end
+
+        run_test! do |response|
+          json = JSON.parse(response.body)
+          expect(json["error"]).to match(/Unknown OIDC provider/)
         end
       end
     end
@@ -148,7 +172,7 @@ RSpec.describe OidcLoginController, type: :request do
         end
 
         let(:auth_request) do
-          AuthRequest.create!(
+          OidcRequest.create!(
             state:         "valid-state-hex",
             nonce:         "valid-nonce-hex",
             code_verifier: "valid-code-verifier",
@@ -213,7 +237,7 @@ RSpec.describe OidcLoginController, type: :request do
                required: %w[error]
 
         let(:auth_request) do
-          AuthRequest.create!(
+          OidcRequest.create!(
             state:         "state-no-user",
             nonce:         "nonce-no-user",
             code_verifier: "verifier-no-user",
@@ -292,7 +316,7 @@ RSpec.describe OidcLoginController, type: :request do
                required: %w[error]
 
         let(:auth_request) do
-          AuthRequest.create!(
+          OidcRequest.create!(
             state:         "state-bad-token",
             nonce:         "nonce-bad-token",
             code_verifier: "verifier-bad-token",

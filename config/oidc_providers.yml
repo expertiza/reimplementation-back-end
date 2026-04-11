@@ -4,8 +4,7 @@ providers:
     issuer: https://accounts.google.com
     client_id: <%= ENV['GOOG_CLIENT_ID'] %>
     client_secret: <%= ENV['GOOG_CLIENT_SECRET'] %>
-    redirect_uri: http://localhost:3000/auth/callback
-    scopes: openid email profile
+    redirect_uri: <%= ENV['GOOG_REDIRECT_URI'] %>
 
 # Add more providers here:
   # okta:
