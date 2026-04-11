@@ -16,7 +16,7 @@ class OidcRequest < ApplicationRecord
 
     state = SecureRandom.hex(32)
     nonce = SecureRandom.hex(32)
-    code_verifier = SecureRandom.urlsafe_base64(64)
+    code_verifier = SecureRandom.urlsafe_base64(64, false)
     code_challenge = Base64.urlsafe_encode64(
       Digest::SHA256.digest(code_verifier), padding: false
     )
