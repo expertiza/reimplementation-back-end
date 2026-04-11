@@ -7,7 +7,7 @@ class OidcLoginController < ApplicationController
 
   # GET /auth/providers
   def providers
-    render json: OidcConfig.public_list.to_json
+    render json: OidcConfig.public_list
   end
 
   # POST /auth/client-select
