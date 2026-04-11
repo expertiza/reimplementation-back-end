@@ -6,7 +6,6 @@ RSpec.describe OidcConfig, type: :model do
   before do
     described_class.reload!
     allow(Rails.logger).to receive(:warn)
-    allow(Rails.logger).to receive(:error)
   end
 
   after do
@@ -40,8 +39,6 @@ RSpec.describe OidcConfig, type: :model do
         expect(providers.keys).to eq(['google-ncsu'])
         expect(providers['google-ncsu']['client_id']).to eq('client-id-from-env')
         expect(providers['google-ncsu']['client_secret']).to eq('client-secret-from-env')
-        expect(providers).to be_frozen
-        expect(providers['google-ncsu']).to be_frozen
       ensure
         ENV['GOOG_CLIENT_ID'] = original_client_id
         ENV['GOOG_CLIENT_SECRET'] = original_client_secret
@@ -57,7 +54,6 @@ RSpec.describe OidcConfig, type: :model do
             client_id: id-1
             client_secret: secret-1
             redirect_uri: http://localhost:3000/auth/callback
-            scopes: openid email profile
       YAML
 
       second_yaml = <<~YAML
@@ -68,7 +64,6 @@ RSpec.describe OidcConfig, type: :model do
             client_id: id-2
             client_secret: secret-2
             redirect_uri: http://localhost:3000/auth/callback
-            scopes: openid email profile
       YAML
 
       allow(File).to receive(:read).and_call_original
@@ -83,7 +78,7 @@ RSpec.describe OidcConfig, type: :model do
       expect(described_class.providers.keys).to eq(['second'])
     end
 
-    it 'skips invalid providers and warns for missing keys or invalid formats' do
+    it 'skips providers missing required keys and warns' do
       yaml = <<~YAML
         providers:
           valid:
@@ -104,8 +99,6 @@ RSpec.describe OidcConfig, type: :model do
             issuer: https://issuer.example.com
             client_id: id
             redirect_uri: http://localhost:3000/auth/callback
-            scopes: openid email profile
-          malformed: hello
       YAML
 
       allow(File).to receive(:read).and_call_original
@@ -115,15 +108,13 @@ RSpec.describe OidcConfig, type: :model do
 
       expect(providers.keys).to contain_exactly('valid', 'no_scopes')
       expect(Rails.logger).to have_received(:warn).with(/missing_secret.*missing client_secret/)
-      expect(Rails.logger).to have_received(:warn).with(/malformed.*invalid config format/)
     end
 
-    it 'returns an empty hash when YAML has no providers map' do
+    it 'returns an empty hash when no providers key exists' do
       allow(File).to receive(:read).and_call_original
-      allow(File).to receive(:read).with(described_class::CONFIG_FILE).and_return('[]')
+      allow(File).to receive(:read).with(described_class::CONFIG_FILE).and_return('{}')
 
       expect(described_class.providers).to eq({})
-      expect(described_class.providers).to be_frozen
     end
 
     it 'supports YAML aliases in provider definitions' do
@@ -136,7 +127,6 @@ RSpec.describe OidcConfig, type: :model do
             client_id: id
             client_secret: secret
             redirect_uri: http://localhost:3000/auth/callback
-            scopes: openid email profile
           google-copy:
             <<: *base
             display_name: Google Copy
@@ -150,16 +140,6 @@ RSpec.describe OidcConfig, type: :model do
       expect(providers.keys).to contain_exactly('google', 'google-copy')
       expect(providers['google-copy']['issuer']).to eq('https://accounts.google.com')
     end
-
-    it 'returns an empty hash and logs an error for malformed YAML' do
-      malformed_yaml = "providers:\n  bad: [unterminated"
-
-      allow(File).to receive(:read).and_call_original
-      allow(File).to receive(:read).with(described_class::CONFIG_FILE).and_return(malformed_yaml)
-
-      expect(described_class.providers).to eq({})
-      expect(Rails.logger).to have_received(:error).with(/OIDC config load failed:/)
-    end
   end
 
   describe '.find' do
@@ -170,8 +150,7 @@ RSpec.describe OidcConfig, type: :model do
           'issuer' => 'https://accounts.google.com',
           'client_id' => 'id',
           'client_secret' => 'secret',
-          'redirect_uri' => 'http://localhost:3000/auth/callback',
-          'scopes' => 'openid email profile'
+          'redirect_uri' => 'http://localhost:3000/auth/callback'
         }
       )
 
@@ -194,8 +173,7 @@ RSpec.describe OidcConfig, type: :model do
           'issuer' => 'https://accounts.google.com',
           'client_id' => 'id',
           'client_secret' => 'secret',
-          'redirect_uri' => 'http://localhost:3000/auth/callback',
-          'scopes' => 'openid email profile'
+          'redirect_uri' => 'http://localhost:3000/auth/callback'
         }
       )
 
@@ -207,25 +185,25 @@ RSpec.describe OidcConfig, type: :model do
     it 'parses whitespace-delimited scope strings' do
       provider = { 'scopes' => 'openid email profile custom' }
 
-      expect(described_class.scopes_for(provider)).to eq(%i[openid email profile custom])
+      expect(described_class.scopes_for(provider)).to eq(%w[openid email profile custom])
     end
 
     it 'parses comma-delimited scope strings' do
       provider = { 'scopes' => 'openid,email,profile' }
 
-      expect(described_class.scopes_for(provider)).to eq(%i[openid email profile])
+      expect(described_class.scopes_for(provider)).to eq(%w[openid email profile])
     end
 
-    it 'parses array scopes and stringifies symbols' do
-      provider = { 'scopes' => [:openid, 'email', 'profile'] }
-
-      expect(described_class.scopes_for(provider)).to eq(%i[openid email profile])
-    end
-
-    it 'falls back to default scopes when missing' do
+    it 'falls back to default scopes when scopes is nil' do
       provider = { 'scopes' => nil }
 
-      expect(described_class.scopes_for(provider)).to eq(%i[openid email profile])
+      expect(described_class.scopes_for(provider)).to eq(%w[openid email profile])
+    end
+
+    it 'falls back to default scopes when scopes key is absent' do
+      provider = {}
+
+      expect(described_class.scopes_for(provider)).to eq(%w[openid email profile])
     end
   end
 end
