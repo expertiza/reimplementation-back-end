@@ -8,7 +8,23 @@ class OidcConfig
     @providers ||= begin
                      yaml = ERB.new(File.read(CONFIG_FILE)).result
                      parsed = YAML.safe_load(yaml, permitted_classes: [], aliases: true)
-                     validate!(parsed&.dig("providers") || {})
+
+                     unless parsed.is_a?(Hash)
+                       Rails.logger.warn(
+                         "OIDC config ignored: expected top-level mapping in #{CONFIG_FILE}, got #{parsed.class}"
+                       )
+                       parsed = {}
+                     end
+
+                     providers = parsed["providers"]
+                     unless providers.is_a?(Hash)
+                       Rails.logger.warn(
+                         "OIDC config ignored: expected 'providers' to be a mapping in #{CONFIG_FILE}, got #{providers.class}"
+                       )
+                       providers = {}
+                     end
+
+                     validate!(providers)
                    end
   end
 
