@@ -32,6 +32,7 @@ RSpec.describe ResponsesController, type: :controller do
       allow(ResponseMap).to receive(:find_by).and_return(response_map)
       allow(Response).to receive(:new).and_return(response_double)
       allow(response_double).to receive(:as_json).and_return({ 'id' => 1 })
+      allow(response_double).to receive(:rubric_label).and_return('Response')
     end
 
     context 'when save succeeds' do
@@ -44,7 +45,7 @@ RSpec.describe ResponsesController, type: :controller do
         post :create, params: { response_map_id: response_map.id }
         expect(response).to have_http_status(:created)
         body = JSON.parse(response.body)
-        expect(body['message']).to eq('Response draft created successfully')
+        expect(body['message']).to eq('Response started successfully')
         expect(body['response']).to eq({ 'id' => 1 })
       end
     end
@@ -84,6 +85,7 @@ RSpec.describe ResponsesController, type: :controller do
       allow(controller).to receive(:set_response) { controller.instance_variable_set(:@response, response_double) }
       allow(response_double).to receive(:as_json).and_return({ 'id' => 1 })
       allow(response_double).to receive(:update)
+      allow(response_double).to receive(:rubric_label).and_return('Response')
     end
 
     context 'when response already submitted' do
@@ -109,7 +111,7 @@ RSpec.describe ResponsesController, type: :controller do
         patch :update, params: { id: 1, response: { content: 'x' } }
         expect(response).to have_http_status(:ok)
         body = JSON.parse(response.body)
-        expect(body['message']).to eq('Draft updated successfully')
+        expect(body['message']).to eq('Response saved successfully')
       end
     end
 
@@ -131,9 +133,15 @@ RSpec.describe ResponsesController, type: :controller do
 
   describe 'PATCH #submit' do
     let(:response_double) { double('Response') }
+    let(:response_map_double) { double('ResponseMap') }
+    let(:assignment_double) { double('Assignment') }
 
     before do
       allow(controller).to receive(:set_response) { controller.instance_variable_set(:@response, response_double) }
+      allow(response_double).to receive(:rubric_label).and_return('Response')
+      allow(response_double).to receive(:response_map).and_return(response_map_double)
+      allow(response_map_double).to receive(:assignment).and_return(assignment_double)
+      allow(controller).to receive(:reviewee_topic_for).with(response_map_double).and_return(nil)
     end
 
     context 'when response not found' do
@@ -156,43 +164,46 @@ RSpec.describe ResponsesController, type: :controller do
         patch :submit, params: { id: 1 }
         expect(response).to have_http_status(:unprocessable_entity)
         body = JSON.parse(response.body)
-        expect(body['error']).to eq('User has already submitted the response')
+        expect(body['error']).to eq('Response has already been submitted')
       end
     end
 
     context 'when rubric incomplete' do
       before do
         allow(response_double).to receive(:is_submitted?).and_return(false)
-        allow(controller).to receive(:submission_window_open?).with(response_double).and_return(true)
+        allow(DueDate).to receive(:submission_window_open?).with(assignment: assignment_double, topic: nil).and_return(true)
         allow(response_double).to receive(:scores).and_return([double('Score', answer: nil)])
+        allow(response_double).to receive(:aggregate_questionnaire_score).and_return(42)
+        allow(response_double).to receive(:is_submitted=).with(true)
+        allow(response_double).to receive(:save).and_return(true)
       end
 
-      it 'returns 422 with rubric error' do
+      it 'does not block submission and returns ok' do
         patch :submit, params: { id: 1 }
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:ok)
         body = JSON.parse(response.body)
-        expect(body['error']).to eq('All rubric items must be answered')
+        expect(body['message']).to eq('Response submitted and scored successfully')
       end
     end
 
     context 'when deadline has passed' do
       before do
         allow(response_double).to receive(:is_submitted?).and_return(false)
-        allow(controller).to receive(:submission_window_open?).with(response_double).and_return(false)
+        allow(DueDate).to receive(:submission_window_open?).with(assignment: assignment_double, topic: nil).and_return(false)
       end
 
       it 'returns forbidden with deadline message' do
         patch :submit, params: { id: 1 }
         expect(response).to have_http_status(:forbidden)
         body = JSON.parse(response.body)
-        expect(body['error']).to eq('Deadline has passed')
+        expect(body['error']).to eq('Response deadline has passed')
       end
     end
 
     context 'when submitting twice (duplicate submission)' do
       before do
         # first call: not submitted, second call: already submitted
-        allow(controller).to receive(:submission_window_open?).with(response_double).and_return(true)
+        allow(DueDate).to receive(:submission_window_open?).with(assignment: assignment_double, topic: nil).and_return(true)
         allow(response_double).to receive(:is_submitted?).and_return(false, true)
         allow(response_double).to receive(:scores).and_return([])
         allow(response_double).to receive(:aggregate_questionnaire_score).and_return(42)
@@ -209,7 +220,7 @@ RSpec.describe ResponsesController, type: :controller do
         patch :submit, params: { id: 1 }
         expect(response).to have_http_status(:unprocessable_entity)
         body = JSON.parse(response.body)
-        expect(body['error']).to eq('User has already submitted the response')
+        expect(body['error']).to eq('Response has already been submitted')
       end
     end
   end
@@ -263,6 +274,7 @@ RSpec.describe ResponsesController, type: :controller do
     before do
       allow(controller).to receive(:set_response) { controller.instance_variable_set(:@response, response_double) }
       allow(controller).to receive(:has_role?).and_return(true)
+      allow(response_double).to receive(:rubric_label).and_return('Response')
     end
 
     context 'when response not found' do
@@ -287,7 +299,7 @@ RSpec.describe ResponsesController, type: :controller do
         patch :unsubmit, params: { id: 1 }
         expect(response).to have_http_status(:ok)
         body = JSON.parse(response.body)
-        expect(body['message']).to eq('User response has been unsubmitted')
+        expect(body['message']).to eq('Response reopened for edits. The reviewer can now make changes.')
       end
     end
 
@@ -300,7 +312,7 @@ RSpec.describe ResponsesController, type: :controller do
         patch :unsubmit, params: { id: 1 }
         expect(response).to have_http_status(:unprocessable_entity)
         body = JSON.parse(response.body)
-        expect(body['error']).to eq('User response already unsubmitted')
+        expect(body['error']).to eq('This response is not submitted, so it cannot be reopened')
       end
     end
   end

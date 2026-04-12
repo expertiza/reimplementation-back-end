@@ -7,23 +7,33 @@ class ResponsesController < ApplicationController
   def action_allowed?
     case action_name
     when 'create'
-      true
+      map_id = params[:response_map_id] || params[:map_id]
+      map = ResponseMap.find_by(id: map_id)
+      return false unless map && map.assignment
+
+      # Reviewer, teaching staff (instructor/TA), or admin ancestor of instructor
+      response_owner?(map) ||
+        current_user_teaching_staff_of_assignment?(map.assignment.id) ||
+        parent_admin_for_assignment?(map.assignment)
+
     when 'update', 'submit'
-      @response = Response.find(params[:id])
-      unless response_belongs_to? || current_user_is_parent_of_assignment_instructor_for_response? || 
-             current_user_is_teaching_staff_for_response_assignment?
-        render json: { error: 'forbidden' }, status: :forbidden
-      end
+      resp = Response.find_by(id: params[:id])
+      return false unless resp && resp.response_map&.assignment
+
+      current_user_owns_response?(resp) ||
+        current_user_teaching_staff_of_assignment?(resp.response_map.assignment.id) ||
+        parent_admin_for_response?(resp)
+
     when 'unsubmit', 'destroy'
-      # Only allow if user is the instructor of the associated assignment or has admin privileges
-      unless current_user_is_parent_of_assignment_instructor_for_response? || 
-             current_user_is_teaching_staff_for_response_assignment?
-        render json: { error: 'forbidden' }, status: :forbidden
-      end
+      resp = Response.find_by(id: params[:id])
+      return false unless resp && resp.response_map&.assignment
+
+      current_user_teaching_staff_of_assignment?(resp.response_map.assignment.id) ||
+        parent_admin_for_response?(resp)
+
     else
-      render json: { error: 'forbidden' }, status: :forbidden
+      false
     end
-    true
   end
 
   # POST /responses
@@ -38,7 +48,7 @@ class ResponsesController < ApplicationController
     )
 
     if @response.save
-      render json: { message: "#{response_map_label} submission started successfully", response: @response }, status: :created
+      render json: { message: "#{response_label} started successfully", response: @response }, status: :created
     else
       render json: { error: @response.errors.full_messages.to_sentence }, status: :unprocessable_entity
     end
@@ -50,7 +60,7 @@ class ResponsesController < ApplicationController
     return render json: { error: 'forbidden' }, status: :forbidden if @response.is_submitted?
 
     if @response.update(response_params)
-      render json: { message: "#{response_map_label} submission saved successfully", response: @response }, status: :ok
+      render json: { message: "#{response_label} saved successfully", response: @response }, status: :ok
     else
       render json: { error: @response.errors.full_messages.to_sentence }, status: :unprocessable_entity
     end
@@ -59,13 +69,14 @@ class ResponsesController < ApplicationController
   # PATCH /responses/:id/submit
   # Lock the response and calculate final score
   def submit
-    return render json: { error: 'Submission not found' }, status: :not_found unless @response
+    return render json: { error: "#{response_label} not found" }, status: :not_found unless @response
     if @response.is_submitted?
-      return render json: { error: 'Submission has already been locked' }, status: :unprocessable_entity
+      return render json: { error: "#{response_label} has already been submitted" }, status: :unprocessable_entity
     end
+    response_map = @response.response_map
     # Check deadline
-    unless submission_window_open?(@response)
-      return render json: { error: 'Submission deadline has passed' }, status: :forbidden
+    unless DueDate.submission_window_open?(assignment: response_map&.assignment, topic: reviewee_topic_for(response_map))
+      return render json: { error: "#{response_label} deadline has passed" }, status: :forbidden
     end
 
     # Lock response
@@ -76,7 +87,7 @@ class ResponsesController < ApplicationController
 
     if @response.save
       render json: {
-        message: "#{response_map_label} submission locked and scored successfully",
+        message: "#{response_label} submitted and scored successfully",
         response: @response,
         total_score: total_score
       }, status: :ok
@@ -86,22 +97,22 @@ class ResponsesController < ApplicationController
   end
 
   # PATCH /responses/:id/unsubmit
-  # Instructor/Admin reopens a submitted response for further editing
+  # Instructor/Admin allows a submitted response to be reopened for editing.
   def unsubmit
-    return render json: { error: "#{response_map_label} submission not found" }, status: :not_found unless @response
+    return render json: { error: "#{response_label} not found" }, status: :not_found unless @response
 
     if @response.is_submitted?
       @response.update(is_submitted: false)
-      render json: { message: "#{response_map_label} submission reopened for edits. The reviewer can now make changes.", response: @response }, status: :ok
+      render json: { message: "#{response_label} reopened for editing. The reviewer can now make changes.", response: @response }, status: :ok
     else
-      render json: { error: "This #{response_map_label.downcase} submission is not locked, so it cannot be reopened" }, status: :unprocessable_entity
+      render json: { error: "This #{response_label.downcase} is not submitted, so it cannot be reopened" }, status: :unprocessable_entity
     end
   end
 
   # DELETE /responses/:id
-  # Instructor/Admin deletes invalid/test response
+  # Instructor/Admin deletes a response
   def destroy
-    return render json: { error: 'Submission not found' }, status: :not_found unless @response
+    return render json: { error: "#{response_label} not found" }, status: :not_found unless @response
 
     @response.destroy
     head :no_content
@@ -124,93 +135,53 @@ class ResponsesController < ApplicationController
     )
   end
 
-  def response_belongs_to?
-    # Member actions: we have @response from set_response
-    return @response.map&.reviewer&.id == current_user.id if @response&.map&.reviewer && current_user
+  def current_user_owns_response?(resp = @response)
+    return false unless resp&.map && current_user
 
-    # Collection actions (create, next_action): check map ownership
-    map_id = params[:response_map_id] || params[:map_id]
-    return false if map_id.blank?
-
-    map = ResponseMap.find_by(id: map_id)
-    return false unless map
-
-    map.reviewer == current_user
+    resp.map.reviewer&.id == current_user.id
   end
 
-  # Checks whether the current_user is the instructor for the assignment
-  # associated with the response identified by params[:id].
-  # Uses the shared authorization method from Authorization concern.
-  def current_user_instructs_response_assignment?
-    resp = Response.find_by(id: params[:id])
-    return false unless resp&.response_map
-
-    assignment = resp.response_map&.assignment
-    return false unless assignment
-
-    # Delegate to the shared authorization helper
-    current_user_instructs_assignment?(assignment)
-  end
-
-  # Returns true if current user is teaching staff for the assignment associated
-  # with the current response (instructor or TA mapped to the assignment's course)
-  def current_user_is_teaching_staff_for_response_assignment?
-    resp = Response.find_by(id: params[:id])
-    return false unless resp&.response_map
-
-    assignment = resp.response_map&.assignment
-    return false unless assignment
-
-    # Uses Authorization concern helper to check instructor OR TA mapping
-    current_user_teaching_staff_of_assignment?(assignment.id)
-  end
-
-  # Returns true if the current user is the parent (creator) of the instructor
-  # for the assignment associated with the current response (params[:id]).
-  def current_user_is_parent_of_assignment_instructor_for_response?
-    resp = Response.find_by(id: params[:id])
-    return false unless resp&.response_map
-
-    assignment = resp.response_map&.assignment
-    return false unless assignment
-
-    instructor = find_assignment_instructor(assignment)
-    return false unless instructor
-
-    user_logged_in? && instructor.parent_id == current_user.id
-  end
-
-  # Returns the friendly label for the response's map type (e.g., "Review", "Assignment Survey")
-  # Falls back to a generic "Submission" if the label cannot be determined.
-  def response_map_label
-    return 'Submission' unless @response&.response_map
-
-    map_label = @response.response_map&.response_map_label
-    map_label.presence || 'Submission'
-  end
-
-  # Returns true if the assignment's due date is in the future or no due date is set
-  def submission_window_open?(response)
+  # Keep these wrappers local to this controller for now. The shared primitives
+  # (`find_assignment_instructor`, `current_user_ancestor_of?`, role checks) are
+  # already provided by Authorization. The policy here is response-specific:
+  # allow an Administrator only when they are an ancestor of the assignment's
+  # instructor, which is the rule used to reopen/delete responses and to let an
+  # admin act on a response map during creation.
+  def parent_admin_for_response?(response)
     assignment = response&.response_map&.assignment
-    return true if assignment.nil?
-    return true if assignment.due_dates.nil?
-    
-    # Check if due_date has a future? method, otherwise compare timestamps
-    due_dates = assignment.due_dates
-    # Prefer the `upcoming` API if available 
-    if due_dates.respond_to?(:upcoming)
-      next_due = due_dates.upcoming.first
-      return true if next_due.nil?
-      return next_due.due_at > Time.current
-    end
-    # Fallback to legacy `future?` if present
-    if due_dates.respond_to?(:future?)
-      return due_dates.first.future?
-    end
+    parent_admin_for_assignment?(assignment)
+  end
 
-    # Fallback: compare timestamps
-    return true if due_dates.first.nil?
-    
-    due_dates.first.due_at > Time.current
+  def parent_admin_for_assignment?(assignment)
+    instructor = assignment && find_assignment_instructor(assignment)
+    user_logged_in? && current_user_is_a?('Administrator') && instructor && current_user_ancestor_of?(instructor)
+  end
+
+  def response_owner?(map)
+    user_logged_in? && map.reviewer&.id == current_user.id
+  end
+
+  # Controller-level message helper for the human-readable response type used in
+  # API messages, such as "Review" or "Teammate Review".
+  def response_label
+    return @response.rubric_label if @response
+
+    map_label = @response_map&.response_map_label
+    map_label.presence || 'Response'
+  end
+
+  # Keep response-map-to-topic lookup here because it depends on the response
+  # reviewee shape (team vs participant), while deadline comparison belongs on
+  # DueDate.
+  def reviewee_topic_for(response_map)
+    reviewee = response_map&.reviewee
+    team =
+      if reviewee.is_a?(Team)
+        reviewee
+      elsif reviewee.respond_to?(:team)
+        reviewee.team
+      end
+
+    team&.signed_up_teams&.last&.sign_up_topic
   end
 end

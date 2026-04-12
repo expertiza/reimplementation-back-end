@@ -9,44 +9,45 @@ class Response < ApplicationRecord
   accepts_nested_attributes_for :scores
 
   alias map response_map
-  delegate :response_assignment, :reviewee, :reviewer, to: :map
+  delegate :reviewer_assignment, :response_assignment, :reviewee, :reviewer, to: :map
 
   # return the questionnaire that belongs to the response
   def questionnaire
-    response_assignment.assignment_questionnaires.find_by(used_in_round: self.round).questionnaire
+    reviewer_assignment.assignment_questionnaires.find_by(used_in_round: self.round).questionnaire
   end
 
-  # returns a string of response name, needed so the front end can tell students which rubric they are filling out
+  # Backward-compatible wrapper around ResponseMap#response_map_label.
+  # Keep this on Response so callers do not need to dereference map directly.
   def rubric_label
     return 'Response' if map.nil?
 
-    if map.respond_to?(:response_map_label)
-      label = map.response_map_label
-      return label if label.present?
-    end
+    label = map.response_map_label
+    return label if label.present?
 
     # response type doesn't exist
     'Unknown Type'
   end
 
   # Returns true if this response's score differs from peers by more than the assignment notification limit
+  # This comparison is response-specific (uses per-response max score and questionnaire settings),
+  # so it stays on Response instead of the generic ReviewAggregator mixin.
   def reportable_difference?
     map_class = map.class
     # gets all responses made by a reviewee
     existing_responses = map_class.assessments_for(map.reviewee)
 
-  count = 0
-  total_numerator = BigDecimal('0')
-  total_denominator = BigDecimal('0')
+    count = 0
+    total_numerator = BigDecimal('0')
+    total_denominator = BigDecimal('0')
     # gets the sum total percentage scores of all responses that are not this response
     # (each response can omit questions, so maximum_score may differ and we normalize before averaging)
-    existing_responses.each do |response|
-      unless id == response.id # the current_response is also in existing_responses array
-        count += 1
-        # Accumulate raw sums and divide once to minimize rounding error
-        total_numerator += BigDecimal(response.aggregate_questionnaire_score.to_s)
-        total_denominator += BigDecimal(response.maximum_score.to_s)
-      end
+    existing_responses.each do |peer_response|
+      next if id == peer_response.id # this response may also be present in existing_responses
+
+      count += 1
+      # Accumulate raw sums and divide once to minimize rounding error
+      total_numerator += BigDecimal(peer_response.aggregate_questionnaire_score.to_s)
+      total_denominator += BigDecimal(peer_response.maximum_score.to_s)
     end
 
     # if this response is the only response by the reviewee, there's no grade conflict
