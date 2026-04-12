@@ -91,10 +91,14 @@ class GradesController < ApplicationController
 
 
     # instructor_review (GET /api/v1/grades/:participant_id/instructor_review)
-    # helps the instructor begin grading or re-grading a submission.
-    # It finds or creates the appropriate review mapping for the given participant and returns JSON indicating whether to go to 
-    # Response#new (no review exists yet) or Response#edit (review already exists).
-    # This supports the instructor’s ability to open or edit a review for a student’s submission.
+    # Helps the instructor begin grading or re-grading a submission.
+    #
+    # Older Expertiza flows returned UI redirect paths such as
+    # `/response/new/:id`. This API-only controller instead returns the HTTP
+    # method, path, and request payload the client should use against the
+    # current `/responses` endpoints. That keeps GradesController decoupled from
+    # any specific front-end routing while still exposing enough information for
+    # the client to continue or start a review.
     def instructor_review
         reviewer = AssignmentParticipant.find_or_create_by!(user_id: current_user.id, parent_id: @assignment.id, handle: current_user.name)         
 
@@ -105,12 +109,27 @@ class GradesController < ApplicationController
         )
 
         existing_response = Response.find_by(map_id: mapping.id)
-        action = existing_response.present? ? 'edit' : 'new'
+        request_contract =
+          if existing_response.present?
+            {
+              request_method: 'PATCH',
+              request_path: "/responses/#{existing_response.id}",
+              request_payload: {}
+            }
+          else
+            {
+              request_method: 'POST',
+              request_path: '/responses',
+              request_payload: { response_map_id: mapping.id }
+            }
+          end
 
         render json: {
         map_id: mapping.id,
         response_id: existing_response&.id,
-        redirect_to: "/response/#{action}/#{mapping.id}"
+        request_method: request_contract[:request_method],
+        request_path: request_contract[:request_path],
+        request_payload: request_contract[:request_payload]
         }
     end
 

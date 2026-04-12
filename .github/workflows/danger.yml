@@ -8,9 +8,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+
+      - name: Fetch PR refs for Danger
+        run: |
+          git fetch --no-tags --prune origin \
+            +refs/heads/${{ github.event.pull_request.base.ref }}:refs/remotes/origin/${{ github.event.pull_request.base.ref }} \
+            +refs/heads/${{ github.event.pull_request.head.ref }}:refs/remotes/origin/${{ github.event.pull_request.head.ref }} || true
+          git fetch --no-tags origin ${{ github.event.pull_request.base.sha }} || true
+          git fetch --no-tags origin ${{ github.event.pull_request.head.sha }} || true
 
       - name: Clear Ruby cache
         run: |

@@ -127,18 +127,20 @@ class ResponsesController < ApplicationController
   end
 
   def response_params
+    # Keep generic PATCH narrowly scoped to draft editing. The map binding and
+    # submitted state are controlled by dedicated endpoints (`create`, `submit`,
+    # `unsubmit`) so reviewers cannot reattach a response to a different map or
+    # self-lock a draft through the update action.
     params.require(:response).permit(
-      :map_id,
-      :is_submitted,
-      :submitted_at,
-      scores_attributes: [:id, :question_id, :answer, :comment]
+      :additional_comment,
+      scores_attributes: [:id, :item_id, :answer, :comments]
     )
   end
 
   def current_user_owns_response?(resp = @response)
     return false unless resp&.map && current_user
 
-    resp.map.reviewer&.id == current_user.id
+    reviewer_owned_by_current_user?(resp.map.reviewer)
   end
 
   # Keep these wrappers local to this controller for now. The shared primitives
@@ -158,7 +160,7 @@ class ResponsesController < ApplicationController
   end
 
   def response_owner?(map)
-    user_logged_in? && map.reviewer&.id == current_user.id
+    user_logged_in? && reviewer_owned_by_current_user?(map.reviewer)
   end
 
   # Controller-level message helper for the human-readable response type used in
@@ -183,5 +185,12 @@ class ResponsesController < ApplicationController
       end
 
     team&.signed_up_teams&.last&.sign_up_topic
+  end
+
+  def reviewer_owned_by_current_user?(reviewer)
+    # Response maps point to Participant records, but authorization is based on
+    # the logged-in User. Compare through `reviewer.user_id` rather than the
+    # participant's own id so the actual reviewer can edit/submit their draft.
+    reviewer&.user_id == current_user.id
   end
 end

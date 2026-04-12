@@ -24,6 +24,25 @@ RSpec.describe ResponsesController, type: :controller do
     allow(controller).to receive(:action_allowed?).and_return(true)
   end
 
+  describe '#current_user_owns_response?' do
+    it 'matches ownership through reviewer.user_id instead of participant id' do
+      reviewer = instance_double('AssignmentParticipant', id: 99, user_id: user.id)
+      map = instance_double('ResponseMap', reviewer: reviewer)
+      response_double = instance_double('Response', map: map)
+
+      expect(controller.send(:current_user_owns_response?, response_double)).to be true
+    end
+  end
+
+  describe '#response_owner?' do
+    it 'matches create authorization through reviewer.user_id instead of participant id' do
+      reviewer = instance_double('AssignmentParticipant', id: 88, user_id: user.id)
+      map = instance_double('ResponseMap', reviewer: reviewer)
+
+      expect(controller.send(:response_owner?, map)).to be true
+    end
+  end
+
   describe 'POST #create' do
     let(:response_map) { double('ResponseMap', id: 123) }
     let(:response_double) { double('Response') }
@@ -112,6 +131,33 @@ RSpec.describe ResponsesController, type: :controller do
         expect(response).to have_http_status(:ok)
         body = JSON.parse(response.body)
         expect(body['message']).to eq('Response saved successfully')
+      end
+    end
+
+    context 'when update receives draft fields only' do
+      before do
+        allow(response_double).to receive(:is_submitted?).and_return(false)
+      end
+
+      it 'passes only editable draft attributes to the model' do
+        expect(response_double).to receive(:update) do |attrs|
+          expect(attrs.to_h).to eq(
+            'additional_comment' => 'Draft note',
+            'scores_attributes' => [{ 'id' => '7', 'item_id' => '3', 'answer' => 5, 'comments' => 'well supported' }]
+          )
+        end.and_return(true)
+
+        patch :update, params: {
+          id: 1,
+          response: {
+            additional_comment: 'Draft note',
+            map_id: 999,
+            is_submitted: true,
+            scores_attributes: [{ id: 7, item_id: 3, answer: 5, comments: 'well supported', question_id: 10, comment: 'ignored' }]
+          }
+        }
+
+        expect(response).to have_http_status(:ok)
       end
     end
 
@@ -299,7 +345,7 @@ RSpec.describe ResponsesController, type: :controller do
         patch :unsubmit, params: { id: 1 }
         expect(response).to have_http_status(:ok)
         body = JSON.parse(response.body)
-        expect(body['message']).to eq('Response reopened for edits. The reviewer can now make changes.')
+        expect(body['message']).to eq('Response reopened for editing. The reviewer can now make changes.')
       end
     end
 
