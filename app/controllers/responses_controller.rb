@@ -20,7 +20,7 @@ class ResponsesController < ApplicationController
       resp = Response.find_by(id: params[:id])
       return false unless resp && resp.response_map&.assignment
 
-      response_belongs_to?(resp) ||
+      current_user_owns_response?(resp) ||
         current_user_teaching_staff_of_assignment?(resp.response_map.assignment.id) ||
         parent_admin_for_response?(resp)
 
@@ -73,8 +73,9 @@ class ResponsesController < ApplicationController
     if @response.is_submitted?
       return render json: { error: "#{response_label} has already been submitted" }, status: :unprocessable_entity
     end
+    response_map = @response.response_map
     # Check deadline
-    unless response_deadline_open?(@response)
+    unless DueDate.submission_window_open?(assignment: response_map&.assignment, topic: reviewee_topic_for(response_map))
       return render json: { error: "#{response_label} deadline has passed" }, status: :forbidden
     end
 
@@ -96,20 +97,20 @@ class ResponsesController < ApplicationController
   end
 
   # PATCH /responses/:id/unsubmit
-  # Instructor/Admin reopens a submitted response for further editing
+  # Instructor/Admin allows a submitted response to be reopened for editing.
   def unsubmit
     return render json: { error: "#{response_label} not found" }, status: :not_found unless @response
 
     if @response.is_submitted?
       @response.update(is_submitted: false)
-      render json: { message: "#{response_label} reopened for edits. The reviewer can now make changes.", response: @response }, status: :ok
+      render json: { message: "#{response_label} reopened for editing. The reviewer can now make changes.", response: @response }, status: :ok
     else
       render json: { error: "This #{response_label.downcase} is not submitted, so it cannot be reopened" }, status: :unprocessable_entity
     end
   end
 
   # DELETE /responses/:id
-  # Instructor/Admin deletes invalid/test response
+  # Instructor/Admin deletes a response
   def destroy
     return render json: { error: "#{response_label} not found" }, status: :not_found unless @response
 
@@ -134,13 +135,18 @@ class ResponsesController < ApplicationController
     )
   end
 
-  def response_belongs_to?(resp = @response)
+  def current_user_owns_response?(resp = @response)
     return false unless resp&.map && current_user
 
     resp.map.reviewer&.id == current_user.id
   end
 
-  # Variant helpers for parent-admin checks
+  # Keep these wrappers local to this controller for now. The shared primitives
+  # (`find_assignment_instructor`, `current_user_ancestor_of?`, role checks) are
+  # already provided by Authorization. The policy here is response-specific:
+  # allow an Administrator only when they are an ancestor of the assignment's
+  # instructor, which is the rule used to reopen/delete responses and to let an
+  # admin act on a response map during creation.
   def parent_admin_for_response?(response)
     assignment = response&.response_map&.assignment
     parent_admin_for_assignment?(assignment)
@@ -155,7 +161,8 @@ class ResponsesController < ApplicationController
     user_logged_in? && map.reviewer&.id == current_user.id
   end
 
-  # Controller-level message helper that delegates label lookup to model methods.
+  # Controller-level message helper for the human-readable response type used in
+  # API messages, such as "Review" or "Teammate Review".
   def response_label
     return @response.rubric_label if @response
 
@@ -163,36 +170,18 @@ class ResponsesController < ApplicationController
     map_label.presence || 'Response'
   end
 
-  # Returns true when the assignment still allows this response to be submitted.
-  def response_deadline_open?(response)
-    assignment = response&.response_map&.assignment
-    return true if assignment.nil?
-    return true if assignment.due_dates.nil?
-    
-    # Support both modern and legacy due date collections.
-    due_dates = assignment.due_dates
-    # Prefer the scoped API when this relation supports it.
-    if due_dates_support_upcoming_scope?(due_dates)
-      next_due = due_dates.upcoming.first
-      return true if next_due.nil?
-      return next_due.due_at > Time.current
-    end
-    # Fall back to legacy API used in older code paths.
-    if due_dates_support_legacy_future_check?(due_dates)
-      return due_dates.first.future?
-    end
+  # Keep response-map-to-topic lookup here because it depends on the response
+  # reviewee shape (team vs participant), while deadline comparison belongs on
+  # DueDate.
+  def reviewee_topic_for(response_map)
+    reviewee = response_map&.reviewee
+    team =
+      if reviewee.is_a?(Team)
+        reviewee
+      elsif reviewee.respond_to?(:team)
+        reviewee.team
+      end
 
-    # Fall back: compare timestamps
-    return true if due_dates.first.nil?
-    
-    due_dates.first.due_at > Time.current
-  end
-
-  def due_dates_support_upcoming_scope?(due_dates)
-    due_dates.respond_to?(:upcoming)
-  end
-
-  def due_dates_support_legacy_future_check?(due_dates)
-    due_dates.respond_to?(:future?)
+    team&.signed_up_teams&.last&.sign_up_topic
   end
 end

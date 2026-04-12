@@ -51,6 +51,34 @@ class DueDate < ApplicationRecord
     due_dates.find { |due_date| due_date.due_at > Time.zone.now }
   end
 
+  # Resolves the next submission deadline from generic domain inputs:
+  # the assignment being worked on and an optional sign-up topic. This method
+  # intentionally does not know about Response, ResponseMap, or controller
+  # params. Callers are responsible for deriving the relevant assignment/topic
+  # from their own context, then delegating deadline comparison here.
+  #
+  # That keeps DueDate reusable across controllers while still supporting the
+  # current response flow, where topic-aware review deadlines may override the
+  # assignment-level due date.
+  def self.next_submission_due_date(assignment:, topic: nil)
+    return nil unless assignment&.id
+
+    return TopicDueDate.next_due_date(assignment.id, topic.id) if topic&.id
+
+    next_due_date(assignment.id)
+  end
+
+  # Returns true when the relevant submission deadline has not yet passed.
+  # The method is generic at the due-date layer: it answers "is submission
+  # still open for this assignment/topic context?" rather than encoding any
+  # response-specific behavior.
+  def self.submission_window_open?(assignment:, topic: nil, reference_time: Time.current)
+    return true unless assignment
+
+    next_due = next_submission_due_date(assignment: assignment, topic: topic)
+    next_due.nil? || next_due.due_at > reference_time
+  end
+
   # Determines the current round for a parent (assignment/topic) using one consistent rule:
   # - If any round-based due dates are in the past, use the latest past due date's round.
   # - Otherwise, use the earliest upcoming due date's round.

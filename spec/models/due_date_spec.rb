@@ -184,6 +184,42 @@ RSpec.describe DueDate, type: :model do
     end
   end
 
+  describe '.next_submission_due_date' do
+    let(:assignment) { Assignment.create!(id: 2001, name: 'Submission Assignment', instructor:) }
+    let(:topic) { SignUpTopic.create!(id: 2002, topic_name: 'Submission Topic', assignment: assignment) }
+
+    it 'uses topic due dates when a topic is provided' do
+      expect(TopicDueDate).to receive(:next_due_date).with(assignment.id, topic.id)
+      DueDate.next_submission_due_date(assignment: assignment, topic: topic)
+    end
+
+    it 'falls back to assignment due dates when no topic is provided' do
+      expect(DueDate).to receive(:next_due_date).with(assignment.id)
+      DueDate.next_submission_due_date(assignment: assignment, topic: nil)
+    end
+  end
+
+  describe '.submission_window_open?' do
+    let(:assignment) { Assignment.create!(id: 3001, name: 'Window Assignment', instructor:) }
+
+    it 'returns true when there is no assignment context' do
+      expect(DueDate.submission_window_open?(assignment: nil)).to be true
+    end
+
+    it 'returns true when no upcoming due date exists' do
+      allow(DueDate).to receive(:next_submission_due_date).with(assignment: assignment, topic: nil).and_return(nil)
+
+      expect(DueDate.submission_window_open?(assignment: assignment, topic: nil)).to be true
+    end
+
+    it 'returns false when the next due date is in the past' do
+      past_due_date = instance_double('DueDate', due_at: 1.hour.ago)
+      allow(DueDate).to receive(:next_submission_due_date).with(assignment: assignment, topic: nil).and_return(past_due_date)
+
+      expect(DueDate.submission_window_open?(assignment: assignment, topic: nil)).to be false
+    end
+  end
+
   describe '.current_round_for' do
     let(:assignment) { Assignment.create(id: 1001, name: 'Round Assignment', instructor:) }
 

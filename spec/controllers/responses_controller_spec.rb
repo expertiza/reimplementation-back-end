@@ -133,10 +133,15 @@ RSpec.describe ResponsesController, type: :controller do
 
   describe 'PATCH #submit' do
     let(:response_double) { double('Response') }
+    let(:response_map_double) { double('ResponseMap') }
+    let(:assignment_double) { double('Assignment') }
 
     before do
       allow(controller).to receive(:set_response) { controller.instance_variable_set(:@response, response_double) }
       allow(response_double).to receive(:rubric_label).and_return('Response')
+      allow(response_double).to receive(:response_map).and_return(response_map_double)
+      allow(response_map_double).to receive(:assignment).and_return(assignment_double)
+      allow(controller).to receive(:reviewee_topic_for).with(response_map_double).and_return(nil)
     end
 
     context 'when response not found' do
@@ -166,7 +171,7 @@ RSpec.describe ResponsesController, type: :controller do
     context 'when rubric incomplete' do
       before do
         allow(response_double).to receive(:is_submitted?).and_return(false)
-        allow(controller).to receive(:response_deadline_open?).with(response_double).and_return(true)
+        allow(DueDate).to receive(:submission_window_open?).with(assignment: assignment_double, topic: nil).and_return(true)
         allow(response_double).to receive(:scores).and_return([double('Score', answer: nil)])
         allow(response_double).to receive(:aggregate_questionnaire_score).and_return(42)
         allow(response_double).to receive(:is_submitted=).with(true)
@@ -184,7 +189,7 @@ RSpec.describe ResponsesController, type: :controller do
     context 'when deadline has passed' do
       before do
         allow(response_double).to receive(:is_submitted?).and_return(false)
-        allow(controller).to receive(:response_deadline_open?).with(response_double).and_return(false)
+        allow(DueDate).to receive(:submission_window_open?).with(assignment: assignment_double, topic: nil).and_return(false)
       end
 
       it 'returns forbidden with deadline message' do
@@ -198,7 +203,7 @@ RSpec.describe ResponsesController, type: :controller do
     context 'when submitting twice (duplicate submission)' do
       before do
         # first call: not submitted, second call: already submitted
-        allow(controller).to receive(:response_deadline_open?).with(response_double).and_return(true)
+        allow(DueDate).to receive(:submission_window_open?).with(assignment: assignment_double, topic: nil).and_return(true)
         allow(response_double).to receive(:is_submitted?).and_return(false, true)
         allow(response_double).to receive(:scores).and_return([])
         allow(response_double).to receive(:aggregate_questionnaire_score).and_return(42)
