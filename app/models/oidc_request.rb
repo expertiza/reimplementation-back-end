@@ -37,7 +37,8 @@ class OidcRequest < ApplicationRecord
     )
   end
 
-  def verified_email_from_code!(provider:, code:)
+  def verified_email_from_code!(provider_key:, code:)
+    provider = OidcConfig.find(provider_key)
     discovery = OpenIDConnect::Discovery::Provider::Config.discover!(provider["issuer"])
     client = self.class.new_client(provider, discovery: discovery)
 
@@ -67,4 +68,6 @@ class OidcRequest < ApplicationRecord
       userinfo_endpoint: discovery.userinfo_endpoint
     )
   end
+
+  private_class_method :new_client
 end

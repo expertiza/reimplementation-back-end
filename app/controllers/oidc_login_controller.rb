@@ -5,12 +5,17 @@ class OidcLoginController < ApplicationController
     render json: { error: e.message }, status: :not_found
   end
 
+  rescue_from OpenIDConnect::Discovery::DiscoveryFailed, Rack::OAuth2::Client::Error do |e|
+    render json: { error: "Provider communication failed: #{e.message}" }, status: :bad_gateway
+  end
+
   # GET /auth/providers
   def providers
     render json: OidcConfig.public_list
   end
 
   # POST /auth/client-select
+  # This is a good candidate for rate limiting
   def client_select
     authorization_uri = OidcRequest.authorization_uri_for!(provider_key: params[:provider])
 
@@ -22,10 +27,8 @@ class OidcLoginController < ApplicationController
     # Look up and consume the auth request
     auth_request = OidcRequest.consume_recent_by_state!(params[:state])
 
-    provider = OidcConfig.find(auth_request.provider)
-
     # Match to existing user by email
-    email = auth_request.verified_email_from_code!(provider: provider, code: params[:code])
+    email = auth_request.verified_email_from_code!(provider_key: auth_request.provider, code: params[:code])
     user  = User.find_by(email: email)
 
     if user
