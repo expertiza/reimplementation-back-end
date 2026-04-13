@@ -68,6 +68,4 @@ class OidcRequest < ApplicationRecord
       userinfo_endpoint: discovery.userinfo_endpoint
     )
   end
-
-  private_class_method :new_client
 end
