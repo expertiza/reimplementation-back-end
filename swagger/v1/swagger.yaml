@@ -2399,6 +2399,18 @@ paths:
                     example: 'Unknown OIDC provider: nonexistent'
                 required:
                 - error
+        '502':
+          description: provider discovery failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Provider communication failed: ...'
+                required:
+                - error
       requestBody:
         content:
           application/json:
@@ -2469,6 +2481,18 @@ paths:
                   error:
                     type: string
                     example: 'Token verification failed: invalid signature'
+                required:
+                - error
+        '502':
+          description: provider communication failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Provider communication failed: ...'
                 required:
                 - error
       requestBody:

@@ -99,6 +99,10 @@ RSpec.describe OidcRequest, type: :model do
   end
 
   describe '#verified_email_from_code!' do
+    before do
+      allow(OidcConfig).to receive(:find).with('google-ncsu').and_return(provider)
+    end
+
     let(:oidc_request) do
       described_class.create!(
         state: 'state',
@@ -118,18 +122,18 @@ RSpec.describe OidcRequest, type: :model do
     it 'exchanges code, verifies token and returns email' do
       allow(client).to receive(:authorization_code=).with('authorization-code')
       allow(client).to receive(:access_token!).with(code_verifier: 'verifier')
-        .and_return(instance_double(OpenIDConnect::AccessToken, id_token: 'fake.id.token'))
+                                              .and_return(instance_double(OpenIDConnect::AccessToken, id_token: 'fake.id.token'))
 
       allow(OpenIDConnect::ResponseObject::IdToken).to receive(:decode)
-        .with('fake.id.token', discovery.jwks)
-        .and_return(id_token_obj)
+                                                         .with('fake.id.token', discovery.jwks)
+                                                         .and_return(id_token_obj)
       allow(id_token_obj).to receive(:verify!).with(
         issuer: 'https://accounts.google.com',
         client_id: 'test-client-id',
         nonce: 'nonce'
       )
 
-      email = oidc_request.verified_email_from_code!(provider: provider, code: 'authorization-code')
+      email = oidc_request.verified_email_from_code!(provider_key: 'google-ncsu', code: 'authorization-code')
       expect(email).to eq('oidcuser@ncsu.edu')
     end
   end
