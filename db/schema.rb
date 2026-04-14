@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_07_003623) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_11_120000) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -115,16 +115,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_07_003623) do
     t.datetime "updated_at", null: false
     t.index ["assignment_id"], name: "index_assignments_duties_on_assignment_id"
     t.index ["duty_id"], name: "index_assignments_duties_on_duty_id"
-  end
-
-  create_table "auth_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.string "state"
-    t.string "nonce"
-    t.string "code_verifier"
-    t.string "provider"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["state"], name: "index_auth_requests_on_state"
   end
 
   create_table "bookmark_ratings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -248,6 +238,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_07_003623) do
     t.string "type"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "oidc_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "state"
+    t.string "nonce"
+    t.string "code_verifier"
+    t.string "provider"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["state"], name: "index_oidc_requests_on_state"
   end
 
   create_table "participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|

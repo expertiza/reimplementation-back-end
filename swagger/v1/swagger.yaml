@@ -2371,7 +2371,7 @@ paths:
       security: []
       description: |
         Accepts a provider key, performs OIDC discovery, generates PKCE and state parameters,
-        persists an AuthRequest for later verification, and returns the provider's authorization URL
+        persists an OidcRequest for later verification, and returns the provider's authorization URL
         that the front end should redirect the user to.
       parameters: []
       responses:
@@ -2387,6 +2387,30 @@ paths:
                     example: https://accounts.google.com/o/oauth2/v2/auth?client_id=...&scope=openid+email+profile&state=...&nonce=...
                 required:
                 - redirect_uri
+        '404':
+          description: unknown OIDC provider
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Unknown OIDC provider: nonexistent'
+                required:
+                - error
+        '502':
+          description: provider discovery failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Provider communication failed: ...'
+                required:
+                - error
       requestBody:
         content:
           application/json:
@@ -2424,7 +2448,7 @@ paths:
                 required:
                 - token
         '404':
-          description: no account found for the email
+          description: no account found or unknown provider
           content:
             application/json:
               schema:
@@ -2457,6 +2481,18 @@ paths:
                   error:
                     type: string
                     example: 'Token verification failed: invalid signature'
+                required:
+                - error
+        '502':
+          description: provider communication failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'Provider communication failed: ...'
                 required:
                 - error
       requestBody:
