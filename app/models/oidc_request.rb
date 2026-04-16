@@ -1,5 +1,8 @@
 class OidcRequest < ApplicationRecord
-  scope :recent, ->(window = 5.minutes) { where("created_at > ?", window.ago) }
+  VALIDITY_WINDOW = 5.minutes
+
+  scope :recent, ->(window = VALIDITY_WINDOW) { where("created_at > ?", window.ago) }
+  scope :stale,  ->(window = VALIDITY_WINDOW) { where("created_at <= ?", window.ago) }
 
   def self.consume_recent_by_state!(state, window: 5.minutes)
     transaction do
