@@ -44,7 +44,8 @@ class OidcLoginController < ApplicationController
     user = oidc_request.authenticate_user!(code: code)
     render json: { token: user.generate_jwt }, status: :ok
   rescue ActiveRecord::RecordNotFound, OidcRequest::AuthenticationError,
-    OpenIDConnect::ResponseObject::IdToken::InvalidToken
+    OpenIDConnect::ResponseObject::IdToken::InvalidToken,
+    OidcConfig::ProviderNotFound
     render_error "Authentication failed", status: :unauthorized
   end
 

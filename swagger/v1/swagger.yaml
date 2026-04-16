@@ -2317,6 +2317,7 @@ paths:
       summary: Logs in a user
       tags:
       - Authentication
+      security: []
       parameters: []
       responses:
         '200':

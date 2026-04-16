@@ -12,6 +12,7 @@ RSpec.describe AuthenticationController, type: :request do
     post 'Logs in a user' do
       tags 'Authentication'
       consumes 'application/json'
+      security []
       parameter name: :credentials, in: :body, schema: {
         type: :object,
         properties: {
