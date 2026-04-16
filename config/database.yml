@@ -5,14 +5,20 @@ default: &default
   port: 3306
   socket: /var/run/mysqld/mysqld.sock
 
+# Docker Compose sets DATABASE_URL (e.g. mysql2://root:expertiza@db:3306/reimplementation?).
+# Local runs often omit it; use host MySQL on 3307 (compose maps db:3306 -> host:3307).
+<% local_default = 'mysql2://root:expertiza@127.0.0.1:3307/reimplementation?'
+   resolved_url = ENV['DATABASE_URL'].to_s.strip
+   resolved_url = local_default if resolved_url.empty? %>
+
 development:
   <<: *default
-  url: <%= ENV['DATABASE_URL'].gsub('?', '_development?') %>
+  url: <%= resolved_url.gsub('?', '_development?') %>
 
 test:
   <<: *default
-  url: <%= ENV['DATABASE_URL'].gsub('?', '_test?') %>
+  url: <%= resolved_url.gsub('?', '_test?') %>
 
 production:
   <<: *default
-  url: <%= ENV['DATABASE_URL'].gsub('?', '_production?') %>
+  url: <%= ENV.fetch('DATABASE_URL').gsub('?', '_production?') %>

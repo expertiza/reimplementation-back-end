@@ -13,7 +13,12 @@ class AssignmentTeam < Team
   delegate :path, to: :assignment, prefix: true
 
   def hyperlinks
-    submitted_hyperlinks.blank? ? [] : YAML.safe_load(submitted_hyperlinks)
+    return [] if submitted_hyperlinks.blank?
+
+    YAML.safe_load(submitted_hyperlinks)
+  rescue Psych::Exception, StandardError => e
+    Rails.logger.warn("[AssignmentTeam#hyperlinks] team_id=#{id}: #{e.class}: #{e.message}")
+    []
   end
 
   def submit_hyperlink(hyperlink)
@@ -50,22 +55,24 @@ class AssignmentTeam < Team
     return nil unless teams_participants
 
     teams_participants.each do |teams_participant|
-      if teams_participant.team_id.nil?
-        next
-      end
-      team = AssignmentTeam.find(teams_participant.team_id)
-      return team if team.parent_id == participant.parent_id
+      next if teams_participant.team_id.nil?
+
+      team = Team.find_by(id: teams_participant.team_id)
+      next unless team.is_a?(AssignmentTeam)
+      next unless team.parent_id == participant.parent_id
+
+      return team
     end
     nil
   end
 
   # Set the directory num for this team
   def set_team_directory_num
-    return if directory_num && (directory_num >= 0)
+    return if directory_num.present? && directory_num >= 0
 
-    max_num = AssignmentTeam.where(parent_id:).order('directory_num desc').first.directory_num
-    dir_num = max_num ? max_num + 1 : 0
-    update(directory_num: dir_num)
+    max_num = AssignmentTeam.where(parent_id: parent_id).where.not(id: id).where.not(directory_num: nil).maximum(:directory_num)
+    dir_num = max_num.nil? ? 0 : max_num + 1
+    update!(directory_num: dir_num)
   end
 
   # Gets the team directory path

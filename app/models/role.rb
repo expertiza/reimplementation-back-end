@@ -12,6 +12,13 @@ class Role < ApplicationRecord
   ADMINISTRATOR_ID = 4
   SUPER_ADMINISTRATOR_ID = 5
 
+  # Aliases for role_id comparisons (scopes, User.instantiate, etc.)
+  STUDENT = STUDENT_ID
+  TEACHING_ASSISTANT = TEACHING_ASSISTANT_ID
+  INSTRUCTOR = INSTRUCTOR_ID
+  ADMINISTRATOR = ADMINISTRATOR_ID
+  SUPER_ADMINISTRATOR = SUPER_ADMINISTRATOR_ID
+
   def super_administrator?
     name['Super Administrator']
   end
@@ -66,7 +73,6 @@ class Role < ApplicationRecord
   end
 
   def as_json(options = nil)
-    options = options || {} # Ensure options is a hash
-    super(options.merge({ only: %i[id name parent_id] }))
+    super({ only: %i[id name parent_id] }.merge(options || {}))
   end
 end

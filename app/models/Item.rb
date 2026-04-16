@@ -2,7 +2,7 @@
 
 class Item < ApplicationRecord
   before_create :set_seq
-  belongs_to :questionnaire # each item belongs to a specific questionnaire
+  belongs_to :questionnaire, inverse_of: :items # each item belongs to a specific questionnaire
   has_many :answers, dependent: :destroy, foreign_key: 'item_id'
   attr_accessor :choice_strategy
   
@@ -25,7 +25,9 @@ class Item < ApplicationRecord
 
   def as_json(options = {})
       super(options.merge({
-                            only: %i[txt weight seq question_type size alternatives break_before min_label max_label created_at updated_at],
+                            # Include id so callers (e.g. calibration_reports) can merge `only: [:id, ...]`
+                            # without this list overwriting and dropping id — all rubric rows need distinct ids.
+                            only: %i[id txt weight seq question_type size alternatives break_before min_label max_label created_at updated_at],
                             include: {
                               questionnaire: { only: %i[name id] }
                             }

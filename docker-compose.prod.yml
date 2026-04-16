@@ -1,0 +1,48 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: reimplementation-app
+    # Load secrets from `.env` into the container (avoids empty ${VAR} overriding when Compose
+    # does not see `.env`, e.g. wrong working directory or sudo + different cwd).
+    env_file:
+      - .env
+    environment:
+      RAILS_ENV: production
+      DATABASE_URL: mysql2://root:${MYSQL_ROOT_PASSWORD}@db:3306/reimplementation
+      CACHE_STORE: redis://redis:6380/0
+      REDIS_URL: redis://redis:6380/0
+      RAILS_LOG_TO_STDOUT: "true"
+      RAILS_SERVE_STATIC_FILES: "true"
+      # JWT_SECRET_KEY + SECRET_KEY_BASE: set in `.env` (via env_file) — do not pass ${} here
+      # or an empty interpolation would override the file.
+    ports:
+      - "3002:3002"
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    container_name: reimplementation-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: reimplementation
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    container_name: reimplementation-redis
+    restart: unless-stopped
+    # Your app/dev compose uses port 6380, so run redis on 6380 in container as well.
+    command: ["redis-server", "--port", "6380", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+
+volumes:
+  mysql-data:
+  redis-data:

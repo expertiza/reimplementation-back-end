@@ -87,7 +87,29 @@ class QuestionnairesController < ApplicationController
   private
 
   def questionnaire_params
-    params.require(:questionnaire).permit(:name, :questionnaire_type, :private, :min_question_score, :max_question_score, :instructor_id)
+    # The questionnaire editor submits rubric items as `items_attributes`.
+    # Only permit keys that exist on `items` table to avoid UnknownAttributeError.
+    params.require(:questionnaire).permit(
+      :name,
+      :questionnaire_type,
+      :private,
+      :min_question_score,
+      :max_question_score,
+      :instructor_id,
+      items_attributes: [
+        :id,
+        :txt,
+        :question_type,
+        :seq,
+        :weight,
+        :size,
+        :alternatives,
+        :break_before,
+        :min_label,
+        :max_label,
+        :_destroy
+      ]
+    )
   end
 
   def sanitize_display_type(type)

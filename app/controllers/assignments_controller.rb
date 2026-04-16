@@ -10,14 +10,14 @@ class AssignmentsController < ApplicationController
   # GET /assignments/:id
   def show
     assignment = Assignment.find(params[:id])
-    render json: assignment
+    render json: assignment_json(assignment)
   end
 
   # POST /assignments
   def create
     assignment = Assignment.new(assignment_params)
     if assignment.save
-      render json: assignment, status: :created
+      render json: assignment_json(assignment), status: :created
     else
       render json: assignment.errors, status: :unprocessable_entity
     end
@@ -27,7 +27,7 @@ class AssignmentsController < ApplicationController
   def update
     assignment = Assignment.find(params[:id])
     if assignment.update(assignment_params)
-      render json: assignment, status: :ok
+      render json: assignment_json(assignment), status: :ok
     else
       render json: assignment.errors, status: :unprocessable_entity
     end
@@ -211,55 +211,102 @@ class AssignmentsController < ApplicationController
   end
   
   private
+
+  # Default `render json: assignment` omits associations; the editor needs rubrics and due dates to reload.
+  def assignment_json(assignment)
+    assignment.as_json(
+      include: {
+        due_dates: {},
+        assignment_questionnaires: {
+          include: {
+            questionnaire: { only: %i[id name questionnaire_type] }
+          }
+        }
+      }
+    )
+  end
+
   # Only allow a list of trusted parameters through.
   def assignment_params
+    # Only real columns on `assignments` (see db/schema.rb). Frontend used to send many
+    # non-existent keys (e.g. show_template_review), which caused UnknownAttributeError on update.
     params.require(:assignment).permit(
       :name,
-      :title,
-      :description,
       :directory_path,
       :spec_location,
       :private,
-      :show_template_review,
-      :require_quiz,
-      :has_badge,
-      :staggered_deadline,
-      :is_calibrated,
-      :has_teams,
+      :submitter_count,
+      :num_reviews,
+      :num_review_of_reviews,
+      :num_review_of_reviewers,
+      :reviews_visible_to_all,
+      :num_reviewers,
       :max_team_size,
-      :show_teammate_review,
-      :is_pair_programming,
-      :has_mentors,
-      :has_topics,
-      :review_topic_threshold,
-      :maximum_number_of_reviews_per_submission,
-      :review_strategy,
-      :review_rubric_varies_by_round,
-      :review_rubric_varies_by_topic,
-      :review_rubric_varies_by_role,
-      :has_max_review_limit,
-      :set_allowed_number_of_reviews_per_reviewer,
-      :set_required_number_of_reviews_per_reviewer,
-      :is_review_anonymous,
-      :is_review_done_by_teams,
-      :allow_self_reviews,
-      :reviews_visible_to_other_reviewers,
-      :number_of_review_rounds,
+      :staggered_deadline,
+      :allow_suggestions,
       :days_between_submissions,
+      :review_assignment_strategy,
+      :max_reviews_per_submission,
+      :review_topic_threshold,
+      :copy_flag,
+      :rounds_of_reviews,
+      :microtask,
+      :require_quiz,
+      :num_quiz_questions,
+      :is_coding_assignment,
+      :is_intelligent,
+      :calculate_penalty,
       :late_policy_id,
       :is_penalty_calculated,
-      :calculate_penalty,
-      :use_signup_deadline,
-      :use_drop_topic_deadline,
-      :use_team_formation_deadline,
-      :use_date_updater,
-      :submission_allowed,
-      :review_allowed,
-      :teammate_allowed,
-      :metareview_allowed,
-      weights: [],
-      notification_limits: [],
-      reminder: []
+      :max_bids,
+      :show_teammate_reviews,
+      :availability_flag,
+      :use_bookmark,
+      :can_review_same_topic,
+      :can_choose_topic_to_review,
+      :is_calibrated,
+      :is_selfreview_enabled,
+      :reputation_algorithm,
+      :is_anonymous,
+      :num_reviews_required,
+      :num_metareviews_required,
+      :num_metareviews_allowed,
+      :num_reviews_allowed,
+      :simicheck,
+      :simicheck_threshold,
+      :is_answer_tagging_allowed,
+      :has_badge,
+      :allow_selecting_additional_reviews_after_1st_round,
+      :sample_assignment_id,
+      :instructor_id,
+      :course_id,
+      :enable_pair_programming,
+      :has_teams,
+      :has_topics,
+      :vary_by_round,
+      assignment_questionnaires_attributes: %i[
+        id
+        questionnaire_id
+        used_in_round
+        notification_limit
+        questionnaire_weight
+        _destroy
+      ],
+      due_dates_attributes: %i[
+        id
+        due_at
+        deadline_type_id
+        round
+        deadline_name
+        submission_allowed_id
+        review_allowed_id
+        teammate_review_allowed_id
+        quiz_allowed_id
+        threshold
+        review_of_review_allowed_id
+        type
+        _destroy
+      ]
     )
   end
 

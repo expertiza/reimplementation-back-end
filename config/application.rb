@@ -32,6 +32,13 @@ module Reimplementation
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
-    config.cache_store = :redis_store, ENV['CACHE_STORE'], { expires_in: 3.days, raise_errors: false }
+
+    # PORO/service classes (calibration helpers, etc.)
+    config.autoload_paths << root.join('app/services')
+    config.eager_load_paths << root.join('app/services')
+    # Rails 8: :redis_store was removed; use :redis_cache_store (requires redis gem).
+    redis_cache_url = ENV['CACHE_STORE'].presence || ENV['REDIS_URL'].presence || 'redis://localhost:6380/0'
+    config.cache_store = :redis_cache_store,
+                           { url: redis_cache_url, expires_in: 3.days }
   end
 end

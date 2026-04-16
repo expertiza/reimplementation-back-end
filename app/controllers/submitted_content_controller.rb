@@ -114,8 +114,7 @@ class SubmittedContentController < ApplicationController
   # POST /submitted_content/submit_file
   # Handles file upload for the participant's team with validation and optional unzipping
   def submit_file
-    # Get the uploaded file from request parameters
-    uploaded = params[:uploaded_file]
+    uploaded = resolve_multipart_upload(params[:uploaded_file])
 
     # Validate that a file was provided
     return render_error('No file provided. Please select a file to upload using the "uploaded_file" parameter.', :bad_request) unless uploaded
@@ -362,6 +361,24 @@ class SubmittedContentController < ApplicationController
       # Fallback to string representation
       uploaded.to_s
     end
+  end
+
+  # Rack multipart must yield ActionDispatch::Http::UploadedFile. If the client sends the
+  # wrong Content-Type, +uploaded_file+ can arrive as ActionController::Parameters; dig
+  # out the first real upload in the subtree.
+  def resolve_multipart_upload(raw, depth = 0)
+    return nil if raw.blank? || depth > 6
+    return raw if raw.is_a?(ActionDispatch::Http::UploadedFile)
+    return raw if defined?(Rack::Test::UploadedFile) && raw.is_a?(Rack::Test::UploadedFile)
+
+    if raw.is_a?(ActionController::Parameters)
+      raw.each_value { |v| found = resolve_multipart_upload(v, depth + 1); return found if found }
+    elsif raw.is_a?(Hash)
+      raw.each_value { |v| found = resolve_multipart_upload(v, depth + 1); return found if found }
+    elsif raw.is_a?(Array)
+      raw.each { |v| found = resolve_multipart_upload(v, depth + 1); return found if found }
+    end
+    nil
   end
 
   # Creates a submission record for audit trail (used by both file and hyperlink operations)
