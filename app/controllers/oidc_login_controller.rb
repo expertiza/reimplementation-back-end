@@ -25,10 +25,10 @@ class OidcLoginController < ApplicationController
   # POST /auth/callback
   def callback
     # Look up and consume the auth request
-    auth_request = OidcRequest.consume_recent_by_state!(params[:state])
+    oidc_request = OidcRequest.consume_recent_by_state!(params[:state])
 
     # Match to existing user by email
-    email = auth_request.verified_email_from_code!(provider_key: auth_request.provider, code: params[:code])
+    email = oidc_request.verified_email_from_code!(provider_key: oidc_request.provider, code: params[:code])
     user  = User.find_by(email: email)
 
     if user

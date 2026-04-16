@@ -218,8 +218,8 @@ RSpec.describe OidcLoginController, type: :request do
           )
         end
 
-        let(:auth_request) { create_oidc_request(state: "valid-state") }
-        let(:body) { { state: auth_request.state, code: "authorization-code" } }
+        let(:oidc_request) { create_oidc_request(state: "valid-state") }
+        let(:body) { { state: oidc_request.state, code: "authorization-code" } }
 
         before do
           user
@@ -244,8 +244,8 @@ RSpec.describe OidcLoginController, type: :request do
                required: %w[error]
 
         context 'when no user exists for the email' do
-          let(:auth_request) { create_oidc_request(state: "state-no-user") }
-          let(:body) { { state: auth_request.state, code: "authorization-code" } }
+          let(:oidc_request) { create_oidc_request(state: "state-no-user") }
+          let(:body) { { state: oidc_request.state, code: "authorization-code" } }
 
           before do
             stub_provider_config
@@ -260,8 +260,8 @@ RSpec.describe OidcLoginController, type: :request do
         end
 
         context 'when the stored provider no longer exists' do
-          let(:auth_request) { create_oidc_request(state: "state-missing-provider", provider: "deleted-provider") }
-          let(:body) { { state: auth_request.state, code: "authorization-code" } }
+          let(:oidc_request) { create_oidc_request(state: "state-missing-provider", provider: "deleted-provider") }
+          let(:body) { { state: oidc_request.state, code: "authorization-code" } }
 
           before do
             allow(OidcConfig).to receive(:find).with("deleted-provider")
@@ -301,8 +301,8 @@ RSpec.describe OidcLoginController, type: :request do
                },
                required: %w[error]
 
-        let(:auth_request) { create_oidc_request(state: "state-bad-token") }
-        let(:body) { { state: auth_request.state, code: "authorization-code" } }
+        let(:oidc_request) { create_oidc_request(state: "state-bad-token") }
+        let(:body) { { state: oidc_request.state, code: "authorization-code" } }
 
         before do
           stub_provider_config
@@ -330,8 +330,8 @@ RSpec.describe OidcLoginController, type: :request do
                },
                required: %w[error]
 
-        let(:auth_request) { create_oidc_request(state: "state-discovery-fail") }
-        let(:body) { { state: auth_request.state, code: "authorization-code" } }
+        let(:oidc_request) { create_oidc_request(state: "state-discovery-fail") }
+        let(:body) { { state: oidc_request.state, code: "authorization-code" } }
 
         before do
           stub_provider_config

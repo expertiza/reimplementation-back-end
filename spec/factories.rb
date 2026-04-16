@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  factory :auth_request do
+  factory :oidc_request do
     state { "MyString" }
     nonce { "MyString" }
     code_verifier { "MyString" }
