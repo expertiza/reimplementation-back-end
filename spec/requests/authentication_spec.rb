@@ -37,9 +37,6 @@ RSpec.describe AuthenticationController, type: :request do
         end
         let(:credentials) { { user_name: user.name, password: 'password' } }
 
-        let(:token) { user.generate_jwt }
-        let(:Authorization) { "Bearer #{token}" }
-        let(:headers) { { "Authorization" => "Bearer #{token}" } }
         run_test! do |response|
           json_response = JSON.parse(response.body)
           token = json_response['token']
@@ -70,9 +67,6 @@ RSpec.describe AuthenticationController, type: :request do
           )
         end
         let(:credentials) { { user_name: user.name, password: 'wrongpassword' } }
-        let(:token) { user.generate_jwt }
-        let(:Authorization) { "Bearer #{token}" }
-        let(:headers) { { "Authorization" => "Bearer #{token}" } }
         run_test!
       end
     end
