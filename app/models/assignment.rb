@@ -21,7 +21,7 @@ class Assignment < ApplicationRecord
   attr_accessor :title, :description, :has_badge, :enable_pair_programming, :is_calibrated, :staggered_deadline
 
   def review_questionnaire_id
-    Questionnaire.find_by_assignment_id id
+    questionnaire_for(questionnaire_type: 'ReviewQuestionnaire')&.id
   end
 
   def teams?
@@ -224,6 +224,90 @@ class Assignment < ApplicationRecord
       end
     end
     review_rounds
+  end
+
+  def rubric_mappings_for(questionnaire_type:)
+    assignment_questionnaires
+      .includes(:questionnaire, :project_topic)
+      .for_questionnaire_type(questionnaire_type)
+  end
+
+  def questionnaire_for(questionnaire_type:, round: nil, topic: nil, topic_id: nil)
+    rubric_mapping_for(questionnaire_type:, round:, topic:, topic_id:)&.questionnaire
+  end
+
+  def rubric_mapping_for(questionnaire_type:, round: nil, topic: nil, topic_id: nil)
+    topic_id ||= topic&.id
+
+    specific_rubric_mapping_for(questionnaire_type:, round:, topic_id:) ||
+      default_rubric_mapping_for(questionnaire_type:, round:)
+  end
+
+  def specific_rubric_mapping_for(questionnaire_type:, round: nil, topic_id:)
+    return nil unless vary_by_topic && topic_id.present?
+
+    scoped_rubric_mappings(questionnaire_type:, round:, topic_id:)
+      .where.not(topic_id: nil)
+      .order(updated_at: :desc)
+      .first
+  end
+
+  def default_rubric_mapping_for(questionnaire_type:, round: nil)
+    scoped_rubric_mappings(questionnaire_type:, round:, topic_id: nil)
+      .where(topic_id: nil)
+      .order(updated_at: :desc)
+      .first
+  end
+
+  def assign_topic_rubric!(project_topic:, questionnaire_type:, questionnaire_id:, used_in_round: nil)
+    raise ActiveRecord::RecordNotFound, 'Topic not found for assignment' unless project_topics.exists?(id: project_topic.id)
+
+    mapping = topic_rubric_slot(questionnaire_type:, topic_id: project_topic.id, used_in_round:)
+
+    if questionnaire_id.blank?
+      mapping&.destroy
+      return nil
+    end
+
+    questionnaire = Questionnaire.find(questionnaire_id)
+    mapping ||= assignment_questionnaires.new(topic_id: project_topic.id)
+    mapping.questionnaire = questionnaire
+    mapping.used_in_round = normalized_round(used_in_round)
+    mapping.save!
+    mapping
+  end
+
+  def clear_topic_rubric!(project_topic:, questionnaire_type:, used_in_round: nil)
+    topic_rubric_slot(questionnaire_type:, topic_id: project_topic.id, used_in_round:)&.destroy
+  end
+
+  def available_rubrics_for(user:, questionnaire_type:)
+    Questionnaire.accessible_for_assignment(user:, assignment: self, questionnaire_type:)
+  end
+
+  private
+
+  def scoped_rubric_mappings(questionnaire_type:, round:, topic_id:)
+    relation = rubric_mappings_for(questionnaire_type:)
+    relation = if vary_by_round
+                 relation.where(used_in_round: round)
+               else
+                 relation.where(used_in_round: nil)
+               end
+
+    relation = relation.where(topic_id:) if vary_by_topic || topic_id.nil?
+    relation
+  end
+
+  def topic_rubric_slot(questionnaire_type:, topic_id:, used_in_round:)
+    scoped_rubric_mappings(questionnaire_type:, round: used_in_round, topic_id:)
+      .where(topic_id:)
+      .order(updated_at: :desc)
+      .first
+  end
+
+  def normalized_round(used_in_round)
+    vary_by_round ? used_in_round : nil
   end
 
 end

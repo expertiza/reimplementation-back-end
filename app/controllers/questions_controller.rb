@@ -104,6 +104,7 @@ class QuestionsController < ApplicationController
 
   def types
     types = Item.pluck(:question_type).uniq
+    types = ['Dropdown', 'Multiple choice', 'Scale', 'Criterion', 'Text field'] if types.empty?
     render json: types, status: :ok
   end
 

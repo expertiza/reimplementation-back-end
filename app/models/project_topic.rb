@@ -1,6 +1,8 @@
 class ProjectTopic < ApplicationRecord
+  self.table_name = 'sign_up_topics'
   has_many :signed_up_teams, dependent: :destroy
   has_many :teams, through: :signed_up_teams
+  has_many :assignment_questionnaires, foreign_key: 'topic_id', dependent: :destroy
   belongs_to :assignment
 
   # Ensures the number of max choosers is non-negative
@@ -64,6 +66,35 @@ class ProjectTopic < ApplicationRecord
     teams.joins(:signed_up_teams)
          .where(signed_up_teams: { is_waitlisted: true })
          .order('signed_up_teams.created_at ASC')
+  end
+
+  def has_specific_rubric?(questionnaire_type: 'ReviewQuestionnaire', round: nil)
+    specific_rubric_mapping(questionnaire_type:, round:).present?
+  end
+
+  def rubric_for_review(round: nil)
+    assignment.questionnaire_for(questionnaire_type: 'ReviewQuestionnaire', round:, topic: self)
+  end
+
+  def specific_rubric_mapping(questionnaire_type: 'ReviewQuestionnaire', round: nil)
+    assignment.specific_rubric_mapping_for(questionnaire_type:, round:, topic_id: id)
+  end
+
+  def assign_rubric!(questionnaire_type:, questionnaire_id:, used_in_round: nil)
+    assignment.assign_topic_rubric!(
+      project_topic: self,
+      questionnaire_type: questionnaire_type,
+      questionnaire_id: questionnaire_id,
+      used_in_round:
+    )
+  end
+
+  def clear_rubric!(questionnaire_type:, used_in_round: nil)
+    assignment.clear_topic_rubric!(
+      project_topic: self,
+      questionnaire_type: questionnaire_type,
+      used_in_round:
+    )
   end
 
   private
