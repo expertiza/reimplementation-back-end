@@ -4,9 +4,17 @@ class OidcRequest < ApplicationRecord
   scope :recent, ->(window = VALIDITY_WINDOW) { where("created_at > ?", window.ago) }
   scope :stale,  ->(window = VALIDITY_WINDOW) { where("created_at <= ?", window.ago) }
 
-  def self.consume_recent_by_state!(state, window: 5.minutes)
+  def stale?(window = VALIDITY_WINDOW)
+    created_at <= window.ago
+  end
+
+  def self.consume_recent_by_state!(state, window: VALIDITY_WINDOW)
     transaction do
-      request = recent(window).lock.find_by!(state: state)
+      request = lock.find_by!(state: state)
+      if request.stale?(window)
+        request.destroy!
+        raise ActiveRecord::RecordNotFound
+      end
       request.destroy!
       request
     end
