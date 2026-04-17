@@ -37,8 +37,13 @@ Rails.application.configure do
 
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = false
-
   config.action_mailer.perform_caching = false
+  config.action_mailer.delivery_method = :smtp
+
+  # Prevent actual emails from being sent in development.
+  # Emails will still be processed and logged, but never leave the server.
+  # Set to true (and configure SMTP env vars) if you need to test real delivery locally.
+  config.action_mailer.perform_deliveries = false
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
@@ -65,4 +70,11 @@ Rails.application.configure do
   # config.action_cable.disable_request_forgery_protection = true
   config.hosts << 'localhost'
   config.hosts << "www.example.com"
+
+  # ── Frontend URL Configuration ──
+  # Set defaults for local development (can be overridden via environment variables)
+  # Rails convention recommends config.x.* for custom settings
+  config.x.frontend_scheme = ENV.fetch('FRONTEND_SCHEME', 'http')
+  config.x.frontend_domain = ENV.fetch('FRONTEND_DOMAIN', 'localhost')
+  config.x.frontend_port = ENV.fetch('FRONTEND_PORT', '3000')
 end
