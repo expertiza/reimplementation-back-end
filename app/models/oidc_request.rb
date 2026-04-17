@@ -77,7 +77,7 @@ class OidcRequest < ApplicationRecord
   # Matches on both username from input and email from id_token because emails are not unique
   def authenticate_user!(code:)
     email = verified_email_from_code!(provider_key: provider, code: code)
-    User.find_by(name: username, email: email) ||
+    User.where("LOWER(name) = ? AND LOWER(email) = ?", username.downcase, email.downcase).first ||
       raise(AuthenticationError, "No account found for #{username} with email #{email}")
   end
 
