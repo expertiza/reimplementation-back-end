@@ -214,4 +214,16 @@ Rails.application.routes.draw do
       resources :assignments do
         resources :duties, controller: 'assignments_duties', only: [:index, :create, :destroy]
       end
+      resources :import, path: :import, only: [] do
+        collection do
+          get "/:class", to: "import#index"
+          post "/:class", to: "import#import"
+        end
+      end
+      resources :export, path: :export, only: [] do
+        collection do
+          get "/:class", to: "export#index"
+          post "/:class", to: "export#export"
+        end
+      end
 end

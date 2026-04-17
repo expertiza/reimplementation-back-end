@@ -23,9 +23,29 @@ class TeamsController < ApplicationController
   # POST /teams
   # Creates a new team associated with the current user
   def create
-    @team = Team.new(team_params)
+    @team = Team.new(normalized_team_params)
     if @team.save
       render json: @team, serializer: TeamSerializer, status: :created
+    else
+      render json: { errors: @team.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  # PATCH/PUT /teams/:id
+  # Updates a specific team based on ID
+  def update
+    if @team.update(normalized_team_params)
+      render json: @team, serializer: TeamSerializer, status: :ok
+    else
+      render json: { errors: @team.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  # DELETE /teams/:id
+  # Removes a specific team based on ID
+  def destroy
+    if @team.destroy
+      head :no_content
     else
       render json: { errors: @team.errors.full_messages }, status: :unprocessable_entity
     end
@@ -94,7 +114,13 @@ class TeamsController < ApplicationController
 
   # Whitelists the parameters allowed for team creation/updation
   def team_params
-    params.require(:team).permit(:name, :type, :assignment_id)
+    params.require(:team).permit(:name, :type, :assignment_id, :parent_id)
+  end
+
+  def normalized_team_params
+    permitted = team_params.to_h
+    permitted[:parent_id] ||= permitted.delete('assignment_id') || permitted.delete(:assignment_id)
+    permitted
   end
 
   # Whitelists parameters required to add a team member
