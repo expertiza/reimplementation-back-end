@@ -21,6 +21,7 @@ class OidcLoginController < ApplicationController
 
   # POST /auth/client-select
   # Username is required because emails are not unique
+  # Provider only knows email
   # This is a good candidate for rate limiting
   def client_select
     provider = params.require(:provider)
