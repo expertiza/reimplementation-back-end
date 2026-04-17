@@ -25,7 +25,7 @@ class Item < ApplicationRecord
 
   def as_json(options = {})
       super(options.merge({
-                            only: %i[txt weight seq question_type size alternatives break_before min_label max_label created_at updated_at],
+                            only: %i[id txt weight seq question_type size alternatives break_before min_label max_label created_at updated_at],
                             include: {
                               questionnaire: { only: %i[name id] }
                             }

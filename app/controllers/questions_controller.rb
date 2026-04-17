@@ -103,7 +103,11 @@ class QuestionsController < ApplicationController
   end
 
   def types
-    types = Item.pluck(:question_type).uniq
+    types = if QuestionType.exists?
+              QuestionType.order(:name).pluck(:name)
+            else
+              %w[Criterion Scale Dropdown TextArea TextField MultipleChoiceRadio]
+            end
     render json: types, status: :ok
   end
 
