@@ -1,5 +1,8 @@
 class OidcRequest < ApplicationRecord
   VALIDITY_WINDOW = 5.minutes
+  CLEANUP_PROBABILITY = 0.10
+
+  after_create :maybe_cleanup_stale
 
   scope :recent, ->(window = VALIDITY_WINDOW) { where("created_at > ?", window.ago) }
   scope :stale,  ->(window = VALIDITY_WINDOW) { where("created_at <= ?", window.ago) }
@@ -78,5 +81,11 @@ class OidcRequest < ApplicationRecord
       token_endpoint: discovery.token_endpoint,
       userinfo_endpoint: discovery.userinfo_endpoint
     )
+  end
+
+  private
+
+  def maybe_cleanup_stale
+    CleanupStaleOidcRequestsJob.perform_later if rand < CLEANUP_PROBABILITY
   end
 end
