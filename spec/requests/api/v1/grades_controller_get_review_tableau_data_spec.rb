@@ -82,7 +82,7 @@ RSpec.describe GradesController, type: :controller do
     fake_response_relation = double("ActiveRecord::Relation")
     allow(fake_response_relation).to receive(:find_each).and_yield(fake_response)
     allow(Response).to receive(:where)
-                         .with("map_id = #{fake_response_map[:id]}")
+                         .with("response_map_id = #{fake_response_map[:id]}")
                          .and_return(fake_response_relation)
 
     # Stub Answer.find_by(...)

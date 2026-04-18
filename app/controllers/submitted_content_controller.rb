@@ -331,7 +331,7 @@ class SubmittedContentController < ApplicationController
   # Strong parameters for submission record creation
   def submitted_content_params
     # Permit only specified attributes for security
-    params.require(:submitted_content).permit(:id, :content, :operation, :team_id, :user, :assignment_id, :record_type)
+    params.require(:submitted_content).permit(:id, :content, :operation, :team_id, :submitted_by, :record_type)
   end
 
   # Returns the participant's team (local method, no instance variable caching)
@@ -371,9 +371,8 @@ class SubmittedContentController < ApplicationController
     SubmissionRecord.create!(
       record_type: record_type,           # 'file' or 'hyperlink'
       content: content,                    # File path or URL
-      user: @participant.user_name,        # Username from participant
+      submitted_by: @participant.user_name,        # Username from participant
       team_id: @participant.team_id,       # Team ID from participant
-      assignment_id: @participant.assignment_id,  # Assignment ID from participant
       operation: operation                 # Operation description (e.g., 'Submit File')
     )
   end

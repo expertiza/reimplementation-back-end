@@ -11,7 +11,7 @@ RSpec.describe 'Participants API', type: :request do
   let(:studenta) do
     User.create!(
       username: "studenta",
-      password_digest: "password",
+      password: "password",
       role_id: @roles[:student].id,
       full_name: "Student A",
       email: "testuser@example.com"
@@ -21,7 +21,7 @@ RSpec.describe 'Participants API', type: :request do
   let(:studentb) do
     User.create!(
       username: "studentb",
-      password_digest: "password",
+      password: "password",
       role_id: @roles[:student].id,
       full_name: "Student B",
       email: "testuser@example.com"
@@ -31,7 +31,7 @@ RSpec.describe 'Participants API', type: :request do
   let!(:instructor) do
     User.create!(
       username: "Instructor",
-      password_digest: "password",
+      password: "password",
       role_id: @roles[:instructor].id,
       full_name: "Instructor Name",
       email: "instructor@example.com"

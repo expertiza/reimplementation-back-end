@@ -11,11 +11,10 @@ RSpec.describe 'Account Requests API', type: :request do
   let(:prof) {
     User.create(
       username: "profa",
-      password_digest: "password",
+      password: "password",
       role_id: @roles[:instructor].id,
       full_name: "Prof A",
       email: "testuser@example.com",
-      # mru_directory_path: "/home/testuser",
       )
   }
 

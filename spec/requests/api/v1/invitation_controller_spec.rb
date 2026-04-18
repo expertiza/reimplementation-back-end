@@ -14,7 +14,7 @@ RSpec.describe 'Invitations API', type: :request do
   let(:ta) do
     User.create!(
       username: "ta",
-      password_digest: "password",
+      password: "password",
       role_id: @roles[:ta].id,
       full_name: "Teaching Assistant",
       email: "ta@example.com"
@@ -24,7 +24,7 @@ RSpec.describe 'Invitations API', type: :request do
   let!(:user1) do
     User.create!(
       username: "student",
-      password_digest: "password",
+      password: "password",
       role_id: @roles[:student].id,
       full_name: "Student Name",
       email: "student@example.com"
@@ -34,7 +34,7 @@ RSpec.describe 'Invitations API', type: :request do
   let!(:user2) do
     User.create!(
       username: "student2",
-      password_digest: "password",
+      password: "password",
       role_id: @roles[:student].id,
       full_name: "Student Two",
       email: "student2@example.com"
