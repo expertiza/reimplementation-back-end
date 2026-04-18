@@ -169,7 +169,7 @@ RSpec.describe OidcRequest, type: :model do
     end
 
     before do
-      # Suppress actual job execution — we test DB state directly
+      # Suppress actual cleanup execution — we test DB state directly
       allow(CleanupStaleOidcRequestsJob).to receive(:perform_later)
     end
 
@@ -208,10 +208,10 @@ RSpec.describe OidcRequest, type: :model do
 
   describe 'probabilistic cleanup via after_create' do
     it 'enqueues CleanupStaleOidcRequestsJob approximately 10% of the time over many requests' do
-      total    = 500
-      enqueued = 0
+      total   = 500
+      cleaned = 0
 
-      allow(CleanupStaleOidcRequestsJob).to receive(:perform_later) { enqueued += 1 }
+      allow(CleanupStaleOidcRequestsJob).to receive(:perform_later) { cleaned += 1 }
 
       total.times do |i|
         OidcRequest.create!(
@@ -222,13 +222,13 @@ RSpec.describe OidcRequest, type: :model do
         )
       end
 
-      rate = enqueued.to_f / total
+      rate = cleaned.to_f / total
       expect(rate).to be_between(0.04, 0.20),
-        "Expected ~10% cleanup rate, got #{(rate * 100).round(1)}% (#{enqueued}/#{total})"
+        "Expected ~10% job enqueue rate, got #{(rate * 100).round(1)}% (#{cleaned}/#{total})"
     end
 
-    it 'does not enqueue the job when rand is above the threshold' do
-      allow(described_class).to receive(:rand).and_return(0.99)
+    it 'does not enqueue CleanupStaleOidcRequestsJob when rand is above the threshold' do
+      allow_any_instance_of(OidcRequest).to receive(:rand).and_return(0.99)
       expect(CleanupStaleOidcRequestsJob).not_to receive(:perform_later)
 
       OidcRequest.create!(
@@ -239,8 +239,8 @@ RSpec.describe OidcRequest, type: :model do
       )
     end
 
-    it 'always enqueues the job when rand is below the threshold' do
-      allow(described_class).to receive(:rand).and_return(0.01)
+    it 'enqueues CleanupStaleOidcRequestsJob when rand is below the threshold' do
+      allow_any_instance_of(OidcRequest).to receive(:rand).and_return(0.01)
       expect(CleanupStaleOidcRequestsJob).to receive(:perform_later).once
 
       OidcRequest.create!(
