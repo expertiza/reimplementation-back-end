@@ -12,15 +12,18 @@ class OidcRequest < ApplicationRecord
   end
 
   def self.consume_recent_by_state!(state, window: VALIDITY_WINDOW)
+    was_stale = false
+    request   = nil
+
     transaction do
-      request = lock.find_by!(state: state)
-      if request.stale?(window)
-        request.destroy!
-        raise ActiveRecord::RecordNotFound
-      end
+      request   = lock.find_by!(state: state)
+      was_stale = request.stale?(window)
       request.destroy!
-      request
     end
+
+    raise ActiveRecord::RecordNotFound if was_stale
+
+    request
   end
 
   def self.authorization_uri_for!(provider_key:)
