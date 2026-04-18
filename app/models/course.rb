@@ -21,7 +21,7 @@ class Course < ApplicationRecord
   # Add a Teaching Assistant to the course
   def add_ta(user)
     if user.nil?
-      return { success: false, message: "The user with id #{user.id} does not exist" }
+      return { success: false, message: "The user with id #{user&.id} does not exist" }
     elsif TaMapping.exists?(user_id: user.id, course_id: id)
       return { success: false, message: "The user with id #{user.id} is already a TA for this course." }
     else
