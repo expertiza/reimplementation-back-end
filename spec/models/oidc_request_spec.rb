@@ -169,7 +169,7 @@ RSpec.describe OidcRequest, type: :model do
     end
 
     before do
-      # Suppress actual cleanup execution — we test DB state directly
+      # Suppress actual cleanup execution - we test DB state directly
       allow(CleanupStaleOidcRequestsJob).to receive(:perform_later)
     end
 
