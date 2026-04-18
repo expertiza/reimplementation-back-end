@@ -7,6 +7,6 @@ FactoryBot.define do
     private { false }
     directory_path { Faker::File.dir }
     association :institution, factory: :institution
-    association :instructor, factory: :user
+    association :instructor, factory: :instructor
   end
 end
