@@ -53,12 +53,12 @@ RSpec.describe OidcRequest, type: :model do
         .to raise_error(ActiveRecord::RecordNotFound)
     end
 
-    it 'raises RecordNotFound for expired requests' do
+    it 'raises RecordNotFound for expired requests and destroys the stale row' do
       recent_request.update_columns(created_at: 10.minutes.ago)
 
       expect { described_class.consume_recent_by_state!('recent-state') }
         .to raise_error(ActiveRecord::RecordNotFound)
-      expect(described_class.find_by(id: recent_request.id)).to be_present
+      expect(described_class.find_by(id: recent_request.id)).to be_nil
     end
 
     it 'supports a custom recency window' do
@@ -151,6 +151,104 @@ RSpec.describe OidcRequest, type: :model do
 
       result = described_class.new_client(provider, discovery: discovery)
       expect(result).to eq(client)
+    end
+  end
+
+  describe 'stale row cleanup' do
+    def make_stale_requests(count)
+      count.times.map do |i|
+        req = OidcRequest.create!(
+          state: "stale-state-#{i}-#{SecureRandom.hex(4)}",
+          nonce: "nonce-#{i}",
+          code_verifier: "verifier-#{i}",
+          provider: 'google-ncsu'
+        )
+        req.update_columns(created_at: 10.minutes.ago)
+        req
+      end
+    end
+
+    before do
+      # Suppress actual job execution — we test DB state directly
+      allow(CleanupStaleOidcRequestsJob).to receive(:perform_later)
+    end
+
+    context 'detect-and-delete on consume_recent_by_state!' do
+      it 'immediately destroys a handful of stale rows when each is looked up' do
+        requests = make_stale_requests(5)
+
+        requests.each do |req|
+          expect { described_class.consume_recent_by_state!(req.state) }
+            .to raise_error(ActiveRecord::RecordNotFound)
+        end
+
+        surviving_ids = described_class.where(id: requests.map(&:id)).pluck(:id)
+        expect(surviving_ids).to be_empty
+      end
+
+      it 'leaves fresh rows untouched while destroying stale ones' do
+        stale = make_stale_requests(3)
+        fresh = OidcRequest.create!(
+          state: 'fresh-state',
+          nonce: 'fresh-nonce',
+          code_verifier: 'fresh-verifier',
+          provider: 'google-ncsu'
+        )
+
+        stale.each do |req|
+          expect { described_class.consume_recent_by_state!(req.state) }
+            .to raise_error(ActiveRecord::RecordNotFound)
+        end
+
+        expect(described_class.find_by(id: fresh.id)).to be_present
+        expect(described_class.where(id: stale.map(&:id)).count).to eq(0)
+      end
+    end
+  end
+
+  describe 'probabilistic cleanup via after_create' do
+    it 'enqueues CleanupStaleOidcRequestsJob approximately 10% of the time over many requests' do
+      total    = 500
+      enqueued = 0
+
+      allow(CleanupStaleOidcRequestsJob).to receive(:perform_later) { enqueued += 1 }
+
+      total.times do |i|
+        OidcRequest.create!(
+          state: "prob-state-#{i}-#{SecureRandom.hex(4)}",
+          nonce: "nonce-#{i}",
+          code_verifier: "verifier-#{i}",
+          provider: 'google-ncsu'
+        )
+      end
+
+      rate = enqueued.to_f / total
+      expect(rate).to be_between(0.04, 0.20),
+        "Expected ~10% cleanup rate, got #{(rate * 100).round(1)}% (#{enqueued}/#{total})"
+    end
+
+    it 'does not enqueue the job when rand is above the threshold' do
+      allow(described_class).to receive(:rand).and_return(0.99)
+      expect(CleanupStaleOidcRequestsJob).not_to receive(:perform_later)
+
+      OidcRequest.create!(
+        state: 'no-cleanup-state',
+        nonce: 'nonce',
+        code_verifier: 'verifier',
+        provider: 'google-ncsu'
+      )
+    end
+
+    it 'always enqueues the job when rand is below the threshold' do
+      allow(described_class).to receive(:rand).and_return(0.01)
+      expect(CleanupStaleOidcRequestsJob).to receive(:perform_later).once
+
+      OidcRequest.create!(
+        state: 'yes-cleanup-state',
+        nonce: 'nonce',
+        code_verifier: 'verifier',
+        provider: 'google-ncsu'
+      )
     end
   end
 end
