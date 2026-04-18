@@ -26,7 +26,7 @@ RSpec.describe 'Assignments API', type: :request do
       name: "admin",
       full_name: "admin",
       email: "admin@gmail.com",
-      password_digest: "admin",
+      password: "password",
       role_id: 2,          # Must exist in DB
       institution_id: institution.id
     )
@@ -35,11 +35,10 @@ RSpec.describe 'Assignments API', type: :request do
   let!(:prof) do
     User.create!(
       username: "profa",
-      password_digest: "password",
+      password: "password",
       role_id: @roles[:instructor].id,
       full_name: "Prof A",
       email: "testuser@example.com",
-      # mru_directory_path: "/home/testuser"
     )
   end
 

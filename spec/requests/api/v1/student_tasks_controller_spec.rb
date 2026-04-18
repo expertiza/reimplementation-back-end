@@ -10,8 +10,8 @@ RSpec.describe 'StudentTasks API', type: :request do
 
   let!(:instructor) do
     User.create!(
-      name: "Instructor",
-      password_digest: "password",
+      username: "Instructor",
+      password: "password",
       role_id: @roles[:instructor].id,
       full_name: "Instructor Name",
       email: "instructor@example.com"
@@ -20,8 +20,8 @@ RSpec.describe 'StudentTasks API', type: :request do
 
   let(:studenta) do
     User.create!(
-      name: "studenta",
-      password_digest: "password",
+      username: "studenta",
+      password: "password",
       role_id: @roles[:student].id,
       full_name: "Student A",
       email: "testuser@example.com"
@@ -60,7 +60,6 @@ RSpec.describe 'StudentTasks API', type: :request do
               user_id: studenta.id,
               parent_id: assignment.id,
               handle: studenta.name,
-              permission_granted: [true, false].sample,
               # store “stage” and “deadline” fields as your Participant model expects
               # e.g. might be:
               topic: "Topic #{i}",
@@ -83,7 +82,6 @@ RSpec.describe 'StudentTasks API', type: :request do
             expect(task['current_stage']).to     be_a(String)
             expect(task['stage_deadline']).to    be_a(String)
             expect(task['topic']).to             be_a(String)
-            expect(task['permission_granted']).to be_in([true, false])
           end
         end
       end
@@ -121,7 +119,6 @@ RSpec.describe 'StudentTasks API', type: :request do
             current_stage: "Review",
             stage_deadline: (Time.now + 7.days).to_s,
             topic: "Topic XYZ",
-            permission_granted: true
           )
         end
 
@@ -134,7 +131,6 @@ RSpec.describe 'StudentTasks API', type: :request do
           expect(data['current_stage']).to     eq("Review")
           expect(data['stage_deadline']).to    be_a(String)  # e.g. "YYYY-MM-DD..."
           expect(data['topic']).to             eq("Topic XYZ")
-          expect(data['permission_granted']).to be true
         end
       end
 

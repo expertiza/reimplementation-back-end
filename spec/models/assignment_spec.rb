@@ -12,7 +12,7 @@ RSpec.describe Assignment, type: :model do
   include RolesHelper
   before(:all) { @roles = create_roles_hierarchy } # Create the full roles hierarchy once for creating the instructor role later
   let(:institution) { Institution.create!(name: "NC State") } # All users belong to the same institution to satisfy foreign key constraints.
-  let(:instructor) { User.create!(name: "instructor", full_name: "Instructor User", email: "instructor@example.com", password_digest: "password", role_id: @roles[:instructor].id, institution_id: institution.id) }
+  let(:instructor) { User.create!(name: "instructor", full_name: "Instructor User", email: "instructor@example.com", password: "password", role_id: @roles[:instructor].id, institution_id: institution.id) }
 
   describe '#num_review_rounds' do
     it 'counts review due dates to determine the number of rounds' do

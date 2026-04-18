@@ -122,8 +122,8 @@ class ParticipantsController < ApplicationController
   def participant_params
     params.require(:participant).permit(:user_id, :assignment_id, :authorization, :can_submit,
                                         :can_review, :can_take_quiz, :can_mentor, :handle,
-                                        :team_id, :join_team_request_id, :permission_granted,
-                                        :topic, :current_stage, :stage_deadline)
+                                        :team_id, :join_team_request_id, :topic, 
+                                        :current_stage, :stage_deadline)
   end
 
   private

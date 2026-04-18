@@ -9,7 +9,7 @@ RSpec.describe 'Grades API', type: :request do
   let(:instructor) do
     User.create!(
       username: "instructor",
-      password_digest: "password",
+      password: "password",
       role_id: @roles[:instructor].id,
       full_name: "Instructor Name",
       email: "instructor@example.com"
@@ -19,7 +19,7 @@ RSpec.describe 'Grades API', type: :request do
   let(:ta) do
     User.create!(
       username: "ta",
-      password_digest: "password",
+      password: "password",
       role_id: @roles[:ta].id,
       full_name: "Teaching Assistant",
       email: "ta@example.com"
@@ -29,7 +29,7 @@ RSpec.describe 'Grades API', type: :request do
   let(:student) do
     User.create!(
       username: "student",
-      password_digest: "password",
+      password: "password",
       role_id: @roles[:student].id,
       full_name: "Student Name",
       email: "student@example.com"
@@ -39,7 +39,7 @@ RSpec.describe 'Grades API', type: :request do
   let(:student2) do
     User.create!(
       username: "student2",
-      password_digest: "password",
+      password: "password",
       role_id: @roles[:student].id,
       full_name: "Student Two",
       email: "student2@example.com"
