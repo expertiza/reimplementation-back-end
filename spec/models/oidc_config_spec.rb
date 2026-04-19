@@ -131,6 +131,23 @@ RSpec.describe OidcConfig, type: :model do
       expect(described_class.providers).to eq({})
     end
 
+    it 'returns an empty hash when the top-level YAML is not a Hash' do
+      allow(File).to receive(:read).and_call_original
+      allow(File).to receive(:read).with(described_class::CONFIG_FILE).and_return("- item_one\n- item_two\n")
+
+      expect(described_class.providers).to eq({})
+      expect(Rails.logger).to have_received(:warn).with(/expected top-level mapping/)
+    end
+
+    it 'returns an empty hash when the providers value is not a Hash' do
+      allow(File).to receive(:read).and_call_original
+      allow(File).to receive(:read).with(described_class::CONFIG_FILE)
+                                   .and_return("providers:\n  - item_one\n  - item_two\n")
+
+      expect(described_class.providers).to eq({})
+      expect(Rails.logger).to have_received(:warn).with(/expected 'providers' to be a mapping/)
+    end
+
     it 'supports YAML aliases in provider definitions' do
       yaml = <<~YAML
         providers:
@@ -216,6 +233,12 @@ RSpec.describe OidcConfig, type: :model do
 
     it 'falls back to default scopes when scopes key is absent' do
       provider = {}
+
+      expect(described_class.scopes_for(provider)).to eq(%w[openid email profile])
+    end
+
+    it 'parses mixed comma and whitespace delimiters' do
+      provider = { 'scopes' => 'openid, email, profile' }
 
       expect(described_class.scopes_for(provider)).to eq(%w[openid email profile])
     end
