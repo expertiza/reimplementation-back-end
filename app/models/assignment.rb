@@ -2,6 +2,7 @@
 
 class Assignment < ApplicationRecord
   include MetricHelper
+  include TopicBasedRubricLookup
   has_many :participants, class_name: 'AssignmentParticipant', foreign_key: 'parent_id', dependent: :destroy
   has_many :users, through: :participants, inverse_of: :assignment
   has_many :teams, class_name: 'AssignmentTeam', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :assignment
