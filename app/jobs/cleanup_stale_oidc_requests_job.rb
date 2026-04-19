@@ -2,6 +2,6 @@ class CleanupStaleOidcRequestsJob < ApplicationJob
   queue_as :default
 
   def perform
-    OidcRequest.stale.delete_all
+    OidcRequest.delete_stale
   end
 end

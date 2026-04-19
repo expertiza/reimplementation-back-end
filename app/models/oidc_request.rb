@@ -6,6 +6,11 @@ class OidcRequest < ApplicationRecord
 
   scope :recent, ->(window = VALIDITY_WINDOW) { where("created_at > ?", window.ago) }
   scope :stale,  ->(window = VALIDITY_WINDOW) { where("created_at <= ?", window.ago) }
+  private_class_method :recent, :stale
+
+  def self.delete_stale(window: VALIDITY_WINDOW)
+    stale(window).delete_all
+  end
 
   def stale?(window = VALIDITY_WINDOW)
     created_at <= window.ago
