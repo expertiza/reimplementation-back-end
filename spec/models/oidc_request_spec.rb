@@ -127,6 +127,22 @@ RSpec.describe OidcRequest, type: :model do
       email = oidc_request.verified_email_from_code!(provider_key: 'google-ncsu', code: 'authorization-code')
       expect(email).to eq('oidcuser@ncsu.edu')
     end
+
+    it 'raises InvalidToken when id token verification fails' do
+      allow(client).to receive(:authorization_code=).with('authorization-code')
+      allow(client).to receive(:access_token!).with(code_verifier: 'verifier')
+                                              .and_return(instance_double(OpenIDConnect::AccessToken, id_token: 'fake.id.token'))
+
+      allow(OpenIDConnect::ResponseObject::IdToken).to receive(:decode)
+                                                         .with('fake.id.token', discovery.jwks)
+                                                         .and_return(id_token_obj)
+      allow(id_token_obj).to receive(:verify!)
+        .and_raise(OpenIDConnect::ResponseObject::IdToken::InvalidToken.new('nonce mismatch'))
+
+      expect {
+        oidc_request.verified_email_from_code!(provider_key: 'google-ncsu', code: 'authorization-code')
+      }.to raise_error(OpenIDConnect::ResponseObject::IdToken::InvalidToken, /nonce mismatch/)
+    end
   end
 
   describe '.new_client' do
@@ -142,6 +158,40 @@ RSpec.describe OidcRequest, type: :model do
 
       result = described_class.new_client(provider, discovery: discovery)
       expect(result).to eq(client)
+    end
+  end
+
+  describe '.delete_stale' do
+    it 'removes stale rows and leaves fresh ones untouched' do
+      fresh = OidcRequest.create!(state: 'fresh-del', nonce: 'n', code_verifier: 'v', provider: 'google-ncsu')
+      stale = OidcRequest.create!(state: 'stale-del', nonce: 'n', code_verifier: 'v', provider: 'google-ncsu')
+      stale.update_columns(created_at: 10.minutes.ago)
+
+      described_class.delete_stale
+
+      expect(described_class.find_by(id: fresh.id)).to be_present
+      expect(described_class.find_by(id: stale.id)).to be_nil
+    end
+
+    it 'returns 0 when no stale rows exist' do
+      OidcRequest.create!(state: 'only-fresh', nonce: 'n', code_verifier: 'v', provider: 'google-ncsu')
+
+      expect(described_class.delete_stale).to eq(0)
+    end
+  end
+
+  describe '#stale?' do
+    it 'returns false for a freshly created request' do
+      req = OidcRequest.create!(state: 'new-req', nonce: 'n', code_verifier: 'v', provider: 'google-ncsu')
+
+      expect(req.stale?).to be false
+    end
+
+    it 'returns true for a request older than the validity window' do
+      req = OidcRequest.create!(state: 'old-req', nonce: 'n', code_verifier: 'v', provider: 'google-ncsu')
+      req.update_columns(created_at: 10.minutes.ago)
+
+      expect(req.stale?).to be true
     end
   end
 
