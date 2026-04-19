@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_19_000002) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -44,7 +44,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
     t.datetime "updated_at", null: false
     t.integer "used_in_round"
     t.integer "questionnaire_weight"
+    t.bigint "project_topic_id"
+    t.index ["assignment_id", "project_topic_id", "used_in_round"], name: "index_aq_on_assignment_topic_round"
     t.index ["assignment_id"], name: "fk_aq_assignments_id"
+    t.index ["project_topic_id"], name: "index_assignment_questionnaires_on_project_topic_id"
     t.index ["questionnaire_id"], name: "fk_aq_questionnaire_id"
   end
 
@@ -104,6 +107,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
     t.boolean "has_teams", default: false
     t.boolean "has_topics", default: false
     t.boolean "vary_by_round", default: false, null: false
+    t.boolean "vary_by_topic", default: false, null: false
     t.index ["course_id"], name: "index_assignments_on_course_id"
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
@@ -450,15 +454,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
 
   add_foreign_key "account_requests", "institutions"
   add_foreign_key "account_requests", "roles"
+  add_foreign_key "assignment_questionnaires", "project_topics"
   add_foreign_key "assignments", "courses"
   add_foreign_key "assignments", "users", column: "instructor_id"
   add_foreign_key "assignments_duties", "assignments"
   add_foreign_key "assignments_duties", "duties"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
+  add_foreign_key "duties", "users", column: "instructor_id"
   add_foreign_key "invitations", "participants", column: "from_id"
   add_foreign_key "invitations", "participants", column: "to_id"
-  add_foreign_key "duties", "users", column: "instructor_id"
   add_foreign_key "items", "questionnaires"
   add_foreign_key "participants", "duties"
   add_foreign_key "participants", "join_team_requests"

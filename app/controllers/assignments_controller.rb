@@ -234,6 +234,7 @@ class AssignmentsController < ApplicationController
       :review_topic_threshold,
       :maximum_number_of_reviews_per_submission,
       :review_strategy,
+      :vary_by_topic,
       :review_rubric_varies_by_round,
       :review_rubric_varies_by_topic,
       :review_rubric_varies_by_role,
