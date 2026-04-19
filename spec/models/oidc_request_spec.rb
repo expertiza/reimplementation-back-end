@@ -60,15 +60,6 @@ RSpec.describe OidcRequest, type: :model do
         .to raise_error(ActiveRecord::RecordNotFound)
       expect(described_class.find_by(id: recent_request.id)).to be_nil
     end
-
-    it 'supports a custom recency window' do
-      recent_request.update_columns(created_at: 10.minutes.ago)
-
-      consumed = described_class.consume_recent_by_state!('recent-state', window: 15.minutes)
-
-      expect(consumed.id).to eq(recent_request.id)
-      expect(described_class.find_by(id: recent_request.id)).to be_nil
-    end
   end
 
   describe '.authorization_uri_for!' do

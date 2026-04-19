@@ -16,13 +16,13 @@ class OidcRequest < ApplicationRecord
     created_at <= window.ago
   end
 
-  def self.consume_recent_by_state!(state, window: VALIDITY_WINDOW)
+  def self.consume_recent_by_state!(state)
     was_stale = false
     request   = nil
 
     transaction do
       request   = lock.find_by!(state: state)
-      was_stale = request.stale?(window)
+      was_stale = request.stale?
       request.destroy!
     end
 
