@@ -69,6 +69,7 @@ Rails.application.routes.draw do
           get 'toggle_access/:id', to: 'questionnaires#toggle_access', as: 'toggle_access'
         end
       end
+      resources :assignment_questionnaires, only: %i[index create update destroy]
 
       resources :questions do
         collection do
