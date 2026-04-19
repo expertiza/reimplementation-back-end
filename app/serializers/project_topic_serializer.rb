@@ -5,20 +5,24 @@ class ProjectTopicSerializer < ActiveModel::Serializer
              :category, :description, :link, :created_at, :updated_at,
              :available_slots, :confirmed_teams, :waitlisted_teams
 
+  # Exposes the remaining capacity after confirmed team signups are accounted for.
   def available_slots
     object.available_slots
   end
 
+  # Serializes confirmed teams into the frontend topic-team shape.
   def confirmed_teams
     serialize_teams(object.confirmed_teams)
   end
 
+  # Serializes waitlisted teams into the frontend topic-team shape.
   def waitlisted_teams
     serialize_teams(object.waitlisted_teams)
   end
 
   private
 
+  # Converts team records into the lightweight nested structure expected by topic-management screens.
   def serialize_teams(teams)
     teams.includes(:users).map do |team|
       {
