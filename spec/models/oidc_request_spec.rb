@@ -2,6 +2,7 @@ require 'rails_helper'
 
 RSpec.describe OidcRequest, type: :model do
   include RolesHelper
+
   let(:provider) do
     {
       'display_name' => 'Google NCSU',
@@ -32,7 +33,7 @@ RSpec.describe OidcRequest, type: :model do
     allow(OpenIDConnect::Client).to receive(:new).and_return(client)
   end
 
-  # ─── Helper ─────────────────────────────────────────────────────────
+  # ─── Helpers ────────────────────────────────────────────────────────
 
   def create_request(state: 'state', nonce: 'nonce', verifier: 'verifier',
                      provider: 'google-ncsu', username: 'oidcuser')
@@ -87,20 +88,46 @@ RSpec.describe OidcRequest, type: :model do
       expect(described_class.find_by(id: recent_request.id)).to be_present
     end
 
-    it 'supports a custom recency window' do
-      recent_request.update_columns(created_at: 10.minutes.ago)
-
-      consumed = described_class.consume_recent_by_state!('recent-state', window: 15.minutes)
-
-      expect(consumed.id).to eq(recent_request.id)
-      expect(described_class.find_by(id: recent_request.id)).to be_nil
-    end
-
     it 'prevents replay by destroying the row on consumption' do
       described_class.consume_recent_by_state!('recent-state')
 
       expect { described_class.consume_recent_by_state!('recent-state') }
         .to raise_error(ActiveRecord::RecordNotFound)
+    end
+  end
+
+  # ─── .delete_stale ──────────────────────────────────────────────────
+
+  describe '.delete_stale' do
+    it 'deletes rows older than the validity window and preserves fresh rows' do
+      fresh = create_request(state: 'fresh')
+      stale = create_request(state: 'stale')
+      stale.update_columns(created_at: 10.minutes.ago)
+
+      described_class.delete_stale
+
+      expect(described_class.find_by(id: fresh.id)).to be_present
+      expect(described_class.find_by(id: stale.id)).to be_nil
+    end
+  end
+
+  # ─── after_create :maybe_enqueue_stale_cleanup ──────────────────────
+
+  describe 'probabilistic cleanup on create' do
+    it 'enqueues CleanupStaleOidcRequestsJob when rand falls under the threshold' do
+      allow_any_instance_of(described_class).to receive(:rand).and_return(0.0)
+
+      expect(CleanupStaleOidcRequestsJob).to receive(:perform_later)
+
+      create_request(state: 'any')
+    end
+
+    it 'does not enqueue when rand falls above the threshold' do
+      allow_any_instance_of(described_class).to receive(:rand).and_return(0.99)
+
+      expect(CleanupStaleOidcRequestsJob).not_to receive(:perform_later)
+
+      create_request(state: 'any')
     end
   end
 

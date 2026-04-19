@@ -1,12 +1,19 @@
 class OidcRequest < ApplicationRecord
   class AuthenticationError < StandardError; end
 
-  scope :recent, ->(window = 5.minutes) { where("created_at > ?", window.ago) }
+  VALIDITY_WINDOW = 5.minutes
+  CLEANUP_PROBABILITY = 0.10
+
+  after_create :maybe_enqueue_stale_cleanup
+
+  def self.delete_stale
+    where("created_at <= ?", VALIDITY_WINDOW.ago).delete_all
+  end
 
   # Atomically finds and deletes the request to prevent replay attacks
-  def self.consume_recent_by_state!(state, window: 5.minutes)
+  def self.consume_recent_by_state!(state)
     transaction do
-      request = recent(window).lock.find_by!(state: state)
+      request = where("created_at > ?", VALIDITY_WINDOW.ago).lock.find_by!(state: state)
       request.destroy!
       request
     end
@@ -91,5 +98,11 @@ class OidcRequest < ApplicationRecord
       token_endpoint: discovery.token_endpoint,
       userinfo_endpoint: discovery.userinfo_endpoint
     )
+  end
+
+  private
+
+  def maybe_enqueue_stale_cleanup
+    CleanupStaleOidcRequestsJob.perform_later if rand < CLEANUP_PROBABILITY
   end
 end
