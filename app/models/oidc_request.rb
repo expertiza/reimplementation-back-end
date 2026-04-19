@@ -1,12 +1,34 @@
 class OidcRequest < ApplicationRecord
-  scope :recent, ->(window = 5.minutes) { where("created_at > ?", window.ago) }
+  VALIDITY_WINDOW = 5.minutes
+  CLEANUP_PROBABILITY = 0.10
 
-  def self.consume_recent_by_state!(state, window: 5.minutes)
+  after_create :maybe_cleanup_stale
+
+  scope :recent, ->(window = VALIDITY_WINDOW) { where("created_at > ?", window.ago) }
+  scope :stale,  ->(window = VALIDITY_WINDOW) { where("created_at <= ?", window.ago) }
+  private_class_method :recent, :stale
+
+  def self.delete_stale(window: VALIDITY_WINDOW)
+    stale(window).delete_all
+  end
+
+  def stale?(window = VALIDITY_WINDOW)
+    created_at <= window.ago
+  end
+
+  def self.consume_recent_by_state!(state)
+    was_stale = false
+    request   = nil
+
     transaction do
-      request = recent(window).lock.find_by!(state: state)
+      request   = lock.find_by!(state: state)
+      was_stale = request.stale?
       request.destroy!
-      request
     end
+
+    raise ActiveRecord::RecordNotFound if was_stale
+
+    request
   end
 
   def self.authorization_uri_for!(provider_key:)
@@ -67,5 +89,11 @@ class OidcRequest < ApplicationRecord
       token_endpoint: discovery.token_endpoint,
       userinfo_endpoint: discovery.userinfo_endpoint
     )
+  end
+
+  private
+
+  def maybe_cleanup_stale
+    CleanupStaleOidcRequestsJob.perform_later if rand < CLEANUP_PROBABILITY
   end
 end

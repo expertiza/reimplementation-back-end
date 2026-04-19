@@ -53,20 +53,11 @@ RSpec.describe OidcRequest, type: :model do
         .to raise_error(ActiveRecord::RecordNotFound)
     end
 
-    it 'raises RecordNotFound for expired requests' do
+    it 'raises RecordNotFound for expired requests and destroys the stale row' do
       recent_request.update_columns(created_at: 10.minutes.ago)
 
       expect { described_class.consume_recent_by_state!('recent-state') }
         .to raise_error(ActiveRecord::RecordNotFound)
-      expect(described_class.find_by(id: recent_request.id)).to be_present
-    end
-
-    it 'supports a custom recency window' do
-      recent_request.update_columns(created_at: 10.minutes.ago)
-
-      consumed = described_class.consume_recent_by_state!('recent-state', window: 15.minutes)
-
-      expect(consumed.id).to eq(recent_request.id)
       expect(described_class.find_by(id: recent_request.id)).to be_nil
     end
   end
@@ -151,6 +142,103 @@ RSpec.describe OidcRequest, type: :model do
 
       result = described_class.new_client(provider, discovery: discovery)
       expect(result).to eq(client)
+    end
+  end
+
+  describe 'stale row cleanup' do
+    def make_stale_requests(count)
+      count.times.map do |i|
+        req = OidcRequest.create!(
+          state: "stale-state-#{i}-#{SecureRandom.hex(4)}",
+          nonce: "nonce-#{i}",
+          code_verifier: "verifier-#{i}",
+          provider: 'google-ncsu'
+        )
+        req.update_columns(created_at: 10.minutes.ago)
+        req
+      end
+    end
+
+    before do
+      # Suppress actual cleanup execution - we test DB state directly
+      allow(CleanupStaleOidcRequestsJob).to receive(:perform_later)
+    end
+
+    context 'detect-and-delete on consume_recent_by_state!' do
+      it 'immediately destroys a handful of stale rows when each is looked up' do
+        requests = make_stale_requests(5)
+
+        requests.each do |req|
+          expect { described_class.consume_recent_by_state!(req.state) }
+            .to raise_error(ActiveRecord::RecordNotFound)
+        end
+
+        surviving_ids = described_class.where(id: requests.map(&:id)).pluck(:id)
+        expect(surviving_ids).to be_empty
+      end
+
+      it 'leaves fresh rows untouched while destroying stale ones' do
+        stale = make_stale_requests(3)
+        fresh = OidcRequest.create!(
+          state: 'fresh-state',
+          nonce: 'fresh-nonce',
+          code_verifier: 'fresh-verifier',
+          provider: 'google-ncsu'
+        )
+
+        stale.each do |req|
+          expect { described_class.consume_recent_by_state!(req.state) }
+            .to raise_error(ActiveRecord::RecordNotFound)
+        end
+
+        expect(described_class.find_by(id: fresh.id)).to be_present
+        expect(described_class.where(id: stale.map(&:id)).count).to eq(0)
+      end
+    end
+  end
+
+  describe 'probabilistic cleanup via after_create' do
+    it 'enqueues CleanupStaleOidcRequestsJob neither every time nor never over many requests' do
+      total   = 500
+      cleaned = 0
+
+      allow(CleanupStaleOidcRequestsJob).to receive(:perform_later) { cleaned += 1 }
+
+      total.times do |i|
+        OidcRequest.create!(
+          state: "prob-state-#{i}-#{SecureRandom.hex(4)}",
+          nonce: "nonce-#{i}",
+          code_verifier: "verifier-#{i}",
+          provider: 'google-ncsu'
+        )
+      end
+
+      expect(cleaned).to be > 0,   "Expected cleanup to fire at least once in #{total} requests"
+      expect(cleaned).to be < total, "Expected cleanup to be skipped at least once in #{total} requests"
+    end
+
+    it 'does not enqueue CleanupStaleOidcRequestsJob when rand is above the threshold' do
+      allow_any_instance_of(OidcRequest).to receive(:rand).and_return(0.99)
+      expect(CleanupStaleOidcRequestsJob).not_to receive(:perform_later)
+
+      OidcRequest.create!(
+        state: 'no-cleanup-state',
+        nonce: 'nonce',
+        code_verifier: 'verifier',
+        provider: 'google-ncsu'
+      )
+    end
+
+    it 'enqueues CleanupStaleOidcRequestsJob when rand is below the threshold' do
+      allow_any_instance_of(OidcRequest).to receive(:rand).and_return(0.01)
+      expect(CleanupStaleOidcRequestsJob).to receive(:perform_later).once
+
+      OidcRequest.create!(
+        state: 'yes-cleanup-state',
+        nonce: 'nonce',
+        code_verifier: 'verifier',
+        provider: 'google-ncsu'
+      )
     end
   end
 end
