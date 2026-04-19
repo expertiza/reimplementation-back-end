@@ -15,8 +15,6 @@ class UsersController < ApplicationController
 
   # POST /users
   def create
-    # Add default password for a user if the password is not provided
-    params[:user][:password] ||= 'password'
     user = User.new(user_params)
     if user.save
       render json: user, status: :created

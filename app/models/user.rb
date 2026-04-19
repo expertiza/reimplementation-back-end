@@ -8,7 +8,8 @@ class User < ApplicationRecord
   validates :name, presence: true, uniqueness: true, allow_blank: false
                    # format: { with: /\A[a-z]+\z/, message: 'must be in lowercase' }
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
-  validates :password, length: { minimum: 6 }, presence: true, allow_nil: true
+  validates :password, presence: true, if: :password_required?
+  validates :password, length: { minimum: 6 }, allow_nil: true
   validates :full_name, presence: true, length: { maximum: 50 }
 
   belongs_to :role
@@ -34,17 +35,18 @@ class User < ApplicationRecord
   delegate :super_administrator?, to: :role
 
   def self.instantiate(record)
-    case record.role
-    when Role::TEACHING_ASSISTANT
-      record.becomes(Ta)
-    when Role::INSTRUCTOR
-      record.becomes(Instructor)
-    when Role::ADMINISTRATOR
-      record.becomes(Administrator)
-    when Role::SUPER_ADMINISTRATOR
+    case record.role.name
+    when /Super Administrator/
       record.becomes(SuperAdministrator)
+    when /Teaching Assistant/
+      record.becomes(Ta)
+    when /Instructor/
+      record.becomes(Instructor)
+    when /Administrator/
+      record.becomes(Administrator)
     else
-      super
+      # Student or other roles remain as User
+      record
     end
   end
 
@@ -65,8 +67,12 @@ class User < ApplicationRecord
   # Reset the password for the user
   def reset_password
     random_password = SecureRandom.alphanumeric(10)
-    user.password_digest = BCrypt::Password.create(random_password)
-    user.save
+    self.password = random_password
+    save
+  end
+
+  def password_required?
+    password_digest.blank? || !password.nil?
   end
 
   # Get instructor_id of the user, if the user is TA,
