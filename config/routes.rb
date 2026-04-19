@@ -50,6 +50,7 @@ Rails.application.routes.draw do
         collection do
           get :list, action: :list
           get :view
+          get :rubric_for
         end
       end
 
