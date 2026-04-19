@@ -330,19 +330,39 @@ RSpec.describe OidcLoginController, type: :request do
                },
                required: %w[error]
 
-        let(:oidc_request) { create_oidc_request(state: "state-discovery-fail") }
-        let(:body) { { state: oidc_request.state, code: "authorization-code" } }
+        context 'when OIDC discovery fails' do
+          let(:oidc_request) { create_oidc_request(state: "state-discovery-fail") }
+          let(:body) { { state: oidc_request.state, code: "authorization-code" } }
 
-        before do
-          stub_provider_config
+          before do
+            stub_provider_config
 
-          allow(OpenIDConnect::Discovery::Provider::Config).to receive(:discover!)
-                                                                 .and_raise(OpenIDConnect::Discovery::DiscoveryFailed.new("Connection refused"))
+            allow(OpenIDConnect::Discovery::Provider::Config).to receive(:discover!)
+                                                                   .and_raise(OpenIDConnect::Discovery::DiscoveryFailed.new("Connection refused"))
+          end
+
+          run_test! do |response|
+            json = JSON.parse(response.body)
+            expect(json["error"]).to match(/Provider communication failed/)
+          end
         end
 
-        run_test! do |response|
-          json = JSON.parse(response.body)
-          expect(json["error"]).to match(/Provider communication failed/)
+        context 'when token exchange raises an OAuth2 client error' do
+          let(:oidc_request) { create_oidc_request(state: "state-token-exchange-fail") }
+          let(:body) { { state: oidc_request.state, code: "authorization-code" } }
+
+          before do
+            stub_provider_config
+            stub_discovery
+
+            allow_any_instance_of(OpenIDConnect::Client).to receive(:access_token!)
+              .and_raise(Rack::OAuth2::Client::Error.new(400, error: "invalid_grant"))
+          end
+
+          run_test! do |response|
+            json = JSON.parse(response.body)
+            expect(json["error"]).to match(/Provider communication failed/)
+          end
         end
       end
     end
