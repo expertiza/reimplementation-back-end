@@ -11,6 +11,7 @@ class OidcRequest < ApplicationRecord
   end
 
   # Atomically finds and deletes the request to prevent replay attacks
+  # Raises RecordNotFound if entry does not exist
   def self.consume_recent_by_state!(state)
     transaction do
       request = where("created_at > ?", VALIDITY_WINDOW.ago).lock.find_by!(state: state)
