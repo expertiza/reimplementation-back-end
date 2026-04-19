@@ -79,7 +79,10 @@ class OidcRequest < ApplicationRecord
       raise AuthenticationError, "Email not verified by provider"
     end
 
-    claims["email"]
+    email = claims["email"].to_s.strip
+    raise AuthenticationError, "Email missing from provider response" if email.blank?
+
+    email
   end
 
   # Matches on both username from input and email from id_token because emails are not unique
