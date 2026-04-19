@@ -78,10 +78,10 @@ class User < ApplicationRecord
   # Get instructor_id of the user, if the user is TA,
   # return the id of the instructor else return the id of the user for superior roles
   def instructor_id
-    case role
-    when Role::INSTRUCTOR, Role::ADMINISTRATOR, Role::SUPER_ADMINISTRATOR
+    case role.name
+    when /Instructor/, /Administrator/, /Super Administrator/
       id
-    when Role::TEACHING_ASSISTANT
+    when /Teaching Assistant/
       my_instructor
     else
       raise NotImplementedError, "Unknown role: #{role.name}"

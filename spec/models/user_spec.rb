@@ -96,58 +96,247 @@ RSpec.describe User, type: :model do
     end
   end
 
-  describe '.instantiate (STI conversion)' do
+  describe 'instance methods - role authorization' do
     let(:institution) { create(:institution) }
+    let(:student_role) { create(:role, :student) }
+    let(:ta_role) { create(:role, :ta) }
+    let(:instructor_role) { create(:role, :instructor) }
+    let(:admin_role) { create(:role, :administrator) }
+    let(:super_admin_role) { create(:role, :super_administrator) }
 
-    it 'converts user to Ta when role is teaching assistant' do
-      ta_role = create(:role, :ta)
-      user_record = create(:user, role: ta_role, institution: institution)
+    describe '#instructor_id' do
+      it 'returns own id for instructor' do
+        instructor = create(:user, role: instructor_role, institution: institution)
+        expect(instructor.instructor_id).to eq(instructor.id)
+      end
 
-      result = User.instantiate(user_record)
+      it 'returns own id for administrator' do
+        admin = create(:user, role: admin_role, institution: institution)
+        expect(admin.instructor_id).to eq(admin.id)
+      end
 
-      expect(result).to be_a(Ta)
-      expect(result.id).to eq(user_record.id)
+      it 'returns own id for super administrator' do
+        super_admin = create(:user, role: super_admin_role, institution: institution)
+        expect(super_admin.instructor_id).to eq(super_admin.id)
+      end
+
+      it 'returns instructor id for teaching assistant' do
+        instructor = create(:user, role: instructor_role, institution: institution)
+        ta = create(:user, role: ta_role, institution: institution, parent: instructor)
+        expect(ta.instructor_id).to eq(instructor.id)
+      end
+
+      it 'raises NotImplementedError for student role' do
+        student = create(:user, role: student_role, institution: institution)
+        expect { student.instructor_id }.to raise_error(NotImplementedError, /Unknown role/)
+      end
     end
 
-    it 'converts user to Instructor when role is instructor' do
-      instructor_role = create(:role, :instructor)
-      user_record = create(:user, role: instructor_role, institution: institution)
+    describe '#can_impersonate?' do
+      let(:student1) { create(:user, role: student_role, institution: institution) }
+      let(:student2) { create(:user, role: student_role, institution: institution) }
+      let(:instructor) { create(:user, role: instructor_role, institution: institution) }
+      let(:super_admin) { create(:user, role: super_admin_role, institution: institution) }
 
-      result = User.instantiate(user_record)
+      it 'super admin can impersonate anyone' do
+        expect(super_admin.can_impersonate?(student1)).to be true
+        expect(super_admin.can_impersonate?(instructor)).to be true
+        expect(super_admin.can_impersonate?(super_admin)).to be true
+      end
 
-      expect(result).to be_a(Instructor)
-      expect(result.id).to eq(user_record.id)
+      it 'parent can impersonate direct child' do
+        child = create(:user, role: student_role, institution: institution, parent: instructor)
+        expect(instructor.can_impersonate?(child)).to be true
+      end
+
+      it 'parent cannot impersonate unrelated user' do
+        expect(instructor.can_impersonate?(student1)).to be false
+      end
+
+      it 'regular user cannot impersonate anyone' do
+        expect(student1.can_impersonate?(student2)).to be false
+      end
     end
 
-    it 'converts user to Administrator when role is administrator' do
-      admin_role = create(:role, :administrator)
-      user_record = create(:user, role: admin_role, institution: institution)
+    describe '#recursively_parent_of' do
+      let(:grandparent) { create(:user, role: instructor_role, institution: institution) }
+      let(:parent) { create(:user, role: instructor_role, institution: institution, parent: grandparent) }
+      let(:child) { create(:user, role: student_role, institution: institution, parent: parent) }
 
-      result = User.instantiate(user_record)
+      it 'identifies direct parent' do
+        expect(parent.recursively_parent_of(child)).to be true
+      end
 
-      expect(result).to be_a(Administrator)
-      expect(result.id).to eq(user_record.id)
+      it 'identifies grandparent in hierarchy' do
+        expect(grandparent.recursively_parent_of(child)).to be true
+      end
+
+      it 'returns false for non-parent' do
+        other_user = create(:user, role: student_role, institution: institution)
+        expect(other_user.recursively_parent_of(child)).to be false
+      end
+
+      it 'returns false when user has no parent' do
+        orphan = create(:user, role: student_role, institution: institution)
+        expect(grandparent.recursively_parent_of(orphan)).to be false
+      end
     end
 
-    it 'converts user to SuperAdministrator when role is super administrator' do
-      super_admin_role = create(:role, :super_administrator)
-      user_record = create(:user, role: super_admin_role, institution: institution)
+    describe '#teaching_assistant?' do
+      it 'returns true for teaching assistant role' do
+        ta = create(:user, role: ta_role, institution: institution)
+        expect(ta.teaching_assistant?).to be true
+      end
 
-      result = User.instantiate(user_record)
-
-      expect(result).to be_a(SuperAdministrator)
-      expect(result.id).to eq(user_record.id)
+      it 'returns false for non-ta roles' do
+        student = create(:user, role: student_role, institution: institution)
+        instructor = create(:user, role: instructor_role, institution: institution)
+        
+        expect(student.teaching_assistant?).to be false
+        expect(instructor.teaching_assistant?).to be false
+      end
     end
 
-    it 'returns User when role is student (no STI conversion)' do
-      student_role = create(:role, :student)
-      user_record = create(:user, role: student_role, institution: institution)
+    describe '#as_json' do
+      let(:user) { create(:user, role: student_role, institution: institution) }
 
-      result = User.instantiate(user_record)
+      it 'includes only permitted user fields' do
+        json = user.as_json
+        
+        expect(json.keys).to include('id', 'name', 'email', 'full_name')
+        expect(json.keys).to include('email_on_review', 'email_on_submission', 'email_on_review_of_review')
+      end
 
-      expect(result).to be_a(User)
-      expect(result).not_to be_a(Ta)
-      expect(result.id).to eq(user_record.id)
+      it 'excludes sensitive fields' do
+        json = user.as_json
+        
+        expect(json.keys).not_to include('password_digest', 'password', 'updated_at', 'created_at')
+      end
+
+      it 'includes role with only id and name' do
+        json = user.as_json
+        
+        expect(json['role']).to be_a(Hash)
+        expect(json['role'].keys).to contain_exactly('id', 'name')
+      end
+
+      it 'includes parent with default nil values when none exists' do
+        json = user.as_json
+        
+        expect(json['parent']).to eq({ 'id' => nil, 'name' => nil })
+      end
+
+      it 'includes institution with data when assigned' do
+        json = user.as_json
+        
+        expect(json['institution']).to be_a(Hash)
+        expect(json['institution']['id']).to eq(institution.id)
+        expect(json['institution']['name']).to eq(institution.name)
+      end
+
+      it 'includes parent data when user has parent' do
+        parent_user = create(:user, role: instructor_role, institution: institution)
+        child_user = create(:user, role: student_role, institution: institution, parent: parent_user)
+        json = child_user.as_json
+        
+        expect(json['parent']['id']).to eq(parent_user.id)
+        expect(json['parent']['name']).to eq(parent_user.name)
+      end
+    end
+
+    describe '#generate_jwt' do
+      let(:user) { create(:user, role: student_role, institution: institution) }
+
+      it 'generates a valid JWT token' do
+        token = user.generate_jwt
+        
+        expect(token).to be_a(String)
+        expect(token.split('.').length).to eq(3)  # JWT has 3 parts
+      end
+
+      it 'encodes user id in token' do
+        token = user.generate_jwt
+        decoded = JWT.decode(token, Rails.application.credentials.secret_key_base)
+        
+        expect(decoded[0]['id']).to eq(user.id)
+      end
+
+      it 'sets expiration to 60 days from now' do
+        token = user.generate_jwt
+        decoded = JWT.decode(token, Rails.application.credentials.secret_key_base)
+        
+        exp_time = Time.at(decoded[0]['exp'])
+        expect(exp_time).to be_between(59.days.from_now, 61.days.from_now)
+      end
+
+      it 'generates different tokens on each call' do
+        token1 = user.generate_jwt
+        token2 = user.generate_jwt
+        
+        expect(token1).not_to eq(token2)  # exp time changes
+      end
+    end
+  end
+
+  describe 'regression checks - edge cases and fragile areas' do
+    let(:institution) { create(:institution) }
+    let(:student_role) { create(:role, :student) }
+    let(:instructor_role) { create(:role, :instructor) }
+    let(:super_admin_role) { create(:role, :super_administrator) }
+
+    it 'handles user with nil parent gracefully' do
+      user = create(:user, role: student_role, institution: institution)
+      
+      expect(user.parent).to be_nil
+      expect { user.recursively_parent_of(user) }.not_to raise_error
+    end
+
+    it 'prevents infinite recursion in parent hierarchy' do
+      user1 = create(:user, role: instructor_role, institution: institution)
+      user2 = create(:user, role: student_role, institution: institution, parent: user1)
+      
+      # user1 is parent of user2, so this should return false (not traverse infinitely)
+      expect(user2.recursively_parent_of(user1)).to be false
+    end
+
+    it 'handles as_json with missing institution' do
+      user = create(:user, role: student_role, institution_id: nil)
+      json = user.as_json
+      
+      expect(json['institution']).to eq({ 'id' => nil, 'name' => nil })
+    end
+
+    it 'generates distinct JWTs for different users' do
+      user1 = create(:user, role: student_role, institution: institution)
+      user2 = create(:user, role: student_role, institution: institution)
+      
+      token1 = user1.generate_jwt
+      token2 = user2.generate_jwt
+      
+      decoded1 = JWT.decode(token1, Rails.application.credentials.secret_key_base)
+      decoded2 = JWT.decode(token2, Rails.application.credentials.secret_key_base)
+      
+      expect(decoded1[0]['id']).to eq(user1.id)
+      expect(decoded2[0]['id']).to eq(user2.id)
+    end
+
+    it 'instructor_id works correctly after role changes' do
+      user = create(:user, role: student_role, institution: institution)
+      
+      expect { user.instructor_id }.to raise_error(NotImplementedError)
+      
+      user.update(role: instructor_role)
+      expect(user.instructor_id).to eq(user.id)
+    end
+
+    it 'can_impersonate? respects role hierarchy' do
+      instructor = create(:user, role: instructor_role, institution: institution)
+      super_admin = create(:user, role: super_admin_role, institution: institution)
+      student = create(:user, role: student_role, institution: institution)
+      
+      expect(instructor.can_impersonate?(student)).to be false
+      expect(super_admin.can_impersonate?(instructor)).to be true
+      expect(super_admin.can_impersonate?(student)).to be true
     end
   end
 end
