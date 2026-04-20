@@ -77,7 +77,7 @@ class GradesController < ApplicationController
 
             response_mapping_condition = "reviewed_object_id = " + params[:assignment_id] + " AND reviewer_id = " + params[:participant_id]
             ReviewResponseMap.where(response_mapping_condition).find_each do |mapping|
-                Response.where("map_id = " + mapping[:id].to_s).find_each do |response|
+                Response.where("response_map_id = " + mapping[:id].to_s).find_each do |response|
 
                     # response = Response.find_by(map_id: mapping[:id])
 
@@ -203,11 +203,11 @@ class GradesController < ApplicationController
         reviewee_id: @team.id
         )
 
-        existing_response = Response.find_by(map_id: mapping.id)
+        existing_response = Response.find_by(response_map_id: mapping.id)
         action = existing_response.present? ? 'edit' : 'new'
 
         render json: {
-        map_id: mapping.id,
+        response_map_id: mapping.id,
         response_id: existing_response&.id,
         redirect_to: "/response/#{action}/#{mapping.id}"
         }
@@ -323,7 +323,7 @@ class GradesController < ApplicationController
                 maps.each_with_index do |map, index|
                     # Find the most recent submitted response for the current round
                     submitted_round_response = map.responses.select do |r|
-                        r.round == round && r.is_submitted && r.map_id == map.id
+                        r.round == round && r.is_submitted && r.response_map_id == map.id
                     end.last
 
                     # Skip if no valid response was submitted

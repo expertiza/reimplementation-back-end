@@ -4,7 +4,7 @@ class Response < ApplicationRecord
   include ScorableHelper
   include MetricHelper
 
-  belongs_to :response_map, class_name: 'ResponseMap', foreign_key: 'map_id', inverse_of: false
+  belongs_to :response_map, class_name: 'ResponseMap', foreign_key: 'response_map_id', inverse_of: false
   has_many :scores, class_name: 'Answer', foreign_key: 'response_id', dependent: :destroy, inverse_of: false
 
   alias map response_map
@@ -43,7 +43,7 @@ class Response < ApplicationRecord
     assignment_questionnaire = AssignmentQuestionnaire.find_by(assignment_id: assignment.id, questionnaire_id: questionnaire.id)
 
     # notification_limit can be specified on 'Rubrics' tab on assignment edit page.
-    allowed_difference_percentage = assignment_questionnaire.notification_limit.to_f
+    allowed_difference_percentage = assignment_questionnaire.notification_threshold.to_f
 
     # the range of average_score_on_same_artifact_from_others and score is [0,1]
     # the range of allowed_difference_percentage is [0, 100]

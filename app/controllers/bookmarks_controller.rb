@@ -68,7 +68,7 @@ class BookmarksController < ApplicationController
   def get_bookmark_rating_score
     begin
       @bookmark = Bookmark.find(params[:id])
-      @bookmark_rating = BookmarkRating.where(bookmark_id: @bookmark.id, user_id: @current_user.id).first
+      @bookmark_rating = BookmarkRating.where(artifact_id: @bookmark.id, rater_id: @current_user.id).first
       render json: @bookmark_rating, status: :ok and return
     rescue ActiveRecord::RecordNotFound
       render json: $ERROR_INFO.to_s, status: :not_found and return
@@ -79,11 +79,11 @@ class BookmarksController < ApplicationController
   # POST on /bookmarks/:id/bookmarkratings
   def save_bookmark_rating_score
     @bookmark = Bookmark.find(params[:id])
-    @bookmark_rating = BookmarkRating.where(bookmark_id: @bookmark.id, user_id: @current_user.id).first
+    @bookmark_rating = BookmarkRating.where(artifact_id: @bookmark.id, rater_id: @current_user.id).first
     if @bookmark_rating.blank?
-      @bookmark_rating = BookmarkRating.create(bookmark_id: @bookmark.id, user_id: @current_user.id, rating: params[:rating])
+      @bookmark_rating = BookmarkRating.create(artifact_id: @bookmark.id, rater_id: @current_user.id, ratings: params[:rating])
     else
-      @bookmark_rating.update({'rating': params[:rating].to_i})
+      @bookmark_rating.update(ratings: params[:rating].to_i)
     end
     render json: {"bookmark": @bookmark, "rating": @bookmark_rating}, status: :ok
   end

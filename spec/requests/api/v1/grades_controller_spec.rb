@@ -8,8 +8,8 @@ RSpec.describe 'Grades API', type: :request do
 
   let(:instructor) do
     User.create!(
-      name: "instructor",
-      password_digest: "password",
+      username: "instructor",
+      password: "password",
       role_id: @roles[:instructor].id,
       full_name: "Instructor Name",
       email: "instructor@example.com"
@@ -18,8 +18,8 @@ RSpec.describe 'Grades API', type: :request do
 
   let(:ta) do
     User.create!(
-      name: "ta",
-      password_digest: "password",
+      username: "ta",
+      password: "password",
       role_id: @roles[:ta].id,
       full_name: "Teaching Assistant",
       email: "ta@example.com"
@@ -28,8 +28,8 @@ RSpec.describe 'Grades API', type: :request do
 
   let(:student) do
     User.create!(
-      name: "student",
-      password_digest: "password",
+      username: "student",
+      password: "password",
       role_id: @roles[:student].id,
       full_name: "Student Name",
       email: "student@example.com"
@@ -38,8 +38,8 @@ RSpec.describe 'Grades API', type: :request do
 
   let(:student2) do
     User.create!(
-      name: "student2",
-      password_digest: "password",
+      username: "student2",
+      password: "password",
       role_id: @roles[:student].id,
       full_name: "Student Two",
       email: "student2@example.com"
@@ -350,7 +350,7 @@ RSpec.describe 'Grades API', type: :request do
 
         run_test! do |response|
           data = JSON.parse(response.body)
-          expect(data).to have_key('map_id')
+          expect(data).to have_key('response_map_id')
           expect(data).to have_key('response_id')
           expect(data).to have_key('redirect_to')
           expect(data['redirect_to']).to include('/response/new/') if data['response_id'].nil?
@@ -367,7 +367,7 @@ RSpec.describe 'Grades API', type: :request do
             reviewer_id: reviewer.id,
             reviewee_id: team.id
           )
-          Response.create!(map_id: mapping.id)
+          Response.create!(response_map_id: mapping.id)
         end
 
         run_test! do |response|

@@ -9,7 +9,8 @@ class DueDate < ApplicationRecord
   LATE_ALLOWED = 2
   NOT_ALLOWED = 1
 
-  belongs_to :parent, polymorphic: true
+  belongs_to :parent, polymorphic: true, foreign_key: 'assignment_id'
+  belongs_to :assignment, foreign_key: 'assignment_id', optional: true
   validate :due_at_is_valid_datetime
   validates :due_at, presence: true
 
@@ -30,8 +31,8 @@ class DueDate < ApplicationRecord
   end
 
   # Fetches all due dates for the parent Assignment or Topic
-  def self.fetch_due_dates(parent_id)
-    due_dates = where('parent_id = ?', parent_id)
+  def self.fetch_due_dates(assignment_id)
+    due_dates = where(assignment_id: assignment_id)
     sort_due_dates(due_dates)
   end
 
@@ -42,21 +43,25 @@ class DueDate < ApplicationRecord
 
   def set(deadline, assignment_id, max_round)
     self.deadline_type_id = deadline
-    self.parent_id = assignment_id
+    self.assignment_id = assignment_id
     self.round = max_round
     save
   end
 
   # Fetches due dates from parent then selects the next upcoming due date
-  def self.next_due_date(parent_id)
-    due_dates = fetch_due_dates(parent_id)
+  def self.next_due_date(assignment_id)
+    due_dates = fetch_due_dates(assignment_id)
     due_dates.find { |due_date| due_date.due_at > Time.zone.now }
   end
 
   # Creates duplicate due dates and assigns them to a new assignment
   def copy(new_assignment_id)
     new_due_date = dup
-    new_due_date.parent_id = new_assignment_id
+    new_due_date.assignment_id = new_assignment_id
     new_due_date.save
+  end
+
+  def parent_id
+    assignment_id
   end
 end

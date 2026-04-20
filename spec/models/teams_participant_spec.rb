@@ -18,7 +18,7 @@ RSpec.describe TeamsParticipant, type: :model do
       name:            suffix,
       email:           "#{suffix}@example.com",
       full_name:       suffix.split('_').map(&:capitalize).join(' '),
-      password_digest: "password",
+      password: "password",
       role_id:         @roles[:student].id,
       institution_id:  institution.id
     )
@@ -36,7 +36,7 @@ RSpec.describe TeamsParticipant, type: :model do
       name:            "instructor",
       full_name:       "Instructor User",
       email:           "instructor@example.com",
-      password_digest: "password",
+      password: "password",
       role_id:         @roles[:instructor].id,
       institution_id:  institution.id
     )
