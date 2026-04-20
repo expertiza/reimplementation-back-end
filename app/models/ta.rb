@@ -8,16 +8,11 @@ class Ta < User
   end
 
   def my_instructor
-    # code here
+    parent_id
   end
 
   def courses_assisted_with
-    courses = TaMapping.where(ta_id: id)
-    courses.map { |c| Course.find(c.course_id) }
-  end
-
-  def courses_assisted_with
-    courses = TaMapping.where(ta_id: id)
+    courses = TaMapping.where(user_id: id)
     courses.map { |c| Course.find(c.course_id) }
   end
 end

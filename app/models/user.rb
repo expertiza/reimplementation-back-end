@@ -82,14 +82,14 @@ class User < ApplicationRecord
     when /Instructor/, /Administrator/, /Super Administrator/
       id
     when /Teaching Assistant/
-      my_instructor
+      Ta.find(id).my_instructor
     else
       raise NotImplementedError, "Unknown role: #{role.name}"
     end
   end
 
   def can_impersonate?(user)
-    return true if role.super_admin?
+    return true if role.super_administrator?
     return true if teaching_assistant_for?(user)
     return true if recursively_parent_of(user)
 
@@ -100,7 +100,7 @@ class User < ApplicationRecord
     p = user.parent
     return false if p.nil?
     return true if p == self
-    return false if p.role.super_admin?
+    return false if p.role.super_administrator?
 
     recursively_parent_of(p)
   end
@@ -109,16 +109,14 @@ class User < ApplicationRecord
     return false unless teaching_assistant?
     return false unless student.role.name == 'Student'
 
-    # We have to use the Ta object instead of User object
-    # because single table inheritance is not currently functioning
     ta = Ta.find(id)
-    return true if ta.courses_assisted_with.any? do |c|
+    ta.courses_assisted_with.any? do |c|
       c.assignments.map(&:participants).flatten.map(&:user_id).include? student.id
     end
   end
 
   def teaching_assistant?
-    true if role.ta?
+    role.ta? ? true : false
   end
 
   def self.from_params(params)
@@ -141,8 +139,8 @@ class User < ApplicationRecord
                             institution: { only: %i[id name] }
                           }
                         })).tap do |hash|
-      hash['parent'] ||= { id: nil, name: nil }
-      hash['institution'] ||= { id: nil, name: nil }
+      hash['parent'] ||= { 'id' => nil, 'name' => nil }
+      hash['institution'] ||= { 'id' => nil, 'name' => nil }
     end
   end
 
@@ -156,7 +154,7 @@ class User < ApplicationRecord
   end
 
   def generate_jwt
-    JWT.encode({ id: id, exp: 60.days.from_now.to_i }, Rails.application.credentials.secret_key_base)
+    JWT.encode({ id: id, exp: 60.days.from_now.to_i }, Rails.application.credentials.secret_key_base, 'HS256')
   end
 
 end
