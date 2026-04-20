@@ -51,31 +51,27 @@ class DueDate < ApplicationRecord
     due_dates.find { |due_date| due_date.due_at > Time.zone.now }
   end
 
-  # Resolves the next submission deadline from generic domain inputs:
-  # the assignment being worked on and an optional sign-up topic. This method
-  # intentionally does not know about Response, ResponseMap, or controller
-  # params. Callers are responsible for deriving the relevant assignment/topic
-  # from their own context, then delegating deadline comparison here.
-  #
-  # That keeps DueDate reusable across controllers while still supporting the
-  # current response flow, where topic-aware review deadlines may override the
-  # assignment-level due date.
-  def self.next_submission_due_date(assignment:, topic: nil)
+  # Resolves the next due date for a time-gated action from generic domain
+  # inputs. The caller supplies the action plus the assignment/topic context;
+  # DueDate stays independent of controllers and response-specific objects.
+  def self.next_due_date_for(action:, assignment:, topic: nil)
     return nil unless assignment&.id
 
-    return TopicDueDate.next_due_date(assignment.id, topic.id) if topic&.id
+    case action.to_sym
+    when :submission
+      return TopicDueDate.next_due_date(assignment.id, topic.id) if topic&.id
 
-    next_due_date(assignment.id)
+      next_due_date(assignment.id)
+    else
+      raise ArgumentError, "Unsupported due date action: #{action}"
+    end
   end
 
-  # Returns true when the relevant submission deadline has not yet passed.
-  # The method is generic at the due-date layer: it answers "is submission
-  # still open for this assignment/topic context?" rather than encoding any
-  # response-specific behavior.
-  def self.submission_window_open?(assignment:, topic: nil, reference_time: Time.current)
+  # Returns true when the requested action is still allowed by its due date.
+  def self.deadline_open_for?(action:, assignment:, topic: nil, reference_time: Time.current)
     return true unless assignment
 
-    next_due = next_submission_due_date(assignment: assignment, topic: topic)
+    next_due = next_due_date_for(action: action, assignment: assignment, topic: topic)
     next_due.nil? || next_due.due_at > reference_time
   end
 
