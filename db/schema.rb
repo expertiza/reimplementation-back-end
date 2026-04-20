@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_11_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_16_184458) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -247,6 +247,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_11_120000) do
     t.string "provider"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "username"
     t.index ["state"], name: "index_oidc_requests_on_state"
   end
 
