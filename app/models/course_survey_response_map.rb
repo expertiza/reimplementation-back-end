@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class CourseSurveyResponseMap < SurveyResponseMap
-    include ResponseMapSubclassTitles
+    include ExpertizaConstants::ResponseMapTitles
     belongs_to :course, foreign_key: 'reviewed_object_id'
     
     def questionnaire

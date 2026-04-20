@@ -149,12 +149,12 @@ class ResponsesController < ApplicationController
   # allow an Administrator only when they are an ancestor of the assignment's
   # instructor, which is the rule used to reopen/delete responses and to let an
   # admin act on a response map during creation.
-  def parent_admin_for_response?(response)
+  def parent_admin_for_response?(response) # TODO: move this to generic parent-admin helper if we find more use cases
     assignment = response&.response_map&.assignment
     parent_admin_for_assignment?(assignment)
   end
 
-  def parent_admin_for_assignment?(assignment)
+  def parent_admin_for_assignment?(assignment)  # TODO: move this to generic parent-admin helper if we find more use cases. mention the admin who created the instructor i
     instructor = assignment && find_assignment_instructor(assignment)
     user_logged_in? && current_user_is_a?('Administrator') && instructor && current_user_ancestor_of?(instructor)
   end

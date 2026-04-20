@@ -11,8 +11,8 @@ class ResponseMap < ApplicationRecord
   # Shared helper for Response#rubric_label; looks up the declarative constant so each map advertises its UI label
   def response_map_label
     const_name = "#{self.class.name.demodulize.underscore.upcase}_TITLE"
-    if ResponseMapSubclassTitles.const_defined?(const_name)
-      ResponseMapSubclassTitles.const_get(const_name).presence
+    if ExpertizaConstants::ResponseMapTitles.const_defined?(const_name)
+      ExpertizaConstants::ResponseMapTitles.const_get(const_name).presence
     end
   end
 
