@@ -10,8 +10,7 @@ RSpec.describe StudentTask, type: :model do
       assignment: @assignment,
       topic: "E2442",
       current_stage: "finished",
-      stage_deadline: "2024-04-23",
-      permission_granted: true
+      stage_deadline: "2024-04-23"
     )
 
   end
@@ -23,8 +22,7 @@ RSpec.describe StudentTask, type: :model do
         current_stage: "finished",
         participant: @participant,
         stage_deadline: "2024-04-23",
-        topic: "E2442",
-        permission_granted: false
+        topic: "E2442"
       }
 
       student_task = StudentTask.new(args)
@@ -34,7 +32,6 @@ RSpec.describe StudentTask, type: :model do
       expect(student_task.participant).to eq(@participant)
       expect(student_task.stage_deadline).to eq("2024-04-23")
       expect(student_task.topic).to eq("E2442")
-      expect(student_task.permission_granted).to be false
     end
   end
 
@@ -47,7 +44,6 @@ RSpec.describe StudentTask, type: :model do
       expect(student_task.topic).to eq(@participant.topic)
       expect(student_task.current_stage).to eq(@participant.current_stage)
       expect(student_task.stage_deadline).to eq(Time.parse(@participant.stage_deadline))
-      expect(student_task.permission_granted).to be @participant.permission_granted
       expect(student_task.participant).to be @participant
     end
   end
