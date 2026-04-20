@@ -1,0 +1,198 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "en-US"
+early_access: false
+
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  review_details: true
+  commit_status: true
+  fail_commit_status: false
+  collapse_walkthrough: false
+  changed_files_summary: true
+  sequence_diagrams: false
+  estimate_code_review_effort: true
+  assess_linked_issues: true
+  related_issues: true
+  related_prs: true
+  suggested_labels: true
+  suggested_reviewers: false
+  auto_apply_labels: false
+  auto_assign_reviewers: false
+  in_progress_fortune: false
+  poem: false
+  enable_prompt_for_ai_agents: false
+
+  labeling_instructions:
+    - label: "api"
+      instructions: "Apply when controllers, routes, request specs, serializers, or Swagger docs change."
+    - label: "database"
+      instructions: "Apply when models, migrations, schema, associations, or data integrity rules change."
+    - label: "workflow"
+      instructions: "Apply when GitHub Actions, CI, bot behavior, or automation files change."
+    - label: "security"
+      instructions: "Apply when authentication, authorization, secrets handling, or workflow permissions change."
+    - label: "tests"
+      instructions: "Apply when RSpec coverage or test helpers are added or modified."
+
+  path_filters:
+    - "!coverage/**"
+    - "!tmp/**"
+    - "!log/**"
+    - "!storage/**"
+    - "!public/assets/**"
+    - "!vendor/bundle/**"
+    - "!*.log"
+    - "!*.ibd"
+
+  path_instructions:
+    - path: "app/controllers/**/*.rb"
+      instructions: |
+        Review authorization, strong parameters, HTTP status codes, and response shape consistency.
+        Flag N+1 queries, missing request-spec coverage, and behavior changes not reflected in Swagger docs.
+
+    - path: "app/models/**/*.rb"
+      instructions: |
+        Focus on associations, validations, callbacks, transactions, STI and polymorphic behavior,
+        foreign keys, data integrity, and query efficiency.
+
+    - path: "app/serializers/**/*.rb"
+      instructions: |
+        Check backward compatibility of response payloads and accidental exposure of internal or sensitive fields.
+
+    - path: "app/mailers/**/*.rb"
+      instructions: |
+        Check mailer/template consistency, recipient safety, and avoid debug output or sensitive data leaks.
+
+    - path: "config/routes.rb"
+      instructions: |
+        Flag duplicate or shadowed routes, surprising non-RESTful patterns, and route changes without matching request specs.
+
+    - path: "db/migrate/**/*.rb"
+      instructions: |
+        Review for reversibility, null constraints, indexes, foreign keys, destructive data changes,
+        and alignment with db/schema.rb and affected model behavior.
+
+    - path: "db/schema.rb"
+      instructions: |
+        If schema changes, verify there is a corresponding migration and that indexes, constraints,
+        and associated tests stay aligned.
+
+    - path: "spec/models/**/*.rb"
+      instructions: |
+        Check that model specs cover validations, associations, callbacks, and important edge cases
+        with meaningful assertions instead of shallow examples.
+
+    - path: "spec/requests/**/*.rb"
+      instructions: |
+        Check authentication, authorization, invalid input, response payload assertions, and failure cases.
+        When endpoints change, expect Swagger docs to stay aligned.
+
+    - path: "swagger/**/*.yml"
+      instructions: |
+        Check for drift between documented endpoints and controller or request-spec behavior.
+
+    - path: ".github/workflows/**/*.{yml,yaml}"
+      instructions: |
+        Review GitHub Actions for unsafe pull_request_target usage, overly broad permissions, secrets exposure,
+        skipped-job logic, artifact passing, and brittle PR-comment behavior.
+
+    - path: "Dangerfile"
+      instructions: |
+        Preserve project-specific review policy. If replacing a Danger rule, verify the equivalent behavior exists
+        in CodeRabbit, GitHub Actions, or another documented enforcement path.
+
+    - path: "Dockerfile"
+      instructions: |
+        Review base image choices, layer ordering, cleanup, and security-sensitive package installation.
+
+    - path: "bin/*"
+      instructions: |
+        Check shell safety, idempotence, and environment assumptions for developer setup scripts.
+
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    auto_pause_after_reviewed_commits: 3
+    ignore_title_keywords:
+      - "WIP"
+      - "DRAFT"
+      - "[WIP]"
+
+  pre_merge_checks:
+    override_requested_reviewers_only: false
+    title:
+      mode: "warning"
+      requirements: "Use a concise, imperative title that names the subsystem changed."
+    custom_checks:
+      - name: "schema-without-migration"
+        mode: "warning"
+        instructions: |
+          Warn if db/schema.rb changes but no file under db/migrate/ changes in the same pull request.
+
+      - name: "behavior-change-needs-tests"
+        mode: "warning"
+        instructions: |
+          Warn when files under app/controllers/, app/models/, config/routes.rb, or db/migrate/ change
+          without meaningful updates under spec/models/ or spec/requests/.
+
+      - name: "workflow-security"
+        mode: "warning"
+        instructions: |
+          Warn on GitHub Actions changes that use pull_request_target with PR-head checkout,
+          overbroad write permissions, or token and secrets exposure patterns.
+
+      - name: "config-and-setup-scrutiny"
+        mode: "warning"
+        instructions: |
+          Warn when config/database.yml, config/storage.yml, config/credentials.yml.enc, config.ru, setup.sh,
+          or workflow files change without a clear explanation in the pull request summary.
+
+      - name: "todo-temp-debug-artifacts"
+        mode: "warning"
+        instructions: |
+          Warn when the pull request introduces TODO or FIXME markers, debug print statements,
+          temp or cache artifacts, or generated local-state files such as results.txt or safe.log.
+
+  tools:
+    github-checks:
+      enabled: true
+      timeout_ms: 300000
+    rubocop:
+      enabled: true
+    brakeman:
+      enabled: true
+    actionlint:
+      enabled: true
+    gitleaks:
+      enabled: true
+    hadolint:
+      enabled: true
+    shellcheck:
+      enabled: true
+    markdownlint:
+      enabled: true
+    yamllint:
+      enabled: true
+
+chat:
+  auto_reply: true
+  allow_non_org_members: true
+  art: false
+
+knowledge_base:
+  web_search:
+    enabled: false
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "CODERABBIT_GUIDELINES.md"
+  learnings:
+    scope: "local"
+  issues:
+    scope: "local"
+  pull_requests:
+    scope: "local"
