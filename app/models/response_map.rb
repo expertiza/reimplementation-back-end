@@ -20,7 +20,7 @@ class ResponseMap < ApplicationRecord
     Questionnaire.find_by(id: reviewed_object_id)
   end
 
-  # Returns the assignment context for this map, derived from the reviewer participant.
+  # Returns the assignment that this map's reviewer belongs to.
   def reviewer_assignment
     reviewer&.assignment
   end
