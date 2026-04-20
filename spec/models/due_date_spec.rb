@@ -226,7 +226,7 @@ RSpec.describe DueDate, type: :model do
     end
   end
 
-  describe '.current_round_for' do
+  describe '.current_round_number_for' do
     let(:assignment) { Assignment.create(id: 1001, name: 'Round Assignment', instructor:) }
 
     it 'returns the latest past round when past and future due dates both exist' do
@@ -237,7 +237,7 @@ RSpec.describe DueDate, type: :model do
       DueDate.create!(parent: assignment, due_at: 2.days.from_now, submission_allowed_id: 3, review_allowed_id: 3,
                       deadline_type_id: 3, round: 3)
 
-      expect(DueDate.current_round_for(assignment)).to eq(2)
+      expect(DueDate.current_round_number_for(assignment)).to eq(2)
     end
 
     it 'returns the earliest upcoming round when no past due dates exist' do
@@ -246,14 +246,14 @@ RSpec.describe DueDate, type: :model do
       DueDate.create!(parent: assignment, due_at: 3.days.from_now, submission_allowed_id: 3, review_allowed_id: 3,
                       deadline_type_id: 3, round: 5)
 
-      expect(DueDate.current_round_for(assignment)).to eq(4)
+      expect(DueDate.current_round_number_for(assignment)).to eq(4)
     end
 
     it 'returns 0 when no round-based due dates exist' do
       DueDate.create!(parent: assignment, due_at: 1.day.from_now, submission_allowed_id: 3, review_allowed_id: 3,
                       deadline_type_id: 3, round: nil)
 
-      expect(DueDate.current_round_for(assignment)).to eq(0)
+      expect(DueDate.current_round_number_for(assignment)).to eq(0)
     end
   end
 

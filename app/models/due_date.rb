@@ -79,7 +79,7 @@ class DueDate < ApplicationRecord
   # - If any round-based due dates are in the past, use the latest past due date's round.
   # - Otherwise, use the earliest upcoming due date's round.
   # - If no round-based due dates exist, return 0.
-  def self.current_round_for(parent, reference_time: Time.current)
+  def self.current_round_number_for(parent, reference_time: Time.current)
     return 0 unless parent&.id
 
     scoped = where(parent: parent).where.not(round: nil, due_at: nil)

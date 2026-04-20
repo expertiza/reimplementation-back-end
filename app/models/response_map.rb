@@ -105,7 +105,7 @@ class ResponseMap < ApplicationRecord
 
   # Delegate round inference to DueDate to keep one consistent rule in one class.
   def current_round_from_due_dates
-    DueDate.current_round_for(assignment)
+    DueDate.current_round_number_for(assignment)
   end
 
   private
