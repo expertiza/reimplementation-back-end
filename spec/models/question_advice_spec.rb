@@ -107,7 +107,6 @@ describe Questionnaire, type: :model do
         end 
         
         it 'verify json output with QuestionAdvice entries associated with question 2' do
-
             expect(question_advice2.question_id).to eq(question2.id)
 
             output = QuestionAdvice.to_json_by_question_id(question2.id)
