@@ -7,7 +7,7 @@ class Course < ApplicationRecord
   validates :name, presence: true
   validates :directory_path, presence: true
   has_many :participants, class_name: 'CourseParticipant', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :course
-  has_many :users, through: :course_participants, inverse_of: :course
+  has_many :users, through: :participants
   has_many :ta_mappings, dependent: :destroy
   has_many :tas, through: :ta_mappings, source: :ta
   has_many :teams, class_name: 'CourseTeam', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :course

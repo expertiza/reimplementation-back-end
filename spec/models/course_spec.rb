@@ -24,6 +24,16 @@ describe Course, type: :model do
       expect(course).not_to be_valid
     end
   end
+
+  describe 'associations' do
+    # Ensures users are reachable through course participants.
+    it 'returns users through participants' do
+      student = create(:user, :student)
+      create(:course_participant, course: course, user: student)
+
+      expect(course.users).to include(student)
+    end
+  end
   describe '#path' do
     context 'when there is no associated instructor' do
       # Raises an error if path is requested without an instructor.
