@@ -303,7 +303,6 @@ class SubmittedContentController < ApplicationController
   end
 
   # GET /submitted_content/:id/view_submissions
-  # Retrieves submission data for a given assignment, grouped by team
   def view_submissions
     assignment = Assignment.find_by(id: params[:id])
     return render json: { error: "Assignment not found" }, status: :not_found if assignment.nil?
@@ -318,13 +317,38 @@ class SubmittedContentController < ApplicationController
         }
       end
 
+      # Pull SubmissionRecords for this team
+      records = SubmissionRecord.where(team_id: team.id, assignment_id: assignment.id)
+
+      links = records.where(record_type: 'hyperlink').map do |r|
+        {
+          id: r.id,
+          url: r.content,
+          display_name: r.content,
+          name: r.content,
+          type: 'Hyperlink',
+          modified: r.created_at
+        }
+      end
+
+      files = records.where(record_type: 'file').map do |r|
+        {
+          id: r.id,
+          url: nil,
+          display_name: File.basename(r.content),
+          name: File.basename(r.content),
+          type: File.extname(r.content).delete('.').upcase,
+          modified: r.created_at
+        }
+      end
+
       {
         id: team.id,
         team_id: team.id,
         team_name: team.name,
         members: members,
-        links: [],
-        files: []
+        links: links,
+        files: files
       }
     end
 
