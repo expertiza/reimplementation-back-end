@@ -316,13 +316,13 @@ RSpec.describe OidcRequest, type: :model do
   end
   describe '#stale?' do
     it 'returns false for a freshly created request' do
-      req = OidcRequest.create!(state: 'new-req', nonce: 'n', code_verifier: 'v', provider: 'google-ncsu')
+      req = create_request(state: 'new-req')
 
       expect(req.stale?).to be false
     end
 
     it 'returns true for a request older than the validity window' do
-      req = OidcRequest.create!(state: 'old-req', nonce: 'n', code_verifier: 'v', provider: 'google-ncsu')
+      req = create_request(state: 'old-req')
       req.update_columns(created_at: 10.minutes.ago)
 
       expect(req.stale?).to be true
@@ -332,11 +332,10 @@ RSpec.describe OidcRequest, type: :model do
   describe 'stale row cleanup' do
     def make_stale_requests(count)
       count.times.map do |i|
-        req = OidcRequest.create!(
+        req = create_request(
           state: "stale-state-#{i}-#{SecureRandom.hex(4)}",
           nonce: "nonce-#{i}",
-          code_verifier: "verifier-#{i}",
-          provider: 'google-ncsu'
+          code_verifier: "verifier-#{i}"
         )
         req.update_columns(created_at: 10.minutes.ago)
         req
@@ -363,11 +362,10 @@ RSpec.describe OidcRequest, type: :model do
 
       it 'leaves fresh rows untouched while destroying stale ones' do
         stale = make_stale_requests(3)
-        fresh = OidcRequest.create!(
+        fresh = create_request(
           state: 'fresh-state',
           nonce: 'fresh-nonce',
-          code_verifier: 'fresh-verifier',
-          provider: 'google-ncsu'
+          code_verifier: 'fresh-verifier'
         )
 
         stale.each do |req|
@@ -389,11 +387,10 @@ RSpec.describe OidcRequest, type: :model do
       allow(CleanupStaleOidcRequestsJob).to receive(:perform_later) { cleaned += 1 }
 
       total.times do |i|
-        OidcRequest.create!(
+        create_request(
           state: "prob-state-#{i}-#{SecureRandom.hex(4)}",
           nonce: "nonce-#{i}",
-          code_verifier: "verifier-#{i}",
-          provider: 'google-ncsu'
+          code_verifier: "verifier-#{i}"
         )
       end
 
@@ -405,11 +402,10 @@ RSpec.describe OidcRequest, type: :model do
       allow_any_instance_of(OidcRequest).to receive(:rand).and_return(0.99)
       expect(CleanupStaleOidcRequestsJob).not_to receive(:perform_later)
 
-      OidcRequest.create!(
+      create_request(
         state: 'no-cleanup-state',
         nonce: 'nonce',
-        code_verifier: 'verifier',
-        provider: 'google-ncsu'
+        code_verifier: 'verifier'
       )
     end
 
@@ -417,11 +413,10 @@ RSpec.describe OidcRequest, type: :model do
       allow_any_instance_of(OidcRequest).to receive(:rand).and_return(0.01)
       expect(CleanupStaleOidcRequestsJob).to receive(:perform_later).once
 
-      OidcRequest.create!(
+      create_request(
         state: 'yes-cleanup-state',
         nonce: 'nonce',
-        code_verifier: 'verifier',
-        provider: 'google-ncsu'
+        code_verifier: 'verifier'
       )
     end
   end
