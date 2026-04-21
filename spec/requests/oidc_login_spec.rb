@@ -50,12 +50,13 @@ RSpec.describe OidcLoginController, type: :request do
     allow(OpenIDConnect::ResponseObject::IdToken).to receive(:decode).and_return(id_token_obj)
   end
 
-  def create_oidc_request(state:, provider: "google-ncsu")
+  def create_oidc_request(state:, provider: "google-ncsu", username: "oidcuser")
     OidcRequest.create!(
       state:         state,
       nonce:         "nonce-#{state}",
       code_verifier: "verifier-#{state}",
-      provider:      provider
+      provider:      provider,
+      username:      username
     )
   end
 
@@ -103,17 +104,19 @@ RSpec.describe OidcLoginController, type: :request do
       produces 'application/json'
       security []
       description <<~DESC
-        Accepts a provider key, performs OIDC discovery, generates PKCE and state parameters,
-        persists an OidcRequest for later verification, and returns the provider's authorization URL
-        that the front end should redirect the user to.
+        Accepts a provider key and username, performs OIDC discovery, generates PKCE and state
+        parameters, persists an OidcRequest for later verification, and returns the provider's
+        authorization URL that the front end should redirect the user to.
+        Username is required because emails are not unique in Expertiza.
       DESC
 
       parameter name: :body, in: :body, schema: {
         type: :object,
         properties: {
-          provider: { type: :string, example: 'google-ncsu', description: 'Key identifying the OIDC provider' }
+          provider: { type: :string, example: 'google-ncsu', description: 'Key identifying the OIDC provider' },
+          username: { type: :string, example: 'jdoe', description: 'Expertiza username for account matching' }
         },
-        required: %w[provider]
+        required: %w[provider username]
       }
 
       response '200', 'authorization redirect URI' do
@@ -123,17 +126,32 @@ RSpec.describe OidcLoginController, type: :request do
                },
                required: %w[redirect_uri]
 
-        let(:body) { { provider: "google-ncsu" } }
+        let(:body) { { provider: "google-ncsu", username: "oidcuser" } }
 
         before do
           allow(OidcRequest).to receive(:authorization_uri_for!)
-                                  .with(provider_key: "google-ncsu")
+                                  .with(provider_key: "google-ncsu", username: "oidcuser")
                                   .and_return("https://accounts.google.com/o/oauth2/v2/auth?scope=openid+email+profile")
         end
 
         run_test! do |response|
           json = JSON.parse(response.body)
           expect(json["redirect_uri"]).to be_present
+        end
+      end
+
+      response '400', 'missing required parameters' do
+        schema type: :object,
+               properties: {
+                 error: { type: :string, example: 'param is missing or the value is empty: username' }
+               },
+               required: %w[error]
+
+        let(:body) { { provider: "google-ncsu" } }
+
+        run_test! do |response|
+          json = JSON.parse(response.body)
+          expect(json["error"]).to match(/username/)
         end
       end
 
@@ -144,7 +162,7 @@ RSpec.describe OidcLoginController, type: :request do
                },
                required: %w[error]
 
-        let(:body) { { provider: "nonexistent" } }
+        let(:body) { { provider: "nonexistent", username: "oidcuser" } }
 
         before do
           allow(OidcRequest).to receive(:authorization_uri_for!)
@@ -164,7 +182,7 @@ RSpec.describe OidcLoginController, type: :request do
                },
                required: %w[error]
 
-        let(:body) { { provider: "google-ncsu" } }
+        let(:body) { { provider: "google-ncsu", username: "oidcuser" } }
 
         before do
           allow(OidcRequest).to receive(:authorization_uri_for!)
@@ -190,7 +208,8 @@ RSpec.describe OidcLoginController, type: :request do
       description <<~DESC
         Called by the front end after the user is redirected back from the identity provider.
         Exchanges the authorization code for tokens, verifies the ID token, and returns
-        a local JWT session token if the user's email matches an existing account.
+        a local JWT session token if the user's username and email match an existing account.
+        Returns a generic error for all failure modes to avoid information leakage.
       DESC
 
       parameter name: :body, in: :body, schema: {
@@ -218,7 +237,7 @@ RSpec.describe OidcLoginController, type: :request do
           )
         end
 
-        let(:oidc_request) { create_oidc_request(state: "valid-state") }
+        let(:oidc_request) { create_oidc_request(state: "valid-state", username: "oidcuser") }
         let(:body) { { state: oidc_request.state, code: "authorization-code" } }
 
         before do
@@ -234,17 +253,17 @@ RSpec.describe OidcLoginController, type: :request do
         end
       end
 
-      # ── 404 — no matching account or unknown provider ──
+      # ── 401 — authentication failed (generic for all failure modes) ──
 
-      response '404', 'no account found or unknown provider' do
+      response '401', 'authentication failed' do
         schema type: :object,
                properties: {
-                 error: { type: :string, example: 'No account found for unknown@example.com' }
+                 error: { type: :string, example: 'Authentication failed' }
                },
                required: %w[error]
 
-        context 'when no user exists for the email' do
-          let(:oidc_request) { create_oidc_request(state: "state-no-user") }
+        context 'when no user matches the username and email' do
+          let(:oidc_request) { create_oidc_request(state: "state-no-user", username: "nobody") }
           let(:body) { { state: oidc_request.state, code: "authorization-code" } }
 
           before do
@@ -255,7 +274,57 @@ RSpec.describe OidcLoginController, type: :request do
 
           run_test! do |response|
             json = JSON.parse(response.body)
-            expect(json["error"]).to match(/No account found/)
+            expect(json["error"]).to eq("Authentication failed")
+          end
+        end
+
+        context 'when email matches but username does not' do
+          let(:oidc_request) { create_oidc_request(state: "state-wrong-user", username: "wronguser") }
+          let(:body) { { state: oidc_request.state, code: "authorization-code" } }
+
+          before do
+            User.create!(
+              name: "oidcuser", password: "password", role_id: @roles[:student].id,
+              full_name: "OIDC User", email: "oidcuser@ncsu.edu", institution: @institution
+            )
+            stub_provider_config
+            stub_discovery
+            stub_token_exchange(email: "oidcuser@ncsu.edu")
+          end
+
+          run_test! do |response|
+            json = JSON.parse(response.body)
+            expect(json["error"]).to eq("Authentication failed")
+          end
+        end
+
+        context 'when state is invalid or expired' do
+          let(:body) { { state: "nonexistent-state", code: "authorization-code" } }
+
+          run_test! do |response|
+            json = JSON.parse(response.body)
+            expect(json["error"]).to eq("Authentication failed")
+          end
+        end
+
+        context 'when token verification fails' do
+          let(:oidc_request) { create_oidc_request(state: "state-bad-token") }
+          let(:body) { { state: oidc_request.state, code: "authorization-code" } }
+
+          before do
+            stub_provider_config
+            stub_discovery
+
+            fake_access_token = instance_double(OpenIDConnect::AccessToken, id_token: "fake.id.token")
+            allow_any_instance_of(OpenIDConnect::Client).to receive(:access_token!).and_return(fake_access_token)
+
+            allow(OpenIDConnect::ResponseObject::IdToken).to receive(:decode)
+                                                               .and_raise(OpenIDConnect::ResponseObject::IdToken::InvalidToken.new("invalid signature"))
+          end
+
+          run_test! do |response|
+            json = JSON.parse(response.body)
+            expect(json["error"]).to eq("Authentication failed")
           end
         end
 
@@ -270,54 +339,25 @@ RSpec.describe OidcLoginController, type: :request do
 
           run_test! do |response|
             json = JSON.parse(response.body)
-            expect(json["error"]).to eq("Unknown OIDC provider: deleted-provider")
+            expect(json["error"]).to eq("Authentication failed")
           end
         end
       end
 
-      # ── 422 — invalid or expired state ──
+      # ── 400 — missing required parameters ──
 
-      response '422', 'invalid or expired login request' do
+      response '400', 'missing required parameters' do
         schema type: :object,
                properties: {
-                 error: { type: :string, example: 'Invalid or expired login request' }
+                 error: { type: :string, example: 'param is missing or the value is empty: state' }
                },
                required: %w[error]
 
-        let(:body) { { state: "nonexistent-state", code: "authorization-code" } }
+        let(:body) { { code: "authorization-code" } }
 
         run_test! do |response|
           json = JSON.parse(response.body)
-          expect(json["error"]).to eq("Invalid or expired login request")
-        end
-      end
-
-      # ── 401 — token verification failed ──
-
-      response '401', 'token verification failed' do
-        schema type: :object,
-               properties: {
-                 error: { type: :string, example: 'Token verification failed: invalid signature' }
-               },
-               required: %w[error]
-
-        let(:oidc_request) { create_oidc_request(state: "state-bad-token") }
-        let(:body) { { state: oidc_request.state, code: "authorization-code" } }
-
-        before do
-          stub_provider_config
-          stub_discovery
-
-          fake_access_token = instance_double(OpenIDConnect::AccessToken, id_token: "fake.id.token")
-          allow_any_instance_of(OpenIDConnect::Client).to receive(:access_token!).and_return(fake_access_token)
-
-          allow(OpenIDConnect::ResponseObject::IdToken).to receive(:decode)
-                                                             .and_raise(OpenIDConnect::ResponseObject::IdToken::InvalidToken.new("invalid signature"))
-        end
-
-        run_test! do |response|
-          json = JSON.parse(response.body)
-          expect(json["error"]).to match(/Token verification failed/)
+          expect(json["error"]).to match(/state/)
         end
       end
 

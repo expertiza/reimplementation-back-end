@@ -215,7 +215,7 @@ Rails.application.routes.draw do
         resources :duties, controller: 'assignments_duties', only: [:index, :create, :destroy]
       end
 
-    get  "auth/providers",     to: "oidc_login#providers"
-    post "auth/client-select", to: "oidc_login#client_select"
-    post "auth/callback",      to: "oidc_login#callback"
+  get  'auth/providers',     to: 'oidc_login#providers'
+  post 'auth/client-select', to: 'oidc_login#client_select'
+  post 'auth/callback',      to: 'oidc_login#callback'
 end

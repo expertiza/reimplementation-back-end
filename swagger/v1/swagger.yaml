@@ -2317,6 +2317,7 @@ paths:
       summary: Logs in a user
       tags:
       - Authentication
+      security: []
       parameters: []
       responses:
         '200':
@@ -2370,9 +2371,10 @@ paths:
       - OIDC Authentication
       security: []
       description: |
-        Accepts a provider key, performs OIDC discovery, generates PKCE and state parameters,
-        persists an OidcRequest for later verification, and returns the provider's authorization URL
-        that the front end should redirect the user to.
+        Accepts a provider key and username, performs OIDC discovery, generates PKCE and state
+        parameters, persists an OidcRequest for later verification, and returns the provider's
+        authorization URL that the front end should redirect the user to.
+        Username is required because emails are not unique in Expertiza.
       parameters: []
       responses:
         '200':
@@ -2387,6 +2389,18 @@ paths:
                     example: https://accounts.google.com/o/oauth2/v2/auth?client_id=...&scope=openid+email+profile&state=...&nonce=...
                 required:
                 - redirect_uri
+        '400':
+          description: missing required parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'param is missing or the value is empty: username'
+                required:
+                - error
         '404':
           description: unknown OIDC provider
           content:
@@ -2421,8 +2435,13 @@ paths:
                   type: string
                   example: google-ncsu
                   description: Key identifying the OIDC provider
+                username:
+                  type: string
+                  example: jdoe
+                  description: Expertiza username for account matching
               required:
               - provider
+              - username
   "/auth/callback":
     post:
       summary: Exchange an OIDC authorization code for a session token
@@ -2432,7 +2451,8 @@ paths:
       description: |
         Called by the front end after the user is redirected back from the identity provider.
         Exchanges the authorization code for tokens, verifies the ID token, and returns
-        a local JWT session token if the user's email matches an existing account.
+        a local JWT session token if the user's username and email match an existing account.
+        Returns a generic error for all failure modes to avoid information leakage.
       parameters: []
       responses:
         '200':
@@ -2447,32 +2467,8 @@ paths:
                     description: JWT session token
                 required:
                 - token
-        '404':
-          description: no account found or unknown provider
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: No account found for unknown@example.com
-                required:
-                - error
-        '422':
-          description: invalid or expired login request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Invalid or expired login request
-                required:
-                - error
         '401':
-          description: token verification failed
+          description: authentication failed
           content:
             application/json:
               schema:
@@ -2480,7 +2476,19 @@ paths:
                 properties:
                   error:
                     type: string
-                    example: 'Token verification failed: invalid signature'
+                    example: Authentication failed
+                required:
+                - error
+        '400':
+          description: missing required parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 'param is missing or the value is empty: state'
                 required:
                 - error
         '502':
