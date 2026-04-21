@@ -1,0 +1,83 @@
+E2602. Reimplement Student Task View
+Mentor: Koushik Gudipelly
+
+Backend scope only.
+This repository does not contain the frontend implementation, so the work here is limited to the Rails API, authorization, response composition, and automated backend tests.
+
+Objective
+Stabilize and complete the backend for the Student Task View so a logged-in student can retrieve a reliable task list and task detail payload for assignment-related work.
+
+Required backend outcomes
+1. Expose a task list endpoint for the current logged-in student.
+2. Expose a task detail endpoint for a single student task.
+3. Build student task data from existing Expertiza relationships instead of from a standalone table.
+4. Enforce authentication and ownership so students can only access their own tasks.
+5. Add backend tests that cover the success and failure paths and prevent regressions.
+
+Student task endpoint contract
+1. `GET /student_tasks/list`
+Returns all assignment tasks for the current student.
+The response should be sorted consistently and should include enough composed data for a task table and summary cards.
+
+2. `GET /student_tasks/:id`
+Returns the detailed payload for one assignment participant record owned by the current student.
+
+3. `GET /student_tasks/view?id=:id`
+Legacy alias for the detail endpoint.
+This should return the same payload as `GET /student_tasks/:id`.
+
+Required task payload data
+1. Participant identity:
+`participant_id`
+
+2. Assignment context:
+`assignment_id`, `assignment`, `assignment_details`
+
+3. Course context:
+`course_id`, `course`
+
+4. Team context:
+`team_id`, `team_name`, `team_members`, `team_details`
+
+5. Topic context:
+`topic`, `topic_details`
+
+6. Status and timing:
+`current_stage`, `stage_deadline`, `deadlines`, `timeline`
+
+7. Permissions and review state:
+`permission_granted`, `review_grade`, `can_request_revision`
+
+8. Feedback:
+`feedback`, `submission_feedback`
+
+Data composition rules
+1. Tasks should be derived from `AssignmentParticipant` records for the current user.
+2. Assignment, course, team, topic, deadlines, and feedback should be assembled from existing associations and related models.
+3. Missing optional data should degrade gracefully instead of raising server errors.
+4. Incomplete review or questionnaire data must not crash the endpoint; missing grades should resolve to `nil`.
+
+Authorization rules
+1. Requests without a valid JWT must return `401`.
+2. A student may only retrieve tasks that belong to their own `AssignmentParticipant` records.
+3. Accessing another student’s task must return `403`.
+4. Accessing a non-existent task ID must return `404`.
+
+Testing requirements
+1. Request specs must cover:
+successful task list retrieval
+successful task detail retrieval
+legacy detail endpoint retrieval
+empty task list
+unauthorized access
+forbidden access to another student’s task
+invalid task ID
+
+2. Model specs must cover:
+student task payload construction
+serialization shape
+participant lookup behavior
+deadline parsing behavior
+
+Implementation note
+This task is a hardening and completion pass, not a greenfield feature. Prefer fixing endpoint behavior, response consistency, and test coverage over adding speculative new API surface area.
