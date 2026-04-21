@@ -50,7 +50,6 @@ Rails.application.routes.draw do
           post :folder_action
         end
 
-        # ADD THIS:
         member do
           get :view_submissions
         end
@@ -122,17 +121,6 @@ Rails.application.routes.draw do
           post :create_advertisement
           patch :update_advertisement
           delete :remove_advertisement
-        end
-      end
-  
-      resources :submitted_content do
-        collection do
-          get    :download
-          get    :list_files
-          delete :remove_hyperlink
-          post   :submit_file
-          post   :submit_hyperlink
-          post   :folder_action
         end
       end
 
