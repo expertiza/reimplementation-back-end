@@ -37,7 +37,22 @@ Rails.application.routes.draw do
           get '/:assignment_id/valid_num_review/:review_type', action: :valid_num_review
           get '/:assignment_id/varying_rubrics_by_round', action: :varying_rubrics_by_round?
           post '/:assignment_id/create_node',action: :create_node
-          get '/:id/view_submissions', action: :view_submissions
+        end
+      end
+
+      resources :submitted_content do
+        collection do
+          get :download
+          get :list_files
+          delete :remove_hyperlink
+          post :submit_file
+          post :submit_hyperlink
+          post :folder_action
+        end
+
+        # ADD THIS:
+        member do
+          get :view_submissions
         end
       end
 
