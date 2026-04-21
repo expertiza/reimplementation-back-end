@@ -7,12 +7,12 @@ default: &default
 
 development:
   <<: *default
-  url: <%= ENV['DATABASE_URL'].gsub('?', '_development?') %>
+  url: <%= ENV.fetch('DATABASE_URL', 'mysql2://root:expertiza@127.0.0.1:3307/reimplementation').gsub('?', '_development?') %>
 
 test:
   <<: *default
-  url: <%= ENV['DATABASE_URL'].gsub('?', '_test?') %>
+  url: <%= ENV.fetch('DATABASE_URL', 'mysql2://root:expertiza@127.0.0.1:3307/reimplementation').gsub('?', '_test?') %>
 
 production:
   <<: *default
-  url: <%= ENV['DATABASE_URL'].gsub('?', '_production?') %>
+  url: <%= ENV.fetch('DATABASE_URL', 'mysql2://root:expertiza@127.0.0.1:3307/reimplementation').gsub('?', '_production?') %>

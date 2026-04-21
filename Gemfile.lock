@@ -153,6 +153,10 @@ GEM
       net-http (>= 0.5.0)
     faraday-retry (2.3.2)
       faraday (~> 2.0)
+    ffi (1.17.4-aarch64-linux-gnu)
+    ffi (1.17.4-arm64-darwin)
+    ffi (1.17.4-x64-mingw-ucrt)
+    ffi (1.17.4-x86_64-linux-gnu)
     find_with_order (1.3.1)
       activerecord (>= 3)
     forwardable (1.3.3)
@@ -253,7 +257,7 @@ GEM
       date
       stringio
     public_suffix (6.0.2)
-    puma (6.6.1)
+    puma (6.4.2)
       nio4r (~> 2.0)
     racc (1.8.1)
     rack (3.2.1)
@@ -425,6 +429,7 @@ DEPENDENCIES
   factory_bot_rails
   faker
   faraday-retry
+  ffi
   find_with_order
   forwardable
   jwt (~> 2.7, >= 2.7.1)

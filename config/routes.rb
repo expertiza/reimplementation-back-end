@@ -67,7 +67,15 @@ Rails.application.routes.draw do
           post 'copy/:id', to: 'questionnaires#copy', as: 'copy'
           get 'toggle_access/:id', to: 'questionnaires#toggle_access', as: 'toggle_access'
         end
+        resources :items, only: [:index]
       end
+
+      resources :questionnaire_types, only: [:index] do
+      end
+
+      resources :item_types, only: [:index] do
+      end
+
 
       resources :questions do
         collection do
@@ -76,8 +84,8 @@ Rails.application.routes.draw do
           delete 'delete_all/questionnaire/:id', to:'questions#delete_all#questionnaire', as: 'delete_all'
         end
       end
-  
-  
+
+
      resources :review_mappings, only: [] do
           collection do
             post :assign_round_robin
@@ -108,7 +116,7 @@ Rails.application.routes.draw do
           delete :remove_advertisement
         end
       end
-  
+
       resources :submitted_content do
         collection do
           get    :download
@@ -167,10 +175,10 @@ Rails.application.routes.draw do
 
       resources :student_teams, only: %i[create update] do
         collection do
-          get :view          
+          get :view
           get :mentor
           get :remove_participant
-          put '/leave', to: 'student_teams#leave_team'        
+          put '/leave', to: 'student_teams#leave_team'
         end
       end
 
@@ -194,9 +202,9 @@ Rails.application.routes.draw do
           post :add_participant
           delete :delete_participants
         end
-      end      
+      end
       resources :grades do
-        collection do        
+        collection do
           get '/:assignment_id/view_all_scores', to: 'grades#view_all_scores'
           patch '/:participant_id/assign_grade', to: 'grades#assign_grade'
           get '/:participant_id/edit', to: 'grades#edit'
@@ -204,6 +212,13 @@ Rails.application.routes.draw do
           get '/:assignment_id/view_our_scores', to: 'grades#view_our_scores'
           get '/:assignment_id/view_my_scores', to: 'grades#view_my_scores'
           get '/:participant_id/instructor_review', to: 'grades#instructor_review'
+        end
+      end
+      resources :response_maps, only: [:index, :create, :destroy]
+      resources :responses do
+        member do
+          patch :submit         # PATCH /responses/:id/submit
+          patch :unsubmit       # PATCH /responses/:id/unsubmit
         end
       end
       resources :duties do

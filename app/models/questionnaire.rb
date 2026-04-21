@@ -2,7 +2,8 @@
 
 class Questionnaire < ApplicationRecord
   belongs_to :instructor
-  has_many :items, class_name: "Item", foreign_key: "questionnaire_id", dependent: :destroy # the collection of items associated with this Questionnaire
+  has_many :items, -> { order(:seq) }, class_name: "Item", foreign_key: "questionnaire_id", dependent: :destroy
+  accepts_nested_attributes_for :items, allow_destroy: true
   before_destroy :check_for_question_associations
 
   validate :validate_questionnaire
@@ -64,78 +65,75 @@ class Questionnaire < ApplicationRecord
     questionnaire
   end
 
-    # Check_for_question_associations checks if questionnaire has associated items or not
-    def check_for_question_associations
-      if items.any?
-        raise ActiveRecord::DeleteRestrictionError.new( "Cannot delete record because dependent items exist")
-      end
-    end
-
-    def as_json(options = {})
-        super(options.merge({
-                              only: %i[id name private min_question_score max_question_score created_at updated_at questionnaire_type instructor_id],
-                              include: {
-                                instructor: { only: %i[name email fullname password role]
-                              }
-                              }
-                            })).tap do |hash|
-          hash['instructor'] ||= { id: nil, name: nil }
-        end
-    end
-
-    DEFAULT_MIN_QUESTION_SCORE = 0  # The lowest score that a reviewer can assign to any questionnaire question
-    DEFAULT_MAX_QUESTION_SCORE = 5  # The highest score that a reviewer can assign to any questionnaire question
-    DEFAULT_QUESTIONNAIRE_URL = 'http://www.courses.ncsu.edu/csc517'.freeze
-    QUESTIONNAIRE_TYPES = ['ReviewQuestionnaire',
-                          'MetareviewQuestionnaire',
-                          'Author FeedbackQuestionnaire',
-                          'AuthorFeedbackQuestionnaire',
-                          'Teammate ReviewQuestionnaire',
-                          'TeammateReviewQuestionnaire',
-                          'SurveyQuestionnaire',
-                          'AssignmentSurveyQuestionnaire',
-                          'Assignment SurveyQuestionnaire',
-                          'Global SurveyQuestionnaire',
-                          'GlobalSurveyQuestionnaire',
-                          'Course SurveyQuestionnaire',
-                          'CourseSurveyQuestionnaire',
-                          'Bookmark RatingQuestionnaire',
-                          'BookmarkRatingQuestionnaire',
-                          'QuizQuestionnaire'].freeze
-    # has_paper_trail
-
-    def get_weighted_score(assignment, scores)
-      # create symbol for "varying rubrics" feature -Yang
-      round = AssignmentQuestionnaire.find_by(assignment_id: assignment.id, questionnaire_id: id).used_in_round
-      questionnaire_symbol = if round.nil?
-                              symbol
-                            else
-                              (symbol.to_s + round.to_s).to_sym
-                            end
-      compute_weighted_score(questionnaire_symbol, assignment, scores)
-    end
-
-    def compute_weighted_score(symbol, assignment, scores)
-      # aq = assignment_questionnaires.find_by(assignment_id: assignment.id)
-      aq = AssignmentQuestionnaire.find_by(assignment_id: assignment.id)
-
-      if scores[symbol][:scores][:avg].nil?
-        0
-      else
-        scores[symbol][:scores][:avg] * aq.questionnaire_weight / 100.0
-      end
-    end
-
-    # Does this questionnaire contain true/false items?
-    def true_false_items?
-      items.each { |question| return true if question.type == 'Checkbox' }
-      false
-    end
-
-    def max_possible_score
-      results = Questionnaire.joins('INNER JOIN items ON items.questionnaire_id = questionnaires.id')
-                            .select('SUM(items.weight) * questionnaires.max_question_score as max_score')
-                            .where('questionnaires.id = ?', id)
-      results[0].max_score
+  # Check_for_question_associations checks if questionnaire has associated items or not
+  def check_for_question_associations
+    if items.any?
+      raise ActiveRecord::DeleteRestrictionError.new( "Cannot delete record because dependent items exist")
     end
   end
+
+  def as_json(options = {})
+      super(options.merge({
+                            only: %i[id name private min_question_score max_question_score created_at updated_at questionnaire_type instructor_id],
+                            include: {
+                              instructor: { only: %i[name email fullname password role]
+                            }
+                            }
+                          })).tap do |hash|
+        hash['instructor'] ||= { id: nil, name: nil }
+      end
+  end
+
+  DEFAULT_MIN_QUESTION_SCORE = 0  # The lowest score that a reviewer can assign to any questionnaire question
+  DEFAULT_MAX_QUESTION_SCORE = 5  # The highest score that a reviewer can assign to any questionnaire question
+  DEFAULT_QUESTIONNAIRE_URL = 'http://www.courses.ncsu.edu/csc517'.freeze
+  QUESTIONNAIRE_TYPES = ['ReviewQuestionnaire',
+                        'MetareviewQuestionnaire',
+                        'Author FeedbackQuestionnaire',
+                        'AuthorFeedbackQuestionnaire',
+                        'Teammate ReviewQuestionnaire',
+                        'TeammateReviewQuestionnaire',
+                        'SurveyQuestionnaire',
+                        'AssignmentSurveyQuestionnaire',
+                        'Assignment SurveyQuestionnaire',
+                        'Global SurveyQuestionnaire',
+                        'GlobalSurveyQuestionnaire',
+                        'Course SurveyQuestionnaire',
+                        'CourseSurveyQuestionnaire',
+                        'Bookmark RatingQuestionnaire',
+                        'BookmarkRatingQuestionnaire',
+                        'QuizQuestionnaire'].freeze
+
+  def get_weighted_score(assignment, scores)
+    round = AssignmentQuestionnaire.find_by(assignment_id: assignment.id, questionnaire_id: id).used_in_round
+    questionnaire_symbol = if round.nil?
+                            symbol
+                          else
+                            (symbol.to_s + round.to_s).to_sym
+                          end
+    compute_weighted_score(questionnaire_symbol, assignment, scores)
+  end
+
+  def compute_weighted_score(symbol, assignment, scores)
+    aq = AssignmentQuestionnaire.find_by(assignment_id: assignment.id)
+
+    if scores[symbol][:scores][:avg].nil?
+      0
+    else
+      scores[symbol][:scores][:avg] * aq.questionnaire_weight / 100.0
+    end
+  end
+
+  # Does this questionnaire contain true/false items?
+  def true_false_items?
+    items.each { |question| return true if question.type == 'Checkbox' }
+    false
+  end
+
+  def max_possible_score
+    results = Questionnaire.joins('INNER JOIN items ON items.questionnaire_id = questionnaires.id')
+                          .select('SUM(items.weight) * questionnaires.max_question_score as max_score')
+                          .where('questionnaires.id = ?', id)
+    results[0].max_score
+  end
+end
