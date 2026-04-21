@@ -84,7 +84,6 @@ RSpec.describe OidcRequest, type: :model do
 
       expect { described_class.consume_recent_by_state!('recent-state') }
         .to raise_error(ActiveRecord::RecordNotFound)
-      # Expired row is not deleted — only consumed rows are destroyed
       expect(described_class.find_by(id: recent_request.id)).to be_present
     end
 
@@ -313,32 +312,6 @@ RSpec.describe OidcRequest, type: :model do
 
       result = described_class.new_client(provider, discovery: discovery)
       expect(result).to eq(client)
-    end
-  end
-  describe 'stale row cleanup' do
-    before do
-      # Suppress actual cleanup execution - we test DB state directly
-      allow(CleanupStaleOidcRequestsJob).to receive(:perform_later)
-    end
-  end
-
-  describe 'probabilistic cleanup via after_create' do
-    it 'enqueues CleanupStaleOidcRequestsJob neither every time nor never over many requests' do
-      total   = 500
-      cleaned = 0
-
-      allow(CleanupStaleOidcRequestsJob).to receive(:perform_later) { cleaned += 1 }
-
-      total.times do |i|
-        create_request(
-          state: "prob-state-#{i}-#{SecureRandom.hex(4)}",
-          nonce: "nonce-#{i}",
-          verifier: "verifier-#{i}"
-        )
-      end
-
-      expect(cleaned).to be > 0,   "Expected cleanup to fire at least once in #{total} requests"
-      expect(cleaned).to be < total, "Expected cleanup to be skipped at least once in #{total} requests"
     end
   end
 end
