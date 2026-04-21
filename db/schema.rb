@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_16_184458) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_21_223609) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -241,14 +241,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_16_184458) do
   end
 
   create_table "oidc_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.string "state"
-    t.string "nonce"
-    t.string "code_verifier"
-    t.string "provider"
+    t.string "state", null: false
+    t.string "nonce", null: false
+    t.string "code_verifier", null: false
+    t.string "provider", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "username"
-    t.index ["state"], name: "index_oidc_requests_on_state"
+    t.string "username", null: false
+    t.index ["state"], name: "index_oidc_requests_on_state", unique: true
   end
 
   create_table "participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
