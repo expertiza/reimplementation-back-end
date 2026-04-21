@@ -72,7 +72,6 @@ describe Questionnaire, type: :model do
         it 'test the export method to see if values are being properly stored ' do
             csv = []
             
-
             expect(question1.questionnaire).to eq(questionnaire)
             expect(question2.questionnaire).to eq(questionnaire)
             
