@@ -98,7 +98,6 @@ describe Questionnaire, type: :model do
             expect(question_advice3.question_id).to eq(question1.id)
 
             output = QuestionAdvice.where(question_id: question1.id).first
-            #output = QuestionAdvice.where(id: question_advice1.id)
 
 
             expect(output.question_id).to eq(question1.id)
