@@ -273,6 +273,23 @@ RSpec.describe OidcRequest, type: :model do
       expect { oidc_request.authenticate_user!(code: 'authorization-code') }
         .to raise_error(OidcRequest::AuthenticationError, /No account found/)
     end
+
+    it 'matches user when DB stores values with leading/trailing whitespace' do
+      user.update_columns(name: '  OidcUser  ', email: '  OidcUser@ncsu.edu  ')
+      oidc_request = create_request(username: 'OidcUser')
+      stub_token_exchange(email: 'OidcUser@ncsu.edu', email_verified: true)
+
+      result = oidc_request.authenticate_user!(code: 'authorization-code')
+      expect(result.id).to eq(user.id)
+    end
+
+    it 'raises AuthenticationError when email is blank' do
+      oidc_request = create_request(username: 'OidcUser')
+      stub_token_exchange(email: '', email_verified: true)
+
+      expect { oidc_request.authenticate_user!(code: 'authorization-code') }
+        .to raise_error(OidcRequest::AuthenticationError, /Email missing/)
+    end
   end
 
   # ─── .new_client ────────────────────────────────────────────────────
