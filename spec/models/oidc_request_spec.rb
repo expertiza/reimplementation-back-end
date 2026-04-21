@@ -109,6 +109,12 @@ RSpec.describe OidcRequest, type: :model do
       expect(described_class.find_by(id: fresh.id)).to be_present
       expect(described_class.find_by(id: stale.id)).to be_nil
     end
+
+    it 'returns 0 when no stale rows exist' do
+      create_request(state: 'only-fresh')
+
+      expect(described_class.delete_stale).to eq(0)
+    end
   end
 
   # ─── after_create :maybe_enqueue_stale_cleanup ──────────────────────
@@ -308,25 +314,6 @@ RSpec.describe OidcRequest, type: :model do
       expect(result).to eq(client)
     end
   end
-  describe '.delete_stale' do
-    it 'removes stale rows and leaves fresh ones untouched' do
-      fresh = OidcRequest.create!(state: 'fresh-del', nonce: 'n', code_verifier: 'v', provider: 'google-ncsu')
-      stale = OidcRequest.create!(state: 'stale-del', nonce: 'n', code_verifier: 'v', provider: 'google-ncsu')
-      stale.update_columns(created_at: 10.minutes.ago)
-
-      described_class.delete_stale
-
-      expect(described_class.find_by(id: fresh.id)).to be_present
-      expect(described_class.find_by(id: stale.id)).to be_nil
-    end
-
-    it 'returns 0 when no stale rows exist' do
-      OidcRequest.create!(state: 'only-fresh', nonce: 'n', code_verifier: 'v', provider: 'google-ncsu')
-
-      expect(described_class.delete_stale).to eq(0)
-    end
-  end
-
   describe '#stale?' do
     it 'returns false for a freshly created request' do
       req = OidcRequest.create!(state: 'new-req', nonce: 'n', code_verifier: 'v', provider: 'google-ncsu')
