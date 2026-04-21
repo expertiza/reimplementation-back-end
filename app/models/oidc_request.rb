@@ -75,9 +75,7 @@ class OidcRequest < ApplicationRecord
 
     claims = id_token.raw_attributes
 
-    if claims.key?("email_verified") && claims["email_verified"] != true
-      raise AuthenticationError, "Email not verified by provider"
-    end
+    raise AuthenticationError, "Email not verified by provider" unless claims["email_verified"] == true
 
     email = claims["email"].to_s.strip
     raise AuthenticationError, "Email missing from provider response" if email.blank?

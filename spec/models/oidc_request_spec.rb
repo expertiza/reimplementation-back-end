@@ -174,7 +174,7 @@ RSpec.describe OidcRequest, type: :model do
     let(:oidc_request) { create_request }
 
     it 'exchanges code, verifies token and returns email' do
-      stub_token_exchange(email: 'oidcuser@ncsu.edu')
+      stub_token_exchange(email: 'oidcuser@ncsu.edu', email_verified: true)
 
       email = oidc_request.verified_email_from_code!(provider_key: 'google-ncsu', code: 'authorization-code')
       expect(email).to eq('oidcuser@ncsu.edu')
@@ -187,11 +187,11 @@ RSpec.describe OidcRequest, type: :model do
       expect(email).to eq('oidcuser@ncsu.edu')
     end
 
-    it 'returns email when provider does not include email_verified claim' do
+    it 'raises AuthenticationError when email_verified claim is absent' do
       stub_token_exchange(email: 'oidcuser@ncsu.edu')
 
-      email = oidc_request.verified_email_from_code!(provider_key: 'google-ncsu', code: 'authorization-code')
-      expect(email).to eq('oidcuser@ncsu.edu')
+      expect { oidc_request.verified_email_from_code!(provider_key: 'google-ncsu', code: 'authorization-code') }
+        .to raise_error(OidcRequest::AuthenticationError, /Email not verified/)
     end
 
     it 'raises AuthenticationError when email_verified is false' do
@@ -220,7 +220,7 @@ RSpec.describe OidcRequest, type: :model do
 
     it 'matches user by username and email' do
       oidc_request = create_request(username: 'OidcUser')
-      stub_token_exchange(email: 'OidcUser@ncsu.edu')
+      stub_token_exchange(email: 'OidcUser@ncsu.edu', email_verified: true)
 
       result = oidc_request.authenticate_user!(code: 'authorization-code')
       expect(result.id).to eq(user.id)
@@ -228,7 +228,7 @@ RSpec.describe OidcRequest, type: :model do
 
     it 'matches user case-insensitively on username' do
       oidc_request = create_request(username: 'oidcuser')
-      stub_token_exchange(email: 'OidcUser@ncsu.edu')
+      stub_token_exchange(email: 'OidcUser@ncsu.edu', email_verified: true)
 
       result = oidc_request.authenticate_user!(code: 'authorization-code')
       expect(result.id).to eq(user.id)
@@ -236,7 +236,7 @@ RSpec.describe OidcRequest, type: :model do
 
     it 'matches user case-insensitively on email' do
       oidc_request = create_request(username: 'OidcUser')
-      stub_token_exchange(email: 'oidcuser@ncsu.edu')
+      stub_token_exchange(email: 'oidcuser@ncsu.edu', email_verified: true)
 
       result = oidc_request.authenticate_user!(code: 'authorization-code')
       expect(result.id).to eq(user.id)
@@ -244,7 +244,7 @@ RSpec.describe OidcRequest, type: :model do
 
     it 'matches user case-insensitively on both username and email' do
       oidc_request = create_request(username: 'OIDCUSER')
-      stub_token_exchange(email: 'OIDCUSER@NCSU.EDU')
+      stub_token_exchange(email: 'OIDCUSER@NCSU.EDU', email_verified: true)
 
       result = oidc_request.authenticate_user!(code: 'authorization-code')
       expect(result.id).to eq(user.id)
@@ -252,7 +252,7 @@ RSpec.describe OidcRequest, type: :model do
 
     it 'raises AuthenticationError when email matches but username does not' do
       oidc_request = create_request(username: 'wronguser')
-      stub_token_exchange(email: 'OidcUser@ncsu.edu')
+      stub_token_exchange(email: 'OidcUser@ncsu.edu', email_verified: true)
 
       expect { oidc_request.authenticate_user!(code: 'authorization-code') }
         .to raise_error(OidcRequest::AuthenticationError, /No account found/)
@@ -260,7 +260,7 @@ RSpec.describe OidcRequest, type: :model do
 
     it 'raises AuthenticationError when username matches but email does not' do
       oidc_request = create_request(username: 'OidcUser')
-      stub_token_exchange(email: 'different@example.com')
+      stub_token_exchange(email: 'different@example.com', email_verified: true)
 
       expect { oidc_request.authenticate_user!(code: 'authorization-code') }
         .to raise_error(OidcRequest::AuthenticationError, /No account found/)
@@ -268,7 +268,7 @@ RSpec.describe OidcRequest, type: :model do
 
     it 'raises AuthenticationError when neither username nor email match' do
       oidc_request = create_request(username: 'nobody')
-      stub_token_exchange(email: 'nobody@example.com')
+      stub_token_exchange(email: 'nobody@example.com', email_verified: true)
 
       expect { oidc_request.authenticate_user!(code: 'authorization-code') }
         .to raise_error(OidcRequest::AuthenticationError, /No account found/)
