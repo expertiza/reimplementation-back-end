@@ -64,7 +64,6 @@ describe Questionnaire, type: :model do
     describe '#test export_fields' do
         it 'make sure that the columns of QuestionAdvice are properly being mapped' do
             output = QuestionAdvice.export_fields(options = {})
-
             expect(output).to eq(["id", "question_id", "score", "advice", "created_at", "updated_at"])
         end
     end
