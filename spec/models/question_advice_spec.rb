@@ -79,8 +79,6 @@ describe Questionnaire, type: :model do
             expect(question_advice2.advice).to eq('advice for question 2')
             expect(question_advice3.advice).to eq('advice for question 3')
 
-            #result = Questionnaire.find(questionnaire.id)
-            #expect(result.items).to eq('bruh')
 
             QuestionAdvice.export(csv, questionnaire.id, nil)
 
