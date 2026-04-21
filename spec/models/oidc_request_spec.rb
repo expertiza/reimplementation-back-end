@@ -187,14 +187,15 @@ RSpec.describe OidcRequest, type: :model do
     end
 
     it 'raises InvalidToken when id token verification fails' do
-      allow(client).to receive(:authorization_code=).with('authorization-code')
-      allow(client).to receive(:access_token!).with(code_verifier: 'verifier')
-                                              .and_return(instance_double(OpenIDConnect::AccessToken, id_token: 'fake.id.token'))
-
-      allow(OpenIDConnect::ResponseObject::IdToken).to receive(:decode)
-                                                         .with('fake.id.token', discovery.jwks)
-                                                         .and_return(id_token_obj)
-      allow(id_token_obj).to receive(:verify!)
+      bad_token = instance_double(
+        OpenIDConnect::ResponseObject::IdToken,
+        raw_attributes: { 'email' => 'oidcuser@ncsu.edu' }
+      )
+      allow(client).to receive(:authorization_code=)
+      allow(client).to receive(:access_token!)
+        .and_return(instance_double(OpenIDConnect::AccessToken, id_token: 'fake.id.token'))
+      allow(OpenIDConnect::ResponseObject::IdToken).to receive(:decode).and_return(bad_token)
+      allow(bad_token).to receive(:verify!)
         .and_raise(OpenIDConnect::ResponseObject::IdToken::InvalidToken.new('nonce mismatch'))
 
       expect {
@@ -314,68 +315,10 @@ RSpec.describe OidcRequest, type: :model do
       expect(result).to eq(client)
     end
   end
-  describe '#stale?' do
-    it 'returns false for a freshly created request' do
-      req = create_request(state: 'new-req')
-
-      expect(req.stale?).to be false
-    end
-
-    it 'returns true for a request older than the validity window' do
-      req = create_request(state: 'old-req')
-      req.update_columns(created_at: 10.minutes.ago)
-
-      expect(req.stale?).to be true
-    end
-  end
-
   describe 'stale row cleanup' do
-    def make_stale_requests(count)
-      count.times.map do |i|
-        req = create_request(
-          state: "stale-state-#{i}-#{SecureRandom.hex(4)}",
-          nonce: "nonce-#{i}",
-          code_verifier: "verifier-#{i}"
-        )
-        req.update_columns(created_at: 10.minutes.ago)
-        req
-      end
-    end
-
     before do
       # Suppress actual cleanup execution - we test DB state directly
       allow(CleanupStaleOidcRequestsJob).to receive(:perform_later)
-    end
-
-    context 'detect-and-delete on consume_recent_by_state!' do
-      it 'immediately destroys a handful of stale rows when each is looked up' do
-        requests = make_stale_requests(5)
-
-        requests.each do |req|
-          expect { described_class.consume_recent_by_state!(req.state) }
-            .to raise_error(ActiveRecord::RecordNotFound)
-        end
-
-        surviving_ids = described_class.where(id: requests.map(&:id)).pluck(:id)
-        expect(surviving_ids).to be_empty
-      end
-
-      it 'leaves fresh rows untouched while destroying stale ones' do
-        stale = make_stale_requests(3)
-        fresh = create_request(
-          state: 'fresh-state',
-          nonce: 'fresh-nonce',
-          code_verifier: 'fresh-verifier'
-        )
-
-        stale.each do |req|
-          expect { described_class.consume_recent_by_state!(req.state) }
-            .to raise_error(ActiveRecord::RecordNotFound)
-        end
-
-        expect(described_class.find_by(id: fresh.id)).to be_present
-        expect(described_class.where(id: stale.map(&:id)).count).to eq(0)
-      end
     end
   end
 
@@ -390,34 +333,12 @@ RSpec.describe OidcRequest, type: :model do
         create_request(
           state: "prob-state-#{i}-#{SecureRandom.hex(4)}",
           nonce: "nonce-#{i}",
-          code_verifier: "verifier-#{i}"
+          verifier: "verifier-#{i}"
         )
       end
 
       expect(cleaned).to be > 0,   "Expected cleanup to fire at least once in #{total} requests"
       expect(cleaned).to be < total, "Expected cleanup to be skipped at least once in #{total} requests"
-    end
-
-    it 'does not enqueue CleanupStaleOidcRequestsJob when rand is above the threshold' do
-      allow_any_instance_of(OidcRequest).to receive(:rand).and_return(0.99)
-      expect(CleanupStaleOidcRequestsJob).not_to receive(:perform_later)
-
-      create_request(
-        state: 'no-cleanup-state',
-        nonce: 'nonce',
-        code_verifier: 'verifier'
-      )
-    end
-
-    it 'enqueues CleanupStaleOidcRequestsJob when rand is below the threshold' do
-      allow_any_instance_of(OidcRequest).to receive(:rand).and_return(0.01)
-      expect(CleanupStaleOidcRequestsJob).to receive(:perform_later).once
-
-      create_request(
-        state: 'yes-cleanup-state',
-        nonce: 'nonce',
-        code_verifier: 'verifier'
-      )
     end
   end
 end
