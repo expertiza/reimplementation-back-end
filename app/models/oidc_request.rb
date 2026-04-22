@@ -84,10 +84,19 @@ class OidcRequest < ApplicationRecord
   end
 
   # Matches on both username from input and email from id_token because emails are not unique
+  # Normalizes whitespace and case to handle legacy data with inconsistent formatting
   def authenticate_user!(code:)
     email = verified_email_from_code!(provider_key: provider, code: code)
-    User.where("LOWER(name) = ? AND LOWER(email) = ?", username.downcase, email.downcase).first ||
-      raise(AuthenticationError, "No account found for #{username} with email #{email}")
+    raise AuthenticationError, "No email claim in ID token" if email.blank?
+    raise AuthenticationError, "No username associated with this request" if username.blank?
+
+    normalized_username = username.to_s.strip.downcase
+    normalized_email = email.to_s.strip.downcase
+
+    User.where(
+      "LOWER(TRIM(name)) = ? AND LOWER(TRIM(email)) = ?",
+      normalized_username, normalized_email
+    ).first || raise(AuthenticationError, "No account found for #{username} with email #{email}")
   end
 
   # Internal: builds an OpenIDConnect::Client from provider config and discovery
