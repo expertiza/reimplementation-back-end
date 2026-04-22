@@ -54,7 +54,7 @@ class OidcRequest < ApplicationRecord
   # Exchanges the authorization code for tokens, then verifies:
   #   - ID token signature via provider JWKS
   #   - Issuer, audience (client_id), and nonce claims
-  #   - email_verified claim if the provider includes it
+  #   - email_verified claim is always required
   def verified_email_from_code!(provider_key:, code:)
     provider = OidcConfig.find(provider_key)
     discovery = OpenIDConnect::Discovery::Provider::Config.discover!(provider["issuer"])
