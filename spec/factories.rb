@@ -2,10 +2,11 @@
 
 FactoryBot.define do
   factory :oidc_request do
-    state { "MyString" }
-    nonce { "MyString" }
-    code_verifier { "MyString" }
-    provider { "MyString" }
+    sequence(:state) { |n| "state-#{n}-#{SecureRandom.hex(8)}" }
+    nonce { SecureRandom.hex(32) }
+    code_verifier { SecureRandom.urlsafe_base64(64) }
+    provider { "google-ncsu" }
+    username { "oidcuser" }
   end
 
   factory :student_task do
