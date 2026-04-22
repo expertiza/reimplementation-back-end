@@ -162,6 +162,14 @@ RSpec.describe OidcRequest, type: :model do
 
       described_class.authorization_uri_for!(provider_key: 'google-ncsu', username: 'oidcuser')
     end
+
+    it 'raises when creating a request with a duplicate state' do
+      create_request(state: 'duplicate-state')
+
+      expect {
+        create_request(state: 'duplicate-state', nonce: 'different-nonce')
+      }.to raise_error(ActiveRecord::RecordNotUnique)
+    end
   end
 
   # ─── #verified_email_from_code! ─────────────────────────────────────
