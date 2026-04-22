@@ -84,7 +84,6 @@ RSpec.describe OidcRequest, type: :model do
 
       expect { described_class.consume_recent_by_state!('recent-state') }
         .to raise_error(ActiveRecord::RecordNotFound)
-      # Expired row is not deleted — only consumed rows are destroyed
       expect(described_class.find_by(id: recent_request.id)).to be_present
     end
 
@@ -108,6 +107,12 @@ RSpec.describe OidcRequest, type: :model do
 
       expect(described_class.find_by(id: fresh.id)).to be_present
       expect(described_class.find_by(id: stale.id)).to be_nil
+    end
+
+    it 'returns 0 when no stale rows exist' do
+      create_request(state: 'only-fresh')
+
+      expect(described_class.delete_stale).to eq(0)
     end
   end
 
@@ -186,6 +191,23 @@ RSpec.describe OidcRequest, type: :model do
 
       email = oidc_request.verified_email_from_code!(provider_key: 'google-ncsu', code: 'authorization-code')
       expect(email).to eq('oidcuser@ncsu.edu')
+    end
+
+    it 'raises InvalidToken when id token verification fails' do
+      bad_token = instance_double(
+        OpenIDConnect::ResponseObject::IdToken,
+        raw_attributes: { 'email' => 'oidcuser@ncsu.edu' }
+      )
+      allow(client).to receive(:authorization_code=)
+      allow(client).to receive(:access_token!)
+        .and_return(instance_double(OpenIDConnect::AccessToken, id_token: 'fake.id.token'))
+      allow(OpenIDConnect::ResponseObject::IdToken).to receive(:decode).and_return(bad_token)
+      allow(bad_token).to receive(:verify!)
+        .and_raise(OpenIDConnect::ResponseObject::IdToken::InvalidToken.new('nonce mismatch'))
+
+      expect {
+        oidc_request.verified_email_from_code!(provider_key: 'google-ncsu', code: 'authorization-code')
+      }.to raise_error(OpenIDConnect::ResponseObject::IdToken::InvalidToken, /nonce mismatch/)
     end
 
     it 'returns email when email_verified is true' do
