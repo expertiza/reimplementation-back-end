@@ -38,13 +38,13 @@ RSpec.describe OidcLoginController, type: :request do
     discovery
   end
 
-  def stub_token_exchange(email:)
+  def stub_token_exchange(email:, email_verified: true)
     fake_access_token = instance_double(OpenIDConnect::AccessToken, id_token: "fake.id.token")
     allow_any_instance_of(OpenIDConnect::Client).to receive(:access_token!).and_return(fake_access_token)
 
     id_token_obj = instance_double(
       OpenIDConnect::ResponseObject::IdToken,
-      raw_attributes: { "email" => email }
+      raw_attributes: { "email" => email, "email_verified" => email_verified }
     )
     allow(id_token_obj).to receive(:verify!).and_return(true)
     allow(OpenIDConnect::ResponseObject::IdToken).to receive(:decode).and_return(id_token_obj)

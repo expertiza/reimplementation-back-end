@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'json_web_token'
 
 class User < ApplicationRecord
@@ -156,8 +157,8 @@ class User < ApplicationRecord
       id: id,
       name: name,
       full_name: full_name,
-      role: role.name,
-      institution_id: institution.id
+      role: role&.name,
+      institution_id: institution&.id
     }
     JsonWebToken.encode(payload, expiry)
   end
