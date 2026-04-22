@@ -133,7 +133,10 @@ RSpec.describe OidcConfig, type: :model do
 
     it 'returns an empty hash when the top-level YAML is not a Hash' do
       allow(File).to receive(:read).and_call_original
-      allow(File).to receive(:read).with(described_class::CONFIG_FILE).and_return("- item_one\n- item_two\n")
+      allow(File).to receive(:read).with(described_class::CONFIG_FILE).and_return(<<~YAML)
+        - item_one
+        - item_two
+      YAML
 
       expect(described_class.providers).to eq({})
       expect(Rails.logger).to have_received(:warn).with(/expected top-level mapping/)
@@ -141,8 +144,11 @@ RSpec.describe OidcConfig, type: :model do
 
     it 'returns an empty hash when the providers value is not a Hash' do
       allow(File).to receive(:read).and_call_original
-      allow(File).to receive(:read).with(described_class::CONFIG_FILE)
-                                   .and_return("providers:\n  - item_one\n  - item_two\n")
+      allow(File).to receive(:read).with(described_class::CONFIG_FILE).and_return(<<~YAML)
+        providers:
+          - item_one
+          - item_two
+      YAML
 
       expect(described_class.providers).to eq({})
       expect(Rails.logger).to have_received(:warn).with(/expected 'providers' to be a mapping/)
