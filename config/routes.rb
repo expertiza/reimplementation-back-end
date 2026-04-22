@@ -165,6 +165,8 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :assignment_records, only: [:index]
+
       resources :student_teams, only: %i[create update] do
         collection do
           get :view          
