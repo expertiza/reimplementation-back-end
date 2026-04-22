@@ -145,11 +145,9 @@ begin
   ]
 
   file_samples = [
-    { name: "report.pdf", size: 204800, type: "pdf" },
-    { name: "slides.pptx", size: 1048576, type: "pptx" },
-    { name: "design-doc.docx", size: 512000, type: "docx" },
-    { name: "demo.mp4", size: 5242880, type: "mp4" },
-    { name: "readme.md", size: 4096, type: "md" }
+    { name: "report.pdf", url: "https://www.w3.org/WAI/UR/terms/media/sample.pdf", type: "pdf" },
+    { name: "slides.pptx", url: "https://file-examples.com/storage/sample.pptx", type: "pptx" },
+    { name: "readme.md", url: "https://raw.githubusercontent.com/github/docs/main/README.md", type: "md" }
   ]
 
   num_teams.times do |i|
@@ -176,15 +174,14 @@ begin
       )
     end
 
-    # Add 1 file record per team
     file = file_samples[i % file_samples.length]
     SubmissionRecord.create(
       record_type: 'file',
-      content: "/submissions/#{assignment_id}/#{team.id}/#{file[:name]}",
+      content: file[:url],        # store real URL instead of local path
       operation: 'Submit File',
       team_id: team.id,
       user: participant.user&.name || "student#{i}",
-      assignment_id: assignment_id,
+      assignment_id: team.parent_id,
       created_at: Faker::Time.backward(days: 7)
     )
   end

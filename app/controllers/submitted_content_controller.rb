@@ -332,9 +332,10 @@ class SubmittedContentController < ApplicationController
       end
 
       files = records.where(record_type: 'file').map do |r|
+        is_external = r.content.to_s.start_with?('http')
         {
           id: r.id,
-          url: nil,
+          url: is_external ? r.content : "/submitted_content/download?download=#{URI.encode_uri_component(filename)}&current_folder[name]=/",
           display_name: File.basename(r.content),
           name: File.basename(r.content),
           type: File.extname(r.content).delete('.').upcase,
