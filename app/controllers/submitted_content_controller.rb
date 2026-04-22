@@ -302,6 +302,64 @@ class SubmittedContentController < ApplicationController
     render_error("Failed to list directory contents: #{e.message}. Please try again.", :internal_server_error)
   end
 
+  # GET /submitted_content/:id/view_submissions
+  def view_submissions
+    assignment = Assignment.find_by(id: params[:id])
+    return render json: { error: "Assignment not found" }, status: :not_found if assignment.nil?
+
+    submissions = assignment.teams.map do |team|
+      members = team.teams_users.includes(:user).map do |tu|
+        user = tu.user
+        {
+          full_name: user&.full_name,
+          github: "",
+          email: user&.email
+        }
+      end
+
+      # Pull SubmissionRecords for this team
+      records = SubmissionRecord.where(team_id: team.id, assignment_id: assignment.id)
+
+      links = records.where(record_type: 'hyperlink').map do |r|
+        {
+          id: r.id,
+          url: r.content,
+          display_name: r.content,
+          name: r.content,
+          type: 'Hyperlink',
+          modified: r.created_at
+        }
+      end
+
+      files = records.where(record_type: 'file').map do |r|
+        is_external = r.content.to_s.start_with?('http')
+        {
+          id: r.id,
+          url: is_external ? r.content : "/submitted_content/download?download=#{URI.encode_uri_component(filename)}&current_folder[name]=/",
+          display_name: File.basename(r.content),
+          name: File.basename(r.content),
+          type: File.extname(r.content).delete('.').upcase,
+          modified: r.created_at
+        }
+      end
+
+      {
+        id: team.id,
+        team_id: team.id,
+        team_name: team.name,
+        members: members,
+        links: links,
+        files: files
+      }
+    end
+
+    render json: {
+      assignment_id: assignment.id,
+      assignment_name: assignment.name,
+      submissions: submissions
+    }, status: :ok
+  end
+
   private
 
   # Before action callback: Sets @submission_record for the show action
