@@ -214,4 +214,11 @@ Rails.application.routes.draw do
       resources :assignments do
         resources :duties, controller: 'assignments_duties', only: [:index, :create, :destroy]
       end
+      resources :response_maps, only: [:show, :create, :update, :destroy] do
+        collection do
+          get 'assignment/:assignment_id',      to: 'response_maps#fetch_response_maps_for_assignment'
+          get 'reviewer/:reviewer_id',          to: 'response_maps#fetch_response_maps_for_reviewer'
+          get 'response_rate/:assignment_id',   to: 'response_maps#response_rate'
+        end
+      end
 end

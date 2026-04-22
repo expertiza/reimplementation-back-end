@@ -20,4 +20,11 @@ class ReviewResponseMap < ResponseMap
   def review_map_type
     'ReviewResponseMap'
   end
+
+  # Returns the round number of the latest response
+  # Used for tracking multiple rounds of review
+  # @return [Integer, nil] the round number or nil if no responses
+  def round
+    self.responses.order(created_at: :desc).first&.round
+  end
 end
