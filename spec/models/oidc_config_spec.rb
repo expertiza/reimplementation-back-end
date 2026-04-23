@@ -249,4 +249,43 @@ RSpec.describe OidcConfig, type: :model do
       expect(described_class.scopes_for(provider)).to eq(%w[openid email profile])
     end
   end
+
+  describe 'production behavior' do
+    before do
+      allow(Rails.env).to receive(:production?).and_return(true)
+    end
+
+    it 'raises InvalidConfiguration when a provider is missing required keys' do
+      yaml = <<~YAML
+      providers:
+        bad:
+          display_name: Bad
+          issuer: https://issuer.example.com
+          client_id: id
+          redirect_uri: http://localhost:3000/auth/callback
+    YAML
+
+      allow(File).to receive(:read).and_call_original
+      allow(File).to receive(:read).with(described_class::CONFIG_FILE).and_return(yaml)
+
+      expect { described_class.providers }
+        .to raise_error(OidcConfig::InvalidConfiguration, /missing client_secret/)
+    end
+
+    it 'raises InvalidConfiguration when the top-level YAML is not a Hash' do
+      allow(File).to receive(:read).and_call_original
+      allow(File).to receive(:read).with(described_class::CONFIG_FILE).and_return("- item_one\n")
+
+      expect { described_class.providers }
+        .to raise_error(OidcConfig::InvalidConfiguration, /expected top-level mapping/)
+    end
+
+    it 'raises InvalidConfiguration when the providers value is not a Hash' do
+      allow(File).to receive(:read).and_call_original
+      allow(File).to receive(:read).with(described_class::CONFIG_FILE).and_return("providers:\n  - item_one\n")
+
+      expect { described_class.providers }
+        .to raise_error(OidcConfig::InvalidConfiguration, /expected 'providers' to be a mapping/)
+    end
+  end
 end
