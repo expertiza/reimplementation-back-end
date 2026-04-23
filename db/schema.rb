@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_22_174500) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -345,6 +345,21 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
     t.index ["map_id"], name: "fk_response_response_map"
   end
 
+  create_table "revision_requests", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.bigint "participant_id", null: false
+    t.bigint "team_id", null: false
+    t.bigint "assignment_id", null: false
+    t.string "status", default: "PENDING", null: false
+    t.text "comments", null: false
+    t.text "response_comment"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "index_revision_requests_on_assignment_id"
+    t.index ["participant_id", "team_id", "status"], name: "index_revision_requests_on_participant_team_status"
+    t.index ["participant_id"], name: "index_revision_requests_on_participant_id"
+    t.index ["team_id"], name: "index_revision_requests_on_team_id"
+  end
+
   create_table "roles", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.bigint "parent_id"
@@ -456,9 +471,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
   add_foreign_key "assignments_duties", "duties"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
+  add_foreign_key "duties", "users", column: "instructor_id"
   add_foreign_key "invitations", "participants", column: "from_id"
   add_foreign_key "invitations", "participants", column: "to_id"
-  add_foreign_key "duties", "users", column: "instructor_id"
   add_foreign_key "items", "questionnaires"
   add_foreign_key "participants", "duties"
   add_foreign_key "participants", "join_team_requests"
@@ -466,6 +481,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
   add_foreign_key "participants", "users"
   add_foreign_key "project_topics", "assignments"
   add_foreign_key "question_advices", "items", column: "question_id"
+  add_foreign_key "revision_requests", "assignments"
+  add_foreign_key "revision_requests", "participants"
+  add_foreign_key "revision_requests", "teams"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
   add_foreign_key "signed_up_teams", "project_topics"
   add_foreign_key "signed_up_teams", "teams"

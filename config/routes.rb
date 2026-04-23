@@ -46,12 +46,16 @@ Rails.application.routes.draw do
           post 'bookmarkratings', to: 'bookmarks#save_bookmark_rating_score'
         end
       end
-      resources :student_tasks do
+      resources :student_tasks, only: %i[index show] do
+        member do
+          post :request_revision
+        end
         collection do
           get :list, action: :list
           get :view
         end
       end
+      resources :revision_requests, only: %i[index show update]
 
       resources :courses do
         collection do

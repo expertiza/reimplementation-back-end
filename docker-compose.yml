@@ -1,38 +1,54 @@
 services:
   app:
     build: .
-    command: tail -f /dev/null
     environment:
       RAILS_ENV: development
-      DATABASE_URL: mysql2://root:expertiza@db:3306/reimplementation?
-      CACHE_STORE: redis://redis:6380/0
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USERNAME: root
+      DB_PASSWORD: expertiza
+      DB_NAME: reimplementation_development
+      DB_TEST_NAME: reimplementation_test
+      DB_PRODUCTION_NAME: reimplementation_production
+      REDIS_URL: redis://redis:6379/1
     ports:
       - "3002:3002"
     volumes:
       - .:/app
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   db:
     image: mysql:8.0
     restart: always
     environment:
-      MYSQL_USER: dev
-      MYSQL_PASSWORD: expertiza
       MYSQL_ROOT_PASSWORD: expertiza
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-pexpertiza"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     ports:
       - "3307:3306"
     volumes:
-      - expertiza-mysql:/var/lib/mysql2/data
-      - ./db:/docker-entrypoint-initdb.d
+      - expertiza-mysql:/var/lib/mysql
+      - ./db/init_databases.sql:/docker-entrypoint-initdb.d/01-init-databases.sql:ro
 
   redis:
     image: redis:latest
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     ports:
-      - "6380:6380"
+      - "6380:6379"
     volumes:
-      - expertiza-redis:/var/lib/redis/data
+      - expertiza-redis:/data
 
 volumes:
   expertiza-mysql:
