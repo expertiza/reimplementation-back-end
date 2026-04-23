@@ -59,6 +59,7 @@ gem 'find_with_order'
 gem 'rubyzip'
 
 gem 'openid_connect'
+gem 'rack-attack'
 
 group :development, :test do
   gem 'debug', platforms: %i[mri mingw x64_mingw]
