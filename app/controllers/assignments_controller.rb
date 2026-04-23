@@ -213,7 +213,7 @@ class AssignmentsController < ApplicationController
   private
   # Only allow a list of trusted parameters through.
   def assignment_params
-    params.require(:assignment).permit(
+    permitted_params = params.require(:assignment).permit(
       :name,
       :title,
       :description,
@@ -262,6 +262,8 @@ class AssignmentsController < ApplicationController
       notification_limits: [],
       reminder: []
     )
+
+    permitted_params.to_h.slice(*Assignment.column_names)
   end
 
   # Helper method to determine staggered_and_no_topic for the assignment

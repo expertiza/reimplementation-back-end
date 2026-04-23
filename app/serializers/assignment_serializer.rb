@@ -1,3 +1,24 @@
 class AssignmentSerializer < ActiveModel::Serializer
-     attributes :id, :name, :max_team_size, :course_id
+     attributes :id,
+                :name,
+                :directory_path,
+                :private,
+                :spec_location,
+                :max_team_size,
+                :staggered_deadline,
+                :require_quiz,
+                :days_between_submissions,
+                :review_topic_threshold,
+                :rounds_of_reviews,
+                :calculate_penalty,
+                :late_policy_id,
+                :is_penalty_calculated,
+                :is_calibrated,
+                :has_badge,
+                :instructor_id,
+                :course_id,
+                :has_teams,
+                :has_topics,
+                :vary_by_round,
+                :vary_by_topic
 end
