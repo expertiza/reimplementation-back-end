@@ -1,24 +1,23 @@
-FROM ruby:3.4.5
+FROM ruby:3.2.7
 
 LABEL maintainer="Ankur Mundra <ankurmundra0212@gmail.com>"
-# Install dependencies
-RUN apt-get update && \
-    apt-get install -y curl && \
-    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs && \
-    apt-get install -y netcat-openbsd
 
-# Set the working directory
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl netcat-openbsd && \
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y --no-install-recommends nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Copy your application files from current location to WORKDIR
-COPY . .
-
-# Install Ruby dependencies
 RUN gem update --system && gem install bundler:2.4.7
+
+COPY Gemfile Gemfile.lock ./
 RUN bundle install
 
-EXPOSE 3002 
+COPY . .
+RUN chmod +x /app/setup.sh
 
-# Set the entry point
+EXPOSE 3002
+
 ENTRYPOINT ["/app/setup.sh"]

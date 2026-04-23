@@ -122,6 +122,10 @@ class User < ApplicationRecord
     user
   end
 
+  def fullname
+    full_name
+  end
+
   # This will override the default as_json method in the ApplicationRecord class and specify
   # that only the id, name, and email attributes should be included when a User object is serialized.
   def as_json(options = {})
