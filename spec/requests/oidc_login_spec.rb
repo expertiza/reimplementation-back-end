@@ -459,7 +459,7 @@ RSpec.describe OidcLoginController, type: :request do
         expect(response.headers["Retry-After"]).to be_present
       end
 
-      it 'does not throttle requests from different IPs independently' do
+      it 'throttles requests independently per IP (different IPs are not affected by each other)' do
         5.times { post '/auth/client-select', params: valid_params, headers: headers }
 
         other_headers = headers.merge("REMOTE_ADDR" => "9.8.7.6")

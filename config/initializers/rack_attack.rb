@@ -2,7 +2,10 @@
 
 # Rack::Attack middleware configuration for OIDC login rate limiting.
 # Uses a dedicated MemoryStore in test so the null_store in test.rb doesn't
-# interfere, and relies on Rails.cache (Redis) in all other environments.
+# interfere, and relies on Rails.cache as configured in other environments.
+# Note: Rails.cache is configured with raise_errors: false in this app
+# (config/application.rb), so a Redis outage will silently drop counters and
+# cause throttles to fail open. Monitor Redis availability accordingly.
 if Rails.env.test?
   Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
 else
@@ -24,8 +27,12 @@ Rack::Attack.throttle("oidc/client-select/ip+username", limit: 3, period: 60) do
   if req.post? && req.path == "/auth/client-select"
     body = req.body.read
     req.body.rewind
-    params = JSON.parse(body) rescue {}
-    username = params["username"].to_s.strip
+    params = begin
+      JSON.parse(body)
+    rescue JSON::ParserError, TypeError
+      {}
+    end
+    username = params["username"].to_s.strip.downcase
     "#{req.ip}:#{username}" unless username.empty?
   end
 end
