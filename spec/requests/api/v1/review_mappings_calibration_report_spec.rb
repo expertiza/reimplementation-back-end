@@ -103,6 +103,52 @@ RSpec.describe 'ReviewMappings calibration report', type: :request do
       )
     end
 
+    it 'returns only the latest submitted student response for each calibration map' do
+      create_response(
+        map: instructor_map,
+        submitted: true,
+        scores: {
+          code_quality => { answer: 4, comments: 'Instructor score' },
+          documentation => { answer: 5, comments: 'Instructor docs' }
+        }
+      )
+      create_response(
+        map: student_map,
+        submitted: true,
+        updated_at: 2.days.ago,
+        scores: {
+          code_quality => { answer: 2, comments: 'Older response' },
+          documentation => { answer: 3, comments: 'Older docs' }
+        }
+      )
+      create_response(
+        map: student_map,
+        submitted: true,
+        updated_at: 1.day.ago,
+        scores: {
+          code_quality => { answer: 5, comments: 'Latest response' },
+          documentation => { answer: 4, comments: 'Latest docs' }
+        }
+      )
+
+      get calibration_report_path(instructor_map), headers: instructor_headers
+
+      expect(response).to have_http_status(:ok)
+
+      json = JSON.parse(response.body)
+      expect(json['student_responses'].length).to eq(1)
+      expect(json['student_responses'].first['answers']).to include(
+        hash_including('item_id' => code_quality.id, 'score' => 5, 'comments' => 'Latest response'),
+        hash_including('item_id' => documentation.id, 'score' => 4, 'comments' => 'Latest docs')
+      )
+      expect(json['per_item_summary']).to include(
+        hash_including(
+          'item_id' => code_quality.id,
+          'bucket_counts' => hash_including('5' => 1, '2' => 0)
+        )
+      )
+    end
+
     it 'returns 404 when the calibration map does not exist' do
       get "/assignments/#{assignment.id}/review_mappings/0/calibration_report", headers: instructor_headers
 

@@ -151,7 +151,7 @@ class ReviewMappingsController < ApplicationController
                    )
                    .where.not(id: instructor_map.id)
 
-    student_maps.flat_map { |map| map.responses.where(is_submitted: true).to_a }
+    student_maps.filter_map { |map| latest_submitted_response_for(map) }
   end
 
   def rubric_items_for(response)
