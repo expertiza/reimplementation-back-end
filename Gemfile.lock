@@ -284,6 +284,8 @@ GEM
       nio4r (~> 2.0)
     racc (1.8.1)
     rack (3.2.1)
+    rack-attack (6.8.0)
+      rack (>= 1.0, < 4)
     rack-cors (3.0.0)
       logger
       rack (>= 3.0.14)
@@ -485,6 +487,7 @@ DEPENDENCIES
   ostruct
   psych (~> 5.2)
   puma (~> 6.4)
+  rack-attack
   rack-cors
   rails (~> 8.0, >= 8.0.1)
   rspec-rails

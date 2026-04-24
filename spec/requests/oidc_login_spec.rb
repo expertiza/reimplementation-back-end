@@ -407,4 +407,82 @@ RSpec.describe OidcLoginController, type: :request do
       end
     end
   end
+
+  # ─── Rate limiting (Rack::Attack) ───────────────────────────────────────────
+
+  describe 'rate limiting' do
+    before do
+      # Reset the Rack::Attack cache between each test so throttle counters
+      # don't bleed across examples.
+      Rack::Attack.cache.store.clear
+    end
+
+    describe 'POST /auth/client-select' do
+      let(:valid_params) { { provider: "google-ncsu", username: "oidcuser" }.to_json }
+      let(:headers) { { "CONTENT_TYPE" => "application/json", "REMOTE_ADDR" => "1.2.3.4" } }
+
+      before do
+        allow(OidcRequest).to receive(:authorization_uri_for!)
+          .and_return("https://accounts.google.com/o/oauth2/v2/auth?scope=openid+email+profile")
+      end
+
+      it 'allows requests within the per-IP limit' do
+        5.times do
+          post '/auth/client-select', params: valid_params, headers: headers
+          expect(response).not_to have_http_status(:too_many_requests)
+        end
+      end
+
+      it 'throttles requests that exceed the per-IP limit' do
+        5.times { post '/auth/client-select', params: valid_params, headers: headers }
+        post '/auth/client-select', params: valid_params, headers: headers
+        expect(response).to have_http_status(:too_many_requests)
+        json = JSON.parse(response.body)
+        expect(json["error"]).to match(/Rate limit exceeded/)
+      end
+
+      it 'returns a Retry-After header when throttled' do
+        5.times { post '/auth/client-select', params: valid_params, headers: headers }
+        post '/auth/client-select', params: valid_params, headers: headers
+        expect(response.headers["Retry-After"]).to be_present
+      end
+
+      it 'throttles requests independently per IP (different IPs are not affected by each other)' do
+        5.times { post '/auth/client-select', params: valid_params, headers: headers }
+
+        other_headers = headers.merge("REMOTE_ADDR" => "9.8.7.6")
+        post '/auth/client-select', params: valid_params, headers: other_headers
+        expect(response).not_to have_http_status(:too_many_requests)
+      end
+    end
+
+    describe 'POST /auth/callback' do
+      let(:headers) { { "CONTENT_TYPE" => "application/json", "REMOTE_ADDR" => "1.2.3.4" } }
+
+      before do
+        allow(OidcRequest).to receive(:consume_recent_by_state!).and_raise(ActiveRecord::RecordNotFound)
+      end
+
+      it 'allows requests within the per-IP limit' do
+        10.times do
+          post '/auth/callback', params: { state: "s", code: "c" }.to_json, headers: headers
+          expect(response).not_to have_http_status(:too_many_requests)
+        end
+      end
+
+      it 'throttles requests that exceed the per-IP limit' do
+        10.times { post '/auth/callback', params: { state: "s", code: "c" }.to_json, headers: headers }
+        post '/auth/callback', params: { state: "s", code: "c" }.to_json, headers: headers
+        expect(response).to have_http_status(:too_many_requests)
+        json = JSON.parse(response.body)
+        expect(json["error"]).to match(/Rate limit exceeded/)
+      end
+
+      it 'returns a Retry-After header when throttled' do
+        10.times { post '/auth/callback', params: { state: "s", code: "c" }.to_json, headers: headers }
+        post '/auth/callback', params: { state: "s", code: "c" }.to_json, headers: headers
+        expect(response.headers["Retry-After"]).to be_present
+      end
+    end
+  end
 end
