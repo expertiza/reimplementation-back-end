@@ -427,11 +427,8 @@ RSpec.describe OidcLoginController, type: :request do
       end
 
       it 'allows requests within the per-IP limit' do
-        # Use distinct usernames so the tighter ip+username throttle (limit: 3)
-        # is not triggered — this test is specifically for the per-IP limit (5).
-        5.times do |i|
-          params = { provider: "google-ncsu", username: "user#{i}" }.to_json
-          post '/auth/client-select', params: params, headers: headers
+        5.times do
+          post '/auth/client-select', params: valid_params, headers: headers
           expect(response).not_to have_http_status(:too_many_requests)
         end
       end
@@ -439,15 +436,6 @@ RSpec.describe OidcLoginController, type: :request do
       it 'throttles requests that exceed the per-IP limit' do
         5.times { post '/auth/client-select', params: valid_params, headers: headers }
         post '/auth/client-select', params: valid_params, headers: headers
-        expect(response).to have_http_status(:too_many_requests)
-        json = JSON.parse(response.body)
-        expect(json["error"]).to match(/Rate limit exceeded/)
-      end
-
-      it 'throttles requests that exceed the per-IP+username limit' do
-        same_user_params = { provider: "google-ncsu", username: "targeted_user" }.to_json
-        3.times { post '/auth/client-select', params: same_user_params, headers: headers }
-        post '/auth/client-select', params: same_user_params, headers: headers
         expect(response).to have_http_status(:too_many_requests)
         json = JSON.parse(response.body)
         expect(json["error"]).to match(/Rate limit exceeded/)

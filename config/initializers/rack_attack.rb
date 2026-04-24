@@ -21,22 +21,6 @@ Rack::Attack.throttle("oidc/client-select/ip", limit: 5, period: 60) do |req|
   req.ip if req.post? && req.path == "/auth/client-select"
 end
 
-# Tighten the limit further per IP+username combination to prevent an attacker
-# from targeting a specific account across retries.
-Rack::Attack.throttle("oidc/client-select/ip+username", limit: 3, period: 60) do |req|
-  if req.post? && req.path == "/auth/client-select"
-    body = req.body.read
-    req.body.rewind
-    params = begin
-      JSON.parse(body)
-    rescue JSON::ParserError, TypeError
-      {}
-    end
-    username = params["username"].to_s.strip.downcase
-    "#{req.ip}:#{username}" unless username.empty?
-  end
-end
-
 # Limit callback completions to 10 requests per minute per IP.
 # Protects against code-reuse replay attempts and brute-force state guessing.
 Rack::Attack.throttle("oidc/callback/ip", limit: 10, period: 60) do |req|
