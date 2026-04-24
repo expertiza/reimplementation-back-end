@@ -24,7 +24,8 @@ class ReviewResponseMap < ResponseMap
   # Collect the student-submitted calibration responses that share a reviewee
   # with the given instructor calibration map. These are the responses that
   # should be compared against the instructor's review in a calibration
-  # report.
+  # report. When a student has revised their review, only the latest
+  # submitted response for each map is included.
   def self.peer_calibration_responses_for(instructor_map)
     peer_maps = where(
       reviewed_object_id: instructor_map.reviewed_object_id,
@@ -32,6 +33,6 @@ class ReviewResponseMap < ResponseMap
       for_calibration: true
     ).where.not(id: instructor_map.id)
 
-    peer_maps.flat_map { |map| map.responses.where(is_submitted: true).to_a }
+    peer_maps.filter_map(&:latest_submitted_response)
   end
 end
