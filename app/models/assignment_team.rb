@@ -16,6 +16,39 @@ class AssignmentTeam < Team
     submitted_hyperlinks.blank? ? [] : YAML.safe_load(submitted_hyperlinks)
   end
 
+  # SubmissionRecords for files this team has submitted against its assignment.
+  # Lives on the team (Information Expert) so callers don't have to know about
+  # SubmissionRecord's schema.
+  def submitted_file_records
+    SubmissionRecord.files.where(team_id: id, assignment_id: parent_id).order(created_at: :asc)
+  end
+
+  # Submitted content in the simple shape expected by reports: hyperlinks and
+  # file paths only. Used by calibration/report views where we just need the
+  # URLs.
+  def submitted_content
+    {
+      hyperlinks: hyperlinks,
+      files: submitted_file_records.pluck(:content)
+    }
+  end
+
+  # Submitted content in the rich shape expected by the calibration
+  # participants listing (per-file id, name, path, timestamps, submitter).
+  def submitted_content_detail
+    files = submitted_file_records.map do |record|
+      {
+        id: record.id,
+        name: File.basename(record.content.to_s),
+        path: record.content,
+        submitted_at: record.created_at,
+        submitted_by: record.user
+      }
+    end
+
+    { hyperlinks: hyperlinks, files: files }
+  end
+
   def submit_hyperlink(hyperlink)
     hyperlink.strip!
     raise 'The hyperlink cannot be empty!' if hyperlink.empty?

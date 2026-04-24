@@ -40,8 +40,18 @@ Rails.application.routes.draw do
         end
 
         resources :review_mappings, only: [] do
-          member do
-            get :calibration_report
+          collection do
+            get    :calibration_participants,         action: :list_calibration_participants
+            post   :calibration_participants,         action: :add_calibration_participant
+            delete 'calibration_participants/:participant_id', action: :remove_calibration_participant
+          end
+        end
+
+        # Reports are owned by ReportsController, not by feature controllers.
+        # Adding a new report type only requires a new action here.
+        resources :reports, only: [] do
+          collection do
+            get 'calibration/:map_id', action: :calibration, as: :calibration
           end
         end
       end
