@@ -25,18 +25,23 @@ class StudentTask
     asgn = participant.assignment
     return nil if asgn.nil?
 
-    quiz_questionnaire_ids = asgn.assignment_questionnaires
-                                 .joins(:questionnaire)
-                                 .where(questionnaires: { questionnaire_type: %w[Quiz QuizQuestionnaire] })
-                                 .pluck(:questionnaire_id)
-
-    has_quiz = quiz_questionnaire_ids.any?
-    first_quiz_questionnaire_id = quiz_questionnaire_ids.first
+    # E2619: look up the quiz questionnaire from the reviewee team's quiz_questionnaire_id.
+    # Previously this used assignment_questionnaires (instructor-assigned quiz), but quiz creation
+    # is now team-driven: each submitting team creates their own quiz from the AssignReviewer page,
+    # and the quiz is linked to their team record rather than the assignment.
+    # We find the response maps where this participant is the reviewer, get the reviewee team,
+    # and read team.quiz_questionnaire_id.
+    reviewee_team = ReviewResponseMap
+                      .where(reviewer_id: participant.id)
+                      .filter_map { |rm| Team.find_by(id: rm.reviewee_id) }
+                      .first
+    quiz_questionnaire_id = reviewee_team&.quiz_questionnaire_id
+    has_quiz = quiz_questionnaire_id.present?
 
     # Quiz is "taken" only when the student has a submitted response on their QuizResponseMap
     quiz_taken = has_quiz &&
                  QuizResponseMap
-                   .where(reviewer_id: participant.id, reviewed_object_id: quiz_questionnaire_ids)
+                   .where(reviewer_id: participant.id, reviewed_object_id: quiz_questionnaire_id)
                    .joins("INNER JOIN responses ON responses.map_id = response_maps.id")
                    .where(responses: { is_submitted: true })
                    .exists?
@@ -52,7 +57,7 @@ class StudentTask
       require_quiz:            asgn.require_quiz || false,
       quiz_taken:              quiz_taken,
       has_quiz_questionnaire:  has_quiz,
-      quiz_questionnaire_id:   first_quiz_questionnaire_id
+      quiz_questionnaire_id:   quiz_questionnaire_id
     )
   end
 

@@ -192,6 +192,9 @@ Rails.application.routes.draw do
           get 'join_requests'
           post 'join_requests', to: 'teams#create_join_request'
           put 'join_requests/:join_request_id', to: 'teams#update_join_request'
+
+          # E2619: link a team-owned quiz questionnaire to this team
+          patch 'quiz_questionnaire', to: 'teams#set_quiz_questionnaire'
         end
       end
       resources :teams_participants, only: [] do

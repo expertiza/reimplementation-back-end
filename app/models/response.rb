@@ -85,11 +85,15 @@ class Response < ApplicationRecord
     # only count the scorable items, only when the answer is not nil
     # we accept nil as answer for scorable items, and they will not be counted towards the total score
     sum = 0
+    # E2619: quiz maps are identified by reviewer_id == reviewee_id (the student reviews
+    # themselves). The response_maps table has no STI type column so is_a?(QuizResponseMap)
+    # always returns false; this is the only reliable discriminator.
     is_quiz = map.reviewer_id == map.reviewee_id
     scores.each do |s|
+      # E2619: TextField, MultipleChoiceRadio, and MultipleChoiceCheckbox quiz items put
+      # the student's selected/typed answer into the comments column (answer is null).
+      # Score them by case-insensitive equality against item.correct_answer.
       if is_quiz && %w[TextField MultipleChoiceRadio MultipleChoiceCheckbox].include?(s.item.question_type)
-        # These quiz item types store the student's answer in comments (answer column is null).
-        # Score by exact case-insensitive match against correct_answer on the item.
         correct = s.item.correct_answer.to_s.strip.downcase
         student_answer = s.comments.to_s.strip.downcase
         sum += (student_answer == correct && correct.present? ? 1 : 0) * (s.item.weight || 1)
@@ -103,10 +107,12 @@ class Response < ApplicationRecord
   # Returns the maximum possible score for this response
   def maximum_score
     total_weight = 0
+    # E2619: same quiz discriminator as aggregate_questionnaire_score.
     is_quiz = map.reviewer_id == map.reviewee_id
     scores.each do |s|
+      # E2619: comment-based quiz items have a null answer but still occupy a scoring slot,
+      # so they must be counted in the maximum regardless of whether the student answered.
       if is_quiz && %w[TextField MultipleChoiceRadio MultipleChoiceCheckbox].include?(s.item.question_type)
-        # comment-based quiz items always count toward max (they always have a student response slot)
         total_weight += (s.item.weight || 1)
       else
         total_weight += (s.item.weight || 1) unless s.answer.nil?

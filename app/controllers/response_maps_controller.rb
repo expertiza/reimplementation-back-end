@@ -31,15 +31,32 @@ class ResponseMapsController < ApplicationController
     maps = map_scope.to_a
 
     result = maps.filter_map do |map|
-      # Skip quiz response maps: they have reviewer_id == reviewee_id (student reviewing themselves)
-      # and their reviewed_object_id is a questionnaire id, not an assignment id
+      # E2619: skip quiz response maps. Quiz maps always have reviewer_id == reviewee_id
+      # (the student quizzes themselves). This guard is more reliable than checking whether
+      # reviewed_object_id matches an assignment id, because a quiz questionnaire id can
+      # coincidentally equal an assignment id and fool the next guard below.
       next if map.reviewer_id == map.reviewee_id
 
+      # Belt-and-suspenders: reviewed_object_id for review maps must reference an assignment.
       assignment = Assignment.find_by(id: map.reviewed_object_id)
       next unless assignment
 
       latest_response = Response.where(map_id: map.id).order(created_at: :desc).first
       team = Team.find_by(id: map.reviewee_id)
+
+      # E2619: include per-map quiz state so the frontend can gate each review row
+      # independently. Each reviewee team owns its own quiz questionnaire, so
+      # quiz_taken must be checked per map, not per assignment.
+      quiz_questionnaire_id = team&.quiz_questionnaire_id
+      quiz_taken = if quiz_questionnaire_id.present?
+                     QuizResponseMap
+                       .where(reviewer_id: map.reviewer_id, reviewed_object_id: quiz_questionnaire_id)
+                       .joins("INNER JOIN responses ON responses.map_id = response_maps.id")
+                       .where(responses: { is_submitted: true })
+                       .exists?
+                   else
+                     false
+                   end
 
       entry = {
         id: map.id,
@@ -47,7 +64,9 @@ class ResponseMapsController < ApplicationController
         reviewee_id: map.reviewee_id,
         reviewed_object_id: map.reviewed_object_id,
         team_name: team&.name || "Team ##{map.reviewee_id}",
-        assignment_name: assignment&.name || "Assignment ##{map.reviewed_object_id}"
+        assignment_name: assignment&.name || "Assignment ##{map.reviewed_object_id}",
+        quiz_questionnaire_id: quiz_questionnaire_id,
+        quiz_taken: quiz_taken
       }
 
       if latest_response
@@ -97,6 +116,11 @@ class ResponseMapsController < ApplicationController
       reviewer_id:        reviewer_participant.id,
       reviewee_id:        reviewee_team_id
     )
+
+    # E2619: when a reviewer is assigned, mark them as allowed to review and take the quiz.
+    # This gates the quiz/review flow in StudentTask: only participants with can_take_quiz=true
+    # will see the quiz requirement on the student tasks page.
+    reviewer_participant.update_columns(can_review: true, can_take_quiz: true)
 
     render json: {
       id:                      map.id,

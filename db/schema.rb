@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_23_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_24_000001) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -400,7 +400,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_23_000001) do
     t.datetime "updated_at", null: false
     t.integer "grade_for_submission"
     t.string "comment_for_submission"
+    t.integer "quiz_questionnaire_id"
     t.index ["parent_id"], name: "index_teams_on_parent_id"
+    t.index ["quiz_questionnaire_id"], name: "index_teams_on_quiz_questionnaire_id"
     t.index ["type"], name: "index_teams_on_type"
   end
 

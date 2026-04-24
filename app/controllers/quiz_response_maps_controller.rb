@@ -7,11 +7,12 @@ class QuizResponseMapsController < ApplicationController
 
   # POST /quiz_response_maps
   # Finds or creates a QuizResponseMap for the current student on a given assignment.
-  # Params: { assignment_id, reviewer_user_id }
+  # Params: { assignment_id, reviewer_user_id, reviewee_team_id (preferred) }
   # Returns: { quiz_map_id, quiz_questionnaire_id, reviewer_participant_id }
   def create
     assignment_id    = params[:assignment_id].to_i
     reviewer_user_id = params[:reviewer_user_id].to_i
+    reviewee_team_id = params[:reviewee_team_id].present? ? params[:reviewee_team_id].to_i : nil
 
     if assignment_id.zero? || reviewer_user_id.zero?
       return render json: { error: 'assignment_id and reviewer_user_id are required' },
@@ -21,14 +22,25 @@ class QuizResponseMapsController < ApplicationController
     assignment = Assignment.find_by(id: assignment_id)
     return render json: { error: 'Assignment not found' }, status: :not_found unless assignment
 
-    # Find the quiz questionnaire linked to this assignment
-    quiz_questionnaire = assignment.assignment_questionnaires
-                                   .joins(:questionnaire)
-                                   .where(questionnaires: { questionnaire_type: %w[Quiz QuizQuestionnaire] })
-                                   .first
-                                   &.questionnaire
+    # E2619: find the quiz questionnaire from the reviewee team's quiz_questionnaire_id.
+    # Prefer reviewee_team_id param (sent per-row by the frontend) so that students reviewing
+    # multiple teams get the correct team's quiz rather than whatever find_by returns first.
+    if reviewee_team_id.present? && !reviewee_team_id.zero?
+      reviewee_team = Team.find_by(id: reviewee_team_id)
+    else
+      # Fall back: find the review map for this reviewer on this assignment. find_by returns
+      # only one record — if a student reviews multiple teams this is ambiguous, which is why
+      # callers should always supply reviewee_team_id.
+      reviewer_participant_lookup = AssignmentParticipant.find_by(user_id: reviewer_user_id, parent_id: assignment_id)
+      review_map = ReviewResponseMap.find_by(reviewer_id: reviewer_user_id, reviewed_object_id: assignment_id)
+      unless review_map
+        review_map = ReviewResponseMap.find_by(reviewer_id: reviewer_participant_lookup&.id, reviewed_object_id: assignment_id)
+      end
+      reviewee_team = review_map ? Team.find_by(id: review_map.reviewee_id) : nil
+    end
+    quiz_questionnaire = reviewee_team&.quiz_questionnaire
 
-    return render json: { error: 'No quiz questionnaire assigned to this assignment' },
+    return render json: { error: 'No quiz questionnaire found for the reviewee team' },
                   status: :unprocessable_entity unless quiz_questionnaire
 
     # Find or create the reviewer's participant record for this assignment
