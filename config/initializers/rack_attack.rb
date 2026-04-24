@@ -1,15 +1,19 @@
 # frozen_string_literal: true
 
 # Rack::Attack middleware configuration for OIDC login rate limiting.
-# Uses a dedicated MemoryStore in test so the null_store in test.rb doesn't
-# interfere, and relies on Rails.cache as configured in other environments.
-# Note: Rails.cache is configured with raise_errors: false in this app
-# (config/application.rb), so a Redis outage will silently drop counters and
-# cause throttles to fail open. Monitor Redis availability accordingly.
-if Rails.env.test?
-  Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
+#
+# Cache store strategy:
+#   test/development — MemoryStore: always available, no Redis required.
+#     test.rb sets Rails.cache to :null_store (counters would never accumulate),
+#     and development uses :null_store by default, so we use MemoryStore directly.
+#   production — Rails.cache (Redis): shared across requests within a process.
+#     Note: configured with raise_errors: false in this app, so a Redis outage
+#     will silently drop counters and cause throttles to fail open. Monitor
+#     Redis availability accordingly.
+Rack::Attack.cache.store = if Rails.env.production?
+  Rails.cache
 else
-  Rack::Attack.cache.store = Rails.cache
+  ActiveSupport::Cache::MemoryStore.new
 end
 
 # ── Throttles ─────────────────────────────────────────────────────────────────
