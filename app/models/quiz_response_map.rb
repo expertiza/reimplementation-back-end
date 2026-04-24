@@ -3,7 +3,7 @@
 class QuizResponseMap < ResponseMap
   include ResponseMapSubclassTitles
   belongs_to :quiz_questionnaire, foreign_key: 'reviewed_object_id', inverse_of: false
-  belongs_to :assignment, inverse_of: false
+  belongs_to :assignment, optional: true, inverse_of: false
   has_many :quiz_responses, foreign_key: :map_id, dependent: :destroy, inverse_of: false
 
   def questionnaire

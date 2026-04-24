@@ -38,10 +38,19 @@ class QuestionsController < ApplicationController
     render json: { error: "Couldn't find Questionnaire" }, status: :not_found
   end
 
+  QUIZ_ITEM_TYPES = %w[TextField MultipleChoiceRadio MultipleChoiceCheckbox Scale Checkbox].freeze
+
   # POST /questions
   def create
     questionnaire_id = params[:questionnaire_id]
     questionnaire = Questionnaire.find(questionnaire_id)
+    is_quiz = %w[Quiz QuizQuestionnaire].include?(questionnaire.questionnaire_type)
+
+    # For quiz questionnaires, only allow the supported quiz item types
+    if is_quiz && !QUIZ_ITEM_TYPES.include?(params[:question_type])
+      return render json: { error: "Invalid quiz item type. Allowed types: #{QUIZ_ITEM_TYPES.join(', ')}" },
+                    status: :unprocessable_entity
+    end
 
     # Create the new Item (item)
     item = questionnaire.items.build(
@@ -64,7 +73,12 @@ class QuestionsController < ApplicationController
       item.size = '60, 5'
     when 'TextField'
       item.size = '30'
+    when 'Checkbox'
+      item.break_before = true
     end
+
+    # For quiz items, store the correct_answer
+    item.correct_answer = params[:correct_answer] if is_quiz
 
     if item.save
       render json: item, status: :created
@@ -107,6 +121,11 @@ class QuestionsController < ApplicationController
     render json: types, status: :ok
   end
 
+  # GET /questions/quiz_types
+  def quiz_types
+    render json: QUIZ_ITEM_TYPES, status: :ok
+  end
+
 
   private
 
@@ -115,7 +134,8 @@ class QuestionsController < ApplicationController
   end
 
   def question_params
-    params.require(:question).permit(:txt, :question_type, :seq, :weight, :max_value, :size, :alternatives)
+    params.require(:question).permit(:txt, :question_type, :seq, :weight, :max_value, :size, :alternatives,
+                                     :correct_answer)
   end
 
   def get_strategy_for_item(item)

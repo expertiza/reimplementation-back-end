@@ -85,21 +85,32 @@ class Response < ApplicationRecord
     # only count the scorable items, only when the answer is not nil
     # we accept nil as answer for scorable items, and they will not be counted towards the total score
     sum = 0
+    is_quiz = map.reviewer_id == map.reviewee_id
     scores.each do |s|
-      # For quiz responses, the weights will be 1 or 0, depending on if correct
-      sum += s.answer * s.item.weight unless s.answer.nil?  #|| !s.item.scorable?
+      if is_quiz && %w[TextField MultipleChoiceRadio MultipleChoiceCheckbox].include?(s.item.question_type)
+        # These quiz item types store the student's answer in comments (answer column is null).
+        # Score by exact case-insensitive match against correct_answer on the item.
+        correct = s.item.correct_answer.to_s.strip.downcase
+        student_answer = s.comments.to_s.strip.downcase
+        sum += (student_answer == correct && correct.present? ? 1 : 0) * (s.item.weight || 1)
+      else
+        sum += s.answer * (s.item.weight || 1) unless s.answer.nil?
+      end
     end
-    # puts "sum: #{sum}"
     sum
   end
 
   # Returns the maximum possible score for this response
   def maximum_score
-    # only count the scorable questions, only when the answer is not nil (we accept nil as
-    # answer for scorable questions, and they will not be counted towards the total score)
     total_weight = 0
+    is_quiz = map.reviewer_id == map.reviewee_id
     scores.each do |s|
-      total_weight += s.item.weight unless s.answer.nil? #|| !s.item.is_a(ScoredItem)?
+      if is_quiz && %w[TextField MultipleChoiceRadio MultipleChoiceCheckbox].include?(s.item.question_type)
+        # comment-based quiz items always count toward max (they always have a student response slot)
+        total_weight += (s.item.weight || 1)
+      else
+        total_weight += (s.item.weight || 1) unless s.answer.nil?
+      end
     end
     total_weight * questionnaire.max_question_score
   end

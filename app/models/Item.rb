@@ -27,18 +27,36 @@ class Item < ApplicationRecord
     end
   end
 
+  QUIZ_ITEM_TYPES = %w[TextField MultipleChoiceRadio MultipleChoiceCheckbox Scale Checkbox].freeze
+
+  def is_quiz_item?
+    %w[Quiz QuizQuestionnaire].include?(questionnaire&.questionnaire_type)
+  end
+
+  validate :correct_answer_only_for_quiz
+
+  def correct_answer_only_for_quiz
+    if correct_answer.present? && !is_quiz_item?
+      errors.add(:correct_answer, 'can only be set on items belonging to a Quiz questionnaire')
+    end
+  end
+
   def as_json(options = {})
-      super(options.merge({
-                            only: %i[
-                              id txt weight seq question_type size alternatives break_before
-                              min_label max_label created_at updated_at textarea_width
-                              textarea_height textbox_width col_names row_names
-                            ],
-                            include: {
-                              questionnaire: { only: %i[name id] }
-                            }
-                          })).tap do |hash|
-      end
+    only_fields = %i[
+      id txt weight seq question_type size alternatives break_before
+      min_label max_label created_at updated_at textarea_width
+      textarea_height textbox_width col_names row_names
+    ]
+    only_fields << :correct_answer if is_quiz_item?
+
+    super(options.merge({
+                          only: only_fields,
+                          include: {
+                            questionnaire: { only: %i[name id questionnaire_type] }
+                          }
+                        })).tap do |hash|
+      hash['is_quiz_item'] = is_quiz_item?
+    end
   end
 
   def strategy

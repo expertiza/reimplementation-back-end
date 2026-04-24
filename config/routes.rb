@@ -80,6 +80,7 @@ Rails.application.routes.draw do
       resources :questions do
         collection do
           get :types
+          get :quiz_types
           get 'show_all/questionnaire/:id', to:'questions#show_all#questionnaire', as: 'show_all'
           delete 'delete_all/questionnaire/:id', to:'questions#delete_all#questionnaire', as: 'delete_all'
         end
@@ -215,6 +216,7 @@ Rails.application.routes.draw do
         end
       end
       resources :response_maps, only: [:index, :create, :destroy]
+      resources :quiz_response_maps, only: [:create]
       resources :responses do
         member do
           patch :submit         # PATCH /responses/:id/submit

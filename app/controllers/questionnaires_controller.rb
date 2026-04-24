@@ -100,7 +100,7 @@ class QuestionnairesController < ApplicationController
                                          items_attributes: [
                                            :id, :txt, :question_type, :seq, :weight,
                                            :size, :alternatives, :min_label, :max_label, :textarea_width, :textarea_height, :textbox_width, :col_names, :row_names,
-                                           :break_before, :_destroy, :max_value
+                                           :break_before, :_destroy, :max_value, :correct_answer
                                          ])
   end
 

@@ -30,10 +30,16 @@ class ResponseMapsController < ApplicationController
     map_scope = map_scope.where(reviewed_object_id: assignment_id) if assignment_id
     maps = map_scope.to_a
 
-    result = maps.map do |map|
+    result = maps.filter_map do |map|
+      # Skip quiz response maps: they have reviewer_id == reviewee_id (student reviewing themselves)
+      # and their reviewed_object_id is a questionnaire id, not an assignment id
+      next if map.reviewer_id == map.reviewee_id
+
+      assignment = Assignment.find_by(id: map.reviewed_object_id)
+      next unless assignment
+
       latest_response = Response.where(map_id: map.id).order(created_at: :desc).first
       team = Team.find_by(id: map.reviewee_id)
-      assignment = Assignment.find_by(id: map.reviewed_object_id)
 
       entry = {
         id: map.id,
