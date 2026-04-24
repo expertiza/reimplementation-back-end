@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'swagger_helper'
-require 'json_web_token'
 
 RSpec.describe AuthenticationController, type: :request do
   before(:all) do
@@ -13,6 +12,7 @@ RSpec.describe AuthenticationController, type: :request do
     post 'Logs in a user' do
       tags 'Authentication'
       consumes 'application/json'
+      security []
       parameter name: :credentials, in: :body, schema: {
         type: :object,
         properties: {
@@ -38,9 +38,6 @@ RSpec.describe AuthenticationController, type: :request do
         end
         let(:credentials) { { user_name: user.name, password: 'password' } }
 
-        let(:token) { JsonWebToken.encode({id: user.id}) }
-        let(:Authorization) { "Bearer #{token}" }
-        let(:headers) { { "Authorization" => "Bearer #{token}" } }
         run_test! do |response|
           json_response = JSON.parse(response.body)
           token = json_response['token']
@@ -71,9 +68,6 @@ RSpec.describe AuthenticationController, type: :request do
           )
         end
         let(:credentials) { { user_name: user.name, password: 'wrongpassword' } }
-        let(:token) { JsonWebToken.encode({id: user.id}) }
-        let(:Authorization) { "Bearer #{token}" }
-        let(:headers) { { "Authorization" => "Bearer #{token}" } }
         run_test!
       end
     end

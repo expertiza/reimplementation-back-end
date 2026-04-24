@@ -1,6 +1,14 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
+  factory :oidc_request do
+    sequence(:state) { |n| "state-#{n}-#{SecureRandom.hex(8)}" }
+    nonce { SecureRandom.hex(32) }
+    code_verifier { SecureRandom.urlsafe_base64(64) }
+    provider { "google-ncsu" }
+    username { "oidcuser" }
+  end
+
   factory :student_task do
     assignment { nil }
     current_stage { "MyString" }
