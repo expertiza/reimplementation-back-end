@@ -197,6 +197,7 @@ Rails.application.routes.draw do
       end      
       resources :grades do
         collection do        
+          get '/:assignment_id/export', to: 'grades#export'
           get '/:assignment_id/view_all_scores', to: 'grades#view_all_scores'
           patch '/:participant_id/assign_grade', to: 'grades#assign_grade'
           get '/:participant_id/edit', to: 'grades#edit'
