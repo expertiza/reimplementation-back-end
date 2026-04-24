@@ -19,7 +19,7 @@ class OidcConfig
                        parsed = {}
                      end
 
-                     providers = parsed["providers"]
+                     providers = parsed["providers"] || {}
                      unless providers.is_a?(Hash)
                        handle_invalid("OIDC config: expected 'providers' to be a mapping in #{CONFIG_FILE}, got #{providers.class}")
                        providers = {}
@@ -52,8 +52,13 @@ class OidcConfig
   # Parses the provider's scopes string (whitespace or comma-separated) into an array.
   # Falls back to the default OIDC scopes if none are configured.
   def self.scopes_for(provider)
-    raw = provider["scopes"].to_s.split(/[\s,]+/).reject(&:blank?)
-    raw.presence || %w[openid email profile]
+    raw = provider["scopes"]
+    list = case raw
+           when Array  then raw.map { |s| s.to_s.strip }
+           when String then raw.split(/[\s,]+/)
+           else []
+           end
+    list.reject(&:blank?).presence || %w[openid email profile]
   end
 
   # Removes providers missing any REQUIRED_KEYS.
@@ -61,6 +66,11 @@ class OidcConfig
   # In other environments, logs a warning and skips the provider.
   def self.validate!(providers)
     providers.reject! do |key, cfg|
+      unless cfg.is_a?(Hash)
+        handle_invalid("OIDC provider '#{key}' invalid: expected mapping, got #{cfg.class}")
+        next true
+      end
+
       missing = REQUIRED_KEYS.select { |k| cfg[k].blank? }
       if missing.any?
         handle_invalid("OIDC provider '#{key}' invalid: missing #{missing.join(', ')}")
