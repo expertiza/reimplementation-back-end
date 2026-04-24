@@ -197,6 +197,12 @@ namespace :demo do
       map
     end
 
+    ReviewResponseMap.where(
+      reviewed_object_id: assignment.id,
+      reviewee_id: reviewee_team.id,
+      for_calibration: true
+    ).where.not(id: [instructor_map.id, *student_maps.map(&:id)]).find_each(&:destroy!)
+
     reviewee_team.update!(submitted_hyperlinks: YAML.dump(['https://example.com/submission']))
     SubmissionRecord.find_or_create_by!(
       record_type: 'file',
