@@ -28,96 +28,199 @@ class StudentTasksController < ApplicationController
 
 
   def queue
-    # Build the task queue for the current user and assignment.
-    # Returns nil if the user is not a participant in the assignment.
-    queue = build_queue_for_user(params[:assignment_id])
+    # Resolve participant + team + assignment context for current user.
+    context = resolve_context_for_assignment(params[:assignment_id])
+    return render json: { error: "Not authorized or not found" }, status: :not_found unless context
 
-    # If no queue is found, the user is either not authorized or not associated with the assignment.
-    return render json: { error: "Not authorized or not found" }, status: :not_found unless queue
+    # Build ordered task list (quiz -> review sequencing preserved).
+    tasks = build_tasks(context)
+    
+    # Ensure ResponseMap + Response records exist before returning.
+    # Important: matches old lazy-creation behavior.
+    ensure_response_objects!(tasks)
 
-    # Ensure all ResponseMaps and Responses exist before returning tasks.
-    queue.ensure_response_objects!
-
-    render json: queue.tasks.map(&:to_task_hash), status: :ok
+    # Return stable API contract (do not change keys).
+    render json: serialize_tasks(tasks), status: :ok
   end
 
   def next_task
-    # Build the task queue for the current user and assignment.
-    queue = build_queue_for_user(params[:assignment_id])
-    return render json: { error: "Not authorized or not found" }, status: :not_found unless queue
+    # Resolve participant + team + assignment context for current user.
+    context = resolve_context_for_assignment(params[:assignment_id])
+    return render json: { error: "Not authorized or not found" }, status: :not_found unless context
 
-    # Ensure response objects exist before checking completion status.
-    queue.ensure_response_objects!
+    tasks = build_tasks(context)
+    ensure_response_objects!(tasks)
 
-    # Find the first task in the queue that has not been completed.
-    next_task = queue.tasks.find { |t| !t.completed? }
+    # First incomplete task determines what user should do next.
+    next_task = tasks.find { |task| !task.completed? }
 
     if next_task
-      # Return the next incomplete task.
-      render json: next_task.to_task_hash, status: :ok
+      render json: next_task.to_h, status: :ok
     else
-      # If all tasks are completed, return completion message.
+      # Explicit completion signal when queue is exhausted.
       render json: { message: "All tasks completed" }, status: :ok
     end
   end
 
   def start_task
-    # Find the ResponseMap associated with the task being started.
+    # Validate ResponseMap exists.
     map = ResponseMap.find_by(id: params[:response_map_id])
     return render json: { error: "ResponseMap not found" }, status: :not_found unless map
 
-    # Ensure the current user is the reviewer assigned to this ResponseMap.
+    # Enforce ownership: only assigned reviewer can start task.
     participant = map.reviewer
-    if participant.user_id != current_user.id
-      return render json: { error: "Unauthorized" }, status: :forbidden
-    end
+    return render json: { error: "Unauthorized" }, status: :forbidden if participant.user_id != current_user.id
 
-    # Build the task queue for this participant and assignment.
-    team_participant = TeamsParticipant.find_by(participant_id: participant.id)
-    assignment = participant.assignment
+    # Rebuild queue context for this participant (must match queue endpoint behavior).
+    context = resolve_context_for_participant(participant)
+    return render json: { error: "Task not in respondable queue" }, status: :not_found unless context
 
-    queue = TaskOrdering::TaskQueue.new(assignment, team_participant)
-    # Retrieve all tasks in the queue.
-    tasks = queue.tasks
-
-    # Find the current task corresponding to the ResponseMap.
-    current_task = tasks.find { |t| (rm = t.response_map) && rm.id == map.id }
+    tasks = build_tasks(context)
+    
+    # Find corresponding task in queue using map_id.
+    current_task = find_task_for_map(tasks, map.id)
     return render json: { error: "Task not in respondable queue" }, status: :not_found unless current_task
 
-    # Get all tasks that appear before the current task in the queue.
-    previous_tasks = tasks.take_while { |t| t != current_task }
-
-    # Ensure all previous tasks are completed before starting this one.
-    if previous_tasks.any? { |t| !t.completed? }
+    # Enforce strict ordering: cannot skip earlier tasks.
+    unless prior_tasks_complete?(tasks, current_task)
       return render json: { error: "Complete previous task first" }, status: :forbidden
     end
 
-    # Ensure a Response record exists for this task.
+    # Ensure Response exists before user starts interacting.
     current_task.ensure_response!
 
-    # Return confirmation that the task has started.
     render json: {
       message: "Task started",
-      task: current_task.to_task_hash
+      task: current_task.to_h
     }, status: :ok
   end
 
-  def build_queue_for_user(assignment_id)
-    # Find the participant record for the current user in the assignment.
+  private
+
+  def resolve_context_for_assignment(assignment_id)
+    # Find participant for current user within assignment.
     participant = Participant.find_by(
       user_id: current_user.id,
       parent_id: assignment_id
     )
-
-    # Return nil if the user is not a participant in the assignment.
     return nil unless participant
 
-    # Find the TeamsParticipant record associated with the participant.
+    resolve_context_for_participant(participant)
+  end
+
+  def resolve_context_for_participant(participant)
+    # Team context is required for duty + grouping.
     team_participant = TeamsParticipant.find_by(participant_id: participant.id)
     return nil unless team_participant
 
-    # Build and return the task queue for this participant.
-    TaskOrdering::TaskQueue.new(participant.assignment, team_participant)
+    {
+      participant: participant,
+      team_participant: team_participant,
+      assignment: participant.assignment,
+      duty: resolve_duty(team_participant, participant)
+    }
+  end
+
+  def resolve_duty(team_participant, participant)
+    # Team-level duty overrides participant-level duty.
+    Duty.find_by(id: team_participant.duty_id) || Duty.find_by(id: participant.duty_id)
+  end
+
+  def build_tasks(context)
+    assignment = context[:assignment]
+    participant = context[:participant]
+    team_participant = context[:team_participant]
+    duty = context[:duty]
+
+    tasks = []
+
+    # Fetch all review assignments for this user.
+    review_maps = ReviewResponseMap.where(
+      reviewer_id: participant.id,
+      reviewed_object_id: assignment.id
+    )
+
+    quiz_questionnaire = assignment.quiz_questionnaire_for_review_flow
+
+    # Important: allows quiz even if questionnaire removed later (existing maps).
+    has_existing_quiz_maps = QuizResponseMap.where(
+      reviewer_id: participant.id
+    ).exists?
+
+    # Preserve quiz-before-review ordering for every review map.
+    if review_maps.any?
+      review_maps.each do |review_map|
+        # Quiz always comes BEFORE review for same review_map
+        if duty_allows_quiz?(duty) && (quiz_questionnaire || has_existing_quiz_maps)
+          tasks << QuizTaskItem.new(
+            assignment: assignment,
+            team_participant: team_participant,
+            review_map: review_map
+          )
+        end
+
+        # Review task tied directly to existing ReviewResponseMap.
+        if duty_allows_review?(duty)
+          tasks << ReviewTaskItem.new(
+            assignment: assignment,
+            team_participant: team_participant,
+            review_map: review_map
+          )
+        end
+      end
+
+    # Edge case: If there are no review maps, expose only the standalone quiz task.
+    elsif duty_allows_quiz?(duty) && quiz_questionnaire
+      tasks << QuizTaskItem.new(
+        assignment: assignment,
+        team_participant: team_participant,
+        review_map: nil
+      )
+    end
+
+    tasks
+  end
+
+  def ensure_response_objects!(tasks)
+    tasks.each do |task|
+      # Lazy-create ResponseMap if needed (especially for quizzes).
+      task.ensure_response_map!
+      
+      # Ensure Response row exists so UI can safely operate.
+      task.ensure_response!
+    end
+  end
+
+  def find_task_for_map(tasks, map_id)
+    # Map lookup must be tolerant of nil maps and type differences.
+    tasks.find do |task|
+      map = task.response_map
+      map && map.id.to_i == map_id.to_i
+    end
+  end
+
+  def prior_tasks_complete?(tasks, current_task)
+    # Enforces strict sequential workflow (quiz -> review).
+    tasks.take_while { |task| task != current_task }.all?(&:completed?)
+  end
+
+  def serialize_tasks(tasks)
+    # Keep response shape identical to pre-refactor API.
+    tasks.map(&:to_h)
+  end
+
+  def duty_allows_review?(duty)
+    return false if duty.nil?
+
+    # Only these roles are allowed to perform reviews.
+    duty.name.in?(%w[participant reader reviewer mentor])
+  end
+
+  def duty_allows_quiz?(duty)
+    return false if duty.nil?
+
+    # Quiz is slightly more permissive than review (no reviewer role required).
+    duty.name.in?(%w[participant reader mentor])
   end
 
   class BaseTaskItem
