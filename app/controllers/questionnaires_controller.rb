@@ -18,7 +18,7 @@ class QuestionnairesController < ApplicationController
     end
   end
 
-  # Items method returns the items belonging to questionnaire with id = {:id}
+  # Lightweight item list for the package export modal.
   # GET on /questionnaires/:id/items
   def items
     @questionnaire = Questionnaire.find(params[:id])

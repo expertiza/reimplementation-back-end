@@ -229,6 +229,8 @@ Rails.application.routes.draw do
           post "/:class", to: "export#export"
         end
       end
+
+      # Package workflow preserves questionnaire, item, and advice relationships.
       resources :questionnaire_packages, only: [] do
         collection do
           get :config, action: :package_config

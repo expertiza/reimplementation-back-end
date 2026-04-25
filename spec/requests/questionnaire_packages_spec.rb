@@ -24,6 +24,9 @@ RSpec.describe 'QuestionnairePackages API', type: :request do
 
       json = JSON.parse(response.body)
       expect(json['required_files']).to include('manifest.json', 'questionnaires.csv', 'items.csv', 'question_advices.csv')
+      expect(json['csv_header_requirements']['questionnaires']).to include('name', 'questionnaire_type', 'instructor_name')
+      expect(json['csv_header_requirements']['items']).to include('questionnaire_name', 'seq', 'txt')
+      expect(json['csv_header_requirements']['question_advices']).to include('questionnaire_name', 'item_seq', 'advice')
       expect(json['package_type']).to eq('questionnaire_template_export')
       expect(json['version']).to eq(1)
       expect(json['available_actions_on_dup']).to include('SkipRecordAction', 'UpdateExistingRecordAction', 'ChangeOffendingFieldAction')
@@ -73,13 +76,13 @@ RSpec.describe 'QuestionnairePackages API', type: :request do
         reviewee_id: reviewee.id,
         reviewed_object_id: assignment.id
       )
-      response = Response.create!(
+      review_response = Response.create!(
         map_id: response_map.id,
         additional_comment: 'Do not export this response'
       )
       Answer.create!(
         item: item,
-        response: response,
+        response: review_response,
         answer: 3,
         comments: 'Do not export this answer'
       )
@@ -219,6 +222,72 @@ RSpec.describe 'QuestionnairePackages API', type: :request do
       expect(JSON.parse(response.body)['error']).to include('Unsupported questionnaire package type')
     end
 
+    it 'imports questionnaire CSVs from role-specific fields without requiring specific filenames' do
+      role = create(:role, :instructor)
+      institution = create(:institution)
+      Instructor.create!(
+        name: 'csvroleimporter',
+        email: 'csvroleimporter@example.com',
+        full_name: 'CSV Role Importer',
+        password: 'password',
+        role: role,
+        institution: institution
+      )
+
+      questionnaire_file = build_csv_upload(
+        filename: 'my rubric list.csv',
+        contents: <<~CSV
+          name,questionnaire_type,display_type,private,min_question_score,max_question_score,instruction_loc,instructor_name
+          Role Field Questionnaire,ReviewQuestionnaire,Likert,false,0,5,instructions,csvroleimporter
+        CSV
+      )
+      items_file = build_csv_upload(
+        filename: 'these are the questions.csv',
+        contents: <<~CSV
+          questionnaire_name,questionnaire_instructor_name,seq,txt,question_type,weight,break_before,min_label,max_label,alternatives,size
+          Role Field Questionnaire,csvroleimporter,1,Role field item,Scale,2,true,poor,excellent,,
+        CSV
+      )
+      question_advices_file = build_csv_upload(
+        filename: 'helpful scoring notes.csv',
+        contents: <<~CSV
+          questionnaire_name,questionnaire_instructor_name,item_seq,item_txt,score,advice
+          Role Field Questionnaire,csvroleimporter,1,Role field item,5,Well done
+        CSV
+      )
+
+      post '/questionnaire_packages/import', params: {
+        questionnaire_file: questionnaire_file,
+        items_file: items_file,
+        question_advices_file: question_advices_file,
+        dup_action: 'ChangeOffendingFieldAction'
+      }
+
+      expect(response).to have_http_status(:created)
+
+      imported_questionnaire = Questionnaire.find_by(name: 'Role Field Questionnaire')
+      expect(imported_questionnaire).to be_present
+      expect(imported_questionnaire.items.find_by(txt: 'Role field item')).to be_present
+      expect(QuestionAdvice.joins(:item).find_by(items: { txt: 'Role field item' }, advice: 'Well done')).to be_present
+    end
+
+    it 'validates separate CSV uploads by required headers' do
+      questionnaire_file = build_csv_upload(
+        filename: 'bad questionnaire upload.csv',
+        contents: <<~CSV
+          name,questionnaire_type
+          Missing Headers,ReviewQuestionnaire
+        CSV
+      )
+
+      post '/questionnaire_packages/import', params: {
+        questionnaire_file: questionnaire_file
+      }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(JSON.parse(response.body)['error']).to include('Questionnaires CSV is missing required headers')
+    end
+
     it 'renames duplicate questionnaires when using the default duplicate action' do
       role = create(:role, :instructor)
       institution = create(:institution)
@@ -301,5 +370,13 @@ RSpec.describe 'QuestionnairePackages API', type: :request do
     end
 
     Rack::Test::UploadedFile.new(file.path, 'application/zip')
+  end
+
+  def build_csv_upload(filename:, contents:)
+    file = Tempfile.new([File.basename(filename, '.csv'), '.csv'])
+    file.write(contents)
+    file.rewind
+
+    Rack::Test::UploadedFile.new(file.path, 'text/csv', original_filename: filename)
   end
 end

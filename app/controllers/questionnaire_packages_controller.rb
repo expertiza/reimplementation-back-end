@@ -2,6 +2,9 @@
 
 require 'base64'
 
+# Custom package workflow for questionnaire templates. The generic import/export
+# endpoints handle one model at a time, but templates must move questionnaires,
+# items, and advice together while excluding responses and quiz data.
 class QuestionnairePackagesController < ApplicationController
   ALLOWED_DUPLICATE_ACTIONS = {
     'SkipRecordAction' => SkipRecordAction,
@@ -11,15 +14,18 @@ class QuestionnairePackagesController < ApplicationController
 
   before_action :questionnaire_package_params
 
+  # Exposes the package contract used by the import modal.
   def package_config
     render json: {
       required_files: QuestionnairePackageImportService::REQUIRED_FILES,
+      csv_header_requirements: QuestionnairePackageImportService::CSV_HEADER_REQUIREMENTS,
       package_type: QuestionnairePackageImportService::PACKAGE_TYPE,
       version: QuestionnairePackageImportService::VERSION,
       available_actions_on_dup: ALLOWED_DUPLICATE_ACTIONS.keys
     }, status: :ok
   end
 
+  # Returns the related CSVs as one base64 zip for the JSON API.
   def export
     questionnaire_ids = parse_questionnaire_ids
     export_all = ActiveRecord::Type::Boolean.new.deserialize(params[:export_all])
@@ -42,10 +48,17 @@ class QuestionnairePackagesController < ApplicationController
     render json: { error: e.message }, status: :unprocessable_entity
   end
 
+  # Imports either an exported zip or role-specific CSV uploads. This stays
+  # custom because cross-file links are required to rebuild templates correctly.
   def import
-    uploaded_file = params[:package_file]
     dup_action = duplicate_action_for(params[:dup_action])
-    result = QuestionnairePackageImportService.new(file: uploaded_file, dup_action: dup_action).perform
+    result = QuestionnairePackageImportService.new(
+      package_file: params[:package_file],
+      questionnaire_file: params[:questionnaire_file],
+      items_file: params[:items_file],
+      question_advices_file: params[:question_advices_file],
+      dup_action: dup_action
+    ).perform
 
     render json: { message: 'Questionnaire template package has been imported!', **result }, status: :created
   rescue StandardError => e
@@ -54,10 +67,20 @@ class QuestionnairePackagesController < ApplicationController
 
   private
 
+  # Permit package-only fields without mixing them into questionnaire params.
   def questionnaire_package_params
-    params.permit(:package_file, :dup_action, :export_all, questionnaire_ids: [])
+    params.permit(
+      :package_file,
+      :questionnaire_file,
+      :items_file,
+      :question_advices_file,
+      :dup_action,
+      :export_all,
+      questionnaire_ids: []
+    )
   end
 
+  # Multipart export forms may send IDs as an array or JSON string.
   def parse_questionnaire_ids
     ids = params[:questionnaire_ids]
     return ids if ids.is_a?(Array)
@@ -68,6 +91,7 @@ class QuestionnairePackagesController < ApplicationController
     []
   end
 
+  # Reuse duplicate-action classes through a package-specific allowlist.
   def duplicate_action_for(action_name)
     return nil if action_name.blank?
 

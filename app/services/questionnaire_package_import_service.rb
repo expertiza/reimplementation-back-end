@@ -5,26 +5,61 @@ require 'json'
 require 'set'
 require 'zip'
 
+# Custom questionnaire-template import. It coordinates several CSVs in one
+# transaction, which the generic single-model importer cannot do.
 class QuestionnairePackageImportService
   PACKAGE_TYPE = QuestionnairePackageExportService::PACKAGE_TYPE
   VERSION = QuestionnairePackageExportService::VERSION
   REQUIRED_FILES = %w[manifest.json questionnaires.csv items.csv question_advices.csv].freeze
+  QUESTIONNAIRE_REQUIRED_HEADERS = %w[
+    name
+    questionnaire_type
+    display_type
+    private
+    min_question_score
+    max_question_score
+    instruction_loc
+    instructor_name
+  ].freeze
+  ITEM_REQUIRED_HEADERS = %w[
+    questionnaire_name
+    questionnaire_instructor_name
+    seq
+    txt
+    question_type
+    weight
+    break_before
+  ].freeze
+  QUESTION_ADVICE_REQUIRED_HEADERS = %w[
+    questionnaire_name
+    questionnaire_instructor_name
+    item_seq
+    item_txt
+    score
+    advice
+  ].freeze
+  CSV_HEADER_REQUIREMENTS = {
+    questionnaires: QUESTIONNAIRE_REQUIRED_HEADERS,
+    items: ITEM_REQUIRED_HEADERS,
+    question_advices: QUESTION_ADVICE_REQUIRED_HEADERS
+  }.freeze
   DEFAULT_DUPLICATE_ACTION = ChangeOffendingFieldAction.new
 
-  def initialize(file:, dup_action: nil)
-    @file = file
+  def initialize(package_file: nil, questionnaire_file: nil, items_file: nil, question_advices_file: nil, dup_action: nil)
+    @package_file = package_file
+    @questionnaire_file = questionnaire_file
+    @items_file = items_file
+    @question_advices_file = question_advices_file
     @duplicate_action = dup_action || DEFAULT_DUPLICATE_ACTION
   end
 
+  # Import parents before dependent rows, using package keys instead of DB IDs.
   def perform
-    raise StandardError, 'A questionnaire package zip file is required.' if @file.blank?
+    csv_sources = resolve_csv_sources
 
-    entries = read_zip_entries
-    validate_package!(entries)
-
-    questionnaire_rows = parse_csv(entries['questionnaires.csv'])
-    item_rows = parse_csv(entries['items.csv'])
-    question_advice_rows = parse_csv(entries['question_advices.csv'])
+    questionnaire_rows = parse_csv(csv_sources.fetch(:questionnaires), :questionnaires)
+    item_rows = parse_csv(csv_sources[:items], :items)
+    question_advice_rows = parse_csv(csv_sources[:question_advices], :question_advices)
 
     imported_counts = {
       questionnaires: 0,
@@ -61,10 +96,32 @@ class QuestionnairePackageImportService
 
   private
 
+  # Accept either the canonical zip or separate role-specific CSV uploads.
+  def resolve_csv_sources
+    if @package_file.present?
+      entries = read_zip_entries
+      validate_package!(entries)
+      return {
+        questionnaires: entries['questionnaires.csv'],
+        items: entries['items.csv'],
+        question_advices: entries['question_advices.csv']
+      }
+    end
+
+    raise StandardError, 'A questionnaire CSV file is required.' if @questionnaire_file.blank?
+
+    {
+      questionnaires: read_uploaded_file(@questionnaire_file),
+      items: read_uploaded_file(@items_file),
+      question_advices: read_uploaded_file(@question_advices_file)
+    }
+  end
+
+  # Read package entries by zip path; manifest validation happens next.
   def read_zip_entries
     entries = {}
 
-    Zip::File.open(@file.path) do |zip_file|
+    Zip::File.open(@package_file.path) do |zip_file|
       zip_file.each do |entry|
         next if entry.directory?
 
@@ -77,6 +134,15 @@ class QuestionnairePackageImportService
     raise StandardError, "Invalid questionnaire package: #{e.message}"
   end
 
+  def read_uploaded_file(file)
+    return nil if file.blank?
+
+    file.respond_to?(:read) ? file.read : File.read(file.path)
+  ensure
+    file.rewind if file.respond_to?(:rewind)
+  end
+
+  # Reject unrelated or unsupported package versions before reading CSV rows.
   def validate_package!(entries)
     missing_files = REQUIRED_FILES - entries.keys
     raise StandardError, "Questionnaire package is missing required files: #{missing_files.join(', ')}" if missing_files.any?
@@ -93,16 +159,44 @@ class QuestionnairePackageImportService
     raise StandardError, "Invalid questionnaire package manifest: #{e.message}"
   end
 
-  def parse_csv(contents)
-    CSV.parse(contents, headers: true).map do |row|
+  # Normalize headers before validation so CSVs match FieldMapping behavior.
+  def parse_csv(contents, role)
+    return [] if contents.blank?
+
+    contents = normalize_csv_contents(contents)
+    table = CSV.parse(contents, headers: true)
+    headers = table.headers.map { |header| normalize_header(header) }
+    rows = table.map do |row|
       row.to_h.transform_keys { |key| normalize_header(key) }
     end
+    validate_headers!(role, headers)
+    rows
+  rescue CSV::MalformedCSVError => e
+    raise StandardError, "Invalid #{csv_label(role)} CSV: #{e.message}"
+  end
+
+  # Fail early with header errors instead of later relationship errors.
+  def validate_headers!(role, headers)
+    missing_headers = CSV_HEADER_REQUIREMENTS.fetch(role) - headers
+    return if missing_headers.empty?
+
+    raise StandardError, "#{csv_label(role)} CSV is missing required headers: #{missing_headers.join(', ')}"
+  end
+
+  def csv_label(role)
+    role.to_s.humanize
   end
 
   def normalize_header(header)
     header.to_s.parameterize.underscore
   end
 
+  # Tolerate common spreadsheet-export encoding issues.
+  def normalize_csv_contents(contents)
+    contents.to_s.force_encoding('UTF-8').encode('UTF-8', invalid: :replace, undef: :replace)
+  end
+
+  # Track imported questionnaires so dependent CSVs can attach to them.
   def import_questionnaires(rows, imported_counts, duplicate_counts)
     mapping = FieldMapping.from_header(Questionnaire, rows.first&.keys || [])
     imported_questionnaires = {}
@@ -127,6 +221,7 @@ class QuestionnairePackageImportService
     [imported_questionnaires, skipped_questionnaire_keys]
   end
 
+  # Resolve questionnaire duplicates before importing dependent rows.
   def import_questionnaire_row(row, mapping)
     incoming = build_questionnaire(row, mapping)
     existing = find_questionnaire_record(row)
@@ -143,6 +238,7 @@ class QuestionnairePackageImportService
     [processed, true, false]
   end
 
+  # Recreate template items and keep a lookup for advice rows.
   def import_items(rows, imported_questionnaires, skipped_questionnaire_keys, imported_counts)
     imported_items = {}
 
@@ -177,6 +273,7 @@ class QuestionnairePackageImportService
     imported_items
   end
 
+  # Prefer package item keys, with a DB fallback for update flows.
   def import_question_advices(rows, imported_questionnaires, imported_items, skipped_questionnaire_keys, imported_counts)
     rows.each do |row|
       source_key = questionnaire_source_key(row['questionnaire_name'], row['questionnaire_instructor_name'])
@@ -200,6 +297,7 @@ class QuestionnairePackageImportService
     end
   end
 
+  # Scope duplicates by instructor name because packages avoid DB IDs.
   def find_questionnaire_record(row)
     instructor = Instructor.find_by(name: row['instructor_name'])
     return nil if instructor.nil?
@@ -207,6 +305,7 @@ class QuestionnairePackageImportService
     Questionnaire.find_by(name: row['name'], instructor_id: instructor.id)
   end
 
+  # Reuse existing mapping so questionnaire conversion stays consistent.
   def build_questionnaire(row, mapping)
     row_values = mapping.ordered_fields.map { |field| row[field] }
     row_hash = {}
@@ -226,6 +325,7 @@ class QuestionnairePackageImportService
     questionnaire
   end
 
+  # Translate selected duplicate action into package-level behavior.
   def resolve_duplicate_questionnaire(existing, incoming)
     case @duplicate_action
     when SkipRecordAction
@@ -238,6 +338,7 @@ class QuestionnairePackageImportService
     end
   end
 
+  # Update only template fields represented in the package CSV.
   def update_existing_questionnaire(existing, incoming)
     existing.assign_attributes(
       incoming.attributes.slice(
@@ -252,6 +353,7 @@ class QuestionnairePackageImportService
     existing
   end
 
+  # Default duplicate handling preserves both records with a readable copy name.
   def unique_questionnaire_name(name, instructor_id)
     base = name.to_s
     candidate = base
@@ -265,14 +367,17 @@ class QuestionnairePackageImportService
     candidate
   end
 
+  # Portable questionnaire key used across package CSVs.
   def questionnaire_source_key(name, instructor_name)
     "#{instructor_name}::#{name}"
   end
 
+  # Portable item key used by advice rows.
   def item_source_key(questionnaire_name, instructor_name, seq, txt)
     "#{questionnaire_source_key(questionnaire_name, instructor_name)}::#{seq}::#{txt}"
   end
 
+  # Spreadsheet uploads provide booleans as strings.
   def normalize_boolean(value)
     ActiveRecord::Type::Boolean.new.deserialize(value)
   end

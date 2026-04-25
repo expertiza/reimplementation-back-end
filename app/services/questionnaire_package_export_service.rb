@@ -4,6 +4,8 @@ require 'csv'
 require 'json'
 require 'zip'
 
+# Portable questionnaire-template export. Unlike the generic model exporter, it
+# keeps template records together and excludes responses, answers, and quiz data.
 class QuestionnairePackageExportService
   PACKAGE_TYPE = 'questionnaire_template_export'
   VERSION = 1
@@ -49,6 +51,7 @@ class QuestionnairePackageExportService
     @questionnaires = questionnaires
   end
 
+  # Builds the manifest and ordered CSVs used by the matching import service.
   def perform
     exportable_questionnaires = questionnaire_scope
       .includes(items: :question_advices)
@@ -100,11 +103,13 @@ class QuestionnairePackageExportService
 
   private
 
+  # Quiz questionnaires need quiz-specific choice data this package omits.
   def questionnaire_scope
     scope = @questionnaires || Questionnaire.all
     scope.where.not(questionnaire_type: 'QuizQuestionnaire')
   end
 
+  # Use instructor names because database IDs are not portable.
   def questionnaire_rows(questionnaires)
     questionnaires.map do |questionnaire|
       [
@@ -120,6 +125,7 @@ class QuestionnairePackageExportService
     end
   end
 
+  # Include only fields needed to rebuild template items.
   def item_rows(questionnaires)
     questionnaires.flat_map do |questionnaire|
       exportable_items_for(questionnaire).map do |item|
@@ -140,6 +146,7 @@ class QuestionnairePackageExportService
     end
   end
 
+  # Reference items by exported fields instead of non-portable item IDs.
   def question_advice_rows(questionnaires)
     questionnaires.flat_map do |questionnaire|
       exportable_items_for(questionnaire).flat_map do |item|
@@ -157,6 +164,7 @@ class QuestionnairePackageExportService
     end
   end
 
+  # Exclude quiz items that depend on choice data outside this format.
   def exportable_items_for(questionnaire)
     questionnaire.items.reject do |item|
       item.question_type.to_s.casecmp('multiple_choice').zero? || item.is_a?(QuizItem)
