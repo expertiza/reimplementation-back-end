@@ -317,31 +317,8 @@ class SubmittedContentController < ApplicationController
         }
       end
 
-      # Pull SubmissionRecords for this team
-      records = SubmissionRecord.where(team_id: team.id, assignment_id: assignment.id)
-
-      links = records.where(record_type: 'hyperlink').map do |r|
-        {
-          id: r.id,
-          url: r.content,
-          display_name: r.content,
-          name: r.content,
-          type: 'Hyperlink',
-          modified: r.created_at
-        }
-      end
-
-      files = records.where(record_type: 'file').map do |r|
-        is_external = r.content.to_s.start_with?('http')
-        {
-          id: r.id,
-          url: is_external ? r.content : "/submitted_content/download?download=#{URI.encode_uri_component(filename)}&current_folder[name]=/",
-          display_name: File.basename(r.content),
-          name: File.basename(r.content),
-          type: File.extname(r.content).delete('.').upcase,
-          modified: r.created_at
-        }
-      end
+      links = current_team_links(team, assignment.id)
+      files = current_team_files(team, assignment.id)
 
       {
         id: team.id,
@@ -434,5 +411,57 @@ class SubmittedContentController < ApplicationController
       assignment_id: @participant.assignment_id,  # Assignment ID from participant
       operation: operation                 # Operation description (e.g., 'Submit File')
     )
+  end
+
+  def current_team_links(team, assignment_id)
+    hyperlink_records = SubmissionRecord
+                        .where(team_id: team.id, assignment_id: assignment_id, record_type: 'hyperlink')
+                        .order(created_at: :desc)
+
+    team.hyperlinks.each_with_index.map do |hyperlink, index|
+      matching_record = hyperlink_records.find { |record| record.content == hyperlink }
+
+      {
+        id: matching_record&.id || index + 1,
+        url: hyperlink,
+        display_name: hyperlink,
+        name: hyperlink,
+        type: 'Hyperlink',
+        modified: matching_record&.created_at || team.updated_at
+      }
+    end
+  end
+
+  def current_team_files(team, assignment_id)
+    team.set_team_directory_num
+    base_path = team.path.to_s
+    return [] unless File.directory?(base_path)
+
+    file_records = SubmissionRecord
+                   .where(team_id: team.id, assignment_id: assignment_id, record_type: 'file')
+                   .order(created_at: :desc)
+
+    file_entries = Dir.glob(File.join(base_path, '**', '*')).select { |entry| File.file?(entry) }.sort
+
+    file_entries.each_with_index.map do |entry, index|
+      relative_path = entry.delete_prefix("#{base_path}/")
+      current_folder = File.dirname(relative_path)
+      current_folder = current_folder == '.' ? '/' : "/#{current_folder}"
+      file_name = File.basename(relative_path)
+      matching_record =
+        file_records.find do |record|
+          record.content.to_s == entry || File.basename(record.content.to_s) == file_name
+        end
+
+      {
+        id: matching_record&.id || index + 1,
+        url: "/submitted_content/download?download=#{URI.encode_uri_component(file_name)}&current_folder[name]=#{URI.encode_uri_component(current_folder)}",
+        display_name: file_name,
+        name: file_name,
+        size: File.size(entry),
+        type: File.extname(file_name).delete('.').upcase,
+        modified: File.mtime(entry)
+      }
+    end
   end
 end
