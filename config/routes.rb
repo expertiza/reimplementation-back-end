@@ -44,6 +44,13 @@ Rails.application.routes.draw do
             get    :calibration_participants,         action: :list_calibration_participants
             post   :calibration_participants,         action: :add_calibration_participant
             delete 'calibration_participants/:participant_id', action: :remove_calibration_participant
+            # DEMO_INSTRUCTOR_RESPONSE
+            # Demo-only: seeds an instructor calibration Response for the given
+            # map. Wired to the "Begin" link on the Calibration tab while the
+            # real review form lives outside this project's scope.
+            # See Demo::CalibrationInstructorSeeder for the full removal checklist.
+            post   ':map_id/mock_instructor_response',
+                   action: :submit_mock_instructor_calibration_response
           end
         end
 

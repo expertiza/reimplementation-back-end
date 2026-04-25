@@ -116,6 +116,36 @@ class ReviewMappingsController < ApplicationController
     render json: { error: e.message }, status: :unprocessable_entity
   end
 
+  # DEMO_INSTRUCTOR_RESPONSE
+  # POST /assignments/:assignment_id/review_mappings/:map_id/mock_instructor_response
+  #
+  # Demo-only: materializes a submitted instructor calibration Response with
+  # default answers for the given calibration map so the calibration report
+  # has data to display while the real review form lives outside this
+  # project's scope. The "how" of fabricating data lives in
+  # Demo::CalibrationInstructorSeeder; this controller is responsible only for
+  # locating the map and translating outcomes into HTTP responses.
+  # See Demo::CalibrationInstructorSeeder for the full removal checklist.
+  def submit_mock_instructor_calibration_response
+    map = ReviewResponseMap.find_by!(
+      id: params[:map_id],
+      reviewed_object_id: @assignment.id,
+      for_calibration: true
+    )
+
+    response = Demo::CalibrationInstructorSeeder.seed!(map)
+
+    render json: {
+      map_id: map.id,
+      response_id: response.id,
+      instructor_review_status: 'submitted'
+    }, status: :ok
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: 'Calibration review map not found' }, status: :not_found
+  rescue ArgumentError, ActiveRecord::RecordInvalid => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
   # DELETE /assignments/:assignment_id/review_mappings/calibration_participants/:participant_id
   def remove_calibration_participant
     participant = AssignmentParticipant.find_by(id: params[:participant_id], parent_id: @assignment.id)
@@ -165,7 +195,8 @@ class ReviewMappingsController < ApplicationController
     list_calibration_participants
     add_calibration_participant
     remove_calibration_participant
-  ].freeze
+    submit_mock_instructor_calibration_response
+  ].freeze # DEMO_INSTRUCTOR_RESPONSE: drop the last entry when the demo seeder is removed.
 
   def action_allowed?
     return current_user_teaching_staff_of_assignment?(params[:assignment_id]) if CALIBRATION_PARTICIPANT_ACTIONS.include?(params[:action])
@@ -226,7 +257,23 @@ class ReviewMappingsController < ApplicationController
       team_id: team&.id,
       team_name: team&.name,
       instructor_review_map_id: instructor_map&.id,
+      instructor_review_status: instructor_review_status_for(instructor_map),
       submissions: team.respond_to?(:submitted_content_detail) ? team.submitted_content_detail : { hyperlinks: [], files: [] }
     }
+  end
+
+  # Classify the instructor's progress on a calibration review map so the UI can
+  # show "Begin" when no response exists yet and "View | Edit" once one does.
+  #   - :not_started -> no Response rows for this map
+  #   - :in_progress -> at least one Response, none submitted yet
+  #   - :submitted   -> at least one submitted Response
+  def instructor_review_status_for(instructor_map)
+    return :not_started unless instructor_map
+
+    responses = instructor_map.responses
+    return :not_started if responses.empty?
+    return :submitted if responses.where(is_submitted: true).exists?
+
+    :in_progress
   end
 end
