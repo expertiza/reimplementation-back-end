@@ -24,18 +24,18 @@ FactoryBot.define do
       course { create(:course) }
     end
 
+    assignment { create(:assignment, course: course) }
+    parent_id { assignment.id }
+
     after(:build) do |team, evaluator|
-      if team.assignment.nil?
-        team.course = evaluator.course
-      else
-        team.course = team.assignment.course
-      end
+      team.assignment ||= create(:assignment, course: evaluator.course)
+      team.parent_id = team.assignment.id
     end
 
     trait :with_assignment do
       after(:build) do |team, evaluator|
         team.assignment = create(:assignment, course: evaluator.course)
-        team.course = team.assignment.course
+        team.parent_id = team.assignment.id
       end
     end
   end

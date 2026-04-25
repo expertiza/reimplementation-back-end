@@ -62,6 +62,107 @@ class ReviewMappingsController < ApplicationController
     render json: { status: "ok", message: "Calibration reviews assigned to all reviewers" }
   end
 
+  # ===== CALIBRATION PARTICIPANTS =====
+  # The "Calibration" tab on the assignment edit view designates one or more
+  # users as calibration submitters. The instructor types a username into the
+  # text box and that user is added as an AssignmentParticipant, a team is
+  # created for them (so submissions flow through the normal team-based
+  # infrastructure), and a ReviewResponseMap with for_calibration = true is
+  # created with the instructor as reviewer. The instructor later opens the
+  # calibration report for this map to enter/compare the calibration review.
+
+  # GET /assignments/:assignment_id/review_mappings/calibration_participants
+  def list_calibration_participants
+    render json: {
+      assignment_id: @assignment.id,
+      calibration_participants: calibration_participant_rows
+    }, status: :ok
+  end
+
+  # POST /assignments/:assignment_id/review_mappings/calibration_participants
+  # Body: { username: "unctlt1" }
+  def add_calibration_participant
+    username = (params[:username] || params.dig(:calibration_participant, :username)).to_s.strip
+    return render json: { error: 'username is required' }, status: :bad_request if username.blank?
+
+    user = User.find_by(name: username) || User.find_by(email: username)
+    return render json: { error: "User '#{username}' not found" }, status: :not_found unless user
+
+    instructor_participant = find_or_create_instructor_participant
+    return render json: { error: 'Assignment has no instructor' }, status: :unprocessable_entity unless instructor_participant
+
+    participant = nil
+    team = nil
+    map = nil
+
+    ActiveRecord::Base.transaction do
+      participant = AssignmentParticipant.find_by(parent_id: @assignment.id, user_id: user.id) ||
+                    @assignment.add_participant(user.id)
+
+      team = participant.team || Team.create_team_for_participant(participant)
+
+      map = ReviewResponseMap.find_or_create_by!(
+        reviewer_id: instructor_participant.id,
+        reviewee_id: team.id,
+        reviewed_object_id: @assignment.id,
+        for_calibration: true
+      )
+    end
+
+    render json: serialize_calibration_row(participant, team, map), status: :created
+  rescue ActiveRecord::RecordInvalid, ArgumentError => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  rescue StandardError => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
+  # DEMO_INSTRUCTOR_RESPONSE
+  # POST /assignments/:assignment_id/review_mappings/:map_id/mock_instructor_response
+  #
+  # Demo-only: materializes a submitted instructor calibration Response with
+  # default answers for the given calibration map so the calibration report
+  # has data to display while the real review form lives outside this
+  # project's scope. The "how" of fabricating data lives in
+  # Demo::CalibrationInstructorSeeder; this controller is responsible only for
+  # locating the map and translating outcomes into HTTP responses.
+  # See Demo::CalibrationInstructorSeeder for the full removal checklist.
+  def submit_mock_instructor_calibration_response
+    map = ReviewResponseMap.find_by!(
+      id: params[:map_id],
+      reviewed_object_id: @assignment.id,
+      for_calibration: true
+    )
+
+    response = Demo::CalibrationInstructorSeeder.seed!(map)
+
+    render json: {
+      map_id: map.id,
+      response_id: response.id,
+      instructor_review_status: 'submitted'
+    }, status: :ok
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: 'Calibration review map not found' }, status: :not_found
+  rescue ArgumentError, ActiveRecord::RecordInvalid => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
+  # DELETE /assignments/:assignment_id/review_mappings/calibration_participants/:participant_id
+  def remove_calibration_participant
+    participant = AssignmentParticipant.find_by(id: params[:participant_id], parent_id: @assignment.id)
+    return render json: { error: 'Calibration participant not found' }, status: :not_found unless participant
+
+    team = participant.team
+    return render json: { error: 'Participant has no team' }, status: :unprocessable_entity unless team
+
+    ReviewResponseMap.where(
+      reviewed_object_id: @assignment.id,
+      reviewee_id: team.id,
+      for_calibration: true
+    ).destroy_all
+
+    render json: { message: "Calibration participant #{participant.id} removed." }, status: :ok
+  end
+
   # ===== DELETE =====
   def destroy
     handler = ReviewMappingHandler.new(@assignment)
@@ -85,9 +186,94 @@ class ReviewMappingsController < ApplicationController
     render json: { status: "ok", message: "Review graded" }
   end
 
+  # Actions that designate calibration submitters require teaching staff
+  # privileges; everything else defaults to allowed and relies on
+  # ApplicationController's own checks. We reuse the shared
+  # `current_user_teaching_staff_of_assignment?` helper from the Authorization
+  # concern instead of duplicating the logic here.
+  CALIBRATION_PARTICIPANT_ACTIONS = %w[
+    list_calibration_participants
+    add_calibration_participant
+    remove_calibration_participant
+    submit_mock_instructor_calibration_response
+  ].freeze # DEMO_INSTRUCTOR_RESPONSE: drop the last entry when the demo seeder is removed.
+
+  def action_allowed?
+    return current_user_teaching_staff_of_assignment?(params[:assignment_id]) if CALIBRATION_PARTICIPANT_ACTIONS.include?(params[:action])
+
+    true
+  end
+
   private
 
   def set_assignment
     @assignment = Assignment.find(params[:assignment_id])
+  end
+
+  # ----- Helpers for the calibration participants endpoints -----
+
+  # The instructor is the reviewer on every calibration ReviewResponseMap it
+  # creates, so the instructor must also be registered as an
+  # AssignmentParticipant on this assignment. Create that record lazily.
+  def find_or_create_instructor_participant
+    instructor = @assignment.instructor
+    return nil unless instructor
+
+    AssignmentParticipant.find_by(parent_id: @assignment.id, user_id: instructor.id) ||
+      @assignment.add_participant(instructor.id)
+  end
+
+  # Build one row per calibration submitter. A submitter is identified as the
+  # (sole) member of a team that is the reviewee of any for_calibration map on
+  # this assignment. Prefer the instructor's map as the "Begin" target.
+  def calibration_participant_rows
+    maps = ReviewResponseMap.where(
+      reviewed_object_id: @assignment.id,
+      for_calibration: true
+    ).order(:id)
+
+    instructor_user_id = @assignment.instructor_id
+    maps_by_team = maps.group_by(&:reviewee_id)
+
+    maps_by_team.map do |team_id, team_maps|
+      team = AssignmentTeam.find_by(id: team_id)
+      next nil unless team
+
+      instructor_map = team_maps.find { |m| m.reviewer&.user_id == instructor_user_id } || team_maps.first
+      submitter = team.participants.where(type: 'AssignmentParticipant').first
+      next nil unless submitter
+
+      serialize_calibration_row(submitter, team, instructor_map)
+    end.compact
+  end
+
+  def serialize_calibration_row(participant, team, instructor_map)
+    {
+      participant_id: participant.id,
+      user_id: participant.user_id,
+      username: participant.user&.name,
+      full_name: participant.user&.full_name,
+      handle: participant.handle,
+      team_id: team&.id,
+      team_name: team&.name,
+      instructor_review_map_id: instructor_map&.id,
+      instructor_review_status: instructor_review_status_for(instructor_map),
+      submissions: team.respond_to?(:submitted_content_detail) ? team.submitted_content_detail : { hyperlinks: [], files: [] }
+    }
+  end
+
+  # Classify the instructor's progress on a calibration review map so the UI can
+  # show "Begin" when no response exists yet and "View | Edit" once one does.
+  #   - :not_started -> no Response rows for this map
+  #   - :in_progress -> at least one Response, none submitted yet
+  #   - :submitted   -> at least one submitted Response
+  def instructor_review_status_for(instructor_map)
+    return :not_started unless instructor_map
+
+    responses = instructor_map.responses
+    return :not_started if responses.empty?
+    return :submitted if responses.where(is_submitted: true).exists?
+
+    :in_progress
   end
 end

@@ -38,6 +38,29 @@ Rails.application.routes.draw do
           get '/:assignment_id/varying_rubrics_by_round', action: :varying_rubrics_by_round?
           post '/:assignment_id/create_node',action: :create_node
         end
+
+        resources :review_mappings, only: [] do
+          collection do
+            get    :calibration_participants,         action: :list_calibration_participants
+            post   :calibration_participants,         action: :add_calibration_participant
+            delete 'calibration_participants/:participant_id', action: :remove_calibration_participant
+            # DEMO_INSTRUCTOR_RESPONSE
+            # Demo-only: seeds an instructor calibration Response for the given
+            # map. Wired to the "Begin" link on the Calibration tab while the
+            # real review form lives outside this project's scope.
+            # See Demo::CalibrationInstructorSeeder for the full removal checklist.
+            post   ':map_id/mock_instructor_response',
+                   action: :submit_mock_instructor_calibration_response
+          end
+        end
+
+        # Reports are owned by ReportsController, not by feature controllers.
+        # Adding a new report type only requires a new action here.
+        resources :reports, only: [] do
+          collection do
+            get 'calibration/:map_id', action: :calibration, as: :calibration
+          end
+        end
       end
 
       resources :bookmarks, except: [:new, :edit] do
