@@ -3,7 +3,7 @@
 require 'rails_helper'
 require 'json_web_token'
 
-RSpec.describe 'ReviewMappings calibration report', type: :request do
+RSpec.describe 'Reports calibration', type: :request do
   let!(:super_admin_role) { Role.create!(name: 'Super Administrator') }
   let!(:admin_role) { Role.create!(name: 'Administrator') }
   let!(:instructor_role) { Role.create!(name: 'Instructor') }
@@ -48,7 +48,7 @@ RSpec.describe 'ReviewMappings calibration report', type: :request do
     documentation
   end
 
-  describe 'GET /assignments/:assignment_id/review_mappings/:id/calibration_report' do
+  describe 'GET /assignments/:assignment_id/reports/calibration/:map_id' do
     it 'returns report JSON for a calibration map' do
       create_response(
         map: instructor_map,
@@ -150,7 +150,7 @@ RSpec.describe 'ReviewMappings calibration report', type: :request do
     end
 
     it 'returns 404 when the calibration map does not exist' do
-      get "/assignments/#{assignment.id}/review_mappings/0/calibration_report", headers: instructor_headers
+      get "/assignments/#{assignment.id}/reports/calibration/0", headers: instructor_headers
 
       expect(response).to have_http_status(:not_found)
       expect(JSON.parse(response.body)['error']).to eq('Calibration review map not found')
@@ -175,7 +175,7 @@ RSpec.describe 'ReviewMappings calibration report', type: :request do
   end
 
   def calibration_report_path(map)
-    "/assignments/#{assignment.id}/review_mappings/#{map.id}/calibration_report"
+    "/assignments/#{assignment.id}/reports/calibration/#{map.id}"
   end
 
   def auth_headers_for(user)
