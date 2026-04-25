@@ -150,8 +150,8 @@ class StudentTasksController < ApplicationController
     # Preserve quiz-before-review ordering for every review map.
     if review_maps.any?
       review_maps.each do |review_map|
-        # Quiz always comes BEFORE review for same review_map
-        if duty_allows_quiz?(duty) && (quiz_questionnaire || has_existing_quiz_maps)
+        # Legacy behavior allows mapped review-flow tasks when duty is absent.
+        if (duty.nil? || duty_allows_quiz?(duty)) && (quiz_questionnaire || has_existing_quiz_maps)
           tasks << QuizTaskItem.new(
             assignment: assignment,
             team_participant: team_participant,
@@ -160,7 +160,7 @@ class StudentTasksController < ApplicationController
         end
 
         # Review task tied directly to existing ReviewResponseMap.
-        if duty_allows_review?(duty)
+        if duty.nil? || duty_allows_review?(duty)
           tasks << ReviewTaskItem.new(
             assignment: assignment,
             team_participant: team_participant,
@@ -185,7 +185,7 @@ class StudentTasksController < ApplicationController
     tasks.each do |task|
       # Lazy-create ResponseMap if needed (especially for quizzes).
       task.ensure_response_map!
-      
+
       # Ensure Response row exists so UI can safely operate.
       task.ensure_response!
     end
@@ -219,7 +219,7 @@ class StudentTasksController < ApplicationController
   def duty_allows_quiz?(duty)
     return false if duty.nil?
 
-    # Quiz is slightly more permissive than review (no reviewer role required).
+    # Reviewers do not receive quiz tasks.
     duty.name.in?(%w[participant reader mentor])
   end
 

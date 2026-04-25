@@ -99,17 +99,85 @@ class ResponsesController < ApplicationController
       return false
     end
 
-    queue = TaskOrdering::TaskQueue.new(participant.assignment, team_participant)
-    unless queue.map_in_queue?(map.id)
+    tasks = build_tasks(participant.assignment, participant, team_participant)
+    current_task = find_task_for_map(tasks, map.id)
+    unless current_task
       render json: { error: "Response map is not a respondable task for this participant" }, status: :forbidden
       return false
     end
 
-    unless queue.prior_tasks_complete_for?(map.id)
+    unless prior_tasks_complete?(tasks, current_task)
       render json: { error: "Complete previous task first" }, status: :precondition_failed
       return false
     end
 
     true
+  end
+
+  def build_tasks(assignment, participant, team_participant)
+    duty = resolve_duty(team_participant, participant)
+    tasks = []
+
+    review_maps = ReviewResponseMap.where(
+      reviewer_id: participant.id,
+      reviewed_object_id: assignment.id
+    )
+    quiz_questionnaire = assignment.quiz_questionnaire_for_review_flow
+    has_existing_quiz_maps = QuizResponseMap.where(reviewer_id: participant.id).exists?
+
+    if review_maps.any?
+      review_maps.each do |review_map|
+        if (duty.nil? || duty_allows_quiz?(duty)) && (quiz_questionnaire || has_existing_quiz_maps)
+          tasks << StudentTasksController::QuizTaskItem.new(
+            assignment: assignment,
+            team_participant: team_participant,
+            review_map: review_map
+          )
+        end
+
+        if duty.nil? || duty_allows_review?(duty)
+          tasks << StudentTasksController::ReviewTaskItem.new(
+            assignment: assignment,
+            team_participant: team_participant,
+            review_map: review_map
+          )
+        end
+      end
+    elsif duty_allows_quiz?(duty) && quiz_questionnaire
+      tasks << StudentTasksController::QuizTaskItem.new(
+        assignment: assignment,
+        team_participant: team_participant,
+        review_map: nil
+      )
+    end
+
+    tasks
+  end
+
+  def resolve_duty(team_participant, participant)
+    Duty.find_by(id: team_participant.duty_id) || Duty.find_by(id: participant.duty_id)
+  end
+
+  def find_task_for_map(tasks, map_id)
+    tasks.find do |task|
+      response_map = task.response_map
+      response_map && response_map.id.to_i == map_id.to_i
+    end
+  end
+
+  def prior_tasks_complete?(tasks, current_task)
+    tasks.take_while { |task| task != current_task }.all?(&:completed?)
+  end
+
+  def duty_allows_review?(duty)
+    return false if duty.nil?
+
+    duty.name.in?(%w[participant reader reviewer mentor])
+  end
+
+  def duty_allows_quiz?(duty)
+    return false if duty.nil?
+
+    duty.name.in?(%w[participant reader mentor])
   end
 end

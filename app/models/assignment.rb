@@ -30,11 +30,6 @@ class Assignment < ApplicationRecord
     Questionnaire.find_by_assignment_id id
   end
 
-  # Builds a TaskQueue for a TeamsParticipant row (duty + structural task list).
-  def respondable_task_queue(team_participant)
-    TaskOrdering::TaskQueue.new(self, team_participant)
-  end
-
   # Returns the quiz questionnaire used by the reviewer pre-check flow.
   # If no quiz questionnaire is attached, the caller can skip quiz task creation.
   def quiz_questionnaire_for_review_flow
