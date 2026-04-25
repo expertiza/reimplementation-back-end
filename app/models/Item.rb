@@ -33,6 +33,21 @@ class Item < ApplicationRecord
       end
   end
 
+  # JSON representation used by calibration reports. Kept on the item itself
+  # (Information Expert) so other report/view code does not re-implement this
+  # shape.
+  def as_calibration_json
+    {
+      id: id,
+      txt: txt,
+      seq: seq,
+      question_type: question_type,
+      weight: weight,
+      min_score: questionnaire.min_question_score,
+      max_score: questionnaire.max_question_score
+    }
+  end
+
   def strategy
     case question_type
     when 'dropdown'

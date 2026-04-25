@@ -20,6 +20,13 @@ class ResponseMap < ApplicationRecord
     return reviewer.assignment
   end
 
+  # Most recently submitted response on this map, or nil. Callers that need
+  # "the map's current submitted response" should ask the map directly rather
+  # than re-query Response in a controller.
+  def latest_submitted_response
+    responses.where(is_submitted: true).order(updated_at: :desc).first
+  end
+
   def self.assessments_for(team)
     responses = []
     # stime = Time.now
