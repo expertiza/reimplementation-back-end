@@ -63,6 +63,9 @@ Rails.application.routes.draw do
       end
 
       resources :questionnaires do
+        member do
+          get :items
+        end
         collection do
           post 'copy/:id', to: 'questionnaires#copy', as: 'copy'
           get 'toggle_access/:id', to: 'questionnaires#toggle_access', as: 'toggle_access'
@@ -224,6 +227,13 @@ Rails.application.routes.draw do
         collection do
           get "/:class", to: "export#index"
           post "/:class", to: "export#export"
+        end
+      end
+      resources :questionnaire_packages, only: [] do
+        collection do
+          get :config, action: :package_config
+          post :export
+          post :import
         end
       end
 end

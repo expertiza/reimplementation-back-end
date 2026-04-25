@@ -1,0 +1,279 @@
+# frozen_string_literal: true
+
+require 'csv'
+require 'json'
+require 'set'
+require 'zip'
+
+class QuestionnairePackageImportService
+  PACKAGE_TYPE = QuestionnairePackageExportService::PACKAGE_TYPE
+  VERSION = QuestionnairePackageExportService::VERSION
+  REQUIRED_FILES = %w[manifest.json questionnaires.csv items.csv question_advices.csv].freeze
+  DEFAULT_DUPLICATE_ACTION = ChangeOffendingFieldAction.new
+
+  def initialize(file:, dup_action: nil)
+    @file = file
+    @duplicate_action = dup_action || DEFAULT_DUPLICATE_ACTION
+  end
+
+  def perform
+    raise StandardError, 'A questionnaire package zip file is required.' if @file.blank?
+
+    entries = read_zip_entries
+    validate_package!(entries)
+
+    questionnaire_rows = parse_csv(entries['questionnaires.csv'])
+    item_rows = parse_csv(entries['items.csv'])
+    question_advice_rows = parse_csv(entries['question_advices.csv'])
+
+    imported_counts = {
+      questionnaires: 0,
+      items: 0,
+      question_advices: 0
+    }
+    duplicate_counts = {
+      questionnaires: 0,
+      items: 0,
+      question_advices: 0
+    }
+
+    ActiveRecord::Base.transaction do
+      imported_questionnaires, skipped_questionnaire_keys = import_questionnaires(
+        questionnaire_rows,
+        imported_counts,
+        duplicate_counts
+      )
+      imported_items = import_items(item_rows, imported_questionnaires, skipped_questionnaire_keys, imported_counts)
+      import_question_advices(
+        question_advice_rows,
+        imported_questionnaires,
+        imported_items,
+        skipped_questionnaire_keys,
+        imported_counts
+      )
+    end
+
+    {
+      imported: imported_counts,
+      duplicates: duplicate_counts
+    }
+  end
+
+  private
+
+  def read_zip_entries
+    entries = {}
+
+    Zip::File.open(@file.path) do |zip_file|
+      zip_file.each do |entry|
+        next if entry.directory?
+
+        entries[entry.name] = entry.get_input_stream.read
+      end
+    end
+
+    entries
+  rescue Zip::Error => e
+    raise StandardError, "Invalid questionnaire package: #{e.message}"
+  end
+
+  def validate_package!(entries)
+    missing_files = REQUIRED_FILES - entries.keys
+    raise StandardError, "Questionnaire package is missing required files: #{missing_files.join(', ')}" if missing_files.any?
+
+    manifest = JSON.parse(entries['manifest.json'])
+    unless manifest['package_type'] == PACKAGE_TYPE
+      raise StandardError, "Unsupported questionnaire package type: #{manifest['package_type']}"
+    end
+
+    return if manifest['version'].to_i == VERSION
+
+    raise StandardError, "Unsupported questionnaire package version: #{manifest['version']}"
+  rescue JSON::ParserError => e
+    raise StandardError, "Invalid questionnaire package manifest: #{e.message}"
+  end
+
+  def parse_csv(contents)
+    CSV.parse(contents, headers: true).map do |row|
+      row.to_h.transform_keys { |key| normalize_header(key) }
+    end
+  end
+
+  def normalize_header(header)
+    header.to_s.parameterize.underscore
+  end
+
+  def import_questionnaires(rows, imported_counts, duplicate_counts)
+    mapping = FieldMapping.from_header(Questionnaire, rows.first&.keys || [])
+    imported_questionnaires = {}
+    skipped_questionnaire_keys = Set.new
+
+    rows.each do |row|
+      source_key = questionnaire_source_key(row['name'], row['instructor_name'])
+      record, duplicate, skipped = import_questionnaire_row(row, mapping)
+      if skipped
+        skipped_questionnaire_keys.add(source_key)
+        duplicate_counts[:questionnaires] += 1
+        next
+      end
+
+      next if record.nil?
+
+      imported_questionnaires[source_key] = record
+      imported_counts[:questionnaires] += 1
+      duplicate_counts[:questionnaires] += 1 if duplicate
+    end
+
+    [imported_questionnaires, skipped_questionnaire_keys]
+  end
+
+  def import_questionnaire_row(row, mapping)
+    incoming = build_questionnaire(row, mapping)
+    existing = find_questionnaire_record(row)
+
+    if existing.nil?
+      incoming.save!
+      return [incoming, false, false]
+    end
+
+    processed = resolve_duplicate_questionnaire(existing, incoming)
+    return [existing, true, true] if processed.nil?
+
+    processed.save!
+    [processed, true, false]
+  end
+
+  def import_items(rows, imported_questionnaires, skipped_questionnaire_keys, imported_counts)
+    imported_items = {}
+
+    rows.each do |row|
+      source_key = questionnaire_source_key(row['questionnaire_name'], row['questionnaire_instructor_name'])
+      next if skipped_questionnaire_keys.include?(source_key)
+
+      questionnaire = imported_questionnaires[source_key]
+      raise StandardError, "Unable to resolve questionnaire for item '#{row['txt']}'." if questionnaire.nil?
+
+      item = Item.new(
+        txt: row['txt'],
+        weight: row['weight'],
+        seq: row['seq'],
+        question_type: row['question_type'],
+        size: row['size'],
+        alternatives: row['alternatives'],
+        break_before: normalize_boolean(row['break_before']),
+        min_label: row['min_label'],
+        max_label: row['max_label']
+      )
+      item.questionnaire = questionnaire
+
+      imported_seq = item.seq
+      item.save!
+      item.update_column(:seq, imported_seq) if imported_seq.present? && item.seq.to_s != imported_seq.to_s
+
+      imported_items[item_source_key(row['questionnaire_name'], row['questionnaire_instructor_name'], row['seq'], row['txt'])] = item
+      imported_counts[:items] += 1
+    end
+
+    imported_items
+  end
+
+  def import_question_advices(rows, imported_questionnaires, imported_items, skipped_questionnaire_keys, imported_counts)
+    rows.each do |row|
+      source_key = questionnaire_source_key(row['questionnaire_name'], row['questionnaire_instructor_name'])
+      next if skipped_questionnaire_keys.include?(source_key)
+
+      questionnaire = imported_questionnaires[source_key]
+      raise StandardError, "Unable to resolve questionnaire for advice '#{row['advice']}'." if questionnaire.nil?
+
+      item = imported_items[item_source_key(row['questionnaire_name'], row['questionnaire_instructor_name'], row['item_seq'], row['item_txt'])] ||
+             questionnaire.items.find_by(seq: row['item_seq'], txt: row['item_txt'])
+      raise StandardError, "Unable to resolve item for advice '#{row['advice']}'." if item.nil?
+
+      question_advice = QuestionAdvice.new(
+        score: row['score'],
+        advice: row['advice']
+      )
+      question_advice.item = item
+      question_advice.save!
+
+      imported_counts[:question_advices] += 1
+    end
+  end
+
+  def find_questionnaire_record(row)
+    instructor = Instructor.find_by(name: row['instructor_name'])
+    return nil if instructor.nil?
+
+    Questionnaire.find_by(name: row['name'], instructor_id: instructor.id)
+  end
+
+  def build_questionnaire(row, mapping)
+    row_values = mapping.ordered_fields.map { |field| row[field] }
+    row_hash = {}
+    mapping.ordered_fields.zip(row_values).each do |key, value|
+      row_hash[key] ||= []
+      row_hash[key] << value
+    end
+
+    questionnaire = Questionnaire.from_hash(row_hash.slice(*Questionnaire.internal_fields))
+    Questionnaire.external_classes.each do |external_class|
+      next unless external_class.should_look_up
+
+      found = external_class.look_up(row_hash)
+      questionnaire.public_send("#{external_class.ref_class.name.downcase}=", found) if found
+    end
+
+    questionnaire
+  end
+
+  def resolve_duplicate_questionnaire(existing, incoming)
+    case @duplicate_action
+    when SkipRecordAction
+      nil
+    when UpdateExistingRecordAction
+      update_existing_questionnaire(existing, incoming)
+    else
+      incoming.name = unique_questionnaire_name(incoming.name, incoming.instructor_id)
+      incoming
+    end
+  end
+
+  def update_existing_questionnaire(existing, incoming)
+    existing.assign_attributes(
+      incoming.attributes.slice(
+        'questionnaire_type',
+        'display_type',
+        'private',
+        'min_question_score',
+        'max_question_score',
+        'instruction_loc'
+      )
+    )
+    existing
+  end
+
+  def unique_questionnaire_name(name, instructor_id)
+    base = name.to_s
+    candidate = base
+    counter = 1
+
+    while Questionnaire.exists?(name: candidate, instructor_id: instructor_id)
+      candidate = "#{base}_copy#{counter == 1 ? '' : counter}"
+      counter += 1
+    end
+
+    candidate
+  end
+
+  def questionnaire_source_key(name, instructor_name)
+    "#{instructor_name}::#{name}"
+  end
+
+  def item_source_key(questionnaire_name, instructor_name, seq, txt)
+    "#{questionnaire_source_key(questionnaire_name, instructor_name)}::#{seq}::#{txt}"
+  end
+
+  def normalize_boolean(value)
+    ActiveRecord::Type::Boolean.new.deserialize(value)
+  end
+end

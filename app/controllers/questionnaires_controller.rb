@@ -17,6 +17,15 @@ class QuestionnairesController < ApplicationController
       render json: $ERROR_INFO.to_s, status: :not_found and return
     end
   end
+
+  # Items method returns the items belonging to questionnaire with id = {:id}
+  # GET on /questionnaires/:id/items
+  def items
+    @questionnaire = Questionnaire.find(params[:id])
+    render json: @questionnaire.items.order(:seq), status: :ok
+  rescue ActiveRecord::RecordNotFound
+    render json: $ERROR_INFO.to_s, status: :not_found
+  end
   
   # Create method creates a questionnaire and returns the JSON object of the created questionnaire
   # POST on /questionnaires
