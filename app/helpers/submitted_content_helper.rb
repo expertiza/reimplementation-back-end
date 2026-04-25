@@ -214,14 +214,17 @@ module SubmittedContentHelper
   def delete_selected_files
     # Wrap the delete operation with error handling
     handle_file_operation_error('deleting') do
+      files_to_delete = resolved_files_for_deletion
+
+      if files_to_delete.empty?
+        render json: { error: 'No files were selected for deletion.' }, status: :bad_request
+        return
+      end
+
       # Track successfully deleted files for response
       deleted_files = []
 
-      # Iterate through each file index in the chk_files param
-      Array(params[:chk_files]).each do |idx|
-        # Build the full file path for this index
-        file_path = File.join(params[:directories][idx], params[:filenames][idx])
-
+      files_to_delete.each do |file_path|
         # Check if file exists before attempting deletion
         if File.exist?(file_path)
           # Remove file or directory recursively
@@ -231,7 +234,7 @@ module SubmittedContentHelper
           deleted_files << file_path
         else
           # File doesn't exist, return error
-          render json: { error: "Cannot delete '#{params[:filenames][idx]}': File does not exist. It may have already been deleted." }, status: :not_found
+          render json: { error: "Cannot delete '#{File.basename(file_path)}': File does not exist. It may have already been deleted." }, status: :not_found
           return
         end
       end
@@ -256,6 +259,37 @@ module SubmittedContentHelper
 
       # Render success response with folder name
       render json: { message: "Directory '#{params[:faction][:create]}' created successfully." }, status: :created
+    end
+  end
+
+  def resolved_files_for_deletion
+    current_folder_param =
+      params.dig(:current_folder, :name) ||
+      params.dig('current_folder', 'name') ||
+      params[:current_folder] ||
+      params['current_folder']
+    delete_target = params.dig(:faction, :delete) || params.dig('faction', 'delete')
+
+    if current_folder_param.present? && delete_target.present?
+      team = participant_team
+      team.set_team_directory_num
+
+      current_folder = clean_folder(current_folder_param)
+      base_path = team.path.to_s
+      directory_path = current_folder == '/' ? base_path : File.join(base_path, current_folder)
+
+      return Array(delete_target).filter_map do |entry_name|
+        sanitized_name = clean_filename(entry_name)
+        File.join(directory_path, sanitized_name) if sanitized_name.present?
+      end
+    end
+
+    Array(params[:chk_files]).filter_map do |idx|
+      directory = params.dig(:directories, idx) || params.dig(:directories, idx.to_s)
+      filename = params.dig(:filenames, idx) || params.dig(:filenames, idx.to_s)
+      next if directory.blank? || filename.blank?
+
+      File.join(directory, filename)
     end
   end
 end
