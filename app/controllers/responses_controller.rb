@@ -106,7 +106,7 @@ class ResponsesController < ApplicationController
     end
 
     unless queue.prior_tasks_complete_for?(map.id)
-      render json: { error: "Complete previous task first" }, status: :precondition_failed
+      render json: { error: "You must complete prior tasks before responding to this one" }, status: :forbidden
       return false
     end
 

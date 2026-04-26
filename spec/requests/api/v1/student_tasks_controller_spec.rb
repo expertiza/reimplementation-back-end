@@ -121,14 +121,12 @@ RSpec.describe 'StudentTasks API', type: :request do
         end
       end
 
-      response '500', 'participant not found returns error' do
+      response '200', 'participant not found returns null' do
         let(:id) { -1 }
         run_test! do |response|
-          expect(response.status).to eq(500)
+          expect(response.status).to eq(200)
         end
       end
-
-      
 
       response '401', 'unauthorized request returns error' do
         let(:Authorization) { "Bearer " }
@@ -241,7 +239,7 @@ RSpec.describe 'StudentTasks API', type: :request do
         let(:body) { { response_map_id: review_map.id } }
         run_test! do |response|
           expect([200, 403]).to include(response.status)
-        end 
+        end
       end
 
       response '404', 'response map not found' do

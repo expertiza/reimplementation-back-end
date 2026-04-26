@@ -71,13 +71,13 @@ RSpec.describe 'Responses API', type: :request do
 
   let!(:review_map) do
     map = ReviewResponseMap.new(
-        reviewer_id: reviewer_participant.id,
-        reviewee_id: reviewee_participant.id,
-        reviewed_object_id: assignment.id
-        )
-        map.save!(validate: false)
-        map 
-    end
+      reviewer_id: reviewer_participant.id,
+      reviewee_id: reviewee_participant.id,
+      reviewed_object_id: assignment.id
+    )
+    map.save!(validate: false)
+    map
+  end
 
   let!(:response_record) do
     Response.create!(
@@ -120,6 +120,61 @@ RSpec.describe 'Responses API', type: :request do
           data = JSON.parse(response.body)
           expect(data['map_id']).to eq(review_map.id)
           expect(data['round']).to eq(1)
+        end
+      end
+
+      response '201', 'allows create when all prior tasks are complete' do
+        let!(:questionnaire) do
+          QuizQuestionnaire.create!(
+            name: "Resp Quiz Prior",
+            instructor_id: instructor.id,
+            min_question_score: 0,
+            max_question_score: 5
+          )
+        end
+        let(:body) { { response_map_id: review_map.id, round: 1, content: '{}' } }
+
+        before do
+          allow(assignment).to receive(:quiz_questionnaire_for_review_flow).and_return(questionnaire)
+          quiz_map = QuizResponseMap.new(
+            reviewer_id: reviewer_participant.id,
+            reviewee_id: reviewee_participant.id,
+            reviewed_object_id: assignment.id
+          )
+          quiz_map.save!(validate: false)
+          Response.create!(map_id: quiz_map.id, round: 1, is_submitted: true)
+        end
+
+        run_test! do |response|
+          expect([201, 200]).to include(response.status)
+        end
+      end
+
+      response '403', 'blocks create when prior quiz task is not complete' do
+        let!(:questionnaire) do
+          QuizQuestionnaire.create!(
+            name: "Resp Quiz Block",
+            instructor_id: instructor.id,
+            min_question_score: 0,
+            max_question_score: 5
+          )
+        end
+        let(:body) { { response_map_id: review_map.id, round: 1, content: '{}' } }
+
+        before do
+          allow(assignment).to receive(:quiz_questionnaire_for_review_flow).and_return(questionnaire)
+          # Quiz map exists but response is NOT submitted
+          quiz_map = QuizResponseMap.new(
+            reviewer_id: reviewer_participant.id,
+            reviewee_id: reviewee_participant.id,
+            reviewed_object_id: assignment.id
+          )
+          quiz_map.save!(validate: false)
+          Response.create!(map_id: quiz_map.id, round: 1, is_submitted: false)
+        end
+
+        run_test! do |response|
+          expect([403]).to include(response.status)
         end
       end
 
@@ -227,6 +282,65 @@ RSpec.describe 'Responses API', type: :request do
         run_test! do |response|
           data = JSON.parse(response.body)
           expect(data['submitted']).to be true
+        end
+      end
+
+      response '200', 'allows submit/update when prior tasks are complete' do
+        let!(:questionnaire) do
+          QuizQuestionnaire.create!(
+            name: "Resp Quiz Upd",
+            instructor_id: instructor.id,
+            min_question_score: 0,
+            max_question_score: 5
+          )
+        end
+        let(:id) { response_record.id }
+        let(:body) { { is_submitted: true } }
+
+        before do
+          allow(assignment).to receive(:quiz_questionnaire_for_review_flow).and_return(questionnaire)
+          quiz_map = QuizResponseMap.new(
+            reviewer_id: reviewer_participant.id,
+            reviewee_id: reviewee_participant.id,
+            reviewed_object_id: assignment.id
+          )
+          quiz_map.save!(validate: false)
+          Response.create!(map_id: quiz_map.id, round: 1, is_submitted: true)
+        end
+
+        run_test! do |response|
+          expect([200]).to include(response.status)
+          data = JSON.parse(response.body)
+          expect(data['submitted']).to be true
+        end
+      end
+
+      response '403', 'blocks submit/update when prior quiz task is incomplete' do
+        let!(:questionnaire) do
+          QuizQuestionnaire.create!(
+            name: "Resp Quiz BlkUpd",
+            instructor_id: instructor.id,
+            min_question_score: 0,
+            max_question_score: 5
+          )
+        end
+        let(:id) { response_record.id }
+        let(:body) { { is_submitted: true } }
+
+        before do
+          allow(assignment).to receive(:quiz_questionnaire_for_review_flow).and_return(questionnaire)
+          quiz_map = QuizResponseMap.new(
+            reviewer_id: reviewer_participant.id,
+            reviewee_id: reviewee_participant.id,
+            reviewed_object_id: assignment.id
+          )
+          quiz_map.save!(validate: false)
+          # Quiz response exists but not submitted
+          Response.create!(map_id: quiz_map.id, round: 1, is_submitted: false)
+        end
+
+        run_test! do |response|
+          expect([403]).to include(response.status)
         end
       end
 
