@@ -54,7 +54,7 @@ namespace :demo do
       item
     end
 
-    update_response = lambda do |map:, scores:, comments_prefix:|
+    update_response = lambda do |map:, scores:|
       response = Response.where(map_id: map.id, is_submitted: true).order(updated_at: :desc).first
 
       unless response
@@ -72,7 +72,7 @@ namespace :demo do
         answer = Answer.find_or_initialize_by(response_id: response.id, item_id: item.id)
         answer.update!(
           answer: score,
-          comments: "#{comments_prefix}: #{item.txt} => #{score}"
+          comments: ''
         )
       end
 
@@ -144,7 +144,6 @@ namespace :demo do
 
     update_response.call(
       map: instructor_map,
-      comments_prefix: 'Instructor calibration review',
       scores: {
         items[0] => 4,
         items[1] => 5,
@@ -186,7 +185,6 @@ namespace :demo do
 
       update_response.call(
         map: map,
-        comments_prefix: "Demo reviewer #{index + 1}",
         scores: {
           items[0] => scores[0],
           items[1] => scores[1],
