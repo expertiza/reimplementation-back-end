@@ -27,9 +27,58 @@ RSpec.describe 'QuestionnairePackages API', type: :request do
       expect(json['csv_header_requirements']['questionnaires']).to include('name', 'questionnaire_type', 'instructor_name')
       expect(json['csv_header_requirements']['items']).to include('questionnaire_name', 'seq', 'txt')
       expect(json['csv_header_requirements']['question_advices']).to include('questionnaire_name', 'item_seq', 'advice')
+      expect(json['available_templates']).to include('questionnaires', 'items', 'question_advices', 'package')
       expect(json['package_type']).to eq('questionnaire_template_export')
       expect(json['version']).to eq(1)
       expect(json['available_actions_on_dup']).to include('SkipRecordAction', 'UpdateExistingRecordAction', 'ChangeOffendingFieldAction')
+    end
+  end
+
+  describe 'GET /questionnaire_packages/templates/:template_name' do
+    it 'downloads a CSV template with a sample row' do
+      get '/questionnaire_packages/templates/items'
+
+      expect(response).to have_http_status(:ok)
+
+      json = JSON.parse(response.body)
+      expect(json['filename']).to eq('items_import_sample.csv')
+      expect(json['content_type']).to eq('text/csv')
+
+      csv = CSV.parse(Base64.decode64(json['data']), headers: true)
+      expect(csv.headers).to include('questionnaire_name', 'seq', 'txt', 'question_type')
+      expect(csv.count).to eq(1)
+      expect(csv.first['questionnaire_name']).to eq('Sample Review Questionnaire')
+      expect(csv.first['txt']).to eq('How clear is the submitted work?')
+    end
+
+    it 'downloads a package template zip with sample rows' do
+      get '/questionnaire_packages/templates/package'
+
+      expect(response).to have_http_status(:ok)
+
+      json = JSON.parse(response.body)
+      expect(json['filename']).to eq('questionnaire_package_import_sample.zip')
+      expect(json['content_type']).to eq('application/zip')
+
+      contents = read_zip_entries(json['data'])
+      expect(contents.keys).to contain_exactly('manifest.json', 'questionnaires.csv', 'items.csv', 'question_advices.csv')
+      expect(JSON.parse(contents['manifest.json'])).to include(
+        'package_type' => 'questionnaire_template_export',
+        'version' => 1
+      )
+      expect(CSV.parse(contents['questionnaires.csv'], headers: true).headers).to include('name', 'questionnaire_type', 'instructor_name')
+      expect(CSV.parse(contents['items.csv'], headers: true).headers).to include('questionnaire_name', 'seq', 'txt')
+      expect(CSV.parse(contents['question_advices.csv'], headers: true).headers).to include('questionnaire_name', 'item_seq', 'advice')
+      expect(CSV.parse(contents['questionnaires.csv'], headers: true).first['name']).to eq('Sample Review Questionnaire')
+      expect(CSV.parse(contents['items.csv'], headers: true).first['txt']).to eq('How clear is the submitted work?')
+      expect(CSV.parse(contents['question_advices.csv'], headers: true).first['advice']).to eq('Mention the strongest evidence and reasoning.')
+    end
+
+    it 'rejects unknown template names' do
+      get '/questionnaire_packages/templates/unknown'
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(JSON.parse(response.body)['error']).to include('Unsupported questionnaire package template')
     end
   end
 
@@ -150,6 +199,124 @@ RSpec.describe 'QuestionnairePackages API', type: :request do
   end
 
   describe 'POST /questionnaire_packages/import' do
+    it 'previews separate CSV uploads without importing records' do
+      role = create(:role, :instructor)
+      institution = create(:institution)
+      Instructor.create!(
+        name: 'previewimporter',
+        email: 'previewimporter@example.com',
+        full_name: 'Preview Importer',
+        password: 'password',
+        role: role,
+        institution: institution
+      )
+
+      questionnaire_file = build_csv_upload(
+        filename: 'preview questionnaires.csv',
+        contents: <<~CSV
+          name,questionnaire_type,display_type,private,min_question_score,max_question_score,instruction_loc,instructor_name
+          Preview Questionnaire,ReviewQuestionnaire,Likert,false,0,5,instructions,previewimporter
+        CSV
+      )
+      items_file = build_csv_upload(
+        filename: 'preview items.csv',
+        contents: <<~CSV
+          questionnaire_name,questionnaire_instructor_name,seq,txt,question_type,weight,break_before,min_label,max_label,alternatives,size
+          Preview Questionnaire,previewimporter,1,Preview item,Scale,2,true,poor,excellent,,
+        CSV
+      )
+      question_advices_file = build_csv_upload(
+        filename: 'preview advices.csv',
+        contents: <<~CSV
+          questionnaire_name,questionnaire_instructor_name,item_seq,item_txt,score,advice
+          Preview Questionnaire,previewimporter,1,Preview item,5,Preview advice
+        CSV
+      )
+
+      post '/questionnaire_packages/preview', params: {
+        questionnaire_file: questionnaire_file,
+        items_file: items_file,
+        question_advices_file: question_advices_file
+      }
+
+      expect(response).to have_http_status(:ok)
+
+      json = JSON.parse(response.body)
+      expect(json['summary']).to include(
+        'questionnaires' => 1,
+        'items' => 1,
+        'question_advices' => 1,
+        'creates' => 3,
+        'errors' => 0
+      )
+      expect(json['questionnaires'].first).to include(
+        'name' => 'Preview Questionnaire',
+        'action' => 'create'
+      )
+      expect(json['items'].first).to include('txt' => 'Preview item', 'action' => 'create')
+      expect(json['question_advices'].first).to include('advice' => 'Preview advice', 'action' => 'create')
+      expect(Questionnaire.find_by(name: 'Preview Questionnaire')).to be_nil
+    end
+
+    it 'previews duplicate and unresolved rows' do
+      role = create(:role, :instructor)
+      institution = create(:institution)
+      instructor = Instructor.create!(
+        name: 'previewduplicate',
+        email: 'previewduplicate@example.com',
+        full_name: 'Preview Duplicate',
+        password: 'password',
+        role: role,
+        institution: institution
+      )
+      Questionnaire.create!(
+        name: 'Preview Duplicate Questionnaire',
+        instructor: instructor,
+        private: false,
+        min_question_score: 0,
+        max_question_score: 5,
+        questionnaire_type: 'ReviewQuestionnaire',
+        display_type: 'Likert',
+        instruction_loc: 'old instructions'
+      )
+
+      questionnaire_file = build_csv_upload(
+        filename: 'preview duplicate questionnaires.csv',
+        contents: <<~CSV
+          name,questionnaire_type,display_type,private,min_question_score,max_question_score,instruction_loc,instructor_name
+          Preview Duplicate Questionnaire,ReviewQuestionnaire,Likert,false,0,5,instructions,previewduplicate
+          Missing Instructor Questionnaire,ReviewQuestionnaire,Likert,false,0,5,instructions,missingpreviewinstructor
+        CSV
+      )
+      items_file = build_csv_upload(
+        filename: 'preview duplicate items.csv',
+        contents: <<~CSV
+          questionnaire_name,questionnaire_instructor_name,seq,txt,question_type,weight,break_before,min_label,max_label,alternatives,size
+          Preview Duplicate Questionnaire,previewduplicate,1,Duplicate preview item,Scale,2,true,,,
+          Missing Instructor Questionnaire,missingpreviewinstructor,1,Missing instructor item,Scale,2,true,,,
+        CSV
+      )
+
+      post '/questionnaire_packages/preview', params: {
+        questionnaire_file: questionnaire_file,
+        items_file: items_file,
+        dup_action: 'UpdateExistingRecordAction'
+      }
+
+      expect(response).to have_http_status(:ok)
+
+      json = JSON.parse(response.body)
+      expect(json['summary']).to include(
+        'questionnaires' => 2,
+        'items' => 2,
+        'duplicates' => 1,
+        'updates' => 1,
+        'errors' => 2
+      )
+      expect(json['questionnaires'].first).to include('action' => 'update', 'duplicate' => true)
+      expect(json['errors'].map { |error| error['file'] }).to include('questionnaires', 'items')
+    end
+
     it 'imports questionnaire packages from a zip file' do
       role = create(:role, :instructor)
       institution = create(:institution)

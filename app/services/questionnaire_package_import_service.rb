@@ -55,11 +55,7 @@ class QuestionnairePackageImportService
 
   # Import parents before dependent rows, using package keys instead of DB IDs.
   def perform
-    csv_sources = resolve_csv_sources
-
-    questionnaire_rows = parse_csv(csv_sources.fetch(:questionnaires), :questionnaires)
-    item_rows = parse_csv(csv_sources[:items], :items)
-    question_advice_rows = parse_csv(csv_sources[:question_advices], :question_advices)
+    questionnaire_rows, item_rows, question_advice_rows = parsed_rows
 
     imported_counts = {
       questionnaires: 0,
@@ -94,7 +90,33 @@ class QuestionnairePackageImportService
     }
   end
 
+  # Dry-run the package and return row-level actions without writing records.
+  def preview
+    questionnaire_rows, item_rows, question_advice_rows = parsed_rows
+    questionnaire_preview = preview_questionnaires(questionnaire_rows)
+    item_preview = preview_items(item_rows, questionnaire_preview)
+    advice_preview = preview_question_advices(question_advice_rows, questionnaire_preview, item_preview)
+
+    {
+      summary: preview_summary(questionnaire_preview, item_preview, advice_preview),
+      questionnaires: questionnaire_preview[:rows],
+      items: item_preview[:rows],
+      question_advices: advice_preview[:rows],
+      errors: questionnaire_preview[:errors] + item_preview[:errors] + advice_preview[:errors]
+    }
+  end
+
   private
+
+  def parsed_rows
+    csv_sources = resolve_csv_sources
+
+    [
+      parse_csv(csv_sources.fetch(:questionnaires), :questionnaires),
+      parse_csv(csv_sources[:items], :items),
+      parse_csv(csv_sources[:question_advices], :question_advices)
+    ]
+  end
 
   # Accept either the canonical zip or separate role-specific CSV uploads.
   def resolve_csv_sources
@@ -194,6 +216,157 @@ class QuestionnairePackageImportService
   # Tolerate common spreadsheet-export encoding issues.
   def normalize_csv_contents(contents)
     contents.to_s.force_encoding('UTF-8').encode('UTF-8', invalid: :replace, undef: :replace)
+  end
+
+  def preview_questionnaires(rows)
+    active_questionnaire_keys = Set.new
+    skipped_questionnaire_keys = Set.new
+    errors = []
+
+    preview_rows = rows.each_with_index.map do |row, index|
+      source_key = questionnaire_source_key(row['name'], row['instructor_name'])
+      instructor = Instructor.find_by(name: row['instructor_name'])
+      existing = instructor ? Questionnaire.find_by(name: row['name'], instructor_id: instructor.id) : nil
+      action = preview_questionnaire_action(existing)
+      error = instructor.nil? ? "Instructor '#{row['instructor_name']}' was not found." : nil
+
+      if error
+        errors << preview_error(:questionnaires, index, error)
+      elsif action == 'skip'
+        skipped_questionnaire_keys.add(source_key)
+      else
+        active_questionnaire_keys.add(source_key)
+      end
+
+      {
+        row: index + 2,
+        name: row['name'],
+        instructor_name: row['instructor_name'],
+        questionnaire_type: row['questionnaire_type'],
+        action: error ? 'error' : action,
+        duplicate: existing.present?,
+        message: error
+      }.compact
+    end
+
+    {
+      rows: preview_rows,
+      active_keys: active_questionnaire_keys,
+      skipped_keys: skipped_questionnaire_keys,
+      errors: errors
+    }
+  end
+
+  def preview_questionnaire_action(existing)
+    return 'create' if existing.nil?
+    return 'skip' if @duplicate_action.is_a?(SkipRecordAction)
+    return 'update' if @duplicate_action.is_a?(UpdateExistingRecordAction)
+
+    'create_copy'
+  end
+
+  def preview_items(rows, questionnaire_preview)
+    active_item_keys = Set.new
+    errors = []
+
+    preview_rows = rows.each_with_index.map do |row, index|
+      questionnaire_key = questionnaire_source_key(row['questionnaire_name'], row['questionnaire_instructor_name'])
+      item_key = item_source_key(row['questionnaire_name'], row['questionnaire_instructor_name'], row['seq'], row['txt'])
+      action, message, error = preview_item_state(row, questionnaire_key, questionnaire_preview)
+
+      if error
+        errors << preview_error(:items, index, error)
+      elsif action == 'create'
+        active_item_keys.add(item_key)
+      end
+
+      {
+        row: index + 2,
+        questionnaire_name: row['questionnaire_name'],
+        seq: row['seq'],
+        txt: row['txt'],
+        question_type: row['question_type'],
+        action: action,
+        message: message || error
+      }.compact
+    end
+
+    {
+      rows: preview_rows,
+      active_keys: active_item_keys,
+      errors: errors
+    }
+  end
+
+  def preview_item_state(row, questionnaire_key, questionnaire_preview)
+    if questionnaire_preview[:skipped_keys].include?(questionnaire_key)
+      return ['skip', "Questionnaire '#{row['questionnaire_name']}' will be skipped.", nil]
+    end
+
+    return ['create', nil, nil] if questionnaire_preview[:active_keys].include?(questionnaire_key)
+
+    ['error', nil, "Unable to resolve questionnaire '#{row['questionnaire_name']}'."]
+  end
+
+  def preview_question_advices(rows, questionnaire_preview, item_preview)
+    errors = []
+
+    preview_rows = rows.each_with_index.map do |row, index|
+      questionnaire_key = questionnaire_source_key(row['questionnaire_name'], row['questionnaire_instructor_name'])
+      item_key = item_source_key(row['questionnaire_name'], row['questionnaire_instructor_name'], row['item_seq'], row['item_txt'])
+      action, message, error = preview_advice_state(row, questionnaire_key, item_key, questionnaire_preview, item_preview)
+
+      errors << preview_error(:question_advices, index, error) if error
+
+      {
+        row: index + 2,
+        questionnaire_name: row['questionnaire_name'],
+        item_seq: row['item_seq'],
+        item_txt: row['item_txt'],
+        score: row['score'],
+        advice: row['advice'],
+        action: action,
+        message: message || error
+      }.compact
+    end
+
+    {
+      rows: preview_rows,
+      errors: errors
+    }
+  end
+
+  def preview_advice_state(row, questionnaire_key, item_key, questionnaire_preview, item_preview)
+    if questionnaire_preview[:skipped_keys].include?(questionnaire_key)
+      return ['skip', "Questionnaire '#{row['questionnaire_name']}' will be skipped.", nil]
+    end
+
+    return ['create', nil, nil] if item_preview[:active_keys].include?(item_key)
+
+    ['error', nil, "Unable to resolve item '#{row['item_txt']}'."]
+  end
+
+  def preview_summary(*previews)
+    rows = previews.flat_map { |preview| preview[:rows] }
+
+    {
+      questionnaires: previews[0][:rows].size,
+      items: previews[1][:rows].size,
+      question_advices: previews[2][:rows].size,
+      creates: rows.count { |row| %w[create create_copy].include?(row[:action]) },
+      updates: rows.count { |row| row[:action] == 'update' },
+      skips: rows.count { |row| row[:action] == 'skip' },
+      duplicates: rows.count { |row| row[:duplicate] },
+      errors: rows.count { |row| row[:action] == 'error' }
+    }
+  end
+
+  def preview_error(file, index, message)
+    {
+      file: file,
+      row: index + 2,
+      message: message
+    }
   end
 
   # Track imported questionnaires so dependent CSVs can attach to them.

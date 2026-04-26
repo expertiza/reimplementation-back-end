@@ -234,7 +234,9 @@ Rails.application.routes.draw do
       resources :questionnaire_packages, only: [] do
         collection do
           get :config, action: :package_config
+          get 'templates/:template_name', action: :template
           post :export
+          post :preview
           post :import
         end
       end
