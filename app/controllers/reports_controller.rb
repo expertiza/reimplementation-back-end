@@ -17,45 +17,23 @@ class ReportsController < ApplicationController
 
   # GET /assignments/:assignment_id/reports/calibration/:map_id
   #
-  # Returns the comparison data for a single instructor calibration review:
-  # the instructor's submitted response, the rubric items, the student
-  # calibration responses for the same reviewee, a per-item summary produced
-  # by CalibrationPerItemSummary, and the reviewee team's submitted content.
+  # Renders the calibration comparison report for one instructor map.
+  # All assembly logic (rubric items, student responses, per-item score
+  # histograms, submitted content) lives in Reports::CalibrationReport,
+  # which follows the iterator pattern from Reports::Base — responses are
+  # walked one at a time via find_each, never preloaded into an ad-hoc array.
   def calibration
     instructor_map = ReviewResponseMap.find_by!(
-      id: params[:map_id],
+      id:                 params[:map_id],
       reviewed_object_id: @assignment.id,
-      for_calibration: true
+      for_calibration:    true
     )
-
-    instructor_response = instructor_map.latest_submitted_response
-    return render_error('Submitted instructor calibration response not found', :unprocessable_entity) unless instructor_response
-
-    rubric_items = instructor_response.rubric_items
-    return render_error('Review rubric not found', :unprocessable_entity) if rubric_items.empty?
-
-    student_responses = ReviewResponseMap.peer_calibration_responses_for(instructor_map)
-
-    per_item_summary = CalibrationPerItemSummary.build(
-      items: rubric_items,
-      instructor_response: instructor_response,
-      student_responses: student_responses
-    )
-
-    reviewee = instructor_map.reviewee
-
-    render json: {
-      map_id: instructor_map.id,
-      assignment_id: @assignment.id,
-      reviewee_id: instructor_map.reviewee_id,
-      rubric_items: rubric_items.map(&:as_calibration_json),
-      instructor_response: instructor_response.as_calibration_json,
-      student_responses: student_responses.map(&:as_calibration_json),
-      per_item_summary: per_item_summary,
-      submitted_content: reviewee.respond_to?(:submitted_content) ? reviewee.submitted_content : { hyperlinks: [], files: [] }
-    }, status: :ok
+    render json: Reports::CalibrationReport.new(instructor_map).render, status: :ok
   rescue ActiveRecord::RecordNotFound
     render_error('Calibration review map not found', :not_found)
+  rescue Reports::CalibrationReport::InstructorResponseMissing,
+         Reports::CalibrationReport::RubricMissing => e
+    render_error(e.message, :unprocessable_entity)
   end
 
   private

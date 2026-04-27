@@ -1,6 +1,17 @@
 # frozen_string_literal: true
 
+# CalibrationPerItemSummary builds a per-rubric-item summary (score buckets +
+# instructor score) from a pre-fetched collection of Response objects.
+#
+# NOTE: This class is superseded for the HTTP report endpoint by
+# Reports::CalibrationReport, which uses an iterator-based pipeline
+# (Template Method pattern) so responses are never bulk-loaded into memory.
+# CalibrationPerItemSummary is retained for use by the calibration demo rake
+# task (lib/tasks/calibration_demo.rake), which works with small in-memory
+# arrays and does not need the streaming approach.
 class CalibrationPerItemSummary
+  # Convenience factory: constructs an instance and immediately calls build.
+  # Equivalent to `new(...).build`.
   def self.build(items:, instructor_response:, student_responses:)
     new(
       items: items,
@@ -15,11 +26,15 @@ class CalibrationPerItemSummary
     @student_responses = Array(student_responses).compact
   end
 
+  # Returns an Array of per-item summary hashes sorted by item sequence number.
+  # Each hash contains the instructor score, instructor comment, per-score
+  # bucket counts, and the number of student responses that contributed.
   def build
     instructor_answers = answers_by_item(@instructor_response)
     latest_student_responses = latest_submitted_student_responses
     student_answers = latest_student_responses.to_h { |response| [response.id, answers_by_item(response)] }
 
+    # Sort by seq so the caller receives items in rubric display order.
     @items.sort_by(&:seq).map do |item|
       {
         item_id: item.id,
@@ -35,6 +50,8 @@ class CalibrationPerItemSummary
 
   private
 
+  # For each calibration map, keep only the most recently updated submitted
+  # response. Older submitted versions and any drafts are discarded.
   def latest_submitted_student_responses
     @student_responses
       .select(&:is_submitted)
@@ -44,6 +61,8 @@ class CalibrationPerItemSummary
       .compact
   end
 
+  # Returns a Hash mapping item_id → Answer for all answers in the response,
+  # or {} when the response is nil (e.g. instructor has no response yet).
   def answers_by_item(response)
     return {} unless response
 
@@ -52,6 +71,9 @@ class CalibrationPerItemSummary
     end
   end
 
+  # Tallies how many student responses scored each possible value for `item`.
+  # Returns a Hash of { score_string => count } covering every integer in the
+  # questionnaire's min..max range so the caller always gets a full histogram.
   def bucket_counts_for(item, responses, answers_by_response)
     buckets = score_range_for(item).each_with_object({}) do |score, counts|
       counts[score.to_s] = 0
