@@ -1,3 +1,13 @@
+# ReviewMappingHandler contains the **business logic** for creating, deleting,
+# and managing ReviewResponseMap records on an assignment. It is deliberately
+# separate from ReviewMappingsController (the HTTP layer): the controller
+# parses params, authorises the request, and renders JSON; the handler
+# performs the actual domain work using pluggable Strategy objects.
+#
+# Strategy classes live in ReviewMappingStrategies/ and encapsulate the
+# pairing algorithm (round-robin, random, CSV, topic-fair, etc.). The handler
+# is not tied to any particular strategy — it just calls
+# `strategy.each_review_pair` and creates the resulting maps.
 class ReviewMappingHandler
   DEFAULT_OUTSTANDING_LIMIT = 2
 

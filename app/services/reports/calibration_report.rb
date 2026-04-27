@@ -31,6 +31,11 @@ module Reports
       @rubric_items = @instructor_response.rubric_items
       raise RubricMissing, 'Review rubric not found' if @rubric_items.empty?
 
+      # @bucket_counts is a two-level Hash:
+      #   { item_id => { "0" => count, "1" => count, ..., "N" => count } }
+      # The inner Hash covers every integer in the questionnaire's score range so
+      # the presenter always receives a complete histogram (zero-filled buckets
+      # included) without needing to know the min/max score.
       @bucket_counts     = empty_buckets_for(@rubric_items)
       @student_responses = []
     end
@@ -71,15 +76,16 @@ module Reports
 
     def empty_buckets_for(items)
       items.each_with_object({}) do |item, hash|
-        min = item.questionnaire&.min_question_score.to_i
-        max = item.questionnaire&.max_question_score.to_i
-        max = min + 5 if max <= min
-        hash[item.id] = (min..max).each_with_object({}) { |score, b| b[score.to_s] = 0 }
+        # Delegate the valid score range to the Questionnaire (Information Expert).
+        # The fallback to class-level defaults lives in Questionnaire#score_range,
+        # not here, so calibration code does not carry knowledge of score bounds.
+        range = item.questionnaire&.score_range || (0..5)
+        hash[item.id] = range.each_with_object({}) { |score, b| b[score.to_s] = 0 }
       end
     end
 
     def per_item_summary(item)
-      instructor_answer = @instructor_response.scores.find { |a| a.item_id == item.id }
+      instructor_answer = @instructor_response.answer_for(item)
       {
         item_id:                item.id,
         item_label:             item.txt,

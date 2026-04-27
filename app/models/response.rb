@@ -62,6 +62,13 @@ class Response < ApplicationRecord
     sum
   end
 
+  # Returns the Answer this response recorded for a specific rubric item, or
+  # nil if no answer was given. Centralises item-lookup here (Information Expert)
+  # so callers don't scatter `scores.find { |a| a.item_id == item.id }` everywhere.
+  def answer_for(item)
+    scores.find { |a| a.item_id == item.id }
+  end
+
   # Ordered rubric items used for this response, or [] if the rubric cannot be
   # resolved (e.g. no AssignmentQuestionnaire for this round). Belongs here
   # rather than in a controller because the response knows which questionnaire

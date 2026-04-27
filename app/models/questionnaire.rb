@@ -85,6 +85,16 @@ class Questionnaire < ApplicationRecord
 
     DEFAULT_MIN_QUESTION_SCORE = 0  # The lowest score that a reviewer can assign to any questionnaire question
     DEFAULT_MAX_QUESTION_SCORE = 5  # The highest score that a reviewer can assign to any questionnaire question
+
+    # Returns the integer Range of valid scores for this questionnaire's items,
+    # falling back to the class-level defaults when the DB columns are unset.
+    # Consumers (e.g. report histogram builders) should call this rather than
+    # hard-coding the 0..5 range themselves.
+    def score_range
+      min = (min_question_score || DEFAULT_MIN_QUESTION_SCORE).to_i
+      max = (max_question_score || DEFAULT_MAX_QUESTION_SCORE).to_i
+      min..max
+    end
     DEFAULT_QUESTIONNAIRE_URL = 'http://www.courses.ncsu.edu/csc517'.freeze
     QUESTIONNAIRE_TYPES = ['ReviewQuestionnaire',
                           'MetareviewQuestionnaire',
