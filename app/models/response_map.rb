@@ -45,7 +45,7 @@ class ResponseMap < ApplicationRecord
 
     # Check if a later review round has passed since the last submitted review
     last_round = (response_supports_round?(last) ? last.round : 0).to_i
-    curr_round = current_round_from_due_dates.to_i
+    curr_round = current_round.to_i
     return true if curr_round.positive? && curr_round > last_round
 
     false
@@ -103,8 +103,8 @@ class ResponseMap < ApplicationRecord
     candidates.compact.max
   end
 
-  # Delegate round inference to DueDate to keep one consistent rule in one class.
-  def current_round_from_due_dates
+  # Returns the current review round for this map's assignment.
+  def current_round
     DueDate.current_round_number_for(assignment)
   end
 
