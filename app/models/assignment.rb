@@ -76,6 +76,53 @@ class Assignment < ApplicationRecord
   end
 
 
+  # ===== CALIBRATION PARTICIPANT MANAGEMENT =====
+
+  # Idempotent version of add_participant: returns the existing
+  # AssignmentParticipant if one already exists, otherwise creates one.
+  # Used by calibration flows where a user may already be a participant
+  # (e.g. the instructor, or a re-added submitter).
+  def find_or_add_participant!(user)
+    AssignmentParticipant.find_by(parent_id: id, user_id: user.id) || add_participant(user.id)
+  end
+
+  # Orchestrates adding a calibration submitter in one atomic transaction:
+  #   1. Ensure the user is an AssignmentParticipant (idempotent).
+  #   2. Ensure the user has a team (creates an AssignmentTeam if not).
+  #   3. Ensure the instructor is an AssignmentParticipant (idempotent).
+  #   4. Find or create the for_calibration ReviewResponseMap (instructor → team).
+  #
+  # Returns the JSON row hash for the new calibration participant, ready to
+  # render directly from the controller.
+  def add_calibration_submitter!(user)
+    ActiveRecord::Base.transaction do
+      submitter    = find_or_add_participant!(user)
+      team         = AssignmentTeam.team(submitter) || Team.create_team_for_participant(submitter)
+      instructor_p = find_or_add_participant!(instructor)
+      map = ReviewResponseMap.find_or_create_by!(
+        reviewer_id:        instructor_p.id,
+        reviewee_id:        team.id,
+        reviewed_object_id: id,
+        for_calibration:    true
+      )
+      map.calibration_participant_json(instructor_user_id: instructor_id)
+    end
+  end
+
+  # Returns the list of calibration participant rows for the assignment editor's
+  # Calibration tab. Delegates query + serialization to ReviewResponseMap so
+  # the controller stays a thin delegate.
+  def calibration_participant_rows
+    ReviewResponseMap
+      .calibration_for(self)
+      .order(:id)
+      .group_by(&:reviewee_id)
+      .filter_map do |_team_id, team_maps|
+        instructor_map = team_maps.find { |m| m.reviewer&.user_id == instructor_id } || team_maps.first
+        instructor_map.calibration_participant_json(instructor_user_id: instructor_id)
+      end
+  end
+
   # Remove a participant from the assignment based on the provided user_id.
   # This method finds the AssignmentParticipant with the given assignment_id and user_id,
   # and then deletes the corresponding record from the database.
