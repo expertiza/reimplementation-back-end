@@ -5,10 +5,30 @@ class QuizResponseMapsController < ApplicationController
     true
   end
 
+  # Finds or creates a {QuizResponseMap} for a student on a given assignment,
+  # then returns the map ID and related IDs needed by the frontend to navigate
+  # to the quiz form.
+  #
+  # The quiz questionnaire is resolved from the reviewee team's
+  # +quiz_questionnaire_id+. Callers should always supply +reviewee_team_id+
+  # so that students reviewing multiple teams receive the correct team's quiz.
+  # When +reviewee_team_id+ is absent the controller falls back to the
+  # reviewer's first {ReviewResponseMap}, which is ambiguous for multi-team
+  # assignments.
+  #
+  # A {QuizResponseMap} has +reviewer_id == reviewee_id+ (both pointing to the
+  # reviewer's own {AssignmentParticipant} record) to signal a self-review /
+  # quiz context throughout the scoring pipeline.
+  #
+  # @param assignment_id [Integer] the assignment the quiz belongs to
+  # @param reviewer_user_id [Integer] the user ID of the student taking the quiz
+  # @param reviewee_team_id [Integer, nil] the team whose quiz should be taken
+  # @return [201] +{ quiz_map_id, quiz_questionnaire_id, reviewer_participant_id }+
+  # @return [400] if +assignment_id+ or +reviewer_user_id+ are missing
+  # @return [404] if the assignment cannot be found
+  # @return [422] if no quiz questionnaire exists for the reviewee team,
+  #               or if the map cannot be persisted
   # POST /quiz_response_maps
-  # Finds or creates a QuizResponseMap for the current student on a given assignment.
-  # Params: { assignment_id, reviewer_user_id, reviewee_team_id (preferred) }
-  # Returns: { quiz_map_id, quiz_questionnaire_id, reviewer_participant_id }
   def create
     assignment_id    = params[:assignment_id].to_i
     reviewer_user_id = params[:reviewer_user_id].to_i

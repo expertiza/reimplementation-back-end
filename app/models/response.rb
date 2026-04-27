@@ -81,6 +81,25 @@ class Response < ApplicationRecord
     (average_score - score).abs * 100 > allowed_difference_percentage
   end
 
+  # Computes the total points earned for all answers on this response.
+  #
+  # For regular peer-review responses, each {Answer} contributes
+  # <tt>answer.answer * item.weight</tt> when the numeric answer is non-nil.
+  #
+  # For quiz responses (identified by +reviewer_id == reviewee_id+ on the
+  # associated {ResponseMap}), quiz item types store the student's selection
+  # in the +comments+ column rather than the numeric +answer+ column.
+  # These items are scored by case-insensitive string equality against
+  # {Item#correct_answer}; a correct answer awards <tt>item.weight</tt> points
+  # and an incorrect/blank answer awards 0.
+  #
+  # Supported quiz item types (both spaced and CamelCase variants are
+  # accepted because the frontend historically used both conventions):
+  # * <tt>"Text field"</tt> / <tt>"TextField"</tt>
+  # * <tt>"Multiple choice"</tt> / <tt>"MultipleChoiceRadio"</tt>
+  # * <tt>"Multiple choice checkbox"</tt> / <tt>"MultipleChoiceCheckbox"</tt>
+  #
+  # @return [Integer] the total raw score earned across all answers
   def aggregate_questionnaire_score
     # only count the scorable items, only when the answer is not nil
     # we accept nil as answer for scorable items, and they will not be counted towards the total score
@@ -89,11 +108,18 @@ class Response < ApplicationRecord
     # themselves). The response_maps table has no STI type column so is_a?(QuizResponseMap)
     # always returns false; this is the only reliable discriminator.
     is_quiz = map.reviewer_id == map.reviewee_id
+    # E2619: The frontend stores question types with spaces ("Text field", "Multiple choice",
+    # "Multiple choice checkbox"). Include both the spaced and CamelCase variants so scoring
+    # works regardless of which convention was used when the quiz was created.
+    comment_scored_types = %w[
+      TextField MultipleChoiceRadio MultipleChoiceCheckbox
+      Text\ field Multiple\ choice Multiple\ choice\ checkbox
+    ].freeze
     scores.each do |s|
       # E2619: TextField, MultipleChoiceRadio, and MultipleChoiceCheckbox quiz items put
       # the student's selected/typed answer into the comments column (answer is null).
       # Score them by case-insensitive equality against item.correct_answer.
-      if is_quiz && %w[TextField MultipleChoiceRadio MultipleChoiceCheckbox].include?(s.item.question_type)
+      if is_quiz && comment_scored_types.include?(s.item.question_type)
         correct = s.item.correct_answer.to_s.strip.downcase
         student_answer = s.comments.to_s.strip.downcase
         sum += (student_answer == correct && correct.present? ? 1 : 0) * (s.item.weight || 1)
@@ -104,15 +130,34 @@ class Response < ApplicationRecord
     sum
   end
 
-  # Returns the maximum possible score for this response
+  # Returns the maximum possible score for this response.
+  #
+  # For regular peer-review responses, only answers whose numeric +answer+
+  # field is non-nil contribute to the maximum, mirroring the behaviour of
+  # {#aggregate_questionnaire_score}.
+  #
+  # For quiz responses (identified by +reviewer_id == reviewee_id+ on the
+  # associated {ResponseMap}), comment-scored item types (see
+  # {#aggregate_questionnaire_score}) always contribute to the maximum
+  # regardless of whether the student provided an answer, because quiz items
+  # never populate the numeric +answer+ column.
+  #
+  # The total accumulated weight is multiplied by the questionnaire's
+  # +max_question_score+ to obtain the ceiling score.
+  #
+  # @return [Integer] the maximum achievable score for this response
   def maximum_score
     total_weight = 0
     # E2619: same quiz discriminator as aggregate_questionnaire_score.
     is_quiz = map.reviewer_id == map.reviewee_id
+    comment_scored_types = %w[
+      TextField MultipleChoiceRadio MultipleChoiceCheckbox
+      Text\ field Multiple\ choice Multiple\ choice\ checkbox
+    ].freeze
     scores.each do |s|
       # E2619: comment-based quiz items have a null answer but still occupy a scoring slot,
       # so they must be counted in the maximum regardless of whether the student answered.
-      if is_quiz && %w[TextField MultipleChoiceRadio MultipleChoiceCheckbox].include?(s.item.question_type)
+      if is_quiz && comment_scored_types.include?(s.item.question_type)
         total_weight += (s.item.weight || 1)
       else
         total_weight += (s.item.weight || 1) unless s.answer.nil?

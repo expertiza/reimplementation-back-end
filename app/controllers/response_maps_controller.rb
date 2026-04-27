@@ -5,10 +5,21 @@ class ResponseMapsController < ApplicationController
     true
   end
 
+  # Returns all peer-review response maps for a reviewer, excluding quiz maps.
+  #
+  # Quiz response maps (where +reviewer_id == reviewee_id+) are filtered out so
+  # the frontend only receives genuine peer-review assignments. Each entry also
+  # carries per-map quiz state (+quiz_taken+, +quiz_questionnaire_id+) so the
+  # frontend can gate the "Start Review" button row-by-row without a second
+  # request.
+  #
+  # @param reviewer_user_id [Integer] required; the user whose maps are fetched
+  # @param assignment_id [Integer, nil] optional; scopes results to one assignment
+  # @return [200] +{ response_maps: [...] }+ each entry contains id, team/assignment
+  #   names, quiz state, and the latest {Response} summary if one exists
+  # @return [400] if +reviewer_user_id+ is missing
   # GET /response_maps?reviewer_user_id=4
   # GET /response_maps?assignment_id=1&reviewer_user_id=4
-  # Returns all response maps for a given reviewer user (optionally scoped to one assignment),
-  # along with the latest response (draft or submitted) for each map.
   def index
     assignment_id    = params[:assignment_id].present? ? params[:assignment_id].to_i : nil
     reviewer_user_id = params[:reviewer_user_id].to_i
@@ -85,10 +96,18 @@ class ResponseMapsController < ApplicationController
     render json: { response_maps: result }, status: :ok
   end
 
+  # Finds or creates a {ReviewResponseMap} linking a reviewer to a reviewee
+  # team for the given assignment. Also ensures the reviewer has an
+  # {AssignmentParticipant} record and sets +can_review+ and +can_take_quiz+
+  # flags so the student task page shows the quiz requirement.
+  #
+  # @param assignment_id [Integer] the assignment being reviewed
+  # @param reviewer_user_id [Integer] the user who will perform the review
+  # @param reviewee_team_id [Integer] the team being reviewed
+  # @return [201] the map and participant IDs
+  # @return [400] if any required parameter is missing
+  # @return [422] if the map or participant cannot be persisted
   # POST /response_maps
-  # Finds or creates a ReviewResponseMap for the given assignment, reviewer user, and reviewee team.
-  # Params: { assignment_id, reviewer_user_id, reviewee_team_id }
-  # Returns: { id, reviewer_id, reviewee_id, reviewed_object_id, reviewer_participant_id }
   def create
     assignment_id    = params[:assignment_id].to_i
     reviewer_user_id = params[:reviewer_user_id].to_i

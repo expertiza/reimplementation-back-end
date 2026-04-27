@@ -1,11 +1,32 @@
 # frozen_string_literal: true
 
+# Plain Ruby object (not an ActiveRecord model) that aggregates assignment,
+# stage, and quiz state for a single student participant.
+#
+# Each instance is built from an {AssignmentParticipant} and is serialised
+# directly to the student tasks API response. The quiz-related fields
+# (+require_quiz+, +quiz_taken+, +has_quiz_questionnaire+,
+# +quiz_questionnaire_id+) were added to enable the frontend to gate the
+# "Start Review" button behind a mandatory quiz.
 class StudentTask
   attr_accessor :assignment, :assignment_id, :current_stage, :participant,
                 :stage_deadline, :topic, :permission_granted,
                 :require_quiz, :quiz_taken, :has_quiz_questionnaire, :quiz_questionnaire_id
 
-  # Initializes a new instance of the StudentTask class
+  # Initialises a new StudentTask from an argument hash.
+  #
+  # @param args [Hash] keyword arguments
+  # @option args [String] :assignment human-readable assignment name
+  # @option args [Integer] :assignment_id numeric assignment ID
+  # @option args [String] :current_stage the participant's current workflow stage
+  # @option args [Participant] :participant the underlying {Participant} record
+  # @option args [Time] :stage_deadline deadline for the current stage
+  # @option args [Topic, nil] :topic the signup topic, if any
+  # @option args [Boolean] :permission_granted whether publishing rights are granted
+  # @option args [Boolean] :require_quiz whether the assignment mandates a quiz before reviewing
+  # @option args [Boolean] :quiz_taken whether the student has already submitted the quiz
+  # @option args [Boolean] :has_quiz_questionnaire whether a quiz questionnaire exists for the reviewee team
+  # @option args [Integer, nil] :quiz_questionnaire_id ID of the quiz questionnaire, or nil
   def initialize(args)
     @assignment        = args[:assignment]
     @assignment_id     = args[:assignment_id]
@@ -20,7 +41,17 @@ class StudentTask
     @quiz_questionnaire_id   = args[:quiz_questionnaire_id]
   end
 
-  # Creates a new StudentTask instance from a Participant object.
+  # Builds a {StudentTask} from a {Participant} record.
+  #
+  # Resolves the reviewee team via the participant's {ReviewResponseMap} and
+  # reads +quiz_questionnaire_id+ directly from the team record. A quiz is
+  # considered "taken" when a submitted {Response} exists on the corresponding
+  # {QuizResponseMap}.
+  #
+  # Returns +nil+ if the participant has no associated assignment.
+  #
+  # @param participant [Participant] the participant to build from
+  # @return [StudentTask, nil]
   def self.create_from_participant(participant)
     asgn = participant.assignment
     return nil if asgn.nil?
@@ -61,18 +92,33 @@ class StudentTask
     )
   end
 
-  # Creates an array of StudentTask instances for all participants linked to a user, sorted by deadline.
+  # Returns all {StudentTask} objects for a user, sorted by +stage_deadline+.
+  #
+  # Participants with no assignment (returning +nil+ from
+  # {create_from_participant}) are silently dropped via +filter_map+.
+  #
+  # @param user [User] the student user
+  # @return [Array<StudentTask>]
   def self.from_user(user)
     Participant.where(user_id: user.id)
                .filter_map { |participant| create_from_participant(participant) }
                .sort_by(&:stage_deadline)
   end
 
-  # Creates a StudentTask instance from a participant of the provided id.
+  # Builds a {StudentTask} from a participant looked up by its primary key.
+  #
+  # @param id [Integer] the {Participant} ID
+  # @return [StudentTask, nil]
   def self.from_participant_id(id)
     create_from_participant(Participant.find_by(id: id))
   end
 
+  # Serialises the task to a plain Hash for JSON API responses.
+  #
+  # All quiz-related fields are included so the frontend can determine
+  # whether to show the quiz gate without additional requests.
+  #
+  # @return [Hash]
   def as_json(_options = {})
     {
       assignment:         @assignment,
@@ -91,7 +137,13 @@ class StudentTask
 
   private
 
-  # Parses a date string to a Time object; falls back to one year from now on failure.
+  # Parses a deadline string into a {Time} object.
+  #
+  # Falls back to one year from now when the string cannot be parsed so that
+  # sorting tasks never raises an error on malformed deadline data.
+  #
+  # @param date_string [String, nil] the deadline string to parse
+  # @return [Time]
   def self.parse_stage_deadline(date_string)
     Time.parse(date_string)
   rescue StandardError

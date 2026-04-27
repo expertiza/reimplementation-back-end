@@ -94,6 +94,14 @@ class QuestionnairesController < ApplicationController
 
   private
 
+  # Strong-parameters allowlist for questionnaire create/update.
+  #
+  # +:correct_answer+ is included in the nested +items_attributes+ allowlist so
+  # that quiz item correct answers submitted via the questionnaire editor are
+  # persisted. The {Item} model's {Item#correct_answer_only_for_quiz} validation
+  # ensures this value is rejected for non-quiz questionnaire types.
+  #
+  # @return [ActionController::Parameters] the permitted parameters
   def questionnaire_params
     params.require(:questionnaire).permit(:name, :questionnaire_type, :private,
                                          :min_question_score, :max_question_score, :instructor_id,
