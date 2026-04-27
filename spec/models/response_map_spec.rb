@@ -3,7 +3,7 @@ require 'rails_helper'
 require 'securerandom'
 
 RSpec.describe ResponseMap, type: :model do
-  describe '#needs_update_link?' do
+  describe '#has_submission_been_updated?' do
     def create_role(label)
       Role.create!(name: "#{label} #{SecureRandom.hex(4)}")
     end
@@ -85,41 +85,41 @@ RSpec.describe ResponseMap, type: :model do
     end
 
     it 'returns true when no submitted response exists yet' do
-      expect(response_map.needs_update_link?).to be true
+      expect(response_map.has_submission_been_updated?).to be true
     end
 
     it 'returns false when the last submitted response is the most recent activity' do
       Response.create!(map_id: response_map.id, is_submitted: true, created_at: response_time, updated_at: response_time)
 
-      expect(response_map.needs_update_link?).to be false
+      expect(response_map.has_submission_been_updated?).to be false
     end
 
     it 'returns true when the reviewee participant updates after the last submitted response' do
       Response.create!(map_id: response_map.id, is_submitted: true, created_at: response_time, updated_at: response_time)
       reviewee_participant.update_column(:updated_at, response_time + 2.days)
 
-      expect(response_map.needs_update_link?).to be true
+      expect(response_map.has_submission_been_updated?).to be true
     end
 
     it 'returns true when the reviewee team updates after the last submitted response' do
       Response.create!(map_id: response_map.id, is_submitted: true, created_at: response_time, updated_at: response_time)
       team.update_column(:updated_at, response_time + 2.days)
 
-      expect(response_map.needs_update_link?).to be true
+      expect(response_map.has_submission_been_updated?).to be true
     end
 
     it 'returns true when teams_participants updates after the last submitted response' do
       Response.create!(map_id: response_map.id, is_submitted: true, created_at: response_time, updated_at: response_time)
       teams_participant_record.update_column(:updated_at, response_time + 2.days)
 
-      expect(response_map.needs_update_link?).to be true
+      expect(response_map.has_submission_been_updated?).to be true
     end
 
     it 'ignores newer drafts when deciding update vs edit' do
       Response.create!(map_id: response_map.id, is_submitted: true, created_at: response_time, updated_at: response_time, round: 1)
       Response.create!(map_id: response_map.id, is_submitted: false, created_at: response_time + 2.days, updated_at: response_time + 2.days, round: 1)
 
-      expect(response_map.needs_update_link?).to be false
+      expect(response_map.has_submission_been_updated?).to be false
     end
 
     it 'returns true when a later review round has passed since the last response' do
@@ -141,7 +141,7 @@ RSpec.describe ResponseMap, type: :model do
         round: 2
       )
 
-      expect(response_map.needs_update_link?).to be true
+      expect(response_map.has_submission_been_updated?).to be true
     end
   end
 end

@@ -30,16 +30,16 @@ class ResponseMap < ApplicationRecord
     reviewer_assignment
   end
 
-  # Decide whether the reviewer should see an "Update" button (something new to review)
-  # or the default "Edit" button (no changes since the last submitted review).
-  def needs_update_link?
+  # Returns true when the submission changed since the last submitted review,
+  # or when the review round changed. True means show "Update"; false means show "Edit".
+  def has_submission_been_updated?
     # Most recent submitted review for this mapping
     last = Response.where(map_id: id, is_submitted: true).order(Arel.sql('created_at DESC')).first
     return true if last.nil?
 
     last_created_at = last.created_at
 
-    #  Latest time the reviewee (or their team) made a submission
+    # Latest time the reviewee (or their team) made a submission
     latest_submission = latest_submission_at_for_reviewee
     return true if latest_submission.present? && latest_submission > last_created_at
 
@@ -127,5 +127,4 @@ class ResponseMap < ApplicationRecord
   def team_exposes_memberships?(team_record)
     team_record.respond_to?(:teams_participants)
   end
-
 end
