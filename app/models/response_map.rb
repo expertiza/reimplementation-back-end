@@ -44,7 +44,7 @@ class ResponseMap < ApplicationRecord
     return true if latest_submission.present? && latest_submission > last_created_at
 
     # Check if a later review round has passed since the last submitted review
-    last_round = (response_exposes_round?(last) ? last.round : 0).to_i
+    last_round = (response_supports_round?(last) ? last.round : 0).to_i
     curr_round = current_round_from_due_dates.to_i
     return true if curr_round.positive? && curr_round > last_round
 
@@ -88,12 +88,12 @@ class ResponseMap < ApplicationRecord
     candidates << reviewee.updated_at if record_has_updated_timestamp?(reviewee)
 
     # Check team-related timestamps if the reviewee has a team
-    if reviewee_exposes_team?(reviewee)
+    if reviewee_has_team?(reviewee)
       team = reviewee.team
       candidates << team.updated_at if record_has_updated_timestamp?(team)
 
       # Also gather timestamps from join records (teams_participants) so collaborator edits count as activity
-      if team_exposes_memberships?(team)
+      if team_supports_memberships?(team)
         team.teams_participants.each do |tp|
           candidates << tp.updated_at if record_has_updated_timestamp?(tp)
         end
@@ -111,7 +111,7 @@ class ResponseMap < ApplicationRecord
   private
 
   # Older subclasses can omit this reader, so guard before accessing it.
-  def response_exposes_round?(response)
+  def response_supports_round?(response)
     response.respond_to?(:round, true)
   end
 
@@ -120,11 +120,11 @@ class ResponseMap < ApplicationRecord
     record.respond_to?(:updated_at) && record.updated_at.present?
   end
 
-  def reviewee_exposes_team?(reviewee_record)
+  def reviewee_has_team?(reviewee_record)
     reviewee_record.respond_to?(:team) && reviewee_record.team.present?
   end
 
-  def team_exposes_memberships?(team_record)
+  def team_supports_memberships?(team_record)
     team_record.respond_to?(:teams_participants)
   end
 end
