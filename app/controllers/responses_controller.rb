@@ -93,19 +93,20 @@ class ResponsesController < ApplicationController
       return false
     end
 
-    team_participant = TeamsParticipant.find_by(participant_id: participant.id)
-    unless team_participant
+    context = StudentTask.resolve_context_for_participant(participant)
+    unless context
       render json: { error: "TeamsParticipant not found for reviewer" }, status: :forbidden
       return false
     end
 
-    queue = TaskOrdering::TaskQueue.new(participant.assignment, team_participant)
-    unless queue.map_in_queue?(map.id)
+    tasks = StudentTask.build_tasks(context)
+    current_task = StudentTask.find_task_for_map(tasks, map.id)
+    unless current_task
       render json: { error: "Response map is not a respondable task for this participant" }, status: :forbidden
       return false
     end
 
-    unless queue.prior_tasks_complete_for?(map.id)
+    unless StudentTask.prior_tasks_complete?(tasks, current_task)
       render json: { error: "Complete previous task first" }, status: :precondition_failed
       return false
     end
