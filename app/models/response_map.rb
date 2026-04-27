@@ -44,7 +44,7 @@ class ResponseMap < ApplicationRecord
     return true if latest_submission.present? && latest_submission > last_created_at
 
     # Check if a later review round has passed since the last submitted review
-    last_round = (response_supports_round?(last) ? last.round : 0).to_i
+    last_round = last.round.to_i
     curr_round = current_round.to_i
     return true if curr_round.positive? && curr_round > last_round
 
@@ -85,18 +85,16 @@ class ResponseMap < ApplicationRecord
     return nil unless reviewee
 
     candidates = []
-    candidates << reviewee.updated_at if record_has_updated_timestamp?(reviewee)
+    candidates << reviewee.updated_at
 
     # Check team-related timestamps if the reviewee has a team
-    if reviewee_has_team?(reviewee)
+    if reviewee.team.present?
       team = reviewee.team
-      candidates << team.updated_at if record_has_updated_timestamp?(team)
+      candidates << team.updated_at
 
       # Also gather timestamps from join records (teams_participants) so collaborator edits count as activity
-      if team_supports_memberships?(team)
-        team.teams_participants.each do |tp|
-          candidates << tp.updated_at if record_has_updated_timestamp?(tp)
-        end
+      team.teams_participants.each do |tp|
+        candidates << tp.updated_at
       end
     end
 
@@ -108,23 +106,40 @@ class ResponseMap < ApplicationRecord
     DueDate.current_round_number_for(assignment)
   end
 
-  private
-
-  # Older subclasses can omit this reader, so guard before accessing it.
-  def response_supports_round?(response)
-    response.respond_to?(:round, true)
-  end
-
-  # Some legacy records may not expose updated_at.
-  def record_has_updated_timestamp?(record)
-    record.respond_to?(:updated_at) && record.updated_at.present?
-  end
-
-  def reviewee_has_team?(reviewee_record)
-    reviewee_record.respond_to?(:team) && reviewee_record.team.present?
-  end
-
-  def team_supports_memberships?(team_record)
-    team_record.respond_to?(:teams_participants)
-  end
+  # Reference note:
+  # The active implementation uses direct attribute/association access
+  # because the current schema and models already guarantee the fields used above:
+  # Response has `round` and `updated_at`, Participant has `updated_at` and `team`,
+  # Team has `updated_at` and `teams_participants`, and TeamsParticipant has `updated_at`.
+  # That makes the defensive `respond_to?` guards unnecessary in the current backend.
+  #
+  # Kept the older defensive helpers below as commented reference code in case support is
+  # needed later for partially migrated objects, alternate subclasses, or compatibility
+  # code that may not expose these readers consistently.
+  #
+  # private
+  #
+  # # Returns true when a response object exposes the `round` reader used by
+  # # `has_submission_been_updated?` while comparing the saved review round.
+  # def response_supports_round?(response)
+  #   response.respond_to?(:round, true)
+  # end
+  #
+  # # Returns true when a record has a usable `updated_at` timestamp for activity tracking
+  # # in `latest_submission_at_for_reviewee`.
+  # def record_has_updated_timestamp?(record)
+  #   record.respond_to?(:updated_at) && record.updated_at.present?
+  # end
+  #
+  # # Returns true when the reviewee exposes a `team` association and that association is present.
+  # # This is related to checking team activity in `latest_submission_at_for_reviewee`.
+  # def reviewee_has_team?(reviewee_record)
+  #   reviewee_record.respond_to?(:team) && reviewee_record.team.present?
+  # end
+  #
+  # # Returns true when a team exposes the `teams_participants` association used to inspect
+  # # collaborator membership timestamps in `latest_submission_at_for_reviewee`.
+  # def team_supports_memberships?(team_record)
+  #   team_record.respond_to?(:teams_participants)
+  # end
 end
