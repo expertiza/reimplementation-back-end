@@ -1,6 +1,6 @@
 
 require 'rails_helper'
-describe Questionnaire, type: :model do
+describe QuestionAdvice, type: :model do
 
     before do
         allow_any_instance_of(User).to receive(:set_defaults)
