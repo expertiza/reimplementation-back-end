@@ -62,7 +62,7 @@ RSpec.describe "Export API", type: :request do
       export_return = [{ name: "FakeModel", contents: "csv_without_ordering" }]
 
       expect(Export).to receive(:perform)
-                          .with(FakeModel, nil, graph_export: false)
+                          .with(FakeModel, nil)
                           .and_return(export_return)
 
       post "/export/FakeModel"
@@ -70,23 +70,6 @@ RSpec.describe "Export API", type: :request do
       expect(response).to have_http_status(:ok)
       json = JSON.parse(response.body)
       expect(json["file"]).to eq([{ "name" => "FakeModel", "contents" => "csv_without_ordering" }])
-    end
-
-    it "passes graph_export when requested" do
-      export_return = [{ name: "FakeModel", contents: "graph_csv_data" }]
-
-      expect(Export).to receive(:perform)
-                          .with(FakeModel, ["id"], graph_export: true)
-                          .and_return(export_return)
-
-      post "/export/FakeModel", params: {
-        ordered_fields: ["id"].to_json,
-        graph_export: "true"
-      }
-
-      expect(response).to have_http_status(:ok)
-      json = JSON.parse(response.body)
-      expect(json["file"]).to eq([{ "name" => "FakeModel", "contents" => "graph_csv_data" }])
     end
 
     it "returns 422 if constantize fails" do
