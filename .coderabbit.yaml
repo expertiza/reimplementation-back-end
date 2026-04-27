@@ -6,6 +6,11 @@ reviews:
   profile: "chill"
   request_changes_workflow: false
   high_level_summary: true
+  high_level_summary_instructions: >
+    Evaluate this pull request against the legacy Expertiza Danger policy as well as normal Rails review quality.
+    Call out violations in pull request size, file scope, work-in-progress titles, TODO/FIXME markers,
+    debug statements, missing tests, schema-without-migration changes, config-file churn, vendor/factory changes,
+    and shallow RSpec patterns.
   review_status: true
   review_details: true
   commit_status: true
@@ -84,11 +89,22 @@ reviews:
       instructions: |
         Check that model specs cover validations, associations, callbacks, and important edge cases
         with meaningful assertions instead of shallow examples.
+        Also apply the legacy Danger policy: discourage `create(` in unit tests when `build` or doubles are enough,
+        reject `.should`, skipped/focused specs, wildcard matcher overuse, missing expectations, matcher-less expectations,
+        and expectations that only prove values are not nil, empty, or zero.
+
+    - path: "spec/controllers/**/*.rb"
+      instructions: |
+        Apply the same legacy RSpec policy used in Expertiza Danger checks:
+        avoid `create(` when lighter test setup would work, avoid `.should`,
+        avoid skipped/focused specs, and flag shallow controller expectations.
 
     - path: "spec/requests/**/*.rb"
       instructions: |
         Check authentication, authorization, invalid input, response payload assertions, and failure cases.
         When endpoints change, expect Swagger docs to stay aligned.
+        Apply the legacy shallow-test rules: each new test should have a meaningful expectation,
+        avoid commented-out expectations, and do not rely only on page content or non-nil checks.
 
     - path: "swagger/**/*.yml"
       instructions: |
@@ -101,8 +117,46 @@ reviews:
 
     - path: "Dangerfile"
       instructions: |
-        Preserve project-specific review policy. If replacing a Danger rule, verify the equivalent behavior exists
-        in CodeRabbit, GitHub Actions, or another documented enforcement path.
+        Preserve the legacy Expertiza Danger policy. If replacing or changing a Danger rule,
+        verify the equivalent behavior exists in CodeRabbit, GitHub Actions, or another documented enforcement path.
+
+    - path: "Gemfile"
+      instructions: |
+        Non-maintainer Gemfile changes should be scrutinized closely. Prefer existing gems when possible
+        and call out dependency additions or lockfile churn without strong justification.
+
+    - path: "Gemfile.lock"
+      instructions: |
+        Flag lockfile-only churn, IDE-generated noise, or dependency graph changes that are not explained in the PR.
+
+    - path: "*.md"
+      instructions: |
+        Non-maintainer documentation changes should be questioned unless they are clearly part of the intended work.
+
+    - path: "*.yml"
+      instructions: |
+        Treat YAML changes as sensitive, especially workflow, environment, and configuration files.
+        Call out changes that look unrelated to the stated task.
+
+    - path: ".rspec"
+      instructions: |
+        Changing `.rspec` is sensitive. Flag it unless the PR clearly justifies altering the global test runner behavior.
+
+    - path: "config.ru"
+      instructions: |
+        Treat Rack entrypoint changes as sensitive and require a clear reason in the PR description.
+
+    - path: "setup.sh"
+      instructions: |
+        Treat setup script changes as sensitive and require a clear reason in the PR description.
+
+    - path: "vendor/**"
+      instructions: |
+        Flag vendor directory changes unless the PR clearly explains why vendored files must change.
+
+    - path: "spec/factories/**"
+      instructions: |
+        Non-maintainer changes to factories should be scrutinized. Ensure they are necessary and do not hide weak tests.
 
     - path: "Dockerfile"
       instructions: |
@@ -156,6 +210,31 @@ reviews:
         instructions: |
           Warn when the pull request introduces TODO or FIXME markers, debug print statements,
           temp or cache artifacts, or generated local-state files such as results.txt or safe.log.
+
+      - name: "legacy-pr-scope-and-title"
+        mode: "warning"
+        instructions: |
+          Warn on pull requests larger than roughly 500 LoC, touching more than 30 files,
+          course-project PRs under roughly 50 LoC, duplicated commit messages, or WIP titles.
+
+      - name: "legacy-config-file-guardrails"
+        mode: "warning"
+        instructions: |
+          For non-maintainers, warn on changes to Gemfile, Gemfile.lock, .gitignore, .rspec, Dangerfile,
+          Rakefile, config.ru, setup.sh, YAML files, Markdown files, vendor/**, and spec/factories/** unless clearly justified.
+
+      - name: "legacy-rspec-hygiene"
+        mode: "warning"
+        instructions: |
+          Warn on skipped, pending, or focused specs; `.should`; unnecessary helper requires;
+          text fixtures under spec; and weak/shallow expectations such as wildcard matcher overuse,
+          no expectations, commented-out expectations, matcher-less expectations, or non-real-value assertions.
+
+      - name: "legacy-global-debug-code"
+        mode: "warning"
+        instructions: |
+          Warn on newly introduced global variables, class variables, or debugging statements such as puts, print,
+          binding.pry, debugger, or console.log.
 
   tools:
     github-checks:

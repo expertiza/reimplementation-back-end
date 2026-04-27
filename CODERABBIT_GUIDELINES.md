@@ -65,12 +65,62 @@ This repository uses CodeRabbit as an AI pull request reviewer for the Expertiza
 - Prefer meaningful request and model specs over shallow examples.
 - Check authentication, authorization, invalid input, and failure paths.
 - Flag behavior changes in `app/` or `config/routes.rb` that are not reflected in `spec/models` or `spec/requests`.
+- Apply the legacy Expertiza Danger RSpec rules:
+  - avoid skipped, pending, or focused tests
+  - avoid `.should`
+  - avoid redundant helper `require` lines
+  - avoid overusing `create(` in unit-style specs when lighter setup would work
+  - flag shallow expectations such as wildcard matcher overuse, missing expectations, commented-out expectations,
+    matcher-less expectations, and assertions that only prove values are not nil, empty, or zero
 
 ### Workflows And Bot Files
 
 - Treat workflow changes as security-sensitive.
 - Flag `pull_request_target` combined with checkout of PR-head code, broad write permissions, unsafe token handling, brittle artifact passing, and comment spam patterns.
 - If a Danger rule is removed, the replacement enforcement path must be explicit.
+
+## Legacy Danger Policy To Preserve
+
+The repository now carries a larger Expertiza-style Danger policy. CodeRabbit should mirror that policy in spirit even when the rule is heuristic rather than executable.
+
+### Pull Request Hygiene
+
+- Welcome first-time or non-maintainer contributors politely.
+- Flag PRs over roughly 500 LoC.
+- Flag course-project PRs under roughly 50 LoC.
+- Flag PRs touching more than 30 files.
+- Flag many duplicated commit messages.
+- Flag WIP titles.
+
+### Change Content Rules
+
+- Flag newly added TODO or FIXME markers.
+- Fail or strongly warn on temp, tmp, or cache artifacts committed into the PR.
+- Flag newly introduced global variables, class variables, and obvious debug code.
+- Flag application changes without corresponding test changes.
+
+### Spec Rules
+
+- Flag skipped, pending, or focused tests.
+- Discourage `create(` inside model and controller specs when lighter setup would work.
+- Reject `.should`.
+- Reject redundant `require 'rspec'`, `spec_helper`, `rails_helper`, `test_helper`, or factory helper lines in specs.
+- Warn on committed `.txt` or `.csv` files under spec paths unless clearly justified.
+
+### Sensitive Files
+
+- Non-maintainer changes to Markdown, YAML, helper files, Gemfile, Gemfile.lock, `.gitignore`, `.rspec`,
+  `Dangerfile`, `Rakefile`, `config.ru`, `setup.sh`, `vendor/**`, and `spec/factories/**` should be scrutinized closely.
+- Schema changes should normally come with migrations.
+
+### Shallow Test Detection
+
+- Flag excessive wildcard argument matchers.
+- Flag tests with no expectations.
+- Flag commented-out expectations.
+- Flag expectations without matchers.
+- Flag expectations that only verify non-nil, non-empty, or non-zero conditions instead of real values.
+- In page-oriented tests, encourage assertions beyond simple page content when deeper validation is possible.
 
 ### Developer Scripts And Docker
 
@@ -131,6 +181,10 @@ These checks are configured as warnings first. They are meant to preserve policy
 - `workflow-security`
 - `config-and-setup-scrutiny`
 - `todo-temp-debug-artifacts`
+- `legacy-pr-scope-and-title`
+- `legacy-config-file-guardrails`
+- `legacy-rspec-hygiene`
+- `legacy-global-debug-code`
 
 These checks should only move from `warning` to `error` after the team is happy with the signal quality.
 
