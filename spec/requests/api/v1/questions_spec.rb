@@ -542,4 +542,98 @@ RSpec.describe 'questions', type: :request do
     end
   
   end
+
+  # -------------------------------------------------------------------------
+  # E2619: GET /questions/quiz_types
+  # Returns the list of item types allowed inside a Quiz questionnaire.
+  # -------------------------------------------------------------------------
+  path '/questions/quiz_types' do
+    get('quiz item types') do
+      tags 'Questions'
+      produces 'application/json'
+
+      # returns 200 with a JSON array of allowed quiz item type strings
+      response(200, 'returns allowed quiz item types') do
+        run_test! do
+          types = JSON.parse(response.body)
+          expect(types).to be_an(Array)
+          expect(types).to include('TextField', 'MultipleChoiceRadio', 'MultipleChoiceCheckbox',
+                                   'Scale', 'Checkbox')
+        end
+      end
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # E2619: POST /questions for quiz questionnaires
+  # Validates that only allowed quiz item types are accepted and that
+  # correct_answer is stored.
+  # -------------------------------------------------------------------------
+  path '/questions' do
+    let(:quiz_questionnaire) do
+      instructor
+      Questionnaire.create!(
+        name: 'My Quiz',
+        questionnaire_type: 'Quiz',
+        private: false,
+        min_question_score: 0,
+        max_question_score: 5,
+        instructor_id: instructor.id
+      )
+    end
+
+    post('create quiz item') do
+      tags 'Questions'
+      consumes 'application/json'
+      produces 'application/json'
+
+      parameter name: :item, in: :body, schema: {
+        type: :object,
+        properties: {
+          questionnaire_id: { type: :integer },
+          txt:              { type: :string },
+          question_type:    { type: :string },
+          weight:           { type: :integer },
+          correct_answer:   { type: :string }
+        },
+        required: %w[questionnaire_id txt question_type]
+      }
+
+      # creates a quiz item with a correct_answer when type is valid
+      response(201, 'creates quiz item and stores correct_answer') do
+        let(:item) do
+          {
+            questionnaire_id: quiz_questionnaire.id,
+            txt:              'What is the capital of France?',
+            question_type:    'TextField',
+            seq:              1,
+            weight:           2,
+            correct_answer:   'Paris'
+          }
+        end
+        run_test! do
+          data = JSON.parse(response.body)
+          expect(data['correct_answer']).to eq('Paris')
+        end
+      end
+
+      # rejects an invalid quiz item type with 422
+      response(422, 'rejects invalid quiz item type') do
+        let(:item) do
+          {
+            questionnaire_id: quiz_questionnaire.id,
+            txt:              'What is your name?',
+            question_type:    'TextArea',   # not allowed in a quiz
+            seq:              1,
+            weight:           1
+          }
+        end
+        run_test! do
+          data = JSON.parse(response.body)
+          expect(data['error']).to include('Invalid quiz item type')
+        end
+      end
+    end
+  end
+
 end
