@@ -14,7 +14,7 @@ module Reports
   #   * The metric this report produces (per-item score histograms) lives
   #     here, NOT in the base, because other reports (averages, tag counts,
   #     survey aggregates) want completely different shapes.
-  class CalibrationReport < ReportTemplate
+  class CalibrationReport < Base
     InstructorResponseMissing = Class.new(StandardError)
     RubricMissing             = Class.new(StandardError)
 
