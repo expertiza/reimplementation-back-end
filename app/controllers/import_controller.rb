@@ -17,7 +17,7 @@ class ImportController < ApplicationController
   SUPPORTED_IMPORT_CLASSES = {
     "User" => User,
     "Team" => Team,
-    "Course" => Course,
+    "CourseParticipant" => CourseParticipant,
     "AssignmentParticipant" => AssignmentParticipant,
     "ProjectTopic" => ProjectTopic,
     "Questionnaire" => Questionnaire,
@@ -73,6 +73,10 @@ class ImportController < ApplicationController
                AssignmentParticipant.with_assignment_context(params[:assignment_id], current_user) do
                  Import.new(klass: klass, file: uploaded_file, headers: ordered_fields, dup_action: dup_action&.new, defaults: defaults).perform(use_headers)
                end
+             elsif klass == CourseParticipant
+               CourseParticipant.with_course_context(params[:course_id], current_user) do
+                 Import.new(klass: klass, file: uploaded_file, headers: ordered_fields, dup_action: dup_action&.new, defaults: defaults).perform(use_headers)
+               end
              elsif klass == ProjectTopic
                ProjectTopic.with_assignment_context(params[:assignment_id]) do
                  Import.new(klass: klass, file: uploaded_file, headers: ordered_fields, dup_action: dup_action&.new, defaults: defaults).perform(use_headers)
@@ -99,7 +103,7 @@ class ImportController < ApplicationController
   # Strong parameters for import operations
   #
   def import_params
-    params.permit(:csv_file, :use_headers, :class, :ordered_fields, :dup_action, :assignment_id)
+    params.permit(:csv_file, :use_headers, :class, :ordered_fields, :dup_action, :assignment_id, :course_id)
   end
 
   def import_defaults_for(klass)
@@ -118,6 +122,17 @@ class ImportController < ApplicationController
     # modal flow used by other importable models.
     if imported_class == AssignmentParticipant
       AssignmentParticipant.with_assignment_context(params[:assignment_id], current_user) do
+        return {
+          mandatory_fields: imported_class.mandatory_fields,
+          optional_fields: imported_class.optional_fields,
+          external_fields: imported_class.external_fields,
+          available_actions_on_dup: imported_class.available_actions_on_duplicate.map { |klass| klass.class.name }
+        }
+      end
+    end
+
+    if imported_class == CourseParticipant
+      CourseParticipant.with_course_context(params[:course_id], current_user) do
         return {
           mandatory_fields: imported_class.mandatory_fields,
           optional_fields: imported_class.optional_fields,

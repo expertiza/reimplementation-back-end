@@ -74,14 +74,17 @@ RSpec.describe "Import/export requests", type: :request do
         expect(json["external_fields"]).to include("role_name", "institution_name")
       end
 
-      it "returns course import metadata with instructor_name and institution_name" do
-        get "/import/Course"
+      it "returns course participant import metadata with user_name" do
+        get "/import/CourseParticipant", params: { course_id: 1 }
 
         expect(response).to have_http_status(:ok)
 
         json = JSON.parse(response.body)
-        expect(json["mandatory_fields"]).to include("name", "directory_path", "instructor_name", "institution_name")
-        expect(json["mandatory_fields"]).not_to include("instructor_id", "institution_id")
+        expect(json["mandatory_fields"]).to eq(["user_name"])
+        expect(json["optional_fields"]).to eq([])
+        expect(json["available_actions_on_dup"]).to match_array(
+          %w[SkipRecordAction UpdateExistingRecordAction]
+        )
       end
     end
   end
@@ -120,6 +123,15 @@ RSpec.describe "Import/export requests", type: :request do
       Assignment.create!(
         name: "Import Assignment",
         instructor: instructor
+      )
+    end
+
+    let!(:course) do
+      Course.create!(
+        name: "Import Course",
+        directory_path: "import_course",
+        instructor: instructor,
+        institution: institution
       )
     end
 
@@ -248,26 +260,28 @@ RSpec.describe "Import/export requests", type: :request do
       end
     end
 
-    context "course imports" do
-      it "imports courses using instructor_name and institution_name" do
-        other_institution = Institution.create!(name: "Other School")
-        file = uploaded_csv("name,directory_path,info,private,instructor_name,institution_name\nImported Course,imported_course,Imported info,true,teacher,Other School\n")
+    context "course participant imports" do
+      it "imports course participants by username within the selected course" do
+        student = User.create!(
+          name: "student_course_participant_import",
+          full_name: "Student Course Participant Import",
+          email: "student_course_participant_import@example.com",
+          password: "password",
+          role: student_role,
+          institution: institution
+        )
+        file = uploaded_csv("user_name\n#{student.name}\n")
 
-        post "/import/Course",
+        post "/import/CourseParticipant",
              params: {
                csv_file: file,
-               use_headers: true
+               use_headers: true,
+               dup_action: "SkipRecordAction",
+               course_id: course.id
              }
 
         expect(response).to have_http_status(:created)
-
-        imported_course = Course.find_by(name: "Imported Course")
-        expect(imported_course).to be_present
-        expect(imported_course.directory_path).to eq("imported_course")
-        expect(imported_course.info).to eq("Imported info")
-        expect(imported_course.private).to eq(true)
-        expect(imported_course.instructor_id).to eq(instructor.id)
-        expect(imported_course.institution_id).to eq(other_institution.id)
+        expect(CourseParticipant.find_by(user: student, parent_id: course.id)).to be_present
       end
     end
   end
@@ -409,27 +423,50 @@ RSpec.describe "Import/export requests", type: :request do
       end
     end
 
-    context "course exports" do
-      it "exports courses with instructor_name and institution_name" do
+    context "course participant exports" do
+      it "exports only participants for the provided course_id" do
         course = Course.create!(
-          name: "Export Course",
-          directory_path: "export_course",
-          info: "Export info",
-          private: true,
+          name: "Participant Export Course",
+          directory_path: "participant_export_course",
           instructor: instructor,
           institution: institution
         )
+        other_course = Course.create!(
+          name: "Other Participant Export Course",
+          directory_path: "other_participant_export_course",
+          instructor: instructor,
+          institution: institution
+        )
+        student = User.create!(
+          name: "student_course_participant_export",
+          full_name: "Student Course Participant Export",
+          email: "student_course_participant_export@example.com",
+          password: "password",
+          role: role,
+          institution: institution
+        )
+        other_student = User.create!(
+          name: "other_student_course_participant_export",
+          full_name: "Other Student Course Participant Export",
+          email: "other_student_course_participant_export@example.com",
+          password: "password",
+          role: role,
+          institution: institution
+        )
+        CourseParticipant.create!(user: student, parent_id: course.id, handle: student.name)
+        CourseParticipant.create!(user: other_student, parent_id: other_course.id, handle: other_student.name)
 
-        post "/export/Course", params: { ordered_fields: %w[name directory_path private instructor_name institution_name].to_json }
+        post "/export/CourseParticipant", params: { ordered_fields: %w[user_name].to_json, course_id: course.id }
 
         expect(response).to have_http_status(:ok)
 
         json = JSON.parse(response.body)
         exported_file = Array(json["file"]).first
 
-        expect(exported_file["name"]).to eq("Course")
-        expect(exported_file["contents"]).to include("name,directory_path,private,instructor_name,institution_name")
-        expect(exported_file["contents"]).to include("#{course.name},#{course.directory_path},true,#{instructor.name},#{institution.name}")
+        expect(exported_file["name"]).to eq("CourseParticipant")
+        expect(exported_file["contents"]).to include("user_name")
+        expect(exported_file["contents"]).to include("student_course_participant_export")
+        expect(exported_file["contents"]).not_to include("other_student_course_participant_export")
       end
     end
   end

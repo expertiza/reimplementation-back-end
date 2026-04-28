@@ -161,6 +161,7 @@ Rails.application.routes.draw do
         collection do
           get '/user/:user_id', to: 'participants#list_user_participants'
           get '/assignment/:assignment_id', to: 'participants#list_assignment_participants'
+          get '/course/:course_id', to: 'participants#list_course_participants'
           get '/:id', to: 'participants#show'
           post '/:authorization', to: 'participants#add'
           patch '/:id/:authorization', to: 'participants#update_authorization'

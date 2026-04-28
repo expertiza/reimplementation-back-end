@@ -3,7 +3,7 @@ class ExportController < ApplicationController
   SUPPORTED_EXPORT_CLASSES = {
     "User" => User,
     "Team" => Team,
-    "Course" => Course,
+    "CourseParticipant" => CourseParticipant,
     "AssignmentParticipant" => AssignmentParticipant,
     "ProjectTopic" => ProjectTopic,
     "Questionnaire" => Questionnaire,
@@ -49,6 +49,12 @@ class ExportController < ApplicationController
                  AssignmentParticipant.with_assignment_context(params[:assignment_id], current_user) do
                    Export.perform(klass, ordered_fields)
                  end
+               elsif klass == CourseParticipant
+                 # CourseParticipant export should include only the
+                 # participants for the selected course.
+                 CourseParticipant.with_course_context(params[:course_id], current_user) do
+                   Export.perform(klass, ordered_fields)
+                 end
                elsif klass == ProjectTopic
                  ProjectTopic.with_assignment_context(params[:assignment_id]) do
                    Export.perform(klass, ordered_fields)
@@ -69,7 +75,7 @@ class ExportController < ApplicationController
   private
 
   def export_params
-    params.permit(:class, :ordered_fields, :assignment_id)
+    params.permit(:class, :ordered_fields, :assignment_id, :course_id)
   end
 
   def export_metadata_for(klass)
@@ -77,6 +83,16 @@ class ExportController < ApplicationController
     # details are previewed from the users table but not exported as input.
     if klass == AssignmentParticipant
       AssignmentParticipant.with_assignment_context(params[:assignment_id], current_user) do
+        return {
+          mandatory_fields: klass.mandatory_fields,
+          optional_fields: klass.optional_fields,
+          external_fields: klass.external_fields
+        }
+      end
+    end
+
+    if klass == CourseParticipant
+      CourseParticipant.with_course_context(params[:course_id], current_user) do
         return {
           mandatory_fields: klass.mandatory_fields,
           optional_fields: klass.optional_fields,
