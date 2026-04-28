@@ -36,8 +36,8 @@ RSpec.describe "Import/export requests", type: :request do
         )
       end
 
-      it "returns metadata for SignUpTopic" do
-        get "/import/SignUpTopic"
+      it "returns metadata for ProjectTopic" do
+        get "/import/ProjectTopic"
 
         expect(response).to have_http_status(:ok)
 
@@ -142,7 +142,7 @@ RSpec.describe "Import/export requests", type: :request do
       it "imports topics" do
         file = uploaded_csv("topic_name,assignment_id\nTopic A,#{assignment.id}\n")
 
-        post "/import/SignUpTopic",
+        post "/import/ProjectTopic",
              params: {
                csv_file: file,
                use_headers: true,
@@ -150,7 +150,7 @@ RSpec.describe "Import/export requests", type: :request do
              }
 
         expect(response).to have_http_status(:created)
-        expect(SignUpTopic.find_by(topic_name: "Topic A", assignment_id: assignment.id)).to be_present
+        expect(ProjectTopic.find_by(topic_name: "Topic A", assignment_id: assignment.id)).to be_present
       end
     end
 
@@ -255,7 +255,7 @@ RSpec.describe "Import/export requests", type: :request do
     end
 
     let!(:topic) do
-      SignUpTopic.create!(
+      ProjectTopic.create!(
         topic_name: "Export Topic",
         assignment_id: assignment.id
       )
@@ -288,7 +288,7 @@ RSpec.describe "Import/export requests", type: :request do
 
     context "topic exports" do
       it "exports topics" do
-        post "/export/SignUpTopic", params: { ordered_fields: %w[topic_name assignment_id].to_json }
+        post "/export/ProjectTopic", params: { ordered_fields: %w[topic_name assignment_id].to_json }
 
         expect(response).to have_http_status(:ok)
 

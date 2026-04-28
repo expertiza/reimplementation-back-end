@@ -14,6 +14,19 @@
 #
 
 class ImportController < ApplicationController
+  SUPPORTED_IMPORT_CLASSES = {
+    "User" => User,
+    "Team" => Team,
+    "Course" => Course,
+    "Assignment" => Assignment,
+    "ProjectTopic" => ProjectTopic,
+    "Questionnaire" => Questionnaire,
+    "Item" => Item,
+    "QuestionAdvice" => QuestionAdvice,
+    "Answer" => Answer,
+    "QuizItem" => QuizItem
+  }.freeze
+
   # Ensure strong parameters are processed before each action
   before_action :import_params
 
@@ -24,9 +37,11 @@ class ImportController < ApplicationController
   # The frontend uses this to build the mapping UI (drag/drop field matching).
   #
   def index
-    imported_class = params[:class].constantize
+    imported_class = resolve_import_class!(params[:class])
 
     render json: import_metadata_for(imported_class), status: :ok
+  rescue ArgumentError => e
+    render json: { error: e.message }, status: :unprocessable_entity
   end
 
   ##
@@ -48,7 +63,7 @@ class ImportController < ApplicationController
     ordered_fields = JSON.parse(params[:ordered_fields]) if params[:ordered_fields]
 
     # Dynamically load the model class (e.g., "User", "Team", etc.)
-    klass = params[:class].constantize
+    klass = resolve_import_class!(params[:class])
     defaults = import_defaults_for(klass)
 
     # Load the chosen duplicate action (Skip, Update, Change)
@@ -132,5 +147,10 @@ class ImportController < ApplicationController
     return {} if params[:assignment_id].blank?
 
     { assignment_id: params[:assignment_id].to_i }
+  end
+
+  # Restricts imports to the explicit set of classes currently supported by the API.
+  def resolve_import_class!(name)
+    SUPPORTED_IMPORT_CLASSES[name.to_s] || raise(ArgumentError, "Unsupported import class: #{name}")
   end
 end

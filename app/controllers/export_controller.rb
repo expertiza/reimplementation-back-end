@@ -1,13 +1,29 @@
 # This controller handles exporting data from the application to various formats.
 class ExportController < ApplicationController
+  SUPPORTED_EXPORT_CLASSES = {
+    "User" => User,
+    "Team" => Team,
+    "Course" => Course,
+    "Assignment" => Assignment,
+    "ProjectTopic" => ProjectTopic,
+    "Questionnaire" => Questionnaire,
+    "Item" => Item,
+    "QuestionAdvice" => QuestionAdvice,
+    "Answer" => Answer,
+    "QuizItem" => QuizItem,
+    "Grades" => Pseudo::Grades,
+    "Pseudo::Grades" => Pseudo::Grades
+  }.freeze
+
   before_action :export_params
 
   def resolve_export_class(name)
-    name.constantize
+    SUPPORTED_EXPORT_CLASSES[name.to_s]
   end
 
   def index
     klass = resolve_export_class(params[:class])
+    raise ArgumentError, "Unsupported export class: #{params[:class]}" if klass.nil?
     
     render json: export_metadata_for(klass), status: :ok
   rescue StandardError => e
@@ -25,6 +41,7 @@ class ExportController < ApplicationController
       end
 
     klass = resolve_export_class(params[:class])
+    raise ArgumentError, "Unsupported export class: #{params[:class]}" if klass.nil?
     
     csv_file = if klass == Team
                  Team.with_assignment_context(params[:assignment_id]) do
