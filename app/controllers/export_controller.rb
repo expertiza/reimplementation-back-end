@@ -128,6 +128,8 @@ class ExportController < ApplicationController
     }
   end
 
+  # Scoped participant exports use readable filenames while keeping the CSV
+  # body limited to import-friendly fields such as username.
   def named_export_files(files, name)
     Array(files).map { |file| file.merge(name: name) }
   end

@@ -264,6 +264,8 @@ class GradesController < ApplicationController
         @assignment = @participant.assignment
     end
 
+    # Export one row per assignment participant. A participant-specific grade
+    # overrides the team submission grade; submission comments remain team-level.
     def grades_csv_for(assignment, include_email: false)
         headers = GRADES_EXPORT_HEADERS + (include_email ? GRADES_EXPORT_OPTIONAL_HEADERS : [])
 
