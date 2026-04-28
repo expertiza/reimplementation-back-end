@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class QuestionAdvice < ApplicationRecord
-    belongs_to :item
+    belongs_to :item, foreign_key: :question_id
     def self.export_fields(_options)
       QuestionAdvice.columns.map(&:name)
     end

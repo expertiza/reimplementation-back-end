@@ -7,7 +7,7 @@ class Course < ApplicationRecord
   validates :name, presence: true
   validates :directory_path, presence: true
   has_many :participants, class_name: 'CourseParticipant', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :course
-  has_many :users, through: :course_participants, inverse_of: :course
+  has_many :users, through: :participants
   has_many :ta_mappings, dependent: :destroy
   has_many :tas, through: :ta_mappings, source: :ta
   has_many :teams, class_name: 'CourseTeam', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :course
@@ -21,7 +21,7 @@ class Course < ApplicationRecord
   # Add a Teaching Assistant to the course
   def add_ta(user)
     if user.nil?
-      return { success: false, message: "The user with id #{user.id} does not exist" }
+      return { success: false, message: "The user with id #{user&.id} does not exist" }
     elsif TaMapping.exists?(user_id: user.id, course_id: id)
       return { success: false, message: "The user with id #{user.id} is already a TA for this course." }
     else
@@ -38,7 +38,7 @@ class Course < ApplicationRecord
 
   # Removes Teaching Assistant from the course
   def remove_ta(user_id)
-    ta_mapping = ta_mappings.find_by(user_id: user_id, course_id: :id)
+    ta_mapping = ta_mappings.find_by(user_id: user_id, course_id: id)
     return { success: false, message: "No TA mapping found for the specified course and TA" } if ta_mapping.nil?
     ta = User.find(ta_mapping.user_id)
     ta_count = TaMapping.where(user_id: user_id).size - 1

@@ -44,4 +44,13 @@ FactoryBot.define do
       role { create(:role, :administrator) }
     end
   end
+
+  factory :instructor, class: 'Instructor' do
+    sequence(:name) { |_n| Faker::Name.name.to_s.delete(" \t\r\n").downcase }
+    sequence(:email) { |_n| Faker::Internet.email.to_s }
+    password { 'password' }
+    sequence(:full_name) { |_n| "#{Faker::Name.name}#{Faker::Name.name}".downcase }
+    role { create(:role, :instructor) }
+    institution { create(:institution) }
+  end
 end
