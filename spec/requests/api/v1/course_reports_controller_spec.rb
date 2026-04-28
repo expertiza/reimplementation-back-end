@@ -2,7 +2,7 @@ require 'swagger_helper'
 require 'json_web_token'
 require 'json'
 
-RSpec.describe 'Assignment Records API', type: :request do
+RSpec.describe 'Course Reports API', type: :request do
   before(:all) do
     @roles = create_roles_hierarchy
   end
@@ -310,9 +310,9 @@ RSpec.describe 'Assignment Records API', type: :request do
     assignment2_review_team.add_member(participant13)
   end
 
-  path '/assignment_records' do
+  path '/course_reports' do
     get 'Retrieve a student-by-assignment table for a course' do
-      tags 'Assignment Records'
+      tags 'Course Reports'
       produces 'application/json'
       security [bearer_auth: []]
 
@@ -324,7 +324,7 @@ RSpec.describe 'Assignment Records API', type: :request do
 
         run_test! do |response|
           data = JSON.parse(response.body)
-          puts "\nAssignment records stats:\n#{JSON.pretty_generate(data)}"
+          puts "\nCourse report stats:\n#{JSON.pretty_generate(data)}"
 
           expect(data['course_id']).to eq(course.id)
           expect(data['course_name']).to eq(course.name)
@@ -466,7 +466,7 @@ RSpec.describe 'Assignment Records API', type: :request do
         let(:Authorization) { "Bearer #{student_token}" }
 
         run_test! do |response|
-          expect(JSON.parse(response.body)['error']).to eq('You are not authorized to index this assignment_records')
+          expect(JSON.parse(response.body)['error']).to eq('You are not authorized to index this course_reports')
         end
       end
 
@@ -475,7 +475,7 @@ RSpec.describe 'Assignment Records API', type: :request do
         let(:Authorization) { "Bearer #{outside_instructor_token}" }
 
         run_test! do |response|
-          expect(JSON.parse(response.body)['error']).to eq('You are not authorized to index this assignment_records')
+          expect(JSON.parse(response.body)['error']).to eq('You are not authorized to index this course_reports')
         end
       end
 

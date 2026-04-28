@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
-class AssignmentRecordsController < ApplicationController
+class CourseReportsController < ApplicationController
+  class FinalDueDateNotReviewDeadlineError < StandardError; end
+
   def action_allowed?
     case params[:action]
     when 'index'
@@ -13,17 +15,18 @@ class AssignmentRecordsController < ApplicationController
     end
   end
 
-  # GET /assignment_records
+  # GET /course_reports
   # Returns a table for all assignments in the given course,
   # with students as rows and assignments as horizontal columns.
   def index
     course = Course.find_by(id: params[:course_id])
     return render json: { error: 'Course not found' }, status: :not_found unless course
 
-    assignments = course.assignments.order(:id)
+    assignments = assignments_ordered_by_final_review_due_date(course)
+    assignment_ids = assignments.map(&:id)
     participants = AssignmentParticipant
       .includes(:user, :assignment)
-      .where(parent_id: assignments.select(:id))
+      .where(parent_id: assignment_ids)
 
     student_rows = participants
       .group_by(&:user_id)
@@ -32,6 +35,8 @@ class AssignmentRecordsController < ApplicationController
       .sort_by { |row| row[:user_name].downcase }
 
     render json: course_report_response(course, assignments, student_rows), status: :ok
+  rescue FinalDueDateNotReviewDeadlineError => e
+    render json: { error: e.message }, status: :internal_server_error
   end
 
   private
@@ -49,6 +54,20 @@ class AssignmentRecordsController < ApplicationController
       assignment_name: assignment.name,
       has_topics: !!assignment.has_topics
     }
+  end
+
+  def assignments_ordered_by_final_review_due_date(course)
+    course.assignments.includes(:due_dates).sort_by do |assignment|
+      [final_review_due_date_for(assignment), assignment.id]
+    end
+  end
+
+  def final_review_due_date_for(assignment)
+    final_due_date = assignment.due_dates.max_by(&:due_at)
+    return final_due_date.due_at if final_due_date&.deadline_type_id == DueDate::REVIEW_DEADLINE_TYPE_ID
+
+    raise FinalDueDateNotReviewDeadlineError,
+          "Final due date for assignment #{assignment.id} is not a review deadline"
   end
 
   def course_report_response(course, assignments, student_rows)

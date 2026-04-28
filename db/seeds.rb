@@ -57,23 +57,65 @@ begin
 
   puts "creating assignments"
   assignment_ids = []
+  assignment_topics = {}
+  topic_assignment_indexes = (0...num_assignments).to_a.sample(num_assignments / 2)
   num_assignments.times do |i|
-    assignment_ids << Assignment.create(
+    has_topics = topic_assignment_indexes.include?(i)
+    assignment = Assignment.create(
       name: Faker::Verb.base,
       instructor_id: instructor_user_ids[i % num_instructors],
       course_id: course_ids[i % num_courses],
       has_teams: true,
+      has_topics: has_topics,
       private: false
-    ).id
+    )
+    assignment_ids << assignment.id
+
+    if has_topics
+      assignment_topics[assignment.id] = 2.times.map do |topic_index|
+        ProjectTopic.create!(
+          assignment_id: assignment.id,
+          topic_name: "Assignment #{i + 1} Topic #{topic_index + 1}",
+          topic_identifier: "A#{i + 1}T#{topic_index + 1}",
+          max_choosers: num_teams
+        )
+      end
+    end
+
+    AssignmentDueDate.create!(
+      parent: assignment,
+      due_at: (i * 3 + 1).days.from_now,
+      deadline_type_id: 1,
+      submission_allowed_id: DueDate::ALLOWED,
+      review_allowed_id: DueDate::ALLOWED
+    )
+
+    AssignmentDueDate.create!(
+      parent: assignment,
+      due_at: (i * 3 + 2).days.from_now,
+      deadline_type_id: DueDate::REVIEW_DEADLINE_TYPE_ID,
+      submission_allowed_id: DueDate::ALLOWED,
+      review_allowed_id: DueDate::ALLOWED
+    )
   end
 
   puts "creating teams"
   team_ids = []
   num_teams.times do |i|
-    team_ids << AssignmentTeam.create(
+    assignment_id = assignment_ids[i % num_assignments]
+    team = AssignmentTeam.create(
       name: "Team #{i + 1}",
-      parent_id: assignment_ids[i % num_assignments]
-    ).id
+      parent_id: assignment_id
+    )
+    team_ids << team.id
+
+    if assignment_topics[assignment_id].present?
+      SignedUpTeam.create!(
+        team_id: team.id,
+        project_topic_id: assignment_topics[assignment_id].sample.id,
+        is_waitlisted: false
+      )
+    end
   end
 
   puts "creating students"
@@ -293,7 +335,11 @@ course_report_assignments.each do |assignment|
     if assignment.has_topics
       topics = ProjectTopic.where(assignment_id: assignment.id).order(:id).to_a
       if topics.any?
-        SignedUpTeam.find_or_create_by!(team_id: team.id, project_topic_id: topics[team_index % topics.size].id) do |signup|
+        existing_signup = SignedUpTeam
+          .joins(:project_topic)
+          .find_by(team_id: team.id, project_topics: { assignment_id: assignment.id })
+
+        SignedUpTeam.find_or_create_by!(team_id: team.id, project_topic_id: existing_signup&.project_topic_id || topics.sample.id) do |signup|
           signup.is_waitlisted = false
         end
       end
