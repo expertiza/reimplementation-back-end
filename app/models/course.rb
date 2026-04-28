@@ -6,7 +6,6 @@ class Course < ApplicationRecord
 
   mandatory_fields :name, :directory_path, :institution_name, :instructor_name
   hidden_fields :id, :created_at, :updated_at, :institution_id, :instructor_id
-  export_submodels false
 
   belongs_to :instructor, class_name: 'User', foreign_key: 'instructor_id'
   belongs_to :institution, foreign_key: 'institution_id'
