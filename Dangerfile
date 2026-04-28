@@ -1,6 +1,14 @@
 # Helper to safely read files in UTF-8 and avoid "invalid byte sequence" errors
 def safe_read(path)
-  File.read(path, encoding: "UTF-8", invalid: :replace, undef: :replace)
+  return "" unless File.exist?(path)
+
+  File.open(path, "rb") do |f|
+    f.read
+     .force_encoding("UTF-8")
+     .encode("UTF-8", invalid: :replace, undef: :replace, replace: "")
+  end
+rescue
+  ""
 end
 
 # --- PR Size Checks ---
