@@ -154,7 +154,7 @@ RSpec.describe 'Users API', type: :request do
           )
         end
 
-         let(:payload) do
+        let(:payload) do
           {
             user: {
               name: 'duplicateuser',
@@ -665,12 +665,14 @@ RSpec.describe 'Users API', type: :request do
         end
       end
 
-      # Scenario: invalid role name currently triggers server error in controller
-      # (graceful handling would be 404 after controller fix)
-      response '500', 'Returns server error for invalid role name (current behavior)' do
+      # Scenario: invalid role name returns 404 from controller
+      response '404', 'Returns not found for invalid role name' do
         let(:name) { 'role_that_does_not_exist' }
 
-        run_test!
+        run_test! do |response|
+          body = JSON.parse(response.body)
+          expect(body['error']).to eq("Role 'Role That Does Not Exist' not found")
+        end
       end
     end
   end

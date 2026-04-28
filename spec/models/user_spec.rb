@@ -399,6 +399,12 @@ RSpec.describe User, type: :model do
         expect(ta.instructor_id).to eq(instructor.id)
       end
 
+      it 'returns nil instructor id for a TA without a parent record' do
+        ta = create(:user, role: ta_role, institution: institution, parent: nil)
+
+        expect(ta.instructor_id).to be_nil
+      end
+
       it 'raises NotImplementedError for student role' do
         student = create(:user, role: student_role, institution: institution)
         expect { student.instructor_id }.to raise_error(NotImplementedError, /Unknown role/)

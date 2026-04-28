@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Ta < User
+  validates :parent_id, presence: true
+
   # Get all users whose parent is the TA
   # @return [Array<User>] all users that belongs to courses that is mapped to the TA
   def managed_users
@@ -12,7 +14,6 @@ class Ta < User
   end
 
   def courses_assisted_with
-    courses = TaMapping.where(user_id: id)
-    courses.map { |c| Course.find(c.course_id) }
+    Course.joins(:ta_mappings).where(ta_mappings: { user_id: id }).distinct.to_a
   end
 end

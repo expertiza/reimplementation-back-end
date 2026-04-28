@@ -68,6 +68,10 @@ class UsersController < ApplicationController
   def role_users
     name = params[:name].split('_').map(&:capitalize).join(' ')
     role = Role.find_by(name:)
+    unless role
+      render json: { error: "Role '#{name}' not found" }, status: :not_found
+      return
+    end
     users = role.users
     render json: users, status: :ok
   rescue ActiveRecord::RecordNotFound => e
