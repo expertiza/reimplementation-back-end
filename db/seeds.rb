@@ -1,5 +1,23 @@
 # frozen_string_literal: true
 
+def seed_assignment_grades
+  puts "assigning seeded grades"
+
+  AssignmentTeam.order(:id).find_each.with_index do |team, index|
+    team.update!(
+      grade_for_submission: team.grade_for_submission || 80 + (index % 16),
+      comment_for_submission: team.comment_for_submission.presence || "Seeded grade for #{team.name}"
+    )
+  end
+
+  AssignmentParticipant.order(:id).find_each.with_index do |participant, index|
+    next unless (index % 5).zero?
+    next if participant.grade.present?
+
+    participant.update!(grade: 85 + (index % 10))
+  end
+end
+
 begin
   # Create an instritution
   inst_id = Institution.create!(
@@ -176,6 +194,8 @@ begin
     end
   end
 
+  seed_assignment_grades
+
   puts "creating questionnaires with items, question advices, and answers"
   questionnaire_blueprints = [
     {
@@ -334,4 +354,5 @@ begin
 
 rescue ActiveRecord::RecordInvalid => e
   puts e, 'The db has already been seeded'
+  seed_assignment_grades
 end
