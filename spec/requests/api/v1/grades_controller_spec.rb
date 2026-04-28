@@ -1,5 +1,6 @@
 require 'swagger_helper'
 require 'json_web_token'
+require 'csv'
 
 RSpec.describe 'Grades API', type: :request do
   before(:all) do
@@ -64,6 +65,67 @@ RSpec.describe 'Grades API', type: :request do
   let(:student_token) { JsonWebToken.encode({id: student.id}) }
 
   let(:Authorization) { "Bearer #{instructor_token}" }
+
+  path '/grades/{assignment_id}/export' do
+    get 'Export assignment grades as CSV' do
+      tags 'Grades'
+      produces 'text/csv'
+      security [bearer_auth: []]
+
+      parameter name: :assignment_id, in: :path, type: :integer, description: 'ID of the assignment'
+      parameter name: :include_email, in: :query, type: :boolean, required: false, description: 'Include participant email addresses'
+      parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
+
+      response '200', 'Returns grades CSV' do
+        let(:assignment_id) { assignment.id }
+
+        before do
+          team.update!(grade_for_submission: 95, comment_for_submission: 'Excellent work!')
+          participant2.update!(grade: 88)
+        end
+
+        run_test! do |response|
+          rows = CSV.parse(response.body, headers: true)
+
+          expect(rows.headers).to eq(%w[username grade comment])
+          expect(rows.size).to eq(2)
+
+          rows_by_username = rows.index_by { |row| row['username'] }
+          expect(rows_by_username[student.name]['grade']).to eq('95')
+          expect(rows_by_username[student.name]['comment']).to eq('Excellent work!')
+          expect(rows_by_username[student2.name]['grade']).to eq('88.0')
+          expect(rows_by_username[student2.name]['comment']).to eq('Excellent work!')
+        end
+      end
+
+      response '200', 'Returns grades CSV with optional email column' do
+        let(:assignment_id) { assignment.id }
+        let(:include_email) { true }
+
+        before do
+          team.update!(grade_for_submission: 95, comment_for_submission: 'Excellent work!')
+        end
+
+        run_test! do |response|
+          rows = CSV.parse(response.body, headers: true)
+
+          expect(rows.headers).to eq(%w[username grade comment email])
+          rows_by_username = rows.index_by { |row| row['username'] }
+          expect(rows_by_username[student.name]['email']).to eq(student.email)
+          expect(rows_by_username[student2.name]['email']).to eq(student2.email)
+        end
+      end
+
+      response '403', 'Forbidden - Student cannot export grades' do
+        let(:assignment_id) { assignment.id }
+        let(:Authorization) { "Bearer #{student_token}" }
+
+        run_test! do |response|
+          expect(JSON.parse(response.body)['error']).to eq('You are not authorized to export this grades')
+        end
+      end
+    end
+  end
 
   path '/grades/{assignment_id}/view_all_scores' do
     get 'Retrieve all review scores for an assignment' do

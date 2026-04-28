@@ -71,8 +71,15 @@ class ImportController < ApplicationController
 
     pp dup_action
 
-    importService = Import.new(klass: klass, file: uploaded_file, headers: ordered_fields, dup_action: dup_action&.new, defaults: defaults)
-    result = importService.perform(use_headers)
+    # AssignmentParticipant import is assignment-scoped and uses username lookup
+    # rather than the generic table-column importer behavior.
+    result = if klass == AssignmentParticipant
+               AssignmentParticipant.with_assignment_context(params[:assignment_id], current_user) do
+                 Import.new(klass: klass, file: uploaded_file, headers: ordered_fields, dup_action: dup_action&.new, defaults: defaults).perform(use_headers)
+               end
+             else
+               Import.new(klass: klass, file: uploaded_file, headers: ordered_fields, dup_action: dup_action&.new, defaults: defaults).perform(use_headers)
+             end
 
     # If no exceptions occur, return success
     render json: { message: "#{klass.name} has been imported!", **result }, status: :created
@@ -104,6 +111,19 @@ class ImportController < ApplicationController
   end
 
   def import_metadata_for(imported_class)
+    # Provide the username-only field list while preserving the shared import
+    # modal flow used by other importable models.
+    if imported_class == AssignmentParticipant
+      AssignmentParticipant.with_assignment_context(params[:assignment_id], current_user) do
+        return {
+          mandatory_fields: imported_class.mandatory_fields,
+          optional_fields: imported_class.optional_fields,
+          external_fields: imported_class.external_fields,
+          available_actions_on_dup: imported_class.available_actions_on_duplicate.map { |klass| klass.class.name }
+        }
+      end
+    end
+
     if imported_class == Team
       Team.with_assignment_context(params[:assignment_id]) do
         return {

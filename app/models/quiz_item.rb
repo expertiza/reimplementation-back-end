@@ -7,8 +7,6 @@ class QuizItem < Item
   hidden_fields :id, :created_at, :updated_at
   has_many :quiz_question_choices, class_name: 'QuizQuestionChoice', foreign_key: 'item_id', inverse_of: false, dependent: :nullify
   filter nil
-  export_submodels false
-
   def edit
   end
 

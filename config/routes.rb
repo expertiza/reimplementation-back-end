@@ -63,6 +63,9 @@ Rails.application.routes.draw do
       end
 
       resources :questionnaires do
+        member do
+          get :items
+        end
         collection do
           post 'copy/:id', to: 'questionnaires#copy', as: 'copy'
           get 'toggle_access/:id', to: 'questionnaires#toggle_access', as: 'toggle_access'
@@ -197,6 +200,7 @@ Rails.application.routes.draw do
       end      
       resources :grades do
         collection do        
+          get '/:assignment_id/export', to: 'grades#export'
           get '/:assignment_id/view_all_scores', to: 'grades#view_all_scores'
           patch '/:participant_id/assign_grade', to: 'grades#assign_grade'
           get '/:participant_id/edit', to: 'grades#edit'
@@ -224,6 +228,17 @@ Rails.application.routes.draw do
         collection do
           get "/:class", to: "export#index"
           post "/:class", to: "export#export"
+        end
+      end
+
+      # Package workflow preserves questionnaire, item, and advice relationships.
+      resources :questionnaire_packages, only: [] do
+        collection do
+          get :config, action: :package_config
+          get 'templates/:template_name', action: :template
+          post :export
+          post :preview
+          post :import
         end
       end
 end
