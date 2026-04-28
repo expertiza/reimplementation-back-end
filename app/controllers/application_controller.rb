@@ -9,7 +9,9 @@ require_relative '../helpers/file_helper'
 class ApplicationController < ActionController::API
   include Authorization
   include JwtToken
-  
+  prepend_before_action :set_response, only: %i[show update]
+  before_action :find_and_authorize_map_for_create, only: %i[create]  # changed from prepend_before_action
+
   before_action :authorize
 
 end
