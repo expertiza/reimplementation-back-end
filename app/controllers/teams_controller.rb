@@ -117,6 +117,7 @@ class TeamsController < ApplicationController
     params.require(:team).permit(:name, :type, :assignment_id, :parent_id)
   end
 
+  # Normalizes incoming team params so assignment-backed requests populate parent_id consistently.
   def normalized_team_params
     permitted = team_params.to_h
     permitted[:parent_id] ||= permitted.delete('assignment_id') || permitted.delete(:assignment_id)
