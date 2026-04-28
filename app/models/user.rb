@@ -16,17 +16,25 @@ class User < ApplicationRecord
   belongs_to :institution, optional: true
   belongs_to :parent, class_name: 'User', optional: true
   has_many :users, foreign_key: 'parent_id', dependent: :nullify
-  has_many :invitations
-  has_many :assignments
+  #Looking at invitation.rb, invitations relate to users only through participants 
+  #(from_id and to_id both point to AssignmentParticipant, not User). 
+  #There is no user foreign key on the invitations table at all.
+ # has_many :invitations
+  has_many :participants
+ # A user participates in assignments via the participants join table
+  has_many :assignments, through: :participants 
+# A user can also be the instructor of many assignments directly 
+# via instructor_id on the assignments table
+  has_many :instructed_assignments, class_name: 'Assignment', foreign_key: 'instructor_id'
   has_many :teams_users, dependent: :destroy
   has_many :teams, through: :teams_users
-  has_many :participants
-
-  scope :students, -> { where role_id: Role::STUDENT }
-  scope :tas, -> { where role_id: Role::TEACHING_ASSISTANT }
-  scope :instructors, -> { where role_id: Role::INSTRUCTOR }
-  scope :administrators, -> { where role_id: Role::ADMINISTRATOR }
-  scope :superadministrators, -> { where role_id: Role::SUPER_ADMINISTRATOR }
+  
+  #join on role name instead of hardcoded IDs, matching create_roles_heirarchy
+  scope :students,           -> { joins(:role).where(roles: { name: 'Student' }) }
+  scope :tas,                -> { joins(:role).where(roles: { name: 'Teaching Assistant' }) }
+  scope :instructors,        -> { joins(:role).where(roles: { name: 'Instructor' }) }
+  scope :administrators,     -> { joins(:role).where(roles: { name: 'Administrator' }) }
+  scope :superadministrators,-> { joins(:role).where(roles: { name: 'Super Administrator' }) }
 
   delegate :student?, to: :role
   delegate :ta?, to: :role

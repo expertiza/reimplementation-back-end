@@ -3,6 +3,244 @@
 require 'rails_helper'
 
 RSpec.describe User, type: :model do
+
+
+  describe 'validations' do
+    let(:role) { create(:role, :student) }
+
+    describe 'name' do
+      it 'is invalid without a name' do
+        user = User.new(email: 'test@example.com', full_name: 'Test User', role: role, password: 'password')
+        expect(user).not_to be_valid
+        expect(user.errors[:name]).to include("can't be blank")
+      end
+
+      it 'is invalid when name is not unique' do
+        create(:user, name: 'duplicate', role: role)
+        user = User.new(name: 'duplicate', email: 'other@example.com', full_name: 'Other User', role: role, password: 'password')
+        expect(user).not_to be_valid
+        expect(user.errors[:name]).to include('has already been taken')
+      end
+
+      it 'is valid with a unique name' do
+        user = User.new(name: 'uniqueuser', email: 'unique@example.com', full_name: 'Unique User', role: role, password: 'password')
+        expect(user).to be_valid
+      end
+    end 
+
+    describe 'email' do
+      it 'is invalid without an email' do
+        user = User.new(name: 'testuser', full_name: 'Test User', role: role, password: 'password')
+        expect(user).not_to be_valid
+        expect(user.errors[:email]).to include("can't be blank")
+      end
+
+      it 'is invalid with a malformed email' do
+        user = User.new(name: 'testuser', email: 'not-an-email', full_name: 'Test User', role: role, password: 'password')
+        expect(user).not_to be_valid
+        expect(user.errors[:email]).to be_present
+      end
+
+      it 'is valid with a properly formatted email' do
+        user = User.new(name: 'testuser', email: 'valid@example.com', full_name: 'Test User', role: role, password: 'password')
+        expect(user).to be_valid
+      end
+    end
+
+    describe 'full_name' do
+      it 'is invalid without a full_name' do
+        user = User.new(name: 'testuser', email: 'test@example.com', role: role, password: 'password')
+        expect(user).not_to be_valid
+        expect(user.errors[:full_name]).to include("can't be blank")
+      end
+
+      it 'is invalid when full_name exceeds 50 characters' do
+        user = User.new(name: 'testuser', email: 'test@example.com', full_name: 'A' * 51, role: role, password: 'password')
+        expect(user).not_to be_valid
+        expect(user.errors[:full_name]).to include('is too long (maximum is 50 characters)')
+      end
+
+      it 'is valid with a full_name at exactly 50 characters' do
+        user = User.new(name: 'testuser', email: 'test@example.com', full_name: 'A' * 50, role: role, password: 'password')
+        expect(user).to be_valid
+      end
+    end
+  end
+
+  # Use shoulda-matchers to assert the association is declared correctly on the model
+  # inspects the model's reflection metadata rather than hitting the database
+  describe 'associations' do
+    it { is_expected.to belong_to(:role) }
+    it { is_expected.to belong_to(:institution).optional }
+    it { is_expected.to belong_to(:parent).class_name('User').optional }
+    it { is_expected.to have_many(:users).with_foreign_key('parent_id').dependent(:nullify) }
+    it { is_expected.to have_many(:assignments).through(:participants) }
+    it { is_expected.to have_many(:instructed_assignments).class_name('Assignment').with_foreign_key('instructor_id') }
+    it { is_expected.to have_many(:teams_users).dependent(:destroy) }
+    it { is_expected.to have_many(:teams).through(:teams_users) }
+    it { is_expected.to have_many(:participants) }
+  end 
+
+  describe 'scopes' do
+    let(:student_role)    { create(:role, name: 'Student') }
+    let(:ta_role)         { create(:role, name: 'Teaching Assistant') }
+    let(:instructor_role) { create(:role, name: 'Instructor') }
+    let(:admin_role)      { create(:role, name: 'Administrator') }
+    let(:super_admin_role){ create(:role, name: 'Super Administrator') }
+
+    describe '.students' do
+      it 'includes users with student role and excludes others' do
+        student = create(:user, role: student_role)
+        instructor = create(:user, role: instructor_role)
+
+        expect(User.students).to include(student)
+        expect(User.students).not_to include(instructor)
+      end
+    end
+
+    describe '.tas' do
+      it 'includes users with teaching assistant role and excludes others' do
+        ta = create(:user, role: ta_role)
+        student = create(:user, role: student_role)
+
+        expect(User.tas).to include(ta)
+        expect(User.tas).not_to include(student)
+      end
+    end
+
+    describe '.instructors' do
+      it 'includes users with instructor role and excludes others' do
+        instructor = create(:user, role: instructor_role)
+        student = create(:user, role: student_role)
+
+        expect(User.instructors).to include(instructor)
+        expect(User.instructors).not_to include(student)
+      end
+    end
+
+    describe '.administrators' do
+      it 'includes users with administrator role and excludes others' do
+        admin = create(:user, role: admin_role)
+        student = create(:user, role: student_role)
+
+        expect(User.administrators).to include(admin)
+        expect(User.administrators).not_to include(student)
+      end
+    end
+
+    describe '.superadministrators' do
+      it 'includes users with super administrator role and excludes others' do
+        super_admin = create(:user, role: super_admin_role)
+        student = create(:user, role: student_role)
+
+        expect(User.superadministrators).to include(super_admin)
+        expect(User.superadministrators).not_to include(student)
+      end
+    end
+  end
+
+  describe 'delegated role checks' do
+    let(:student_role)     { create(:role, name: 'Student') }
+    let(:ta_role)          { create(:role, name: 'Teaching Assistant') }
+    let(:instructor_role)  { create(:role, name: 'Instructor') }
+    let(:admin_role)       { create(:role, name: 'Administrator') }
+    let(:super_admin_role) { create(:role, name: 'Super Administrator') }
+
+    describe '#student?' do
+      it 'returns true for a student role' do
+        user = create(:user, role: student_role)
+        expect(user.student?).to be_truthy 
+      end
+
+      it 'returns false for a non-student role' do
+        user = create(:user, role: instructor_role)
+        expect(user.student?).to be_falsy
+      end
+    end
+
+    describe '#ta?' do
+      it 'returns true for a teaching assistant role' do
+        user = create(:user, role: ta_role)
+        expect(user.ta?).to be_truthy
+      end
+
+      it 'returns false for a non-ta role' do
+        user = create(:user, role: student_role)
+        expect(user.ta?).to be_falsy
+      end
+    end
+
+    describe '#instructor?' do
+      it 'returns true for an instructor role' do
+        user = create(:user, role: instructor_role)
+        expect(user.instructor?).to be_truthy
+      end
+
+      it 'returns false for a non-instructor role' do
+        user = create(:user, role: student_role)
+        expect(user.instructor?).to be_falsy
+      end
+    end
+
+    describe '#administrator?' do
+      it 'returns true for an administrator role' do
+        user = create(:user, role: admin_role)
+        expect(user.administrator?).to be_truthy
+      end
+
+      it 'returns false for a non-administrator role' do
+        user = create(:user, role: student_role)
+        expect(user.administrator?).to be_falsy
+      end
+    end
+
+    describe '#super_administrator?' do
+      it 'returns true for a super administrator role' do
+        user = create(:user, role: super_admin_role)
+        expect(user.super_administrator?).to be_truthy
+      end
+
+      it 'returns false for a plain administrator role' do
+        user = create(:user, role: admin_role)
+        expect(user.super_administrator?).to be_falsy
+      end
+
+      it 'returns false for a non-admin role' do
+        user = create(:user, role: student_role)
+        expect(user.super_administrator?).to be_falsy
+      end
+    end
+  end
+
+  describe 'defaults' do
+    subject(:user) { User.new }
+
+    it 'sets is_new_user to true' do
+      expect(user.is_new_user).to be true
+    end
+
+    it 'sets copy_of_emails to false' do
+      expect(user.copy_of_emails).to be false
+    end
+
+    it 'sets email_on_review to false' do
+      expect(user.email_on_review).to be false
+    end
+
+    it 'sets email_on_submission to false' do
+      expect(user.email_on_submission).to be false
+    end
+
+    it 'sets email_on_review_of_review to false' do
+      expect(user.email_on_review_of_review).to be false
+    end
+
+    it 'sets etc_icons_on_homepage to true' do
+      expect(user.etc_icons_on_homepage).to be true
+    end
+  end
+
+
   describe 'password validations' do
     it 'requires a password when password_digest is blank' do
       user = User.new(name: 'testuser', email: 'test@example.com', full_name: 'Test User', role: create(:role))
