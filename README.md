@@ -39,6 +39,12 @@ if !ENV['COVERAGE_STARTED']
 end
 ```
 
+Then, run the test suite using the following:
+
+```
+bundle exec rspec spec/models/questionnaire_spec.rb spec/models/course_spec.rb spec/models/question_advice_spec.rb 
+```
+
 ## Development Environment
 
 * Ruby version - 3.4.5
