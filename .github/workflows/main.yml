@@ -155,12 +155,11 @@ jobs:
           name: code-coverage-artifacts
           path: coverage/
 
-      - name: Upload code-coverage report to code-climate
-        run: |
-          export GIT_BRANCH="${GITHUB_REF/refs\/heads\//}"
-          gem install codeclimate-test-reporter
-          cc-test-reporter sum-coverage coverage/codeclimate.*.json 
-          cc-test-reporter after-build -t simplecov -r ${{ secrets.CC_TEST_REPORTER_ID }}
+      - name: Upload code-coverage report to qlty
+        uses: qltysh/qlty-action/coverage@v2
+        with:
+          token: ${{ secrets.CC_TEST_REPORTER_ID }}
+          files: coverage/coverage.json
 
   docker:
     needs: test
