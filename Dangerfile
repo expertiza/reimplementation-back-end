@@ -25,6 +25,7 @@ warn("Pull request contains TODO or FIXME comments.") if todo_fixme
 temp_files = git.added_files.any? { |file| file.match?(/(tmp|temp|cache)/i) }
 warn("Pull request includes temp, tmp, or cache files.") if temp_files
 
+
 # --- Missing Test Checks ---
 warn("There are no test changes in this PR.") if (git.modified_files + git.added_files).none? { |f| f.include?('spec/') || f.include?('test/') }
 
