@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_19_000002) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_24_000003) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -347,6 +347,26 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_19_000002) do
     t.integer "round"
     t.integer "version_num"
     t.index ["map_id"], name: "fk_response_response_map"
+  end
+
+  create_table "review_reset_archives", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "response_id", null: false
+    t.integer "map_id", null: false
+    t.integer "assignment_id", null: false
+    t.integer "questionnaire_id", null: false
+    t.bigint "project_topic_id"
+    t.integer "round"
+    t.integer "reviewer_id"
+    t.integer "reviewee_id"
+    t.string "reset_reason", null: false
+    t.json "snapshot_data", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "index_review_reset_archives_on_assignment_id"
+    t.index ["project_topic_id"], name: "index_review_reset_archives_on_project_topic_id"
+    t.index ["questionnaire_id"], name: "index_review_reset_archives_on_questionnaire_id"
+    t.index ["reset_reason"], name: "index_review_reset_archives_on_reset_reason"
+    t.index ["response_id"], name: "index_review_reset_archives_on_response_id"
   end
 
   create_table "roles", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
