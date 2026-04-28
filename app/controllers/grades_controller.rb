@@ -1,12 +1,17 @@
+require 'csv'
+
 class GradesController < ApplicationController
     include GradesHelper
+
+    GRADES_EXPORT_HEADERS = %w[username grade comment].freeze
+    GRADES_EXPORT_OPTIONAL_HEADERS = %w[email].freeze
 
     def action_allowed?
         case params[:action]
         when 'view_our_scores','view_my_scores'
             set_participant_and_team_via_assignment
             current_user_is_assignment_participant?(params[:assignment_id])
-        when 'view_all_scores', 'get_review_tableau_data'
+        when 'view_all_scores', 'get_review_tableau_data', 'export'
             current_user_teaching_staff_of_assignment?(params[:assignment_id])
         when 'edit', 'assign_grade', 'instructor_review'
             set_team_and_assignment_via_participant
@@ -35,6 +40,20 @@ class GradesController < ApplicationController
             team_scores: team_scores,
             participant_scores: participant_scores
         }
+    end
+
+    # export (GET /grades/:assignment_id/export)
+    # Exports fixed, gradebook-friendly CSV columns for an assignment.
+    def export
+        assignment = Assignment.find(params[:assignment_id])
+        filename = "#{assignment.name.parameterize.presence || 'assignment'}-grades.csv"
+
+        send_data(
+            grades_csv_for(assignment, include_email: include_email_in_grades_export?),
+            type: 'text/csv; charset=utf-8',
+            disposition: 'attachment',
+            filename: filename
+        )
     end
 
 
@@ -243,6 +262,30 @@ class GradesController < ApplicationController
             return { error: 'Team not found' , status: :not_found}
         end
         @assignment = @participant.assignment
+    end
+
+    def grades_csv_for(assignment, include_email: false)
+        headers = GRADES_EXPORT_HEADERS + (include_email ? GRADES_EXPORT_OPTIONAL_HEADERS : [])
+
+        CSV.generate(headers: true) do |csv|
+            csv << headers
+
+            assignment.participants.includes(:user).find_each do |participant|
+                team = participant.team
+                row = [
+                    participant.user_name,
+                    participant.grade || team&.grade_for_submission,
+                    team&.comment_for_submission
+                ]
+                row << participant.user&.email if include_email
+
+                csv << row
+            end
+        end
+    end
+
+    def include_email_in_grades_export?
+        ActiveModel::Type::Boolean.new.cast(params[:include_email])
     end
 
     

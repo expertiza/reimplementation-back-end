@@ -3,15 +3,7 @@ class ExportController < ApplicationController
   before_action :export_params
 
   def resolve_export_class(name)
-  # Try top-level first
-    return name.constantize
-  rescue NameError
-    # Try Pseudo namespace
-    begin
-      "Pseudo::#{name}".constantize
-    rescue NameError
-      nil
-    end
+    name.constantize
   end
 
   def index
