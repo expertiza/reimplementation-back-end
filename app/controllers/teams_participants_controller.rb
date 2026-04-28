@@ -24,8 +24,22 @@ class TeamsParticipantsController < ApplicationController
     end
 
     duty_id = params.dig(:teams_participant, :duty_id) || params.dig("teams_participant", "duty_id")
-    team_participant.update(duty_id: duty_id)
-    render json: { message: "Duty updated successfully" }, status: :ok
+    participant = team_participant.participant
+
+    # Canonical source of truth: participant.duty_id
+    if duty_id.present?
+      assignment_duty = AssignmentsDuty.find_by(assignment_id: participant.parent_id, duty_id: duty_id)
+      unless assignment_duty
+        render json: { error: 'Duty is not assigned to this assignment' }, status: :unprocessable_entity and return
+      end
+    end
+
+    participant.duty_id = duty_id
+    if participant.save
+      render json: { message: 'Duty updated successfully' }, status: :ok
+    else
+      render json: { error: participant.errors.full_messages.to_sentence }, status: :unprocessable_entity
+    end
   end
 
   # Displays a list of all participants in a specific team.
