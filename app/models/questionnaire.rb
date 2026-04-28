@@ -3,7 +3,6 @@
 class Questionnaire < ApplicationRecord
   belongs_to :instructor
   has_many :items, class_name: "Item", foreign_key: "questionnaire_id", dependent: :destroy # the collection of items associated with this Questionnaire
-  before_destroy :check_for_question_associations
 
   validate :validate_questionnaire
   validates :name, presence: true
@@ -63,13 +62,6 @@ class Questionnaire < ApplicationRecord
     end
     questionnaire
   end
-
-    # Check_for_question_associations checks if questionnaire has associated items or not
-    def check_for_question_associations
-      if items.any?
-        raise ActiveRecord::DeleteRestrictionError.new( "Cannot delete record because dependent items exist")
-      end
-    end
 
     def as_json(options = {})
         super(options.merge({
