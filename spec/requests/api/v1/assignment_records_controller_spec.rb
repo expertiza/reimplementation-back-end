@@ -87,6 +87,16 @@ RSpec.describe 'Assignment Records API', type: :request do
     )
   end
 
+  let(:outside_instructor) do
+    User.create!(
+      name: 'outside_instructor_records',
+      password_digest: 'password',
+      role_id: @roles[:instructor].id,
+      full_name: 'Outside Instructor Records',
+      email: 'outside_instructor_records@example.com'
+    )
+  end
+
   let!(:course) { create(:course, instructor: instructor) }
 
   let!(:assignment) do
@@ -193,6 +203,36 @@ RSpec.describe 'Assignment Records API', type: :request do
   let!(:assignment_questionnaire1) { AssignmentQuestionnaire.create!(assignment_id: assignment.id, questionnaire_id: questionnaire1.id) }
   let!(:assignment_questionnaire2) { AssignmentQuestionnaire.create!(assignment_id: assignment2.id, questionnaire_id: questionnaire2.id) }
 
+  let!(:assignment_review_due_date1) do
+    AssignmentDueDate.create!(
+      parent: assignment,
+      due_at: 12.days.from_now,
+      deadline_type_id: DueDate::REVIEW_DEADLINE_TYPE_ID,
+      submission_allowed_id: 3,
+      review_allowed_id: 3
+    )
+  end
+
+  let!(:assignment_review_due_date2) do
+    AssignmentDueDate.create!(
+      parent: assignment,
+      due_at: 14.days.from_now,
+      deadline_type_id: DueDate::REVIEW_DEADLINE_TYPE_ID,
+      submission_allowed_id: 3,
+      review_allowed_id: 3
+    )
+  end
+
+  let!(:assignment2_review_due_date) do
+    AssignmentDueDate.create!(
+      parent: assignment2,
+      due_at: 7.days.from_now,
+      deadline_type_id: DueDate::REVIEW_DEADLINE_TYPE_ID,
+      submission_allowed_id: 3,
+      review_allowed_id: 3
+    )
+  end
+
   let!(:review_map1) { ReviewResponseMap.create!(reviewed_object_id: assignment.id, reviewer_id: participant5.id, reviewee_id: team.id) }
   let!(:review_map2) { ReviewResponseMap.create!(reviewed_object_id: assignment.id, reviewer_id: participant6.id, reviewee_id: team.id) }
   let!(:review_map3) { ReviewResponseMap.create!(reviewed_object_id: assignment2.id, reviewer_id: participant8.id, reviewee_id: team2.id) }
@@ -249,6 +289,7 @@ RSpec.describe 'Assignment Records API', type: :request do
 
   let(:instructor_token) { JsonWebToken.encode({ id: instructor.id }) }
   let(:student_token) { JsonWebToken.encode({ id: student.id }) }
+  let(:outside_instructor_token) { JsonWebToken.encode({ id: outside_instructor.id }) }
   let(:Authorization) { "Bearer #{instructor_token}" }
 
   before do
@@ -290,7 +331,20 @@ RSpec.describe 'Assignment Records API', type: :request do
           expect(data.keys).to match_array(%w[course_id course_name assignments students])
           expect(data['assignments'].length).to eq(2)
           expect(data['assignments'].first.keys).to match_array(%w[assignment_id assignment_name has_topics])
-          expect(data['assignments'].map { |item| item['assignment_id'] }).to match_array([assignment.id, assignment2.id])
+          assignment_ids_ordered_by_final_review_deadline = [assignment, assignment2]
+            .sort_by do |assignment_record|
+              assignment_record.due_dates
+                .select { |due_date| due_date.deadline_type_id == DueDate::REVIEW_DEADLINE_TYPE_ID }
+                .map(&:due_at)
+                .max
+            end
+            .map(&:id)
+
+          expect(data['assignments'].map { |item| item['assignment_id'] }).to eq(
+            assignment_ids_ordered_by_final_review_deadline
+          )
+          expect(assignment_review_due_date2.due_at).to be > assignment2_review_due_date.due_at
+          expect(data['assignments'].last['assignment_id']).to eq(assignment.id)
           expect(data['assignments'].map { |item| item['assignment_name'] }).to match_array(['Assignment With Records', 'Assignment Without Topics'])
           expect(data['assignments'].find { |item| item['assignment_id'] == assignment.id }['has_topics']).to eq(true)
           expect(data['assignments'].find { |item| item['assignment_id'] == assignment2.id }['has_topics']).to eq(false)
@@ -387,6 +441,26 @@ RSpec.describe 'Assignment Records API', type: :request do
         end
       end
 
+      response '500', 'Final assignment due date is not a review deadline' do
+        let(:course_id) { course.id }
+
+        let!(:assignment_submission_due_date) do
+          AssignmentDueDate.create!(
+            parent: assignment2,
+            due_at: 21.days.from_now,
+            deadline_type_id: 1,
+            submission_allowed_id: 3,
+            review_allowed_id: 3
+          )
+        end
+
+        run_test! do |response|
+          expect(JSON.parse(response.body)['error']).to eq(
+            "Final due date for assignment #{assignment2.id} is not a review deadline"
+          )
+        end
+      end
+
       response '403', 'Forbidden for students' do
         let(:course_id) { course.id }
         let(:Authorization) { "Bearer #{student_token}" }
@@ -396,9 +470,27 @@ RSpec.describe 'Assignment Records API', type: :request do
         end
       end
 
+      response '403', 'Forbidden for instructors outside the course teaching staff' do
+        let(:course_id) { course.id }
+        let(:Authorization) { "Bearer #{outside_instructor_token}" }
+
+        run_test! do |response|
+          expect(JSON.parse(response.body)['error']).to eq('You are not authorized to index this assignment_records')
+        end
+      end
+
       response '401', 'Unauthorized' do
         let(:course_id) { course.id }
         let(:Authorization) { 'Bearer invalid_token' }
+
+        run_test! do |response|
+          expect(JSON.parse(response.body)['error']).to eq('Not Authorized')
+        end
+      end
+
+      response '401', 'Unauthorized without a bearer token' do
+        let(:course_id) { course.id }
+        let(:Authorization) { '' }
 
         run_test! do |response|
           expect(JSON.parse(response.body)['error']).to eq('Not Authorized')
