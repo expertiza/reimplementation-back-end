@@ -4,15 +4,11 @@ class ExportController < ApplicationController
     "User" => User,
     "Team" => Team,
     "Course" => Course,
-    "Assignment" => Assignment,
+    "AssignmentParticipant" => AssignmentParticipant,
     "ProjectTopic" => ProjectTopic,
     "Questionnaire" => Questionnaire,
     "Item" => Item,
-    "QuestionAdvice" => QuestionAdvice,
-    "Answer" => Answer,
-    "QuizItem" => QuizItem,
-    "Grades" => Pseudo::Grades,
-    "Pseudo::Grades" => Pseudo::Grades
+    "QuestionAdvice" => QuestionAdvice
   }.freeze
 
   before_action :export_params
@@ -53,6 +49,10 @@ class ExportController < ApplicationController
                  AssignmentParticipant.with_assignment_context(params[:assignment_id], current_user) do
                    Export.perform(klass, ordered_fields)
                  end
+               elsif klass == ProjectTopic
+                 ProjectTopic.with_assignment_context(params[:assignment_id]) do
+                   Export.perform(klass, ordered_fields)
+                 end
                else
                  Export.perform(klass, ordered_fields)
                end
@@ -87,6 +87,16 @@ class ExportController < ApplicationController
 
     if klass == Team
       Team.with_assignment_context(params[:assignment_id]) do
+        return {
+          mandatory_fields: klass.mandatory_fields,
+          optional_fields: klass.optional_fields,
+          external_fields: klass.external_fields
+        }
+      end
+    end
+
+    if klass == ProjectTopic
+      ProjectTopic.with_assignment_context(params[:assignment_id]) do
         return {
           mandatory_fields: klass.mandatory_fields,
           optional_fields: klass.optional_fields,

@@ -12,7 +12,6 @@ class AssignmentParticipant < Participant
   mandatory_fields :user_name
   available_actions_on_duplicate SkipRecordAction.new, UpdateExistingRecordAction.new
   filter -> { export_scope }
-  export_submodels false
 
   has_many :sent_invitations, class_name: 'Invitation', foreign_key: 'from_id'
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewee_id'

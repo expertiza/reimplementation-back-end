@@ -6,6 +6,7 @@ class Team < ApplicationRecord
   DEFAULT_TEAM_IMPORT_EXPORT_PARTICIPANT_COLUMNS = 10
   mandatory_fields :name
   hidden_fields :id, :created_at, :updated_at
+  available_actions_on_duplicate SkipRecordAction.new, UpdateExistingRecordAction.new, ChangeOffendingFieldAction.new
   filter -> { export_rows }
   TeamExportRow = Struct.new(:team, :participants) do
     # Normalizes exported rows so missing participant slots return nil cleanly.

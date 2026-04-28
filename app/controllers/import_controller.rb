@@ -18,13 +18,11 @@ class ImportController < ApplicationController
     "User" => User,
     "Team" => Team,
     "Course" => Course,
-    "Assignment" => Assignment,
+    "AssignmentParticipant" => AssignmentParticipant,
     "ProjectTopic" => ProjectTopic,
     "Questionnaire" => Questionnaire,
     "Item" => Item,
-    "QuestionAdvice" => QuestionAdvice,
-    "Answer" => Answer,
-    "QuizItem" => QuizItem
+    "QuestionAdvice" => QuestionAdvice
   }.freeze
 
   # Ensure strong parameters are processed before each action
@@ -69,12 +67,14 @@ class ImportController < ApplicationController
     # Load the chosen duplicate action (Skip, Update, Change)
     dup_action = params[:dup_action]&.constantize
 
-    pp dup_action
-
     # AssignmentParticipant import is assignment-scoped and uses username lookup
     # rather than the generic table-column importer behavior.
     result = if klass == AssignmentParticipant
                AssignmentParticipant.with_assignment_context(params[:assignment_id], current_user) do
+                 Import.new(klass: klass, file: uploaded_file, headers: ordered_fields, dup_action: dup_action&.new, defaults: defaults).perform(use_headers)
+               end
+             elsif klass == ProjectTopic
+               ProjectTopic.with_assignment_context(params[:assignment_id]) do
                  Import.new(klass: klass, file: uploaded_file, headers: ordered_fields, dup_action: dup_action&.new, defaults: defaults).perform(use_headers)
                end
              else
@@ -84,6 +84,8 @@ class ImportController < ApplicationController
     # If no exceptions occur, return success
     render json: { message: "#{klass.name} has been imported!", **result }, status: :created
 
+  rescue ArgumentError => e
+    render json: { error: e.message }, status: :unprocessable_entity
   rescue StandardError => e
     # Catch any unexpected runtime errors
     puts "An unexpected error occurred during import: #{e.message}"
@@ -102,6 +104,7 @@ class ImportController < ApplicationController
 
   def import_defaults_for(klass)
     return team_import_defaults if klass == Team
+    return project_topic_import_defaults if klass == ProjectTopic
     return {} unless klass == User && current_user.present?
 
     {
@@ -135,6 +138,17 @@ class ImportController < ApplicationController
       end
     end
 
+    if imported_class == ProjectTopic
+      ProjectTopic.with_assignment_context(params[:assignment_id]) do
+        return {
+          mandatory_fields: imported_class.mandatory_fields,
+          optional_fields: imported_class.optional_fields,
+          external_fields: imported_class.external_fields,
+          available_actions_on_dup: imported_class.available_actions_on_duplicate.map { |klass| klass.class.name }
+        }
+      end
+    end
+
     {
       mandatory_fields: imported_class.mandatory_fields,
       optional_fields: imported_class.optional_fields,
@@ -144,6 +158,12 @@ class ImportController < ApplicationController
   end
 
   def team_import_defaults
+    return {} if params[:assignment_id].blank?
+
+    { assignment_id: params[:assignment_id].to_i }
+  end
+
+  def project_topic_import_defaults
     return {} if params[:assignment_id].blank?
 
     { assignment_id: params[:assignment_id].to_i }
