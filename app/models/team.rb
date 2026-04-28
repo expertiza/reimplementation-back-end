@@ -7,8 +7,6 @@ class Team < ApplicationRecord
   mandatory_fields :name
   hidden_fields :id, :created_at, :updated_at
   filter -> { export_rows }
-  export_submodels false
-
   TeamExportRow = Struct.new(:team, :participants) do
     def initialize(team, participants)
       super(team, participants)
