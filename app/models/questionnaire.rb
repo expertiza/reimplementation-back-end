@@ -1,13 +1,22 @@
 # frozen_string_literal: true
 
 class Questionnaire < ApplicationRecord
-  belongs_to :instructor
-  has_many :items, -> { order(:seq) }, class_name: "Item", foreign_key: "questionnaire_id", dependent: :destroy
+  # E2619: optional: true because quiz questionnaires are created by students (not instructors).
+  # A student's user_id is not a valid Instructor (STI type constraint), so the default
+  # belongs_to validation would always fail for student-created quizzes.
+  belongs_to :instructor, optional: true
+  # E2619: inverse_of is required here because the scope (-> { order(:seq) }) disables Rails
+  # automatic inverse detection. Without it, item.questionnaire returns nil during nested-
+  # attribute creation, making is_quiz_item? return false and rejecting correct_answer values.
+  has_many :items, -> { order(:seq) }, class_name: "Item", foreign_key: "questionnaire_id",
+           dependent: :destroy, inverse_of: :questionnaire
   accepts_nested_attributes_for :items, allow_destroy: true
   before_destroy :check_for_question_associations
 
   validate :validate_questionnaire
   validates :name, presence: true
+  # E2619: instructor_id required only for non-Quiz questionnaires (instructors create those).
+  validates :instructor_id, presence: true, unless: -> { questionnaire_type == 'Quiz' }
   validates :max_question_score, :min_question_score, numericality: true 
   
 

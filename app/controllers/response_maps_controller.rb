@@ -5,10 +5,21 @@ class ResponseMapsController < ApplicationController
     true
   end
 
+  # Returns all peer-review response maps for a reviewer, excluding quiz maps.
+  #
+  # Quiz response maps (where +reviewer_id == reviewee_id+) are filtered out so
+  # the frontend only receives genuine peer-review assignments. Each entry also
+  # carries per-map quiz state (+quiz_taken+, +quiz_questionnaire_id+) so the
+  # frontend can gate the "Start Review" button row-by-row without a second
+  # request.
+  #
+  # @param reviewer_user_id [Integer] required; the user whose maps are fetched
+  # @param assignment_id [Integer, nil] optional; scopes results to one assignment
+  # @return [200] +{ response_maps: [...] }+ each entry contains id, team/assignment
+  #   names, quiz state, and the latest {Response} summary if one exists
+  # @return [400] if +reviewer_user_id+ is missing
   # GET /response_maps?reviewer_user_id=4
   # GET /response_maps?assignment_id=1&reviewer_user_id=4
-  # Returns all response maps for a given reviewer user (optionally scoped to one assignment),
-  # along with the latest response (draft or submitted) for each map.
   def index
     assignment_id    = params[:assignment_id].present? ? params[:assignment_id].to_i : nil
     reviewer_user_id = params[:reviewer_user_id].to_i
@@ -30,10 +41,33 @@ class ResponseMapsController < ApplicationController
     map_scope = map_scope.where(reviewed_object_id: assignment_id) if assignment_id
     maps = map_scope.to_a
 
-    result = maps.map do |map|
+    result = maps.filter_map do |map|
+      # E2619: skip quiz response maps. Quiz maps always have reviewer_id == reviewee_id
+      # (the student quizzes themselves). This guard is more reliable than checking whether
+      # reviewed_object_id matches an assignment id, because a quiz questionnaire id can
+      # coincidentally equal an assignment id and fool the next guard below.
+      next if map.reviewer_id == map.reviewee_id
+
+      # Belt-and-suspenders: reviewed_object_id for review maps must reference an assignment.
+      assignment = Assignment.find_by(id: map.reviewed_object_id)
+      next unless assignment
+
       latest_response = Response.where(map_id: map.id).order(created_at: :desc).first
       team = Team.find_by(id: map.reviewee_id)
-      assignment = Assignment.find_by(id: map.reviewed_object_id)
+
+      # E2619: include per-map quiz state so the frontend can gate each review row
+      # independently. Each reviewee team owns its own quiz questionnaire, so
+      # quiz_taken must be checked per map, not per assignment.
+      quiz_questionnaire_id = team&.quiz_questionnaire_id
+      quiz_taken = if quiz_questionnaire_id.present?
+                     QuizResponseMap
+                       .where(reviewer_id: map.reviewer_id, reviewed_object_id: quiz_questionnaire_id)
+                       .joins("INNER JOIN responses ON responses.map_id = response_maps.id")
+                       .where(responses: { is_submitted: true })
+                       .exists?
+                   else
+                     false
+                   end
 
       entry = {
         id: map.id,
@@ -41,7 +75,9 @@ class ResponseMapsController < ApplicationController
         reviewee_id: map.reviewee_id,
         reviewed_object_id: map.reviewed_object_id,
         team_name: team&.name || "Team ##{map.reviewee_id}",
-        assignment_name: assignment&.name || "Assignment ##{map.reviewed_object_id}"
+        assignment_name: assignment&.name || "Assignment ##{map.reviewed_object_id}",
+        quiz_questionnaire_id: quiz_questionnaire_id,
+        quiz_taken: quiz_taken
       }
 
       if latest_response
@@ -60,10 +96,18 @@ class ResponseMapsController < ApplicationController
     render json: { response_maps: result }, status: :ok
   end
 
+  # Finds or creates a {ReviewResponseMap} linking a reviewer to a reviewee
+  # team for the given assignment. Also ensures the reviewer has an
+  # {AssignmentParticipant} record and sets +can_review+ and +can_take_quiz+
+  # flags so the student task page shows the quiz requirement.
+  #
+  # @param assignment_id [Integer] the assignment being reviewed
+  # @param reviewer_user_id [Integer] the user who will perform the review
+  # @param reviewee_team_id [Integer] the team being reviewed
+  # @return [201] the map and participant IDs
+  # @return [400] if any required parameter is missing
+  # @return [422] if the map or participant cannot be persisted
   # POST /response_maps
-  # Finds or creates a ReviewResponseMap for the given assignment, reviewer user, and reviewee team.
-  # Params: { assignment_id, reviewer_user_id, reviewee_team_id }
-  # Returns: { id, reviewer_id, reviewee_id, reviewed_object_id, reviewer_participant_id }
   def create
     assignment_id    = params[:assignment_id].to_i
     reviewer_user_id = params[:reviewer_user_id].to_i
@@ -91,6 +135,11 @@ class ResponseMapsController < ApplicationController
       reviewer_id:        reviewer_participant.id,
       reviewee_id:        reviewee_team_id
     )
+
+    # E2619: when a reviewer is assigned, mark them as allowed to review and take the quiz.
+    # This gates the quiz/review flow in StudentTask: only participants with can_take_quiz=true
+    # will see the quiz requirement on the student tasks page.
+    reviewer_participant.update_columns(can_review: true, can_take_quiz: true)
 
     render json: {
       id:                      map.id,
