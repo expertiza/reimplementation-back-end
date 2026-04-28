@@ -114,6 +114,23 @@ begin
     ).id
   end
 
+  puts "assigning students to courses"
+  course_participant_ids = []
+  num_students.times do |i|
+    course_participant = CourseParticipant.create(
+      user_id: student_user_ids[i],
+      parent_id: course_ids[i % num_courses],
+      handle: Faker::Internet.unique.username
+    )
+
+    if course_participant.persisted?
+      puts "Created CourseParticipant with ID: #{course_participant.id}"
+      course_participant_ids << course_participant.id
+    else
+      puts "Failed to create CourseParticipant: #{course_participant.errors.full_messages.join(', ')}"
+    end
+  end
+
   puts "assigning students to teams"
   teams_users_ids = []
   # num_students.times do |i|

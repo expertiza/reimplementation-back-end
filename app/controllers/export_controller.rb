@@ -47,13 +47,13 @@ class ExportController < ApplicationController
                  # AssignmentParticipant export should include only the
                  # participants for the selected assignment.
                  AssignmentParticipant.with_assignment_context(params[:assignment_id], current_user) do
-                   Export.perform(klass, ordered_fields)
+                   named_export_files(Export.perform(klass, ordered_fields), assignment_participant_export_name(params[:assignment_id]))
                  end
                elsif klass == CourseParticipant
                  # CourseParticipant export should include only the
                  # participants for the selected course.
                  CourseParticipant.with_course_context(params[:course_id], current_user) do
-                   Export.perform(klass, ordered_fields)
+                   named_export_files(Export.perform(klass, ordered_fields), course_participant_export_name(params[:course_id]))
                  end
                elsif klass == ProjectTopic
                  ProjectTopic.with_assignment_context(params[:assignment_id]) do
@@ -126,5 +126,24 @@ class ExportController < ApplicationController
       optional_fields: klass.optional_fields,
       external_fields: klass.external_fields
     }
+  end
+
+  def named_export_files(files, name)
+    Array(files).map { |file| file.merge(name: name) }
+  end
+
+  def assignment_participant_export_name(assignment_id)
+    assignment = Assignment.find_by(id: assignment_id)
+    scoped_export_name('AssignmentParticipant', assignment&.name, assignment_id)
+  end
+
+  def course_participant_export_name(course_id)
+    course = Course.find_by(id: course_id)
+    scoped_export_name('CourseParticipant', course&.name, course_id)
+  end
+
+  def scoped_export_name(base_name, scope_name, scope_id)
+    parts = [base_name, scope_name.presence || 'scope', scope_id.presence].compact
+    parts.join('_').parameterize(separator: '_')
   end
 end

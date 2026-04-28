@@ -418,6 +418,8 @@ RSpec.describe "Import/export requests", type: :request do
 
         json = JSON.parse(response.body)
         exported_file = Array(json["file"]).first
+        expected_name = "assignmentparticipant_#{assignment.name}_#{assignment.id}".parameterize(separator: "_")
+        expect(exported_file["name"]).to eq(expected_name)
         expect(exported_file["contents"]).to include("student_participant_export")
         expect(exported_file["contents"]).not_to include("other_student_participant_export")
       end
@@ -462,8 +464,9 @@ RSpec.describe "Import/export requests", type: :request do
 
         json = JSON.parse(response.body)
         exported_file = Array(json["file"]).first
+        expected_name = "courseparticipant_#{course.name}_#{course.id}".parameterize(separator: "_")
 
-        expect(exported_file["name"]).to eq("CourseParticipant")
+        expect(exported_file["name"]).to eq(expected_name)
         expect(exported_file["contents"]).to include("user_name")
         expect(exported_file["contents"]).to include("student_course_participant_export")
         expect(exported_file["contents"]).not_to include("other_student_course_participant_export")
