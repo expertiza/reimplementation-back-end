@@ -30,6 +30,12 @@ class ExportController < ApplicationController
                  Team.with_assignment_context(params[:assignment_id]) do
                    Export.perform(klass, ordered_fields)
                  end
+               elsif klass == AssignmentParticipant
+                 # AssignmentParticipant export should include only the
+                 # participants for the selected assignment.
+                 AssignmentParticipant.with_assignment_context(params[:assignment_id], current_user) do
+                   Export.perform(klass, ordered_fields)
+                 end
                else
                  Export.perform(klass, ordered_fields)
                end
@@ -50,6 +56,18 @@ class ExportController < ApplicationController
   end
 
   def export_metadata_for(klass)
+    # The participant CSV intentionally exposes username only. Other user
+    # details are previewed from the users table but not exported as input.
+    if klass == AssignmentParticipant
+      AssignmentParticipant.with_assignment_context(params[:assignment_id], current_user) do
+        return {
+          mandatory_fields: klass.mandatory_fields,
+          optional_fields: klass.optional_fields,
+          external_fields: klass.external_fields
+        }
+      end
+    end
+
     if klass == Team
       Team.with_assignment_context(params[:assignment_id]) do
         return {
