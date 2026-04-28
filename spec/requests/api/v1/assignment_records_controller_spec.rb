@@ -217,6 +217,21 @@ RSpec.describe 'Assignment Records API', type: :request do
   let!(:review_answer6) { Answer.create!(response_id: review_response6.id, item_id: criterion2.id, answer: 4, comments: 'Very good effort') }
   let!(:review_answer7) { Answer.create!(response_id: review_response7.id, item_id: criterion2.id, answer: 5, comments: 'Excellent effort') }
 
+  let!(:feedback_map1) { FeedbackResponseMap.create!(reviewed_object_id: review_map4.id, reviewer_id: participant11.id, reviewee_id: participant.id) }
+  let!(:feedback_map2) { FeedbackResponseMap.create!(reviewed_object_id: review_map5.id, reviewer_id: participant14.id, reviewee_id: participant2.id) }
+  let!(:feedback_map3) { FeedbackResponseMap.create!(reviewed_object_id: review_map6.id, reviewer_id: participant12.id, reviewee_id: participant9.id) }
+  let!(:feedback_map4) { FeedbackResponseMap.create!(reviewed_object_id: review_map7.id, reviewer_id: participant13.id, reviewee_id: participant10.id) }
+
+  let!(:feedback_response1) { Response.create!(map_id: feedback_map1.id, is_submitted: true) }
+  let!(:feedback_response2) { Response.create!(map_id: feedback_map2.id, is_submitted: true) }
+  let!(:feedback_response3) { Response.create!(map_id: feedback_map3.id, is_submitted: true) }
+  let!(:feedback_response4) { Response.create!(map_id: feedback_map4.id, is_submitted: true) }
+
+  let!(:feedback_answer1) { Answer.create!(response_id: feedback_response1.id, item_id: criterion1.id, answer: 4, comments: 'Helpful review') }
+  let!(:feedback_answer2) { Answer.create!(response_id: feedback_response2.id, item_id: criterion1.id, answer: 5, comments: 'Excellent review') }
+  let!(:feedback_answer3) { Answer.create!(response_id: feedback_response3.id, item_id: criterion2.id, answer: 3, comments: 'Useful review') }
+  let!(:feedback_answer4) { Answer.create!(response_id: feedback_response4.id, item_id: criterion2.id, answer: 2, comments: 'Needs better review detail') }
+
   let!(:teammate_review_map1) { TeammateReviewResponseMap.create!(reviewed_object_id: assignment.id, reviewer_id: participant2.id, reviewee_id: participant.id) }
   let!(:teammate_review_map2) { TeammateReviewResponseMap.create!(reviewed_object_id: assignment.id, reviewer_id: participant.id, reviewee_id: participant2.id) }
   let!(:teammate_review_map3) { TeammateReviewResponseMap.create!(reviewed_object_id: assignment2.id, reviewer_id: participant7.id, reviewee_id: participant3.id) }
@@ -272,7 +287,9 @@ RSpec.describe 'Assignment Records API', type: :request do
 
           expect(data['course_id']).to eq(course.id)
           expect(data['course_name']).to eq(course.name)
+          expect(data.keys).to match_array(%w[course_id course_name assignments students])
           expect(data['assignments'].length).to eq(2)
+          expect(data['assignments'].first.keys).to match_array(%w[assignment_id assignment_name has_topics])
           expect(data['assignments'].map { |item| item['assignment_id'] }).to match_array([assignment.id, assignment2.id])
           expect(data['assignments'].map { |item| item['assignment_name'] }).to match_array(['Assignment With Records', 'Assignment Without Topics'])
           expect(data['assignments'].find { |item| item['assignment_id'] == assignment.id }['has_topics']).to eq(true)
@@ -280,15 +297,25 @@ RSpec.describe 'Assignment Records API', type: :request do
           expect(data['students'].length).to eq(7)
 
           student_row = data['students'].find { |item| item['user_id'] == student.id }
+          expect(student_row.keys).to match_array(%w[user_id user_name assignments])
           expect(student_row['user_name']).to eq(student.name)
+          expect(student_row['assignments'].keys).to match_array([assignment.id.to_s, assignment2.id.to_s])
+          expect(student_row['assignments'][assignment.id.to_s].keys).to match_array(
+            %w[participant_id peer_grade instructor_grade avg_teammate_score avg_author_feedback_score topic]
+          )
+          expect(student_row['assignments'][assignment2.id.to_s].keys).to match_array(
+            %w[participant_id peer_grade instructor_grade avg_teammate_score avg_author_feedback_score]
+          )
           expect(student_row['assignments'][assignment.id.to_s]['participant_id']).to eq(participant.id)
           expect(student_row['assignments'][assignment.id.to_s]['peer_grade']).to eq(90.0)
           expect(student_row['assignments'][assignment.id.to_s]['instructor_grade']).to eq(91)
           expect(student_row['assignments'][assignment.id.to_s]['avg_teammate_score']).to eq(60.0)
+          expect(student_row['assignments'][assignment.id.to_s]['avg_author_feedback_score']).to eq(80.0)
           expect(student_row['assignments'][assignment.id.to_s]['topic']).to eq('Topic Alpha')
           expect(student_row['assignments'][assignment2.id.to_s]['participant_id']).to eq(participant9.id)
           expect(student_row['assignments'][assignment2.id.to_s]['peer_grade']).to eq(60.0)
           expect(student_row['assignments'][assignment2.id.to_s]['instructor_grade']).to eq(84)
+          expect(student_row['assignments'][assignment2.id.to_s]['avg_author_feedback_score']).to eq(60.0)
 
           teammate_row = data['students'].find { |item| item['user_id'] == teammate.id }
           expect(teammate_row['user_name']).to eq(teammate.name)
@@ -296,15 +323,18 @@ RSpec.describe 'Assignment Records API', type: :request do
           expect(teammate_row['assignments'][assignment.id.to_s]['peer_grade']).to eq(90.0)
           expect(teammate_row['assignments'][assignment.id.to_s]['instructor_grade']).to eq(91)
           expect(teammate_row['assignments'][assignment.id.to_s]['avg_teammate_score']).to eq(80.0)
+          expect(teammate_row['assignments'][assignment.id.to_s]['avg_author_feedback_score']).to eq(100.0)
           expect(teammate_row['assignments'][assignment.id.to_s]['topic']).to eq('Topic Alpha')
           expect(teammate_row['assignments'][assignment2.id.to_s]['participant_id']).to eq(participant10.id)
           expect(teammate_row['assignments'][assignment2.id.to_s]['peer_grade']).to eq(60.0)
           expect(teammate_row['assignments'][assignment2.id.to_s]['instructor_grade']).to eq(84)
+          expect(teammate_row['assignments'][assignment2.id.to_s]['avg_author_feedback_score']).to eq(40.0)
 
           other_student_row = data['students'].find { |item| item['user_id'] == other_student.id }
           expect(other_student_row['assignments'][assignment.id.to_s]['participant_id']).to eq(participant11.id)
           expect(other_student_row['assignments'][assignment.id.to_s]['peer_grade']).to eq(50.0)
           expect(other_student_row['assignments'][assignment.id.to_s]['instructor_grade']).to eq(88)
+          expect(other_student_row['assignments'][assignment.id.to_s]['avg_author_feedback_score']).to be_nil
           expect(other_student_row['assignments'][assignment.id.to_s]['topic']).to eq('Topic Alpha')
           expect(other_student_row['assignments'][assignment2.id.to_s]['participant_id']).to eq(participant3.id)
           expect(other_student_row['assignments'][assignment2.id.to_s]['peer_grade']).to eq(60.0)
