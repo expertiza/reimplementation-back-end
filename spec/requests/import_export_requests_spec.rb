@@ -60,6 +60,16 @@ RSpec.describe "Import/export requests", type: :request do
         expect(json["mandatory_fields"]).not_to include("role_id", "institution_id")
         expect(json["external_fields"]).to include("role_name", "institution_name")
       end
+
+      it "returns course import metadata with instructor_name and institution_name" do
+        get "/import/Course"
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        expect(json["mandatory_fields"]).to include("name", "directory_path", "instructor_name", "institution_name")
+        expect(json["mandatory_fields"]).not_to include("instructor_id", "institution_id")
+      end
     end
   end
 
@@ -184,6 +194,29 @@ RSpec.describe "Import/export requests", type: :request do
         expect(imported_user.role_id).to eq(student_role.id)
       end
     end
+
+    context "course imports" do
+      it "imports courses using instructor_name and institution_name" do
+        other_institution = Institution.create!(name: "Other School")
+        file = uploaded_csv("name,directory_path,info,private,instructor_name,institution_name\nImported Course,imported_course,Imported info,true,teacher,Other School\n")
+
+        post "/import/Course",
+             params: {
+               csv_file: file,
+               use_headers: true
+             }
+
+        expect(response).to have_http_status(:created)
+
+        imported_course = Course.find_by(name: "Imported Course")
+        expect(imported_course).to be_present
+        expect(imported_course.directory_path).to eq("imported_course")
+        expect(imported_course.info).to eq("Imported info")
+        expect(imported_course.private).to eq(true)
+        expect(imported_course.instructor_id).to eq(instructor.id)
+        expect(imported_course.institution_id).to eq(other_institution.id)
+      end
+    end
   end
 
   describe "POST /export/:class" do
@@ -262,6 +295,30 @@ RSpec.describe "Import/export requests", type: :request do
         json = JSON.parse(response.body)
         expect(json["file"]).to include("topic_name,assignment_id")
         expect(json["file"]).to include("Export Topic")
+      end
+    end
+
+    context "course exports" do
+      it "exports courses with instructor_name and institution_name" do
+        course = Course.create!(
+          name: "Export Course",
+          directory_path: "export_course",
+          info: "Export info",
+          private: true,
+          instructor: instructor,
+          institution: institution
+        )
+
+        post "/export/Course", params: { ordered_fields: %w[name directory_path private instructor_name institution_name].to_json }
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        exported_file = Array(json["file"]).first
+
+        expect(exported_file["name"]).to eq("Course")
+        expect(exported_file["contents"]).to include("name,directory_path,private,instructor_name,institution_name")
+        expect(exported_file["contents"]).to include("#{course.name},#{course.directory_path},true,#{instructor.name},#{institution.name}")
       end
     end
   end
