@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_23_202332) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -113,6 +113,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
     t.bigint "duty_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "max_members_for_duty", default: 1
     t.index ["assignment_id"], name: "index_assignments_duties_on_assignment_id"
     t.index ["duty_id"], name: "index_assignments_duties_on_duty_id"
   end
@@ -131,11 +132,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
     t.text "description"
     t.integer "user_id"
     t.integer "topic_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "cakes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -184,7 +180,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
     t.bigint "instructor_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "max_members_for_duty"
     t.index ["instructor_id"], name: "index_duties_on_instructor_id"
   end
 
@@ -229,7 +224,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
     t.integer "participant_id"
     t.integer "team_id"
     t.text "comments"
-    t.string "reply_status"
+    t.string "status"
   end
 
   create_table "nodes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -279,6 +274,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
     t.string "link"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "fk_sign_up_categories_sign_up_topics"
     t.index ["assignment_id"], name: "index_project_topics_on_assignment_id"
   end
 
@@ -330,7 +326,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
     t.integer "reviewee_id", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "type"
     t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 
@@ -417,6 +412,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["team_id", "user_id"], name: "index_teams_users_on_team_id_and_user_id", unique: true
     t.index ["team_id"], name: "index_teams_users_on_team_id"
     t.index ["user_id"], name: "index_teams_users_on_user_id"
   end
@@ -456,8 +452,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
   add_foreign_key "assignments_duties", "duties"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
-  add_foreign_key "invitations", "participants", column: "from_id"
-  add_foreign_key "invitations", "participants", column: "to_id"
   add_foreign_key "duties", "users", column: "instructor_id"
   add_foreign_key "items", "questionnaires"
   add_foreign_key "participants", "duties"

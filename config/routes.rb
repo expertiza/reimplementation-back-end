@@ -212,6 +212,10 @@ Rails.application.routes.draw do
         end
       end
       resources :assignments do
-        resources :duties, controller: 'assignments_duties', only: [:index, :create, :destroy]
+        resources :duties, controller: 'assignments_duties', only: [:index, :create, :destroy] do
+          member do
+            patch :limit, action: :update_limit
+          end
+        end
       end
 end
