@@ -46,6 +46,8 @@ class ParticipantsController < ApplicationController
     end
   end
 
+
+
   # Assign the specified authorization to the participant and add them to an assignment
   # POST /participants/:authorization
   def add
@@ -91,6 +93,20 @@ class ParticipantsController < ApplicationController
     participant.can_take_quiz = permissions[:can_take_quiz]
     participant.can_mentor = permissions[:can_mentor]
 
+    if participant.save
+      render json: participant, status: :created
+    else
+      render json: participant.errors, status: :unprocessable_entity
+    end
+  end
+
+  # Update the specified participant duty
+  # PATCH /participants/:id/duty
+  def update_duty
+    participant = find_participant
+    return unless participant
+
+    participant.duty_id = params[:duty_id].presence
     if participant.save
       render json: participant, status: :created
     else
