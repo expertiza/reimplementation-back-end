@@ -16,6 +16,7 @@ class StudentTask
 
   # Builds a student task summary from one participant record.
   def self.create_from_participant(participant)
+    return nil unless participant.assignment.present?
     new(
       assignment: participant.assignment&.name,
       assignment_id: participant.parent_id,
@@ -29,15 +30,15 @@ class StudentTask
 
   # Finds all participant tasks for a user and sorts them by deadline.
   def self.from_user(user)
-    Participant.where(user_id: user.id)
+    Participant.where(user_id: user.id, type: 'AssignmentParticipant')
                .map { |p| create_from_participant(p) }
                .sort_by(&:stage_deadline)
   end
 
   # Finds one participant by ID and turns it into a student task summary.
   def self.from_participant_id(id)
-    part = Participant.find_by(id: id)
-    return nil unless part
+    part = Participant.find_by(id: id, type: 'AssignmentParticipant')
+    raise ActiveRecord::RecordNotFound, "AssignmentParticipant not found with id=#{id}" unless part
 
     create_from_participant(part)
   end
@@ -46,9 +47,10 @@ class StudentTask
   def self.resolve_context_for_assignment(user, assignment_id)
     participant = Participant.find_by(
       user_id: user.id,
-      parent_id: assignment_id
+      parent_id: assignment_id,
+      type: 'AssignmentParticipant'
     )
-    return nil unless participant
+    return nil unless participant&.assignment.present?
 
     resolve_context_for_participant(participant)
   end
