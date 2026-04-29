@@ -53,9 +53,9 @@ class DueDate < ApplicationRecord
     due_dates.find { |due_date| due_date.due_at > Time.zone.now }
   end
 
-  # Resolves the next due date for a time-gated action from generic domain
-  # inputs. The caller supplies the action plus the assignment/topic context;
-  # DueDate stays independent of controllers and response-specific objects.
+  # Finds the next deadline for the requested action.
+  # For submissions, topic deadlines are checked first when a topic is given;
+  # otherwise the assignment-level deadline is used.
   def self.next_due_date_for(action:, assignment:, topic: nil)
     return nil unless assignment&.id
 
