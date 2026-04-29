@@ -9,7 +9,7 @@ require_relative '../helpers/file_helper'
 class ApplicationController < ActionController::API
   include Authorization
   include JwtToken
- 
+  
   before_action :authorize
 
 end
