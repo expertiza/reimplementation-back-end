@@ -4,6 +4,7 @@ class ResponsesController < ApplicationController
   prepend_before_action :set_response, only: %i[show update]
   before_action :find_and_authorize_map_for_create, only: %i[create]
 
+  # Checks whether the current user can use the requested response action.
   def action_allowed?
     case action_name
     when "create"
@@ -15,6 +16,7 @@ class ResponsesController < ApplicationController
     end
   end
 
+  # Shows the response details for one task response.
   def show
     render json: {
       response_id: @response.id,
@@ -25,6 +27,7 @@ class ResponsesController < ApplicationController
     }
   end
 
+  # Creates or reuses a response for the requested response map.
   def create
     return unless enforce_task_order!(@map)
 
@@ -44,6 +47,7 @@ class ResponsesController < ApplicationController
     end
   end
 
+  # Updates the saved response with submission details or comments.
   def update
     return unless enforce_task_order!(@response.map)
 
@@ -61,11 +65,12 @@ class ResponsesController < ApplicationController
 
   private
 
+  # Finds the response used by show and update.
   def set_response
     @response = Response.find(params[:id])
   end
 
-  # Runs before action_allowed? — handles both existence and authorization for create
+  # Finds the response map and checks that the current user owns it.
   def find_and_authorize_map_for_create
     @map = ResponseMap.find_by(id: params[:response_map_id])
     unless @map
@@ -77,8 +82,9 @@ class ResponsesController < ApplicationController
       render json: { error: "You are not authorized to create this responses" }, status: :forbidden
     end
   end
- 
 
+
+  # Allows only the response fields that can be changed by this controller.
   def response_update_params
     p = params.permit(:is_submitted, :additional_comment, :content, :round)
     p[:additional_comment] = p[:content] if p[:content].present?
@@ -86,6 +92,7 @@ class ResponsesController < ApplicationController
     p
   end
 
+  # Makes sure earlier tasks are finished before this task can be changed.
   def enforce_task_order!(map)
     participant = map.reviewer
     unless participant.user_id == current_user.id
