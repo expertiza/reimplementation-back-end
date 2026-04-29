@@ -76,8 +76,37 @@ class ResponseMap < ApplicationRecord
     responses
   end
 
+  # Check to see if this response map is a survey. Default is false, and some subclasses will overwrite to true.
   def survey?
     false
+  end
+
+  # Computes the average score (as a fraction between 0 and 1) across the latest submitted responses
+  # from each round for corresponding ResponseMap.
+  def aggregate_reviewers_score
+    # Return nil if there are no responses for this map
+    return nil if responses.empty?
+
+    # Group all responses by round, then select the latest one per round based on the most recent revision in that round.
+    latest_responses_by_round = responses
+                                .group_by(&:round)
+                                .transform_values { |resps| resps.max_by(&:updated_at) }
+
+    response_score = 0.0
+    total_score = 0.0
+    submitted_found = false
+
+    latest_responses_by_round.each_value do |response|
+      next unless response.is_submitted
+
+      submitted_found = true
+      response_score += response.aggregate_questionnaire_score
+      total_score += response.maximum_score
+    end
+
+    return nil unless submitted_found
+
+    total_score.positive? ? (response_score.to_f / total_score) : 0
   end
 
   # Best-effort timestamp of when the reviewee (or their team) last touched the work.

@@ -1,20 +1,25 @@
 # frozen_string_literal: true
 
 class TeamSerializer < ActiveModel::Serializer
-  attributes :id, :name, :type, :team_size, :assignment_id
+  attributes :id, :name, :type, :team_size
+  has_many :members, serializer: ParticipantSerializer
   has_many :users, serializer: UserSerializer
 
-  def users
-    # Use teams_participants association to get users
-    object.teams_participants.includes(:user).map(&:user)
+  def members
+    # Use teams_participants association to get participants
+    object.teams_participants.includes(:participant).map(&:participant)
   end
 
   def team_size
     object.teams_participants.count
   end
 
-  def assignment_id
-    # Return parent_id for AssignmentTeam, nil for CourseTeam
-    object.is_a?(AssignmentTeam) ? object.parent_id : nil
+  def sign_up_topic
+    signed_up_team&.project_topic
   end
-end 
+
+  def signed_up_team
+    SignedUpTeam.find_by(team_id: object.id)
+  end
+
+end

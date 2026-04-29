@@ -4,7 +4,7 @@ class CoursesController < ApplicationController
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
   def action_allowed?
-    has_privileges_of?('Instructor')
+    current_user_has_instructor_privileges?
   end
 
   # GET /courses
@@ -51,7 +51,6 @@ class CoursesController < ApplicationController
   # Adds a Teaching Assistant to the course
   def add_ta
     user_id = params[:ta_id] # Use user_id from the request
-    print(user_id)
     user = User.find_by(id: user_id)
     
     course_id = params[:id]
