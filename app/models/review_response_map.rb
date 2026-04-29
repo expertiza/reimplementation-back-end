@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class ReviewResponseMap < ResponseMap
-  include ResponseMapSubclassTitles
+  include ExpertizaConstants::ResponseMapTitles
   belongs_to :reviewee, class_name: 'Team', foreign_key: 'reviewee_id', inverse_of: false
 
   # Returns the assignment associated with this review map.

@@ -27,7 +27,7 @@ RSpec.describe CourseSurveyResponseMap, type: :model do
     describe '#get_title' do
       it 'returns the correct title constant' do
         course_survey_response_map = CourseSurveyResponseMap.new
-        expect(course_survey_response_map.get_title).to eq(ResponseMapSubclassTitles::COURSE_SURVEY_RESPONSE_MAP_TITLE)
+        expect(course_survey_response_map.get_title).to eq(ExpertizaConstants::ResponseMapTitles::COURSE_SURVEY_RESPONSE_MAP_TITLE)
       end
     end
   end
