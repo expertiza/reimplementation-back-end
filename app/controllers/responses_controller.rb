@@ -8,7 +8,7 @@ class ResponsesController < ApplicationController
   def action_allowed?
     case action_name
     when "create"
-      true  # auth already handled by prepend_before_action above
+      true  # auth already handled by before_action above
     when "show", "update"
       @response && @response.map.reviewer.user_id == current_user.id
     else

@@ -220,7 +220,7 @@ class StudentTask
 
       return value if value.is_a?(Time) || value.is_a?(ActiveSupport::TimeWithZone)
 
-      Time.zone.parse(value.to_s)
+      Time.zone.parse(value.to_s) || Time.current + 1.year
     rescue StandardError
       Time.current + 1.year
     end
