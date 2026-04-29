@@ -1,14 +1,17 @@
 # frozen_string_literal: true
 
-class StudentTask::QuizTaskItem < StudentTask::BaseTaskItem
+class QuizTaskItem < StudentTask::BaseTaskItem
+  # Labels this task item as a quiz task.
   def task_type
     :quiz
   end
 
+  # Finds the quiz questionnaire attached to this assignment.
   def questionnaire
     assignment.quiz_questionnaire_for_review_flow
   end
 
+  # Finds or creates the quiz response map used to answer this task.
   def response_map
     return @response_map if @response_map
 
