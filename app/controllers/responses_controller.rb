@@ -79,7 +79,7 @@ class ResponsesController < ApplicationController
     end
 
     unless @map.reviewer.user_id == current_user.id
-      render json: { error: "You are not authorized to create this responses" }, status: :forbidden
+      render json: { error: "You are not authorized to create this response" }, status: :forbidden
     end
   end
 
