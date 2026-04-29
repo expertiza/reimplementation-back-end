@@ -75,7 +75,7 @@ class ResponsesController < ApplicationController
     end
     response_map = @response.response_map
     # Check deadline
-    unless DueDate.deadline_open_for?(action: :submission, assignment: response_map&.assignment, topic: reviewee_topic_for(response_map))
+    unless DueDate.assignment_open_for?(action: :submission, assignment: response_map&.assignment, topic: reviewee_topic_for(response_map))
       return render json: { error: "#{response_label} deadline has passed" }, status: :forbidden
     end
 

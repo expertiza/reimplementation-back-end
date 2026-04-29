@@ -70,7 +70,7 @@ class DueDate < ApplicationRecord
   end
 
   # Returns true when the requested action is still allowed by its due date.
-  def self.deadline_open_for?(action:, assignment:, topic: nil, reference_time: Time.current)
+  def self.assignment_open_for?(action:, assignment:, topic: nil, reference_time: Time.current)
     return true unless assignment
 
     next_due = next_due_date_for(action: action, assignment: assignment, topic: topic)

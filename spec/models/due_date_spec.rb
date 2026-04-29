@@ -205,24 +205,24 @@ RSpec.describe DueDate, type: :model do
     end
   end
 
-  describe '.deadline_open_for?' do
+  describe '.assignment_open_for?' do
     let(:assignment) { Assignment.create!(id: 3001, name: 'Window Assignment', instructor:) }
 
     it 'returns true when there is no assignment context' do
-      expect(DueDate.deadline_open_for?(action: :submission, assignment: nil)).to be true
+      expect(DueDate.assignment_open_for?(action: :submission, assignment: nil)).to be true
     end
 
     it 'returns true when no upcoming due date exists' do
       allow(DueDate).to receive(:next_due_date_for).with(action: :submission, assignment: assignment, topic: nil).and_return(nil)
 
-      expect(DueDate.deadline_open_for?(action: :submission, assignment: assignment, topic: nil)).to be true
+      expect(DueDate.assignment_open_for?(action: :submission, assignment: assignment, topic: nil)).to be true
     end
 
     it 'returns false when the next due date is in the past' do
       past_due_date = instance_double('DueDate', due_at: 1.hour.ago)
       allow(DueDate).to receive(:next_due_date_for).with(action: :submission, assignment: assignment, topic: nil).and_return(past_due_date)
 
-      expect(DueDate.deadline_open_for?(action: :submission, assignment: assignment, topic: nil)).to be false
+      expect(DueDate.assignment_open_for?(action: :submission, assignment: assignment, topic: nil)).to be false
     end
   end
 

@@ -217,7 +217,7 @@ RSpec.describe ResponsesController, type: :controller do
     context 'when rubric incomplete' do
       before do
         allow(response_double).to receive(:is_submitted?).and_return(false)
-        allow(DueDate).to receive(:deadline_open_for?).with(action: :submission, assignment: assignment_double, topic: nil).and_return(true)
+        allow(DueDate).to receive(:assignment_open_for?).with(action: :submission, assignment: assignment_double, topic: nil).and_return(true)
         allow(response_double).to receive(:scores).and_return([double('Score', answer: nil)])
         allow(response_double).to receive(:aggregate_questionnaire_score).and_return(42)
         allow(response_double).to receive(:is_submitted=).with(true)
@@ -235,7 +235,7 @@ RSpec.describe ResponsesController, type: :controller do
     context 'when deadline has passed' do
       before do
         allow(response_double).to receive(:is_submitted?).and_return(false)
-        allow(DueDate).to receive(:deadline_open_for?).with(action: :submission, assignment: assignment_double, topic: nil).and_return(false)
+        allow(DueDate).to receive(:assignment_open_for?).with(action: :submission, assignment: assignment_double, topic: nil).and_return(false)
       end
 
       it 'returns forbidden with deadline message' do
@@ -249,7 +249,7 @@ RSpec.describe ResponsesController, type: :controller do
     context 'when submitting twice (duplicate submission)' do
       before do
         # first call: not submitted, second call: already submitted
-        allow(DueDate).to receive(:deadline_open_for?).with(action: :submission, assignment: assignment_double, topic: nil).and_return(true)
+        allow(DueDate).to receive(:assignment_open_for?).with(action: :submission, assignment: assignment_double, topic: nil).and_return(true)
         allow(response_double).to receive(:is_submitted?).and_return(false, true)
         allow(response_double).to receive(:scores).and_return([])
         allow(response_double).to receive(:aggregate_questionnaire_score).and_return(42)
