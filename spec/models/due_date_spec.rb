@@ -186,7 +186,7 @@ RSpec.describe DueDate, type: :model do
 
   describe '.next_due_date_for' do
     let(:assignment) { Assignment.create!(id: 2001, name: 'Submission Assignment', instructor:) }
-    let(:topic) { SignUpTopic.create!(id: 2002, topic_name: 'Submission Topic', assignment: assignment) }
+    let(:topic) { ProjectTopic.create!(id: 2002, topic_name: 'Submission Topic', assignment: assignment) }
 
     it 'uses topic due dates when a topic is provided' do
       expect(TopicDueDate).to receive(:next_due_date).with(assignment.id, topic.id)

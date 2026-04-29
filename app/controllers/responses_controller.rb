@@ -184,7 +184,7 @@ class ResponsesController < ApplicationController
         reviewee.team
       end
 
-    team&.signed_up_teams&.last&.sign_up_topic
+    team&.signed_up_teams&.last&.project_topic
   end
 
   def reviewer_owned_by_current_user?(reviewer)
