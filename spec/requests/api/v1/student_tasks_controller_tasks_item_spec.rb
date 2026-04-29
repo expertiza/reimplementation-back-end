@@ -1,7 +1,7 @@
 # spec/requests/api/v1/student_tasks_controller_tasks_item_spec.rb
 require 'rails_helper'
 
-RSpec.describe StudentTasksController, type: :request do
+RSpec.describe 'StudentTask item classes', type: :request do
   # ---------------------------------------------------------------------------
   # Everything is stubbed — no real DB records are written.
   # The inner classes only call a small, well-defined surface area on these
@@ -11,20 +11,22 @@ RSpec.describe StudentTasksController, type: :request do
   let(:assignment) { instance_double('Assignment', id: 1) }
   let(:participant) { instance_double('AssignmentParticipant', id: 10) }
   let(:team_participant) do
-    instance_double('TeamsParticipant', id: 20, participant: participant)
+    instance_double('TeamsParticipant', id: 20, participant: participant, participant_id: participant.id)
   end
+
+  # Fix #5-9, #12-13: added `type:` to review_map double so map&.type works in to_h
   let(:review_map) do
-    instance_double('ReviewResponseMap', id: 100, reviewee_id: 999)
+    instance_double('ReviewResponseMap', id: 100, reviewee_id: 999, type: 'ReviewResponseMap')
   end
 
   # Reusable response doubles
-  let(:submitted_response)     { instance_double('Response', id: 1, is_submitted: true,  round: 1) }
-  let(:unsubmitted_response)   { instance_double('Response', id: 2, is_submitted: false, round: 1) }
+  let(:submitted_response)   { instance_double('Response', id: 1, is_submitted: true,  round: 1) }
+  let(:unsubmitted_response) { instance_double('Response', id: 2, is_submitted: false, round: 1) }
 
   # ---------------------------------------------------------------------------
   # ReviewTaskItem
   # ---------------------------------------------------------------------------
-  describe StudentTasksController::ReviewTaskItem do
+  describe ReviewTaskItem do
     subject(:item) do
       described_class.new(
         assignment:       assignment,
@@ -69,11 +71,11 @@ RSpec.describe StudentTasksController, type: :request do
     end
 
     describe '#ensure_response!' do
-      # BaseTaskItem#ensure_response! calls:
-      #   Response.find_or_create_by(map_id: response_map.id, round: 1) { |r| r.is_submitted = false }
+      # Fix #1-4: model calls find_or_create_by! (with bang), so stub that method.
+      # Stubbing bypasses the DB entirely, avoiding the FK validation error.
 
       it 'creates a response if none exists' do
-        allow(Response).to receive(:find_or_create_by)
+        allow(Response).to receive(:find_or_create_by!)
           .with(map_id: review_map.id, round: 1)
           .and_yield(unsubmitted_response)
           .and_return(unsubmitted_response)
@@ -84,7 +86,7 @@ RSpec.describe StudentTasksController, type: :request do
 
       it 'does not create a duplicate response on repeated calls' do
         call_count = 0
-        allow(Response).to receive(:find_or_create_by)
+        allow(Response).to receive(:find_or_create_by!)
           .with(map_id: review_map.id, round: 1) do |&block|
             call_count += 1
             block&.call(unsubmitted_response) if call_count == 1
@@ -98,7 +100,7 @@ RSpec.describe StudentTasksController, type: :request do
 
       it 'creates the response with is_submitted false' do
         captured = nil
-        allow(Response).to receive(:find_or_create_by)
+        allow(Response).to receive(:find_or_create_by!)
           .with(map_id: review_map.id, round: 1) do |&block|
             r = instance_double('Response')
             allow(r).to receive(:is_submitted=)
@@ -111,9 +113,9 @@ RSpec.describe StudentTasksController, type: :request do
       end
 
       it 'creates the response with round 1' do
-        # round: 1 is passed as part of the find_or_create_by key — verified by
+        # round: 1 is passed as part of the find_or_create_by! key — verified by
         # checking the stub is called with the correct arguments.
-        expect(Response).to receive(:find_or_create_by)
+        expect(Response).to receive(:find_or_create_by!)
           .with(map_id: review_map.id, round: 1)
           .and_return(unsubmitted_response)
         allow(unsubmitted_response).to receive(:is_submitted=)
@@ -123,6 +125,8 @@ RSpec.describe StudentTasksController, type: :request do
 
     describe '#to_h' do
       subject(:hash) { item.to_h }
+
+      # review_map already has `type: 'ReviewResponseMap'` in its double definition above
 
       it 'includes all required contract keys' do
         expect(hash.keys).to match_array(
@@ -151,13 +155,13 @@ RSpec.describe StudentTasksController, type: :request do
   # ---------------------------------------------------------------------------
   # QuizTaskItem
   # ---------------------------------------------------------------------------
-  describe StudentTasksController::QuizTaskItem do
+  describe QuizTaskItem do
     before do
       allow(assignment).to receive(:quiz_questionnaire_for_review_flow).and_return(nil)
     end
 
     def build_item(rm: review_map)
-      StudentTasksController::QuizTaskItem.new(
+      QuizTaskItem.new(
         assignment:       assignment,
         team_participant: team_participant,
         review_map:       rm
@@ -179,7 +183,7 @@ RSpec.describe StudentTasksController, type: :request do
       context 'when assignment has no quiz questionnaire and no existing quiz map' do
         before do
           allow(QuizResponseMap).to receive(:find_by)
-            .with(reviewer_id: participant.id, reviewee_id: review_map.reviewee_id)
+            .with(reviewer_id: team_participant.participant_id, reviewee_id: review_map.reviewee_id)
             .and_return(nil)
         end
 
@@ -193,7 +197,7 @@ RSpec.describe StudentTasksController, type: :request do
 
         before do
           allow(QuizResponseMap).to receive(:find_by)
-            .with(reviewer_id: participant.id, reviewee_id: review_map.reviewee_id)
+            .with(reviewer_id: team_participant.participant_id, reviewee_id: review_map.reviewee_id)
             .and_return(existing_map)
         end
 
@@ -214,14 +218,18 @@ RSpec.describe StudentTasksController, type: :request do
         before do
           allow(assignment).to receive(:quiz_questionnaire_for_review_flow).and_return(questionnaire)
           allow(QuizResponseMap).to receive(:find_by)
-            .with(reviewer_id: participant.id, reviewee_id: review_map.reviewee_id)
+            .with(reviewer_id: team_participant.participant_id, reviewee_id: review_map.reviewee_id)
             .and_return(nil)
+
+          # Fix #10-11: Ruby 3 passes a plain hash to .new, not keyword args.
+          # Use hash_including or allow with anything to avoid the kw/hash mismatch.
           allow(QuizResponseMap).to receive(:new)
-            .with(
-              reviewer_id:        participant.id,
+            .with(hash_including(
+              reviewer_id:        team_participant.participant_id,
               reviewee_id:        review_map.reviewee_id,
-              reviewed_object_id: assignment.id
-            )
+              reviewed_object_id: questionnaire.id,
+              type:               'QuizResponseMap'
+            ))
             .and_return(new_map)
           allow(new_map).to receive(:save!).with(validate: false)
         end
@@ -232,8 +240,8 @@ RSpec.describe StudentTasksController, type: :request do
 
         it 'does not create duplicate maps on repeated calls' do
           item = build_item
-          item.response_map # first — hits QuizResponseMap.new
-          expect(QuizResponseMap).not_to receive(:new) # second — uses @cached_quiz_map
+          item.response_map # first call — hits QuizResponseMap.new
+          expect(QuizResponseMap).not_to receive(:new) # second — uses cached map
           item.response_map
         end
       end
@@ -243,7 +251,7 @@ RSpec.describe StudentTasksController, type: :request do
       context 'when response_map is nil' do
         before do
           allow(QuizResponseMap).to receive(:find_by)
-            .with(reviewer_id: participant.id, reviewee_id: review_map.reviewee_id)
+            .with(reviewer_id: team_participant.participant_id, reviewee_id: review_map.reviewee_id)
             .and_return(nil)
         end
 
@@ -257,7 +265,7 @@ RSpec.describe StudentTasksController, type: :request do
 
         before do
           allow(QuizResponseMap).to receive(:find_by)
-            .with(reviewer_id: participant.id, reviewee_id: review_map.reviewee_id)
+            .with(reviewer_id: team_participant.participant_id, reviewee_id: review_map.reviewee_id)
             .and_return(quiz_map)
         end
 
@@ -279,26 +287,31 @@ RSpec.describe StudentTasksController, type: :request do
       context 'when response_map is nil' do
         before do
           allow(QuizResponseMap).to receive(:find_by)
-            .with(reviewer_id: participant.id, reviewee_id: review_map.reviewee_id)
+            .with(reviewer_id: team_participant.participant_id, reviewee_id: review_map.reviewee_id)
             .and_return(nil)
         end
 
         it 'returns nil without creating a response' do
-          expect(Response).not_to receive(:find_or_create_by)
+          expect(Response).not_to receive(:find_or_create_by!)
           expect(build_item.ensure_response!).to be_nil
         end
       end
     end
 
     describe '#to_h' do
-      let(:quiz_map) { instance_double('QuizResponseMap', id: 70, reviewee_id: 999, class: QuizResponseMap) }
+      # Fix #12-13: add `type:` to the quiz_map double so map&.type works in to_h
+      let(:quiz_map) do
+        instance_double('QuizResponseMap',
+          id:          70,
+          reviewee_id: 999,
+          type:        'QuizResponseMap'
+        )
+      end
 
       before do
         allow(QuizResponseMap).to receive(:find_by)
-          .with(reviewer_id: participant.id, reviewee_id: review_map.reviewee_id)
+          .with(reviewer_id: team_participant.participant_id, reviewee_id: review_map.reviewee_id)
           .and_return(quiz_map)
-        # #to_h calls map&.class&.name
-        allow(quiz_map).to receive(:class).and_return(QuizResponseMap)
       end
 
       subject(:hash) { build_item.to_h }
