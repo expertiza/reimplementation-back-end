@@ -6,7 +6,4 @@ FactoryBot.define do
     type { 'ResponseMap' }
   end
 
-  factory :review_response_map, class: 'ReviewResponseMap', parent: :response_map do
-    type { 'ReviewResponseMap' }
-  end
 end
