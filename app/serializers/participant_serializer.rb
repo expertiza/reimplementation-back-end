@@ -1,5 +1,5 @@
 class ParticipantSerializer < ActiveModel::Serializer
-    attributes :id, :user, :parent_id, :user_id, :authorization
+    attributes :id, :user, :parent_id, :user_id, :authorization, :duty_id, :duty_name
 
     def user
         {
@@ -8,5 +8,9 @@ class ParticipantSerializer < ActiveModel::Serializer
             email: object.user.email,
             fullName: object.user.full_name
         }
+    end
+
+    def duty_name
+      object.duty&.name
     end
 end
