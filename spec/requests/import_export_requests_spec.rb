@@ -88,6 +88,16 @@ RSpec.describe "Import/export requests", type: :request do
           %w[SkipRecordAction UpdateExistingRecordAction]
         )
       end
+
+      it "does not expose instruction_loc for Questionnaire import metadata" do
+        get "/import/Questionnaire"
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        expect(json["mandatory_fields"]).not_to include("instruction_loc")
+        expect(json["optional_fields"]).not_to include("instruction_loc")
+      end
     end
   end
 
@@ -353,6 +363,18 @@ RSpec.describe "Import/export requests", type: :request do
         exported_file = Array(json["file"]).first
         expect(exported_file["contents"]).to include("name,participant_1")
         expect(exported_file["contents"]).to include("Export Team,#{participant_user.name}")
+      end
+    end
+
+    context "questionnaire exports" do
+      it "does not expose instruction_loc in export metadata" do
+        get "/export/Questionnaire"
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        expect(json["mandatory_fields"]).not_to include("instruction_loc")
+        expect(json["optional_fields"]).not_to include("instruction_loc")
       end
     end
 

@@ -298,6 +298,7 @@ class Team < ApplicationRecord
       raise StandardError, "Missing required fields: #{missing_fields.join(', ')}"
     end
 
+    # Rejects rows where the required participant username cell is blank.
     def validate_import_row!(row_hash)
       return if row_hash['participant_1'].present?
 

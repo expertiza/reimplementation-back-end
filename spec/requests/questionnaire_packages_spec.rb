@@ -23,8 +23,10 @@ RSpec.describe 'QuestionnairePackages API', type: :request do
       expect(response).to have_http_status(:ok)
 
       json = JSON.parse(response.body)
-      expect(json['required_files']).to include('manifest.json', 'questionnaires.csv', 'items.csv', 'question_advices.csv')
+      expect(json['required_files']).to include('manifest.json', 'questionnaires.csv', 'items.csv')
+      expect(json['required_files']).not_to include('question_advices.csv')
       expect(json['csv_header_requirements']['questionnaires']).to include('name', 'questionnaire_type', 'instructor_name')
+      expect(json['csv_header_requirements']['questionnaires']).not_to include('instruction_loc')
       expect(json['csv_header_requirements']['items']).to include('questionnaire_name', 'seq', 'txt')
       expect(json['csv_header_requirements']['question_advices']).to include('questionnaire_name', 'item_seq', 'advice')
       expect(json['available_templates']).to include('questionnaires', 'items', 'question_advices', 'package')
@@ -66,7 +68,9 @@ RSpec.describe 'QuestionnairePackages API', type: :request do
         'package_type' => 'questionnaire_template_export',
         'version' => 1
       )
-      expect(CSV.parse(contents['questionnaires.csv'], headers: true).headers).to include('name', 'questionnaire_type', 'instructor_name')
+      questionnaire_headers = CSV.parse(contents['questionnaires.csv'], headers: true).headers
+      expect(questionnaire_headers).to include('name', 'questionnaire_type', 'instructor_name')
+      expect(questionnaire_headers).not_to include('instruction_loc')
       expect(CSV.parse(contents['items.csv'], headers: true).headers).to include('questionnaire_name', 'seq', 'txt')
       expect(CSV.parse(contents['question_advices.csv'], headers: true).headers).to include('questionnaire_name', 'item_seq', 'advice')
       expect(CSV.parse(contents['questionnaires.csv'], headers: true).first['name']).to eq('Sample Review Questionnaire')
@@ -178,6 +182,7 @@ RSpec.describe 'QuestionnairePackages API', type: :request do
       item_rows = CSV.parse(contents['items.csv'], headers: true)
       advice_rows = CSV.parse(contents['question_advices.csv'], headers: true)
 
+      expect(questionnaire_rows.headers).not_to include('instruction_loc')
       expect(questionnaire_rows.map { |row| row['name'] }).to contain_exactly('Package Questionnaire')
       expect(item_rows.map { |row| row['txt'] }).to contain_exactly('How clear was the feedback?')
       expect(advice_rows.map { |row| row['advice'] }).to contain_exactly('Be more specific.')
@@ -195,6 +200,55 @@ RSpec.describe 'QuestionnairePackages API', type: :request do
       expect(package_text).not_to include('Do not export this answer')
       expect(package_text).not_to include('Quiz Questionnaire')
       expect(package_text).not_to include('Quiz question')
+    end
+
+    it 'exports a questionnaire template package without question advices when excluded' do
+      role = create(:role, :instructor)
+      institution = create(:institution)
+      instructor = Instructor.create!(
+        name: 'noadviceexporter',
+        email: 'noadviceexporter@example.com',
+        full_name: 'No Advice Exporter',
+        password: 'password',
+        role: role,
+        institution: institution
+      )
+      questionnaire = Questionnaire.create!(
+        name: 'No Advice Package Questionnaire',
+        instructor: instructor,
+        private: false,
+        min_question_score: 0,
+        max_question_score: 10,
+        questionnaire_type: 'ReviewQuestionnaire',
+        display_type: 'Likert'
+      )
+      item = Item.create!(
+        questionnaire: questionnaire,
+        txt: 'No advice item',
+        weight: 2,
+        seq: 1,
+        question_type: 'Scale',
+        break_before: true
+      )
+      QuestionAdvice.create!(item: item, score: 4, advice: 'Do not export this advice.')
+
+      post '/questionnaire_packages/export',
+           params: {
+             questionnaire_ids: [questionnaire.id],
+             include_question_advices: false
+           }
+
+      expect(response).to have_http_status(:ok)
+
+      json = JSON.parse(response.body)
+      contents = read_zip_entries(json['data'])
+      manifest = JSON.parse(contents['manifest.json'])
+
+      expect(contents.keys).to contain_exactly('manifest.json', 'questionnaires.csv', 'items.csv')
+      expect(manifest['files']).not_to include('question_advices.csv')
+      expect(manifest['includes']).not_to include('question_advices')
+      expect(json['counts']).to include('question_advices' => 0)
+      expect(contents.values.join("\n")).not_to include('Do not export this advice.')
     end
   end
 
@@ -214,8 +268,8 @@ RSpec.describe 'QuestionnairePackages API', type: :request do
       questionnaire_file = build_csv_upload(
         filename: 'preview questionnaires.csv',
         contents: <<~CSV
-          name,questionnaire_type,display_type,private,min_question_score,max_question_score,instruction_loc,instructor_name
-          Preview Questionnaire,ReviewQuestionnaire,Likert,false,0,5,instructions,previewimporter
+          name,questionnaire_type,display_type,private,min_question_score,max_question_score,instructor_name
+          Preview Questionnaire,ReviewQuestionnaire,Likert,false,0,5,previewimporter
         CSV
       )
       items_file = build_csv_upload(
@@ -283,9 +337,9 @@ RSpec.describe 'QuestionnairePackages API', type: :request do
       questionnaire_file = build_csv_upload(
         filename: 'preview duplicate questionnaires.csv',
         contents: <<~CSV
-          name,questionnaire_type,display_type,private,min_question_score,max_question_score,instruction_loc,instructor_name
-          Preview Duplicate Questionnaire,ReviewQuestionnaire,Likert,false,0,5,instructions,previewduplicate
-          Missing Instructor Questionnaire,ReviewQuestionnaire,Likert,false,0,5,instructions,missingpreviewinstructor
+          name,questionnaire_type,display_type,private,min_question_score,max_question_score,instructor_name
+          Preview Duplicate Questionnaire,ReviewQuestionnaire,Likert,false,0,5,previewduplicate
+          Missing Instructor Questionnaire,ReviewQuestionnaire,Likert,false,0,5,missingpreviewinstructor
         CSV
       )
       items_file = build_csv_upload(
@@ -336,8 +390,8 @@ RSpec.describe 'QuestionnairePackages API', type: :request do
           files: %w[questionnaires.csv items.csv question_advices.csv]
         },
         questionnaires_csv: <<~CSV,
-          name,questionnaire_type,display_type,private,min_question_score,max_question_score,instruction_loc,instructor_name
-          Imported Questionnaire,ReviewQuestionnaire,Likert,false,0,5,instructions,packageimporter
+          name,questionnaire_type,display_type,private,min_question_score,max_question_score,instructor_name
+          Imported Questionnaire,ReviewQuestionnaire,Likert,false,0,5,packageimporter
         CSV
         items_csv: <<~CSV,
           questionnaire_name,questionnaire_instructor_name,seq,txt,question_type,weight,break_before,min_label,max_label,alternatives,size
@@ -376,7 +430,7 @@ RSpec.describe 'QuestionnairePackages API', type: :request do
           version: 1,
           files: %w[questionnaires.csv items.csv question_advices.csv]
         },
-        questionnaires_csv: "name,questionnaire_type,display_type,private,min_question_score,max_question_score,instruction_loc,instructor_name\n",
+        questionnaires_csv: "name,questionnaire_type,display_type,private,min_question_score,max_question_score,instructor_name\n",
         items_csv: "questionnaire_name,questionnaire_instructor_name,seq,txt,question_type,weight,break_before,min_label,max_label,alternatives,size\n",
         question_advices_csv: "questionnaire_name,questionnaire_instructor_name,item_seq,item_txt,score,advice\n"
       )
@@ -404,8 +458,8 @@ RSpec.describe 'QuestionnairePackages API', type: :request do
       questionnaire_file = build_csv_upload(
         filename: 'my rubric list.csv',
         contents: <<~CSV
-          name,questionnaire_type,display_type,private,min_question_score,max_question_score,instruction_loc,instructor_name
-          Role Field Questionnaire,ReviewQuestionnaire,Likert,false,0,5,instructions,csvroleimporter
+          name,questionnaire_type,display_type,private,min_question_score,max_question_score,instructor_name
+          Role Field Questionnaire,ReviewQuestionnaire,Likert,false,0,5,csvroleimporter
         CSV
       )
       items_file = build_csv_upload(
@@ -484,8 +538,8 @@ RSpec.describe 'QuestionnairePackages API', type: :request do
           files: %w[questionnaires.csv items.csv question_advices.csv]
         },
         questionnaires_csv: <<~CSV,
-          name,questionnaire_type,display_type,private,min_question_score,max_question_score,instruction_loc,instructor_name
-          Duplicate Questionnaire,ReviewQuestionnaire,Likert,false,0,5,new instructions,duplicatedpackageimporter
+          name,questionnaire_type,display_type,private,min_question_score,max_question_score,instructor_name
+          Duplicate Questionnaire,ReviewQuestionnaire,Likert,false,0,5,duplicatedpackageimporter
         CSV
         items_csv: <<~CSV,
           questionnaire_name,questionnaire_instructor_name,seq,txt,question_type,weight,break_before,min_label,max_label,alternatives,size

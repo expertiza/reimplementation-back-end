@@ -223,7 +223,7 @@ module ImportableExportableHelper
   # Then external fields are removed (to prevent duplication).
   # --------------------------------------------------------------
   def internal_fields
-    (column_names + (mandatory_fields || [])).uniq - external_fields
+    (column_names + (mandatory_fields || [])).uniq - external_fields - hidden_fields
   end
 
   # --------------------------------------------------------------

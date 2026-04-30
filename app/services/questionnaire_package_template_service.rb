@@ -17,7 +17,6 @@ class QuestionnairePackageTemplateService
         'false',
         '0',
         '5',
-        'seed/review_instructions',
         'instructor_username'
       ]
     },

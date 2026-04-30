@@ -9,7 +9,9 @@ require 'zip'
 class QuestionnairePackageExportService
   PACKAGE_TYPE = 'questionnaire_template_export'
   VERSION = 1
-  FILES = %w[questionnaires.csv items.csv question_advices.csv].freeze
+  REQUIRED_FILES = %w[questionnaires.csv items.csv].freeze
+  OPTIONAL_FILES = %w[question_advices.csv].freeze
+  FILES = (REQUIRED_FILES + OPTIONAL_FILES).freeze
   INCLUDED_RESOURCES = %w[questionnaires items question_advices].freeze
   EXCLUDED_RESOURCES = %w[answers responses quiz_questionnaires quiz_items quiz_question_choices].freeze
 
@@ -20,7 +22,6 @@ class QuestionnairePackageExportService
     private
     min_question_score
     max_question_score
-    instruction_loc
     instructor_name
   ].freeze
 
@@ -47,8 +48,9 @@ class QuestionnairePackageExportService
     advice
   ].freeze
 
-  def initialize(questionnaires: nil)
+  def initialize(questionnaires: nil, include_question_advices: true)
     @questionnaires = questionnaires
+    @include_question_advices = include_question_advices
   end
 
   # Builds the manifest and ordered CSVs used by the matching import service.
@@ -59,7 +61,7 @@ class QuestionnairePackageExportService
 
     questionnaire_csv = build_csv(QUESTIONNAIRE_HEADERS, questionnaire_rows(exportable_questionnaires))
     item_csv = build_csv(ITEM_HEADERS, item_rows(exportable_questionnaires))
-    question_advice_csv = build_csv(QUESTION_ADVICE_HEADERS, question_advice_rows(exportable_questionnaires))
+    question_advice_csv = build_csv(QUESTION_ADVICE_HEADERS, question_advice_rows(exportable_questionnaires)) if include_question_advices?
 
     zip_data = Zip::OutputStream.write_buffer do |zip|
       zip.put_next_entry('manifest.json')
@@ -68,8 +70,8 @@ class QuestionnairePackageExportService
           {
             package_type: PACKAGE_TYPE,
             version: VERSION,
-            files: FILES,
-            includes: INCLUDED_RESOURCES,
+            files: package_files,
+            includes: included_resources,
             excludes: EXCLUDED_RESOURCES,
             exported_at: Time.zone.now.iso8601,
             questionnaire_count: exportable_questionnaires.size
@@ -83,8 +85,10 @@ class QuestionnairePackageExportService
       zip.put_next_entry('items.csv')
       zip.write(item_csv)
 
-      zip.put_next_entry('question_advices.csv')
-      zip.write(question_advice_csv)
+      if include_question_advices?
+        zip.put_next_entry('question_advices.csv')
+        zip.write(question_advice_csv)
+      end
     end
 
     {
@@ -94,14 +98,36 @@ class QuestionnairePackageExportService
       counts: {
         questionnaires: exportable_questionnaires.size,
         items: exportable_questionnaires.sum { |questionnaire| exportable_items_for(questionnaire).size },
-        question_advices: exportable_questionnaires.sum do |questionnaire|
-          exportable_items_for(questionnaire).sum { |item| item.question_advices.size }
-        end
+        question_advices: question_advice_count(exportable_questionnaires)
       }
     }
   end
 
   private
+
+  # Controls whether question_advices.csv is included in the generated package.
+  def include_question_advices?
+    @include_question_advices
+  end
+
+  # Keeps the manifest file list aligned with the optional advice export flag.
+  def package_files
+    include_question_advices? ? FILES : REQUIRED_FILES
+  end
+
+  # Keeps the manifest resource list aligned with the optional advice export flag.
+  def included_resources
+    include_question_advices? ? INCLUDED_RESOURCES : %w[questionnaires items]
+  end
+
+  # Reports advice count as zero when advice rows were deliberately excluded.
+  def question_advice_count(questionnaires)
+    return 0 unless include_question_advices?
+
+    questionnaires.sum do |questionnaire|
+      exportable_items_for(questionnaire).sum { |item| item.question_advices.size }
+    end
+  end
 
   # Quiz questionnaires need quiz-specific choice data this package omits.
   def questionnaire_scope
@@ -119,7 +145,6 @@ class QuestionnairePackageExportService
         questionnaire.private,
         questionnaire.min_question_score,
         questionnaire.max_question_score,
-        questionnaire.instruction_loc,
         questionnaire.instructor&.name
       ]
     end

@@ -10,7 +10,8 @@ require 'zip'
 class QuestionnairePackageImportService
   PACKAGE_TYPE = QuestionnairePackageExportService::PACKAGE_TYPE
   VERSION = QuestionnairePackageExportService::VERSION
-  REQUIRED_FILES = %w[manifest.json questionnaires.csv items.csv question_advices.csv].freeze
+  REQUIRED_FILES = %w[manifest.json questionnaires.csv items.csv].freeze
+  OPTIONAL_FILES = %w[question_advices.csv].freeze
   QUESTIONNAIRE_REQUIRED_HEADERS = %w[
     name
     questionnaire_type
@@ -18,7 +19,6 @@ class QuestionnairePackageImportService
     private
     min_question_score
     max_question_score
-    instruction_loc
     instructor_name
   ].freeze
   ITEM_REQUIRED_HEADERS = %w[
@@ -519,8 +519,7 @@ class QuestionnairePackageImportService
         'display_type',
         'private',
         'min_question_score',
-        'max_question_score',
-        'instruction_loc'
+        'max_question_score'
       )
     )
     existing

@@ -49,7 +49,10 @@ class QuestionnairePackagesController < ApplicationController
     end
 
     scope = questionnaire_ids.present? ? Questionnaire.where(id: questionnaire_ids) : Questionnaire.all
-    package = QuestionnairePackageExportService.new(questionnaires: scope).perform
+    package = QuestionnairePackageExportService.new(
+      questionnaires: scope,
+      include_question_advices: include_question_advices?
+    ).perform
 
     render json: {
       message: 'Questionnaire template package has been exported!',
@@ -110,8 +113,16 @@ class QuestionnairePackagesController < ApplicationController
       :question_advices_file,
       :dup_action,
       :export_all,
+      :include_question_advices,
       questionnaire_ids: []
     )
+  end
+
+  # Defaults to exporting advice CSVs unless the frontend explicitly opts out.
+  def include_question_advices?
+    return true unless params.key?(:include_question_advices)
+
+    ActiveRecord::Type::Boolean.new.deserialize(params[:include_question_advices])
   end
 
   # Multipart export forms may send IDs as an array or JSON string.
