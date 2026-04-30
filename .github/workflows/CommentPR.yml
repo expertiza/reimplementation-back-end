@@ -40,5 +40,5 @@ jobs:
             ```
             ${{ steps.read_files.outputs.test_output }}
             ```
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
