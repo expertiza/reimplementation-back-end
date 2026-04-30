@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rails_helper"
+require "csv"
 require "tempfile"
 
 RSpec.describe "Import/export requests", type: :request do
@@ -29,8 +30,8 @@ RSpec.describe "Import/export requests", type: :request do
         expect(response).to have_http_status(:ok)
 
         json = JSON.parse(response.body)
-        expect(json["mandatory_fields"]).to eq(["name"])
-        expect(json["optional_fields"]).to include("participant_1")
+        expect(json["mandatory_fields"]).to eq(["participant_1"])
+        expect(json["optional_fields"]).to include("name")
         expect(json["available_actions_on_dup"]).to match_array(
           %w[SkipRecordAction UpdateExistingRecordAction ChangeOffendingFieldAction]
         )
@@ -42,7 +43,8 @@ RSpec.describe "Import/export requests", type: :request do
         expect(response).to have_http_status(:ok)
 
         json = JSON.parse(response.body)
-        expect(json["mandatory_fields"]).to include("topic_name", "assignment_id")
+        expect(json["mandatory_fields"]).to eq(["topic_name"])
+        expect(json["optional_fields"]).to include("assignment_id")
         expect(json["available_actions_on_dup"]).to match_array(
           %w[SkipRecordAction UpdateExistingRecordAction ChangeOffendingFieldAction]
         )
@@ -146,7 +148,7 @@ RSpec.describe "Import/export requests", type: :request do
           institution: institution
         )
         participant = AssignmentParticipant.create!(user: student, parent_id: assignment.id, handle: student.name)
-        file = uploaded_csv("name,participant_1\nTeam Alpha,#{participant.id}\n")
+        file = uploaded_csv("name,participant_1\nTeam Alpha,#{student.name}\n")
 
         post "/import/Team",
              params: {
@@ -350,7 +352,7 @@ RSpec.describe "Import/export requests", type: :request do
         json = JSON.parse(response.body)
         exported_file = Array(json["file"]).first
         expect(exported_file["contents"]).to include("name,participant_1")
-        expect(exported_file["contents"]).to include("Export Team,#{participant.id}")
+        expect(exported_file["contents"]).to include("Export Team,#{participant_user.name}")
       end
     end
 
@@ -364,6 +366,19 @@ RSpec.describe "Import/export requests", type: :request do
         exported_file = Array(json["file"]).first
         expect(exported_file["contents"]).to include("topic_name,assignment_id")
         expect(exported_file["contents"]).to include("Export Topic")
+      end
+
+      it "exports topics without assignment_id when it is not selected" do
+        post "/export/ProjectTopic", params: { ordered_fields: %w[topic_name].to_json, assignment_id: assignment.id }
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        exported_file = Array(json["file"]).first
+        rows = CSV.parse(exported_file["contents"])
+        expect(rows.first).to eq(["topic_name"])
+        expect(rows.flatten).to include("Export Topic")
+        expect(exported_file["contents"]).not_to include("assignment_id")
       end
 
       it "scopes topic exports to the provided assignment_id" do

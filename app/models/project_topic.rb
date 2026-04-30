@@ -1,6 +1,6 @@
 class ProjectTopic < ApplicationRecord
   extend ImportableExportableHelper
-  mandatory_fields :topic_name, :assignment_id
+  mandatory_fields :topic_name
   hidden_fields :id, :created_at, :updated_at
   available_actions_on_duplicate SkipRecordAction.new, UpdateExistingRecordAction.new, ChangeOffendingFieldAction.new
   filter -> { export_scope }

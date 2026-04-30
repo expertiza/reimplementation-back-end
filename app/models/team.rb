@@ -4,7 +4,7 @@ class Team < ApplicationRecord
   extend ImportableExportableHelper
   TEAM_PARTICIPANT_COLUMN_PREFIX = 'participant_'
   DEFAULT_TEAM_IMPORT_EXPORT_PARTICIPANT_COLUMNS = 10
-  mandatory_fields :name
+  mandatory_fields :participant_1
   hidden_fields :id, :created_at, :updated_at
   available_actions_on_duplicate SkipRecordAction.new, UpdateExistingRecordAction.new, ChangeOffendingFieldAction.new
   filter -> { export_rows }
@@ -20,13 +20,13 @@ class Team < ApplicationRecord
       team.name
     end
 
-    # Dynamically resolves participant_N export columns to participant ids by position.
+    # Dynamically resolves participant_N export columns to participant usernames by position.
     def method_missing(method_name, *_args)
       method = method_name.to_s
       return super unless method.start_with?(TEAM_PARTICIPANT_COLUMN_PREFIX)
 
       index = method.delete_prefix(TEAM_PARTICIPANT_COLUMN_PREFIX).to_i - 1
-      participants[index]&.id
+      participants[index]&.user&.name
     end
 
     # Advertises support for participant_N dynamic columns during export.
@@ -212,9 +212,9 @@ class Team < ApplicationRecord
       ['name'] + participant_field_names
     end
 
-    # Treats participant columns as optional so CSVs can omit unused slots.
+    # Treats team name and extra participant columns as optional CSV fields.
     def optional_fields
-      participant_field_names
+      (['name'] + participant_field_names) - mandatory_fields
     end
 
     # Team import/export relies only on internal fields, with no external lookup columns.
@@ -227,14 +227,14 @@ class Team < ApplicationRecord
       internal_fields
     end
 
-    # Builds lightweight export rows that expose participant ids in stable column order.
+    # Builds lightweight export rows that expose participant usernames in stable column order.
     def export_rows
-      export_scope.includes(:participants).map do |team|
+      export_scope.includes(participants: :user).map do |team|
         TeamExportRow.new(team, team.participants.order(:id).to_a)
       end
     end
 
-    # Imports teams from CSV rows and attaches participants by exported participant id columns.
+    # Imports teams from CSV rows and attaches participants by exported username columns.
     def try_import_records(file, headers, use_header, defaults = {})
       csv_table = CSV.read(file, headers: use_header)
       normalized_headers =
@@ -242,9 +242,10 @@ class Team < ApplicationRecord
           csv_table.headers.map { |header| header.to_s.parameterize.underscore }
         else
           Array(headers).map { |header| header.to_s.parameterize.underscore }
-        end
+      end
 
       mapping = FieldMapping.from_header(self, normalized_headers)
+      validate_import_mapping!(mapping)
       rows = use_header ? csv_table.map(&:fields) : csv_table
 
       ActiveRecord::Base.transaction do
@@ -272,12 +273,13 @@ class Team < ApplicationRecord
       mapping.ordered_fields.zip(row).each do |key, value|
         row_hash[key] = value
       end
+      validate_import_row!(row_hash)
 
       team = find_or_build_import_team(row_hash, defaults)
       team.save! if team.new_record? || team.changed?
 
-      participant_ids_from_row(row_hash).each do |participant_id|
-        participant = find_import_participant(team, participant_id)
+      participant_values_from_row(row_hash).each do |participant_value|
+        participant = find_import_participant(team, participant_value)
         next unless participant
         next if team.participants.exists?(id: participant.id)
 
@@ -288,21 +290,48 @@ class Team < ApplicationRecord
       end
     end
 
+    # Requires at least the first participant username column for team imports.
+    def validate_import_mapping!(mapping)
+      missing_fields = mandatory_fields - mapping.ordered_fields
+      return if missing_fields.empty?
+
+      raise StandardError, "Missing required fields: #{missing_fields.join(', ')}"
+    end
+
+    def validate_import_row!(row_hash)
+      return if row_hash['participant_1'].present?
+
+      raise StandardError, 'participant_1 is required for team import'
+    end
+
     # Finds an existing assignment team by name or initializes it within the current assignment context.
     def find_or_build_import_team(row_hash, defaults)
       assignment_id = defaults[:assignment_id] || import_export_assignment_id
       raise StandardError, 'assignment_id is required for team import' if assignment_id.blank?
 
-      name = row_hash['name'].presence
-      raise StandardError, 'name is required for team import' if name.blank?
+      name = row_hash['name'].presence || generated_team_name(row_hash, assignment_id)
 
       find_or_initialize_by(name: name, type: 'AssignmentTeam', parent_id: assignment_id)
     end
 
-    # Resolves a participant id from the CSV into the correct participant subtype for the team.
-    def find_import_participant(team, participant_id)
+    # Builds a stable fallback name when team CSVs are organized by usernames only.
+    def generated_team_name(row_hash, assignment_id)
+      usernames = participant_values_from_row(row_hash)
+      raise StandardError, 'participant_1 is required for team import' if usernames.empty?
+
+      base_name = usernames.join('_').parameterize(separator: '_').presence || 'team'
+      "Team_#{assignment_id}_#{base_name}"
+    end
+
+    # Resolves a participant username into the correct participant subtype for the team.
+    def find_import_participant(team, participant_value)
       participant_class = participant_class_for(team.type)
-      participant_class.find_by(id: participant_id, parent_id: team.parent_id)
+      value = participant_value.to_s.strip
+      return if value.blank?
+
+      participant_class
+        .joins(:user)
+        .find_by(parent_id: team.parent_id, users: { name: value })
     end
 
     # Chooses the participant model that matches the imported team subtype.
@@ -325,8 +354,8 @@ class Team < ApplicationRecord
       DEFAULT_TEAM_IMPORT_EXPORT_PARTICIPANT_COLUMNS
     end
 
-    # Extracts non-blank participant ids from the current imported row.
-    def participant_ids_from_row(row_hash)
+    # Extracts non-blank participant usernames from the current imported row.
+    def participant_values_from_row(row_hash)
       row_hash
         .slice(*participant_field_names)
         .values
