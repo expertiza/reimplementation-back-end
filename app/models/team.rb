@@ -13,6 +13,9 @@ class Team < ApplicationRecord
 
   # The team is either an AssignmentTeam or a CourseTeam
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'parent_id', optional: true
+  # E2619: each submitting team owns their quiz questionnaire (set via "Create Quiz" on AssignReviewer page)
+  belongs_to :quiz_questionnaire, class_name: 'Questionnaire', foreign_key: 'quiz_questionnaire_id',
+             optional: true, inverse_of: false
   belongs_to :course, class_name: 'Course', foreign_key: 'parent_id', optional: true
   belongs_to :user, optional: true # Team creator
 

@@ -10,7 +10,7 @@ class AssignmentsController < ApplicationController
   # GET /assignments/:id
   def show
     assignment = Assignment.find(params[:id])
-    render json: assignment
+    render json: assignment, include: [:assignment_questionnaires, :questionnaires, :due_dates]
   end
 
   # POST /assignments
@@ -26,6 +26,15 @@ class AssignmentsController < ApplicationController
   # PATCH/PUT /assignments/:id
   def update
     assignment = Assignment.find(params[:id])
+
+    # When the frontend sends assignment_questionnaires_attributes without ids,
+    # clear existing records first to avoid duplicates.
+    if params[:assignment]&.key?(:assignment_questionnaires_attributes)
+      incoming = params[:assignment][:assignment_questionnaires_attributes]
+      has_ids = incoming.is_a?(Array) && incoming.any? { |aq| aq[:id].present? }
+      assignment.assignment_questionnaires.destroy_all unless has_ids
+    end
+
     if assignment.update(assignment_params)
       render json: assignment, status: :ok
     else
@@ -249,17 +258,10 @@ class AssignmentsController < ApplicationController
       :late_policy_id,
       :is_penalty_calculated,
       :calculate_penalty,
-      :use_signup_deadline,
-      :use_drop_topic_deadline,
-      :use_team_formation_deadline,
-      :use_date_updater,
-      :submission_allowed,
-      :review_allowed,
-      :teammate_allowed,
-      :metareview_allowed,
-      weights: [],
-      notification_limits: [],
-      reminder: []
+      :availability_flag,
+      :instructor_id,
+      :course_id,
+      assignment_questionnaires_attributes: [:id, :questionnaire_id, :used_in_round, :questionnaire_weight, :_destroy]
     )
   end
 
