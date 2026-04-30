@@ -8,6 +8,7 @@ class Assignment < ApplicationRecord
   has_many :invitations, class_name: 'Invitation', foreign_key: 'assignment_id', dependent: :destroy # , inverse_of: :assignment
   has_many :assignment_questionnaires, dependent: :destroy
   has_many :questionnaires, through: :assignment_questionnaires
+  accepts_nested_attributes_for :assignment_questionnaires, allow_destroy: true
   has_many :response_maps, foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :project_topics , class_name: 'ProjectTopic', foreign_key: 'assignment_id', dependent: :destroy
