@@ -3,6 +3,7 @@
 class CourseReportsController < ApplicationController
   class FinalDueDateNotReviewDeadlineError < StandardError; end
 
+  # only restruct for course staff (TA + instr)
   def action_allowed?
     case params[:action]
     when 'index'
@@ -22,6 +23,7 @@ class CourseReportsController < ApplicationController
     course = Course.find_by(id: params[:course_id])
     return render json: { error: 'Course not found' }, status: :not_found unless course
 
+    # We get assns sorted by final review due date
     assignments = assignments_ordered_by_final_review_due_date(course)
     assignment_ids = assignments.map(&:id)
     participants = AssignmentParticipant
@@ -48,6 +50,8 @@ class CourseReportsController < ApplicationController
     )
   end
 
+  # metadata col
+  # indicates whether an assignment has optional columns eg topics.
   def assignment_column(assignment)
     {
       assignment_id: assignment.id,
@@ -62,14 +66,21 @@ class CourseReportsController < ApplicationController
     end
   end
 
+  # function to retrieve final review due date from the db:
+  # Raises FinalDueDateNotReviewDeadline as error
   def final_review_due_date_for(assignment)
     final_due_date = assignment.due_dates.max_by(&:due_at)
     return final_due_date.due_at if final_due_date&.deadline_type_id == DueDate::REVIEW_DEADLINE_TYPE_ID
 
+    # At this point of the project, all assignments are peer review assignments,
+    # so the final deadline is bound to be a review deadline, hence this guard
+    # 
+    #Replace this with code in the incident that non peer review assignments are introduced
     raise FinalDueDateNotReviewDeadlineError,
           "Final due date for assignment #{assignment.id} is not a review deadline"
   end
 
+  # build full response
   def course_report_response(course, assignments, student_rows)
     {
       course_id: course.id,
@@ -79,6 +90,7 @@ class CourseReportsController < ApplicationController
     }
   end
 
+  # per row students being built
   def build_student_row(assignments, student_participants)
     first_participant = student_participants.first
     participant_by_assignment = student_participants.index_by(&:parent_id)
@@ -90,6 +102,8 @@ class CourseReportsController < ApplicationController
     }
   end
 
+  # per user assignment stats
+  # 
   def assignment_cells_for_student(assignments, participant_by_assignment)
     assignments.to_h do |assignment|
       participant = participant_by_assignment[assignment.id]
@@ -97,6 +111,7 @@ class CourseReportsController < ApplicationController
     end
   end
 
+  # building per-assignment cell
   def build_assignment_cell(assignment, participant)
     team = participant.team
 
@@ -106,11 +121,12 @@ class CourseReportsController < ApplicationController
       instructor_grade: team&.grade_for_submission,
       avg_teammate_score: participant.aggregate_teammate_review_grade(teammate_review_maps_for(assignment, participant)),
       avg_author_feedback_score: participant.aggregate_teammate_review_grade(author_feedback_maps_for(assignment, participant))
-    }.tap do |cell|
+    }.tap do |cell| # optional topic col
       cell[:topic] = topic_name_for(assignment, participant) if assignment.has_topics
     end
   end
 
+  # get topic name if exists
   def topic_name_for(assignment, participant)
     return unless assignment.has_topics
 
@@ -120,10 +136,13 @@ class CourseReportsController < ApplicationController
     SignedUpTeam.find_by(team_id: team_id)&.project_topic&.topic_name
   end
 
+  # response maps for teammate review.
+
   def teammate_review_maps_for(assignment, participant)
     TeammateReviewResponseMap.where(reviewed_object_id: assignment.id, reviewee_id: participant.id)
   end
 
+  # response maps for auth feedback
   def author_feedback_maps_for(assignment, participant)
     review_maps = ReviewResponseMap.where(reviewed_object_id: assignment.id, reviewer_id: participant.id)
 
