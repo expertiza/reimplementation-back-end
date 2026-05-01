@@ -1,5 +1,5 @@
 class AddQuestionnaireWeightToAssignmentQuestionnaire < ActiveRecord::Migration[8.0]
   def change
-    add_column :assignment_questionnaires, :questionnaire_weight, :integer
+    add_column :assignment_questionnaires, :questionnaire_weight, :integer unless column_exists?(:assignment_questionnaires, :questionnaire_weight)
   end
 end

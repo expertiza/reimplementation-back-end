@@ -3,7 +3,7 @@ class QuestionnairesController < ApplicationController
   # Index method returns the list of JSON objects of the questionnaire
   # GET on /questionnaires
   def index
-    @questionnaires = Questionnaire.order(:id)
+    @questionnaires = Questionnaire.includes(:instructor).order(:id)
     render json: @questionnaires, status: :ok and return
   end
   
@@ -27,8 +27,11 @@ class QuestionnairesController < ApplicationController
       @questionnaire.display_type = sanitize_display_type(@questionnaire.questionnaire_type)
       @questionnaire.save!
       render json: @questionnaire, status: :created and return
-    rescue ActiveRecord::RecordInvalid
-      render json: $ERROR_INFO.to_s, status: :unprocessable_entity
+    rescue ActiveRecord::RecordInvalid => e
+      render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
+
+    rescue => e
+      render json: { error: e.message, backtrace: e.backtrace.take(5) }, status: :internal_server_error
     end
   end
 
@@ -37,7 +40,7 @@ class QuestionnairesController < ApplicationController
   def destroy
     begin
       @questionnaire = Questionnaire.find(params[:id])
-      @questionnaire.delete
+      @questionnaire.destroy! # ensures dependent items are removed
     rescue ActiveRecord::RecordNotFound
       render json: $ERROR_INFO.to_s, status: :not_found and return
     end
@@ -48,12 +51,17 @@ class QuestionnairesController < ApplicationController
 
   def update
     @questionnaire = Questionnaire.find(params[:id])
+
     if @questionnaire.update(questionnaire_params)
       render json: @questionnaire, status: :ok
     else
       render json: @questionnaire.errors.full_messages, status: :unprocessable_entity
     end
+  rescue ActiveRecord::RecordNotFound
+    render json: $ERROR_INFO.to_s, status: :not_found
   end
+
+
   # Copy method creates a copy of questionnaire with id - {:id} and return its JSON object
   # POST on /questionnaires/copy/:id
   def copy
@@ -86,10 +94,25 @@ class QuestionnairesController < ApplicationController
 
   private
 
+  # Strong-parameters allowlist for questionnaire create/update.
+  #
+  # +:correct_answer+ is included in the nested +items_attributes+ allowlist so
+  # that quiz item correct answers submitted via the questionnaire editor are
+  # persisted. The {Item} model's {Item#correct_answer_only_for_quiz} validation
+  # ensures this value is rejected for non-quiz questionnaire types.
+  #
+  # @return [ActionController::Parameters] the permitted parameters
   def questionnaire_params
-    params.require(:questionnaire).permit(:name, :questionnaire_type, :private, :min_question_score, :max_question_score, :instructor_id)
+    params.require(:questionnaire).permit(:name, :questionnaire_type, :private,
+                                         :min_question_score, :max_question_score, :instructor_id,
+                                         items_attributes: [
+                                           :id, :txt, :question_type, :seq, :weight,
+                                           :size, :alternatives, :min_label, :max_label, :textarea_width, :textarea_height, :textbox_width, :col_names, :row_names,
+                                           :break_before, :_destroy, :max_value, :correct_answer
+                                         ])
   end
 
+  # To match the expected format, replace a space by a for questionnaire types with 2 or more words
   def sanitize_display_type(type)
     display_type = type.split('Questionnaire')[0]
     if %w[AuthorFeedback CourseSurvey TeammateReview GlobalSurvey AssignmentSurvey BookmarkRating].include?(display_type)

@@ -8,6 +8,7 @@ gem 'sqlite3', '~> 1.4'  # Alternative for development
 gem 'puma', '~> 6.4'
 gem 'rails', '~> 8.0', '>= 8.0.1'
 gem 'mini_portile2', '~> 2.8'  # Helps with native gem compilation
+gem 'ffi'  # Required by rest-client on Windows
 gem 'observer'  # Required for Ruby 3.4.5 compatibility with Rails 8.0
 gem 'mutex_m'  # Required for Ruby 3.4.5 compatibility
 gem 'faraday-retry'  # Required for Faraday v2.0+ compatibility

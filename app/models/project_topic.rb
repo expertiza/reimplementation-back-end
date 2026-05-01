@@ -1,4 +1,6 @@
 class ProjectTopic < ApplicationRecord
+  self.table_name = 'sign_up_topics'
+
   has_many :signed_up_teams, dependent: :destroy
   has_many :teams, through: :signed_up_teams
   belongs_to :assignment

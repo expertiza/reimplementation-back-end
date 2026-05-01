@@ -10,7 +10,7 @@ class AssignmentsController < ApplicationController
   # GET /assignments/:id
   def show
     assignment = Assignment.find(params[:id])
-    render json: assignment
+    render json: assignment, include: [:assignment_questionnaires, :questionnaires, :due_dates]
   end
 
   # POST /assignments
@@ -26,6 +26,15 @@ class AssignmentsController < ApplicationController
   # PATCH/PUT /assignments/:id
   def update
     assignment = Assignment.find(params[:id])
+
+    # When the frontend sends assignment_questionnaires_attributes without ids,
+    # clear existing records first to avoid duplicates.
+    if params[:assignment]&.key?(:assignment_questionnaires_attributes)
+      incoming = params[:assignment][:assignment_questionnaires_attributes]
+      has_ids = incoming.is_a?(Array) && incoming.any? { |aq| aq[:id].present? }
+      assignment.assignment_questionnaires.destroy_all unless has_ids
+    end
+
     if assignment.update(assignment_params)
       render json: assignment, status: :ok
     else
@@ -215,51 +224,36 @@ class AssignmentsController < ApplicationController
   def assignment_params
     params.require(:assignment).permit(
       :name,
-      :title,
-      :description,
       :directory_path,
       :spec_location,
       :private,
-      :show_template_review,
       :require_quiz,
       :has_badge,
       :staggered_deadline,
       :is_calibrated,
       :has_teams,
       :max_team_size,
-      :show_teammate_review,
-      :is_pair_programming,
-      :has_mentors,
+      :show_teammate_reviews,
+      :enable_pair_programming,
       :has_topics,
       :review_topic_threshold,
-      :maximum_number_of_reviews_per_submission,
-      :review_strategy,
-      :review_rubric_varies_by_round,
-      :review_rubric_varies_by_topic,
-      :review_rubric_varies_by_role,
-      :has_max_review_limit,
-      :set_allowed_number_of_reviews_per_reviewer,
-      :set_required_number_of_reviews_per_reviewer,
-      :is_review_anonymous,
-      :is_review_done_by_teams,
-      :allow_self_reviews,
-      :reviews_visible_to_other_reviewers,
-      :number_of_review_rounds,
+      :max_reviews_per_submission,
+      :review_assignment_strategy,
+      :vary_by_round,
+      :num_reviews_allowed,
+      :num_reviews_required,
+      :is_anonymous,
+      :is_selfreview_enabled,
+      :reviews_visible_to_all,
+      :rounds_of_reviews,
       :days_between_submissions,
       :late_policy_id,
       :is_penalty_calculated,
       :calculate_penalty,
-      :use_signup_deadline,
-      :use_drop_topic_deadline,
-      :use_team_formation_deadline,
-      :use_date_updater,
-      :submission_allowed,
-      :review_allowed,
-      :teammate_allowed,
-      :metareview_allowed,
-      weights: [],
-      notification_limits: [],
-      reminder: []
+      :availability_flag,
+      :instructor_id,
+      :course_id,
+      assignment_questionnaires_attributes: [:id, :questionnaire_id, :used_in_round, :questionnaire_weight, :_destroy]
     )
   end
 

@@ -188,8 +188,7 @@ class GradesController < ApplicationController
         end
     end
 
-
-    # instructor_review (GET /grades/:participant_id/instructor_review)
+    # instructor_review (GET /api/v1/grades/:participant_id/instructor_review)
     # helps the instructor begin grading or re-grading a submission.
     # It finds or creates the appropriate review mapping for the given participant and returns JSON indicating whether to go to 
     # Response#new (no review exists yet) or Response#edit (review already exists).
