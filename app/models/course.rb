@@ -6,6 +6,7 @@ class Course < ApplicationRecord
   has_many :assignments, dependent: :destroy
   validates :name, presence: true
   validates :directory_path, presence: true
+  has_many :course_participants, class_name: 'CourseParticipant', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :course
   has_many :participants, class_name: 'CourseParticipant', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :course
   has_many :users, through: :course_participants, inverse_of: :course
   has_many :ta_mappings, dependent: :destroy
@@ -56,4 +57,5 @@ class Course < ApplicationRecord
     new_course.name += '_copy'
     new_course.save
   end
+
 end

@@ -63,6 +63,9 @@ Rails.application.routes.draw do
       end
 
       resources :questionnaires do
+        member do
+          get :items
+        end
         collection do
           post 'copy/:id', to: 'questionnaires#copy', as: 'copy'
           get 'toggle_access/:id', to: 'questionnaires#toggle_access', as: 'toggle_access'
@@ -158,6 +161,7 @@ Rails.application.routes.draw do
         collection do
           get '/user/:user_id', to: 'participants#list_user_participants'
           get '/assignment/:assignment_id', to: 'participants#list_assignment_participants'
+          get '/course/:course_id', to: 'participants#list_course_participants'
           get '/:id', to: 'participants#show'
           post '/:authorization', to: 'participants#add'
           patch '/:id/:authorization', to: 'participants#update_authorization'
@@ -197,6 +201,7 @@ Rails.application.routes.draw do
       end      
       resources :grades do
         collection do        
+          get '/:assignment_id/export', to: 'grades#export'
           get '/:assignment_id/view_all_scores', to: 'grades#view_all_scores'
           patch '/:participant_id/assign_grade', to: 'grades#assign_grade'
           get '/:participant_id/edit', to: 'grades#edit'
@@ -213,5 +218,28 @@ Rails.application.routes.draw do
       end
       resources :assignments do
         resources :duties, controller: 'assignments_duties', only: [:index, :create, :destroy]
+      end
+      resources :import, path: :import, only: [] do
+        collection do
+          get "/:class", to: "import#index"
+          post "/:class", to: "import#import"
+        end
+      end
+      resources :export, path: :export, only: [] do
+        collection do
+          get "/:class", to: "export#index"
+          post "/:class", to: "export#export"
+        end
+      end
+
+      # Package workflow preserves questionnaire, item, and advice relationships.
+      resources :questionnaire_packages, only: [] do
+        collection do
+          get :config, action: :package_config
+          get 'templates/:template_name', action: :template
+          post :export
+          post :preview
+          post :import
+        end
       end
 end

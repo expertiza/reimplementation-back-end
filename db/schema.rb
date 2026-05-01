@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_24_000000) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -135,11 +135,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "cakes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "courses", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.string "directory_path"
@@ -196,14 +191,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
 
   create_table "invitations", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.integer "assignment_id"
+    t.bigint "from_id"
+    t.integer "to_id"
     t.string "reply_status", limit: 1
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "from_id", null: false
-    t.bigint "to_id", null: false
     t.index ["assignment_id"], name: "fk_invitation_assignments"
-    t.index ["from_id"], name: "index_invitations_on_from_id"
-    t.index ["to_id"], name: "index_invitations_on_to_id"
+    t.index ["from_id"], name: "fk_invitationfrom_users"
+    t.index ["to_id"], name: "fk_invitationto_users"
   end
 
   create_table "items", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -279,16 +274,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
     t.string "link"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["assignment_id"], name: "fk_sign_up_categories_sign_up_topics"
     t.index ["assignment_id"], name: "index_project_topics_on_assignment_id"
   end
 
   create_table "question_advices", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.bigint "question_id", null: false
+    t.bigint "item_id", null: false
     t.integer "score"
     t.text "advice"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["question_id"], name: "index_question_advices_on_question_id"
+    t.index ["item_id"], name: "index_question_advices_on_item_id"
   end
 
   create_table "question_types", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -317,7 +313,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
   end
 
   create_table "quiz_question_choices", id: :integer, charset: "latin1", force: :cascade do |t|
-    t.integer "question_id"
+    t.integer "item_id"
     t.text "txt"
     t.boolean "iscorrect", default: false
     t.datetime "created_at", null: false
@@ -330,7 +326,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
     t.integer "reviewee_id", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "type"
     t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 
@@ -389,15 +384,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
   end
 
   create_table "teams", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
     t.string "name", null: false
+    t.integer "parent_id"
     t.string "type", null: false
-    t.integer "parent_id", null: false
-    t.integer "grade_for_submission"
-    t.string "comment_for_submission"
     t.text "submitted_hyperlinks"
     t.integer "directory_num"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "grade_for_submission"
+    t.string "comment_for_submission"
+    t.index ["parent_id"], name: "index_teams_on_parent_id"
+    t.index ["type"], name: "index_teams_on_type"
   end
 
   create_table "teams_participants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -417,6 +414,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["team_id", "user_id"], name: "index_teams_users_on_team_id_and_user_id", unique: true
     t.index ["team_id"], name: "index_teams_users_on_team_id"
     t.index ["user_id"], name: "index_teams_users_on_user_id"
   end
@@ -456,16 +454,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
   add_foreign_key "assignments_duties", "duties"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
-  add_foreign_key "invitations", "participants", column: "from_id"
-  add_foreign_key "invitations", "participants", column: "to_id"
   add_foreign_key "duties", "users", column: "instructor_id"
+  add_foreign_key "invitations", "teams", column: "from_id"
   add_foreign_key "items", "questionnaires"
   add_foreign_key "participants", "duties"
   add_foreign_key "participants", "join_team_requests"
   add_foreign_key "participants", "teams"
   add_foreign_key "participants", "users"
   add_foreign_key "project_topics", "assignments"
-  add_foreign_key "question_advices", "items", column: "question_id"
+  add_foreign_key "question_advices", "items"
   add_foreign_key "roles", "roles", column: "parent_id", on_delete: :cascade
   add_foreign_key "signed_up_teams", "project_topics"
   add_foreign_key "signed_up_teams", "teams"

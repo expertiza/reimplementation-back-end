@@ -285,6 +285,65 @@ RSpec.describe 'questionnaires', type: :request do
     end
   end
 
+  path '/questionnaires/{id}/items' do
+    parameter name: 'id', in: :path, type: :integer
+
+    let(:valid_questionnaire_params) do
+      {
+        name: 'Test Questionnaire With Items',
+        questionnaire_type: 'ReviewQuestionnaire',
+        private: false,
+        min_question_score: 0,
+        max_question_score: 5,
+        instructor_id: prof.id
+      }
+    end
+
+    let(:questionnaire) do
+      prof
+      Questionnaire.create!(valid_questionnaire_params)
+    end
+
+    let(:id) do
+      Item.create!(
+        questionnaire: questionnaire,
+        txt: 'Second item',
+        weight: 1,
+        seq: 2,
+        question_type: 'Scale',
+        break_before: true
+      )
+      Item.create!(
+        questionnaire: questionnaire,
+        txt: 'First item',
+        weight: 1,
+        seq: 1,
+        question_type: 'Scale',
+        break_before: true
+      )
+      questionnaire.id
+    end
+
+    get('list questionnaire items') do
+      tags 'Questionnaires'
+      produces 'application/json'
+
+      response(200, 'successful') do
+        run_test! do
+          body = JSON.parse(response.body)
+          expect(body.map { |item| item['txt'] }).to eq(['First item', 'Second item'])
+        end
+      end
+
+      response(404, 'not found') do
+        let(:id) { 0 }
+        run_test! do
+          expect(response.body).to include("Couldn't find Questionnaire")
+        end
+      end
+    end
+  end
+
   path '/questionnaires/toggle_access/{id}' do
     parameter name: 'id', in: :path, type: :integer
     let(:valid_questionnaire_params) do

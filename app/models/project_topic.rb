@@ -1,8 +1,15 @@
 class ProjectTopic < ApplicationRecord
+  extend ImportableExportableHelper
+  mandatory_fields :topic_name
+  hidden_fields :id, :created_at, :updated_at
+  available_actions_on_duplicate SkipRecordAction.new, UpdateExistingRecordAction.new, ChangeOffendingFieldAction.new
+  filter -> { export_scope }
+
   has_many :signed_up_teams, dependent: :destroy
   has_many :teams, through: :signed_up_teams
+  has_many :assignment_questionnaires, class_name: 'AssignmentQuestionnaire', foreign_key: 'topic_id', dependent: :destroy
+  has_many :due_dates, as: :parent, class_name: 'DueDate', dependent: :destroy
   belongs_to :assignment
-
   # Ensures the number of max choosers is non-negative
   validates :max_choosers, numericality: {
     only_integer: true,
@@ -85,5 +92,29 @@ class ProjectTopic < ApplicationRecord
   # Removes waitlist entries for the given team from all other topics.
   def remove_from_waitlist(team)
     team.signed_up_teams.waitlisted.where.not(project_topic_id: id).destroy_all
+  end
+
+  class << self
+    def with_assignment_context(assignment_id)
+      previous_assignment_id = import_export_assignment_id
+      self.import_export_assignment_id = assignment_id
+      yield
+    ensure
+      self.import_export_assignment_id = previous_assignment_id
+    end
+
+    private
+
+    def export_scope
+      import_export_assignment_id.present? ? where(assignment_id: import_export_assignment_id) : all
+    end
+
+    def import_export_assignment_id
+      Thread.current[:project_topic_import_export_assignment_id]
+    end
+
+    def import_export_assignment_id=(assignment_id)
+      Thread.current[:project_topic_import_export_assignment_id] = assignment_id.presence&.to_i
+    end
   end
 end

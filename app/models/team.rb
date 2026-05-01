@@ -1,6 +1,39 @@
 # frozen_string_literal: true
 
 class Team < ApplicationRecord
+  extend ImportableExportableHelper
+  TEAM_PARTICIPANT_COLUMN_PREFIX = 'participant_'
+  DEFAULT_TEAM_IMPORT_EXPORT_PARTICIPANT_COLUMNS = 10
+  mandatory_fields :participant_1
+  hidden_fields :id, :created_at, :updated_at
+  available_actions_on_duplicate SkipRecordAction.new, UpdateExistingRecordAction.new, ChangeOffendingFieldAction.new
+  filter -> { export_rows }
+  TeamExportRow = Struct.new(:team, :participants) do
+    # Normalizes exported rows so missing participant slots return nil cleanly.
+    def initialize(team, participants)
+      super(team, participants)
+      self.participants ||= []
+    end
+
+    # Exposes the wrapped team's name as the exported row's base column.
+    def name
+      team.name
+    end
+
+    # Dynamically resolves participant_N export columns to participant usernames by position.
+    def method_missing(method_name, *_args)
+      method = method_name.to_s
+      return super unless method.start_with?(TEAM_PARTICIPANT_COLUMN_PREFIX)
+
+      index = method.delete_prefix(TEAM_PARTICIPANT_COLUMN_PREFIX).to_i - 1
+      participants[index]&.user&.name
+    end
+
+    # Advertises support for participant_N dynamic columns during export.
+    def respond_to_missing?(method_name, include_private = false)
+      method_name.to_s.start_with?(TEAM_PARTICIPANT_COLUMN_PREFIX) || super
+    end
+  end
 
   # Core associations
   has_many :signed_up_teams, dependent: :destroy
@@ -10,6 +43,7 @@ class Team < ApplicationRecord
   has_many :users, through: :teams_participants
   has_many :participants, through: :teams_participants
   has_many :join_team_requests, dependent: :destroy
+  has_many :sent_invitations, class_name: 'Invitation', foreign_key: 'from_id', dependent: :destroy
 
   # The team is either an AssignmentTeam or a CourseTeam
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'parent_id', optional: true
@@ -21,16 +55,17 @@ class Team < ApplicationRecord
   validates :type, presence: true, inclusion: { in: %w[AssignmentTeam CourseTeam MentoredTeam], message: "must be 'Assignment' or 'Course' or 'Mentor'" }
 
   after_update :release_topics_if_empty
+  before_destroy :clear_participant_team_references
 
   def has_member?(user)
     participants.exists?(user_id: user.id)
   end
-  
+
   # Returns the current number of team members
   def team_size
     users.count
   end
-  
+
   # Returns the maximum allowed team size
   def max_size
     if is_a?(AssignmentTeam) && assignment&.max_team_size
@@ -41,7 +76,7 @@ class Team < ApplicationRecord
       nil
     end
   end
-  
+
   def full?
     current_size = participants.count
 
@@ -54,6 +89,7 @@ class Team < ApplicationRecord
     false
   end
 
+  # Returns true when the given user already belongs to this team.
   # Checks if the given participant is already on any team for the associated assignment or course.
   def participant_on_team?(participant)
     # pick the correct “scope” (assignment or course) based on this team’s class
@@ -115,10 +151,10 @@ class Team < ApplicationRecord
     # Remove the join record if it exists
     tp = TeamsParticipant.find_by(team_id: id, participant_id: participant.id)
     tp&.destroy
-    
+
     # Update the participant's team_id column - will remove the team reference inside participants table later. keeping it for now
     # this will remove the reference only if the participant's current team is the same team removing the participant
-    if participant.team_id==id
+    if participant.team_id == id
       participant.update!(team_id: nil)
     end
 
@@ -155,13 +191,193 @@ class Team < ApplicationRecord
 
     # All checks passed; participant is eligible to join the team
     { success: true }
-
   end
 
   private
 
+  # Clears legacy participant.team_id pointers before deleting the team record.
+  def clear_participant_team_references
+    Participant.where(team_id: id).update_all(team_id: nil)
+  end
+
+  # Releases any claimed topics when the team becomes empty.
   def release_topics_if_empty
     return unless participants.empty?
     project_topics.each { |topic| topic.drop_team(self) }
+  end
+
+  class << self
+    # Returns the full import/export field list, including dynamic participant columns.
+    def internal_fields
+      ['name'] + participant_field_names
+    end
+
+    # Treats team name and extra participant columns as optional CSV fields.
+    def optional_fields
+      (['name'] + participant_field_names) - mandatory_fields
+    end
+
+    # Team import/export relies only on internal fields, with no external lookup columns.
+    def external_fields
+      []
+    end
+
+    # Returns the full CSV contract for teams without additional external fields.
+    def internal_and_external_fields
+      internal_fields
+    end
+
+    # Builds lightweight export rows that expose participant usernames in stable column order.
+    def export_rows
+      export_scope.includes(participants: :user).map do |team|
+        TeamExportRow.new(team, team.participants.order(:id).to_a)
+      end
+    end
+
+    # Imports teams from CSV rows and attaches participants by exported username columns.
+    def try_import_records(file, headers, use_header, defaults = {})
+      csv_table = CSV.read(file, headers: use_header)
+      normalized_headers =
+        if use_header
+          csv_table.headers.map { |header| header.to_s.parameterize.underscore }
+        else
+          Array(headers).map { |header| header.to_s.parameterize.underscore }
+      end
+
+      mapping = FieldMapping.from_header(self, normalized_headers)
+      validate_import_mapping!(mapping)
+      rows = use_header ? csv_table.map(&:fields) : csv_table
+
+      ActiveRecord::Base.transaction do
+        rows.each do |row|
+          import_team_row(row, mapping, defaults)
+        end
+      end
+
+      []
+    end
+
+    def with_assignment_context(assignment_id)
+      previous_assignment_id = import_export_assignment_id
+      self.import_export_assignment_id = assignment_id
+      yield
+    ensure
+      self.import_export_assignment_id = previous_assignment_id
+    end
+
+    private
+
+    # Imports a single team row, creating the team and linking any listed participants.
+    def import_team_row(row, mapping, defaults)
+      row_hash = {}
+      mapping.ordered_fields.zip(row).each do |key, value|
+        row_hash[key] = value
+      end
+      validate_import_row!(row_hash)
+
+      team = find_or_build_import_team(row_hash, defaults)
+      team.save! if team.new_record? || team.changed?
+
+      participant_values_from_row(row_hash).each do |participant_value|
+        participant = find_import_participant(team, participant_value)
+        next unless participant
+        next if team.participants.exists?(id: participant.id)
+
+        result = team.add_member(participant)
+        next if result[:success]
+
+        raise StandardError, result[:error]
+      end
+    end
+
+    # Requires at least the first participant username column for team imports.
+    def validate_import_mapping!(mapping)
+      missing_fields = mandatory_fields - mapping.ordered_fields
+      return if missing_fields.empty?
+
+      raise StandardError, "Missing required fields: #{missing_fields.join(', ')}"
+    end
+
+    # Rejects rows where the required participant username cell is blank.
+    def validate_import_row!(row_hash)
+      return if row_hash['participant_1'].present?
+
+      raise StandardError, 'participant_1 is required for team import'
+    end
+
+    # Finds an existing assignment team by name or initializes it within the current assignment context.
+    def find_or_build_import_team(row_hash, defaults)
+      assignment_id = defaults[:assignment_id] || import_export_assignment_id
+      raise StandardError, 'assignment_id is required for team import' if assignment_id.blank?
+
+      name = row_hash['name'].presence || generated_team_name(row_hash, assignment_id)
+
+      find_or_initialize_by(name: name, type: 'AssignmentTeam', parent_id: assignment_id)
+    end
+
+    # Builds a stable fallback name when team CSVs are organized by usernames only.
+    def generated_team_name(row_hash, assignment_id)
+      usernames = participant_values_from_row(row_hash)
+      raise StandardError, 'participant_1 is required for team import' if usernames.empty?
+
+      base_name = usernames.join('_').parameterize(separator: '_').presence || 'team'
+      "Team_#{assignment_id}_#{base_name}"
+    end
+
+    # Resolves a participant username into the correct participant subtype for the team.
+    def find_import_participant(team, participant_value)
+      participant_class = participant_class_for(team.type)
+      value = participant_value.to_s.strip
+      return if value.blank?
+
+      participant_class
+        .joins(:user)
+        .find_by(parent_id: team.parent_id, users: { name: value })
+    end
+
+    # Chooses the participant model that matches the imported team subtype.
+    def participant_class_for(team_type)
+      %w[AssignmentTeam MentoredTeam].include?(team_type) ? AssignmentParticipant : CourseParticipant
+    end
+
+    # Generates participant_1..participant_N column names for team CSVs.
+    def participant_field_names
+      (1..participant_column_count).map { |index| "#{TEAM_PARTICIPANT_COLUMN_PREFIX}#{index}" }
+    end
+
+    # Sizes the participant column set using assignment context, falling back to a fixed default.
+    def participant_column_count
+      assignment = Assignment.find_by(id: import_export_assignment_id) if import_export_assignment_id.present?
+      return DEFAULT_TEAM_IMPORT_EXPORT_PARTICIPANT_COLUMNS unless assignment
+      return assignment.max_team_size if assignment.max_team_size.present?
+      return assignment.participants.count if assignment.participants.count.positive?
+
+      DEFAULT_TEAM_IMPORT_EXPORT_PARTICIPANT_COLUMNS
+    end
+
+    # Extracts non-blank participant usernames from the current imported row.
+    def participant_values_from_row(row_hash)
+      row_hash
+        .slice(*participant_field_names)
+        .values
+        .map(&:presence)
+        .compact
+    end
+
+    # Limits team export rows to assignment-scoped team types, optionally within one assignment.
+    def export_scope
+      scope = where(type: %w[AssignmentTeam MentoredTeam])
+      import_export_assignment_id.present? ? scope.where(parent_id: import_export_assignment_id) : scope
+    end
+
+    # Stores the current assignment import/export scope in thread-local state.
+    def import_export_assignment_id
+      Thread.current[:team_import_export_assignment_id]
+    end
+
+    # Sets the current assignment import/export scope in thread-local state.
+    def import_export_assignment_id=(assignment_id)
+      Thread.current[:team_import_export_assignment_id] = assignment_id.presence&.to_i
+    end
   end
 end

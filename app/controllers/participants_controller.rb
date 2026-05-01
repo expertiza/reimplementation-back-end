@@ -33,6 +33,22 @@ class ParticipantsController < ApplicationController
     end
   end
 
+  # Return a list of participants for a given course
+  # params - course_id
+  # GET /participants/course/:course_id
+  def list_course_participants
+    course = find_course if params[:course_id].present?
+    return if params[:course_id].present? && course.nil?
+
+    participants = filter_course_participants(course)
+
+    if participants.nil?
+      render json: participants.errors, status: :unprocessable_entity
+    else
+      render json: participants.as_json(include: { user: { include: %i[role parent] } }), status: :ok
+    end
+  end
+
   # Return a specified participant
   # params - id
   # GET /participants/:id
@@ -142,6 +158,13 @@ class ParticipantsController < ApplicationController
     participants.order(:id)
   end
 
+  # Filters participants based on the provided course
+  # Returns participants ordered by their IDs
+  def filter_course_participants(course)
+    participants = Participant.where(parent_id: course.id, type: 'CourseParticipant') if course
+    participants.order(:id)
+  end
+
   # Finds a user based on the user_id parameter
   # Returns the user if found
   def find_user
@@ -158,6 +181,15 @@ class ParticipantsController < ApplicationController
     assignment = Assignment.find_by(id: assignment_id)
     render json: { error: 'Assignment not found' }, status: :not_found unless assignment
     assignment
+  end
+
+  # Finds a course based on the course_id parameter
+  # Returns the course if found
+  def find_course
+    course_id = params[:course_id]
+    course = Course.find_by(id: course_id)
+    render json: { error: 'Course not found' }, status: :not_found unless course
+    course
   end
 
   # Finds a participant based on the id parameter
