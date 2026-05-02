@@ -40,6 +40,21 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :submitted_content do
+        collection do
+          get :download
+          get :list_files
+          delete :remove_hyperlink
+          post :submit_file
+          post :submit_hyperlink
+          post :folder_action
+        end
+
+        member do
+          get :view_submissions
+        end
+      end
+
       resources :bookmarks, except: [:new, :edit] do
         member do
           get 'bookmarkratings', to: 'bookmarks#get_bookmark_rating_score'
@@ -106,17 +121,6 @@ Rails.application.routes.draw do
           post :create_advertisement
           patch :update_advertisement
           delete :remove_advertisement
-        end
-      end
-  
-      resources :submitted_content do
-        collection do
-          get    :download
-          get    :list_files
-          delete :remove_hyperlink
-          post   :submit_file
-          post   :submit_hyperlink
-          post   :folder_action
         end
       end
 

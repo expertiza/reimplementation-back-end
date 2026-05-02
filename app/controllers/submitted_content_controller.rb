@@ -302,6 +302,41 @@ class SubmittedContentController < ApplicationController
     render_error("Failed to list directory contents: #{e.message}. Please try again.", :internal_server_error)
   end
 
+  # GET /submitted_content/:id/view_submissions
+  def view_submissions
+    assignment = Assignment.find_by(id: params[:id])
+    return render json: { error: "Assignment not found" }, status: :not_found if assignment.nil?
+
+    submissions = assignment.teams.map do |team|
+      members = team.teams_users.includes(:user).map do |tu|
+        user = tu.user
+        {
+          full_name: user&.full_name,
+          github: "",
+          email: user&.email
+        }
+      end
+
+      links = current_team_links(team, assignment.id)
+      files = current_team_files(team, assignment.id)
+
+      {
+        id: team.id,
+        team_id: team.id,
+        team_name: team.name,
+        members: members,
+        links: links,
+        files: files
+      }
+    end
+
+    render json: {
+      assignment_id: assignment.id,
+      assignment_name: assignment.name,
+      submissions: submissions
+    }, status: :ok
+  end
+
   private
 
   # Before action callback: Sets @submission_record for the show action
@@ -376,5 +411,57 @@ class SubmittedContentController < ApplicationController
       assignment_id: @participant.assignment_id,  # Assignment ID from participant
       operation: operation                 # Operation description (e.g., 'Submit File')
     )
+  end
+
+  def current_team_links(team, assignment_id)
+    hyperlink_records = SubmissionRecord
+                        .where(team_id: team.id, assignment_id: assignment_id, record_type: 'hyperlink')
+                        .order(created_at: :desc)
+
+    team.hyperlinks.each_with_index.map do |hyperlink, index|
+      matching_record = hyperlink_records.find { |record| record.content == hyperlink }
+
+      {
+        id: matching_record&.id || index + 1,
+        url: hyperlink,
+        display_name: hyperlink,
+        name: hyperlink,
+        type: 'Hyperlink',
+        modified: matching_record&.created_at || team.updated_at
+      }
+    end
+  end
+
+  def current_team_files(team, assignment_id)
+    team.set_team_directory_num
+    base_path = team.path.to_s
+    return [] unless File.directory?(base_path)
+
+    file_records = SubmissionRecord
+                   .where(team_id: team.id, assignment_id: assignment_id, record_type: 'file')
+                   .order(created_at: :desc)
+
+    file_entries = Dir.glob(File.join(base_path, '**', '*')).select { |entry| File.file?(entry) }.sort
+
+    file_entries.each_with_index.map do |entry, index|
+      relative_path = entry.delete_prefix("#{base_path}/")
+      current_folder = File.dirname(relative_path)
+      current_folder = current_folder == '.' ? '/' : "/#{current_folder}"
+      file_name = File.basename(relative_path)
+      matching_record =
+        file_records.find do |record|
+          record.content.to_s == entry || File.basename(record.content.to_s) == file_name
+        end
+
+      {
+        id: matching_record&.id || index + 1,
+        url: "/submitted_content/download?download=#{URI.encode_uri_component(file_name)}&current_folder[name]=#{URI.encode_uri_component(current_folder)}",
+        display_name: file_name,
+        name: file_name,
+        size: File.size(entry),
+        type: File.extname(file_name).delete('.').upcase,
+        modified: File.mtime(entry)
+      }
+    end
   end
 end

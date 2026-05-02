@@ -209,7 +209,7 @@ class AssignmentsController < ApplicationController
       end
     end
   end
-  
+
   private
   # Only allow a list of trusted parameters through.
   def assignment_params

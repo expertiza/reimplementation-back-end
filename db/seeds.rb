@@ -135,6 +135,57 @@ begin
     end
   end
 
+  puts "creating submission records (hyperlinks and files)"
+  hyperlink_samples = [
+    "https://github.com/ncsu-csc/project-repo",
+    "https://github.com/ncsu-csc/demo-app",
+    "https://youtu.be/dQw4w9WgXcQ",
+    "https://docs.google.com/presentation/d/example",
+    "https://github.com/student-team/final-project"
+  ]
+
+  file_samples = [
+    { name: "report.pdf", url: "https://www.w3.org/WAI/UR/terms/media/sample.pdf", type: "pdf" },
+    { name: "slides.pptx", url: "https://file-examples.com/storage/sample.pptx", type: "pptx" },
+    { name: "readme.md", url: "https://raw.githubusercontent.com/github/docs/main/README.md", type: "md" }
+  ]
+
+  num_teams.times do |i|
+    team = AssignmentTeam.find(team_ids[i])
+    participant = AssignmentParticipant.find_by(team_id: team.id)
+    next unless participant
+
+    assignment_id = team.parent_id
+
+    # Add 1-2 hyperlinks per team
+    rand(1..2).times do |j|
+      url = hyperlink_samples[(i + j) % hyperlink_samples.length]
+      # Store on the team's hyperlinks list
+      team.submit_hyperlink(url) rescue nil
+      # Create audit record
+      SubmissionRecord.create(
+        record_type: 'hyperlink',
+        content: url,
+        operation: 'Submit Hyperlink',
+        team_id: team.id,
+        user: participant.user&.name || "student#{i}",
+        assignment_id: assignment_id,
+        created_at: Faker::Time.backward(days: 14)
+      )
+    end
+
+    file = file_samples[i % file_samples.length]
+    SubmissionRecord.create(
+      record_type: 'file',
+      content: file[:url],        # store real URL instead of local path
+      operation: 'Submit File',
+      team_id: team.id,
+      user: participant.user&.name || "student#{i}",
+      assignment_id: team.parent_id,
+      created_at: Faker::Time.backward(days: 7)
+    )
+  end
+
 rescue ActiveRecord::RecordInvalid => e
   puts e, 'The db has already been seeded'
 end
