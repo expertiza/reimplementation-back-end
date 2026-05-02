@@ -20,8 +20,20 @@ class Assignment < ApplicationRecord
   #This method return the value of the has_badge field for the given assignment object.
   attr_accessor :title, :description, :has_badge, :enable_pair_programming, :is_calibrated, :staggered_deadline
 
+  # Returns the assignment-linked review questionnaire record.
+  # The assignment can be linked to many questionnaires via AssignmentQuestionnaire.
+  def review_questionnaire_for_review_flow
+    questionnaires.find_by(questionnaire_type: 'ReviewQuestionnaire')
+  end
+
   def review_questionnaire_id
     Questionnaire.find_by_assignment_id id
+  end
+
+  # Returns the quiz questionnaire used by the reviewer pre-check flow.
+  # If no quiz questionnaire is attached, the caller can skip quiz task creation.
+  def quiz_questionnaire_for_review_flow
+    questionnaires.find_by(questionnaire_type: 'QuizQuestionnaire')
   end
 
   def teams?
