@@ -79,6 +79,9 @@ class CalibrationPerItemSummary
       counts[score.to_s] = 0
     end
 
+    # `responses` is already reduced to the latest submitted response for each
+    # student calibration map, so this counts one effective calibration review
+    # per reviewer for the shared calibration artifact.
     responses.each do |response|
       score = answers_by_response.fetch(response.id).fetch(item.id, nil)&.answer
       next if score.nil?
