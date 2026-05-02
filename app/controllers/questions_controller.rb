@@ -1,4 +1,5 @@
 class QuestionsController < ApplicationController
+  include ReviewResetHandler
   before_action :set_question, only: [:show, :update]
 
   # GET /questions
@@ -42,6 +43,9 @@ class QuestionsController < ApplicationController
   def create
     questionnaire_id = params[:questionnaire_id]
     questionnaire = Questionnaire.find(questionnaire_id)
+    reset_plan = review_questionnaire?(questionnaire) ?
+      build_review_reset_plan_for_questionnaire(questionnaire, reset_reason: 'questionnaire_updated') :
+      []
 
     # Create the new Item (item)
     item = questionnaire.items.build(
@@ -67,6 +71,7 @@ class QuestionsController < ApplicationController
     end
 
     if item.save
+      apply_review_reset_plan(reset_plan)
       render json: item, status: :created
     else
       render json: { error: item.errors.full_messages.to_sentence }, status: :unprocessable_entity
@@ -75,7 +80,12 @@ class QuestionsController < ApplicationController
 
   # PUT /questions/:id
   def update
+    reset_plan = review_questionnaire?(@item.questionnaire) ?
+      build_review_reset_plan_for_questionnaire(@item.questionnaire, reset_reason: 'questionnaire_updated') :
+      []
+
     if @item.update(question_params)
+      apply_review_reset_plan(reset_plan)
       render json: @item, status: :ok
     else
       render json: { error: @item.errors.full_messages.to_sentence }, status: :unprocessable_entity
@@ -84,7 +94,11 @@ class QuestionsController < ApplicationController
 
   def destroy
     @item = Item.find(params[:id])
+    reset_plan = review_questionnaire?(@item.questionnaire) ?
+      build_review_reset_plan_for_questionnaire(@item.questionnaire, reset_reason: 'questionnaire_updated') :
+      []
     @item.destroy
+    apply_review_reset_plan(reset_plan)
     head :no_content
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Couldn't find Item" }, status: :not_found
@@ -93,7 +107,11 @@ class QuestionsController < ApplicationController
   # DELETE /questions/delete_all/questionnaire/:id
   def delete_all
     questionnaire = Questionnaire.find(params[:id])
+    reset_plan = review_questionnaire?(questionnaire) ?
+      build_review_reset_plan_for_questionnaire(questionnaire, reset_reason: 'questionnaire_updated') :
+      []
     if questionnaire.items.delete_all
+      apply_review_reset_plan(reset_plan)
       render json: { message: "All questions deleted" }, status: :ok
     else
       render json: { error: "Deletion failed" }, status: :unprocessable_entity

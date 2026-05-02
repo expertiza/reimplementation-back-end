@@ -2,6 +2,7 @@
 
 class Assignment < ApplicationRecord
   include MetricHelper
+  include TopicBasedRubricLookup
   has_many :participants, class_name: 'AssignmentParticipant', foreign_key: 'parent_id', dependent: :destroy
   has_many :users, through: :participants, inverse_of: :assignment
   has_many :teams, class_name: 'AssignmentTeam', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :assignment
@@ -16,6 +17,7 @@ class Assignment < ApplicationRecord
   has_many :duties, through: :assignments_duties
   belongs_to :course, optional: true
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments
+  accepts_nested_attributes_for :assignment_questionnaires, allow_destroy: true
 
   #This method return the value of the has_badge field for the given assignment object.
   attr_accessor :title, :description, :has_badge, :enable_pair_programming, :is_calibrated, :staggered_deadline

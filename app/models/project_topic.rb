@@ -1,6 +1,7 @@
 class ProjectTopic < ApplicationRecord
   has_many :signed_up_teams, dependent: :destroy
   has_many :teams, through: :signed_up_teams
+  has_many :assignment_questionnaires, dependent: :nullify
   belongs_to :assignment
 
   # Ensures the number of max choosers is non-negative

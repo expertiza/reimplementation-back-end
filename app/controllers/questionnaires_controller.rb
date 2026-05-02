@@ -1,4 +1,5 @@
 class QuestionnairesController < ApplicationController
+  include ReviewResetHandler
   
   # Index method returns the list of JSON objects of the questionnaire
   # GET on /questionnaires
@@ -48,7 +49,12 @@ class QuestionnairesController < ApplicationController
 
   def update
     @questionnaire = Questionnaire.find(params[:id])
+    reset_plan = review_questionnaire?(@questionnaire) ?
+      build_review_reset_plan_for_questionnaire(@questionnaire, reset_reason: 'questionnaire_updated') :
+      []
+
     if @questionnaire.update(questionnaire_params)
+      apply_review_reset_plan(reset_plan)
       render json: @questionnaire, status: :ok
     else
       render json: @questionnaire.errors.full_messages, status: :unprocessable_entity
