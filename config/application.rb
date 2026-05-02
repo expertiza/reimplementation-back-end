@@ -17,7 +17,7 @@ Bundler.require(*Rails.groups)
 module Reimplementation
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 7.0
+    config.load_defaults 8.0
     config.active_record.schema_format = :ruby
 
     # Configuration for the application, engines, and railties goes here.
@@ -32,6 +32,7 @@ module Reimplementation
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
-    config.cache_store = :redis_store, ENV['CACHE_STORE'], { expires_in: 3.days, raise_errors: false }
+    config.cache_store = :redis_cache_store, { url: ENV['CACHE_STORE'], expires_in: 3.days }
   end
 end
+

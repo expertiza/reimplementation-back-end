@@ -160,8 +160,13 @@ Rails.application.routes.draw do
           get '/assignment/:assignment_id', to: 'participants#list_assignment_participants'
           get '/:id', to: 'participants#show'
           post '/:authorization', to: 'participants#add'
-          patch '/:id/:authorization', to: 'participants#update_authorization'
+          patch '/:id/:authorization',
+                to: 'participants#update_authorization',
+                constraints: { authorization: /reader|reviewer|submitter|mentor/i }
           delete '/:id', to: 'participants#destroy'
+        end
+        member do
+          patch :duty, to: 'participants#update_duty'
         end
       end
 
@@ -212,6 +217,10 @@ Rails.application.routes.draw do
         end
       end
       resources :assignments do
-        resources :duties, controller: 'assignments_duties', only: [:index, :create, :destroy]
+        resources :duties, controller: 'assignments_duties', only: [:index, :create, :destroy] do
+          member do
+            patch :limit, action: :update_limit
+          end
+        end
       end
 end

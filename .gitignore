@@ -32,3 +32,8 @@
 coverage/
 rsa_keys.yml
 pg_data/
+
+# Other
+setup.sh
+Gemfile.lock
+Gemfile

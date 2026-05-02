@@ -179,7 +179,7 @@ RSpec.describe 'teams_participants', type: :request do
         run_test! do |response|
           json = JSON.parse(response.body)
           expect(json['message']).to eq("Duty updated successfully")
-          expect(teams_participant.reload.duty_id).to eq(2)
+          expect(participant_for_update.reload.duty_id).to eq(2)
         end
       end
 

@@ -4,6 +4,7 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 ruby '3.4.5'
 
 gem 'mysql2', '~> 0.5.7'
+gem 'redis', '~> 5.0'
 gem 'sqlite3', '~> 1.4'  # Alternative for development
 gem 'puma', '~> 6.4'
 gem 'rails', '~> 8.0', '>= 8.0.1'
@@ -57,13 +58,10 @@ gem 'find_with_order'
 
 # For handling zip file uploads and extraction
 gem 'rubyzip'
+gem 'faker'
 
 
 group :development, :test do
-  gem 'debug', platforms: %i[mri mingw x64_mingw]
-  gem 'factory_bot_rails'
-  gem 'database_cleaner-active_record'
-  gem 'faker'
   gem 'rspec-rails'
   gem 'rswag-specs'
   gem 'rubocop'

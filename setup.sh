@@ -12,6 +12,9 @@ rm -f /app/tmp/pids/server.pid
 
 echo "Step 2: Bundling dependencies..."
 bundle install
+
+#echo "Debug Step: Drop schema and reset database"
+#rake db:drop
   
 echo "Step 3: Creating the database..."
 rake db:create
@@ -19,7 +22,7 @@ rake db:create
 echo "Step 4: Running database migrations..."
 rake db:migrate
 
-echo "Step 5: Seeding the database..." 
+echo "Step 5: Seeding the database..."
 rake db:seed
 
 echo "Step 6: Starting the Rails server..."

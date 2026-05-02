@@ -341,4 +341,43 @@ RSpec.describe 'Participants API', type: :request do
       end
     end
   end
+
+  path '/participants/{id}/duty' do
+    patch 'Update participant duty' do
+      tags 'Participants'
+      consumes 'application/json'
+      produces 'application/json'
+
+      parameter name: :id, in: :path, type: :integer, description: 'ID of the participant'
+      parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
+      parameter name: :duty, in: :body, schema: {
+        type: :object,
+        properties: {
+          duty_id: { type: :integer, nullable: true, description: 'Duty ID for this participant' }
+        }
+      }
+
+      let!(:role_duty) { Duty.create!(name: 'Developer') }
+
+      response '201', 'Participant duty updated' do
+        let(:id) { participant1.id }
+        let(:duty) { { duty_id: role_duty.id } }
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['duty_id']).to eq(role_duty.id)
+          expect(data['duty_name']).to eq('Developer')
+        end
+      end
+
+      response '404', 'Participant not found' do
+        let(:id) { 99 }
+        let(:duty) { { duty_id: nil } }
+
+        run_test! do |response|
+          expect(JSON.parse(response.body)['error']).to eql('Participant not found')
+        end
+      end
+    end
+  end
 end
