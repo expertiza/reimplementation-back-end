@@ -53,8 +53,6 @@ class Team < ApplicationRecord
         raise ArgumentError, "Unsupported participant type: #{participant.class}"
       end
 
-    raise ArgumentError, 'participant is not associated with an assignment or course' if parent.nil?
-
     team_name = name.presence || generate_team_name_for(participant, parent)
 
     team = team_class.create!(parent_id: parent.id, name: team_name)
