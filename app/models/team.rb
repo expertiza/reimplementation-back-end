@@ -22,6 +22,59 @@ class Team < ApplicationRecord
 
   after_update :release_topics_if_empty
 
+  # Factory method that creates the appropriate subclass of Team for the given
+  # participant and enrolls that participant as a member.
+  #
+  # - AssignmentParticipant  => AssignmentTeam (parent = assignment)
+  # - CourseParticipant      => CourseTeam     (parent = course)
+  #
+  # This is the mechanism used to back individual submitters (including the
+  # phantom "calibration submitters" that an instructor adds on the Calibration
+  # tab). Expertiza routes every submission through a team, so even a single
+  # submitter needs a team behind the scenes.
+  #
+  # Params:
+  #   participant - an AssignmentParticipant or CourseParticipant
+  #   name:       - optional team name; if omitted a stable unique name is
+  #                 generated from the user's handle/name.
+  #
+  # Returns the newly-created team (AssignmentTeam or CourseTeam).
+  # Raises ArgumentError if the participant type is not supported.
+  def self.create_team_for_participant(participant, name: nil)
+    raise ArgumentError, 'participant is required' if participant.nil?
+
+    team_class, parent =
+      case participant
+      when AssignmentParticipant
+        [AssignmentTeam, participant.assignment]
+      when CourseParticipant
+        [CourseTeam, participant.course]
+      else
+        raise ArgumentError, "Unsupported participant type: #{participant.class}"
+      end
+
+    team_name = name.presence || generate_team_name_for(participant, parent)
+
+    team = team_class.create!(parent_id: parent.id, name: team_name)
+    result = team.add_member(participant)
+
+    unless result.is_a?(Hash) && result[:success]
+      team.destroy
+      error = result.is_a?(Hash) ? result[:error] : 'Unable to add participant to new team'
+      raise ActiveRecord::RecordInvalid.new(team), error
+    end
+
+    team
+  end
+
+  def self.generate_team_name_for(participant, parent)
+    base = (participant.user&.handle.presence || participant.user&.name.presence || "participant_#{participant.id}").to_s
+    candidate = "#{base}_team"
+    return candidate unless Team.exists?(parent_id: parent.id, name: candidate)
+
+    "#{candidate}_#{SecureRandom.hex(3)}"
+  end
+
   def has_member?(user)
     participants.exists?(user_id: user.id)
   end

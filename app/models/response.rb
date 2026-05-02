@@ -62,6 +62,45 @@ class Response < ApplicationRecord
     sum
   end
 
+  # Returns the Answer this response recorded for a specific rubric item, or
+  # nil if no answer was given. Centralises item-lookup here (Information Expert)
+  # so callers don't scatter `scores.find { |a| a.item_id == item.id }` everywhere.
+  def answer_for(item)
+    scores.find { |a| a.item_id == item.id }
+  end
+
+  # Ordered rubric items used for this response, or [] if the rubric cannot be
+  # resolved (e.g. no AssignmentQuestionnaire for this round). Belongs here
+  # rather than in a controller because the response knows which questionnaire
+  # applies to it.
+  def rubric_items
+    questionnaire.items.order(:seq)
+  rescue NoMethodError
+    []
+  end
+
+  # JSON representation of this response for calibration reports. Keeps the
+  # serialization next to the class that owns the data (Information Expert),
+  # so any consumer that needs a response rendered for a calibration view can
+  # ask the response for it.
+  def as_calibration_json
+    {
+      id: id,
+      map_id: map_id,
+      reviewer_id: map.reviewer_id,
+      reviewer_name: map.reviewer&.fullname,
+      is_submitted: is_submitted,
+      updated_at: updated_at,
+      answers: scores.map do |answer|
+        {
+          item_id: answer.item_id,
+          score: answer.answer,
+          comments: answer.comments
+        }
+      end
+    }
+  end
+
   # Returns the maximum possible score for this response
   def maximum_score
     # only count the scorable questions, only when the answer is not nil (we accept nil as

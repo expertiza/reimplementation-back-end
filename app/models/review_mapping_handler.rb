@@ -1,3 +1,13 @@
+# ReviewMappingHandler contains the **business logic** for creating, deleting,
+# and managing ReviewResponseMap records on an assignment. It is deliberately
+# separate from ReviewMappingsController (the HTTP layer): the controller
+# parses params, authorises the request, and renders JSON; the handler
+# performs the actual domain work using pluggable Strategy objects.
+#
+# Strategy classes live in ReviewMappingStrategies/ and encapsulate the
+# pairing algorithm (round-robin, random, CSV, topic-fair, etc.). The handler
+# is not tied to any particular strategy — it just calls
+# `strategy.each_review_pair` and creates the resulting maps.
 class ReviewMappingHandler
   DEFAULT_OUTSTANDING_LIMIT = 2
 
@@ -59,8 +69,12 @@ class ReviewMappingHandler
     # Get all participants (students)
     reviewers = AssignmentParticipant.where(parent_id: @assignment.id)
 
-    # Get all instructor calibration teams/submissions
-    calibration_teams = AssignmentTeam.where(parent_id: @assignment.id, is_calibration: true)
+    # Get teams that already have an instructor calibration map.
+    calibration_team_ids = ReviewResponseMap
+                           .where(reviewed_object_id: @assignment.id, for_calibration: true)
+                           .distinct
+                           .pluck(:reviewee_id)
+    calibration_teams = AssignmentTeam.where(id: calibration_team_ids)
     return if calibration_teams.empty?
 
     # Assign in round robin: each reviewer gets 2 calibration reviews
@@ -71,7 +85,7 @@ class ReviewMappingHandler
           reviewer: reviewer,
           reviewee: team,
           reviewed_object_id: @assignment.id,
-          calibration: true
+          for_calibration: true
         )
       end
     end
@@ -79,7 +93,7 @@ class ReviewMappingHandler
 
 
   def calibration_reviews_for(reviewer)
-    ReviewResponseMap.where(reviewer: reviewer, calibration: true)
+    ReviewResponseMap.where(reviewer: reviewer, reviewed_object_id: @assignment.id, for_calibration: true)
   end
 
   # ===== OUTSTANDING REVIEWS =====

@@ -32,3 +32,9 @@
 coverage/
 rsa_keys.yml
 pg_data/
+
+# Local-only files not intended for the repository
+app/controllers/demo/
+app/services/demo/
+app/controllers/transcript
+wiki.txt

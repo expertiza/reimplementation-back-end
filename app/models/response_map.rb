@@ -20,6 +20,24 @@ class ResponseMap < ApplicationRecord
     return reviewer.assignment
   end
 
+  # Most recently submitted response on this map, or nil. Callers that need
+  # "the map's current submitted response" should ask the map directly rather
+  # than re-query Response in a controller.
+  def latest_submitted_response
+    responses.where(is_submitted: true).order(updated_at: :desc).first
+  end
+
+  # Classify the progress of this review map:
+  #   :not_started  -- no Response rows exist yet
+  #   :in_progress  -- at least one Response, none submitted
+  #   :submitted    -- at least one submitted Response
+  # Lives here (Information Expert) because the map owns its responses.
+  def review_status
+    return :not_started if responses.empty?
+    return :submitted   if responses.where(is_submitted: true).exists?
+    :in_progress
+  end
+
   def self.assessments_for(team)
     responses = []
     # stime = Time.now
