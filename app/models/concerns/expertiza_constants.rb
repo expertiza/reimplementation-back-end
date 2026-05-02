@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-module ResponseMapSubclassTitles
+module ExpertizaConstants
+  module ResponseMapTitles
     ASSIGNMENT_SURVEY_RESPONSE_MAP_TITLE = 'Assignment Survey'
     BOOKMARK_RATING_RESPONSE_MAP_TITLE = 'Bookmark Review'
     COURSE_SURVEY_RESPONSE_MAP_TITLE = 'Course Survey'
@@ -9,5 +10,7 @@ module ResponseMapSubclassTitles
     METAREVIEW_RESPONSE_MAP_TITLE = 'Metareview'
     QUIZ_RESPONSE_MAP_TITLE = 'Quiz'
     REVIEW_RESPONSE_MAP_TITLE = 'Review'
-    TEAMMATE_REVIEW_RESPONSE_MAP_TITLE = 'Teammate Review' 
+    SURVEY_RESPONSE_MAP_TITLE = 'Survey'
+    TEAMMATE_REVIEW_RESPONSE_MAP_TITLE = 'Teammate Review'
+  end
 end

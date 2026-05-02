@@ -184,6 +184,79 @@ RSpec.describe DueDate, type: :model do
     end
   end
 
+  describe '.next_due_date_for' do
+    let(:assignment) { Assignment.create!(id: 2001, name: 'Submission Assignment', instructor:) }
+    let(:topic) { ProjectTopic.create!(id: 2002, topic_name: 'Submission Topic', assignment: assignment) }
+
+    it 'uses topic due dates when a topic is provided' do
+      expect(TopicDueDate).to receive(:next_due_date).with(assignment.id, topic.id)
+      DueDate.next_due_date_for(action: :submission, assignment: assignment, topic: topic)
+    end
+
+    it 'falls back to assignment due dates when no topic is provided' do
+      expect(DueDate).to receive(:next_due_date).with(assignment.id)
+      DueDate.next_due_date_for(action: :submission, assignment: assignment, topic: nil)
+    end
+
+    it 'raises for an unsupported action' do
+      expect do
+        DueDate.next_due_date_for(action: :review, assignment: assignment, topic: nil)
+      end.to raise_error(ArgumentError, 'Unsupported due date action: review')
+    end
+  end
+
+  describe '.assignment_open_for?' do
+    let(:assignment) { Assignment.create!(id: 3001, name: 'Window Assignment', instructor:) }
+
+    it 'returns true when there is no assignment context' do
+      expect(DueDate.assignment_open_for?(action: :submission, assignment: nil)).to be true
+    end
+
+    it 'returns true when no upcoming due date exists' do
+      allow(DueDate).to receive(:next_due_date_for).with(action: :submission, assignment: assignment, topic: nil).and_return(nil)
+
+      expect(DueDate.assignment_open_for?(action: :submission, assignment: assignment, topic: nil)).to be true
+    end
+
+    it 'returns false when the next due date is in the past' do
+      past_due_date = instance_double('DueDate', due_at: 1.hour.ago)
+      allow(DueDate).to receive(:next_due_date_for).with(action: :submission, assignment: assignment, topic: nil).and_return(past_due_date)
+
+      expect(DueDate.assignment_open_for?(action: :submission, assignment: assignment, topic: nil)).to be false
+    end
+  end
+
+  describe '.current_round_number_for' do
+    let(:assignment) { Assignment.create(id: 1001, name: 'Round Assignment', instructor:) }
+
+    it 'returns the latest past round when past and future due dates both exist' do
+      DueDate.create!(parent: assignment, due_at: 3.days.ago, submission_allowed_id: 3, review_allowed_id: 3,
+                      deadline_type_id: 3, round: 1)
+      DueDate.create!(parent: assignment, due_at: 1.day.ago, submission_allowed_id: 3, review_allowed_id: 3,
+                      deadline_type_id: 3, round: 2)
+      DueDate.create!(parent: assignment, due_at: 2.days.from_now, submission_allowed_id: 3, review_allowed_id: 3,
+                      deadline_type_id: 3, round: 3)
+
+      expect(DueDate.current_round_number_for(assignment)).to eq(2)
+    end
+
+    it 'returns the earliest upcoming round when no past due dates exist' do
+      DueDate.create!(parent: assignment, due_at: 1.day.from_now, submission_allowed_id: 3, review_allowed_id: 3,
+                      deadline_type_id: 3, round: 4)
+      DueDate.create!(parent: assignment, due_at: 3.days.from_now, submission_allowed_id: 3, review_allowed_id: 3,
+                      deadline_type_id: 3, round: 5)
+
+      expect(DueDate.current_round_number_for(assignment)).to eq(4)
+    end
+
+    it 'returns 0 when no round-based due dates exist' do
+      DueDate.create!(parent: assignment, due_at: 1.day.from_now, submission_allowed_id: 3, review_allowed_id: 3,
+                      deadline_type_id: 3, round: nil)
+
+      expect(DueDate.current_round_number_for(assignment)).to eq(0)
+    end
+  end
+
   describe 'validation' do
     let(:assignment) { Assignment.create(id: 1, name: 'Test Assignment', instructor:) }
 
