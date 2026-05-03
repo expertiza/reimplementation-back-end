@@ -5,6 +5,24 @@ class TeamsController < ApplicationController
   # Validate team type only during team creation
   before_action :validate_team_type, only: [:create]
 
+  # Authorization policy for this controller (used by Authorization concern).
+  # - Teaching staff (TA and above) can access all actions.
+  # - Students can view only teams they belong to, and cannot manage membership.
+  def action_allowed?
+    return true if current_user_has_ta_privileges?
+
+    case params[:action]
+    when 'index'
+      false
+    when 'show', 'members'
+      @team&.has_member?(current_user)
+    when 'create', 'add_member', 'remove_member'
+      false
+    else
+      false
+    end
+  end
+
   # GET /teams
   # Fetches all teams and renders them using TeamSerializer
   def index
