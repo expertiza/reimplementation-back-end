@@ -362,6 +362,21 @@ RSpec.describe ResponsesController, type: :controller do
       end
     end
 
+    context 'when reopening a submitted response fails' do
+      before do
+        allow(response_double).to receive(:is_submitted?).and_return(true)
+        allow(response_double).to receive(:update).with(is_submitted: false).and_return(false)
+        allow(response_double).to receive_message_chain(:errors, :full_messages).and_return(['could not reopen'])
+      end
+
+      it 'returns unprocessable_entity with errors' do
+        patch :unsubmit, params: { id: 1 }
+        expect(response).to have_http_status(:unprocessable_entity)
+        body = JSON.parse(response.body)
+        expect(body['error']).to include('could not reopen')
+      end
+    end
+
     context 'when response already unsubmitted' do
       before do
         allow(response_double).to receive(:is_submitted?).and_return(false)

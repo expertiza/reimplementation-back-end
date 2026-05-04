@@ -103,8 +103,11 @@ class ResponsesController < ApplicationController
     return render json: { error: "#{response_label} not found" }, status: :not_found unless @response
 
     if @response.is_submitted?
-      @response.update(is_submitted: false)
-      render json: { message: "#{response_label} reopened for editing. The reviewer can now make changes.", response: @response }, status: :ok
+      if @response.update(is_submitted: false)
+        render json: { message: "#{response_label} reopened for editing. The reviewer can now make changes.", response: @response }, status: :ok
+      else
+        render json: { error: @response.errors.full_messages.to_sentence }, status: :unprocessable_entity
+      end
     else
       render json: { error: "This #{response_label.downcase} is not submitted, so it cannot be reopened" }, status: :unprocessable_entity
     end
