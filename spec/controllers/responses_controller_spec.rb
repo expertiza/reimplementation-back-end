@@ -43,6 +43,30 @@ RSpec.describe ResponsesController, type: :controller do
     end
   end
 
+  describe '#reviewee_topic_for' do
+    it 'returns the reviewee signup topic for the response map assignment' do
+      assignment = instance_double('Assignment', id: 44)
+      topic = instance_double('ProjectTopic')
+      signup = instance_double('SignedUpTeam', project_topic: topic)
+      signups = double('SignedUpTeams')
+      reviewee = instance_double('Team', signed_up_teams: signups)
+      map = instance_double('ResponseMap', assignment: assignment, reviewee: reviewee)
+
+      expect(signups).to receive(:joins).with(:project_topic).and_return(signups)
+      expect(signups).to receive(:find_by).with(project_topics: { assignment_id: assignment.id }).and_return(signup)
+
+      expect(controller.send(:reviewee_topic_for, map)).to eq(topic)
+    end
+
+    it 'returns nil when the reviewee does not support topic signups' do
+      assignment = instance_double('Assignment', id: 44)
+      reviewee = instance_double('Participant')
+      map = instance_double('ResponseMap', assignment: assignment, reviewee: reviewee)
+
+      expect(controller.send(:reviewee_topic_for, map)).to be_nil
+    end
+  end
+
   describe 'POST #create' do
     let(:response_map) { double('ResponseMap', id: 123) }
     let(:response_double) { double('Response') }

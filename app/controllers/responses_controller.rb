@@ -178,7 +178,14 @@ class ResponsesController < ApplicationController
 
   # Keep response-map-to-topic lookup here; deadline comparison belongs on DueDate.
   def reviewee_topic_for(response_map)
-    response_map&.reviewee&.signed_up_teams&.last&.project_topic
+    assignment = response_map&.assignment
+    reviewee = response_map&.reviewee
+    return nil unless assignment && reviewee.respond_to?(:signed_up_teams)
+
+    signup = reviewee.signed_up_teams
+                    .joins(:project_topic)
+                    .find_by(project_topics: { assignment_id: assignment.id })
+    signup&.project_topic
   end
 
   def reviewer_owned_by_current_user?(reviewer)
