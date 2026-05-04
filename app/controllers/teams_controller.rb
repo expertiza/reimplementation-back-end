@@ -78,6 +78,24 @@ class TeamsController < ApplicationController
     render json: { error: 'User not found' }, status: :not_found
   end
 
+  # E2619: PATCH /teams/:id/quiz_questionnaire
+  # Links a quiz questionnaire to this team. Called by the frontend after the instructor/student
+  # creates a quiz questionnaire from the AssignReviewer page.
+  # Params: { questionnaire_id }
+  def set_quiz_questionnaire
+    questionnaire_id = params[:questionnaire_id].to_i
+    if questionnaire_id.zero?
+      return render json: { error: 'questionnaire_id is required' }, status: :bad_request
+    end
+    unless Questionnaire.exists?(id: questionnaire_id)
+      return render json: { error: 'Questionnaire not found' }, status: :not_found
+    end
+    @team.update!(quiz_questionnaire_id: questionnaire_id)
+    render json: { id: @team.id, quiz_questionnaire_id: @team.quiz_questionnaire_id }, status: :ok
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
   # Placeholder method to get current user (can be replaced by actual auth logic)
   def current_user
     @current_user
