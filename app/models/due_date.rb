@@ -30,8 +30,10 @@ class DueDate < ApplicationRecord
   end
 
   # Fetches all due dates for the parent Assignment or Topic
-  def self.fetch_due_dates(parent_id)
-    due_dates = where('parent_id = ?', parent_id)
+  def self.fetch_due_dates(parent)
+    return [] unless parent.respond_to?(:to_model) && parent.id
+
+    due_dates = where(parent: parent)
     sort_due_dates(due_dates)
   end
 
@@ -48,8 +50,8 @@ class DueDate < ApplicationRecord
   end
 
   # Fetches due dates from parent then selects the next upcoming due date
-  def self.next_due_date(parent_id)
-    due_dates = fetch_due_dates(parent_id)
+  def self.next_due_date(parent)
+    due_dates = fetch_due_dates(parent)
     due_dates.find { |due_date| due_date.due_at > Time.zone.now }
   end
 
@@ -63,7 +65,7 @@ class DueDate < ApplicationRecord
     when :submission
       return TopicDueDate.next_due_date(assignment.id, topic.id) if topic&.id
 
-      next_due_date(assignment.id)
+      next_due_date(assignment)
     else
       raise ArgumentError, "Unsupported due date action: #{action}"
     end

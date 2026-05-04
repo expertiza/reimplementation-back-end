@@ -22,7 +22,7 @@ RSpec.describe DueDate, type: :model do
       due_date5 = DueDate.create(parent: assignment, due_at: 3.days.ago, submission_allowed_id: 3,
                                  review_allowed_id: 3, deadline_type_id: 3)
       due_dates = [due_date1, due_date2, due_date3, due_date4, due_date5]
-      fetched_due_dates = DueDate.fetch_due_dates(due_date3.parent_id)
+      fetched_due_dates = DueDate.fetch_due_dates(due_date3.parent)
 
       fetched_due_dates.each { |due_date| expect(due_dates).to include(due_date) }
     end
@@ -101,9 +101,9 @@ RSpec.describe DueDate, type: :model do
       due_date3 = DueDate.create(parent: assignment, due_at: 3.days.ago, submission_allowed_id: 3,
                                  review_allowed_id: 3, deadline_type_id: 3)
 
-      assign1_due_dates = DueDate.fetch_due_dates(assignment.id)
+      assign1_due_dates = DueDate.fetch_due_dates(assignment)
       assign1_due_dates.each { |due_date| due_date.copy(assignment2.id) }
-      assign2_due_dates = DueDate.fetch_due_dates(assignment2.id)
+      assign2_due_dates = DueDate.fetch_due_dates(assignment2)
 
       excluded_attributes = %w[id created_at updated_at parent parent_id]
 
@@ -133,7 +133,18 @@ RSpec.describe DueDate, type: :model do
       end
 
       it 'returns the next upcoming due date' do
-        result = DueDate.next_due_date(assignment_due_date2.parent_id)
+        result = DueDate.next_due_date(assignment_due_date2.parent)
+        expect(result).to eq(assignment_due_date1)
+      end
+
+      it 'does not return due dates from a different parent type with the same id' do
+        topic = ProjectTopic.create!(id: assignment.id, topic_name: 'Colliding Topic', assignment: assignment)
+        DueDate.create!(parent: topic, due_at: 1.day.from_now,
+                        submission_allowed_id: 3, review_allowed_id: 3, deadline_type_id: 3,
+                        type: 'TopicDueDate')
+
+        result = DueDate.next_due_date(assignment)
+
         expect(result).to eq(assignment_due_date1)
       end
     end
@@ -194,7 +205,7 @@ RSpec.describe DueDate, type: :model do
     end
 
     it 'falls back to assignment due dates when no topic is provided' do
-      expect(DueDate).to receive(:next_due_date).with(assignment.id)
+      expect(DueDate).to receive(:next_due_date).with(assignment)
       DueDate.next_due_date_for(action: :submission, assignment: assignment, topic: nil)
     end
 
