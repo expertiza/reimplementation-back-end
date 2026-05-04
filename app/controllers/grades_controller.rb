@@ -209,14 +209,16 @@ class GradesController < ApplicationController
 
         existing_response = Response.find_by(map_id: mapping.id)
         request_contract =
-          if existing_response.present?
+          if existing_response.present? && !existing_response.is_submitted?
             {
+              response_id: existing_response.id,
               request_method: 'PATCH',
               request_path: "/responses/#{existing_response.id}",
               request_payload: {}
             }
           else
             {
+              response_id: nil,
               request_method: 'POST',
               request_path: '/responses',
               request_payload: { response_map_id: mapping.id }
@@ -225,7 +227,7 @@ class GradesController < ApplicationController
 
         render json: {
         map_id: mapping.id,
-        response_id: existing_response&.id,
+        response_id: request_contract[:response_id],
         request_method: request_contract[:request_method],
         request_path: request_contract[:request_path],
         request_payload: request_contract[:request_payload]

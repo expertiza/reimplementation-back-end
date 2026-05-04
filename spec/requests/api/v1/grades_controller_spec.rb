@@ -361,7 +361,7 @@ RSpec.describe 'Grades API', type: :request do
 
       response '200', 'Returns mapping and request contract for existing review' do
         let(:participant_id) { participant.id }
-        
+
         before do
           reviewer = AssignmentParticipant.create!(user_id: instructor.id, parent_id: assignment.id, handle: instructor.name)
           mapping = ReviewResponseMap.create!(
@@ -369,7 +369,7 @@ RSpec.describe 'Grades API', type: :request do
             reviewer_id: reviewer.id,
             reviewee_id: team.id
           )
-          Response.create!(map_id: mapping.id)
+          Response.create!(map_id: mapping.id, is_submitted: false)
         end
 
         run_test! do |response|
@@ -378,6 +378,28 @@ RSpec.describe 'Grades API', type: :request do
           expect(data['request_method']).to eq('PATCH')
           expect(data['request_path']).to eq("/responses/#{data['response_id']}")
           expect(data['request_payload']).to eq({})
+        end
+      end
+
+      response '200', 'Returns create contract when existing review is submitted' do
+        let(:participant_id) { participant.id }
+
+        before do
+          reviewer = AssignmentParticipant.create!(user_id: instructor.id, parent_id: assignment.id, handle: instructor.name)
+          mapping = ReviewResponseMap.create!(
+            reviewed_object_id: assignment.id,
+            reviewer_id: reviewer.id,
+            reviewee_id: team.id
+          )
+          Response.create!(map_id: mapping.id, is_submitted: true)
+        end
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['response_id']).to be_nil
+          expect(data['request_method']).to eq('POST')
+          expect(data['request_path']).to eq('/responses')
+          expect(data['request_payload']).to eq({ 'response_map_id' => data['map_id'] })
         end
       end
 
