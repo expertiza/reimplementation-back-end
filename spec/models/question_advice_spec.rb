@@ -53,7 +53,7 @@ describe QuestionAdvice, type: :model do
     end
 
     describe '#advice' do
-        it 'returns the score of QuestionAdvice' do
+        it 'returns the advice of QuestionAdvice' do
             expect(question_advice1.advice).to eq('default advice')
             expect(question_advice2.advice).to eq('advice for question 2')
             expect(question_advice3.advice).to eq('advice for question 3')
