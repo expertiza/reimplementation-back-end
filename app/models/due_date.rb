@@ -50,22 +50,22 @@ class DueDate < ApplicationRecord
   end
 
   # Fetches due dates from parent then selects the next upcoming due date
-  def self.next_due_date(parent)
+  def self.next_due_date(parent, reference_time: Time.current)
     due_dates = fetch_due_dates(parent)
-    due_dates.find { |due_date| due_date.due_at > Time.zone.now }
+    due_dates.find { |due_date| due_date.due_at > reference_time }
   end
 
   # Finds the next deadline for the requested action.
   # For submissions, topic deadlines are checked first when a topic is given;
   # otherwise the assignment-level deadline is used.
-  def self.next_due_date_for(action:, assignment:, topic: nil)
+  def self.next_due_date_for(action:, assignment:, topic: nil, reference_time: Time.current)
     return nil unless assignment&.id
 
     case action.to_sym
     when :submission
-      return TopicDueDate.next_due_date(assignment.id, topic.id) if topic&.id
+      return TopicDueDate.next_due_date(assignment.id, topic.id, reference_time: reference_time) if topic&.id
 
-      next_due_date(assignment)
+      next_due_date(assignment, reference_time: reference_time)
     else
       raise ArgumentError, "Unsupported due date action: #{action}"
     end
@@ -75,7 +75,7 @@ class DueDate < ApplicationRecord
   def self.assignment_open_for?(action:, assignment:, topic: nil, reference_time: Time.current)
     return true unless assignment
 
-    next_due = next_due_date_for(action: action, assignment: assignment, topic: topic)
+    next_due = next_due_date_for(action: action, assignment: assignment, topic: topic, reference_time: reference_time)
     next_due.nil? || next_due.due_at > reference_time
   end
 

@@ -137,6 +137,12 @@ RSpec.describe DueDate, type: :model do
         expect(result).to eq(assignment_due_date1)
       end
 
+      it 'uses the provided reference time when finding the next due date' do
+        result = DueDate.next_due_date(assignment, reference_time: assignment_due_date1.due_at + 1.hour)
+
+        expect(result).to eq(assignment_due_date2)
+      end
+
       it 'does not return due dates from a different parent type with the same id' do
         topic = ProjectTopic.create!(id: assignment.id, topic_name: 'Colliding Topic', assignment: assignment)
         DueDate.create!(parent: topic, due_at: 1.day.from_now,
@@ -198,15 +204,16 @@ RSpec.describe DueDate, type: :model do
   describe '.next_due_date_for' do
     let(:assignment) { Assignment.create!(id: 2001, name: 'Submission Assignment', instructor:) }
     let(:topic) { ProjectTopic.create!(id: 2002, topic_name: 'Submission Topic', assignment: assignment) }
+    let(:reference_time) { Time.current }
 
     it 'uses topic due dates when a topic is provided' do
-      expect(TopicDueDate).to receive(:next_due_date).with(assignment.id, topic.id)
-      DueDate.next_due_date_for(action: :submission, assignment: assignment, topic: topic)
+      expect(TopicDueDate).to receive(:next_due_date).with(assignment.id, topic.id, reference_time: reference_time)
+      DueDate.next_due_date_for(action: :submission, assignment: assignment, topic: topic, reference_time: reference_time)
     end
 
     it 'falls back to assignment due dates when no topic is provided' do
-      expect(DueDate).to receive(:next_due_date).with(assignment)
-      DueDate.next_due_date_for(action: :submission, assignment: assignment, topic: nil)
+      expect(DueDate).to receive(:next_due_date).with(assignment, reference_time: reference_time)
+      DueDate.next_due_date_for(action: :submission, assignment: assignment, topic: nil, reference_time: reference_time)
     end
 
     it 'raises for an unsupported action' do
@@ -218,22 +225,27 @@ RSpec.describe DueDate, type: :model do
 
   describe '.assignment_open_for?' do
     let(:assignment) { Assignment.create!(id: 3001, name: 'Window Assignment', instructor:) }
+    let(:reference_time) { Time.current }
 
     it 'returns true when there is no assignment context' do
       expect(DueDate.assignment_open_for?(action: :submission, assignment: nil)).to be true
     end
 
     it 'returns true when no upcoming due date exists' do
-      allow(DueDate).to receive(:next_due_date_for).with(action: :submission, assignment: assignment, topic: nil).and_return(nil)
+      allow(DueDate).to receive(:next_due_date_for)
+        .with(action: :submission, assignment: assignment, topic: nil, reference_time: reference_time)
+        .and_return(nil)
 
-      expect(DueDate.assignment_open_for?(action: :submission, assignment: assignment, topic: nil)).to be true
+      expect(DueDate.assignment_open_for?(action: :submission, assignment: assignment, topic: nil, reference_time: reference_time)).to be true
     end
 
     it 'returns false when the next due date is in the past' do
       past_due_date = instance_double('DueDate', due_at: 1.hour.ago)
-      allow(DueDate).to receive(:next_due_date_for).with(action: :submission, assignment: assignment, topic: nil).and_return(past_due_date)
+      allow(DueDate).to receive(:next_due_date_for)
+        .with(action: :submission, assignment: assignment, topic: nil, reference_time: reference_time)
+        .and_return(past_due_date)
 
-      expect(DueDate.assignment_open_for?(action: :submission, assignment: assignment, topic: nil)).to be false
+      expect(DueDate.assignment_open_for?(action: :submission, assignment: assignment, topic: nil, reference_time: reference_time)).to be false
     end
   end
 
