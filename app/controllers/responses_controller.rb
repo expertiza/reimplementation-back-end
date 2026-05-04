@@ -57,6 +57,7 @@ class ResponsesController < ApplicationController
   # PATCH /responses/:id
   # Reviewer edits existing draft (still unsubmitted)
   def update
+    return render json: { error: "#{response_label} not found" }, status: :not_found unless @response
     return render json: { error: 'forbidden' }, status: :forbidden if @response.is_submitted?
 
     if @response.update(response_params)

@@ -107,6 +107,19 @@ RSpec.describe ResponsesController, type: :controller do
       allow(response_double).to receive(:rubric_label).and_return('Response')
     end
 
+    context 'when response not found' do
+      before do
+        allow(controller).to receive(:set_response) { controller.instance_variable_set(:@response, nil) }
+      end
+
+      it 'returns 404' do
+        patch :update, params: { id: 1, response: { content: 'x' } }
+        expect(response).to have_http_status(:not_found)
+        body = JSON.parse(response.body)
+        expect(body['error']).to eq('Response not found')
+      end
+    end
+
     context 'when response already submitted' do
       before do
         allow(response_double).to receive(:is_submitted?).and_return(true)
