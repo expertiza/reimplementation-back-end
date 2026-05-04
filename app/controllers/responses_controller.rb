@@ -176,19 +176,9 @@ class ResponsesController < ApplicationController
     map_label.presence || 'Response'
   end
 
-  # Keep response-map-to-topic lookup here because it depends on the response
-  # reviewee shape (team vs participant), while deadline comparison belongs on
-  # DueDate.
+  # Keep response-map-to-topic lookup here; deadline comparison belongs on DueDate.
   def reviewee_topic_for(response_map)
-    reviewee = response_map&.reviewee
-    team =
-      if reviewee.is_a?(Team)
-        reviewee
-      elsif reviewee.respond_to?(:team)
-        reviewee.team
-      end
-
-    team&.signed_up_teams&.last&.project_topic
+    response_map&.reviewee&.signed_up_teams&.last&.project_topic
   end
 
   def reviewer_owned_by_current_user?(reviewer)
