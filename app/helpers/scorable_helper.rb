@@ -57,7 +57,7 @@ module ScorableHelper
       # Answers can be nil in cases such as "Upload File" being the only item.
       map = ResponseMap.find(map_id)
       # E-1973 either get the assignment from the participant or the map itself
-      assignment = map.response_assignment
+      assignment = map.reviewer_assignment
       questionnaire = Questionnaire.find(assignment.review_questionnaire_id)
     else
       questionnaire = Item.find(answer.item_id).questionnaire

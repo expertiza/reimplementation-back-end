@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class ResponseMap < ApplicationRecord
-  include ResponseMapSubclassTitles
-
   has_many :responses, foreign_key: 'map_id', dependent: :destroy, inverse_of: false
   belongs_to :reviewer, class_name: 'Participant', foreign_key: 'reviewer_id', inverse_of: false
   belongs_to :reviewee, class_name: 'Participant', foreign_key: 'reviewee_id', inverse_of: false
@@ -10,19 +8,51 @@ class ResponseMap < ApplicationRecord
 
   alias map_id id
 
+  # Shared helper for Response#rubric_label; looks up the declarative constant so each map advertises its UI label
+  def response_map_label
+    const_name = "#{self.class.name.demodulize.underscore.upcase}_TITLE"
+    if ExpertizaConstants::ResponseMapTitles.const_defined?(const_name)
+      ExpertizaConstants::ResponseMapTitles.const_get(const_name).presence
+    end
+  end
+
   def questionnaire
     Questionnaire.find_by(id: reviewed_object_id)
   end
 
-  # returns the assignment related to the response map
+  # Returns the assignment that this map's reviewer belongs to.
+  def reviewer_assignment
+    reviewer&.assignment
+  end
+
+  # Backward-compatible alias used by older call sites.
   def response_assignment
-    # reviewer will always be the Assignment Participant so finding Assignment based on reviewer_id.
-    return reviewer.assignment
+    reviewer_assignment
+  end
+
+  # Returns true when the submission changed since the last submitted review,
+  # or when the review round changed. True means show "Update"; false means show "Edit".
+  def has_submission_been_updated?
+    # Most recent submitted review for this mapping
+    last = Response.where(map_id: id, is_submitted: true).order(Arel.sql('created_at DESC')).first
+    return true if last.nil?
+
+    last_created_at = last.created_at
+
+    # Latest time the reviewee (or their team) made a submission
+    latest_submission = latest_submission_at_for_reviewee
+    return true if latest_submission.present? && latest_submission > last_created_at
+
+    # Check if a later review round has passed since the last submitted review
+    last_round = last.round.to_i
+    curr_round = current_round.to_i
+    return true if curr_round.positive? && curr_round > last_round
+
+    false
   end
 
   def self.assessments_for(team)
     responses = []
-    # stime = Time.now
     if team
       array_sort = []
       sort_to = []
@@ -32,13 +62,11 @@ class ResponseMap < ApplicationRecord
 
         all_resp = Response.where(map_id: map.map_id).last
         if map.type.eql?('ReviewResponseMap')
-          # If its ReviewResponseMap then only consider those response which are submitted.
           array_sort << all_resp if all_resp.is_submitted
         else
           array_sort << all_resp
         end
-        # sort all versions in descending order and get the latest one.
-        sort_to = array_sort.sort # { |m1, m2| (m1.updated_at and m2.updated_at) ? m2.updated_at <=> m1.updated_at : (m1.version_num ? -1 : 1) }
+        sort_to = array_sort.sort
         responses << sort_to[0] unless sort_to[0].nil?
         array_sort.clear
         sort_to.clear
@@ -59,31 +87,88 @@ class ResponseMap < ApplicationRecord
     # Return nil if there are no responses for this map
     return nil if responses.empty?
 
-    # Group all responses by round, then select the latest one per round based on the most recent created one (i.e., most recent revision in that round)
+    # Group all responses by round, then select the latest one per round based on the most recent revision in that round.
     latest_responses_by_round = responses
-      .group_by(&:round)
-      .transform_values { |resps| resps.max_by(&:updated_at) } 
+                                .group_by(&:round)
+                                .transform_values { |resps| resps.max_by(&:updated_at) }
 
-    response_score = 0.0  # Sum of actual scores obtained
-    total_score = 0.0     # Sum of maximum possible scores
-    submitted_found = false  #flag to track if any submitted response exists
+    response_score = 0.0
+    total_score = 0.0
+    submitted_found = false
 
-    # For each latest response in each round, if the response was submitted, sum up its earned score and its maximum possible score.
     latest_responses_by_round.each_value do |response|
-      # Only consider responses that were submitted
       next unless response.is_submitted
-      
-      submitted_found = true  # true if a submitted response is found
-      
-      # Accumulate the obtained and maximum scores
+
+      submitted_found = true
       response_score += response.aggregate_questionnaire_score
       total_score += response.maximum_score
     end
 
-    # If no submitted responses at all, return nil
     return nil unless submitted_found
 
-    # Return the normalized score (as a float), or 0 if no valid total score
-    total_score > 0 ? (response_score.to_f / total_score) : 0
+    total_score.positive? ? (response_score.to_f / total_score) : 0
   end
+
+  # Best-effort timestamp of when the reviewee (or their team) last touched the work.
+  def latest_submission_at_for_reviewee
+    return nil unless reviewee
+
+    candidates = []
+    candidates << reviewee.updated_at
+
+    # Check team-related timestamps if the reviewee has a team
+    if reviewee.team.present?
+      team = reviewee.team
+      candidates << team.updated_at
+
+      # Also gather timestamps from join records (teams_participants) so collaborator edits count as activity
+      team.teams_participants.each do |tp|
+        candidates << tp.updated_at
+      end
+    end
+
+    candidates.compact.max
+  end
+
+  # Returns the current review round for this map's assignment.
+  def current_round
+    DueDate.current_round_number_for(assignment)
+  end
+
+  # Reference note:
+  # The active implementation uses direct attribute/association access
+  # because the current schema and models already guarantee the fields used above:
+  # Response has `round` and `updated_at`, Participant has `updated_at` and `team`,
+  # Team has `updated_at` and `teams_participants`, and TeamsParticipant has `updated_at`.
+  # That makes the defensive `respond_to?` guards unnecessary in the current backend.
+  #
+  # Kept the older defensive helpers below as commented reference code in case support is
+  # needed later for partially migrated objects, alternate subclasses, or compatibility
+  # code that may not expose these readers consistently.
+  #
+  # private
+  #
+  # # Returns true when a response object exposes the `round` reader used by
+  # # `has_submission_been_updated?` while comparing the saved review round.
+  # def response_supports_round?(response)
+  #   response.respond_to?(:round, true)
+  # end
+  #
+  # # Returns true when a record has a usable `updated_at` timestamp for activity tracking
+  # # in `latest_submission_at_for_reviewee`.
+  # def record_has_updated_timestamp?(record)
+  #   record.respond_to?(:updated_at) && record.updated_at.present?
+  # end
+  #
+  # # Returns true when the reviewee exposes a `team` association and that association is present.
+  # # This is related to checking team activity in `latest_submission_at_for_reviewee`.
+  # def reviewee_has_team?(reviewee_record)
+  #   reviewee_record.respond_to?(:team) && reviewee_record.team.present?
+  # end
+  #
+  # # Returns true when a team exposes the `teams_participants` association used to inspect
+  # # collaborator membership timestamps in `latest_submission_at_for_reviewee`.
+  # def team_supports_memberships?(team_record)
+  #   team_record.respond_to?(:teams_participants)
+  # end
 end

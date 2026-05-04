@@ -30,8 +30,10 @@ class DueDate < ApplicationRecord
   end
 
   # Fetches all due dates for the parent Assignment or Topic
-  def self.fetch_due_dates(parent_id)
-    due_dates = where('parent_id = ?', parent_id)
+  def self.fetch_due_dates(parent)
+    return [] unless parent.respond_to?(:to_model) && parent.id
+
+    due_dates = where(parent: parent)
     sort_due_dates(due_dates)
   end
 
@@ -48,9 +50,51 @@ class DueDate < ApplicationRecord
   end
 
   # Fetches due dates from parent then selects the next upcoming due date
-  def self.next_due_date(parent_id)
-    due_dates = fetch_due_dates(parent_id)
-    due_dates.find { |due_date| due_date.due_at > Time.zone.now }
+  def self.next_due_date(parent, reference_time: Time.current)
+    due_dates = fetch_due_dates(parent)
+    due_dates.find { |due_date| due_date.due_at > reference_time }
+  end
+
+  # Finds the next deadline for the requested action.
+  # For submissions, topic deadlines are checked first when a topic is given;
+  # otherwise the assignment-level deadline is used.
+  def self.next_due_date_for(action:, assignment:, topic: nil, reference_time: Time.current)
+    return nil unless assignment&.id
+
+    case action.to_sym
+    when :submission
+      return TopicDueDate.next_due_date(assignment.id, topic.id, reference_time: reference_time) if topic&.id
+
+      next_due_date(assignment, reference_time: reference_time)
+    else
+      raise ArgumentError, "Unsupported due date action: #{action}"
+    end
+  end
+
+  # Returns true when the requested action is still allowed by its due date.
+  def self.assignment_open_for?(action:, assignment:, topic: nil, reference_time: Time.current)
+    return true unless assignment
+
+    next_due = next_due_date_for(action: action, assignment: assignment, topic: topic, reference_time: reference_time)
+    next_due.nil? || next_due.due_at > reference_time
+  end
+
+  # Determines the current round for a parent (assignment/topic) using one consistent rule:
+  # - If any round-based due dates are in the past, use the latest past due date's round.
+  # - Otherwise, use the earliest upcoming due date's round.
+  # - If no round-based due dates exist, return 0.
+  def self.current_round_number_for(parent, reference_time: Time.current)
+    return 0 unless parent&.id
+
+    scoped = where(parent: parent).where.not(round: nil, due_at: nil)
+
+    latest_past = scoped.where('due_at <= ?', reference_time).order(due_at: :desc).first
+    return latest_past.round.to_i if latest_past
+
+    earliest_upcoming = scoped.where('due_at > ?', reference_time).order(due_at: :asc).first
+    return earliest_upcoming.round.to_i if earliest_upcoming
+
+    0
   end
 
   # Creates duplicate due dates and assigns them to a new assignment

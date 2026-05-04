@@ -76,25 +76,24 @@ Rails.application.routes.draw do
           delete 'delete_all/questionnaire/:id', to:'questions#delete_all#questionnaire', as: 'delete_all'
         end
       end
-  
-  
-     resources :review_mappings, only: [] do
-          collection do
-            post :assign_round_robin
-            post :assign_random
-            post :assign_from_csv
-            post :request_review_fewest
-            post :assign_calibration
-            post :assign_quiz
-            delete :delete_all_for_reviewer
-          end
 
-          member do
-            patch :submit_review
-            patch :unsubmit_review
-            patch :grade_review
-            delete :delete_mapping
-          end
+      resources :review_mappings, only: [] do
+        collection do
+          post :assign_round_robin
+          post :assign_random
+          post :assign_from_csv
+          post :request_review_fewest
+          post :assign_calibration
+          post :assign_quiz
+          delete :delete_all_for_reviewer
+        end
+
+        member do
+          patch :submit_review
+          patch :unsubmit_review
+          patch :grade_review
+          delete :delete_mapping
+        end
       end
 
       resources :signed_up_teams do
@@ -102,13 +101,13 @@ Rails.application.routes.draw do
           post '/sign_up', to: 'signed_up_teams#sign_up'
           post '/sign_up_student', to: 'signed_up_teams#sign_up_student'
         end
-         member do
+        member do
           post :create_advertisement
           patch :update_advertisement
           delete :remove_advertisement
         end
       end
-  
+
       resources :submitted_content do
         collection do
           get    :download
@@ -167,10 +166,10 @@ Rails.application.routes.draw do
 
       resources :student_teams, only: %i[create update] do
         collection do
-          get :view          
+          get :view
           get :mentor
           get :remove_participant
-          put '/leave', to: 'student_teams#leave_team'        
+          put '/leave', to: 'student_teams#leave_team'
         end
       end
 
@@ -194,9 +193,9 @@ Rails.application.routes.draw do
           post :add_participant
           delete :delete_participants
         end
-      end      
+      end
       resources :grades do
-        collection do        
+        collection do
           get '/:assignment_id/view_all_scores', to: 'grades#view_all_scores'
           patch '/:participant_id/assign_grade', to: 'grades#assign_grade'
           get '/:participant_id/edit', to: 'grades#edit'
@@ -204,6 +203,12 @@ Rails.application.routes.draw do
           get '/:assignment_id/view_our_scores', to: 'grades#view_our_scores'
           get '/:assignment_id/view_my_scores', to: 'grades#view_my_scores'
           get '/:participant_id/instructor_review', to: 'grades#instructor_review'
+        end
+      end
+      resources :responses do
+        member do
+          patch :submit         # PATCH /responses/:id/submit
+          patch :unsubmit       # PATCH /responses/:id/unsubmit
         end
       end
       resources :duties do

@@ -22,7 +22,7 @@ RSpec.describe GlobalSurveyResponseMap, type: :model do
     describe '#get_title' do
       it 'returns the correct title constant' do
         global_survey_response_map = GlobalSurveyResponseMap.new
-        expect(global_survey_response_map.get_title).to eq(ResponseMapSubclassTitles::GLOBAL_SURVEY_RESPONSE_MAP_TITLE)
+        expect(global_survey_response_map.get_title).to eq(ExpertizaConstants::ResponseMapTitles::GLOBAL_SURVEY_RESPONSE_MAP_TITLE)
       end
     end
   end
