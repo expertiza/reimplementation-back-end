@@ -58,8 +58,7 @@ RSpec.describe ResponseMap, type: :model do
         user: reviewee_user,
         assignment: assignment,
         parent_id: assignment.id,
-        handle: reviewee_user.name,
-        team: team
+        handle: reviewee_user.name
       )
     end
 
