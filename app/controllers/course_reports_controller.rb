@@ -23,8 +23,7 @@ class CourseReportsController < ApplicationController
     course = Course.find_by(id: params[:course_id])
     return render json: { error: 'Course not found' }, status: :not_found unless course
 
-    # We get assns sorted by final review due date
-    assignments = assignments_ordered_by_final_review_due_date(course)
+    assignments = assignments_ordered_by(course, :final_review_due_date)
     assignment_ids = assignments.map(&:id)
     participants = AssignmentParticipant
       .includes(:user, :assignment)
@@ -60,9 +59,18 @@ class CourseReportsController < ApplicationController
     }
   end
 
-  def assignments_ordered_by_final_review_due_date(course)
+  def assignments_ordered_by(course, field)
     course.assignments.includes(:due_dates).sort_by do |assignment|
-      [final_review_due_date_for(assignment), assignment.id]
+      [assignment_sort_value(assignment, field), assignment.id]
+    end
+  end
+
+  def assignment_sort_value(assignment, field)
+    case field
+    when :final_review_due_date
+      final_review_due_date_for(assignment)
+    else
+      assignment.public_send(field)
     end
   end
 
@@ -80,7 +88,7 @@ class CourseReportsController < ApplicationController
           "Final due date for assignment #{assignment.id} is not a review deadline"
   end
 
-  # build full response
+  # function to build full response, along with the metadata + student rows.
   def course_report_response(course, assignments, student_rows)
     {
       course_id: course.id,
@@ -90,7 +98,7 @@ class CourseReportsController < ApplicationController
     }
   end
 
-  # per row students being built
+  # function to build each row of students (students x assignment matrix)
   def build_student_row(assignments, student_participants)
     first_participant = student_participants.first
     participant_by_assignment = student_participants.index_by(&:parent_id)
@@ -102,8 +110,7 @@ class CourseReportsController < ApplicationController
     }
   end
 
-  # per user assignment stats
-  # 
+  # per user assignment stats, combines assignment cells (next call )with student row
   def assignment_cells_for_student(assignments, participant_by_assignment)
     assignments.to_h do |assignment|
       participant = participant_by_assignment[assignment.id]
@@ -111,7 +118,7 @@ class CourseReportsController < ApplicationController
     end
   end
 
-  # building per-assignment cell
+  # building per-assignment cell. each cell corresponds to each assignment in a single student row.
   def build_assignment_cell(assignment, participant)
     team = participant.team
 
