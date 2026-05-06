@@ -26,9 +26,17 @@ class TeamsParticipantsController < ApplicationController
     duty_id = params.dig(:teams_participant, :duty_id) || params.dig("teams_participant", "duty_id")
     participant = team_participant.participant
 
-    # Canonical source of truth: participant.duty_id
+    # For assignment teams, derive the assignment from the team, not from participant.parent_id.
+    # This controller also serves CourseTeam, so participant.parent_id is not always an assignment id.
+    # Gate this action to assignment teams and resolve the assignment from team_participant.team.
+    assignment = nil
+    if team_participant.team.type == "AssignmentTeam"
+      assignment = team_participant.team.assignment
+    else
+      render json: { error: 'Duty assignment is only supported for assignment teams' }, status: :unprocessable_entity and return
+    end
     if duty_id.present?
-      assignment_duty = AssignmentsDuty.find_by(assignment_id: participant.parent_id, duty_id: duty_id)
+      assignment_duty = AssignmentsDuty.find_by(assignment_id: assignment.id, duty_id: duty_id)
       unless assignment_duty
         render json: { error: 'Duty is not assigned to this assignment' }, status: :unprocessable_entity and return
       end

@@ -31,6 +31,9 @@ class AssignmentsDutiesController < ApplicationController
   end
 
   # PATCH /assignments/:assignment_id/duties/:id/limit
+  # Set or update the maximum number of team members allowed to have this duty (role) for a given assignment.
+  # Request body: { max_members_for_duty: integer }
+  # Response: The updated duty mapping with the new limit, or validation errors if invalid.
   def update_limit
     if @assignment_duty.update(limit_params)
       render json: serialize_assignment_duty(@assignment_duty), status: :ok
