@@ -5,6 +5,8 @@ class Item < ApplicationRecord
   belongs_to :questionnaire # each item belongs to a specific questionnaire
   has_many :answers, dependent: :destroy, foreign_key: 'item_id'
   attr_accessor :choice_strategy
+
+  scope :for_questionnaire_and_type, ->(questionnaire_id, question_type) { where(questionnaire_id: questionnaire_id, question_type: question_type) }
   
   validates :seq, presence: true, numericality: true # sequence must be numeric
   validates :txt, length: { minimum: 0, allow_nil: false, message: "can't be nil" } # text content must be provided
