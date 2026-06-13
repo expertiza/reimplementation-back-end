@@ -126,6 +126,52 @@ RSpec.describe TeamsController, type: :request do
   let(:token) { JsonWebToken.encode(id: instructor.id) }
   let(:auth_headers) { { Authorization: "Bearer #{token}" } }
 
+  # Verifies TeamsController enforces role-based authorization with correct HTTP status codes
+  # (students receive 403 on restricted endpoints rather than succeeding or returning 500).
+  describe 'Authorization / HTTP status codes' do
+    let(:student_token) { JsonWebToken.encode(id: other_user.id) }
+    let(:student_headers) { { Authorization: "Bearer #{student_token}" } }
+
+    it 'returns 403 for student on GET /teams' do
+      team_with_course
+      get '/teams', headers: student_headers
+      expect(response).to have_http_status(:forbidden)
+      expect(json_response).to have_key('error')
+    end
+
+    it 'returns 403 for student on GET /teams/:id when not a member' do
+      get "/teams/#{team_with_course.id}", headers: student_headers
+      expect(response).to have_http_status(:forbidden)
+      expect(json_response).to have_key('error')
+    end
+
+    it 'returns 403 for student on POST /teams' do
+      post '/teams', params: { team: { name: 'X', type: 'CourseTeam', assignment_id: assignment.id } }, headers: student_headers
+      expect(response).to have_http_status(:forbidden)
+      expect(json_response).to have_key('error')
+    end
+
+    it 'returns 403 for student on POST /teams/:id/members' do
+      new_user = create(:user)
+      create(:course_participant, user: new_user, parent_id: course.id)
+
+      post "/teams/#{team_with_course.id}/members",
+           params: { team_participant: { user_id: new_user.id } },
+           headers: student_headers
+
+      expect(response).to have_http_status(:forbidden)
+      expect(json_response).to have_key('error')
+    end
+
+    it 'returns 403 for student on DELETE /teams/:id/members/:user_id' do
+      teams_participant_course
+
+      delete "/teams/#{team_with_course.id}/members/#{other_user.id}", headers: student_headers
+      expect(response).to have_http_status(:forbidden)
+      expect(json_response).to have_key('error')
+    end
+  end
+
   describe 'GET /teams' do
     it 'returns all teams' do
       team_with_course

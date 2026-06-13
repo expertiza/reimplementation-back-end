@@ -309,7 +309,18 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
         expect(response).to have_http_status(:unprocessable_entity)
         expect(JSON.parse(response.body)['error']).to eq('Team is full')
       end
-    end
+      
+      # Ensures accepting a join request on a full team returns 422 and does not mutate state
+      it 'does not change reply_status or add participant when team is full' do
+        assignment.update!(max_team_size: 1)
+
+        patch "/join_team_requests/#{join_team_request.id}/accept", headers: team_member_headers
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(join_team_request.reload.reply_status).to eq('PENDING')
+        expect(team1.participants.reload).not_to include(participant2)
+      end
+    end  
 
     context 'when filtering join team requests' do
       let(:student_token) { JsonWebToken.encode({id: student1.id}) }

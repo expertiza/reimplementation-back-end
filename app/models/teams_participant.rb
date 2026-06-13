@@ -8,4 +8,14 @@ class TeamsParticipant < ApplicationRecord
   validates :participant_id, uniqueness: { scope: :team_id }
   validates :user_id, presence: true
 
+  validate :team_not_full, on: :create
+
+  private
+
+  def team_not_full
+    return unless team
+    max = team.max_size
+    return if max.blank?
+    errors.add(:base, 'Team is at full capacity') if team.participants.count >= max
+  end
 end

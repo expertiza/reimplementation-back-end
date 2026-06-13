@@ -3,72 +3,43 @@
 require 'rails_helper'
 
 RSpec.describe CourseTeam, type: :model do
-
   include RolesHelper
-  # --------------------------------------------------------------------------
-  # Global Setup
-  # --------------------------------------------------------------------------
-  # Create the full roles hierarchy once, to be shared by all examples.
-  before(:all) do
-    @roles = create_roles_hierarchy
-  end
 
-  # ------------------------------------------------------------------------
-  # Helper: DRY-up creation of student users with a predictable pattern.
-  # ------------------------------------------------------------------------
-  def create_student(suffix)
-    User.create!(
-      name:            suffix,
-      email:           "#{suffix}@example.com",
-      full_name:       suffix.split('_').map(&:capitalize).join(' '),
-      password_digest: "password",
-      role_id:          @roles[:student].id,
-      institution_id:  institution.id
-    )
-  end
+  before(:all) { @roles = create_roles_hierarchy }
 
-  # ------------------------------------------------------------------------
-  # Shared Data Setup: Build core domain objects used across tests.
-  # ------------------------------------------------------------------------
-  let(:institution) do
-    # All users belong to the same institution to satisfy foreign key constraints.
-    Institution.create!(name: "NC State")
-  end
-
+  let(:institution) { Institution.create!(name: 'NC State') }
   let(:instructor) do
-    # The instructor will own assignments and courses in subsequent tests.
     User.create!(
-      name:            "instructor",
-      full_name:       "Instructor User",
-      email:           "instructor@example.com",
-      password_digest: "password",
-      role_id:          @roles[:instructor].id,
-      institution_id:  institution.id
+      name: 'instructor',
+      full_name: 'Instructor User',
+      email: 'instructor@example.com',
+      password_digest: 'password',
+      role_id: @roles[:instructor].id,
+      institution_id: institution.id
     )
   end
+  let(:course) { Course.create!(name: 'Course 1', instructor_id: instructor.id, institution_id: institution.id, directory_path: '/course1') }
+  let(:course_team) { CourseTeam.create!(parent_id: course.id, name: 'team 2') }
 
-  let(:team_owner) do
+  def make_user(suffix)
     User.create!(
-      name:            "team_owner",
-      full_name:       "Team Owner",
-      email:           "team_owner@example.com",
-      password_digest: "password",
-      role_id:          @roles[:student].id,
-      institution_id:  institution.id
+      name: suffix,
+      email: "#{suffix}@example.com",
+      full_name: suffix.split('_').map(&:capitalize).join(' '),
+      password_digest: 'password',
+      role_id: @roles[:student].id,
+      institution_id: institution.id
     )
   end
 
-  let(:assignment)  { Assignment.create!(name: "Assignment 1", instructor_id: instructor.id, max_team_size: 3) }
-  let(:course)  { Course.create!(name: "Course 1", instructor_id: instructor.id, institution_id: institution.id, directory_path: "/course1") }
-
-  let(:course_team) do
-    CourseTeam.create!(
-      parent_id:      course.id,
-      name:           'team 2',
-    )
+  def make_participant(suffix)
+    user = make_user(suffix)
+    CourseParticipant.create!(user: user, parent_id: course.id, handle: user.name)
   end
 
-
+  # -----------------------------------------------------------------------
+  # Validations
+  # -----------------------------------------------------------------------
   describe 'validations' do
     it 'is valid with valid attributes' do
       expect(course_team).to be_valid
@@ -77,7 +48,7 @@ RSpec.describe CourseTeam, type: :model do
     it 'is not valid without a course' do
       team = build(:course_team, course: nil)
       expect(team).not_to be_valid
-      expect(team.errors[:course]).to include("must exist")
+      expect(team.errors[:course]).to include('must exist')
     end
 
     it 'validates type must be CourseTeam' do
@@ -88,10 +59,40 @@ RSpec.describe CourseTeam, type: :model do
     end
   end
 
+  # -----------------------------------------------------------------------
+  # Associations
+  # -----------------------------------------------------------------------
+  describe 'associations' do
+    it { should belong_to(:course) }
+    it { should have_many(:teams_participants).dependent(:destroy) }
+    it { should have_many(:users).through(:teams_participants) }
+  end
+
+  # -----------------------------------------------------------------------
+  # Membership — bullet point 1
+  # -----------------------------------------------------------------------
   describe '#add_member' do
-    context 'when user is not enrolled in the course' do
-      it 'does not add the member to the team' do
-        unenrolled_user = create_student("add_user")
+    context 'when participant is enrolled in the course' do
+      it 'successfully adds the participant' do
+        participant = make_participant('enrolled_student')
+
+        result = course_team.add_member(participant)
+        expect(result[:success]).to be true
+        expect(course_team.has_member?(participant.user)).to be true
+      end
+    end
+
+    context 'when user is NOT enrolled in the course' do
+      it 'does not add the member' do
+        unenrolled_user = make_user('unenrolled_student')
+
+        result = course_team.add_member(unenrolled_user)
+        expect(result[:success]).to be false
+        expect(result[:error]).to eq("#{unenrolled_user.name} is not a participant in this course")
+      end
+
+      it 'does not create a TeamsParticipant record' do
+        unenrolled_user = make_user('unenrolled_student2')
 
         expect {
           course_team.add_member(unenrolled_user)
@@ -99,33 +100,4 @@ RSpec.describe CourseTeam, type: :model do
       end
     end
   end
-
-  describe 'associations' do
-    it { should belong_to(:course) }
-    it { should have_many(:teams_participants).dependent(:destroy) }
-    it { should have_many(:users).through(:teams_participants) }
-  end
-
-  describe 'team management' do
-    let(:enrolled_user) { create(:user, role: create(:role)) }
-    let(:unenrolled_user) { create(:user, role: create(:role)) }
-
-    before do
-      @participant = create(:course_participant, user: enrolled_user, course: course)
-    end
-
-    it 'can add enrolled user' do
-      result = course_team.add_member(enrolled_user)
-      
-      expect(result[:success]).to be true
-      expect(course_team.has_member?(enrolled_user)).to be true
-    end
-
-    it 'cannot add unenrolled user' do
-      result = course_team.add_member(unenrolled_user)
-
-      expect(result[:success]).to be false
-      expect(result[:error]).to eq("#{unenrolled_user.name} is not a participant in this course")
-    end
-  end
-end 
+end

@@ -31,8 +31,8 @@ class Invitation < ApplicationRecord
   # send invite email
   def send_invite_email
     InvitationMailer.with(invitation: self)
-                        .send_invitation_email
-                        .deliver_later
+                    .send_invitation_email
+                    .deliver_later
   end
 
   # This method handles all that needs to be done upon a user accepting an invitation.
@@ -40,39 +40,50 @@ class Invitation < ApplicationRecord
     inviter_team = from_participant.team
     invitee_team = to_participant.team
 
-    # Wrap in transaction to prevent partial updates and concurrency
-    ActiveRecord::Base.transaction do
-      # 1. Add the invitee to the inviter's team
-      inviter_team.add_member(to_participant)
-      
-      # if participant is member of an existing team then only step 2 and 3 makes sense. otherwise just need to add the participant to the inviter team
-      if invitee_team.present?
-        # 2. Update the participant’s and team's assigned topic
-        inviter_signed_up_team = SignedUpTeam.find_by(team_id: inviter_team.id)
-        invitee_signed_up_team = SignedUpTeam.find_by(team_id: invitee_team.id)
-  
-        SignedUpTeam.update_topic_after_invite_accept(inviter_signed_up_team,invitee_signed_up_team)
-  
-        # 3. Remove participant from their old team
-        invitee_team.remove_member(to_participant)
-      end
+    error_message = nil
+    accepted = false
 
-      # 4. Mark this invitation as accepted
-      update!(reply_status: InvitationValidator::ACCEPT_STATUS)
+    ActiveRecord::Base.transaction do
+      inviter_team.with_lock do
+        # 0. Capacity check (race-safe)
+        if inviter_team.full?
+          error_message = 'Team is full.'
+          raise ActiveRecord::Rollback
+        end
+
+        # If participant is member of an existing team, update topics and move them between teams.
+        if invitee_team.present? && invitee_team.id != inviter_team.id
+          inviter_signed_up_team = SignedUpTeam.find_by(team_id: inviter_team.id)
+          invitee_signed_up_team = SignedUpTeam.find_by(team_id: invitee_team.id)
+
+          SignedUpTeam.update_topic_after_invite_accept(inviter_signed_up_team, invitee_signed_up_team)
+
+          # Remove from old team first so participant_id uniqueness does not block the move.
+          invitee_team.remove_member(to_participant)
+        end
+
+        # Add the invitee to the inviter's team and verify success.
+        add_result = inviter_team.add_member(to_participant)
+        unless add_result[:success]
+          error_message = add_result[:error].presence || 'Unable to add participant to team.'
+          raise ActiveRecord::Rollback
+        end
+
+        update!(reply_status: InvitationValidator::ACCEPT_STATUS)
+        accepted = true
+      end
     end
 
-    { success: true, message: "Invitation accepted successfully." }
+    return { success: false, error: (error_message || 'Invitation acceptance failed.') } unless accepted
 
-  rescue TeamFullError => e
-    { success: false, error: e.message }
-  rescue => e
+    { success: true, message: 'Invitation accepted successfully.' }
+  rescue StandardError => e
     { success: false, error: "Unexpected error: #{e.message}" }
   end
 
-
   # This method handles all that needs to be done upon an user declining an invitation.
   def decline
-    update(reply_status: InvitationValidator::DECLINED_STATUS)  
+    update(reply_status: InvitationValidator::DECLINED_STATUS)
   end
 
   # This method handles all that need to be done upon an invitation retraction.
@@ -89,20 +100,23 @@ class Invitation < ApplicationRecord
                           only: %i[id reply_status created_at updated_at],
                           include: {
                             assignment: { only: %i[id name] },
-                            from_participant: { 
+                            from_participant: {
                               only: %i[id],
                               include: {
                                 user: { only: %i[id name full_name email] },
-                                team: {only: %i[id name]}
-                              }},
+                                team: { only: %i[id name] }
+                              }
+                            },
                             # from_team: { only: %i[id name] },
-                            to_participant: {    
+                            to_participant: {
                               only: [:id],
                               include: {
                                 user: { only: %i[id name full_name email] }
-                              }}
+                              }
+                            }
                           }
                         })).tap do |hash|
     end
   end
 end
+
