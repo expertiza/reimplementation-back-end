@@ -11,8 +11,11 @@ CURRENT_MAINTAINERS = %w[
 ADDED_FILES    = git.added_files
 DELETED_FILES  = git.deleted_files
 MODIFIED_FILES = git.modified_files
-RENAMED_FILES  = git.renamed_files
-TOUCHED_FILES  = ADDED_FILES + DELETED_FILES + MODIFIED_FILES + RENAMED_FILES
+RENAMED_FILES = git.renamed_files.map do |file|
+  file[:after] || file['after']
+end.compact
+
+TOUCHED_FILES = ADDED_FILES + DELETED_FILES + MODIFIED_FILES + RENAMED_FILES
 LOC            = git.lines_of_code
 COMMITS        = git.commits
 
