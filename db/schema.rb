@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_28_000000) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -408,6 +408,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
     t.bigint "participant_id", null: false
     t.integer "user_id", null: false
     t.index ["participant_id"], name: "index_teams_participants_on_participant_id"
+    t.index ["team_id", "participant_id"], name: "index_teams_participants_on_team_participant_unique", unique: true
     t.index ["team_id"], name: "index_teams_participants_on_team_id"
     t.index ["user_id"], name: "index_teams_participants_on_user_id"
   end
@@ -456,9 +457,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
   add_foreign_key "assignments_duties", "duties"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
+  add_foreign_key "duties", "users", column: "instructor_id"
   add_foreign_key "invitations", "participants", column: "from_id"
   add_foreign_key "invitations", "participants", column: "to_id"
-  add_foreign_key "duties", "users", column: "instructor_id"
   add_foreign_key "items", "questionnaires"
   add_foreign_key "participants", "duties"
   add_foreign_key "participants", "join_team_requests"

@@ -8,24 +8,36 @@ class User < ApplicationRecord
   validates :name, presence: true, uniqueness: true, allow_blank: false
                    # format: { with: /\A[a-z]+\z/, message: 'must be in lowercase' }
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
-  validates :password, length: { minimum: 6 }, presence: true, allow_nil: true
+  validates :password, presence: true, if: :password_required?
+  validates :password, length: { minimum: 6 }, allow_nil: true
   validates :full_name, presence: true, length: { maximum: 50 }
 
   belongs_to :role
   belongs_to :institution, optional: true
   belongs_to :parent, class_name: 'User', optional: true
   has_many :users, foreign_key: 'parent_id', dependent: :nullify
-  has_many :invitations
-  has_many :assignments
-  has_many :teams_users, dependent: :destroy
-  has_many :teams, through: :teams_users
+
+  # Looking at invitation.rb, invitations relate to users only through participants.
+  # (from_id and to_id both point to AssignmentParticipant, not User).
+  # There is no user foreign key on the invitations table at all.
+  # has_many :invitations
   has_many :participants
 
-  scope :students, -> { where role_id: Role::STUDENT }
-  scope :tas, -> { where role_id: Role::TEACHING_ASSISTANT }
-  scope :instructors, -> { where role_id: Role::INSTRUCTOR }
-  scope :administrators, -> { where role_id: Role::ADMINISTRATOR }
-  scope :superadministrators, -> { where role_id: Role::SUPER_ADMINISTRATOR }
+  # A user participates in assignments via the participants join table
+  has_many :assignments, through: :participants
+
+  # A user can also be the instructor of many assignments directly
+  # via instructor_id on the assignments table
+  has_many :instructed_assignments, class_name: 'Assignment', foreign_key: 'instructor_id'
+  has_many :teams_users, dependent: :destroy
+  has_many :teams, through: :teams_users
+  
+  #join on role name instead of hardcoded IDs, matching create_roles_heirarchy
+  scope :students,           -> { joins(:role).where(roles: { name: 'Student' }) }
+  scope :tas,                -> { joins(:role).where(roles: { name: 'Teaching Assistant' }) }
+  scope :instructors,        -> { joins(:role).where(roles: { name: 'Instructor' }) }
+  scope :administrators,     -> { joins(:role).where(roles: { name: 'Administrator' }) }
+  scope :superadministrators,-> { joins(:role).where(roles: { name: 'Super Administrator' }) }
 
   delegate :student?, to: :role
   delegate :ta?, to: :role
@@ -34,17 +46,18 @@ class User < ApplicationRecord
   delegate :super_administrator?, to: :role
 
   def self.instantiate(record)
-    case record.role
-    when Role::TEACHING_ASSISTANT
-      record.becomes(Ta)
-    when Role::INSTRUCTOR
-      record.becomes(Instructor)
-    when Role::ADMINISTRATOR
-      record.becomes(Administrator)
-    when Role::SUPER_ADMINISTRATOR
+    case record.role.name
+    when /Super Administrator/
       record.becomes(SuperAdministrator)
+    when /Teaching Assistant/
+      record.becomes(Ta)
+    when /Instructor/
+      record.becomes(Instructor)
+    when /Administrator/
+      record.becomes(Administrator)
     else
-      super
+      # Student or other roles remain as User
+      record
     end
   end
 
@@ -65,25 +78,29 @@ class User < ApplicationRecord
   # Reset the password for the user
   def reset_password
     random_password = SecureRandom.alphanumeric(10)
-    user.password_digest = BCrypt::Password.create(random_password)
-    user.save
+    self.password = random_password
+    save
+  end
+
+  def password_required?
+    password_digest.blank? || !password.nil?
   end
 
   # Get instructor_id of the user, if the user is TA,
   # return the id of the instructor else return the id of the user for superior roles
   def instructor_id
-    case role
-    when Role::INSTRUCTOR, Role::ADMINISTRATOR, Role::SUPER_ADMINISTRATOR
+    case role.name
+    when /Instructor/, /Administrator/, /Super Administrator/
       id
-    when Role::TEACHING_ASSISTANT
-      my_instructor
+    when /Teaching Assistant/
+      Ta.find(id).my_instructor
     else
       raise NotImplementedError, "Unknown role: #{role.name}"
     end
   end
 
   def can_impersonate?(user)
-    return true if role.super_admin?
+    return true if role.super_administrator?
     return true if teaching_assistant_for?(user)
     return true if recursively_parent_of(user)
 
@@ -94,7 +111,7 @@ class User < ApplicationRecord
     p = user.parent
     return false if p.nil?
     return true if p == self
-    return false if p.role.super_admin?
+    return false if p.role.super_administrator?
 
     recursively_parent_of(p)
   end
@@ -103,16 +120,14 @@ class User < ApplicationRecord
     return false unless teaching_assistant?
     return false unless student.role.name == 'Student'
 
-    # We have to use the Ta object instead of User object
-    # because single table inheritance is not currently functioning
     ta = Ta.find(id)
-    return true if ta.courses_assisted_with.any? do |c|
+    ta.courses_assisted_with.any? do |c|
       c.assignments.map(&:participants).flatten.map(&:user_id).include? student.id
     end
   end
 
   def teaching_assistant?
-    true if role.ta?
+    !!role.ta?
   end
 
   def self.from_params(params)
@@ -135,8 +150,8 @@ class User < ApplicationRecord
                             institution: { only: %i[id name] }
                           }
                         })).tap do |hash|
-      hash['parent'] ||= { id: nil, name: nil }
-      hash['institution'] ||= { id: nil, name: nil }
+      hash['parent'] ||= { 'id' => nil, 'name' => nil }
+      hash['institution'] ||= { 'id' => nil, 'name' => nil }
     end
   end
 
@@ -150,7 +165,7 @@ class User < ApplicationRecord
   end
 
   def generate_jwt
-    JWT.encode({ id: id, exp: 60.days.from_now.to_i }, Rails.application.credentials.secret_key_base)
+    JWT.encode({ id: id, exp: 60.days.from_now.to_i }, Rails.application.credentials.secret_key_base, 'HS256')
   end
 
 end

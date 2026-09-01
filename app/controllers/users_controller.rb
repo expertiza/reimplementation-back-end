@@ -15,8 +15,6 @@ class UsersController < ApplicationController
 
   # POST /users
   def create
-    # Add default password for a user if the password is not provided
-    params[:user][:password] ||= 'password'
     user = User.new(user_params)
     if user.save
       render json: user, status: :created
@@ -70,6 +68,10 @@ class UsersController < ApplicationController
   def role_users
     name = params[:name].split('_').map(&:capitalize).join(' ')
     role = Role.find_by(name:)
+    unless role
+      render json: { error: "Role '#{name}' not found" }, status: :not_found
+      return
+    end
     users = role.users
     render json: users, status: :ok
   rescue ActiveRecord::RecordNotFound => e
