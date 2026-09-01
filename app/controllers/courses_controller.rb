@@ -10,7 +10,15 @@ class CoursesController < ApplicationController
   # GET /courses
   # List all the courses
   def index
-    courses = Course.all
+    courses = case current_user.role_id
+              when Role::SUPER_ADMINISTRATOR
+                Course.all
+              when Role::ADMINISTRATOR
+                instructor_ids = User.where(parent_id: current_user.id).pluck(:id) + [current_user.id]
+                Course.where(private: false).or(Course.where(instructor_id: instructor_ids))
+              else
+                Course.where(private: false).or(Course.where(instructor_id: current_user.id))
+              end
     render json: courses, status: :ok
   end
 
