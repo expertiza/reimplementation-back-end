@@ -8,6 +8,16 @@ class ResponseMap < ApplicationRecord
 
   alias map_id id
 
+  # Returns the latest submitted response per round for this map.
+  # Relies on responses being eager-loaded (e.g. via includes) to avoid N+1.
+  # Output: { round => response }
+  def latest_submitted_response_by_round
+    responses
+      .select(&:is_submitted)
+      .group_by(&:round)
+      .transform_values { |rs| rs.max_by(&:id) }
+  end
+
   # Shared helper for Response#rubric_label; looks up the declarative constant so each map advertises its UI label
   def response_map_label
     const_name = "#{self.class.name.demodulize.underscore.upcase}_TITLE"

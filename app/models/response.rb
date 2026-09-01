@@ -98,7 +98,7 @@ class Response < ApplicationRecord
     sum = 0
     scores.each do |s|
       # For quiz responses, the weights will be 1 or 0, depending on if correct
-      sum += s.answer * s.item.weight unless s.answer.nil?  #|| !s.item.scorable?
+      sum += s.answer * s.item.weight unless s.answer.nil? #|| !s.item.scorable?
     end
     # puts "sum: #{sum}"
     sum
