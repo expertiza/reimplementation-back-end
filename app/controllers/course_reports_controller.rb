@@ -90,6 +90,8 @@ class CourseReportsController < ApplicationController
     users          = @course.unique_users(assignment_ids)
     user_ids       = users.map(&:id)
 
+    # Load all participants up front so we can both build the [assignment, user] lookup
+    # and pass participant IDs to precompute_teammate_scores without a second query.
     all_participants = AssignmentParticipant.where(parent_id: assignment_ids).to_a
     participant_map  = all_participants.group_by { |p| [p.parent_id, p.user_id] }
                                        .transform_values(&:first)
@@ -189,13 +191,15 @@ class CourseReportsController < ApplicationController
       .where(reviewee_id: participant_ids)
       .includes(responses: :scores)
 
+    # Collect all percentage scores received by each reviewee, then
+    # average them and format as a percentage string (e.g. "82%").
     scores_by_reviewee = Hash.new { |h, k| h[k] = [] }
     submitted_scores(maps).each { |entry| scores_by_reviewee[entry.map.reviewee_id] << entry.score_pct.round }
     scores_by_reviewee.transform_values { |s| "#{(s.sum.to_f / s.size).round}%" }
   end
 
   # Returns an array of ScoreEntry for every submitted response across all maps
-  # that has a non-zero max score. Shared by peer and teammate scoring loops.
+  # that have a non-zero max score. Shared by peer and teammate scoring loops.
   def submitted_scores(maps)
     maps.flat_map do |map|
       map.responses.select(&:is_submitted).filter_map do |resp|
