@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_17_000001) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -104,6 +104,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
     t.boolean "has_teams", default: false
     t.boolean "has_topics", default: false
     t.boolean "vary_by_round", default: false, null: false
+    t.integer "instructor_grade_min_score"
+    t.integer "instructor_grade_max_score"
     t.index ["course_id"], name: "index_assignments_on_course_id"
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
@@ -343,6 +345,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_064334) do
     t.integer "round"
     t.integer "version_num"
     t.index ["map_id"], name: "fk_response_response_map"
+  end
+
+  create_table "review_grades", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "participant_id", null: false
+    t.float "grade_for_reviewer"
+    t.text "comment_for_reviewer"
+    t.integer "grader_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["participant_id"], name: "index_review_grades_on_participant_id", unique: true
   end
 
   create_table "roles", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|

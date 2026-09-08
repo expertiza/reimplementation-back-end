@@ -19,8 +19,6 @@ RSpec.describe ResponsesController, type: :controller do
     # Also provide current_user directly to be safe
     allow(controller).to receive(:current_user).and_return(user)
 
-    # Stub role helpers used by ResponsesController
-    allow(controller).to receive(:has_role?).and_return(true)
     allow(controller).to receive(:action_allowed?).and_return(true)
   end
 
@@ -356,7 +354,6 @@ RSpec.describe ResponsesController, type: :controller do
 
     before do
       allow(controller).to receive(:set_response) { controller.instance_variable_set(:@response, response_double) }
-      allow(controller).to receive(:has_role?).and_return(true)
       allow(response_double).to receive(:rubric_label).and_return('Response')
     end
 

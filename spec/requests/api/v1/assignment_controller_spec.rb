@@ -461,7 +461,59 @@ RSpec.describe 'Assignments API', type: :request do
           expect(response).to have_http_status(:not_found)
           expect(data['error']).to eq('Assignment not found')
         end
-        
+
+      end
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # instructor_grade_min_score / instructor_grade_max_score
+  # -------------------------------------------------------------------------
+
+  describe 'instructor grade scale fields' do
+    describe 'GET /assignments/:id (show)' do
+      it 'includes instructor_grade_min_score and instructor_grade_max_score in the response' do
+        assignment.update!(instructor_grade_min_score: 1, instructor_grade_max_score: 10)
+        get "/assignments/#{assignment.id}", headers: { 'Authorization' => Authorization() }
+        data = JSON.parse(response.body)
+        expect(data['instructor_grade_min_score']).to eq(1)
+        expect(data['instructor_grade_max_score']).to eq(10)
+      end
+
+      it 'includes assignment_questionnaires with nested questionnaire in the response' do
+        questionnaire = Questionnaire.create!(name: 'Review Q', instructor_id: prof.id,
+                                             min_question_score: 1, max_question_score: 5)
+        questionnaire.items.create!(txt: 'Q1', seq: 1, question_type: 'Scale', weight: 1, break_before: true)
+        AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire,
+                                        used_in_round: 1, questionnaire_weight: 100)
+        get "/assignments/#{assignment.id}", headers: { 'Authorization' => Authorization() }
+        data = JSON.parse(response.body)
+        aqs = data['assignment_questionnaires']
+        expect(aqs).not_to be_empty
+        expect(aqs.first['questionnaire']).not_to be_nil
+        expect(aqs.first['questionnaire']['id']).to eq(questionnaire.id)
+      end
+    end
+
+    describe 'PATCH /assignments/:id (update)' do
+      it 'saves instructor_grade_min_score and instructor_grade_max_score' do
+        patch "/assignments/#{assignment.id}",
+              params: { assignment: { instructor_grade_min_score: 0, instructor_grade_max_score: 5 } },
+              headers: { 'Authorization' => Authorization() }
+        expect(response).to have_http_status(:ok)
+        assignment.reload
+        expect(assignment.instructor_grade_min_score).to eq(0)
+        expect(assignment.instructor_grade_max_score).to eq(5)
+      end
+
+      it 'does not raise UnknownAttributeError for permitted params' do
+        expect do
+          patch "/assignments/#{assignment.id}",
+                params: { assignment: { name: 'Updated', instructor_grade_min_score: 1,
+                                        instructor_grade_max_score: 10 } },
+                headers: { 'Authorization' => Authorization() }
+        end.not_to raise_error
+        expect(response).to have_http_status(:ok)
       end
     end
   end

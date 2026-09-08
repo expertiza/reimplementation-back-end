@@ -76,7 +76,7 @@ module Authorization
     user_logged_in? &&
     (
         current_user_instructs_assignment?(assignment) ||
-        current_user_has_ta_mapping_for_assignment?(assignment)
+        current_user_TAs_assignment?(assignment)
         # TODO: include a check to allow admins or superadmins access to assignments their child instructors can access
     )
   end
@@ -139,12 +139,12 @@ module Authorization
             reviewee_team.user?(current_user) ||
             current_user_has_admin_privileges? ||
             (current_user_is_a?('Instructor') && current_user_instructs_assignment?(assignment)) ||
-            (current_user_is_a?('Teaching Assistant') && current_user_has_ta_mapping_for_assignment?(assignment))
+            (current_user_is_a?('Teaching Assistant') && current_user_TAs_assignment?(assignment))
           )
     end
     current_user_has_id?(user_id) ||
         (current_user_is_a?('Instructor') && current_user_instructs_assignment?(assignment)) ||
-        (assignment.course && current_user_is_a?('Teaching Assistant') && current_user_has_ta_mapping_for_assignment?(assignment))
+        (assignment.course && current_user_is_a?('Teaching Assistant') && current_user_TAs_assignment?(assignment))
   end
 
   # Determine if there is a current user
@@ -172,9 +172,18 @@ module Authorization
     )
   end
 
-  # Determine if the current user and the given assignment are associated by a TA mapping
-  def current_user_has_ta_mapping_for_assignment?(assignment)
-    user_logged_in? && !assignment.nil? && TaMapping.exists?(user_id: current_user.id, course_id: assignment.course.id)
+  # Returns true if the current user is a TA for the given course.
+  def current_user_TAs_course?(course)
+    user_logged_in? && course.present? && TaMapping.exists?(user_id: current_user.id, course_id: course.id)
+  end
+
+  # Returns true if the current user TAs the course that owns this assignment.
+  # Implemented in terms of current_user_TAs_course? because a TA is mapped to a
+  # course, not individual assignments within it.
+  # If the assignment has no course (course_id is nil), assignment.course returns
+  # nil and current_user_TAs_course? returns false safely via course.present?.
+  def current_user_TAs_assignment?(assignment)
+    assignment.present? && current_user_TAs_course?(assignment.course)
   end
 
   # Recursively find an assignment given the passed in Response id. Because a ResponseMap
@@ -190,15 +199,41 @@ module Authorization
     end
   end
 
-  # Finds the assignment_instructor for a given assignment. If the assignment is associated with
-  # a course, the instructor for the course is returned. If not, the instructor associated
-  # with the assignment is return.
+  # Returns the instructor who owns the given assignment.
+  # If the assignment belongs to a course, the course's instructor is returned.
+  # If the assignment has no course (standalone assignment), falls back to
+  # assignment.instructor so the method works in both cases.
   def find_assignment_instructor(assignment)
     if assignment.course
       Course.find_by(id: assignment.course.id).instructor
     else
       assignment.instructor
     end
+  end
+
+  # Returns true if the current user may create, read, update, or delete the
+  # given resource (an Assignment or a Course), based on the role hierarchy:
+  #   Super Admin  — always yes (handled by all_actions_allowed? before this runs)
+  #   Admin        — yes if the resource's owning instructor is the admin or a descendant
+  #   Instructor   — yes if they own the resource
+  #   TA           — yes if they are mapped to the resource's course
+  def current_user_can_manage?(resource)
+    return false unless user_logged_in? && resource
+
+    if current_user_has_admin_privileges?
+      instructor = resource_owning_instructor(resource)
+      return instructor.present? &&
+             (instructor.id == current_user.id || current_user_ancestor_of?(instructor))
+    end
+
+    return resource_owning_instructor(resource)&.id == current_user.id if current_user_is_a?('Instructor')
+
+    if current_user_is_a?('Teaching Assistant')
+      course = resource.is_a?(Course) ? resource : resource.course
+      return current_user_TAs_course?(course)
+    end
+
+    false
   end
 
   def current_user_has_all_heatgrid_data_privileges?(assignment)
@@ -217,7 +252,7 @@ module Authorization
     return true if current_user_is_a?('Instructor') && current_user_instructs_assignment?(assignment)
 
     # 4. TA mapped to the course of the assignment
-    return true if current_user_is_a?('Teaching Assistant') && current_user_has_ta_mapping_for_assignment?(assignment)
+    return true if current_user_is_a?('Teaching Assistant') && current_user_TAs_assignment?(assignment)
 
     false
   end
@@ -266,5 +301,20 @@ module Authorization
 
   def current_user_and_role_exist?
     user_logged_in? && !current_user.role.nil?
+  end
+
+  # Returns a relation of course_ids the current TA is mapped to.
+  # Used as a subquery in index scoping for both CoursesController and AssignmentsController.
+  def current_user_ta_course_ids
+    TaMapping.where(user_id: current_user.id).select(:course_id)
+  end
+
+  # Returns the User who owns (instructed) the given resource.
+  # Assignments may inherit their instructor from their parent course.
+  def resource_owning_instructor(resource)
+    case resource
+    when Assignment then find_assignment_instructor(resource)
+    when Course     then resource.instructor
+    end
   end
 end
