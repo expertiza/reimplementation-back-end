@@ -58,7 +58,7 @@ class QuestionnairesController < ApplicationController
   # POST on /questionnaires/copy/:id
   def copy
     begin
-      @questionnaire = Questionnaire.copy_questionnaire_details(params)
+      @questionnaire = Questionnaire.copy(params)
       render json: @questionnaire, status: :ok and return
     rescue ActiveRecord::RecordNotFound
       render json: $ERROR_INFO.to_s, status: :not_found and return

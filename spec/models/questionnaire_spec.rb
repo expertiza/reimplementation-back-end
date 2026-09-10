@@ -2,26 +2,38 @@
 
 require 'rails_helper'
 describe Questionnaire, type: :model do
-
   # Creating dummy objects for the test with the help of let statement
-  let(:role) {Role.create(name: 'Instructor', parent_id: nil, id: 2, default_page_id: nil)}
-  let(:instructor) { Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role_id: role.id) }
+  let(:role) { Role.create(name: 'Instructor', parent_id: nil, id: 2, default_page_id: nil) }
+  let(:instructor) do
+    Instructor.create(
+      name: 'testinstructor',
+      email: 'test@test.com',
+      full_name: 'Test Instructor',
+      password: '123456',
+      role_id: role.id
+    )
+  end
   let(:questionnaire) do
     Questionnaire.create!(
-      id: 1,
       name: 'abc',
       private: false,
       min_question_score: 0,
       max_question_score: 10,
-      instructor: instructor,
+      instructor: instructor
     )
   end
-  let(:questionnaire1) { Questionnaire.new name: 'xyz', private: 0, max_question_score: 20, instructor_id: instructor.id }
-  let(:questionnaire2) { Questionnaire.new name: 'pqr', private: 0, max_question_score: 10, instructor_id: instructor.id }
-  let(:question1) { questionnaire.items.build(weight: 1, id: 1, seq: 1, txt: "que 1", question_type: "scale", break_before: true) }
-  let(:question2) { questionnaire.items.build(weight: 10, id: 2, seq: 2, txt: "que 2", question_type: "multiple_choice", break_before: true) }
-
-
+  let(:questionnaire1) do
+    Questionnaire.new(name: 'xyz', private: 0, max_question_score: 20, instructor_id: instructor.id)
+  end
+  let(:questionnaire2) do
+    Questionnaire.new(name: 'pqr', private: 0, max_question_score: 10, instructor_id: instructor.id)
+  end
+  let(:question1) do
+    questionnaire.items.build(weight: 1, seq: 1, txt: 'que 1', question_type: 'scale', break_before: true)
+  end
+  let(:question2) do
+    questionnaire.items.build(weight: 10, seq: 2, txt: 'que 2', question_type: 'multiple_choice', break_before: true)
+  end
 
   describe '#name' do
     # Test validates the name of the questionnaire
@@ -58,13 +70,11 @@ describe Questionnaire, type: :model do
       expect(questionnaire).not_to be_valid
     end
 
-    # Test ensures maximum score is positive
-    it 'validate maximum score should be positive' do
-      expect(questionnaire.max_question_score).to eq(10)
-      questionnaire.max_question_score = -10
-      expect(questionnaire).not_to be_valid
+    # Max score is no longer required to be positive — only min < max is enforced.
+    it 'allows max_question_score of 0 when min is negative' do
+      questionnaire.min_question_score = -5
       questionnaire.max_question_score = 0
-      expect(questionnaire).not_to be_valid
+      expect(questionnaire).to be_valid
     end
 
     # Test ensures maximum score is greater than the minimum score
@@ -99,8 +109,12 @@ describe Questionnaire, type: :model do
       expect(questionnaire).not_to be_valid
     end
 
+    # Min score is not required to be positive — negative min scores are valid
+    it 'allows negative min_question_score when it is less than max' do
+      questionnaire.min_question_score = -3
+      expect(questionnaire).to be_valid
+    end
   end
-
 
   describe 'associations' do
     # Test validates the association that a questionnaire comprises of several questions
@@ -109,23 +123,26 @@ describe Questionnaire, type: :model do
     end
   end
 
-  describe '.copy_questionnaire_details' do
-    # Test ensures calls from the method copy_questionnaire_details
-    it 'allowing calls from copy_questionnaire_details' do
-      allow(Questionnaire).to receive(:find).with('1').and_return(questionnaire)
-      allow(Item).to receive(:where).with(questionnaire_id: '1').and_return([Item])
-    end
-    
+  describe '.copy' do
     # Test ensures creation of a copy of given questionnaire
     it 'creates a copy of the questionnaire' do
       instructor.save!
       questionnaire.save!
       question1.save!
       question2.save!
-      copied_questionnaire = Questionnaire.copy_questionnaire_details( { id: questionnaire.id, instructor_id: instructor.id})
-      expect(copied_questionnaire.instructor_id).to eq(questionnaire.instructor_id)
-      expect(copied_questionnaire.name).to eq("Copy of #{questionnaire.name}")
-      expect(copied_questionnaire.created_at).to be_within(1.second).of(Time.zone.now)
+      copied = Questionnaire.copy({ id: questionnaire.id, instructor_id: instructor.id })
+      expect(copied.instructor_id).to eq(questionnaire.instructor_id)
+      expect(copied.name).to eq("Copy of #{questionnaire.name}")
+      expect(copied.created_at).to be_within(1.second).of(Time.zone.now)
+    end
+
+    # The copy must receive a new id and be a distinct persisted record
+    it 'assigns a new id different from the original' do
+      instructor.save!
+      questionnaire.save!
+      copied = Questionnaire.copy({ id: questionnaire.id, instructor_id: instructor.id })
+      expect(copied.id).not_to eq(questionnaire.id)
+      expect(copied.id).not_to be_nil
     end
 
     # Test ensures creation of copy of all the present questionnaire in the database
@@ -134,11 +151,36 @@ describe Questionnaire, type: :model do
       questionnaire.save!
       question1.save!
       question2.save!
-      copied_questionnaire = described_class.copy_questionnaire_details({ id: questionnaire.id, instructor_id: instructor.id })
-      expect(copied_questionnaire.items.count).to eq(2)
-      expect(copied_questionnaire.items.first.txt).to eq(question1.txt)
-      expect(copied_questionnaire.items.second.txt).to eq(question2.txt)
+      copied = described_class.copy({ id: questionnaire.id, instructor_id: instructor.id })
+      expect(copied.items.count).to eq(2)
+      expect(copied.items.first.txt).to eq(question1.txt)
+      expect(copied.items.second.txt).to eq(question2.txt)
+    end
+
+    # Copied items must be associated with the new questionnaire, not the original
+    it 'associates copied items with the new questionnaire, not the original' do
+      instructor.save!
+      questionnaire.save!
+      question1.save!
+      question2.save!
+      copied = described_class.copy({ id: questionnaire.id, instructor_id: instructor.id })
+      copied.items.each do |item|
+        expect(item.questionnaire_id).to eq(copied.id)
+        expect(item.questionnaire_id).not_to eq(questionnaire.id)
+      end
+    end
+
+    # Item attributes are preserved on the copy
+    it 'preserves item attributes on the copy' do
+      instructor.save!
+      questionnaire.save!
+      question1.save!
+      question2.save!
+      copied = described_class.copy({ id: questionnaire.id, instructor_id: instructor.id })
+      first_copy = copied.items.first
+      expect(first_copy.txt).to eq(question1.txt)
+      expect(first_copy.weight).to eq(question1.weight)
+      expect(first_copy.question_type).to eq(question1.question_type)
     end
   end
-
 end
