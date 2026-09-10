@@ -49,6 +49,28 @@ describe ReviewQuestionnaire, type: :model do
       allow(AssignmentTeam).to receive(:team).with(participant).and_return(nil)
       expect(questionnaire.get_assessments_for_round(participant, 1)).to be_nil
     end
+
+    it 'returns only submitted responses for the given round (uses map.responses, not map.response)' do
+      participant   = double('participant')
+      team          = double('team', id: 42)
+      allow(AssignmentTeam).to receive(:team).with(participant).and_return(team)
+
+      # Build two fake responses: one matching round + submitted, one not submitted
+      reviewer      = double('reviewer', fullname: 'Alice Tester')
+      submitted_res = double('response', round: 1, is_submitted: true, map: double(reviewer: reviewer))
+      unsubmitted   = double('response', round: 1, is_submitted: false)
+      wrong_round   = double('response', round: 2, is_submitted: true)
+
+      map = double('map')
+      allow(map).to receive(:responses).and_return([submitted_res, unsubmitted, wrong_round])
+
+      allow(ResponseMap).to receive(:where)
+        .with(reviewee_id: 42, type: 'ReviewResponseMap')
+        .and_return([map])
+
+      result = questionnaire.get_assessments_for_round(participant, 1)
+      expect(result).to eq([submitted_res])
+    end
   end
 
   describe 'inheritance' do

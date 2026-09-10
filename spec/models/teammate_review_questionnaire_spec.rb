@@ -49,6 +49,24 @@ describe TeammateReviewQuestionnaire, type: :model do
       allow(TeammateReviewResponseMap).to receive(:where).with(reviewer_id: 99).and_return([])
       expect(questionnaire.get_assessments_for_round(participant, 1)).to eq([])
     end
+
+    it 'returns only submitted responses for the given round (uses map.responses, not map.response)' do
+      participant   = double('participant', id: 55)
+
+      submitted_res = double('response', round: 1, is_submitted: true)
+      unsubmitted   = double('response', round: 1, is_submitted: false)
+      wrong_round   = double('response', round: 2, is_submitted: true)
+
+      map = double('map')
+      allow(map).to receive(:responses).and_return([submitted_res, unsubmitted, wrong_round])
+
+      allow(TeammateReviewResponseMap).to receive(:where)
+        .with(reviewer_id: 55)
+        .and_return([map])
+
+      result = questionnaire.get_assessments_for_round(participant, 1)
+      expect(result).to eq([submitted_res])
+    end
   end
 
   describe '#has_criterion_items?' do
