@@ -6,7 +6,7 @@ RSpec.describe TeamsParticipant, type: :model do
   # --------------------------------------------------------------------------
   # Global Setup
   # --------------------------------------------------------------------------
-  before(:all) do
+  before(:each) do
     @roles = create_roles_hierarchy
   end
 

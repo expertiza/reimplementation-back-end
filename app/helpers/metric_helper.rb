@@ -29,21 +29,30 @@ module MetricHelper
   # Get a collection of all comments across all rounds of a review
   # as well as a count of the total number of comments. Returns the
   # above information both for totals and in a list per-round.
+  #
+  # Previously, comments_in_round and counter_in_round were reset inside
+  # the per-map loop, so only the last ReviewResponseMap's data survived
+  # when a reviewer had reviewed more than one team. Initialization is now
+  # done once before the loop so all maps are accumulated correctly.
   def get_all_review_comments(reviewer_id)
     comments_in_round = []
     counter_in_round = []
 
+    # For each map this reviewer submitted, walk every round and append that
+    # round's comment text to comments_in_round[round], incrementing
+    # counter_in_round[round] once per map that had a response in that round.
+    # ||= ensures we accumulate across maps rather than resetting per map.
     ReviewResponseMap.where(reviewed_object_id: id, reviewer_id: reviewer_id).find_each do |response_map|
-      (1..num_review_rounds + 1).each do |round|
-        comments_in_round[round] = ''
-        counter_in_round[round] = 0
+      (1..num_review_rounds).each do |round|
+        comments_in_round[round] ||= ''
+        counter_in_round[round] ||= 0
         last_response_in_current_round = response_map.responses.select { |r| r.round == round }.last
         next if last_response_in_current_round.nil?
 
         last_response_in_current_round.scores.each do |answer|
-          comments_in_round[round] += (answer.comments ||= '')
+          comments_in_round[round] += (answer.comments || '')
         end
-        additional_comment = last_response_in_current_round.additional_comment
+        additional_comment = last_response_in_current_round.additional_comment || ''
         comments_in_round[round] += additional_comment
         counter_in_round[round] += 1
       end

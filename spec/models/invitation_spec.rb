@@ -3,7 +3,7 @@ require 'swagger_helper'
 
 RSpec.describe Invitation, type: :model do
   include ActiveJob::TestHelper
-  before(:all) do
+  before(:each) do
     @roles = create_roles_hierarchy
   end
 

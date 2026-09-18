@@ -25,7 +25,7 @@ RSpec.describe FeedbackResponseMap, type: :model do
     describe '#get_title' do
       it 'returns the correct title constant' do
         feedback_response_map = FeedbackResponseMap.new 
-        expect(feedback_response_map.get_title).to eq(ResponseMapSubclassTitles::FEEDBACK_RESPONSE_MAP_TITLE)
+        expect(feedback_response_map.get_title).to eq(ExpertizaConstants::ResponseMapTitles::FEEDBACK_RESPONSE_MAP_TITLE)
       end
     end
 

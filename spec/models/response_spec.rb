@@ -74,7 +74,7 @@ describe Response do
   # answer for scorable questions, and they will not be counted towards the total score)
   describe '#maximum_score' do
     before do
-      allow(response.response_assignment)
+      allow(response.reviewer_assignment)
         .to receive_message_chain(:assignment_questionnaires, :find_by)
         .with(used_in_round: 1)
         .and_return(assignment_questionnaire)
@@ -105,13 +105,92 @@ describe Response do
     end
   end
 
-  describe '#response_assignment' do
+  describe '#reviewer_assignment' do
     it 'returns assignment for ResponseMap' do
-      expect(response_map.response_assignment).to eq(assignment)
+      expect(response_map.reviewer_assignment).to eq(assignment)
     end
 
     it 'returns assignment for ReviewResponseMap' do
-      expect(review_response_map.response_assignment).to eq(assignment)
+      expect(review_response_map.reviewer_assignment).to eq(assignment)
+    end
+  end
+
+  describe '#response_assignment (compatibility alias)' do
+    it 'delegates to reviewer_assignment for ResponseMap' do
+      expect(response_map.response_assignment).to eq(response_map.reviewer_assignment)
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # Response#questionnaire
+  # -------------------------------------------------------------------------
+  # The original implementation was a one-liner:
+  #   reviewer_assignment.assignment_questionnaires.find_by(used_in_round: self.round).questionnaire
+  # For single-round assignments, AssignmentQuestionnaire is stored with used_in_round: nil
+  # but Response#round is 1, so find_by returns nil and calling .questionnaire on nil raised
+  # NoMethodError. The fix falls back to .first when the round-specific lookup fails.
+  describe '#questionnaire' do
+    let(:questionnaire_obj) { instance_double(Questionnaire) }
+
+    context 'varying-round assignment (used_in_round matches response.round)' do
+      it 'returns the questionnaire for the matching round' do
+        aq = instance_double(AssignmentQuestionnaire, questionnaire: questionnaire_obj)
+        aq_relation = double('aq_relation')
+        allow(aq_relation).to receive(:find_by).with(used_in_round: 1).and_return(aq)
+        allow(aq_relation).to receive(:first).and_return(aq)
+
+        allow(response).to receive(:round).and_return(1)
+        assignment_double = double('assignment', assignment_questionnaires: aq_relation)
+        allow(response).to receive(:reviewer_assignment).and_return(assignment_double)
+
+        expect(response.questionnaire).to eq(questionnaire_obj)
+      end
+    end
+
+    context 'single-round assignment (used_in_round is nil but response.round is 1)' do
+      it 'falls back to the nil-round AssignmentQuestionnaire and returns its questionnaire' do
+        aq = instance_double(AssignmentQuestionnaire, questionnaire: questionnaire_obj)
+        aq_relation = double('aq_relation')
+        # Primary lookup: no AQ stored with used_in_round: 1 (single-round uses nil)
+        allow(aq_relation).to receive(:find_by).with(used_in_round: 1).and_return(nil)
+        # Deterministic fallback: find_by(used_in_round: nil) targets single-round AQs specifically
+        allow(aq_relation).to receive(:find_by).with(used_in_round: nil).and_return(aq)
+
+        allow(response).to receive(:round).and_return(1)
+        assignment_double = double('assignment', assignment_questionnaires: aq_relation)
+        allow(response).to receive(:reviewer_assignment).and_return(assignment_double)
+
+        expect(response.questionnaire).to eq(questionnaire_obj)
+      end
+
+      it 'does not raise NoMethodError when find_by returns nil' do
+        aq = instance_double(AssignmentQuestionnaire, questionnaire: questionnaire_obj)
+        aq_relation = double('aq_relation')
+        allow(aq_relation).to receive(:find_by).with(used_in_round: 1).and_return(nil)
+        allow(aq_relation).to receive(:find_by).with(used_in_round: nil).and_return(aq)
+
+        allow(response).to receive(:round).and_return(1)
+        assignment_double = double('assignment', assignment_questionnaires: aq_relation)
+        allow(response).to receive(:reviewer_assignment).and_return(assignment_double)
+
+        expect { response.questionnaire }.not_to raise_error
+      end
+    end
+
+    context 'when no AssignmentQuestionnaire exists at all' do
+      it 'returns nil safely via the safe-navigator (&.)' do
+        aq_relation = double('aq_relation')
+        allow(aq_relation).to receive(:find_by).with(used_in_round: 1).and_return(nil)
+        # Both lookups return nil — safe-navigator on aq&.questionnaire must not raise
+        allow(aq_relation).to receive(:find_by).with(used_in_round: nil).and_return(nil)
+
+        allow(response).to receive(:round).and_return(1)
+        assignment_double = double('assignment', assignment_questionnaires: aq_relation)
+        allow(response).to receive(:reviewer_assignment).and_return(assignment_double)
+
+        expect { response.questionnaire }.not_to raise_error
+        expect(response.questionnaire).to be_nil
+      end
     end
   end
 end

@@ -13,7 +13,7 @@ RSpec.describe Team, type: :model do
   # Global Setup
   # --------------------------------------------------------------------------
   # Create the full roles hierarchy once, to be shared by all examples.
-  before(:all) do
+  before(:each) do
     @roles = create_roles_hierarchy
   end
 

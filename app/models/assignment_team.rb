@@ -2,7 +2,6 @@
 
 class AssignmentTeam < Team
   include Analytic::AssignmentTeamAnalytic
-  include ReviewAggregator
   # Each AssignmentTeam must belong to a specific assignment
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'parent_id'
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewee_id'
@@ -107,17 +106,25 @@ class AssignmentTeam < Team
     ReviewResponseMap.create(reviewee_id: id, reviewer_id: reviewer.get_reviewer.id, reviewed_object_id: assignment.id, team_reviewing_enabled: assignment.team_reviewing_enabled)
   end
 
+  # Returns submitted files for this team.
+  # File storage is not yet implemented in the reimplementation — returns empty array as stub.
+  def submitted_files
+    []
+  end
+
   # Whether the team has submitted work or not
   def has_submissions?
     submitted_files.any? || submitted_hyperlinks.present?
   end
 
-  # Computes the average review grade for an assignment team.
-  # This method aggregates scores from all ReviewResponseMaps (i.e., all reviewers of the team).
-  def aggregate_review_grade
-    compute_average_review_score(review_mappings)
+  # Computes the weighted average peer review grade for this team across all reviewers.
+  def aggregate_reviewer_score
+    maps = review_mappings
+             .where(reviewed_object_id: parent_id)
+             .includes(responses: { scores: :item })
+    ResponseMap.compute_average_reviewer_score(maps)
   end
-  
+
   # Adds a participant to this team.
   # - Update the participant's team_id (so their direct reference is consistent)
   # - Ensure there is a TeamsParticipant join record connecting the participant and this team
@@ -143,7 +150,7 @@ class AssignmentTeam < Team
     # Remove the join record if it exists
     tp = TeamsParticipant.find_by(team_id: id, participant_id: participant.id)
     tp&.destroy
-    
+
     # Update the participant's team_id column - will remove the team reference inside participants table later. keeping it for now
     # participant.update!(team_id: nil)
 
@@ -197,12 +204,6 @@ class AssignmentTeam < Team
   # Whether the team has submitted work or not
   def has_submissions?
     submitted_files.any? || submitted_hyperlinks.present?
-  end
-
-  # Computes the average review grade for an assignment team.
-  # This method aggregates scores from all ReviewResponseMaps (i.e., all reviewers of the team).
-  def aggregate_review_grade
-    compute_average_review_score(review_mappings)
   end
 
   protected

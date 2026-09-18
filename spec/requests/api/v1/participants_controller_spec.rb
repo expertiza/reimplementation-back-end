@@ -341,4 +341,53 @@ RSpec.describe 'Participants API', type: :request do
       end
     end
   end
+
+  # -------------------------------------------------------------------------
+  # GET /participants/teammates
+  # -------------------------------------------------------------------------
+  path '/participants/teammates' do
+    get 'Retrieve teammates grouped by course for the current user' do
+      tags 'Participants'
+      produces 'application/json'
+      parameter name: 'Authorization', in: :header, type: :string
+
+      response '200', 'returns teammates grouped by course with expected structure' do
+        let!(:team_setup) do
+          institution = Institution.create!(name: 'NCSU Teammates Test')
+          course      = Course.create!(name: 'CSC 517 Team', directory_path: 'csc517_team', instructor: instructor, institution: institution)
+          assignment  = Assignment.create!(name: 'Team Assignment', instructor: instructor, course: course)
+
+          teammate = User.create!(
+            name: 'teammate1', password_digest: 'password',
+            role_id: @roles[:student].id, full_name: 'Team Mate One',
+            email: 'teammate1@example.com'
+          )
+
+          team = AssignmentTeam.create!(name: 'Team Alpha', parent_id: assignment.id)
+          participant_a = AssignmentParticipant.create!(user_id: studenta.id, parent_id: assignment.id, handle: studenta.name)
+          participant_b = AssignmentParticipant.create!(user_id: teammate.id, parent_id: assignment.id, handle: teammate.name)
+
+          # user.teams traverses teams_users; team.users traverses teams_participants.
+          # all_teammates calls both, so both join tables must have rows.
+          TeamsUser.create!(team_id: team.id, user_id: studenta.id)
+          TeamsUser.create!(team_id: team.id, user_id: teammate.id)
+          TeamsParticipant.create!(team_id: team.id, user_id: studenta.id, participant_id: participant_a.id)
+          TeamsParticipant.create!(team_id: team.id, user_id: teammate.id, participant_id: participant_b.id)
+        end
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data).to be_a(Hash)
+          expect(data.keys).to include('CSC 517 Team')
+          expect(data['CSC 517 Team']).to include('Team Mate One')
+          expect(data['CSC 517 Team']).not_to include('Student A')
+        end
+      end
+
+      response '401', 'unauthorized request' do
+        let(:'Authorization') { 'Bearer ' }
+        run_test!
+      end
+    end
+  end
 end

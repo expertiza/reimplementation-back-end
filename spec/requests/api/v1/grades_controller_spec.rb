@@ -345,21 +345,23 @@ RSpec.describe 'Grades API', type: :request do
       parameter name: :participant_id, in: :path, type: :integer, description: 'ID of the participant'
       parameter name: 'Authorization', in: :header, type: :string, required: true, description: 'Bearer token'
 
-      response '200', 'Returns mapping and redirect information for new review' do
+      response '200', 'Returns mapping and request contract for new review' do
         let(:participant_id) { participant.id }
 
         run_test! do |response|
           data = JSON.parse(response.body)
           expect(data).to have_key('response_map_id')
           expect(data).to have_key('response_id')
-          expect(data).to have_key('redirect_to')
-          expect(data['redirect_to']).to include('/response/new/') if data['response_id'].nil?
+          expect(data['response_id']).to be_nil
+          expect(data['request_method']).to eq('POST')
+          expect(data['request_path']).to eq('/responses')
+          expect(data['request_payload']).to eq({ 'response_map_id' => data['map_id'] })
         end
       end
 
-      response '200', 'Returns mapping and redirect information for existing review' do
+      response '200', 'Returns mapping and request contract for existing review' do
         let(:participant_id) { participant.id }
-        
+
         before do
           reviewer = AssignmentParticipant.create!(user_id: instructor.id, parent_id: assignment.id, handle: instructor.name)
           mapping = ReviewResponseMap.create!(
@@ -367,13 +369,37 @@ RSpec.describe 'Grades API', type: :request do
             reviewer_id: reviewer.id,
             reviewee_id: team.id
           )
-          Response.create!(response_map_id: mapping.id)
+          Response.create!(map_id: mapping.id, is_submitted: false)
         end
 
         run_test! do |response|
           data = JSON.parse(response.body)
           expect(data['response_id']).to be_present
-          expect(data['redirect_to']).to include('/response/edit/')
+          expect(data['request_method']).to eq('PATCH')
+          expect(data['request_path']).to eq("/responses/#{data['response_id']}")
+          expect(data['request_payload']).to eq({})
+        end
+      end
+
+      response '200', 'Returns create contract when existing review is submitted' do
+        let(:participant_id) { participant.id }
+
+        before do
+          reviewer = AssignmentParticipant.create!(user_id: instructor.id, parent_id: assignment.id, handle: instructor.name)
+          mapping = ReviewResponseMap.create!(
+            reviewed_object_id: assignment.id,
+            reviewer_id: reviewer.id,
+            reviewee_id: team.id
+          )
+          Response.create!(map_id: mapping.id, is_submitted: true)
+        end
+
+        run_test! do |response|
+          data = JSON.parse(response.body)
+          expect(data['response_id']).to be_nil
+          expect(data['request_method']).to eq('POST')
+          expect(data['request_path']).to eq('/responses')
+          expect(data['request_payload']).to eq({ 'response_map_id' => data['map_id'] })
         end
       end
 
@@ -426,10 +452,124 @@ RSpec.describe 'Grades API', type: :request do
     end
 
     it 'denies TA from assigning grades' do
-      patch "/grades/#{participant.id}/assign_grade", 
+      patch "/grades/#{participant.id}/assign_grade",
             params: { grade_for_submission: 90 },
             headers: { 'Authorization' => "Bearer #{ta_token}" }
       expect(response).to have_http_status(:forbidden)
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # insert_section_headers — section headings appear in view_our_scores
+  # -------------------------------------------------------------------------
+  # insert_section_headers is a private helper called inside get_reviews.
+  # We test its effect through the public view_our_scores endpoint: when a questionnaire
+  # has SectionHeader items, the response's round arrays must contain { type: "header" }
+  # sentinel hashes at the correct positions.
+  describe 'section headers in view_our_scores' do
+    let!(:questionnaire) do
+      Questionnaire.create!(
+        name: 'Section Header Test Rubric',
+        instructor_id: instructor.id,
+        private: false,
+        min_question_score: 0,
+        max_question_score: 5,
+        questionnaire_type: 'ReviewQuestionnaire'
+      )
+    end
+
+    before do
+      # SectionHeader before the first group
+      Item.create!(questionnaire_id: questionnaire.id, txt: 'Code Quality', weight: 0,
+                   seq: 1, question_type: 'SectionHeader', break_before: true)
+      # Two scoreable CriterionItems
+      Item.create!(questionnaire_id: questionnaire.id, txt: 'Is the code readable?', weight: 1,
+                   seq: 2, question_type: 'CriterionItem', break_before: true)
+      Item.create!(questionnaire_id: questionnaire.id, txt: 'Is the code tested?', weight: 1,
+                   seq: 3, question_type: 'CriterionItem', break_before: true)
+
+      AssignmentQuestionnaire.create!(
+        assignment_id: assignment.id,
+        questionnaire_id: questionnaire.id,
+        used_in_round: nil,
+        questionnaire_weight: 100
+      )
+
+      # Reviewer submits a response covering the two scored items
+      reviewer_participant = AssignmentParticipant.create!(
+        user_id: student2.id, parent_id: assignment.id, handle: student2.name
+      )
+      map = ReviewResponseMap.create!(
+        reviewed_object_id: assignment.id,
+        reviewer_id: reviewer_participant.id,
+        reviewee_id: team.id
+      )
+      resp = Response.create!(map_id: map.id, is_submitted: true, round: 1)
+      scored_items = Item.where(questionnaire_id: questionnaire.id, question_type: 'CriterionItem').order(:seq)
+      scored_items.each do |item|
+        Answer.create!(response_id: resp.id, item_id: item.id, answer: 4, comments: 'Good')
+      end
+    end
+
+    it 'injects a section header sentinel at position 0 in the round array' do
+      get "/grades/#{assignment.id}/view_our_scores",
+          headers: { 'Authorization' => "Bearer #{student_token}" }
+
+      expect(response).to have_http_status(:ok)
+      data = JSON.parse(response.body)
+
+      round_arrays = data['reviews_of_our_work'].values
+      expect(round_arrays).not_to be_empty
+
+      first_round = round_arrays.first
+      expect(first_round).to be_an(Array)
+
+      # The first element should be the SectionHeader sentinel, not a scores array
+      header_entry = first_round.find { |e| e.is_a?(Hash) && e['type'] == 'header' }
+      expect(header_entry).not_to be_nil
+      expect(header_entry['txt']).to eq('Code Quality')
+    end
+
+    it 'places the header sentinel before the scored items, not after' do
+      get "/grades/#{assignment.id}/view_our_scores",
+          headers: { 'Authorization' => "Bearer #{student_token}" }
+
+      data = JSON.parse(response.body)
+      first_round = data['reviews_of_our_work'].values.first
+
+      header_index = first_round.index { |e| e.is_a?(Hash) && e['type'] == 'header' }
+      # There should be scored-item arrays after the header
+      expect(first_round.length).to be > header_index + 1
+    end
+
+    it 'does not inject headers when the questionnaire has none' do
+      # Remove the SectionHeader item
+      Item.where(questionnaire_id: questionnaire.id, question_type: 'SectionHeader').destroy_all
+
+      get "/grades/#{assignment.id}/view_our_scores",
+          headers: { 'Authorization' => "Bearer #{student_token}" }
+
+      data = JSON.parse(response.body)
+      first_round = data['reviews_of_our_work'].values.first
+
+      header_entry = (first_round || []).find { |e| e.is_a?(Hash) && e['type'] == 'header' }
+      expect(header_entry).to be_nil
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # student_tasks#show — AssignmentParticipant constraint
+  # -------------------------------------------------------------------------
+  describe 'student_tasks show endpoint' do
+    it 'returns 404 with error message when the id does not match any AssignmentParticipant' do
+      # Only AssignmentParticipant records should be matched — other Participant subclasses
+      # for the same user must not slip through and cause type-mismatch 500s.
+      # A missing/non-matching id must produce exactly 404 (not found), not 403 (forbidden).
+      get '/student_tasks/show/999999',
+          headers: { 'Authorization' => "Bearer #{student_token}" }
+
+      expect(response.status).to eq(404)
+      expect(JSON.parse(response.body)['error']).to eq('Participant not found')
     end
   end
 end

@@ -10,7 +10,7 @@ RSpec.describe Assignment, type: :model do
   let(:answer2) { Answer.new(answer: 1, comments: 'Answer text', item_id: 1) }
   
   include RolesHelper
-  before(:all) { @roles = create_roles_hierarchy } # Create the full roles hierarchy once for creating the instructor role later
+  before(:each) { @roles = create_roles_hierarchy }
   let(:institution) { Institution.create!(name: "NC State") } # All users belong to the same institution to satisfy foreign key constraints.
   let(:instructor) { User.create!(name: "instructor", full_name: "Instructor User", email: "instructor@example.com", password: "password", role_id: @roles[:instructor].id, institution_id: institution.id) }
 
@@ -64,7 +64,7 @@ RSpec.describe Assignment, type: :model do
   describe '.get_all_review_comments' do
     it 'returns concatenated review comments and # of reviews in each round' do
       allow(Assignment).to receive(:find).with(1).and_return(assignment)
-      allow(assignment).to receive(:num_review_rounds).and_return(2)
+      allow(assignment).to receive(:num_review_rounds).and_return(3)
       allow(ReviewResponseMap).to receive_message_chain(:where, :find_each).with(reviewed_object_id: 1, reviewer_id: 1)
                                                                            .with(no_args).and_yield(review_response_map)
       response1 = double('Response', round: 1, additional_comment: '')
