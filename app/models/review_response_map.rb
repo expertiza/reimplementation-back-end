@@ -3,6 +3,8 @@ class ReviewResponseMap < ResponseMap
   include ExpertizaConstants::ResponseMapTitles
   belongs_to :reviewee, class_name: 'Team', foreign_key: 'reviewee_id', inverse_of: false
 
+  scope :for_assignment, ->(assignment_id) { where(reviewed_object_id: assignment_id) }
+
   # Returns the assignment associated with this review map.
   def reviewer_assignment
     return assignment

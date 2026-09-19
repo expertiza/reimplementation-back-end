@@ -49,6 +49,25 @@ class Course < ApplicationRecord
     { success: true, ta_name: ta.name }
   end
 
+  # Assignments that have at least one participant.
+  # Used by course report endpoints to exclude empty assignments.
+  def active_assignments
+    assignments
+      .joins("INNER JOIN participants ON participants.parent_id = assignments.id AND participants.type = 'AssignmentParticipant'")
+      .distinct
+      .to_a
+  end
+
+  # All students who participated in at least one of the given assignments,
+  # ordered by name. Used to build the rows of the course report table.
+  def unique_users(assignment_ids)
+    User
+      .joins("INNER JOIN participants ON participants.user_id = users.id")
+      .where("participants.type = 'AssignmentParticipant' AND participants.parent_id IN (?)", assignment_ids)
+      .distinct
+      .order(:name)
+  end
+
   # Creates a copy of the course
   def copy_course
     new_course = dup

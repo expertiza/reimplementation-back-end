@@ -135,10 +135,12 @@ class ResponsesController < ApplicationController
     # submitted state are controlled by dedicated endpoints (`create`, `submit`,
     # `unsubmit`) so reviewers cannot reattach a response to a different map or
     # self-lock a draft through the update action.
-    params.require(:response).permit(
+    p = params.require(:response).permit(
       :additional_comment,
       scores_attributes: [:id, :item_id, :answer, :comments]
     )
+    (p[:scores_attributes] || []).each { |s| s[:answer] = s[:answer].to_i if s.key?(:answer) }
+    p
   end
 
   def current_user_owns_response?(resp = @response)
