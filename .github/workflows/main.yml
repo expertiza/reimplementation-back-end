@@ -16,7 +16,7 @@ jobs:
       
     services:
       mysql:
-        image: mysql:8.0
+        image: mysql:8.4
         env:
           MYSQL_ROOT_PASSWORD: expertiza
           MYSQL_DATABASE: expertiza_test
@@ -75,13 +75,14 @@ jobs:
         run: |
           echo "SimpleCov coverage reporting is configured in spec_helper.rb"
 
-      - name: Run model tests
-        run: bundle exec rspec spec/models
-
-      - name: Run controller tests
-        run: bundle exec rspec spec/requests/
+      - name: Run full RSpec suite
+        shell: bash
+        run: |
+          set -o pipefail
+          bundle exec rspec 2>&1 | tee rspec_results.txt
 
       - name: Generate coverage report
+        if: always()
         run: |
           echo "Coverage report generated in coverage/index.html"
           ls -la coverage/ || echo "No coverage directory found"
@@ -94,10 +95,12 @@ jobs:
           fi
 
       - name: Upload coverage artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: code-coverage-artifacts
           path: coverage/
+          if-no-files-found: warn
           
       - name: Comment coverage on PR
         if: github.event_name == 'pull_request'
