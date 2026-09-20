@@ -76,6 +76,26 @@ jobs:
           set -o pipefail
           bundle exec rspec 2>&1 | tee rspec_results.txt
 
+      - name: Prepare RSpec summary
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          if grep -q "^Failed examples:" rspec_results.txt; then
+            {
+              echo "Failed examples:"
+              grep "^rspec " rspec_results.txt || true
+            } > rspec_summary.txt
+          else
+            echo "All tests passed." > rspec_summary.txt
+          fi
+
+      - name: Upload RSpec summary
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rspec-summary
+          path: rspec_summary.txt
+          if-no-files-found: warn
+
       - name: Check coverage report
         if: always()
         run: |
