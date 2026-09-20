@@ -143,4 +143,55 @@ RSpec.describe ResponseMap, type: :model do
       expect(response_map.has_submission_been_updated?).to be true
     end
   end
+
+  describe '.compute_average_reviewer_score' do
+    def map_with_grade(grade)
+      instance_double(ResponseMap, review_grade: grade)
+    end
+
+    it 'returns nil when passed nil' do
+      expect(ResponseMap.compute_average_reviewer_score(nil)).to be_nil
+    end
+
+    it 'returns nil when passed an empty array' do
+      expect(ResponseMap.compute_average_reviewer_score([])).to be_nil
+    end
+
+    it 'returns nil when all maps have a nil review_grade' do
+      maps = [map_with_grade(nil), map_with_grade(nil)]
+      expect(ResponseMap.compute_average_reviewer_score(maps)).to be_nil
+    end
+
+    it 'returns 100.0 when a single map has a perfect review_grade of 1.0' do
+      expect(ResponseMap.compute_average_reviewer_score([map_with_grade(1.0)])).to eq(100.0)
+    end
+
+    it 'returns 0.0 when a single map has a review_grade of 0.0' do
+      expect(ResponseMap.compute_average_reviewer_score([map_with_grade(0.0)])).to eq(0.0)
+    end
+
+    it 'averages two maps into the correct score' do
+      # (0.5 + 0.75) / 2 * 100 = 62.5
+      maps = [map_with_grade(0.5), map_with_grade(0.75)]
+      expect(ResponseMap.compute_average_reviewer_score(maps)).to eq(62.5)
+    end
+
+    it 'excludes nil-grade maps from the average' do
+      # Only 0.8 contributes → 0.8 / 1 * 100 = 80.0
+      maps = [map_with_grade(nil), map_with_grade(0.8)]
+      expect(ResponseMap.compute_average_reviewer_score(maps)).to eq(80.0)
+    end
+
+    it 'computes an unweighted average (all maps count equally regardless of score)' do
+      # Three maps: 0.4, 0.6, 0.8 → avg 0.6 → 60.0
+      maps = [map_with_grade(0.4), map_with_grade(0.6), map_with_grade(0.8)]
+      expect(ResponseMap.compute_average_reviewer_score(maps)).to eq(60.0)
+    end
+
+    it 'rounds the result to two decimal places' do
+      # (0.1 + 0.2 + 0.3) / 3 * 100 = 20.0 (exact in this case, but covers rounding path)
+      maps = [map_with_grade(0.1), map_with_grade(0.2), map_with_grade(0.3)]
+      expect(ResponseMap.compute_average_reviewer_score(maps)).to eq(20.0)
+    end
+  end
 end

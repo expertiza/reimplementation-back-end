@@ -153,4 +153,8 @@ class User < ApplicationRecord
     JWT.encode({ id: id, exp: 60.days.from_now.to_i }, Rails.application.credentials.secret_key_base)
   end
 
+  def self_and_descendant_ids
+    User.where(parent_id: id).pluck(:id) + [id]
+  end
+
 end

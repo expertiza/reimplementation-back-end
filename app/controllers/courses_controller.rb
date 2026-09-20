@@ -4,13 +4,33 @@ class CoursesController < ApplicationController
   rescue_from ActionController::ParameterMissing, with: :parameter_missing
 
   def action_allowed?
-    current_user_has_instructor_privileges?
+    # TAs are read-only on courses; block all write actions explicitly.
+    return false if current_user_is_a?('Teaching Assistant') && action_name.in?(%w[create destroy add_ta remove_ta copy])
+    # create has no resource to check ownership of, so role gate is sufficient.
+    return current_user_has_instructor_privileges? if action_name == 'create'
+    # index is open to TAs and above; scoping inside the action limits what each role sees.
+    return current_user_has_ta_privileges? if action_name == 'index'
+
+    # show, view_tas, update, destroy, etc. — check per-resource ownership.
+    course = @course || Course.find_by(id: params[:id])
+    return true unless course  # let the action itself render 404
+    current_user_can_manage?(course)
   end
 
   # GET /courses
   # List all the courses
   def index
-    courses = Course.all
+    courses = if current_user_has_super_admin_privileges?
+                Course.all
+              elsif current_user_has_admin_privileges?
+                Course.where(instructor_id: current_user.self_and_descendant_ids)
+              elsif current_user_is_a?('Instructor')
+                Course.where(instructor_id: current_user.id)
+              elsif current_user_is_a?('Teaching Assistant')
+                Course.where(id: current_user_ta_course_ids)
+              else
+                Course.none
+              end
     render json: courses, status: :ok
   end
 

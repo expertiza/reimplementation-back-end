@@ -1,16 +1,44 @@
 class AssignmentsController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :not_found
 
+  # Analogous to CoursesController#action_allowed? — both delegate ownership
+  # checks to current_user_can_manage?. The only intentional difference is the
+  # collection-action gate: TAs may create and list assignments (for courses
+  # they are mapped to), whereas only Instructors and above may create courses.
+  def action_allowed?
+    return current_user_has_ta_privileges? if action_name.in?(%w[index create])
+
+    assignment = Assignment.find_by(id: params[:id] || params[:assignment_id])
+    return true unless assignment  # let the action itself render 404
+
+    current_user_can_manage?(assignment)
+  end
+
   # GET /assignments
   def index
-    assignments = Assignment.all
+    assignments = if current_user_has_super_admin_privileges?
+                    Assignment.all
+                  elsif current_user_has_admin_privileges?
+                    Assignment.where(instructor_id: current_user.self_and_descendant_ids)
+                  elsif current_user_is_a?('Instructor')
+                    Assignment.where(instructor_id: current_user.id)
+                              .or(Assignment.where(course_id: Course.where(instructor_id: current_user.id).select(:id)))
+                  elsif current_user_is_a?('Teaching Assistant')
+                    Assignment.where(course_id: current_user_ta_course_ids)
+                  else
+                    Assignment.none
+                  end
     render json: assignments
   end
 
   # GET /assignments/:id
   def show
     assignment = Assignment.find(params[:id])
-    render json: assignment
+    data = assignment.attributes
+    data['assignment_questionnaires'] = assignment.assignment_questionnaires
+      .includes(:questionnaire)
+      .map { |aq| aq.attributes.merge('questionnaire' => aq.questionnaire&.attributes) }
+    render body: data.to_json, content_type: 'application/json'
   end
 
   # POST /assignments
@@ -27,7 +55,7 @@ class AssignmentsController < ApplicationController
   def update
     assignment = Assignment.find(params[:id])
     if assignment.update(assignment_params)
-      render json: assignment, status: :ok
+      render body: assignment.attributes.to_json, content_type: 'application/json', status: :ok
     else
       render json: assignment.errors, status: :unprocessable_entity
     end
@@ -51,6 +79,28 @@ class AssignmentsController < ApplicationController
     end
   end
   
+  # When a user wants to change the min/max score scale for a rubric, the code
+  # needs to find how many previously assigned ReviewGrade scores would become
+  # invalid (out of bounds) under the new scale, so the UI can warn the
+  # instructor before saving the change.
+  # GET /assignments/:id/review_grades_out_of_bounds?min=0&max=4
+  def review_grades_out_of_bounds
+    assignment = Assignment.find_by(id: params[:id])
+    return render json: { error: "Assignment not found" }, status: :not_found unless assignment
+
+    new_min = params[:min].presence&.to_f
+    new_max = params[:max].presence&.to_f
+
+    participant_ids = AssignmentParticipant.where(parent_id: assignment.id).pluck(:id)
+    grades = ReviewGrade.where(participant_id: participant_ids).pluck(:grade_for_reviewer).compact
+
+    conflicts = grades.count do |g|
+      (new_min && g < new_min) || (new_max && g > new_max)
+    end
+
+    render json: { conflict_count: conflicts }, status: :ok
+  end
+
   #add participant to assignment
   def add_participant
     assignment = Assignment.find_by(id: params[:assignment_id])
@@ -214,52 +264,36 @@ class AssignmentsController < ApplicationController
   # Only allow a list of trusted parameters through.
   def assignment_params
     params.require(:assignment).permit(
+      # Real DB columns
       :name,
-      :title,
-      :description,
       :directory_path,
       :spec_location,
       :private,
-      :show_template_review,
+      :course_id,
       :require_quiz,
-      :has_badge,
-      :staggered_deadline,
-      :is_calibrated,
       :has_teams,
       :max_team_size,
-      :show_teammate_review,
-      :is_pair_programming,
-      :has_mentors,
       :has_topics,
       :review_topic_threshold,
-      :maximum_number_of_reviews_per_submission,
-      :review_strategy,
-      :review_rubric_varies_by_round,
-      :review_rubric_varies_by_topic,
-      :review_rubric_varies_by_role,
-      :has_max_review_limit,
-      :set_allowed_number_of_reviews_per_reviewer,
-      :set_required_number_of_reviews_per_reviewer,
-      :is_review_anonymous,
-      :is_review_done_by_teams,
-      :allow_self_reviews,
-      :reviews_visible_to_other_reviewers,
-      :number_of_review_rounds,
+      :max_reviews_per_submission,
       :days_between_submissions,
       :late_policy_id,
       :is_penalty_calculated,
       :calculate_penalty,
-      :use_signup_deadline,
-      :use_drop_topic_deadline,
-      :use_team_formation_deadline,
-      :use_date_updater,
-      :submission_allowed,
-      :review_allowed,
-      :teammate_allowed,
-      :metareview_allowed,
-      weights: [],
-      notification_limits: [],
-      reminder: []
+      :vary_by_round,
+      :rounds_of_reviews,
+      :instructor_grade_min_score,
+      :instructor_grade_max_score,
+      # Virtual attr_accessors defined on Assignment
+      :title,
+      :description,
+      # DB boolean columns
+      :has_badge,          # legacy column from old Expertiza schema; not actively used but kept to avoid unknown-attribute errors on round-trips
+      :enable_pair_programming,
+      :is_calibrated,
+      :staggered_deadline,
+      # Nested assignment_questionnaires
+      assignment_questionnaires_attributes: [:id, :questionnaire_id, :used_in_round, :questionnaire_weight, :_destroy]
     )
   end
 

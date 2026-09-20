@@ -1,135 +1,114 @@
+# frozen_string_literal: true
+
 module PenaltyHelper
-  def get_penalty(participant_id)
-    set_participant_and_assignment(participant_id)
-    set_late_policy if @assignment.late_policy_id
-  
-    penalties = { submission: 0, review: 0, meta_review: 0 }
-    penalties[:submission] = calculate_submission_penalty
-    penalties[:review] = calculate_review_penalty
-    penalties[:meta_review] = calculate_meta_review_penalty
-    penalties
-  end
-    
-  def set_participant_and_assignment(participant_id)
-    @participant = AssignmentParticipant.find(participant_id)
-    @assignment = @participant.assignment
-  end
-  
-  def set_late_policy
-    late_policy = LatePolicy.find(@assignment.late_policy_id)
-    @penalty_per_unit = late_policy.penalty_per_unit
-    @max_penalty_for_no_submission = late_policy.max_penalty
-    @penalty_unit = late_policy.penalty_unit
+  # Returns the grade after deducting the submission late penalty.
+  # Returns nil when there is no raw grade. Extracted here because the same
+  # deduction is needed anywhere a raw grade is shown alongside a deadline policy.
+  def penalized_submission_grade(raw_grade, participant_id)
+    return nil if raw_grade.nil?
+
+    penalty = penalty_for(participant_id)[:submission]
+    (raw_grade - penalty).round(2)
   end
 
-  def calculate_submission_penalty
-    return 0 if @penalty_per_unit.nil?
-  
-    submission_due_date = get_submission_due_date
-    submission_records = SubmissionRecord.where(team_id: @participant.team.id, assignment_id: @participant.assignment.id)
-    late_submission_times = get_late_submission_times(submission_records, submission_due_date)
-  
-    if late_submission_times.any?
-      calculate_late_submission_penalty(late_submission_times.last.updated_at, submission_due_date)
-    else
-      handle_no_submission(submission_records)
-    end
-  end
-  
-  def get_submission_due_date
-    AssignmentDueDate.where(deadline_type_id: @submission_deadline_type_id, parent_id: @assignment.id).first.due_at
-  end
-  
-  def get_late_submission_times(submission_records, submission_due_date)
-    submission_records.select { |submission_record| submission_record.updated_at > submission_due_date }
-  end
-  
-  def calculate_late_submission_penalty(last_submission_time, submission_due_date)
-    return 0 if last_submission_time <= submission_due_date
-  
-    time_difference = last_submission_time - submission_due_date
-    penalty_units = calculate_penalty_units(time_difference, @penalty_unit)
-    penalty_for_submission = penalty_units * @penalty_per_unit
-    apply_max_penalty_limit(penalty_for_submission)
-  end
-  
-  def handle_no_submission(submission_records)
-    submission_records.any? ? 0 : @max_penalty_for_no_submission
-  end
-  
-  def apply_max_penalty_limit(penalty_for_submission)
-    if penalty_for_submission > @max_penalty_for_no_submission
-      @max_penalty_for_no_submission
-    else
-      penalty_for_submission
-    end
+  # Returns late penalties for each submission type for the given participant.
+  # Returns zeroes for all types when the assignment has no late policy.
+  def penalty_for(participant_id)
+    participant = AssignmentParticipant.find(participant_id)
+    assignment  = participant.assignment
+
+    return zero_penalties unless assignment.late_policy_id
+
+    policy = LatePolicy.find(assignment.late_policy_id)
+    return zero_penalties unless policy.penalty_per_unit
+
+    {
+      submission: submission_penalty(participant, assignment, policy),
+      review:     review_penalty(participant, assignment, policy)
+    }
   end
 
-  def calculate_review_penalty
-    calculate_penalty(@assignment.num_reviews, @review_deadline_type_id, ReviewResponseMap, :get_reviewer)
-  end
-  
-  def calculate_meta_review_penalty
-    calculate_penalty(@assignment.num_review_of_reviews, @meta_review_deadline_type_id, MetareviewResponseMap, :id)
-  end
-  
   private
-  
-  def calculate_penalty(num_reviews_required, deadline_type_id, mapping_class, reviewer_method)
-    return 0 if num_reviews_required <= 0 || @penalty_per_unit.nil?
-  
-    review_mappings = mapping_class.where(reviewer_id: @participant.send(reviewer_method).id)
-    review_due_date = AssignmentDueDate.where(deadline_type_id: deadline_type_id, parent_id: @assignment.id).first
-    return 0 if review_due_date.nil?
-  
-    compute_penalty_on_reviews(review_mappings, review_due_date.due_at, num_reviews_required)
+
+  def zero_penalties
+    { submission: 0, review: 0 }
   end
 
-  def compute_penalty_on_reviews(review_mappings, review_due_date, num_of_reviews_required, penalty_unit, penalty_per_unit, max_penalty)
-    review_timestamps = collect_review_timestamps(review_mappings)
-    review_timestamps.sort!
-    
-    penalty = 0
-  
-    num_of_reviews_required.times do |i|
-      if review_timestamps[i]
-        penalty += calculate_review_penalty(review_timestamps[i], review_due_date, penalty_unit, penalty_per_unit, max_penalty)
-      else
-        penalty = apply_max_penalty_if_missing(max_penalty)
-      end
+  def submission_penalty(participant, assignment, policy)
+    due_date_record = AssignmentDueDate.where(
+      deadline_type_id: ExpertizaConstants::DeadlineTypes::SUBMISSION,
+      parent_id: assignment.id
+    ).first
+    return 0 unless due_date_record
+
+    due_date     = due_date_record.due_at
+    records      = SubmissionRecord.where(team_id: participant.team.id, assignment_id: assignment.id)
+    late_records = records.select { |r| r.updated_at > due_date }
+
+    if late_records.any?
+      late_penalty(late_records.last.updated_at, due_date, policy)
+    elsif records.any?
+      0
+    else
+      policy.max_penalty
     end
-  
-    penalty
   end
-  
-  private
-  
-  def collect_review_timestamps(review_mappings)
-    review_mappings.filter_map do |map|
+
+  def review_penalty(participant, assignment, policy)
+    return 0 if assignment.num_reviews.to_i <= 0
+
+    due_date_record = AssignmentDueDate.where(
+      deadline_type_id: ExpertizaConstants::DeadlineTypes::REVIEW,
+      parent_id: assignment.id
+    ).first
+    return 0 unless due_date_record
+
+    reviewer_id = participant.get_reviewer.id
+    mappings    = ReviewResponseMap.where(reviewer_id: reviewer_id)
+    accumulated_review_penalty(mappings, due_date_record.due_at, assignment.num_reviews, policy)
+  end
+
+  # Accumulates the late penalty across all required reviews for a reviewer.
+  # If a review is missing entirely, the full max_penalty is charged for that slot.
+  def accumulated_review_penalty(mappings, due_date, num_required, policy)
+    timestamps = review_submission_timestamps(mappings)
+
+    total = 0
+    num_required.times do |i|
+      total += if timestamps[i]
+                 late_penalty(timestamps[i], due_date, policy)
+               else
+                 policy.max_penalty
+               end
+    end
+    total
+  end
+
+  # Returns the created_at timestamp of the first response for each map that has one.
+  # Maps with no response are omitted; the result may be shorter than mappings.
+  def review_submission_timestamps(mappings)
+    mappings.filter_map do |map|
       Response.find_by(map_id: map.id)&.created_at unless map.response.empty?
     end
   end
-  
-  def calculate_review_penalty(submission_date, due_date, penalty_unit, penalty_per_unit, max_penalty)
-    return 0 if submission_date <= due_date
-  
-    time_difference = submission_date - due_date
-    penalty_units = calculate_penalty_units(time_difference, penalty_unit)
-    [penalty_units * penalty_per_unit, max_penalty].min
-  end
-  
-  def apply_max_penalty_if_missing(max_penalty)
-    max_penalty
+
+  # Returns the penalty for a single late submission; 0 if on time.
+  # Capped at policy.max_penalty.
+  def late_penalty(submitted_at, due_at, policy)
+    return 0 if submitted_at <= due_at
+
+    units = penalty_units(submitted_at - due_at, policy.penalty_unit)
+    [units * policy.penalty_per_unit, policy.max_penalty].min
   end
 
-  def calculate_penalty_units(time_difference, penalty_unit)
-    case penalty_unit
-    when 'Minute'
-      time_difference / 60
-    when 'Hour'
-      time_difference / 3600
-    when 'Day'
-      time_difference / 86_400
+  # Converts a time difference (in seconds) to the number of penalty units
+  # based on the policy's unit (Minute, Hour, or Day).
+  def penalty_units(time_difference, unit)
+    case unit
+    when 'Minute' then time_difference / 60
+    when 'Hour'   then time_difference / 3600
+    when 'Day'    then time_difference / 86_400
+    else 0
     end
   end
 end

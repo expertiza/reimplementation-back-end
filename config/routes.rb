@@ -24,6 +24,9 @@ Rails.application.routes.draw do
         end
       end
       resources :assignments do
+        member do
+          get :review_grades_out_of_bounds
+        end
         collection do
           post '/:assignment_id/add_participant/:user_id',action: :add_participant
           delete '/:assignment_id/remove_participant/:user_id',action: :remove_participant
@@ -59,6 +62,12 @@ Rails.application.routes.draw do
           get ':id/tas', action: :view_tas
           get ':id/remove_ta/:ta_id', action: :remove_ta
           get ':id/copy', action: :copy
+        end
+        member do
+          scope :course_report do
+            get :grade_summary, controller: 'course_reports', action: :grade_summary
+            get :all_reviews,   controller: 'course_reports', action: :all_reviews
+          end
         end
       end
 
@@ -196,6 +205,14 @@ Rails.application.routes.draw do
           delete :delete_participants
         end
       end
+      resources :reports, only: [] do
+        collection do
+          post :generate_report
+        end
+      end
+
+      resources :review_reports, only: [:update]
+
       resources :grades do
         collection do
           get '/:assignment_id/view_all_scores', to: 'grades#view_all_scores'
