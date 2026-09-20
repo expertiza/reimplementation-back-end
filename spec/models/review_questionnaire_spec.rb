@@ -56,7 +56,8 @@ describe ReviewQuestionnaire, type: :model do
       allow(AssignmentTeam).to receive(:team).with(participant).and_return(team)
 
       # Build two fake responses: one matching round + submitted, one not submitted
-      reviewer      = double('reviewer', fullname: 'Alice Tester')
+      user          = double('user', full_name: 'Alice Tester')
+      reviewer      = double('reviewer', user: user)
       submitted_res = double('response', round: 1, is_submitted: true, map: double(reviewer: reviewer))
       unsubmitted   = double('response', round: 1, is_submitted: false)
       wrong_round   = double('response', round: 2, is_submitted: true)

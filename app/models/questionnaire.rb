@@ -2,7 +2,8 @@
 
 class Questionnaire < ApplicationRecord
   belongs_to :instructor
-  has_many :items, class_name: "Item", foreign_key: "questionnaire_id", dependent: :destroy # the collection of items associated with this Questionnaire
+  # the collection of items associated with this Questionnaire
+  has_many :items, class_name: 'Item', foreign_key: 'questionnaire_id', dependent: :destroy
   before_destroy :any_item_associations?
 
   # Subclasses declare @print_name = '...' and inherit this reader automatically.
@@ -10,11 +11,11 @@ class Questionnaire < ApplicationRecord
     attr_reader :print_name
   end
 
-  validate :validate_questionnaire
+  validate :validate
   validates :name, presence: true
   validates :max_question_score, :min_question_score, numericality: true
 
-  # Scored rubric subclasses must override these.
+  # Subclasses must override symbol and get_assessments_for.
   def symbol
     raise NotImplementedError, "#{self.class}#symbol not implemented"
   end
@@ -23,16 +24,17 @@ class Questionnaire < ApplicationRecord
     raise NotImplementedError, "#{self.class}#get_assessments_for not implemented"
   end
 
-  def validate_questionnaire
-    errors.add(:max_question_score, 'The maximum item score must be a positive integer.') if max_question_score < 1
-    errors.add(:min_question_score, 'The minimum item score must be a positive integer.') if min_question_score < 0
-    errors.add(:min_question_score, 'The minimum item score must be less than the maximum.') if min_question_score >= max_question_score
-    results = Questionnaire.where('id <> ? and name = ? and instructor_id = ?', id, name, instructor_id)
-    errors.add(:name, 'Questionnaire names must be unique.') if results.present?
+  # Validates min < max and name uniqueness per instructor.
+  def validate
+    if min_question_score >= max_question_score
+      errors.add(:min_question_score, 'The minimum item score must be less than the maximum.')
+    end
+    duplicate_questionnaire = Questionnaire.where('id <> ? and name = ? and instructor_id = ?', id, name, instructor_id)
+    errors.add(:name, 'Questionnaire names must be unique.') if duplicate_questionnaire.present?
   end
 
   # Returns a new persisted copy of this questionnaire, including its items and their advice.
-  def self.copy_questionnaire_details(params)
+  def self.copy(params)
     orig_questionnaire = Questionnaire.find(params[:id])
     questionnaire = orig_questionnaire.dup
     questionnaire.instructor_id = params[:instructor_id]
@@ -43,12 +45,12 @@ class Questionnaire < ApplicationRecord
     questionnaire
   end
 
-  # Raises an error if the questionnaire has associated items, preventing deletion.
+  # Raises an error if the questionnaire has associated items.
   def any_item_associations?
     return unless items.any?
 
     raise ActiveRecord::DeleteRestrictionError,
-          'Cannot delete questionnaire because dependent items exist'
+          'Cannot delete questionnaire because at least one assignment uses it.'
   end
 
   def as_json(options = {})
@@ -112,7 +114,7 @@ class Questionnaire < ApplicationRecord
 
   # Calculates the maximum raw score achievable on this questionnaire:
   # (sum of all item weights) × max_item_score. This serves as the denominator
-  # when normalising a response's raw score to a percentage.
+  # when normalizing a response's raw score to a percentage.
   def max_possible_item_score_total
     results = Questionnaire.joins('INNER JOIN items ON items.questionnaire_id = questionnaires.id')
                            .select('SUM(items.weight) * questionnaires.max_item_score as max_score')
