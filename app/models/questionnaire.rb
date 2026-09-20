@@ -70,12 +70,12 @@ class Questionnaire < ApplicationRecord
   QUESTIONNAIRE_TYPES = [
     'ReviewQuestionnaire',
     'AuthorFeedbackQuestionnaire',
-    'BookmarkRatingQuestionnaire',
-    'QuizQuestionnaire',
-    'SurveyQuestionnaire',
-    'CourseEvaluationQuestionnaire',
     'TeammateReviewQuestionnaire',
-    'GlobalSurveyQuestionnaire'
+    'SurveyQuestionnaire',
+    'GlobalSurveyQuestionnaire',
+    'CourseEvaluationQuestionnaire',
+    'BookmarkRatingQuestionnaire',
+    'QuizQuestionnaire'
   ].freeze
 
   # Returns this questionnaire's weighted contribution to an assignment's overall score.
