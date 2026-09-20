@@ -18,7 +18,7 @@ describe BookmarkRatingQuestionnaire, type: :model do
 
   describe '#print_name' do
     it 'returns the correct print name' do
-      expect(BookmarkRatingQuestionnaire.print_name).to eq('Bookmark Rating Rubric')
+      expect(BookmarkRatingQuestionnaire.print_name).to eq('Bookmark-Rating Rubric')
     end
   end
 
