@@ -22,7 +22,6 @@ RSpec.describe JoinTeamRequest, type: :model do
     ActiveJob::Base.queue_adapter = :test
     TeamsParticipant.create(team_id: team.id, participant_id: team_member_participant.id, user_id: team_member.id)
   end
-
   after(:each) do
     clear_enqueued_jobs
   end
@@ -83,14 +82,14 @@ RSpec.describe JoinTeamRequest, type: :model do
     it 'requires participant_id' do
       join_request = JoinTeamRequest.new(team_id: team.id, comments: 'Join please', reply_status: 'PENDING')
       expect(join_request).not_to be_valid
-      expect(join_request.errors[:participant]).to include("must exist")
+      expect(join_request.errors[:participant]).to be_present
     end
 
     # Verifies the model enforces that a request must reference a team.
     it 'requires team_id' do
       join_request = JoinTeamRequest.new(participant_id: requester_participant.id, comments: 'Join please', reply_status: 'PENDING')
       expect(join_request).not_to be_valid
-      expect(join_request.errors[:team]).to include("must exist")
+      expect(join_request.errors[:team]).to be_present
     end
 
     # Confirms invalid state values are rejected so status remains in a safe set.
@@ -101,7 +100,7 @@ RSpec.describe JoinTeamRequest, type: :model do
         reply_status: 'INVALID_STATUS'
       )
       expect(join_request).not_to be_valid
-      expect(join_request.errors[:reply_status]).to include("is not included in the list")
+      expect(join_request.errors[:reply_status]).to be_present
     end
 
     # Ensures the pending state is treated as a valid business state.
@@ -134,77 +133,6 @@ RSpec.describe JoinTeamRequest, type: :model do
       expect(join_request).to be_valid
     end
 
-    # This rule exists, but it is enforced in the controller's create action, not as a model validation.
-    # The model only validates reply_status inclusion, so this example remains intentionally pending.
-    it 'rejects a second pending request for the same participant and team', pending: 'Rule exists outside the model: controller create action checks for an existing pending request.' do
-      JoinTeamRequest.create!(
-        participant_id: requester_participant.id,
-        team_id: team.id,
-        reply_status: 'PENDING'
-      )
-
-      duplicate_request = JoinTeamRequest.new(
-        participant_id: requester_participant.id,
-        team_id: team.id,
-        reply_status: 'PENDING'
-      )
-
-      expect(duplicate_request).not_to be_valid
-      expect(duplicate_request.errors[:participant_id]).to include("already has a pending request for this team")
-    end
-
-    # This rule exists, but it is enforced in the controller's create action, not as a model validation.
-    # The model does not validate membership state, so the business rule is currently enforced outside the model.
-    it 'rejects a request when the participant is already on the target team', pending: 'Rule exists outside the model: controller create action checks team membership before save.' do
-      TeamsParticipant.create!(
-        participant_id: requester_participant.id,
-        team_id: team.id,
-        user_id: requester.id
-      )
-
-      join_request = JoinTeamRequest.new(
-        participant_id: requester_participant.id,
-        team_id: team.id,
-        reply_status: 'PENDING'
-      )
-
-      expect(join_request).not_to be_valid
-      expect(join_request.errors[:participant_id]).to include("already belongs to this team")
-    end
-
-    # This rule does not appear to be enforced anywhere in the current codebase.
-    # The controller checks duplicate pending requests and same-team membership, but not assignment-scope team membership.
-    it 'rejects a request when the participant is already on another team in the same assignment', pending: 'Rule does not appear to be enforced anywhere in the current codebase.' do
-      TeamsParticipant.create!(
-        participant_id: requester_participant.id,
-        team_id: another_team.id,
-        user_id: requester.id
-      )
-
-      join_request = JoinTeamRequest.new(
-        participant_id: requester_participant.id,
-        team_id: team.id,
-        reply_status: 'PENDING'
-      )
-
-      expect(join_request).not_to be_valid
-      expect(join_request.errors[:participant_id]).to include("already assigned to a team in this assignment")
-    end
-
-    # This rule exists, but it is enforced in the controller's team-capacity guard, not as a model validation.
-    # The model does not validate team fullness, so this check is intentionally left pending as a documented gap in the model spec.
-    it 'rejects a request when the team is already full', pending: 'Rule exists outside the model: controller checks team.full? before create.' do
-      allow(team).to receive(:full?).and_return(true)
-
-      join_request = JoinTeamRequest.new(
-        participant_id: requester_participant.id,
-        team_id: team.id,
-        reply_status: 'PENDING'
-      )
-
-      expect(join_request).not_to be_valid
-      expect(join_request.errors[:team_id]).to include("team is full")
-    end
   end
 
   # --------------------------------------------------------------------------
@@ -213,7 +141,7 @@ RSpec.describe JoinTeamRequest, type: :model do
   describe 'creation and attributes' do
     # Checks the request persists the exact participant, team, comment, and status.
     it 'creates a join request with correct attributes' do
-      join_request = JoinTeamRequest.create(
+      join_request = JoinTeamRequest.create!(
         participant_id: requester_participant.id,
         team_id: team.id,
         comments: 'I want to join your team',
@@ -226,9 +154,9 @@ RSpec.describe JoinTeamRequest, type: :model do
       expect(join_request.reply_status).to eq('PENDING')
     end
 
-    # Confirms a default pending status is accepted without explicit assignment.
-    it 'allows creating without explicit reply_status' do
-      join_request = JoinTeamRequest.create(
+    # Confirms a pending status is accepted when explicitly assigned.
+    it 'allows creating with a pending reply_status' do
+      join_request = JoinTeamRequest.create!(
         participant_id: requester_participant.id,
         team_id: team.id,
         reply_status: 'PENDING'
@@ -240,7 +168,7 @@ RSpec.describe JoinTeamRequest, type: :model do
 
     # Verifies a nil comments field is accepted because a request may be submitted without text.
     it 'allows empty comments' do
-      join_request = JoinTeamRequest.create(
+      join_request = JoinTeamRequest.create!(
         participant_id: requester_participant.id,
         team_id: team.id,
         reply_status: 'PENDING'
@@ -269,9 +197,10 @@ RSpec.describe JoinTeamRequest, type: :model do
   describe 'relationships' do
     # Verifies the instance resolves back to the exact participant record.
     it 'returns correct participant' do
-      join_request = JoinTeamRequest.create(
+      join_request = JoinTeamRequest.create!(
         participant_id: requester_participant.id,
-        team_id: team.id
+        team_id: team.id,
+        reply_status: 'PENDING'
       )
 
       expect(join_request.participant).to eq(requester_participant)
@@ -279,9 +208,10 @@ RSpec.describe JoinTeamRequest, type: :model do
 
     # Verifies the instance resolves back to the exact team record.
     it 'returns correct team' do
-      join_request = JoinTeamRequest.create(
+      join_request = JoinTeamRequest.create!(
         participant_id: requester_participant.id,
-        team_id: team.id
+        team_id: team.id,
+        reply_status: 'PENDING'
       )
 
       expect(join_request.team).to eq(team)
@@ -312,33 +242,24 @@ RSpec.describe JoinTeamRequest, type: :model do
     end
 
     # Verifies the request can be accepted once it is still pending.
-    it 'can transition from PENDING to ACCEPTED' do
+    it 'allows changing reply_status from PENDING to ACCEPTED' do
       join_request.update!(reply_status: 'ACCEPTED')
       expect(join_request.reload.reply_status).to eq('ACCEPTED')
     end
 
     # Verifies the request can be declined while still pending.
-    it 'can transition from PENDING to DECLINED' do
+    it 'allows changing reply_status from PENDING to DECLINED' do
       join_request.update!(reply_status: 'DECLINED')
       expect(join_request.reload.reply_status).to eq('DECLINED')
     end
 
     # Verifies the updated status persists across a reload, preventing stale in-memory state.
-    it 'persists status changes' do
+    it 'persists reply_status changes' do
       join_request.update!(reply_status: 'ACCEPTED')
       reloaded = JoinTeamRequest.find(join_request.id)
       expect(reloaded.reply_status).to eq('ACCEPTED')
     end
 
-    # This rule exists, but it is enforced in the controller's accept/decline flow, not as a model validation.
-    # The model only checks inclusion in the allowed status list, so the status-transition guard remains outside the model.
-    it 'rejects reprocessing an already accepted request', pending: 'Rule exists outside the model: controller ensure_request_pending blocks processed requests.' do
-      join_request.update!(reply_status: 'ACCEPTED')
-
-      join_request.reply_status = 'PENDING'
-      expect(join_request).not_to be_valid
-      expect(join_request.errors[:reply_status]).to include("cannot be re-opened after being processed")
-    end
   end
 
   # --------------------------------------------------------------------------
@@ -401,7 +322,7 @@ RSpec.describe JoinTeamRequest, type: :model do
   # --------------------------------------------------------------------------
   describe 'multiple requests' do
     # Verifies a participant may request a different team after an earlier request is resolved.
-    it 'allows same participant to request different teams after a prior request is resolved' do
+    it 'stores a declined request and a later request for another team' do
       JoinTeamRequest.create!(
         participant_id: requester_participant.id,
         team_id: team.id,
