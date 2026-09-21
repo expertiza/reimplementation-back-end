@@ -1,4 +1,14 @@
 ---
+inherit_from: .rubocop_todo.yml
+
+inherit_mode:
+  merge:
+    - Exclude
+
+AllCops:
+  NewCops: disable
+  SuggestExtensions: false
+
 Style/ClassAndModuleChildren:
   Enabled: false
 
