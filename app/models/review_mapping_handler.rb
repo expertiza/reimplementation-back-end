@@ -55,31 +55,43 @@ class ReviewMappingHandler
   # calibration for bit turned on 
   # everyone gets assigned 2 calibration reviews along with the other reviwes
   # assign calibration reviews done by instructor in round robin to students 
+  # Assigns calibration reviews to all student participants in round-robin order.
+  # Uses teams that the instructor has already reviewed with calibrate_to: true as
+  # the calibration targets — mirrors old Expertiza's assign_calibration action.
   def assign_calibration_reviews_round_robin
-    # Get all participants (students)
-    reviewers = AssignmentParticipant.where(parent_id: @assignment.id)
+    instructor_participant = AssignmentParticipant.find_by(
+      parent_id: @assignment.id,
+      user_id:   @assignment.instructor_id
+    )
+    return unless instructor_participant
 
-    # Get all instructor calibration teams/submissions
-    calibration_teams = AssignmentTeam.where(parent_id: @assignment.id, is_calibration: true)
-    return if calibration_teams.empty?
+    # Teams for which the instructor has already submitted a calibration review
+    calibration_team_ids = ReviewResponseMap.where(
+      reviewed_object_id: @assignment.id,
+      reviewer_id:        instructor_participant.id,
+      calibrate_to:       true
+    ).pluck(:reviewee_id)
+    return if calibration_team_ids.empty?
 
-    # Assign in round robin: each reviewer gets 2 calibration reviews
+    calibration_teams = AssignmentTeam.where(id: calibration_team_ids)
+    reviewers         = AssignmentParticipant.where(parent_id: @assignment.id)
+                                             .where.not(user_id: @assignment.instructor_id)
+
     reviewers.each_with_index do |reviewer, index|
       2.times do |i|
         team = calibration_teams[(index + i) % calibration_teams.size]
         ReviewResponseMap.find_or_create_by!(
-          reviewer: reviewer,
-          reviewee: team,
+          reviewer_id:        reviewer.id,
+          reviewee_id:        team.id,
           reviewed_object_id: @assignment.id,
-          calibration: true
+          calibrate_to:       true
         )
       end
     end
   end
 
-
   def calibration_reviews_for(reviewer)
-    ReviewResponseMap.where(reviewer: reviewer, calibration: true)
+    ReviewResponseMap.where(reviewer_id: reviewer.id, calibrate_to: true)
   end
 
   # ===== OUTSTANDING REVIEWS =====

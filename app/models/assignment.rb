@@ -7,19 +7,60 @@ class Assignment < ApplicationRecord
   has_many :teams, class_name: 'AssignmentTeam', foreign_key: 'parent_id', dependent: :destroy, inverse_of: :assignment
   has_many :invitations, class_name: 'Invitation', foreign_key: 'assignment_id', dependent: :destroy # , inverse_of: :assignment
   has_many :assignment_questionnaires, dependent: :destroy
+  accepts_nested_attributes_for :assignment_questionnaires, allow_destroy: true
   has_many :questionnaires, through: :assignment_questionnaires
   has_many :response_maps, foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :project_topics , class_name: 'ProjectTopic', foreign_key: 'assignment_id', dependent: :destroy
   has_many :due_dates,as: :parent, class_name: 'DueDate',  dependent: :destroy
+  accepts_nested_attributes_for :due_dates, allow_destroy: true
   has_many :assignments_duties, dependent: :destroy
   has_many :duties, through: :assignments_duties
   belongs_to :course, optional: true
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments
   accepts_nested_attributes_for :assignment_questionnaires, allow_destroy: true
 
-  #This method return the value of the has_badge field for the given assignment object.
-  attr_accessor :title, :description, :has_badge, :enable_pair_programming
+  # Virtual attributes not backed by a DB column
+  attr_accessor :title, :description
+
+  # Map frontend field names to the actual DB column names
+  alias_attribute :review_strategy, :review_assignment_strategy
+  alias_attribute :maximum_number_of_reviews_per_submission, :max_reviews_per_submission
+  alias_attribute :show_teammate_review, :show_teammate_reviews
+  alias_attribute :is_review_anonymous, :is_anonymous
+  alias_attribute :allow_self_reviews, :is_selfreview_enabled
+  alias_attribute :set_allowed_number_of_reviews_per_reviewer, :num_reviews_allowed
+  alias_attribute :set_required_number_of_reviews_per_reviewer, :num_reviews_required
+  alias_attribute :reviews_visible_to_other_reviewers, :reviews_visible_to_all
+  alias_attribute :review_rubric_varies_by_round,            :vary_by_round
+  alias_attribute :number_of_review_rounds,                  :rounds_of_reviews
+  alias_attribute :is_pair_programming,                      :enable_pair_programming
+  alias_attribute :allow_participants_to_create_bookmarks,   :use_bookmark
+  alias_attribute :allow_tag_prompts,                        :is_answer_tagging_allowed
+  alias_attribute :available_to_students,                    :availability_flag
+  # Feature flags added in reimplementation migration.
+  # Explicit methods instead of alias_attribute so the app loads even before the migration runs
+  # (Rails 7.1 alias_attribute validates column existence at class-load time).
+  def review_rubric_varies_by_topic;     read_attribute(:vary_by_topic);             end
+  def review_rubric_varies_by_topic=(v); write_attribute(:vary_by_topic, v);         end
+  def review_rubric_varies_by_role;      read_attribute(:vary_by_role);              end
+  def review_rubric_varies_by_role=(v);  write_attribute(:vary_by_role, v);          end
+  def auto_assign_mentors;               read_attribute(:auto_assign_mentor);         end
+  def auto_assign_mentors=(v);           write_attribute(:auto_assign_mentor, v);     end
+  def is_role_based;                     read_attribute(:duty_based_assignment);      end
+  def is_role_based=(v);                 write_attribute(:duty_based_assignment, v);  end
+  def enable_bidding_for_reviews;        read_attribute(:bidding_for_reviews_enabled); end
+  def enable_bidding_for_reviews=(v);    write_attribute(:bidding_for_reviews_enabled, v); end
+  def is_review_done_by_teams;           read_attribute(:team_reviewing_enabled);     end
+  def is_review_done_by_teams=(v);       write_attribute(:team_reviewing_enabled, v); end
+  # Frontend field names that map to differently-named existing DB columns
+  alias_attribute :allow_topic_suggestion_from_students,     :allow_suggestions
+  alias_attribute :allow_reviewer_to_choose_topic_to_review, :can_choose_topic_to_review
+  alias_attribute :staggered_deadline_assignment,            :staggered_deadline
+
+  # Purely virtual flags — no DB column, not persisted
+  attr_writer :show_template_review, :has_max_review_limit,
+              :calibration_for_training, :apply_late_policy
 
   def review_questionnaire_id
     Questionnaire.find_by_assignment_id id

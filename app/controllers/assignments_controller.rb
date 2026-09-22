@@ -44,6 +44,15 @@ class AssignmentsController < ApplicationController
   # POST /assignments
   def create
     assignment = Assignment.new(assignment_params)
+    # Mirror old Expertiza behavior: instructor comes from the course when one is
+    # selected (so an admin creating an assignment in another instructor's course
+    # doesn't accidentally take ownership). Fall back to current_user only when no
+    # course is attached (standalone assignment).
+    if assignment.course_id.present?
+      assignment.instructor_id = Course.find_by(id: assignment.course_id)&.instructor_id || current_user.id
+    else
+      assignment.instructor_id = current_user.id
+    end
     if assignment.save
       render json: assignment, status: :created
     else
@@ -59,6 +68,59 @@ class AssignmentsController < ApplicationController
     else
       render json: assignment.errors, status: :unprocessable_entity
     end
+  end
+
+  # GET /assignments/:id/calibration_submissions
+  # Returns all teams for the assignment with their submitted content and the
+  # instructor's calibration review status — mirroring old Expertiza's _calibration.html.erb.
+  def calibration_submissions
+    assignment = Assignment.find(params[:id])
+
+    instructor_participant = AssignmentParticipant.find_by(
+      parent_id: assignment.id,
+      user_id:   assignment.instructor_id
+    )
+
+    teams = AssignmentTeam.where(parent_id: assignment.id)
+
+    payload = teams.map do |team|
+      member_names = TeamsUser.where(team_id: team.id).filter_map do |tu|
+        user = User.find_by(id: tu.user_id)
+        next unless user
+        "#{user.name} (#{user.full_name})"
+      end.join(', ')
+
+      # Resolve calibration review map and its status
+      calibration_map = instructor_participant && ReviewResponseMap.find_by(
+        reviewed_object_id: assignment.id,
+        reviewer_id:        instructor_participant.id,
+        reviewee_id:        team.id,
+        calibrate_to:       true
+      )
+
+      review_status = if calibration_map.nil?
+                        'not_started'
+                      elsif calibration_map.responses.exists?(is_submitted: true)
+                        'completed'
+                      elsif calibration_map.responses.exists?
+                        'in_progress'
+                      else
+                        'not_started'
+                      end
+
+      hyperlinks = team.hyperlinks rescue []
+      files      = SubmissionRecord.where(assignment_id: assignment.id, team_id: team.id, record_type: 'file')
+                                   .pluck(:content)
+
+      {
+        id:                team.id,
+        participant_name:  member_names,
+        review_status:     review_status,
+        submitted_content: { hyperlinks: hyperlinks, files: files }
+      }
+    end
+
+    render json: payload, status: :ok
   end
 
   def not_found
@@ -264,36 +326,60 @@ class AssignmentsController < ApplicationController
   # Only allow a list of trusted parameters through.
   def assignment_params
     params.require(:assignment).permit(
-      # Real DB columns
-      :name,
-      :directory_path,
-      :spec_location,
+      # Identity
+      :name, :title, :description, :directory_path, :spec_location, :course_id,
+      # Visibility
       :private,
-      :course_id,
-      :require_quiz,
-      :has_teams,
-      :max_team_size,
+      # Feature flags (DB columns or aliases defined in Assignment model)
+      :require_quiz, :has_badge, :staggered_deadline, :is_calibrated,
+      :has_teams, :max_team_size,
+      :show_teammate_review,        # alias → show_teammate_reviews
+      :is_pair_programming,         # alias → enable_pair_programming
       :has_topics,
+      :available_to_students,              # alias → availability_flag
+      :allow_tag_prompts,                  # alias → is_answer_tagging_allowed
+      :allow_participants_to_create_bookmarks, # alias → use_bookmark
+      # Review configuration
       :review_topic_threshold,
-      :max_reviews_per_submission,
-      :days_between_submissions,
-      :late_policy_id,
-      :is_penalty_calculated,
-      :calculate_penalty,
-      :vary_by_round,
-      :rounds_of_reviews,
-      :instructor_grade_min_score,
-      :instructor_grade_max_score,
-      # Virtual attr_accessors defined on Assignment
-      :title,
-      :description,
-      # DB boolean columns
-      :has_badge,          # legacy column from old Expertiza schema; not actively used but kept to avoid unknown-attribute errors on round-trips
-      :enable_pair_programming,
-      :is_calibrated,
-      :staggered_deadline,
-      # Nested assignment_questionnaires
-      assignment_questionnaires_attributes: [:id, :questionnaire_id, :used_in_round, :questionnaire_weight, :_destroy]
+      :maximum_number_of_reviews_per_submission, # alias → max_reviews_per_submission
+      :review_strategy,                          # alias → review_assignment_strategy
+      :review_rubric_varies_by_round,            # alias → vary_by_round
+      :review_rubric_varies_by_topic,            # alias → vary_by_topic
+      :review_rubric_varies_by_role,             # alias → vary_by_role
+      :is_review_anonymous,                      # alias → is_anonymous
+      :is_review_done_by_teams,                  # alias → team_reviewing_enabled
+      :allow_self_reviews,                       # alias → is_selfreview_enabled
+      :reviews_visible_to_other_reviewers,       # alias → reviews_visible_to_all
+      :has_max_review_limit,                     # virtual (no DB column, UI toggle only)
+      :set_allowed_number_of_reviews_per_reviewer, # alias → num_reviews_allowed
+      :set_required_number_of_reviews_per_reviewer, # alias → num_reviews_required
+      :number_of_review_rounds,                  # alias → rounds_of_reviews
+      :is_role_based,                            # alias → duty_based_assignment
+      # Topics / bidding
+      :allow_topic_suggestion_from_students,     # alias → allow_suggestions
+      :enable_bidding_for_topics,
+      :enable_bidding_for_reviews,               # alias → bidding_for_reviews_enabled
+      :enable_authors_to_review_other_topics,
+      :allow_reviewer_to_choose_topic_to_review, # alias → can_choose_topic_to_review
+      :staggered_deadline_assignment,            # alias → staggered_deadline
+      # Penalties / late policy
+      :days_between_submissions, :late_policy_id, :is_penalty_calculated,
+      :calculate_penalty, :apply_late_policy,    # apply_late_policy is virtual
+      # Mentors
+      :has_mentors, :auto_assign_mentors,        # auto_assign_mentors → auto_assign_mentor
+      # UI-only virtual flag
+      :show_template_review,
+      # Grade scale
+      :instructor_grade_min_score, :instructor_grade_max_score,
+      # Rubric rows saved via nested attributes
+      assignment_questionnaires_attributes: [
+        :id, :questionnaire_id, :used_in_round, :questionnaire_weight, :notification_limit, :dropdown, :_destroy
+      ],
+      due_dates_attributes: [
+        :id, :deadline_type_id, :due_at, :round,
+        :submission_allowed_id, :review_allowed_id, :teammate_review_allowed_id,
+        :flag, :threshold, :_destroy
+      ]
     )
   end
 
