@@ -204,12 +204,12 @@ RSpec.describe 'questionnaires', type: :request do
       response(422, 'unprocessable entity') do
         let(:body_params) do
           {
-            min_question_score: -1
+            min_question_score: 10
           }
         end
         schema type: :array, items: { type: :string }
         run_test! do
-          expect(response.body).to_not include('"min_question_score":-1')
+          expect(response.body).to_not include('"min_question_score":10')
         end
       end
     end
@@ -255,12 +255,12 @@ RSpec.describe 'questionnaires', type: :request do
       response(422, 'unprocessable entity') do
         let(:body_params) do
           {
-            min_question_score: -1
+            min_question_score: 10
           }
         end
         schema type: :array, items: { type: :string }
         run_test! do
-          expect(response.body).to_not include('"min_question_score":-1')
+          expect(response.body).to_not include('"min_question_score":10')
         end
       end
     end
