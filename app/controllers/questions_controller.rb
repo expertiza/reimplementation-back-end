@@ -57,7 +57,6 @@ class QuestionsController < ApplicationController
       item.weight = params[:weight]
       item.max_label = 'Strongly agree'
       item.min_label = 'Strongly disagree'
-      item.max_value = params[:max_value] || 5
     when 'Dropdown'
       item.alternatives = '0|1|2|3|4|5'
     when 'TextArea'
@@ -103,7 +102,7 @@ class QuestionsController < ApplicationController
   end
 
   def types
-    types = Item.pluck(:question_type).uniq
+    types = ["Criterion", "Scale", "Dropdown", "Multiple choice", "Text area", "Text field", "Grid"]
     render json: types, status: :ok
   end
 
