@@ -55,7 +55,7 @@ class Questionnaire < ApplicationRecord
 
   def as_json(options = {})
     super(options.merge({
-      only: %i[id name private min_item_score max_item_score created_at updated_at questionnaire_type instructor_id],
+      only: %i[id name private min_question_score max_question_score created_at updated_at questionnaire_type instructor_id],
       include: {
         instructor: { only: %i[name email fullname role] }
       }
@@ -69,11 +69,19 @@ class Questionnaire < ApplicationRecord
 
   QUESTIONNAIRE_TYPES = [
     'ReviewQuestionnaire',
+    'MetareviewQuestionnaire',
+    'Author FeedbackQuestionnaire',
     'AuthorFeedbackQuestionnaire',
+    'Teammate ReviewQuestionnaire',
     'TeammateReviewQuestionnaire',
     'SurveyQuestionnaire',
+    'AssignmentSurveyQuestionnaire',
+    'Assignment SurveyQuestionnaire',
+    'Global SurveyQuestionnaire',
     'GlobalSurveyQuestionnaire',
-    'CourseEvaluationQuestionnaire',
+    'Course SurveyQuestionnaire',
+    'CourseSurveyQuestionnaire',
+    'Bookmark RatingQuestionnaire',
     'BookmarkRatingQuestionnaire',
     'QuizQuestionnaire'
   ].freeze
@@ -103,7 +111,7 @@ class Questionnaire < ApplicationRecord
 
   # Does this questionnaire contain checkbox-type items?
   def checkbox_items?
-    items.each { |question| return true if question.type == 'Checkbox' }
+    items.each { |item| return true if item.type == 'Checkbox' }
     false
   end
 
@@ -113,11 +121,11 @@ class Questionnaire < ApplicationRecord
   end
 
   # Calculates the maximum raw score achievable on this questionnaire:
-  # (sum of all item weights) × max_item_score. This serves as the denominator
+  # (sum of all item weights) × max_question_score. This serves as the denominator
   # when normalizing a response's raw score to a percentage.
   def max_possible_item_score_total
     results = Questionnaire.joins('INNER JOIN items ON items.questionnaire_id = questionnaires.id')
-                           .select('SUM(items.weight) * questionnaires.max_item_score as max_score')
+                           .select('SUM(items.weight) * questionnaires.max_question_score as max_score')
                            .where('questionnaires.id = ?', id)
     results[0].max_score
   end

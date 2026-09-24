@@ -9,7 +9,7 @@ module GradesHelper
     all_penalties = {} 
 
     Participant.where(assignment_id: assignment_id).each do |participant|
-      penalties = calculate_penalty(participant.id)
+      penalties = penalty_for(participant.id)
       total_penalty = calculate_total_penalty(penalties)
   
       if total_penalty > 0
@@ -259,9 +259,9 @@ module GradesHelper
     !assignment.is_penalty_calculated
   end
   
-  # Calculates the total penalty from submission, review, and meta-review penalties.
+  # Calculates the total penalty from submission and review penalties.
   def calculate_total_penalty(penalties)
-    total = penalties[:submission] + penalties[:review] + penalties[:meta_review]
+    total = penalties[:submission] + penalties[:review]
     total > 0 ? total : 0
   end
   
@@ -278,9 +278,8 @@ module GradesHelper
 
   def assign_all_penalties(participant, penalties)
     all_penalties[participant.id] = {
-      submission: penalties[:submission],
-      review: penalties[:review],
-      meta_review: penalties[:meta_review],
+      submission:    penalties[:submission],
+      review:        penalties[:review],
       total_penalty: @total_penalty
     }
     return all_penalties
@@ -310,7 +309,7 @@ module GradesHelper
   end
 
   # def get_penalty_from_helper(participant_id)
-  #   get_penalty(participant_id)
+  #   penalty_for(participant_id)
   # end
 
 end
