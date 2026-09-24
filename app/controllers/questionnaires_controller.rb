@@ -1,9 +1,19 @@
 class QuestionnairesController < ApplicationController
-  
-  # Index method returns the list of JSON objects of the questionnaire
+
+  # Index method returns the list of JSON objects of the questionnaire.
+  # Supports an optional ?type= query parameter to filter by questionnaire_type.
   # GET on /questionnaires
+  # GET on /questionnaires?type=ReviewQuestionnaire
   def index
-    @questionnaires = Questionnaire.order(:id)
+    if params[:type].present?
+      unless Questionnaire::QUESTIONNAIRE_TYPES.include?(params[:type])
+        render json: "Invalid questionnaire type: #{params[:type]}", status: :unprocessable_entity and return
+      end
+
+      @questionnaires = Questionnaire.by_type(params[:type]).order(:id)
+    else
+      @questionnaires = Questionnaire.order(:id)
+    end
     render json: @questionnaires, status: :ok and return
   end
   
@@ -18,13 +28,19 @@ class QuestionnairesController < ApplicationController
     end
   end
   
-  # Create method creates a questionnaire and returns the JSON object of the created questionnaire
+  # Create method creates a questionnaire and returns the JSON object of the created questionnaire.
+  # Instantiates the correct subclass (e.g. ReviewQuestionnaire) so that subclass callbacks
+  # such as after_initialize run and set display_type correctly.
   # POST on /questionnaires
-  # Instructor Id statically defined since implementation of Instructor model is out of scope of E2345.
   def create
     begin
-      @questionnaire = Questionnaire.new(questionnaire_params)
-      @questionnaire.display_type = sanitize_display_type(@questionnaire.questionnaire_type)
+      type = params.dig(:questionnaire, :questionnaire_type)
+      unless Questionnaire::QUESTIONNAIRE_TYPES.include?(type)
+        render json: "Invalid questionnaire type: #{type}", status: :unprocessable_entity and return
+      end
+
+      klass = type.constantize
+      @questionnaire = klass.new(questionnaire_params)
       @questionnaire.save!
       render json: @questionnaire, status: :created and return
     rescue ActiveRecord::RecordInvalid
@@ -87,7 +103,7 @@ class QuestionnairesController < ApplicationController
   private
 
   def questionnaire_params
-    params.require(:questionnaire).permit(:name, :questionnaire_type, :private, :min_question_score, :max_question_score, :instructor_id)
+    params.require(:questionnaire).permit(:name, :questionnaire_type, :private, :min_question_score, :max_question_score, :instructor_id, items_attributes: [:id, :txt, :question_type, :weight, :seq, :min_label, :max_label, :alternatives, :size, :break_before, :_destroy])
   end
 
   def sanitize_display_type(type)

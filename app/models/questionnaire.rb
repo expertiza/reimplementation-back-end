@@ -3,7 +3,8 @@
 class Questionnaire < ApplicationRecord
   belongs_to :instructor
   # the collection of items associated with this Questionnaire
-  has_many :items, class_name: 'Item', foreign_key: 'questionnaire_id', dependent: :destroy
+  has_many :items, class_name: 'Item', foreign_key: 'questionnaire_id', dependent: :destroy, inverse_of: :questionnaire
+  accepts_nested_attributes_for :items, allow_destroy: true
   before_destroy :any_item_associations?
 
   # Subclasses declare @print_name = '...' and inherit this reader automatically.
@@ -57,15 +58,20 @@ class Questionnaire < ApplicationRecord
     super(options.merge({
       only: %i[id name private min_question_score max_question_score created_at updated_at questionnaire_type instructor_id],
       include: {
-        instructor: { only: %i[name email fullname role] }
+        instructor: { only: %i[name email fullname role] },
+        items: {}
       }
     })).tap do |hash|
       hash['instructor'] ||= { id: nil, name: nil }
+      hash['items'] ||= []
     end
   end
 
   DEFAULT_MIN_ITEM_SCORE = 0  # The lowest score that a reviewer can assign to any questionnaire item
   DEFAULT_MAX_ITEM_SCORE = 5  # The highest score that a reviewer can assign to any questionnaire item
+
+  # Filters questionnaires by questionnaire_type string.
+  scope :by_type, ->(type) { where(questionnaire_type: type) }
 
   QUESTIONNAIRE_TYPES = [
     'ReviewQuestionnaire',
