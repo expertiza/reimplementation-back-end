@@ -2,6 +2,12 @@ name: Danger
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   danger:
     if: github.event.pull_request.head.repo.full_name == github.repository
