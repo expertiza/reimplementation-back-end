@@ -376,7 +376,13 @@ warning_message_of_config_file_change('.gitignore', /\.gitignore$/)
 warning_message_of_config_file_change('.mention-bot', /\.mention-bot$/)
 warning_message_of_config_file_change('.rspec', /\.rspec$/)
 warning_message_of_config_file_change('Capfile', /(^|\/)Capfile$/)
-warning_message_of_config_file_change('Dangerfile', /(^|\/)Dangerfile$/)
+if !CURRENT_MAINTAINERS.include?(PR_AUTHOR) &&
+   TOUCHED_FILES.grep(/(^|\/)Dangerfile$/).any?
+  warn(
+    'You changed Dangerfile; please double-check whether this is necessary.',
+    sticky: true
+  )
+end
 warning_message_of_config_file_change('Guardfile', /(^|\/)Guardfile$/)
 warning_message_of_config_file_change('LICENSE', /(^|\/)LICENSE$/)
 warning_message_of_config_file_change('Procfile', /(^|\/)Procfile$/)
