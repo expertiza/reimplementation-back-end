@@ -4,7 +4,7 @@ services:
     command: tail -f /dev/null
     environment:
       RAILS_ENV: development
-      DATABASE_URL: mysql2://root:expertiza@db:3306/reimplementation?
+      DATABASE_URL: mysql2://root:${MYSQL_ROOT_PASSWORD}@db:3306/reimplementation?
       CACHE_STORE: redis://redis:6380/0
     ports:
       - "3002:3002"
@@ -16,11 +16,11 @@ services:
 
   db:
     image: mysql:8.4
-    restart: always
+    restart: unless-stopped
     environment:
-      MYSQL_USER: dev
-      MYSQL_PASSWORD: expertiza
-      MYSQL_ROOT_PASSWORD: expertiza
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
       - "3307:3306"
     volumes:
