@@ -27,3 +27,19 @@ alt="IMAGE ALT TEXT HERE" width="560" height="315" border="10" /></a>
 ### Database Credentials
 - username: root
 - password: expertiza
+
+
+### Running tests in Docker
+
+The Docker container uses the development environment by default.
+
+To run RSpec against the test database, use:
+
+```bash
+docker compose exec app sh -lc 'RAILS_ENV=test DATABASE_URL="$TEST_DATABASE_URL" bundle exec rspec'
+
+
+This is safer than just:
+
+```bash
+docker compose exec app bundle exec rspec
