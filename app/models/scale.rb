@@ -3,14 +3,14 @@
 class Scale < ScoredItem
     include QuestionHelper
   
-    attr_accessor :txt, :type, :weight, :min_label, :max_label, :answer, :min_question_score, :max_question_score
+    attr_accessor :txt, :question_type, :weight, :min_label, :max_label, :answer, :min_question_score, :max_question_score
   
     def edit
-      edit_common('Item:', min_question_score, max_question_score , txt, weight, type).to_json
+      edit_common('Item:', min_question_score, max_question_score , txt, weight, question_type).to_json
     end
   
     def view_item_text
-      view_item_text_common(txt, type, weight, score_range).to_json
+      view_item_text_common(txt, question_type, weight, score_range).to_json
     end
   
     def complete

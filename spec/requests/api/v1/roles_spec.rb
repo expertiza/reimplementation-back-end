@@ -10,12 +10,11 @@ RSpec.describe 'Roles API', type: :request do
 
   let(:adm) {
     User.create(
-      name: "adma",
-      password_digest: "password",
+      username: "adma",
+      password: "password",
       role_id: @roles[:admin].id,
       full_name: "Admin A",
       email: "testuser@example.com",
-      mru_directory_path: "/home/testuser",
       )
   }
 
@@ -70,9 +69,6 @@ RSpec.describe 'Roles API', type: :request do
         let(:role) { { name: '' } }
 
         after do |example|
-          puts "Response status: #{response.status}" if response
-          puts "Response body: #{response.body}" if response&.body
-
           example.metadata[:response][:content] = {
             'application/json' => {
               example: JSON.parse(response.body, symbolize_names: true)
@@ -175,8 +171,6 @@ RSpec.describe 'Roles API', type: :request do
         let(:id) { Role.create(name: 'Test Role').id }
 
         after do |example|
-          puts "Response status: #{response.status}" if response
-          puts "Response body: #{response.body}" if response&.body
           example.metadata[:response][:content] = {
             'application/json' => {
               example: JSON.parse(response.body, symbolize_names: true)

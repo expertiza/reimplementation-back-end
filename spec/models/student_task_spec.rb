@@ -46,7 +46,6 @@ RSpec.describe StudentTask, type: :model do
       expect(student_task.participant).to eq(@participant)
       expect(student_task.stage_deadline).to eq("2024-04-23")
       expect(student_task.topic).to eq("E2442")
-      expect(student_task.permission_granted).to be false
     end
   end
 

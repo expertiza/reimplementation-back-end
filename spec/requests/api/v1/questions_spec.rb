@@ -9,12 +9,11 @@ RSpec.describe 'questions', type: :request do
   end
 
   let(:instructor) { User.create(
-    name: "profa",
-    password_digest: "password",
+    username: "profa",
+    password: "password",
     role_id: @roles[:instructor].id,
     full_name: "Prof A",
     email: "testuser@example.com",
-    mru_directory_path: "/home/testuser",
     ) }
 
   let!(:questionnaire) do

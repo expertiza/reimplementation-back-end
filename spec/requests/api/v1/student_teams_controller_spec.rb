@@ -12,8 +12,8 @@ RSpec.describe 'Student Teams API', type: :request do
   #
   let(:student_user) {
     User.create!(
-      name: "student1",
-      password_digest: "password",
+      username: "student1",
+      password: "password",
       role_id: @roles[:student].id,
       full_name: "Student One",
       email: "student1@example.com"
@@ -22,8 +22,8 @@ RSpec.describe 'Student Teams API', type: :request do
 
   let(:student_user2) {
     User.create!(
-      name: "student2",
-      password_digest: "password",
+      username: "student2",
+      password: "password",
       role_id: @roles[:student].id,
       full_name: "Student Two",
       email: "student2@example.com"
@@ -32,8 +32,8 @@ RSpec.describe 'Student Teams API', type: :request do
 
   let(:ta_user) {
     User.create!(
-      name: "ta123",
-      password_digest: "password",
+      username: "ta123",
+      password: "password",
       role_id: @roles[:ta].id,
       full_name: "Teaching Assistant",
       email: "ta@example.com"

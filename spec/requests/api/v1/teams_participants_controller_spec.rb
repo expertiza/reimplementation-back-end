@@ -22,11 +22,10 @@ RSpec.describe 'teams_participants', type: :request do
   let(:instructor) do
     User.create!(
       name:                "profa",
-      password_digest:     "password",
+      password:     "password",
       role_id:              @roles[:instructor].id,
       full_name:           "Prof A",
       email:               "testuser@example.com",
-      mru_directory_path:  "/home/testuser",
       institution_id:      institution.id
     )
   end
@@ -37,7 +36,7 @@ RSpec.describe 'teams_participants', type: :request do
       full_name:       "New Participant",
       name:            "NewParticipant",
       email:           "newparticipant@example.com",
-      password_digest: "password",
+      password: "password",
       role_id:          @roles[:student].id,
       institution_id:  institution.id
     )
@@ -49,7 +48,7 @@ RSpec.describe 'teams_participants', type: :request do
       full_name:       "Student Member",
       name:            "student_member",
       email:           "studentmember@example.com",
-      password_digest: "password",
+      password: "password",
       role_id:          @roles[:student].id,
       institution_id:  institution.id
     )
@@ -77,7 +76,7 @@ RSpec.describe 'teams_participants', type: :request do
       name:            "team_owner",
       full_name:       "Team Owner",
       email:           "team_owner@example.com",
-      password_digest: "password",
+      password: "password",
       role_id:          @roles[:student].id,
       institution_id:  institution.id
     )
@@ -190,7 +189,7 @@ RSpec.describe 'teams_participants', type: :request do
             full_name:       "Other",
             name:            "other",
             email:           "other@example.com",
-            password_digest: "pw",
+            password: "password",
             role_id:          @roles[:student].id,
             institution_id:  institution.id
           )
@@ -324,7 +323,7 @@ RSpec.describe 'teams_participants', type: :request do
       # -- NOT FOUND: Participant record missing for given name --
       response(404, 'participant not found') do
         let(:id)                                     { team_with_assignment.id }
-        let!(:user_without_participant)              { User.create!(full_name: "User Without Participant", name: "no_part", email: "no@example.com", password_digest: "pw", role_id: @roles[:student].id, institution_id: institution.id) }
+        let!(:user_without_participant)              { User.create!(full_name: "User Without Participant", name: "no_part", email: "no@example.com", password: "password", role_id: @roles[:student].id, institution_id: institution.id) }
         let(:payload)                                { { name: user_without_participant.name } }
 
         run_test! do

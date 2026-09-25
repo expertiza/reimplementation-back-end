@@ -19,7 +19,7 @@
 #       name:            suffix,
 #       email:           "#{suffix}@example.com",
 #       full_name:       suffix.split('_').map(&:capitalize).join(' '),
-#       password_digest: "password",
+#       password: "password",
 #       role_id:          roles[:student].id,
 #       institution_id:  institution.id
 #     )
@@ -39,7 +39,7 @@
 #       name:            "instructor",
 #       full_name:       "Instructor User",
 #       email:           "instructor@example.com",
-#       password_digest: "password",
+#       password: "password",
 #       role_id:          roles[:instructor].id,
 #       institution_id:  institution.id
 #     )
@@ -50,7 +50,7 @@
 #       name:            "team_owner",
 #       full_name:       "Team Owner",
 #       email:           "team_owner@example.com",
-#       password_digest: "password",
+#       password: "password",
 #       role_id:          roles[:student].id,
 #       institution_id:  institution.id
 #     )
@@ -66,7 +66,7 @@
 #       name: "mentor_user",
 #       full_name: "Mentor User",
 #       email: "mentor@example.com",
-#       password_digest: "password",
+#       password: "password",
 #       role_id: mentor_role.id,
 #       institution_id: institution.id
 #     )
@@ -85,7 +85,7 @@
 #       name: "student_user",
 #       full_name: "Student User",
 #       email: "student@example.com",
-#       password_digest: "password",
+#       password: "password",
 #       role_id: roles[:student].id,
 #       institution_id: institution.id
 #     )

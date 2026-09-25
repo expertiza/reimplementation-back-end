@@ -9,7 +9,8 @@ class DueDate < ApplicationRecord
   LATE_ALLOWED = 2
   NOT_ALLOWED = 1
 
-  belongs_to :parent, polymorphic: true
+  belongs_to :parent, polymorphic: true, foreign_key: 'assignment_id'
+  belongs_to :assignment, foreign_key: 'assignment_id', optional: true
   validate :due_at_is_valid_datetime
   validates :due_at, presence: true
 
@@ -52,7 +53,7 @@ class DueDate < ApplicationRecord
 
   def set(deadline, assignment_id, max_round)
     self.deadline_type_id = deadline
-    self.parent_id = assignment_id
+    self.assignment_id = assignment_id
     self.round = max_round
     save
   end
@@ -108,7 +109,11 @@ class DueDate < ApplicationRecord
   # Creates duplicate due dates and assigns them to a new assignment
   def copy(new_assignment_id)
     new_due_date = dup
-    new_due_date.parent_id = new_assignment_id
+    new_due_date.assignment_id = new_assignment_id
     new_due_date.save
+  end
+
+  def parent_id
+    assignment_id
   end
 end

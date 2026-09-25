@@ -10,12 +10,11 @@ RSpec.describe 'courses', type: :request do
 
   let(:prof) {
     User.create(
-      name: "profa",
-      password_digest: "password",
+      username: "profa",
+      password: "password",
       role_id: @roles[:instructor].id,
       full_name: "Prof A",
       email: "testuser@example.com",
-      mru_directory_path: "/home/testuser",
     )
   }
 
@@ -29,12 +28,11 @@ RSpec.describe 'courses', type: :request do
     let(:institution) { Institution.create(name: "NC State") }
     let(:ta) {
       User.create(
-        name: "taa",
-        password_digest: "password",
+        username: "taa",
+        password: "password",
         role_id: @roles[:ta].id,
         full_name: "TA A",
         email: "testuser@example.com",
-        mru_directory_path: "/home/testuser",
       )
     }
     let(:course) {
@@ -109,12 +107,11 @@ RSpec.describe 'courses', type: :request do
     let(:id) { course.id }
     let(:ta) {
       User.create(
-        name: "taa",
-        password_digest: "password",
+        username: "taa",
+        password: "password",
         role_id: @roles[:ta].id,
         full_name: "TA A",
         email: "testuser@example.com",
-        mru_directory_path: "/home/testuser",
       )
     }
     let(:ta_id) { ta.id }

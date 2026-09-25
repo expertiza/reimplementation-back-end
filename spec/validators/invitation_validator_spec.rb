@@ -8,11 +8,11 @@ RSpec.describe InvitationValidator do
 
     let(:instructor) { create(:user, role_id: @roles[:instructor].id, name: "profa", full_name: "Prof A", email: "profa@example.com")}
     let(:user1) do
-        User.create!( name: "student", password_digest: "password",role_id: @roles[:student].id, full_name: "Student Name",email: "student@example.com") 
+        User.create!( name: "student", password: "password",role_id: @roles[:student].id, full_name: "Student Name",email: "student@example.com") 
     end
 
     let(:user2) do
-        User.create!( name: "student2", password_digest: "password", role_id: @roles[:student].id, full_name: "Student Two", email: "student2@example.com")
+        User.create!( name: "student2", password: "password", role_id: @roles[:student].id, full_name: "Student Two", email: "student2@example.com")
     end
     let(:assignment) { Assignment.create!(name: "Test Assignment", instructor_id: instructor.id) }
     let(:team1) { AssignmentTeam.create!(name: "Team1", parent_id: assignment.id) }
