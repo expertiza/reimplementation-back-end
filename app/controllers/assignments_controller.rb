@@ -38,6 +38,7 @@ class AssignmentsController < ApplicationController
     data['assignment_questionnaires'] = assignment.assignment_questionnaires
       .includes(:questionnaire)
       .map { |aq| aq.attributes.merge('questionnaire' => aq.questionnaire&.attributes) }
+    data['due_dates'] = assignment.due_dates.map(&:attributes)
     render body: data.to_json, content_type: 'application/json'
   end
 
@@ -64,7 +65,9 @@ class AssignmentsController < ApplicationController
   def update
     assignment = Assignment.find(params[:id])
     if assignment.update(assignment_params)
-      render body: assignment.attributes.to_json, content_type: 'application/json', status: :ok
+      data = assignment.attributes
+      data['due_dates'] = assignment.due_dates.map(&:attributes)
+      render body: data.to_json, content_type: 'application/json', status: :ok
     else
       render json: assignment.errors, status: :unprocessable_entity
     end

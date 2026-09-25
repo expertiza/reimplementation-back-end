@@ -526,7 +526,7 @@ RSpec.describe 'Assignments API', type: :request do
     def patch_assignment(id, body)
       patch "/assignments/#{id}",
             params: { assignment: body }.to_json,
-            headers: { 'Content-Type' => 'application/json', 'Authorization' => Authorization }
+            headers: { 'Content-Type' => 'application/json', 'Authorization' => Authorization() }
     end
 
     # ------------------------------------------------------------------
@@ -564,7 +564,7 @@ RSpec.describe 'Assignments API', type: :request do
         patch_assignment(assignment.id, { set_allowed_number_of_reviews_per_reviewer: 4 })
         expect(response).to have_http_status(:ok)
         expect(assignment.reload.num_reviews_allowed).to eq(4)
-        expect(JSON.parse(response.body)['set_allowed_number_of_reviews_per_reviewer']).to eq(4)
+        expect(JSON.parse(response.body)['num_reviews_allowed']).to eq(4)
       end
 
       it 'persists zero to clear the limit' do
