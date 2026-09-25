@@ -48,7 +48,6 @@ end
 unless CURRENT_MAINTAINERS.include?(PR_AUTHOR)
   if PR_TITLE =~ /E[0-9]{4}/
     message(
-      markdown(
         <<~MARKDOWN
           Thanks for the pull request, and welcome! The Expertiza team is excited to review your changes, and you should hear from us soon.
 
@@ -63,7 +62,6 @@ unless CURRENT_MAINTAINERS.include?(PR_AUTHOR)
     )
   else
     message(
-      markdown(
         <<~MARKDOWN
           Thanks for the pull request, and welcome! The Expertiza team is excited to review your changes, and you should hear from us soon.
 
@@ -83,7 +81,6 @@ end
 # ------------------------------------------------------------------------------
 if LOC > 500
   warn(
-    markdown(
       <<~MARKDOWN
         Your pull request is more than 500 LoC.
         Please make sure you did not commit unnecessary changes, such as `schema.rb`, `node_modules`, or changelog noise.
@@ -98,7 +95,6 @@ end
 # ------------------------------------------------------------------------------
 if PR_TITLE =~ /E[0-9]{4}/ && LOC < 50
   warn(
-    markdown(
       <<~MARKDOWN
         Your pull request is less than 50 LoC.
         If you are finished refactoring the code, please consider writing corresponding tests.
@@ -113,7 +109,6 @@ end
 # ------------------------------------------------------------------------------
 if TOUCHED_FILES.size > 30
   warn(
-    markdown(
       <<~MARKDOWN
         Your pull request touches more than 30 files.
         Please make sure you did not commit unnecessary changes, such as `node_modules`, `vendor`, or workflow churn.
@@ -131,7 +126,6 @@ has_many_dup_commit_messages = messages.uniq.any? { |msg| messages.count(msg) >=
 
 if has_many_dup_commit_messages
   warn(
-    markdown(
       <<~MARKDOWN
         Your pull request has many duplicated commit messages. Please try to squash similar commits
         and use meaningful commit messages later.
@@ -146,7 +140,6 @@ end
 # ------------------------------------------------------------------------------
 if PR_TITLE.match?(/\bWIP\b/i)
   warn(
-    markdown(
       <<~MARKDOWN
         This pull request is classed as `Work in Progress`. It cannot be merged right now.
       MARKDOWN
@@ -160,7 +153,6 @@ end
 # ------------------------------------------------------------------------------
 if PR_ADDED.match?(/\b(TODO|FIXME)\b/i)
   warn(
-    markdown(
       <<~MARKDOWN
         This pull request contains `TODO` or `FIXME` task(s); please fix them.
       MARKDOWN
@@ -174,7 +166,6 @@ end
 # ------------------------------------------------------------------------------
 if ADDED_FILES.grep(/temp|tmp|cache/i).any?
   fail(
-    markdown(
       <<~MARKDOWN
         You committed `temp`, `tmp` or `cache` files. Please remove them.
       MARKDOWN
@@ -193,7 +184,6 @@ end
   next unless added_lines.match?(/\$[A-Za-z0-9_]+/) || added_lines.match?(/@@[A-Za-z0-9_]+/)
 
   warn(
-    markdown(
       <<~MARKDOWN
         You are using global variables (`$`) or class variables (`@@`); please double-check whether this is necessary.
       MARKDOWN
