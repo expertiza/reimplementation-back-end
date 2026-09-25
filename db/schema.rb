@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_17_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_09_21_000002) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -44,6 +44,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_17_000001) do
     t.datetime "updated_at", null: false
     t.integer "used_in_round"
     t.integer "questionnaire_weight"
+    t.boolean "dropdown", default: false, null: false
     t.index ["assignment_id"], name: "fk_aq_assignments_id"
     t.index ["questionnaire_id"], name: "fk_aq_questionnaire_id"
   end
@@ -106,6 +107,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_17_000001) do
     t.boolean "vary_by_round", default: false, null: false
     t.integer "instructor_grade_min_score"
     t.integer "instructor_grade_max_score"
+    t.boolean "vary_by_topic", default: false
+    t.boolean "vary_by_role", default: false
+    t.boolean "has_mentors", default: false
+    t.boolean "auto_assign_mentor", default: false
+    t.boolean "duty_based_assignment", default: false
+    t.boolean "bidding_for_reviews_enabled", default: false
+    t.boolean "enable_bidding_for_topics", default: false
+    t.boolean "enable_authors_to_review_other_topics", default: false
+    t.boolean "team_reviewing_enabled", default: false
     t.index ["course_id"], name: "index_assignments_on_course_id"
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
@@ -333,6 +343,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_17_000001) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "type"
+    t.boolean "calibrate_to", default: false, null: false
     t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 
@@ -468,9 +479,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_17_000001) do
   add_foreign_key "assignments_duties", "duties"
   add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "instructor_id"
+  add_foreign_key "duties", "users", column: "instructor_id"
   add_foreign_key "invitations", "participants", column: "from_id"
   add_foreign_key "invitations", "participants", column: "to_id"
-  add_foreign_key "duties", "users", column: "instructor_id"
   add_foreign_key "items", "questionnaires"
   add_foreign_key "participants", "duties"
   add_foreign_key "participants", "join_team_requests"

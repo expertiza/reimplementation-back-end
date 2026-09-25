@@ -9,9 +9,16 @@ class DueDate < ApplicationRecord
   LATE_ALLOWED = 2
   NOT_ALLOWED = 1
 
+  NAMED_TYPES = [
+    ExpertizaConstants::DeadlineTypes::SIGNUP,
+    ExpertizaConstants::DeadlineTypes::DROP_TOPIC,
+    ExpertizaConstants::DeadlineTypes::TEAM_FORMATION
+  ].freeze
+
   belongs_to :parent, polymorphic: true
   validate :due_at_is_valid_datetime
   validates :due_at, presence: true
+  before_save :set_deadline_name
 
   attr_accessor :teammate_review_allowed, :submission_allowed, :review_allowed
 
@@ -104,6 +111,15 @@ class DueDate < ApplicationRecord
 
     0
   end
+
+  private
+
+  def set_deadline_name
+    return unless NAMED_TYPES.include?(deadline_type_id)
+    self.deadline_name = ExpertizaConstants::DeadlineTypes::NAMES[deadline_type_id]
+  end
+
+  public
 
   # Creates duplicate due dates and assigns them to a new assignment
   def copy(new_assignment_id)

@@ -466,7 +466,6 @@ RSpec.describe 'Assignments API', type: :request do
     end
   end
 
-  # -------------------------------------------------------------------------
   # instructor_grade_min_score / instructor_grade_max_score
   # -------------------------------------------------------------------------
 
@@ -514,6 +513,139 @@ RSpec.describe 'Assignments API', type: :request do
                 headers: { 'Authorization' => Authorization() }
         end.not_to raise_error
         expect(response).to have_http_status(:ok)
+      end
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # PATCH /assignments/{id}  — field persistence for bug-fixed fields
+  # -------------------------------------------------------------------------
+  describe 'PATCH /assignments/:id' do
+    let(:assignment) { Assignment.create!(name: 'Patch Test', instructor_id: prof.id) }
+
+    def patch_assignment(id, body)
+      patch "/assignments/#{id}",
+            params: { assignment: body }.to_json,
+            headers: { 'Content-Type' => 'application/json', 'Authorization' => Authorization() }
+    end
+
+    # ------------------------------------------------------------------
+    # is_penalty_calculated (the real DB column behind apply_late_policy)
+    # ------------------------------------------------------------------
+    context 'is_penalty_calculated' do
+      it 'persists true when sent in the payload' do
+        patch_assignment(assignment.id, { is_penalty_calculated: true })
+        expect(response).to have_http_status(:ok)
+        expect(assignment.reload.is_penalty_calculated).to be true
+        expect(JSON.parse(response.body)['is_penalty_calculated']).to be true
+      end
+
+      it 'persists false when sent in the payload' do
+        assignment.update!(is_penalty_calculated: true)
+        patch_assignment(assignment.id, { is_penalty_calculated: false })
+        expect(response).to have_http_status(:ok)
+        expect(assignment.reload.is_penalty_calculated).to be false
+      end
+
+      it 'apply_late_policy (virtual) in payload does not change is_penalty_calculated' do
+        # Sending the virtual name alone should be a no-op on the DB column.
+        # The frontend now always sends is_penalty_calculated, not apply_late_policy.
+        assignment.update!(is_penalty_calculated: false)
+        patch_assignment(assignment.id, { apply_late_policy: true })
+        expect(assignment.reload.is_penalty_calculated).to be false
+      end
+    end
+
+    # ------------------------------------------------------------------
+    # set_allowed_number_of_reviews_per_reviewer (alias → num_reviews_allowed)
+    # ------------------------------------------------------------------
+    context 'set_allowed_number_of_reviews_per_reviewer' do
+      it 'persists a positive limit' do
+        patch_assignment(assignment.id, { set_allowed_number_of_reviews_per_reviewer: 4 })
+        expect(response).to have_http_status(:ok)
+        expect(assignment.reload.num_reviews_allowed).to eq(4)
+        expect(JSON.parse(response.body)['num_reviews_allowed']).to eq(4)
+      end
+
+      it 'persists zero to clear the limit' do
+        assignment.update!(num_reviews_allowed: 5)
+        patch_assignment(assignment.id, { set_allowed_number_of_reviews_per_reviewer: 0 })
+        expect(response).to have_http_status(:ok)
+        expect(assignment.reload.num_reviews_allowed).to eq(0)
+      end
+
+      it 'has_max_review_limit (virtual) in payload is accepted without error and is a no-op' do
+        patch_assignment(assignment.id, { has_max_review_limit: true })
+        expect(response).to have_http_status(:ok)
+        # DB column is unchanged
+        expect(assignment.reload.num_reviews_allowed).to eq(assignment.num_reviews_allowed)
+      end
+    end
+
+    # ------------------------------------------------------------------
+    # Named deadline due_dates_attributes (drop_topic, team_formation, signup)
+    # ------------------------------------------------------------------
+    context 'named deadline due_dates_attributes' do
+      it 'creates a drop_topic deadline when none exists' do
+        due_at = 7.days.from_now
+        patch_assignment(assignment.id, {
+          due_dates_attributes: [{
+            deadline_type_id: ExpertizaConstants::DeadlineTypes::DROP_TOPIC,
+            due_at: due_at.iso8601,
+            submission_allowed_id: 3,
+            review_allowed_id: 3,
+            teammate_review_allowed_id: 3
+          }]
+        })
+        expect(response).to have_http_status(:ok)
+        dd = assignment.due_dates.find_by(deadline_type_id: ExpertizaConstants::DeadlineTypes::DROP_TOPIC)
+        expect(dd).not_to be_nil
+        expect(dd.due_at.to_i).to be_within(2).of(due_at.to_i)
+      end
+
+      it 'updates only allowed_ids on an existing named deadline (no due_at change)' do
+        original_due_at = 5.days.from_now
+        dd = AssignmentDueDate.create!(
+          parent: assignment,
+          due_at: original_due_at,
+          deadline_type_id: ExpertizaConstants::DeadlineTypes::DROP_TOPIC,
+          submission_allowed_id: 3, review_allowed_id: 3, teammate_review_allowed_id: 3
+        )
+
+        patch_assignment(assignment.id, {
+          due_dates_attributes: [{
+            id: dd.id,
+            deadline_type_id: ExpertizaConstants::DeadlineTypes::DROP_TOPIC,
+            submission_allowed_id: 1,
+            review_allowed_id: 2,
+            teammate_review_allowed_id: 1
+          }]
+        })
+
+        expect(response).to have_http_status(:ok)
+        dd.reload
+        expect(dd.submission_allowed_id).to eq(1)
+        expect(dd.review_allowed_id).to eq(2)
+        # due_at is preserved since we omitted it from the payload
+        expect(dd.due_at.to_i).to be_within(2).of(original_due_at.to_i)
+      end
+
+      it 'creates a team_formation deadline with the correct deadline_name in the response' do
+        due_at = 10.days.from_now
+        patch_assignment(assignment.id, {
+          due_dates_attributes: [{
+            deadline_type_id: ExpertizaConstants::DeadlineTypes::TEAM_FORMATION,
+            due_at: due_at.iso8601,
+            submission_allowed_id: 3,
+            review_allowed_id: 3,
+            teammate_review_allowed_id: 3
+          }]
+        })
+        expect(response).to have_http_status(:ok)
+        due_dates = JSON.parse(response.body)['due_dates']
+        tf = due_dates.find { |d| d['deadline_type_id'] == ExpertizaConstants::DeadlineTypes::TEAM_FORMATION }
+        expect(tf).not_to be_nil
+        expect(tf['deadline_name']).to eq('team_formation')
       end
     end
   end
