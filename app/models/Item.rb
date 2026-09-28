@@ -20,7 +20,7 @@ class Item < ApplicationRecord
   end
 
   def set_seq
-    self.seq = questionnaire.items.size + 1
+    self.seq = questionnaire.items.size
   end
 
   def as_json(options = {})

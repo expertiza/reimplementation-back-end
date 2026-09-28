@@ -111,15 +111,17 @@ RSpec.describe 'questions', type: :request do
           break_before: { type: :boolean },
           txt: { type: :string },
           question_type: { type: :string },
+          seq: { type: :number }
         },
-        required: %w[weight questionnaire_id break_before txt question_type]
+        required: %w[weight questionnaire_id break_before txt question_type seq]
       }
 
       # post request on /questions returns 201 created response and creates a item with given valid parameters
       response(201, 'created') do
         let(:item) { valid_question_params }
         run_test! do
-          expect(response.body).to include('"seq":1')
+          parsed_response = JSON.parse(response.body)
+          expect(parsed_response['seq'].to_i).to eq(1)
         end
       end
 
@@ -536,7 +538,9 @@ RSpec.describe 'questions', type: :request do
       # get request on /questions/types returns types of questions present in the database
       response(200, 'successful') do
         run_test! do
-          expect(response.body.size).to eq(2)
+          parsed_response = JSON.parse(response.body)
+          expect(parsed_response.size).to eq(7)
+          expect(parsed_response).to include("Multiple choice")
         end
       end
     end
