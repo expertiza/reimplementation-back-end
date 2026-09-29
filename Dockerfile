@@ -1,6 +1,6 @@
 FROM ruby:3.4.5
 
-LABEL maintainer="Ankur Mundra <ankurmundra0212@gmail.com>"
+LABEL maintainer="Bestin Lalu <blalu@ncsu.edu>"
 # Install dependencies
 RUN apt-get update && \
     apt-get install -y curl netcat-openbsd
