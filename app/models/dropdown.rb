@@ -2,7 +2,7 @@
 
 class Dropdown < UnscoredItem
     include QuestionHelper
-  
+    self.inheritance_column = nil
     attr_accessor :txt, :type, :count, :weight
     def edit(count)
       edit_common("Item #{count}:", txt , weight, type).to_json

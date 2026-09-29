@@ -10,8 +10,8 @@ RSpec.describe 'StudentTasks API', type: :request do
 
   let!(:instructor) do
     User.create!(
-      name: "Instructor",
-      password_digest: "password",
+      username: "Instructor",
+      password: "password",
       role_id: @roles[:instructor].id,
       full_name: "Instructor Name",
       email: "instructor@example.com"
@@ -20,8 +20,8 @@ RSpec.describe 'StudentTasks API', type: :request do
 
   let(:studenta) do
     User.create!(
-      name: "studenta",
-      password_digest: "password",
+      username: "studenta",
+      password: "password",
       role_id: @roles[:student].id,
       full_name: "Student A",
       email: "testuser@example.com"

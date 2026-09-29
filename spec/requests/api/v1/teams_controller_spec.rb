@@ -18,12 +18,11 @@ RSpec.describe TeamsController, type: :request do
   # An instructor user who will own assignments and courses.
   let(:instructor) do
     User.create!(
-      name:                "profa",
-      password_digest:     "password",
+      username:                "profa",
+      password:     "password",
       role_id:              @roles[:instructor].id,
       full_name:           "Prof A",
       email:               "testuser@example.com",
-      mru_directory_path:  "/home/testuser",
       institution_id:      institution.id
     )
   end
@@ -32,9 +31,9 @@ RSpec.describe TeamsController, type: :request do
   let(:user) do
     User.create!(
       full_name:       "New Participant",
-      name:            "NewParticipant",
+      username:            "NewParticipant",
       email:           "newparticipant@example.com",
-      password_digest: "password",
+      password: "password",
       role_id:          @roles[:student].id,
       institution_id:  institution.id
     )
@@ -44,9 +43,9 @@ RSpec.describe TeamsController, type: :request do
   let(:other_user) do
     User.create!(
       full_name:       "Student Member",
-      name:            "student_member",
+      username:            "student_member",
       email:           "studentmember@example.com",
-      password_digest: "password",
+      password: "password",
       role_id:          @roles[:student].id,
       institution_id:  institution.id
     )
@@ -69,10 +68,10 @@ RSpec.describe TeamsController, type: :request do
 
   let(:team_owner) do
     User.create!(
-      name:            "team_owner",
+      username:            "team_owner",
       full_name:       "Team Owner",
       email:           "team_owner@example.com",
-      password_digest: "password",
+      password: "password",
       role_id:          @roles[:student].id,
       institution_id:  institution.id
     )

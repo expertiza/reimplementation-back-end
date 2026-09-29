@@ -63,12 +63,11 @@ RSpec.describe 'Submitted Content API', type: :request do
 
   let(:instructor) do
     User.create!(
-      name: 'profa',
-      password_digest: 'password',
+      username: 'profa',
+      password: 'password',
       role_id: @roles[:instructor].id,
       full_name: 'Prof A',
       email: 'testuser@example.com',
-      mru_directory_path: '/home/testuser',
       institution_id: institution.id
     )
   end
@@ -76,9 +75,9 @@ RSpec.describe 'Submitted Content API', type: :request do
   let(:student) do
     User.create!(
       full_name: 'Student Member',
-      name: 'student_member',
+      username: 'student_member',
       email: 'studentmember@example.com',
-      password_digest: 'password',
+      password: 'password',
       role_id: @roles[:student].id,
       institution_id: institution.id
     )
@@ -124,8 +123,7 @@ RSpec.describe 'Submitted Content API', type: :request do
       content: '/path/to/file.txt',
       operation: 'Submit File',
       team_id: team.id,
-      user: student.name,
-      assignment_id: assignment.id
+      submitted_by: student.name
     }.merge(attrs))
   end
 
@@ -169,10 +167,9 @@ RSpec.describe 'Submitted Content API', type: :request do
               content: { type: :string },
               operation: { type: :string },
               team_id: { type: :integer },
-              user: { type: :string },
-              assignment_id: { type: :integer }
+              submitted_by: { type: :string },
             },
-            required: %w[content team_id user assignment_id]
+            required: %w[content team_id submitted_by]
           }
         }
       }
@@ -184,8 +181,7 @@ RSpec.describe 'Submitted Content API', type: :request do
               content: 'http://example.com',
               operation: 'Submit Hyperlink',
               team_id: team.id,
-              user: student.name,
-              assignment_id: assignment.id
+              submitted_by: student.name,
             }
           }
         end
@@ -217,7 +213,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
 
         run_test! do
-          expect(response).to have_http_status(:unprocessable_content)
+          expect(response).to have_http_status(:unprocessable_entity)
         end
       end
     end
@@ -637,7 +633,6 @@ RSpec.describe 'Submitted Content API', type: :request do
           send(method, '/submitted_content/submit_file',
               params: { id: id, uploaded_file: uploaded_file, unzip: true, current_folder: { name: '/' } },
               headers: auth_headers_student.merge({ 'CONTENT_TYPE' => 'multipart/form-data' }))
-          puts "RESPONSE BODY: #{response.body}" 
           expect(response).to have_http_status(:created)
         end
       end

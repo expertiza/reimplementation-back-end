@@ -13,10 +13,10 @@ describe Response do
   let(:item) { ScoredItem.new(weight: 2) }
   let(:answer) { Answer.new(answer: 1, comments: 'Answer text', item:item) }
   let(:questionnaire) { Questionnaire.new(items: [item], min_question_score: 0, max_question_score: 5) }
-  let(:assignment_questionnaire) { AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire, used_in_round: 1, notification_limit: 5.0)}
+  let(:assignment_questionnaire) { AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire, used_in_round: 1, notification_threshold: 5.0)}
   let(:review_response_map) { ReviewResponseMap.new(assignment: assignment, reviewee: team, reviewer: participant2) }
   let(:response_map) { ResponseMap.new(assignment: assignment, reviewee: participant, reviewer: participant2) }
-  let(:response) { Response.new(map_id: review_response_map.id, response_map: review_response_map, round:1, scores: [answer]) }
+  let(:response) { Response.new(response_map_id: review_response_map.id, response_map: review_response_map, round:1, scores: [answer]) }
 
   # Compare the current response score with other scores on the same artifact, and test if the difference is significant enough to notify
   # instructor.
@@ -38,7 +38,7 @@ describe Response do
           allow(response).to receive(:maximum_score).and_return(100)
           allow(response).to receive(:questionnaire_by_answer).with(answer).and_return(questionnaire)
           allow(AssignmentQuestionnaire).to receive(:find_by).with(assignment_id: assignment.id, questionnaire_id: questionnaire.id)
-                                                             .and_return(double('AssignmentQuestionnaire', notification_limit: 5.0))
+                                                             .and_return(double('AssignmentQuestionnaire', notification_threshold: 5.0))
           expect(response.reportable_difference?).to be true
         end
       end

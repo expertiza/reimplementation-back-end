@@ -5,8 +5,7 @@ class SubmissionRecord < ApplicationRecord
   validates :content, presence: true
   validates :operation, presence: true
   validates :team_id, presence: true
-  validates :user, presence: true
-  validates :assignment_id, presence: true
+  validates :submitted_by, presence: true
 
   scope :files, -> { where(record_type: 'file') }
   scope :hyperlinks, -> { where(record_type: 'hyperlink') }

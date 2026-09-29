@@ -9,7 +9,7 @@ RSpec.describe 'ProjectTopicController API', type: :request do
   let!(:instructor) do
     User.create!(
       name: "Instructor",
-      password_digest: "password",
+      password: "password",
       role_id: @roles[:instructor].id,
       full_name: "Instructor Name",
       email: "instructor@example.com"
