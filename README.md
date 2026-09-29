@@ -37,9 +37,10 @@ To run RSpec against the test database, use:
 
 ```bash
 docker compose exec app sh -lc 'RAILS_ENV=test DATABASE_URL="$TEST_DATABASE_URL" bundle exec rspec'
-
+```
 
 This is safer than just:
 
 ```bash
 docker compose exec app bundle exec rspec
+```
