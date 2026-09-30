@@ -14,7 +14,7 @@ RSpec.describe StudentTask, type: :model do
       topic:             "E2442",
       current_stage:     "submission",
       stage_deadline:    "2024-04-23",
-      permission_granted: true,
+      OK_to_show:        true,
       team:              @team,
       user:              @user,
       id:                1
@@ -57,7 +57,7 @@ RSpec.describe StudentTask, type: :model do
       expect(student_task.course).to eq(@course.name)
       expect(student_task.topic).to be_nil # SignedUpTeam stubbed to return nil
       expect(student_task.current_stage).to eq("submission")
-      expect(student_task.permission_granted).to be @participant.permission_granted
+      expect(student_task.permission_granted).to be @participant.OK_to_show
       expect(student_task.participant).to be @participant
     end
   end
@@ -131,9 +131,9 @@ RSpec.describe StudentTask, type: :model do
 
       # Participants stub — course_a/Beta should sort before course_a/Alpha because of
       # alphabetical assignment name comparison within the same course
-      p1 = double(assignment: assignment_a2, team: @team, user: @user, permission_granted: true, id: 1)
-      p2 = double(assignment: assignment_a1, team: @team, user: @user, permission_granted: true, id: 2)
-      p3 = double(assignment: assignment_b1, team: @team, user: @user, permission_granted: true, id: 3)
+      p1 = double(assignment: assignment_a2, team: @team, user: @user, OK_to_show: true, id: 1)
+      p2 = double(assignment: assignment_a1, team: @team, user: @user, OK_to_show: true, id: 2)
+      p3 = double(assignment: assignment_b1, team: @team, user: @user, OK_to_show: true, id: 3)
 
       user = double(id: 42)
       allow(DueDate).to receive(:current_stage_for).and_return("submission")

@@ -164,19 +164,19 @@ RSpec.describe DueDate, type: :model do
       let!(:topic3) { ProjectTopic.create(id: 5, topic_name: 'Test Topic2', assignment: assignment2) }
       let!(:topic_due_date1) do
         DueDate.create(parent: topic1, due_at: 2.days.from_now, submission_allowed_id: 3, review_allowed_id: 3,
-                       deadline_type_id: 3, parent_type: 'ProjectTopic')
+                       deadline_type_id: 3, parent_type: 'ProjectTopic', type: 'TopicDueDate')
       end
       let!(:topic_due_date2) do
         DueDate.create(parent: topic1, due_at: 3.days.from_now, submission_allowed_id: 3, review_allowed_id: 3,
-                       deadline_type_id: 3, parent_type: 'ProjectTopic')
+                       deadline_type_id: 3, parent_type: 'ProjectTopic', type: 'TopicDueDate')
       end
       let!(:past_topic_due_date) do
         DueDate.create(parent: topic1, due_at: 1.day.ago, submission_allowed_id: 3, review_allowed_id: 3,
-                       deadline_type_id: 3, parent_type: 'ProjectTopic')
+                       deadline_type_id: 3, parent_type: 'ProjectTopic', type: 'TopicDueDate')
       end
       let!(:past_topic_due_date2) do
         DueDate.create(parent: topic2, due_at: 2.day.ago, submission_allowed_id: 3, review_allowed_id: 3,
-                       deadline_type_id: 3, parent_type: 'ProjectTopic')
+                       deadline_type_id: 3, parent_type: 'ProjectTopic', type: 'TopicDueDate')
       end
       let!(:assignment_due_date) do
         DueDate.create(assignment: assignment2, due_at: 2.days.from_now, submission_allowed_id: 3, review_allowed_id: 3,

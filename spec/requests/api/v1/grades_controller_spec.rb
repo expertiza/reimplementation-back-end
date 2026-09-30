@@ -350,7 +350,7 @@ RSpec.describe 'Grades API', type: :request do
 
         run_test! do |response|
           data = JSON.parse(response.body)
-          expect(data).to have_key('response_map_id')
+          expect(data).to have_key('map_id')
           expect(data).to have_key('response_id')
           expect(data['response_id']).to be_nil
           expect(data['request_method']).to eq('POST')
@@ -369,7 +369,7 @@ RSpec.describe 'Grades API', type: :request do
             reviewer_id: reviewer.id,
             reviewee_id: team.id
           )
-          Response.create!(map_id: mapping.id, is_submitted: false)
+          Response.create!(response_map_id: mapping.id, is_submitted: false)
         end
 
         run_test! do |response|
@@ -391,7 +391,7 @@ RSpec.describe 'Grades API', type: :request do
             reviewer_id: reviewer.id,
             reviewee_id: team.id
           )
-          Response.create!(map_id: mapping.id, is_submitted: true)
+          Response.create!(response_map_id: mapping.id, is_submitted: true)
         end
 
         run_test! do |response|
@@ -504,7 +504,7 @@ RSpec.describe 'Grades API', type: :request do
         reviewer_id: reviewer_participant.id,
         reviewee_id: team.id
       )
-      resp = Response.create!(map_id: map.id, is_submitted: true, round: 1)
+      resp = Response.create!(response_map_id: map.id, is_submitted: true, round: 1)
       scored_items = Item.where(questionnaire_id: questionnaire.id, question_type: 'CriterionItem').order(:seq)
       scored_items.each do |item|
         Answer.create!(response_id: resp.id, item_id: item.id, answer: 4, comments: 'Good')

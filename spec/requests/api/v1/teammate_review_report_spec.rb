@@ -55,7 +55,7 @@ RSpec.describe 'Teammate Review Report', type: :request do
   end
 
   def submit_response(map, submitted: true)
-    Response.create!(map_id: map.id, is_submitted: submitted, updated_at: Time.current)
+    Response.create!(response_map_id: map.id, is_submitted: submitted, updated_at: Time.current)
   end
 
   # -----------------------------------------------------------------------
@@ -241,7 +241,7 @@ RSpec.describe 'Teammate Review Report', type: :request do
 
     before do
       map = create_teammate_map(ap1, ap2)
-      resp = Response.create!(map_id: map.id, is_submitted: true, additional_comment: 'Great work')
+      resp = Response.create!(response_map_id: map.id, is_submitted: true, additional_comment: 'Great work')
       item = questionnaire.items.create!(txt: 'Collaboration', seq: 1, question_type: 'Scale', weight: 1, break_before: true)
       Answer.create!(response: resp, item: item, answer: 4, comments: 'Good')
     end

@@ -81,9 +81,9 @@ class BookmarksController < ApplicationController
     @bookmark = Bookmark.find(params[:id])
     @bookmark_rating = BookmarkRating.where(artifact_id: @bookmark.id, rater_id: @current_user.id).first
     if @bookmark_rating.blank?
-      @bookmark_rating = BookmarkRating.create(artifact_id: @bookmark.id, rater_id: @current_user.id, ratings: params[:rating])
+      @bookmark_rating = BookmarkRating.create(artifact_id: @bookmark.id, rater_id: @current_user.id, rating: params[:rating])
     else
-      @bookmark_rating.update(ratings: params[:rating].to_i)
+      @bookmark_rating.update(rating: params[:rating].to_i)
     end
     render json: {"bookmark": @bookmark, "rating": @bookmark_rating}, status: :ok
   end

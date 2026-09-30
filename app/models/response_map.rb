@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class ResponseMap < ApplicationRecord
-  has_many :responses, foreign_key: 'map_id', dependent: :destroy, inverse_of: false
+  has_many :responses, foreign_key: 'response_map_id', dependent: :destroy, inverse_of: false
   belongs_to :reviewer, class_name: 'Participant', foreign_key: 'reviewer_id', inverse_of: false
   belongs_to :reviewee, class_name: 'Participant', foreign_key: 'reviewee_id', inverse_of: false
   belongs_to :assignment, class_name: 'Assignment', foreign_key: 'reviewed_object_id', inverse_of: false
@@ -44,7 +44,7 @@ class ResponseMap < ApplicationRecord
   # or when the review round changed. True means show "Update"; false means show "Edit".
   def has_submission_been_updated?
     # Most recent submitted review for this mapping
-    last = Response.where(map_id: id, is_submitted: true).order(Arel.sql('created_at DESC')).first
+    last = Response.where(response_map_id: id, is_submitted: true).order(Arel.sql('created_at DESC')).first
     return true if last.nil?
 
     last_created_at = last.created_at
@@ -70,7 +70,7 @@ class ResponseMap < ApplicationRecord
       maps.each do |map|
         next if map.response.empty?
 
-        all_resp = Response.where(map_id: map.map_id).last
+        all_resp = Response.where(response_map_id: map.map_id).last
         if map.type.eql?('ReviewResponseMap')
           array_sort << all_resp if all_resp.is_submitted
         else

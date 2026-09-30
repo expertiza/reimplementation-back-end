@@ -42,7 +42,7 @@ module PenaltyHelper
     return 0 unless due_date_record
 
     due_date     = due_date_record.due_at
-    records      = SubmissionRecord.where(team_id: participant.team.id, assignment_id: assignment.id)
+    records      = SubmissionRecord.where(team_id: participant.team.id)
     late_records = records.select { |r| r.updated_at > due_date }
 
     if late_records.any?
@@ -88,7 +88,7 @@ module PenaltyHelper
   # Maps with no response are omitted; the result may be shorter than mappings.
   def review_submission_timestamps(mappings)
     mappings.filter_map do |map|
-      Response.find_by(map_id: map.id)&.created_at unless map.response.empty?
+      Response.find_by(response_map_id: map.id)&.created_at unless map.response.empty?
     end
   end
 

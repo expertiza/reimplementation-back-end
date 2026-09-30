@@ -36,8 +36,8 @@ class StudentTask
       course:             assignment.course&.name || 'Unknown Course',
       topic:              topic_name,
       current_stage:      current_stage,
-      stage_deadline:     parse_stage_deadline(next_due ? next_due.due_at.in_time_zone(participant.user.try(:timezonepref) || 'UTC') : 'Finished'),
-      permission_granted: participant.permission_granted,
+      stage_deadline:     parse_stage_deadline(next_due ? next_due.due_at.in_time_zone(participant.user.try(:time_zone_pref) || 'UTC') : 'Finished'),
+      permission_granted: participant.OK_to_show,
       participant:        participant,
       active_round:       active_round
     )
@@ -57,7 +57,7 @@ class StudentTask
     # for each of these:
     #   participant.assignment         →  included via :assignment
     #   assignment.course              →  included via assignment: :course
-    #   participant.user               →  included via :user  (for timezonepref)
+    #   participant.user               →  included via :user  (for time_zone_pref)
     #
     # Remaining per-row queries that cannot be batched without schema changes:
     #   participant.team               →  resolved through TeamsParticipant (custom method,

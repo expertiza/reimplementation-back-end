@@ -88,7 +88,7 @@ class AssignmentParticipant < Participant
     end
 
     ReviewResponseMap.where(reviewer_id: id).find_each do |map|
-      Response.where(map_id: map.id, is_submitted: true).order(updated_at: :desc).each do |response|
+      Response.where(response_map_id: map.id, is_submitted: true).order(updated_at: :desc).each do |response|
         timeline << {
           'id'    => response.id,
           'name'  => "Round #{response.round} peer review",
@@ -100,7 +100,7 @@ class AssignmentParticipant < Participant
     end
 
     FeedbackResponseMap.where(reviewer_id: id).find_each do |map|
-      response = Response.where(map_id: map.id, is_submitted: true).order(updated_at: :desc).first
+      response = Response.where(response_map_id: map.id, is_submitted: true).order(updated_at: :desc).first
       next if response.nil?
 
       timeline << {

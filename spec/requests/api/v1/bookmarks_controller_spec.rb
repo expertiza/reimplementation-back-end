@@ -248,7 +248,7 @@ RSpec.describe 'bookmarks', type: :request do
       response(200, 'successful') do
         let(:rating) { { rating: 4 } }
         run_test! do
-          expect(response.body).to include('"ratings":4')
+          expect(response.body).to include('"rating":4')
         end
       end
     end
@@ -259,10 +259,10 @@ RSpec.describe 'bookmarks', type: :request do
 
       response(200, 'successful') do
         before do
-          BookmarkRating.create!(artifact_id: bookmark.id, rater_id: student.id, ratings: 5)
+          BookmarkRating.create!(artifact_id: bookmark.id, rater_id: student.id, rating: 5)
         end
         run_test! do
-          expect(response.body).to include('"ratings":5')
+          expect(response.body).to include('"rating":5')
         end
       end
 

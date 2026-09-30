@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_17_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_09_25_032901) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email"
@@ -141,7 +141,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_17_000001) do
     t.integer "artifact_id"
     t.datetime "created_at", null: false
     t.integer "rater_id"
-    t.integer "ratings"
+    t.integer "rating"
     t.datetime "updated_at", null: false
   end
 
@@ -306,6 +306,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_17_000001) do
     t.string "type", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id"
+    t.integer "duty_id"
     t.index ["join_team_request_id"], name: "index_participants_on_join_team_request_id"
     t.index ["team_id"], name: "index_participants_on_team_id"
     t.index ["user_id"], name: "fk_participant_users"
@@ -631,6 +632,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_17_000001) do
     t.string "time_zone_pref"
     t.datetime "updated_at", null: false
     t.string "username"
+    t.string "mru_directory_path"
+    t.boolean "email_on_review", default: false
     t.index ["institution_id"], name: "index_users_on_institution_id"
     t.index ["parent_id"], name: "index_users_on_parent_id"
     t.index ["role_id"], name: "index_users_on_role_id"

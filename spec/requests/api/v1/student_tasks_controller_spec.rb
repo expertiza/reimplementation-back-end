@@ -73,7 +73,7 @@ RSpec.describe 'StudentTasks API', type: :request do
               user_id: studenta.id,
               parent_id: assignment.id,
               handle: "#{studenta.name}_#{i}",
-              permission_granted: [true, false].sample
+              OK_to_show: [true, false].sample
             )
           end
         end
@@ -116,7 +116,7 @@ RSpec.describe 'StudentTasks API', type: :request do
           course = Course.create!(name: 'CSC 517 Show', directory_path: 'csc517_show', instructor: instructor, institution: institution)
           assignment = Assignment.create!(name: 'Timeline Assignment', instructor: instructor, course: course)
           DueDate.create!(parent: assignment, due_at: 7.days.from_now, deadline_name: 'Submission', deadline_type_id: 1, submission_allowed_id: 3, review_allowed_id: 3)
-          AssignmentParticipant.create!(user_id: studenta.id, parent_id: assignment.id, handle: studenta.name, permission_granted: true)
+          AssignmentParticipant.create!(user_id: studenta.id, parent_id: assignment.id, handle: studenta.name, OK_to_show: true)
         end
         let(:id) { show_participant.id }
 
