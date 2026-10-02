@@ -11,12 +11,7 @@ Things you may want to cover:
 
 ### Prerequisites
 - Verify that [Docker Desktop](https://www.docker.com/products/docker-desktop/) is installed and running.
-- [Download](https://www.jetbrains.com/ruby/download/) RubyMine
-- Make sure that the Docker plugin [is enabled](https://www.jetbrains.com/help/ruby/docker.html#enable_docker).
 
-
-### Instructions
-Tutorial: [Docker Compose as a remote interpreter](https://www.jetbrains.com/help/ruby/using-docker-compose-as-a-remote-interpreter.html)
 
 ### Video Tutorial
 
@@ -24,10 +19,17 @@ Tutorial: [Docker Compose as a remote interpreter](https://www.jetbrains.com/hel
 " target="_blank"><img src="http://img.youtube.com/vi/BHniRaZ0_JE/maxresdefault.jpg" 
 alt="IMAGE ALT TEXT HERE" width="560" height="315" border="10" /></a>
 
-### Database Credentials
-- username: root
-- password: expertiza
+### Environment Configuration
 
+Copy the example environment file before starting the containers:
+
+```bash
+cp .env.example .env
+```
+
+Update the database credentials and other local configuration values in `.env` as needed.
+
+The `.env` file is ignored by Git and should not be committed.
 
 ### Running tests in Docker
 

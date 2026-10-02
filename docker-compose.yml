@@ -1,7 +1,12 @@
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   app:
     build: .
-    command: tail -f /dev/null
     environment:
       RAILS_ENV: ${RAILS_ENV}
       DATABASE_URL: ${DATABASE_URL}
@@ -12,8 +17,14 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - public
+      - private
+    logging: *default-logging
 
   db:
     image: mysql:8.4
@@ -27,14 +38,35 @@ services:
     volumes:
       - expertiza-mysql:/var/lib/mysql
       - ./db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks:
+      - private
+    logging: *default-logging
 
   redis:
     image: redis:latest
-    ports:
-      - "6380:6380"
     volumes:
       - expertiza-redis:/var/lib/redis/data
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--port", "6380", "--maxmemory", "100mb"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6380", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - private
+    logging: *default-logging
 
 volumes:
   expertiza-mysql:
   expertiza-redis:
+
+networks:
+  public:
+  private:
