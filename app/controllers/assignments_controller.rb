@@ -28,13 +28,20 @@ class AssignmentsController < ApplicationController
                   else
                     Assignment.none
                   end
-    render json: assignments
+    render json: assignments.map { |a|
+      a.attributes.merge(
+        'course_name' => a.course&.name,
+        'created_at'  => a.created_at,
+        'updated_at'  => a.updated_at
+      )
+    }
   end
 
   # GET /assignments/:id
   def show
     assignment = Assignment.find(params[:id])
     data = assignment.attributes
+    data['has_topics'] = assignment.has_topics
     data['assignment_questionnaires'] = assignment.assignment_questionnaires
       .includes(:questionnaire)
       .map { |aq| aq.attributes.merge('questionnaire' => aq.questionnaire&.attributes) }
@@ -341,7 +348,6 @@ class AssignmentsController < ApplicationController
       :has_topics,
       :available_to_students,              # alias → availability_flag
       :allow_tag_prompts,                  # alias → is_answer_tagging_allowed
-      :allow_participants_to_create_bookmarks, # alias → use_bookmark
       # Review configuration
       :review_topic_threshold,
       :maximum_number_of_reviews_per_submission, # alias → max_reviews_per_submission
