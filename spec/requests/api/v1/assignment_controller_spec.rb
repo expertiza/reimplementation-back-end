@@ -649,4 +649,149 @@ RSpec.describe 'Assignments API', type: :request do
       end
     end
   end
+
+  # -------------------------------------------------------------------------
+  # POST /assignments — create
+  # -------------------------------------------------------------------------
+  describe 'POST /assignments' do
+    def post_assignment(body)
+      post '/assignments',
+           params: { assignment: body }.to_json,
+           headers: { 'Content-Type' => 'application/json', 'Authorization' => Authorization() }
+    end
+
+    context 'with valid params' do
+      it 'creates the assignment and returns 201' do
+        expect {
+          post_assignment(name: 'Brand New Assignment')
+        }.to change(Assignment, :count).by(1)
+        expect(response).to have_http_status(:created)
+      end
+
+      it 'sets instructor_id to the authenticated user when no course_id is given' do
+        post_assignment(name: 'Standalone Assignment')
+        data = JSON.parse(response.body)
+        expect(data['instructor_id']).to eq(prof.id)
+      end
+
+      it 'inherits instructor_id from the course when course_id is given' do
+        post_assignment(name: 'Course Assignment', course_id: course.id)
+        expect(response).to have_http_status(:created)
+        data = JSON.parse(response.body)
+        expect(data['instructor_id']).to eq(course.instructor_id)
+        expect(data['course_id']).to eq(course.id)
+      end
+    end
+
+    context 'with invalid params' do
+      it 'returns 422 when name is blank' do
+        post_assignment(name: '')
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # GET /assignments/:id/calibration_submissions
+  # -------------------------------------------------------------------------
+  describe 'GET /assignments/:id/calibration_submissions' do
+    def get_calibration(id)
+      get "/assignments/#{id}/calibration_submissions",
+          headers: { 'Authorization' => Authorization() }
+    end
+
+    context 'when the assignment exists' do
+      it 'returns 200 with an empty array when there are no teams' do
+        get_calibration(assignment.id)
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body)).to eq([])
+      end
+
+      it 'returns a row per team with not_started status when no review map exists' do
+        team = AssignmentTeam.create!(name: 'Team Alpha', parent_id: assignment.id)
+        get_calibration(assignment.id)
+        expect(response).to have_http_status(:ok)
+        data = JSON.parse(response.body)
+        expect(data.size).to eq(1)
+        expect(data.first['id']).to eq(team.id)
+        expect(data.first['review_status']).to eq('not_started')
+        expect(data.first['submitted_content']).to include('hyperlinks', 'files')
+      end
+
+      it 'includes participant names for team members' do
+        team = AssignmentTeam.create!(name: 'Team Beta', parent_id: assignment.id)
+        TeamsUser.create!(team: team, user: prof)
+        get_calibration(assignment.id)
+        data = JSON.parse(response.body)
+        expect(data.first['participant_name']).to include(prof.name)
+      end
+    end
+
+    context 'when the assignment does not exist' do
+      it 'returns 404' do
+        get_calibration(999)
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # GET /assignments/:assignment_id/varying_rubrics_by_round
+  # -------------------------------------------------------------------------
+  describe 'GET /assignments/:assignment_id/varying_rubrics_by_round' do
+    def get_varying(assignment_id)
+      get "/assignments/#{assignment_id}/varying_rubrics_by_round",
+          headers: { 'Authorization' => Authorization() }
+    end
+
+    context 'when the assignment does not exist' do
+      it 'returns 404' do
+        get_varying(999)
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+
+    context 'when the assignment has no questionnaire' do
+      it 'returns 404 with a descriptive error' do
+        get_varying(assignment.id)
+        expect(response).to have_http_status(:not_found)
+        data = JSON.parse(response.body)
+        expect(data['error']).to match(/No questionnaire\/rubric exists/)
+      end
+    end
+
+    context 'when a questionnaire exists' do
+      let!(:questionnaire) do
+        Questionnaire.create!(name: 'Review Rubric', instructor_id: prof.id,
+                              min_question_score: 0, max_question_score: 5)
+      end
+
+      it 'returns false when vary_by_round is false' do
+        assignment.update!(vary_by_round: false)
+        AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire,
+                                        used_in_round: 1, questionnaire_weight: 100)
+        get_varying(assignment.id)
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body)).to eq(false)
+      end
+
+      it 'returns true when vary_by_round is true and per-round questionnaires exist' do
+        assignment.update!(vary_by_round: true)
+        AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire,
+                                        used_in_round: 1, questionnaire_weight: 100)
+        get_varying(assignment.id)
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body)).to eq(true)
+      end
+
+      it 'returns false when vary_by_round is true but no used_in_round is set' do
+        assignment.update!(vary_by_round: true)
+        AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire,
+                                        used_in_round: nil, questionnaire_weight: 100)
+        get_varying(assignment.id)
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body)).to eq(false)
+      end
+    end
+  end
 end
