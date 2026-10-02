@@ -210,38 +210,68 @@ module SubmittedContentHelper
     end
   end
 
-  # Deletes one or more selected files
+  # Deletes one or more selected files from the team's submission directory.
+  # Takes bare filenames (as returned by list_files) and resolves them against
+  # the team path here, the way download does -- a client-supplied path would
+  # make this an arbitrary-delete primitive, since FileUtils.rm_rf does not
+  # care what it is pointed at.
   def delete_selected_files
     # Wrap the delete operation with error handling
     handle_file_operation_error('deleting') do
       # Track successfully deleted files for response
       deleted_files = []
 
-      # Iterate through each file index in the chk_files param
-      Array(params[:chk_files]).each do |idx|
-        # Build the full file path for this index
-        file_path = File.join(params[:directories][idx], params[:filenames][idx])
+      # Resolve the directory server-side from the team's own path
+      directory = resolve_submission_directory
 
-        # Check if file exists before attempting deletion
-        if File.exist?(file_path)
-          # Remove file or directory recursively
-          FileUtils.rm_rf(file_path)
+      # Iterate through the requested filenames
+      Array(params[:filenames]).each do |name|
+        # basename strips any directory component a caller tried to smuggle in
+        file_name = File.basename(name.to_s)
+        file_path = File.join(directory, file_name)
 
-          # Add to deleted files list
-          deleted_files << file_path
-        else
-          # File doesn't exist, return error
-          render json: { error: "Cannot delete '#{params[:filenames][idx]}': File does not exist. It may have already been deleted." }, status: :not_found
+        # Refuse anything that resolves outside the team's own directory
+        unless path_within?(file_path, submission_base_path)
+          render json: { error: "Cannot delete '#{file_name}': the path is outside your submission directory." }, status: :forbidden
           return
         end
+
+        # Check file exists before attempting deletion
+        unless File.exist?(file_path)
+          render json: { error: "Cannot delete '#{file_name}': File does not exist. It may have already been deleted." }, status: :not_found
+          return
+        end
+
+        # Remove file or directory recursively
+        FileUtils.rm_rf(file_path)
+
+        # Report the name back, never the server-side path
+        deleted_files << file_name
       end
 
-      # Count total deleted files
-      file_count = deleted_files.size
-
-      # Render success response with deleted file list
-      render json: { message: "Successfully deleted #{file_count} file(s).", files: deleted_files }, status: :no_content
+      # Render success response with the deleted file list. This is a 200 and
+      # not a 204: a 204 carries no body, so the message would be discarded.
+      render json: { message: "Successfully deleted #{deleted_files.size} file(s).", files: deleted_files }, status: :ok
     end
+  end
+
+  # The team's submission directory, which every file operation is scoped to
+  def submission_base_path
+    @participant.team.path.to_s
+  end
+
+  # Resolves the folder in view to an absolute path under the team directory
+  def resolve_submission_directory
+    base_path = submission_base_path
+    folder = clean_folder(params.dig(:current_folder, :name) || '/')
+    folder == '/' ? base_path : File.join(base_path, folder)
+  end
+
+  # True when path sits inside base, so a crafted folder or filename cannot
+  # escape the team directory
+  def path_within?(path, base)
+    expanded_base = File.expand_path(base)
+    File.expand_path(path).start_with?("#{expanded_base}#{File::SEPARATOR}")
   end
 
   # Creates a new folder in the participant's directory
