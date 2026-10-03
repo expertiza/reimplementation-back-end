@@ -20,6 +20,19 @@ Style/Documentation:
 Style/FrozenStringLiteralComment:
   Enabled: false
 
+# Indentation/alignment is not enforced for this project.
+Layout/ArgumentAlignment:
+  Enabled: false
+
+Layout/ClosingParenthesisIndentation:
+  Enabled: false
+
+Layout/FirstArgumentIndentation:
+  Enabled: false
+
+Layout/FirstHashElementIndentation:
+  Enabled: false
+
 Metrics/BlockLength:
   Max: 120
   Exclude:
