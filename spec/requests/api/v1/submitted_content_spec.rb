@@ -922,7 +922,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         expect(json.to_s).not_to include(team_directory)
       end
 
-      it 'does not delete a file outside the team directory when the file name points there' do
+      it 'does not delete a file outside the team directory even if the file name points there' do
         outside = Dir.mktmpdir
         victim = File.join(outside, 'victim.txt')
         File.write(victim, 'do not delete me')
@@ -937,7 +937,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
       end
 
-      it 'does not delete a file outside the team directory when the folder points there' do
+      it 'does not delete a file outside the team directory even if the folder points there' do
         outside = Dir.mktmpdir
         victim = File.join(outside, 'victim.txt')
         File.write(victim, 'do not delete me')

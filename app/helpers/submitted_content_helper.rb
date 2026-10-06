@@ -259,7 +259,7 @@ module SubmittedContentHelper
         # Remove file or directory recursively
         FileUtils.rm_rf(file_path)
 
-        # Collect the file name rather than file_path, so the response does not
+        # Add the file name rather than file_path, so the response does not
         # disclose the server's directory layout to the client.
         deleted_files << file_name
       end
