@@ -602,6 +602,41 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
       end
 
+      context 'with a name that is already taken' do
+        let(:id) { participant.id }
+        let(:uploaded_file) do
+          file = Tempfile.new(['test', '.txt'])
+          file.write('replacement content')
+          file.rewind
+          ActionDispatch::Http::UploadedFile.new(
+            tempfile: file,
+            filename: 'test.txt',
+            type: 'text/plain'
+          )
+        end
+
+        before do
+          allow(team).to receive(:path).and_return(team_directory)
+          allow_any_instance_of(SubmittedContentController)
+            .to receive(:check_content_size).and_return(true)
+          allow_any_instance_of(SubmittedContentController)
+            .to receive(:valid_file_extension?).and_return(true)
+          allow_any_instance_of(SubmittedContentController)
+            .to receive(:create_submission_record_for).and_return(true)
+          File.write(File.join(team_directory, 'test.txt'), 'original content')
+        end
+
+        it 'returns conflict and leaves the existing file as it was' do
+          send(method, '/submitted_content/submit_file',
+               params: { id: id, uploaded_file: uploaded_file, current_folder: { name: '/' } },
+               headers: auth_headers_student.merge({ 'CONTENT_TYPE' => 'multipart/form-data' }))
+
+          expect(response).to have_http_status(:conflict)
+          expect(json['error']).to include('already exists')
+          expect(File.read(File.join(team_directory, 'test.txt'))).to eq('original content')
+        end
+      end
+
       context 'with zip file and unzip flag' do
         let(:id) { participant.id }
         let(:uploaded_file) do
@@ -819,6 +854,103 @@ RSpec.describe 'Submitted Content API', type: :request do
 
     describe 'POST' do
       it_behaves_like 'folder actions', :post
+    end
+
+    # These run the deletion against a real directory on disk, checking which
+    # files are actually removed rather than only that the request is accepted.
+    describe 'POST with delete action (real deletion)' do
+      let(:team_directory) { Dir.mktmpdir }
+
+      after do
+        FileUtils.remove_entry(team_directory) if team_directory && Dir.exist?(team_directory)
+      end
+
+      before do
+        allow(AssignmentParticipant).to receive(:find).and_return(participant)
+        allow(participant).to receive(:team).and_return(team)
+        allow_any_instance_of(SubmittedContentController)
+          .to receive(:ensure_participant_team).and_return(true)
+        allow_any_instance_of(SubmittedContentController)
+          .to receive(:participant_team).and_return(team)
+        allow(team).to receive(:set_team_directory_num)
+        allow(team).to receive(:path).and_return(team_directory)
+      end
+
+      def delete_request(filenames, folder: '/')
+        post '/submitted_content/folder_action',
+             params: { id: participant.id,
+                       faction: { delete: 'true' },
+                       current_folder: { name: folder },
+                       filenames: filenames },
+             headers: auth_headers_student
+      end
+
+      it 'deletes a file when the request names it without a directory' do
+        target = File.join(team_directory, 'report.pdf')
+        File.write(target, 'contents')
+
+        delete_request(['report.pdf'])
+
+        expect(response).to have_http_status(:ok)
+        expect(json['files']).to eq(['report.pdf'])
+        expect(File.exist?(target)).to be false
+      end
+
+      it 'deletes several files in one request' do
+        %w[a.txt b.txt].each { |n| File.write(File.join(team_directory, n), 'x') }
+
+        delete_request(%w[a.txt b.txt])
+
+        expect(response).to have_http_status(:ok)
+        expect(json['message']).to include('2 file(s)')
+        expect(Dir.children(team_directory)).to be_empty
+      end
+
+      it 'returns not found when the file is absent' do
+        delete_request(['missing.pdf'])
+
+        expect(response).to have_http_status(:not_found)
+        expect(json['error']).to include('does not exist')
+      end
+
+      it 'never reports server-side paths back to the client' do
+        File.write(File.join(team_directory, 'report.pdf'), 'contents')
+
+        delete_request(['report.pdf'])
+
+        expect(json['files']).to eq(['report.pdf'])
+        expect(json.to_s).not_to include(team_directory)
+      end
+
+      it 'does not delete a file outside the team directory even if the file name points there' do
+        outside = Dir.mktmpdir
+        victim = File.join(outside, 'victim.txt')
+        File.write(victim, 'do not delete me')
+
+        begin
+          delete_request(["../#{File.basename(outside)}/victim.txt"])
+
+          expect(File.exist?(victim)).to be true
+          expect(response).to have_http_status(:not_found)
+        ensure
+          FileUtils.remove_entry(outside)
+        end
+      end
+
+      it 'does not delete a file outside the team directory even if the folder points there' do
+        outside = Dir.mktmpdir
+        victim = File.join(outside, 'victim.txt')
+        File.write(victim, 'do not delete me')
+
+        begin
+          delete_request(['victim.txt'], folder: "/../../#{File.basename(outside)}")
+
+          expect(File.exist?(victim)).to be true
+          expect(response).not_to have_http_status(:ok)
+        ensure
+          FileUtils.remove_entry(outside)
+        end
+      end
     end
 
     post('folder action (swagger)') do

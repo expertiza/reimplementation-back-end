@@ -56,7 +56,9 @@ gem 'lingua'
 gem 'find_with_order'
 
 # For handling zip file uploads and extraction
-gem 'rubyzip'
+# The gem's entrypoint is lib/zip.rb, so the implicit require 'rubyzip' fails;
+# Bundler swallows that LoadError and Zip would silently never be defined.
+gem 'rubyzip', require: 'zip'
 
 
 group :development, :test do
