@@ -1,6 +1,15 @@
 module SubmittedContentHelper
   include FileHelper
 
+  # The only list of accepted upload extensions. The controller builds its
+  # error message from this.
+  ALLOWED_EXTENSIONS = %w[
+    pdf png jpeg jpg
+    zip tar gz 7z
+    odt doc docx xls xlsx ppt pptx
+    md rb mp4 txt
+  ].freeze
+
   # Unzips a file to the specified directory with error handling
   # @param file_name [String] Path to the ZIP file to extract
   # @param unzip_dir [String] Directory where contents will be extracted
@@ -97,14 +106,11 @@ module SubmittedContentHelper
   # @param original_filename [String] The filename to check
   # @return [Boolean] true if extension is allowed, false otherwise
   def valid_file_extension?(original_filename)
-    # Define list of allowed file extensions
-    allowed_extensions = %w[pdf png jpeg jpg zip tar gz 7z odt docx md rb mp4 txt]
-
     # Extract the file extension (last part after final dot) and convert to lowercase
     file_extension = original_filename&.split('.')&.last&.downcase
 
     # Check if the extension is in the allowed list
-    allowed_extensions.include?(file_extension)
+    ALLOWED_EXTENSIONS.include?(file_extension)
   end
 
   # Validates if a file size is within the specified limit
