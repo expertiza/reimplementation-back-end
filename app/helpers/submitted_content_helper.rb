@@ -211,17 +211,25 @@ module SubmittedContentHelper
   end
 
   # Deletes one or more selected files from the team's submission directory.
-  # Takes bare filenames (as returned by list_files) and resolves them against
-  # the team path here, the way download does -- a client-supplied path would
-  # make this an arbitrary-delete primitive, since FileUtils.rm_rf does not
-  # care what it is pointed at.
+  #
+  # The request supplies bare file names only. The directory those names are
+  # resolved against is derived here from the team's own path; the request
+  # never gets to name a directory itself.
+  #
+  # That division is what makes this safe, because FileUtils.rm_rf validates
+  # nothing: it recursively deletes whatever path it is handed, and stays
+  # silent when that path does not exist. Whoever controls the path therefore
+  # controls what gets deleted. If the directory came from the request, this
+  # endpoint would delete any file the Rails process can reach rather than
+  # only the team's own submissions.
   def delete_selected_files
     # Wrap the delete operation with error handling
     handle_file_operation_error('deleting') do
       # Track successfully deleted files for response
       deleted_files = []
 
-      # Resolve the directory server-side from the team's own path
+      # Build the absolute directory on disk: the team's own submission
+      # directory, plus the folder the request asked for.
       directory = resolve_submission_directory
 
       # Iterate through the requested filenames
@@ -245,7 +253,8 @@ module SubmittedContentHelper
         # Remove file or directory recursively
         FileUtils.rm_rf(file_path)
 
-        # Report the name back, never the server-side path
+        # Collect the file name rather than file_path, so the response does not
+        # disclose the server's directory layout to the client.
         deleted_files << file_name
       end
 
@@ -267,8 +276,7 @@ module SubmittedContentHelper
     folder == '/' ? base_path : File.join(base_path, folder)
   end
 
-  # True when path sits inside base, so a crafted folder or filename cannot
-  # escape the team directory
+  # True when path points to something inside base.
   def path_within?(path, base)
     expanded_base = File.expand_path(base)
     File.expand_path(path).start_with?("#{expanded_base}#{File::SEPARATOR}")
