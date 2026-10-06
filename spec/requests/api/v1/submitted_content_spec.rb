@@ -821,8 +821,8 @@ RSpec.describe 'Submitted Content API', type: :request do
       it_behaves_like 'folder actions', :post
     end
 
-    # The shared examples above stub delete_selected_files out, so they only
-    # prove folder_action dispatches. These exercise the deletion itself.
+    # These run the deletion against a real directory on disk, checking which
+    # files are actually removed rather than only that the request is accepted.
     describe 'POST with delete action (real deletion)' do
       let(:team_directory) { Dir.mktmpdir }
 
@@ -850,7 +850,7 @@ RSpec.describe 'Submitted Content API', type: :request do
              headers: auth_headers_student
       end
 
-      it 'deletes a file resolved from its bare name' do
+      it 'deletes a file when the request names it without a directory' do
         target = File.join(team_directory, 'report.pdf')
         File.write(target, 'contents')
 
@@ -887,7 +887,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         expect(json.to_s).not_to include(team_directory)
       end
 
-      it 'refuses to escape the team directory through the filename' do
+      it 'does not delete a file outside the team directory when the file name points there' do
         outside = Dir.mktmpdir
         victim = File.join(outside, 'victim.txt')
         File.write(victim, 'do not delete me')
@@ -902,7 +902,7 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
       end
 
-      it 'refuses to escape the team directory through the folder' do
+      it 'does not delete a file outside the team directory when the folder points there' do
         outside = Dir.mktmpdir
         victim = File.join(outside, 'victim.txt')
         File.write(victim, 'do not delete me')
