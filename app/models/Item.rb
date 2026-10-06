@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 class Item < ApplicationRecord
+  # All valid question types supported by the application.
+  # Used by QuestionsController#types to return the list to the front-end,
+  # and can be used elsewhere for validation or display.
+  QUESTION_TYPES = ['Criterion', 'Scale', 'Dropdown', 'Multiple choice', 'Text area', 'Text field', 'Grid'].freeze
+
   before_create :set_seq
   belongs_to :questionnaire, inverse_of: :items # each item belongs to a specific questionnaire
   has_many :answers, dependent: :destroy, foreign_key: 'item_id'

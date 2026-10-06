@@ -102,8 +102,7 @@ class QuestionsController < ApplicationController
   end
 
   def types
-    types = ["Criterion", "Scale", "Dropdown", "Multiple choice", "Text area", "Text field", "Grid"]
-    render json: types, status: :ok
+    render json: Item::QUESTION_TYPES, status: :ok
   end
 
 

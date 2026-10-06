@@ -539,8 +539,8 @@ RSpec.describe 'questions', type: :request do
       response(200, 'successful') do
         run_test! do
           parsed_response = JSON.parse(response.body)
-          expect(parsed_response.size).to eq(7)
-          expect(parsed_response).to include("Multiple choice")
+          expect(parsed_response.size).to eq(Item::QUESTION_TYPES.size)
+          expect(parsed_response).to match_array(Item::QUESTION_TYPES)
         end
       end
     end
