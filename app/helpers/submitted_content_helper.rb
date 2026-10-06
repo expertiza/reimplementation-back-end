@@ -47,14 +47,14 @@ module SubmittedContentHelper
     just_filename = File.basename(e.name)
     safe_name = just_filename.gsub(%r{[^\w\.\_/]}, '_').tr("'", '_')
 
-    # Build the full path where the entry will be extracted
-    file_path = File.join(unzip_dir, safe_name)
+    # Make sure the target directory exists before extracting into it
+    FileUtils.mkdir_p(unzip_dir)
 
-    # Create parent directories if they don't exist
-    FileUtils.mkdir_p(File.dirname(file_path))
-
-    # Extract the entry, overwriting if file already exists (true = overwrite)
-    e.extract(file_path) { true }
+    # Extract the entry, overwriting if file already exists (true = overwrite).
+    # rubyzip 3.x takes a path relative to destination_directory, so passing an
+    # absolute path here would be joined onto the current working directory
+    # and fail with ENOENT.
+    e.extract(safe_name, destination_directory: unzip_dir) { true }
   end
 
   # Constructs the full file path from params for file operations

@@ -155,11 +155,8 @@ class SubmittedContentController < ApplicationController
     # Write the file to disk in binary mode
     File.open(full_path, 'wb') { |f| f.write(file_bytes) }
 
-    # If unzip flag is set and file is a zip, extract contents using rubyzip library
-    # In controller, replace the inline Zip::File.open block with:
     if params[:unzip] && file_type(safe_filename) == 'zip'
       SubmittedContentHelper.unzip_file(full_path, current_directory, true)
-      File.delete(full_path)
     end
 
     # Create submission record for audit trail
