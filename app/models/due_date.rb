@@ -116,6 +116,7 @@ class DueDate < ApplicationRecord
 
   def set_deadline_name
     return unless NAMED_TYPES.include?(deadline_type_id)
+
     self.deadline_name = ExpertizaConstants::DeadlineTypes::NAMES[deadline_type_id]
   end
 

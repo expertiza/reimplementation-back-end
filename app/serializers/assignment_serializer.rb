@@ -1,8 +1,8 @@
 class AssignmentSerializer < ActiveModel::Serializer
-  attributes :id, :name, :course_id,
+  attributes :id, :name, :course_id, :instructor_id,
              # General tab
              :directory_path, :spec_location, :private,
-             :require_quiz, :has_badge, :staggered_deadline, :is_calibrated,
+             :require_quiz, :staggered_deadline, :is_calibrated,
              :has_teams, :max_team_size,
              :show_teammate_review, :is_pair_programming,
              :has_topics,

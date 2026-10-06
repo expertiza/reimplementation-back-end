@@ -10,15 +10,18 @@ class Assignment < ApplicationRecord
   accepts_nested_attributes_for :assignment_questionnaires, allow_destroy: true
   has_many :questionnaires, through: :assignment_questionnaires
   has_many :response_maps, foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
-  has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
-  has_many :project_topics , class_name: 'ProjectTopic', foreign_key: 'assignment_id', dependent: :destroy
-  has_many :due_dates,as: :parent, class_name: 'DueDate',  dependent: :destroy
+  has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewed_object_id', dependent: :destroy,
+                             inverse_of: :assignment
+  has_many :project_topics, class_name: 'ProjectTopic', foreign_key: 'assignment_id', dependent: :destroy
+  has_many :due_dates, as: :parent, class_name: 'DueDate', dependent: :destroy
   accepts_nested_attributes_for :due_dates, allow_destroy: true
   has_many :assignments_duties, dependent: :destroy
   has_many :duties, through: :assignments_duties
   belongs_to :course, optional: true
   belongs_to :instructor, class_name: 'User', inverse_of: :assignments
   accepts_nested_attributes_for :assignment_questionnaires, allow_destroy: true
+
+  validates :name, presence: true
 
   # Virtual attributes not backed by a DB column
   attr_accessor :title, :description
@@ -41,18 +44,53 @@ class Assignment < ApplicationRecord
   # Feature flags added in reimplementation migration.
   # Explicit methods instead of alias_attribute so the app loads even before the migration runs
   # (Rails 7.1 alias_attribute validates column existence at class-load time).
-  def review_rubric_varies_by_topic;     read_attribute(:vary_by_topic);             end
-  def review_rubric_varies_by_topic=(v); write_attribute(:vary_by_topic, v);         end
-  def review_rubric_varies_by_role;      read_attribute(:vary_by_role);              end
-  def review_rubric_varies_by_role=(v);  write_attribute(:vary_by_role, v);          end
-  def auto_assign_mentors;               read_attribute(:auto_assign_mentor);         end
-  def auto_assign_mentors=(v);           write_attribute(:auto_assign_mentor, v);     end
-  def is_role_based;                     read_attribute(:duty_based_assignment);      end
-  def is_role_based=(v);                 write_attribute(:duty_based_assignment, v);  end
-  def enable_bidding_for_reviews;        read_attribute(:bidding_for_reviews_enabled); end
-  def enable_bidding_for_reviews=(v);    write_attribute(:bidding_for_reviews_enabled, v); end
-  def is_review_done_by_teams;           read_attribute(:team_reviewing_enabled);     end
-  def is_review_done_by_teams=(v);       write_attribute(:team_reviewing_enabled, v); end
+  def review_rubric_varies_by_topic
+    read_attribute(:vary_by_topic)
+  end
+
+  def review_rubric_varies_by_topic=(val)
+    write_attribute(:vary_by_topic, val)
+  end
+
+  def review_rubric_varies_by_role
+    read_attribute(:vary_by_role)
+  end
+
+  def review_rubric_varies_by_role=(val)
+    write_attribute(:vary_by_role, val)
+  end
+
+  def auto_assign_mentors
+    read_attribute(:auto_assign_mentor)
+  end
+
+  def auto_assign_mentors=(val)
+    write_attribute(:auto_assign_mentor, val)
+  end
+
+  def is_role_based
+    read_attribute(:duty_based_assignment)
+  end
+
+  def is_role_based=(val)
+    write_attribute(:duty_based_assignment, val)
+  end
+
+  def enable_bidding_for_reviews
+    read_attribute(:bidding_for_reviews_enabled)
+  end
+
+  def enable_bidding_for_reviews=(val)
+    write_attribute(:bidding_for_reviews_enabled, val)
+  end
+
+  def is_review_done_by_teams
+    read_attribute(:team_reviewing_enabled)
+  end
+
+  def is_review_done_by_teams=(val)
+    write_attribute(:team_reviewing_enabled, val)
+  end
   # Frontend field names that map to differently-named existing DB columns
   alias_attribute :allow_topic_suggestion_from_students,     :allow_suggestions
   alias_attribute :allow_reviewer_to_choose_topic_to_review, :can_choose_topic_to_review
@@ -67,8 +105,9 @@ class Assignment < ApplicationRecord
   end
 
   def teams?
-    @has_teams ||= teams.any?
+    @teams ||= teams.any?
   end
+
   def num_review_rounds
     review_rounds = due_dates.where(deadline_type_id: DueDate::REVIEW_DEADLINE_TYPE_ID).count
     review_rounds.positive? ? review_rounds : (rounds_of_reviews || 0)
@@ -80,7 +119,7 @@ class Assignment < ApplicationRecord
       raise 'The path cannot be created. The assignment must be associated with either a course or an instructor.'
     end
 
-    path_text = if !course_id.nil? && course_id > 0
+    path_text = if !course_id.nil? && course_id.positive?
                   "#{Rails.root}/pg_data/#{FileHelper.clean_path(instructor.name)}/#{FileHelper.clean_path(course.directory_path)}/"
                 else
                   "#{Rails.root}/pg_data/#{FileHelper.clean_path(instructor.name)}/"
@@ -99,17 +138,17 @@ class Assignment < ApplicationRecord
     # Find the User with the provided user_id
     user = User.find_by(id: user_id)
     # Check if the user exists
-    if user.nil?
-      raise "The user account does not exist"
-    end
+    raise 'The user account does not exist' if user.nil?
+
     # Check if the user is already a participant in the assignment
-    participant = AssignmentParticipant.find_by(parent_id:id, user_id:user.id)
+    participant = AssignmentParticipant.find_by(parent_id: id, user_id: user.id)
     if participant
       # Raises error if the user is already a participant
       raise "The user #{user.name} is already a participant."
     end
+
     # Create a new AssignmentParticipant associated with the assignment and user
-    new_part = AssignmentParticipant.create(parent_id: self.id,
+    new_part = AssignmentParticipant.create(parent_id: id,
                                             user_id: user.id)
     # Set the participant's handle
     new_part.set_handle
@@ -117,18 +156,17 @@ class Assignment < ApplicationRecord
     new_part
   end
 
-
   # Remove a participant from the assignment based on the provided user_id.
   # This method finds the AssignmentParticipant with the given assignment_id and user_id,
   # and then deletes the corresponding record from the database.
   # No return value; the participant is removed from the assignment.
   def remove_participant(user_id)
     # Find the AssignmentParticipant associated with this assignment and user
-    assignment_participant = AssignmentParticipant.where(parent_id: self.id, user_id: user_id).first
+    assignment_participant = AssignmentParticipant.where(parent_id: id, user_id: user_id).first
     # Delete the AssignmentParticipant record
-    if assignment_participant
-      assignment_participant.destroy
-    end
+    return unless assignment_participant
+
+    assignment_participant.destroy
   end
 
   # Remove the assignment from the associated course.
@@ -141,9 +179,7 @@ class Assignment < ApplicationRecord
     self
   end
 
-
-
- # Assign a course to the assignment based on the provided course_id.
+  # Assign a course to the assignment based on the provided course_id.
   # If the assignment already belongs to the specified course, an error is raised.
   # Returns the modified assignment object with the updated course assignment.
   def assign_course(course_id)
@@ -152,41 +188,41 @@ class Assignment < ApplicationRecord
     # Check if the assignment already belongs to the provided course_id
     if assignment.course_id == course_id
       # Raises error if the assignment already belongs to the provided course_id
-      raise "The assignment already belongs to this course id."
+      raise 'The assignment already belongs to this course id.'
     end
+
     # Update the assignment's course assignment
     assignment.course_id = course_id
     # Return the modified assignment
     assignment
   end
 
-
   # Create a copy of the assignment, including its name, instructor, and course assignment.
   # The new assignment is named "Copy of [original assignment name]".
   # Returns the newly created assignment object, which is a copy of the original assignment.
   def copy
     copied_assignment = Assignment.new(
-        name: "Copy of #{self.name}",
-        course_id: self.course_id
-      )
+      name: "Copy of #{name}",
+      course_id: course_id
+    )
 
     # Assign the correct instructor to the copied assignment
-    copied_assignment.instructor = self.instructor
+    copied_assignment.instructor = instructor
 
     # Save the copied assignment to the database
     copied_assignment.save
 
     copied_assignment
-
   end
+
   def is_calibrated?
     is_calibrated
   end
-  
+
   def pair_programming_enabled?
     enable_pair_programming
   end
-  
+
   def has_badge?
     has_badge
   end
@@ -195,58 +231,57 @@ class Assignment < ApplicationRecord
     staggered_deadline? && topic_id.nil?
   end
 
-
-  #This method return the value of the has_topics field for the given assignment object.
+  # This method return the value of the has_topics field for the given assignment object.
   # has_topics is of boolean type and is set true if there is any topic associated with the assignment.
   def topics?
-    @has_topics ||= project_topics.any?
+    @topics ||= project_topics.any?
   end
 
-  #This method return if the given assignment is a team assignment.
+  # This method return if the given assignment is a team assignment.
   # Checks if the value of max_team_size for the given assignment object is greater than 1
   def team_assignment?
     !max_team_size.nil? && max_team_size > 1
   end
 
-  #Auxiliary method for checking the validity of the field reviews_allowed for the given assignment object
+  # Auxiliary method for checking the validity of the field reviews_allowed for the given assignment object
   # Checks if review_allowed is not null and not negative.
   def valid_reviews_allowed?(reviews_allowed)
     reviews_allowed && reviews_allowed != -1
   end
 
-  #method for checking if reviews_required are smaller than reviews_allowed for the given assignment object.
+  # method for checking if reviews_required are smaller than reviews_allowed for the given assignment object.
   def num_reviews_greater?(reviews_required, reviews_allowed)
     valid_reviews_allowed?(reviews_allowed) and reviews_required > reviews_allowed
   end
 
-  #This method checks if for the given review type, required reviews and allowed reviews have valid order of values
+  # This method checks if for the given review type, required reviews and allowed reviews have valid order of values
   # Receives a parameter review_type and return an object with boolean value of 'success' and corresponding message
   # If the parameter is of a invalid type, the corresponding error message is received.
   def valid_num_review(review_type)
-    if review_type=='review'
-      #checks for reviews
-      if num_reviews_greater?(num_reviews_required,num_reviews_allowed)
-        {success: false, message: 'Number of reviews required cannot be greater than number of reviews allowed'}
+    if review_type == 'review'
+      # checks for reviews
+      if num_reviews_greater?(num_reviews_required, num_reviews_allowed)
+        { success: false, message: 'Number of reviews required cannot be greater than number of reviews allowed' }
       else
-        {success: true}
+        { success: true }
       end
 
-      #checks for meta-reviews
+      # checks for meta-reviews
     elsif review_type == 'metareview'
-        if num_reviews_greater?(num_metareviews_required,num_metareviews_allowed)
-          {success: false, message: 'Number of metareviews required cannot be greater than number of metareviews allowed'}
-        else
-          {success: true}
-        end
+      if num_reviews_greater?(num_metareviews_required, num_metareviews_allowed)
+        { success: false,
+          message: 'Number of metareviews required cannot be greater than number of metareviews allowed' }
+      else
+        { success: true }
+      end
 
-        #for invalid review_type
+    # for invalid review_type
     else
-      {success: false, message: 'Please enter a valid review type.'}
+      { success: false, message: 'Please enter a valid review type.' }
     end
   end
 
-
-  #This method check if for the given assignment,different type of rubrics are used in different round.
+  # This method check if for the given assignment,different type of rubrics are used in different round.
   # Checks if for the given assignment any questionnaire is present with used_in_round field not nil.
   # Returns a boolean value whether such questionnaire is present.
   def varying_rubrics_by_round?
@@ -267,5 +302,4 @@ class Assignment < ApplicationRecord
     end
     review_rounds
   end
-
 end

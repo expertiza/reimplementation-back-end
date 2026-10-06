@@ -23,23 +23,23 @@ RSpec.describe 'Assignments API', type: :request do
   let!(:user) do
     User.create!(
       id: 1,
-      name: "admin",
-      full_name: "admin",
-      email: "admin@gmail.com",
-      password_digest: "admin",
-      role_id: 2,          # Must exist in DB
+      name: 'admin',
+      full_name: 'admin',
+      email: 'admin@gmail.com',
+      password_digest: 'admin',
+      role_id: 2, # Must exist in DB
       institution_id: institution.id
     )
   end
 
   let!(:prof) do
     User.create!(
-      name: "profa",
-      password_digest: "password",
+      name: 'profa',
+      password_digest: 'password',
       role_id: @roles[:instructor].id,
-      full_name: "Prof A",
-      email: "testuser@example.com",
-      mru_directory_path: "/home/testuser"
+      full_name: 'Prof A',
+      email: 'testuser@example.com',
+      mru_directory_path: '/home/testuser'
     )
   end
 
@@ -55,8 +55,7 @@ RSpec.describe 'Assignments API', type: :request do
            id: 1,
            name: 'ECE517',
            instructor: prof,
-           institution: institution
-    )
+           institution: institution)
   end
 
   let(:token) { JsonWebToken.encode({ id: prof.id }) }
@@ -67,7 +66,7 @@ RSpec.describe 'Assignments API', type: :request do
   # -------------------------------------------------------------------------
   path '/assignments' do
     get 'Get assignments' do
-      tags "Get All Assignments"
+      tags 'Get All Assignments'
       produces 'application/json'
       parameter name: 'Content-Type', in: :header, type: :string
       let('Content-Type') { 'application/json' }
@@ -97,8 +96,8 @@ RSpec.describe 'Assignments API', type: :request do
       let('Content-Type') { 'application/json' }
 
       response '200', 'participant added successfully' do
-        let(:user_id)       { user.id }         # "admin" user
-        let(:assignment_id) { assignment.id }    # assignment1
+        let(:user_id)       { user.id } # "admin" user
+        let(:assignment_id) { assignment.id } # assignment1
 
         run_test! do
           response_json = JSON.parse(response.body)
@@ -446,7 +445,6 @@ RSpec.describe 'Assignments API', type: :request do
           expect(response).to have_http_status(:ok)
           expect(data['id']).to eq(assignment.id)
           expect(data['name']).to eq(assignment.name)
-          expect(data['has_badge']).to eq(assignment.has_badge?)
           expect(data['pair_programming_enabled']).to eq(assignment.pair_programming_enabled?)
           expect(data['is_calibrated']).to eq(assignment.is_calibrated?)
           expect(data['staggered_and_no_topic']).to eq(assignment.staggered_and_no_topic?(topic_id))
@@ -461,7 +459,6 @@ RSpec.describe 'Assignments API', type: :request do
           expect(response).to have_http_status(:not_found)
           expect(data['error']).to eq('Assignment not found')
         end
-
       end
     end
   end
@@ -562,7 +559,7 @@ RSpec.describe 'Assignments API', type: :request do
 
       it 'includes assignment_questionnaires with nested questionnaire in the response' do
         questionnaire = Questionnaire.create!(name: 'Review Q', instructor_id: prof.id,
-                                             min_question_score: 1, max_question_score: 5)
+                                              min_question_score: 1, max_question_score: 5)
         questionnaire.items.create!(txt: 'Q1', seq: 1, question_type: 'Scale', weight: 1, break_before: true)
         AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire,
                                         used_in_round: 1, questionnaire_weight: 100)
@@ -670,14 +667,14 @@ RSpec.describe 'Assignments API', type: :request do
       it 'creates a drop_topic deadline when none exists' do
         due_at = 7.days.from_now
         patch_assignment(assignment.id, {
-          due_dates_attributes: [{
-            deadline_type_id: ExpertizaConstants::DeadlineTypes::DROP_TOPIC,
-            due_at: due_at.iso8601,
-            submission_allowed_id: 3,
-            review_allowed_id: 3,
-            teammate_review_allowed_id: 3
-          }]
-        })
+                           due_dates_attributes: [{
+                             deadline_type_id: ExpertizaConstants::DeadlineTypes::DROP_TOPIC,
+                             due_at: due_at.iso8601,
+                             submission_allowed_id: 3,
+                             review_allowed_id: 3,
+                             teammate_review_allowed_id: 3
+                           }]
+                         })
         expect(response).to have_http_status(:ok)
         dd = assignment.due_dates.find_by(deadline_type_id: ExpertizaConstants::DeadlineTypes::DROP_TOPIC)
         expect(dd).not_to be_nil
@@ -694,14 +691,14 @@ RSpec.describe 'Assignments API', type: :request do
         )
 
         patch_assignment(assignment.id, {
-          due_dates_attributes: [{
-            id: dd.id,
-            deadline_type_id: ExpertizaConstants::DeadlineTypes::DROP_TOPIC,
-            submission_allowed_id: 1,
-            review_allowed_id: 2,
-            teammate_review_allowed_id: 1
-          }]
-        })
+                           due_dates_attributes: [{
+                             id: dd.id,
+                             deadline_type_id: ExpertizaConstants::DeadlineTypes::DROP_TOPIC,
+                             submission_allowed_id: 1,
+                             review_allowed_id: 2,
+                             teammate_review_allowed_id: 1
+                           }]
+                         })
 
         expect(response).to have_http_status(:ok)
         dd.reload
@@ -714,14 +711,14 @@ RSpec.describe 'Assignments API', type: :request do
       it 'creates a team_formation deadline with the correct deadline_name in the response' do
         due_at = 10.days.from_now
         patch_assignment(assignment.id, {
-          due_dates_attributes: [{
-            deadline_type_id: ExpertizaConstants::DeadlineTypes::TEAM_FORMATION,
-            due_at: due_at.iso8601,
-            submission_allowed_id: 3,
-            review_allowed_id: 3,
-            teammate_review_allowed_id: 3
-          }]
-        })
+                           due_dates_attributes: [{
+                             deadline_type_id: ExpertizaConstants::DeadlineTypes::TEAM_FORMATION,
+                             due_at: due_at.iso8601,
+                             submission_allowed_id: 3,
+                             review_allowed_id: 3,
+                             teammate_review_allowed_id: 3
+                           }]
+                         })
         expect(response).to have_http_status(:ok)
         due_dates = JSON.parse(response.body)['due_dates']
         tf = due_dates.find { |d| d['deadline_type_id'] == ExpertizaConstants::DeadlineTypes::TEAM_FORMATION }
@@ -743,9 +740,9 @@ RSpec.describe 'Assignments API', type: :request do
 
     context 'with valid params' do
       it 'creates the assignment and returns 201' do
-        expect {
+        expect do
           post_assignment(name: 'Brand New Assignment')
-        }.to change(Assignment, :count).by(1)
+        end.to change(Assignment, :count).by(1)
         expect(response).to have_http_status(:created)
       end
 
@@ -837,7 +834,7 @@ RSpec.describe 'Assignments API', type: :request do
         get_varying(assignment.id)
         expect(response).to have_http_status(:not_found)
         data = JSON.parse(response.body)
-        expect(data['error']).to match(/No questionnaire\/rubric exists/)
+        expect(data['error']).to match(%r{No questionnaire/rubric exists})
       end
     end
 

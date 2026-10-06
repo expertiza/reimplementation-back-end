@@ -5,6 +5,7 @@ class AssignmentQuestionnaireSerializer < ActiveModel::Serializer
   def questionnaire
     q = object.questionnaire
     return nil unless q
+
     { id: q.id, name: q.name, questionnaire_type: q.questionnaire_type }
   end
 
