@@ -466,6 +466,87 @@ RSpec.describe 'Assignments API', type: :request do
     end
   end
 
+  # -------------------------------------------------------------------------
+  # GET /assignments/:id — show
+  # -------------------------------------------------------------------------
+  describe 'GET /assignments/:id' do
+    it 'returns 200 with assignment data for a valid id' do
+      get "/assignments/#{assignment.id}", headers: { 'Authorization' => Authorization() }
+      expect(response).to have_http_status(:ok)
+      data = JSON.parse(response.body)
+      expect(data['id']).to eq(assignment.id)
+      expect(data['name']).to eq(assignment.name)
+    end
+
+    it 'returns 404 when assignment does not exist' do
+      get '/assignments/999', headers: { 'Authorization' => Authorization() }
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # PATCH /assignments/:id — update 404
+  # -------------------------------------------------------------------------
+  describe 'PATCH /assignments/:id — not found' do
+    it 'returns 404 when assignment does not exist' do
+      patch '/assignments/999',
+            params: { assignment: { name: 'Ghost' } }.to_json,
+            headers: { 'Content-Type' => 'application/json', 'Authorization' => Authorization() }
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # Topic settings — field persistence
+  # -------------------------------------------------------------------------
+  describe 'topic settings field persistence via PATCH /assignments/:id' do
+    let(:assignment) { Assignment.create!(name: 'Topic Settings Test', instructor_id: prof.id) }
+
+    def patch_assignment(body)
+      patch "/assignments/#{assignment.id}",
+            params: { assignment: body }.to_json,
+            headers: { 'Content-Type' => 'application/json', 'Authorization' => Authorization() }
+    end
+
+    it 'persists allow_topic_suggestion_from_students' do
+      patch_assignment(allow_topic_suggestion_from_students: true)
+      expect(response).to have_http_status(:ok)
+      expect(assignment.reload.allow_suggestions).to be true
+    end
+
+    it 'persists enable_bidding_for_topics' do
+      patch_assignment(enable_bidding_for_topics: true)
+      expect(response).to have_http_status(:ok)
+      expect(assignment.reload.enable_bidding_for_topics).to be true
+    end
+
+    it 'persists enable_authors_to_review_other_topics' do
+      patch_assignment(enable_authors_to_review_other_topics: true)
+      expect(response).to have_http_status(:ok)
+      expect(assignment.reload.enable_authors_to_review_other_topics).to be true
+    end
+
+    it 'persists allow_reviewer_to_choose_topic_to_review' do
+      patch_assignment(allow_reviewer_to_choose_topic_to_review: true)
+      expect(response).to have_http_status(:ok)
+      expect(assignment.reload.can_choose_topic_to_review).to be true
+    end
+
+    it 'persists enable_bidding_for_reviews' do
+      patch_assignment(enable_bidding_for_reviews: true)
+      expect(response).to have_http_status(:ok)
+      expect(assignment.reload.bidding_for_reviews_enabled).to be true
+    end
+
+    it 'resets topic settings to false' do
+      assignment.update!(allow_suggestions: true, enable_bidding_for_topics: true)
+      patch_assignment(allow_topic_suggestion_from_students: false, enable_bidding_for_topics: false)
+      expect(response).to have_http_status(:ok)
+      expect(assignment.reload.allow_suggestions).to be false
+      expect(assignment.reload.enable_bidding_for_topics).to be false
+    end
+  end
+
   # instructor_grade_min_score / instructor_grade_max_score
   # -------------------------------------------------------------------------
 
