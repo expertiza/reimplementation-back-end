@@ -602,6 +602,41 @@ RSpec.describe 'Submitted Content API', type: :request do
         end
       end
 
+      context 'with a name that is already taken' do
+        let(:id) { participant.id }
+        let(:uploaded_file) do
+          file = Tempfile.new(['test', '.txt'])
+          file.write('replacement content')
+          file.rewind
+          ActionDispatch::Http::UploadedFile.new(
+            tempfile: file,
+            filename: 'test.txt',
+            type: 'text/plain'
+          )
+        end
+
+        before do
+          allow(team).to receive(:path).and_return(team_directory)
+          allow_any_instance_of(SubmittedContentController)
+            .to receive(:check_content_size).and_return(true)
+          allow_any_instance_of(SubmittedContentController)
+            .to receive(:valid_file_extension?).and_return(true)
+          allow_any_instance_of(SubmittedContentController)
+            .to receive(:create_submission_record_for).and_return(true)
+          File.write(File.join(team_directory, 'test.txt'), 'original content')
+        end
+
+        it 'returns conflict and leaves the existing file as it was' do
+          send(method, '/submitted_content/submit_file',
+               params: { id: id, uploaded_file: uploaded_file, current_folder: { name: '/' } },
+               headers: auth_headers_student.merge({ 'CONTENT_TYPE' => 'multipart/form-data' }))
+
+          expect(response).to have_http_status(:conflict)
+          expect(json['error']).to include('already exists')
+          expect(File.read(File.join(team_directory, 'test.txt'))).to eq('original content')
+        end
+      end
+
       context 'with zip file and unzip flag' do
         let(:id) { participant.id }
         let(:uploaded_file) do

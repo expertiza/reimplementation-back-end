@@ -152,6 +152,13 @@ class SubmittedContentController < ApplicationController
     # Build the full file path (use basename to prevent directory traversal)
     full_path = File.join(current_directory, File.basename(safe_filename))
 
+    # Refuse to replace a submission that is already there. The write below
+    # would otherwise overwrite the earlier file of the same name, and nothing
+    # would tell the submitter it had happened.
+    if File.exist?(full_path)
+      return render_error("A file named '#{File.basename(full_path)}' already exists in this folder. Please delete it first or upload under a different name.", :conflict)
+    end
+
     # Write the file to disk in binary mode
     File.open(full_path, 'wb') { |f| f.write(file_bytes) }
 
