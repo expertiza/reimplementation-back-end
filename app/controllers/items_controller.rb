@@ -1,10 +1,11 @@
 class ItemsController < ApplicationController
-  before_action :set_item, only: [:show, :update]
+  before_action :set_item, only: %i[show update]
 
   # GET /questions
   def action_allowed?
     current_user_has_role?('Instructor')
   end
+
   # Index method returns the list of items as a JSON object
   # GET /items
   def index
@@ -14,19 +15,17 @@ class ItemsController < ApplicationController
 
   # GET /items/:id
   def show
-    begin
-      @item = Item.find(params[:id])
+    @item = Item.find(params[:id])
 
-      # Choose the correct strategy based on item type
-      strategy = get_strategy_for_item(@item)
+    # Choose the correct strategy based on item type
+    strategy = get_strategy_for_item(@item)
 
-      # Render the item using the strategy
-      @rendered_item = strategy.render(@item)
+    # Render the item using the strategy
+    @rendered_item = strategy.render(@item)
 
-      render json: { item: @item, rendered_item: @rendered_item }, status: :ok
-    rescue ActiveRecord::RecordNotFound
-      render json: { error: "Item not found" }, status: :not_found
-    end
+    render json: { item: @item, rendered_item: @rendered_item }, status: :ok
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: 'Item not found' }, status: :not_found
   end
 
   # GET /items/show_all/questionnaire/:id
@@ -45,7 +44,7 @@ class ItemsController < ApplicationController
 
     # Build the new Item using the frontend-facing param names
     item = questionnaire.items.build(
-      txt: params[:prompt],          # prompt maps to the txt DB column
+      txt: params[:prompt], # prompt maps to the txt DB column
       question_type: params[:question_type],
       seq: params[:seq],
       break_before: true
@@ -94,9 +93,9 @@ class ItemsController < ApplicationController
   def delete_all
     questionnaire = Questionnaire.find(params[:id])
     if questionnaire.items.delete_all
-      render json: { message: "All questions deleted" }, status: :ok
+      render json: { message: 'All questions deleted' }, status: :ok
     else
-      render json: { error: "Deletion failed" }, status: :unprocessable_entity
+      render json: { error: 'Deletion failed' }, status: :unprocessable_entity
     end
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Couldn't find Questionnaire" }, status: :not_found
@@ -105,7 +104,6 @@ class ItemsController < ApplicationController
   def types
     render json: Item::QUESTION_TYPES, status: :ok
   end
-
 
   private
 
@@ -117,8 +115,8 @@ class ItemsController < ApplicationController
     # Accept frontend-facing names. :prompt is aliased to :txt via alias_attribute.
     # :rows/:columns/:row_names/:column_names go through the virtual setters in Item.
     params.require(:item).permit(:prompt, :question_type, :seq, :weight, :max_value,
-                                  :rows, :columns, :row_names, :column_names, :alternatives,
-                                  :break_before, :min_label, :max_label)
+                                 :rows, :columns, :row_names, :column_names, :alternatives,
+                                 :break_before, :min_label, :max_label)
   end
 
   def get_strategy_for_item(item)
@@ -129,7 +127,7 @@ class ItemsController < ApplicationController
       Strategies::ScaleStrategy.new
     # You can add more strategies as needed
     else
-      raise "Strategy for this item type not defined"
+      raise 'Strategy for this item type not defined'
     end
   end
 end
