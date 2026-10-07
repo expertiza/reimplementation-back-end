@@ -30,10 +30,10 @@ class FileUpload < Item
             type: 'textarea',
             cols: 50,
             rows: 1,
-            name: "item[#{id}][txt]",
+            name: "item[#{id}][prompt]",
             id: "question_#{id}_txt",
             placeholder: 'Edit item content here',
-            value: txt
+            value: prompt
           },
           {
             type: 'input',
@@ -52,23 +52,7 @@ class FileUpload < Item
       {
         action: 'view_item_text',
         elements: [
-          { type: 'text', value: txt },
+          { type: 'text', value: prompt },
           { type: 'text', value: question_type },
           { type: 'text', value: weight.to_s },
           { type: 'text', value: id.to_s },
-          { type: 'text', value: '—' } # Placeholder for non-applicable fields
-        ]
-      }.to_json
-    end
-  
-  
-    # Implement this method for completing a item
-    def complete(count, answer = nil)
-      # Implement the logic for completing a item
-    end
-  
-    # Implement this method for viewing a completed item by a student
-    def view_completed_item(count, files)
-      # Implement the logic for viewing a completed item by a student
-    end
-  end

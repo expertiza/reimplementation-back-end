@@ -6,7 +6,7 @@ class Scale < ScoredItem
     attr_accessor :txt, :type, :weight, :min_label, :max_label, :answer, :min_question_score, :max_question_score
   
     def edit
-      edit_common('Item:', min_question_score, max_question_score , txt, weight, type).to_json
+      edit_common('Item:', min_question_score, max_question_score , prompt, weight, type).to_json
     end
   
     def view_item_text
