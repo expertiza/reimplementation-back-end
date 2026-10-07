@@ -55,4 +55,8 @@ class FileUpload < Item
           { type: 'text', value: prompt },
           { type: 'text', value: question_type },
           { type: 'text', value: weight.to_s },
-          { type: 'text', value: id.to_s },
+          { type: 'text', value: id.to_s }
+        ]
+      }.to_json
+    end
+end
