@@ -8,14 +8,16 @@ RSpec.describe 'items', type: :request do
     @roles = create_roles_hierarchy
   end
 
-  let(:instructor) { User.create(
-    name: "profa",
-    password_digest: "password",
-    role_id: @roles[:instructor].id,
-    full_name: "Prof A",
-    email: "testuser@example.com",
-    mru_directory_path: "/home/testuser",
-    ) }
+  let(:instructor) do
+    User.create(
+      name: 'profa',
+      password_digest: 'password',
+      role_id: @roles[:instructor].id,
+      full_name: 'Prof A',
+      email: 'testuser@example.com',
+      mru_directory_path: '/home/testuser'
+    )
+  end
 
   let!(:itemnaire) do
     instructor
@@ -29,16 +31,16 @@ RSpec.describe 'items', type: :request do
     )
   end
 
-  let(:token) { JsonWebToken.encode({id: instructor.id}) }
+  let(:token) { JsonWebToken.encode({ id: instructor.id }) }
   let(:Authorization) { "Bearer #{token}" }
   path '/items' do
     let(:item1) do
       itemnaire
       Item.create(
-        seq: 1, 
-        prompt: "test item 1",
-        item_type: "multiple_choice", 
-        break_before: true, 
+        seq: 1,
+        prompt: 'test item 1',
+        item_type: 'multiple_choice',
+        break_before: true,
         weight: 5,
         itemnaire: itemnaire
       )
@@ -47,10 +49,10 @@ RSpec.describe 'items', type: :request do
     let(:item2) do
       itemnaire
       Item.create(
-        seq: 2, 
-        prompt: "test item 2",
-        item_type: "multiple_choice", 
-        break_before: false, 
+        seq: 2,
+        prompt: 'test item 2',
+        item_type: 'multiple_choice',
+        break_before: false,
         weight: 10,
         itemnaire: itemnaire
       )
@@ -71,12 +73,12 @@ RSpec.describe 'items', type: :request do
       tags 'Items'
       consumes 'application/json'
       produces 'application/json'
-      
+
       let(:valid_item_params) do
         {
           itemnaire_id: itemnaire.id,
-          prompt: "test item",
-          item_type: "multiple_choice", 
+          prompt: 'test item',
+          item_type: 'multiple_choice',
           break_before: false,
           seq: 1,
           weight: 10
@@ -85,9 +87,9 @@ RSpec.describe 'items', type: :request do
       # Creation of dummy objects for the test with the help of let statements
       let(:invalid_item_params1) do
         {
-          itemnaire_id: nil ,
-          prompt: "test item",
-          item_type: "multiple_choice", 
+          itemnaire_id: nil,
+          prompt: 'test item',
+          item_type: 'multiple_choice',
           break_before: false,
           weight: 10
         }
@@ -95,9 +97,9 @@ RSpec.describe 'items', type: :request do
 
       let(:invalid_item_params2) do
         {
-          itemnaire_id: itemnaire.id ,
-          prompt: "test item",
-          item_type: nil, 
+          itemnaire_id: itemnaire.id,
+          prompt: 'test item',
+          item_type: nil,
           break_before: false,
           weight: 10
         }
@@ -136,25 +138,22 @@ RSpec.describe 'items', type: :request do
 
       # post request on /items returns 422 unprocessable entity when incorrect parameters are passed to create a item
       response(422, 'unprocessable entity') do
-        let(:item) { invalid_item_params2 }   # <--- pass invalid params directly to the request
+        let(:item) { invalid_item_params2 } # <--- pass invalid params directly to the request
         run_test!
       end
-
     end
-
   end
 
   path '/items/{id}' do
-
     parameter name: 'id', in: :path, type: :integer
 
     let(:item1) do
       itemnaire
       Item.create(
-        seq: 1, 
-        prompt: "test item 1",
-        item_type: "Scale", 
-        break_before: true, 
+        seq: 1,
+        prompt: 'test item 1',
+        item_type: 'Scale',
+        break_before: true,
         weight: 5,
         itemnaire: itemnaire
       )
@@ -163,23 +162,20 @@ RSpec.describe 'items', type: :request do
     let(:item2) do
       itemnaire
       Item.create(
-        seq: 2, 
-        prompt: "test item 2",
-        item_type: "Scale", 
-        break_before: false, 
+        seq: 2,
+        prompt: 'test item 2',
+        item_type: 'Scale',
+        break_before: false,
         weight: 10,
         itemnaire: itemnaire
       )
     end
 
-    
     let(:id) do
       itemnaire
       item1
-      item1.id 
+      item1.id
     end
-
-
 
     get('show item') do
       tags 'Items'
@@ -195,9 +191,9 @@ RSpec.describe 'items', type: :request do
       # get request on /items/{id} returns 404 not found response when item id is not present in the database
       response(404, 'not_found') do
         let(:id) { 'invalid' }
-          run_test! do
-            expect(response.body).to include("Couldn't find Item")
-          end
+        run_test! do
+          expect(response.body).to include("Couldn't find Item")
+        end
       end
     end
 
@@ -213,7 +209,7 @@ RSpec.describe 'items', type: :request do
           seq: { type: :integer }
         }
       }
-      
+
       # put request on /items/{id} returns 200 successful response and updates parameters of item with given item id
       response(200, 'successful') do
         let(:body_params) do
@@ -235,7 +231,7 @@ RSpec.describe 'items', type: :request do
           }
         end
         run_test! do
-          expect(response.body).to include("Not Found")
+          expect(response.body).to include('Not Found')
         end
       end
 
@@ -243,16 +239,14 @@ RSpec.describe 'items', type: :request do
       response(422, 'unprocessable entity') do
         let(:body_params) do
           {
-            seq: "Dfsd"
+            seq: 'Dfsd'
           }
         end
         schema type: :object
         run_test! do
           expect(response.body).to_not include('"seq":"Dfsd"')
         end
-      end  
-
-
+      end
     end
 
     patch('update item') do
@@ -267,7 +261,7 @@ RSpec.describe 'items', type: :request do
           seq: { type: :integer }
         }
       }
-      
+
       # patch request on /items/{id} returns 200 successful response and updates parameters of item with given item id
       response(200, 'successful') do
         let(:body_params) do
@@ -297,7 +291,7 @@ RSpec.describe 'items', type: :request do
       response(422, 'unprocessable entity') do
         let(:body_params) do
           {
-            seq: "Dfsd"
+            seq: 'Dfsd'
           }
         end
         schema type: :object
@@ -307,9 +301,7 @@ RSpec.describe 'items', type: :request do
       end
     end
 
-
     delete('delete item') do
-
       tags 'Items'
       produces 'application/json'
 
@@ -328,7 +320,6 @@ RSpec.describe 'items', type: :request do
         end
       end
     end
-
   end
 
   path '/items/delete_all/itemnaire/{id}' do
@@ -349,10 +340,10 @@ RSpec.describe 'items', type: :request do
     let(:item1) do
       itemnaire
       Item.create(
-        seq: 1, 
-        prompt: "test item 1",
-        item_type: "multiple_choice", 
-        break_before: true, 
+        seq: 1,
+        prompt: 'test item 1',
+        item_type: 'multiple_choice',
+        break_before: true,
         weight: 5,
         itemnaire: itemnaire
       )
@@ -361,21 +352,20 @@ RSpec.describe 'items', type: :request do
     let(:item2) do
       itemnaire
       Item.create(
-        seq: 2, 
-        prompt: "test item 2",
-        item_type: "multiple_choice", 
-        break_before: false, 
+        seq: 2,
+        prompt: 'test item 2',
+        item_type: 'multiple_choice',
+        break_before: false,
         weight: 10,
         itemnaire: itemnaire
       )
     end
 
-    
     let(:id) do
       itemnaire
       item1
       item2
-      itemnaire.id 
+      itemnaire.id
     end
 
     delete('delete all items') do
@@ -417,10 +407,10 @@ RSpec.describe 'items', type: :request do
     let(:item1) do
       itemnaire
       Item.create(
-        seq: 1, 
-        prompt: "test item 1",
-        item_type: "multiple_choice", 
-        break_before: true, 
+        seq: 1,
+        prompt: 'test item 1',
+        item_type: 'multiple_choice',
+        break_before: true,
         weight: 5,
         itemnaire: itemnaire
       )
@@ -441,10 +431,10 @@ RSpec.describe 'items', type: :request do
     let(:item2) do
       itemnaire2
       Item.create(
-        seq: 2, 
-        prompt: "test item 2",
-        item_type: "multiple_choice", 
-        break_before: true, 
+        seq: 2,
+        prompt: 'test item 2',
+        item_type: 'multiple_choice',
+        break_before: true,
         weight: 5,
         itemnaire: itemnaire2
       )
@@ -453,23 +443,22 @@ RSpec.describe 'items', type: :request do
     let(:item3) do
       itemnaire2
       Item.create(
-        seq: 3, 
-        prompt: "test item 3",
-        item_type: "multiple_choice", 
-        break_before: false, 
+        seq: 3,
+        prompt: 'test item 3',
+        item_type: 'multiple_choice',
+        break_before: false,
         weight: 10,
         itemnaire: itemnaire2
       )
     end
 
-    
     let(:id) do
       itemnaire
       itemnaire2
       item1
       item2
       item3
-      itemnaire.id 
+      itemnaire.id
     end
 
     get('show all items') do
@@ -480,7 +469,7 @@ RSpec.describe 'items', type: :request do
       response(200, 'successful') do
         run_test! do
           expect(Item.where(itemnaire_id: id).count).to eq(1)
-          expect(response.body).to_not include('"itemnaire_id: "' + itemnaire2.id.to_s)
+          expect(response.body).to_not include("\"itemnaire_id: \"#{itemnaire2.id}")
         end
       end
 
@@ -495,7 +484,6 @@ RSpec.describe 'items', type: :request do
   end
 
   path '/items/types' do
-
     let(:itemnaire) do
       instructor
       Itemnaire.create(
@@ -511,10 +499,10 @@ RSpec.describe 'items', type: :request do
     let(:item1) do
       itemnaire
       Item.create(
-        seq: 1, 
-        prompt: "test item 1",
-        item_type: "multiple_choice", 
-        break_before: true, 
+        seq: 1,
+        prompt: 'test item 1',
+        item_type: 'multiple_choice',
+        break_before: true,
         weight: 5,
         itemnaire: itemnaire
       )
@@ -523,10 +511,10 @@ RSpec.describe 'items', type: :request do
     let(:item2) do
       itemnaire
       Item.create(
-        seq: 2, 
-        prompt: "test item 2",
-        item_type: "multiple_choice", 
-        break_before: false, 
+        seq: 2,
+        prompt: 'test item 2',
+        item_type: 'multiple_choice',
+        break_before: false,
         weight: 10,
         itemnaire: itemnaire
       )
@@ -540,10 +528,9 @@ RSpec.describe 'items', type: :request do
         run_test! do
           parsed_response = JSON.parse(response.body)
           expect(parsed_response.size).to eq(7)
-          expect(parsed_response).to include("Multiple choice")
+          expect(parsed_response).to include('Multiple choice')
         end
       end
     end
-  
   end
 end
