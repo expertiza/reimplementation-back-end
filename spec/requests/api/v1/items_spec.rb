@@ -26,8 +26,8 @@ RSpec.describe 'items', type: :request do
       name: 'Questionnaire 1',
       questionnaire_type: 'AuthorFeedbackReview',
       private: true,
-      min_item_score: 0,
-      max_item_score: 10,
+      min_question_score: 0,
+      max_question_score: 10,
       instructor_id: instructor.id
     )
   end
@@ -332,8 +332,8 @@ RSpec.describe 'items', type: :request do
         name: 'Questionnaire 1',
         questionnaire_type: 'AuthorFeedbackReview',
         private: true,
-        min_item_score: 0,
-        max_item_score: 10,
+        min_question_score: 0,
+        max_question_score: 10,
         instructor_id: instructor.id
       )
     end
@@ -399,8 +399,8 @@ RSpec.describe 'items', type: :request do
         name: 'Questionnaire 1',
         questionnaire_type: 'AuthorFeedbackReview',
         private: true,
-        min_item_score: 0,
-        max_item_score: 10,
+        min_question_score: 0,
+        max_question_score: 10,
         instructor_id: instructor.id
       )
     end
@@ -423,8 +423,8 @@ RSpec.describe 'items', type: :request do
         name: 'Questionnaire 2',
         questionnaire_type: 'AuthorFeedbackReview',
         private: true,
-        min_item_score: 0,
-        max_item_score: 10,
+        min_question_score: 0,
+        max_question_score: 10,
         instructor_id: instructor.id
       )
     end
@@ -491,8 +491,8 @@ RSpec.describe 'items', type: :request do
         name: 'Questionnaire 1',
         questionnaire_type: 'AuthorFeedbackReview',
         private: true,
-        min_item_score: 0,
-        max_item_score: 10,
+        min_question_score: 0,
+        max_question_score: 10,
         instructor_id: instructor.id
       )
     end
