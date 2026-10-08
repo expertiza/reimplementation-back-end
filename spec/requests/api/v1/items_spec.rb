@@ -20,11 +20,11 @@ RSpec.describe 'items', type: :request do
     )
   end
 
-  let!(:itemnaire) do
+  let!(:questionnaire) do
     instructor
-    Itemnaire.create(
-      name: 'Itemnaire 1',
-      itemnaire_type: 'AuthorFeedbackReview',
+    Questionnaire.create(
+      name: 'Questionnaire 1',
+      questionnaire_type: 'AuthorFeedbackReview',
       private: true,
       min_item_score: 0,
       max_item_score: 10,
@@ -36,26 +36,26 @@ RSpec.describe 'items', type: :request do
   let(:Authorization) { "Bearer #{token}" }
   path '/items' do
     let(:item1) do
-      itemnaire
+      questionnaire
       Item.create(
         seq: 1,
         prompt: 'test item 1',
         item_type: 'multiple_choice',
         break_before: true,
         weight: 5,
-        itemnaire: itemnaire
+        questionnaire: questionnaire
       )
     end
 
     let(:item2) do
-      itemnaire
+      questionnaire
       Item.create(
         seq: 2,
         prompt: 'test item 2',
         item_type: 'multiple_choice',
         break_before: false,
         weight: 10,
-        itemnaire: itemnaire
+        questionnaire: questionnaire
       )
     end
 
@@ -77,7 +77,7 @@ RSpec.describe 'items', type: :request do
 
       let(:valid_item_params) do
         {
-          itemnaire_id: itemnaire.id,
+          questionnaire_id: questionnaire.id,
           prompt: 'test item',
           item_type: 'multiple_choice',
           break_before: false,
@@ -88,7 +88,7 @@ RSpec.describe 'items', type: :request do
       # Creation of dummy objects for the test with the help of let statements
       let(:invalid_item_params1) do
         {
-          itemnaire_id: nil,
+          questionnaire_id: nil,
           prompt: 'test item',
           item_type: 'multiple_choice',
           break_before: false,
@@ -98,7 +98,7 @@ RSpec.describe 'items', type: :request do
 
       let(:invalid_item_params2) do
         {
-          itemnaire_id: itemnaire.id,
+          questionnaire_id: questionnaire.id,
           prompt: 'test item',
           item_type: nil,
           break_before: false,
@@ -110,13 +110,13 @@ RSpec.describe 'items', type: :request do
         type: :object,
         properties: {
           weight: { type: :integer },
-          itemnaire_id: { type: :integer },
+          questionnaire_id: { type: :integer },
           break_before: { type: :boolean },
           prompt: { type: :string },
           item_type: { type: :string },
           seq: { type: :number }
         },
-        required: %w[weight itemnaire_id break_before prompt item_type seq]
+        required: %w[weight questionnaire_id break_before prompt item_type seq]
       }
 
       # post request on /items returns 201 created response and creates a item with given valid parameters
@@ -128,8 +128,8 @@ RSpec.describe 'items', type: :request do
         end
       end
 
-      # post request on /items returns 404 not found when itemnaire id for the given item is not present in the database
-      response(404, 'itemnaire id not found') do
+      # post request on /items returns 404 not found when questionnaire id for the given item is not present in the database
+      response(404, 'questionnaire id not found') do
         let(:item) do
           instructor
           Item.create(invalid_item_params1)
@@ -149,31 +149,31 @@ RSpec.describe 'items', type: :request do
     parameter name: 'id', in: :path, type: :integer
 
     let(:item1) do
-      itemnaire
+      questionnaire
       Item.create(
         seq: 1,
         prompt: 'test item 1',
         item_type: 'Scale',
         break_before: true,
         weight: 5,
-        itemnaire: itemnaire
+        questionnaire: questionnaire
       )
     end
 
     let(:item2) do
-      itemnaire
+      questionnaire
       Item.create(
         seq: 2,
         prompt: 'test item 2',
         item_type: 'Scale',
         break_before: false,
         weight: 10,
-        itemnaire: itemnaire
+        questionnaire: questionnaire
       )
     end
 
     let(:id) do
-      itemnaire
+      questionnaire
       item1
       item1.id
     end
@@ -323,14 +323,14 @@ RSpec.describe 'items', type: :request do
     end
   end
 
-  path '/items/delete_all/itemnaire/{id}' do
+  path '/items/delete_all/questionnaire/{id}' do
     parameter name: 'id', in: :path, type: :integer
 
-    let(:itemnaire) do
+    let(:questionnaire) do
       instructor
-      Itemnaire.create(
-        name: 'Itemnaire 1',
-        itemnaire_type: 'AuthorFeedbackReview',
+      Questionnaire.create(
+        name: 'Questionnaire 1',
+        questionnaire_type: 'AuthorFeedbackReview',
         private: true,
         min_item_score: 0,
         max_item_score: 10,
@@ -339,65 +339,65 @@ RSpec.describe 'items', type: :request do
     end
 
     let(:item1) do
-      itemnaire
+      questionnaire
       Item.create(
         seq: 1,
         prompt: 'test item 1',
         item_type: 'multiple_choice',
         break_before: true,
         weight: 5,
-        itemnaire: itemnaire
+        questionnaire: questionnaire
       )
     end
 
     let(:item2) do
-      itemnaire
+      questionnaire
       Item.create(
         seq: 2,
         prompt: 'test item 2',
         item_type: 'multiple_choice',
         break_before: false,
         weight: 10,
-        itemnaire: itemnaire
+        questionnaire: questionnaire
       )
     end
 
     let(:id) do
-      itemnaire
+      questionnaire
       item1
       item2
-      itemnaire.id
+      questionnaire.id
     end
 
     delete('delete all items') do
       tags 'Items'
       produces 'application/json'
 
-      # delete method on /items/delete_all/itemnaire/{id} returns 200 successful response when all items with given itemnaire id are deleted
+      # delete method on /items/delete_all/questionnaire/{id} returns 200 successful response when all items with given questionnaire id are deleted
       response(200, 'successful') do
         run_test! do
-          expect(Item.where(itemnaire_id: id).count).to eq(0)
+          expect(Item.where(questionnaire_id: id).count).to eq(0)
         end
       end
 
-      # delete request on /items/delete_all/itemnaire/{id} returns 404 not found response when itemnaire id is not found in the database
+      # delete request on /items/delete_all/questionnaire/{id} returns 404 not found response when questionnaire id is not found in the database
       response(404, 'not found') do
         let(:id) { 0 }
         run_test! do
-          expect(response.body).to include("Couldn't find Itemnaire")
+          expect(response.body).to include("Couldn't find Questionnaire")
         end
       end
     end
   end
 
-  path '/items/show_all/itemnaire/{id}' do
+  path '/items/show_all/questionnaire/{id}' do
     parameter name: 'id', in: :path, type: :integer
 
-    let(:itemnaire) do
+    let(:questionnaire) do
       instructor
-      Itemnaire.create(
-        name: 'Itemnaire 1',
-        itemnaire_type: 'AuthorFeedbackReview',
+      Questionnaire.create(
+        name: 'Questionnaire 1',
+        questionnaire_type: 'AuthorFeedbackReview',
         private: true,
         min_item_score: 0,
         max_item_score: 10,
@@ -406,22 +406,22 @@ RSpec.describe 'items', type: :request do
     end
 
     let(:item1) do
-      itemnaire
+      questionnaire
       Item.create(
         seq: 1,
         prompt: 'test item 1',
         item_type: 'multiple_choice',
         break_before: true,
         weight: 5,
-        itemnaire: itemnaire
+        questionnaire: questionnaire
       )
     end
 
-    let(:itemnaire2) do
+    let(:questionnaire2) do
       instructor
-      Itemnaire.create(
-        name: 'Itemnaire 2',
-        itemnaire_type: 'AuthorFeedbackReview',
+      Questionnaire.create(
+        name: 'Questionnaire 2',
+        questionnaire_type: 'AuthorFeedbackReview',
         private: true,
         min_item_score: 0,
         max_item_score: 10,
@@ -430,66 +430,66 @@ RSpec.describe 'items', type: :request do
     end
 
     let(:item2) do
-      itemnaire2
+      questionnaire2
       Item.create(
         seq: 2,
         prompt: 'test item 2',
         item_type: 'multiple_choice',
         break_before: true,
         weight: 5,
-        itemnaire: itemnaire2
+        questionnaire: questionnaire2
       )
     end
 
     let(:item3) do
-      itemnaire2
+      questionnaire2
       Item.create(
         seq: 3,
         prompt: 'test item 3',
         item_type: 'multiple_choice',
         break_before: false,
         weight: 10,
-        itemnaire: itemnaire2
+        questionnaire: questionnaire2
       )
     end
 
     let(:id) do
-      itemnaire
-      itemnaire2
+      questionnaire
+      questionnaire2
       item1
       item2
       item3
-      itemnaire.id
+      questionnaire.id
     end
 
     get('show all items') do
       tags 'Items'
       produces 'application/json'
 
-      # get method on /items/show_all/itemnaire/{id} returns 200 successful response when all items with given itemnaire id are shown
+      # get method on /items/show_all/questionnaire/{id} returns 200 successful response when all items with given questionnaire id are shown
       response(200, 'successful') do
         run_test! do
-          expect(Item.where(itemnaire_id: id).count).to eq(1)
-          expect(response.body).to_not include("\"itemnaire_id: \"#{itemnaire2.id}")
+          expect(Item.where(questionnaire_id: id).count).to eq(1)
+          expect(response.body).to_not include("\"questionnaire_id: \"#{questionnaire2.id}")
         end
       end
 
-      # get request on /items/delete_all/itemnaire/{id} returns 404 not found response when itemnaire id is not found in the database
+      # get request on /items/delete_all/questionnaire/{id} returns 404 not found response when questionnaire id is not found in the database
       response(404, 'not found') do
         let(:id) { 0 }
         run_test! do
-          expect(response.body).to include("Couldn't find Itemnaire")
+          expect(response.body).to include("Couldn't find Questionnaire")
         end
       end
     end
   end
 
   path '/items/types' do
-    let(:itemnaire) do
+    let(:questionnaire) do
       instructor
-      Itemnaire.create(
-        name: 'Itemnaire 1',
-        itemnaire_type: 'AuthorFeedbackReview',
+      Questionnaire.create(
+        name: 'Questionnaire 1',
+        questionnaire_type: 'AuthorFeedbackReview',
         private: true,
         min_item_score: 0,
         max_item_score: 10,
@@ -498,26 +498,26 @@ RSpec.describe 'items', type: :request do
     end
 
     let(:item1) do
-      itemnaire
+      questionnaire
       Item.create(
         seq: 1,
         prompt: 'test item 1',
         item_type: 'multiple_choice',
         break_before: true,
         weight: 5,
-        itemnaire: itemnaire
+        questionnaire: questionnaire
       )
     end
 
     let(:item2) do
-      itemnaire
+      questionnaire
       Item.create(
         seq: 2,
         prompt: 'test item 2',
         item_type: 'multiple_choice',
         break_before: false,
         weight: 10,
-        itemnaire: itemnaire
+        questionnaire: questionnaire
       )
     end
 
