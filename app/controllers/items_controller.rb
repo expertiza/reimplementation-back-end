@@ -123,11 +123,12 @@ class ItemsController < ApplicationController # rubocop:disable Metrics/ClassLen
   end
 
   def item_params
-    # Accept frontend-facing names. :prompt is aliased to :txt via alias_attribute.
-    # :rows/:columns/:row_names/:column_names go through the virtual setters in Item.
-    params.require(:item).permit(:prompt, :question_type, :seq, :weight, :max_value,
-                                 :rows, :columns, :row_names, :column_names, :alternatives,
-                                 :break_before, :min_label, :max_label)
+    # The frontend sends :prompt, which maps to the txt column.
+    permitted = params.require(:item).permit(:prompt, :txt, :question_type, :seq, :weight, :alternatives,
+                                             :size, :break_before, :min_label, :max_label)
+    prompt = permitted.delete(:prompt)
+    permitted[:txt] = prompt if prompt
+    permitted
   end
 
   def get_strategy_for_item(item)

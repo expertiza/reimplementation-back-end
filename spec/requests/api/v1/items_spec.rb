@@ -40,8 +40,8 @@ RSpec.describe 'items', type: :request do
       questionnaire
       Item.create(
         seq: 1,
-        prompt: 'test item 1',
-        item_type: 'multiple_choice',
+        txt: 'test item 1',
+        question_type: 'multiple_choice',
         break_before: true,
         weight: 5,
         questionnaire: questionnaire
@@ -52,8 +52,8 @@ RSpec.describe 'items', type: :request do
       questionnaire
       Item.create(
         seq: 2,
-        prompt: 'test item 2',
-        item_type: 'multiple_choice',
+        txt: 'test item 2',
+        question_type: 'multiple_choice',
         break_before: false,
         weight: 10,
         questionnaire: questionnaire
@@ -80,7 +80,7 @@ RSpec.describe 'items', type: :request do
         {
           questionnaire_id: questionnaire.id,
           prompt: 'test item',
-          item_type: 'multiple_choice',
+          question_type: 'multiple_choice',
           break_before: false,
           seq: 1,
           weight: 10
@@ -91,7 +91,7 @@ RSpec.describe 'items', type: :request do
         {
           questionnaire_id: nil,
           prompt: 'test item',
-          item_type: 'multiple_choice',
+          question_type: 'multiple_choice',
           break_before: false,
           weight: 10
         }
@@ -101,7 +101,7 @@ RSpec.describe 'items', type: :request do
         {
           questionnaire_id: questionnaire.id,
           prompt: 'test item',
-          item_type: nil,
+          question_type: nil,
           break_before: false,
           weight: 10
         }
@@ -114,10 +114,10 @@ RSpec.describe 'items', type: :request do
           questionnaire_id: { type: :integer },
           break_before: { type: :boolean },
           prompt: { type: :string },
-          item_type: { type: :string },
+          question_type: { type: :string },
           seq: { type: :number }
         },
-        required: %w[weight questionnaire_id break_before prompt item_type seq]
+        required: %w[weight questionnaire_id break_before prompt question_type seq]
       }
 
       # post request on /items returns 201 created response and creates a item with given valid parameters
@@ -131,10 +131,7 @@ RSpec.describe 'items', type: :request do
 
       # post request on /items returns 404 not found when questionnaire id for the given item is not present in the database
       response(404, 'questionnaire id not found') do
-        let(:item) do
-          instructor
-          Item.create(invalid_item_params1)
-        end
+        let(:item) { invalid_item_params1 }
         run_test!
       end
 
@@ -153,8 +150,8 @@ RSpec.describe 'items', type: :request do
       questionnaire
       Item.create(
         seq: 1,
-        prompt: 'test item 1',
-        item_type: 'Scale',
+        txt: 'test item 1',
+        question_type: 'Scale',
         break_before: true,
         weight: 5,
         questionnaire: questionnaire
@@ -165,8 +162,8 @@ RSpec.describe 'items', type: :request do
       questionnaire
       Item.create(
         seq: 2,
-        prompt: 'test item 2',
-        item_type: 'Scale',
+        txt: 'test item 2',
+        question_type: 'Scale',
         break_before: false,
         weight: 10,
         questionnaire: questionnaire
@@ -186,7 +183,7 @@ RSpec.describe 'items', type: :request do
       # get request on /items/{id} returns 200 successful response and returns item with given item id
       response(200, 'successful') do
         run_test! do
-          expect(response.body).to include('"prompt":"test item 1"')
+          expect(response.body).to include('"txt":"test item 1"')
         end
       end
 
@@ -343,8 +340,8 @@ RSpec.describe 'items', type: :request do
       questionnaire
       Item.create(
         seq: 1,
-        prompt: 'test item 1',
-        item_type: 'multiple_choice',
+        txt: 'test item 1',
+        question_type: 'multiple_choice',
         break_before: true,
         weight: 5,
         questionnaire: questionnaire
@@ -355,8 +352,8 @@ RSpec.describe 'items', type: :request do
       questionnaire
       Item.create(
         seq: 2,
-        prompt: 'test item 2',
-        item_type: 'multiple_choice',
+        txt: 'test item 2',
+        question_type: 'multiple_choice',
         break_before: false,
         weight: 10,
         questionnaire: questionnaire
@@ -410,8 +407,8 @@ RSpec.describe 'items', type: :request do
       questionnaire
       Item.create(
         seq: 1,
-        prompt: 'test item 1',
-        item_type: 'multiple_choice',
+        txt: 'test item 1',
+        question_type: 'multiple_choice',
         break_before: true,
         weight: 5,
         questionnaire: questionnaire
@@ -434,8 +431,8 @@ RSpec.describe 'items', type: :request do
       questionnaire2
       Item.create(
         seq: 2,
-        prompt: 'test item 2',
-        item_type: 'multiple_choice',
+        txt: 'test item 2',
+        question_type: 'multiple_choice',
         break_before: true,
         weight: 5,
         questionnaire: questionnaire2
@@ -446,8 +443,8 @@ RSpec.describe 'items', type: :request do
       questionnaire2
       Item.create(
         seq: 3,
-        prompt: 'test item 3',
-        item_type: 'multiple_choice',
+        txt: 'test item 3',
+        question_type: 'multiple_choice',
         break_before: false,
         weight: 10,
         questionnaire: questionnaire2
@@ -502,8 +499,8 @@ RSpec.describe 'items', type: :request do
       questionnaire
       Item.create(
         seq: 1,
-        prompt: 'test item 1',
-        item_type: 'multiple_choice',
+        txt: 'test item 1',
+        question_type: 'multiple_choice',
         break_before: true,
         weight: 5,
         questionnaire: questionnaire
@@ -514,8 +511,8 @@ RSpec.describe 'items', type: :request do
       questionnaire
       Item.create(
         seq: 2,
-        prompt: 'test item 2',
-        item_type: 'multiple_choice',
+        txt: 'test item 2',
+        question_type: 'multiple_choice',
         break_before: false,
         weight: 10,
         questionnaire: questionnaire
