@@ -52,10 +52,11 @@ class AssignmentsController < ApplicationController
   # POST /assignments
   def create
     assignment = Assignment.new(assignment_params)
-    # Mirror old Expertiza behavior: instructor comes from the course when one is
-    # selected (so an admin creating an assignment in another instructor's course
-    # doesn't accidentally take ownership). Fall back to current_user only when no
-    # course is attached (standalone assignment).
+    # Instructor for an assignment is taken from the course instructor if the assignment
+    # belongs to a course; otherwise, the instructor is the current user.
+    # (If the assignment doesn't belong to a course, there can't be a TA, so we don't
+    # have to worry about that case. If an admin creates an assignment and wants it to
+    # belong to an instructor, they can impersonate the instructor instead.)
     assignment.instructor_id = if assignment.course_id.present?
                                  Course.find_by(id: assignment.course_id)&.instructor_id || current_user.id
                                else
@@ -82,7 +83,7 @@ class AssignmentsController < ApplicationController
 
   # GET /assignments/:id/calibration_submissions
   # Returns all teams for the assignment with their submitted content and the
-  # instructor's calibration review status — mirroring old Expertiza's _calibration.html.erb.
+  # instructor's calibration review status.
   def calibration_submissions
     assignment = Assignment.find(params[:id])
 
@@ -106,7 +107,7 @@ class AssignmentsController < ApplicationController
         reviewed_object_id: assignment.id,
         reviewer_id: instructor_participant.id,
         reviewee_id: team.id,
-        calibrate_to: true
+        for_calibration: true
       )
 
       review_status = if calibration_map.nil?
@@ -358,19 +359,19 @@ class AssignmentsController < ApplicationController
       :review_rubric_varies_by_topic,            # alias → vary_by_topic
       :review_rubric_varies_by_role,             # alias → vary_by_role
       :is_review_anonymous,                      # alias → is_anonymous
-      :is_review_done_by_teams,                  # alias → team_reviewing_enabled
+      :is_review_done_by_teams,                  # alias → reviewing_is_done_by_teams
       :allow_self_reviews,                       # alias → is_selfreview_enabled
       :reviews_visible_to_other_reviewers,       # alias → reviews_visible_to_all
       :has_max_review_limit,                     # virtual (no DB column, UI toggle only)
       :set_allowed_number_of_reviews_per_reviewer, # alias → num_reviews_allowed
       :set_required_number_of_reviews_per_reviewer, # alias → num_reviews_required
       :number_of_review_rounds,                  # alias → rounds_of_reviews
-      :is_role_based,                            # alias → duty_based_assignment
+      :is_role_based,                            # alias → team_members_have_duties
       # Topics / bidding
       :allow_topic_suggestion_from_students,     # alias → allow_suggestions
-      :enable_bidding_for_topics,
+      :topics_assigned_by_bidding,
       :enable_bidding_for_reviews,               # alias → bidding_for_reviews_enabled
-      :enable_authors_to_review_other_topics,
+      :can_review_same_topic,
       :allow_reviewer_to_choose_topic_to_review, # alias → can_choose_topic_to_review
       :staggered_deadline_assignment,            # alias → staggered_deadline
       # Penalties / late policy

@@ -511,16 +511,16 @@ RSpec.describe 'Assignments API', type: :request do
       expect(assignment.reload.allow_suggestions).to be true
     end
 
-    it 'persists enable_bidding_for_topics' do
-      patch_assignment(enable_bidding_for_topics: true)
+    it 'persists topics_assigned_by_bidding' do
+      patch_assignment(topics_assigned_by_bidding: true)
       expect(response).to have_http_status(:ok)
-      expect(assignment.reload.enable_bidding_for_topics).to be true
+      expect(assignment.reload.topics_assigned_by_bidding).to be true
     end
 
-    it 'persists enable_authors_to_review_other_topics' do
-      patch_assignment(enable_authors_to_review_other_topics: true)
+    it 'persists can_review_same_topic' do
+      patch_assignment(can_review_same_topic: true)
       expect(response).to have_http_status(:ok)
-      expect(assignment.reload.enable_authors_to_review_other_topics).to be true
+      expect(assignment.reload.can_review_same_topic).to be true
     end
 
     it 'persists allow_reviewer_to_choose_topic_to_review' do
@@ -536,11 +536,11 @@ RSpec.describe 'Assignments API', type: :request do
     end
 
     it 'resets topic settings to false' do
-      assignment.update!(allow_suggestions: true, enable_bidding_for_topics: true)
-      patch_assignment(allow_topic_suggestion_from_students: false, enable_bidding_for_topics: false)
+      assignment.update!(allow_suggestions: true, topics_assigned_by_bidding: true)
+      patch_assignment(allow_topic_suggestion_from_students: false, topics_assigned_by_bidding: false)
       expect(response).to have_http_status(:ok)
       expect(assignment.reload.allow_suggestions).to be false
-      expect(assignment.reload.enable_bidding_for_topics).to be false
+      expect(assignment.reload.topics_assigned_by_bidding).to be false
     end
   end
 

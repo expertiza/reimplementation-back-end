@@ -69,11 +69,11 @@ class Assignment < ApplicationRecord
   end
 
   def is_role_based
-    read_attribute(:duty_based_assignment)
+    read_attribute(:team_members_have_duties)
   end
 
   def is_role_based=(val)
-    write_attribute(:duty_based_assignment, val)
+    write_attribute(:team_members_have_duties, val)
   end
 
   def enable_bidding_for_reviews
@@ -85,11 +85,11 @@ class Assignment < ApplicationRecord
   end
 
   def is_review_done_by_teams
-    read_attribute(:team_reviewing_enabled)
+    read_attribute(:reviewing_is_done_by_teams)
   end
 
   def is_review_done_by_teams=(val)
-    write_attribute(:team_reviewing_enabled, val)
+    write_attribute(:reviewing_is_done_by_teams, val)
   end
   # Frontend field names that map to differently-named existing DB columns
   alias_attribute :allow_topic_suggestion_from_students,     :allow_suggestions

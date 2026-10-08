@@ -111,11 +111,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_21_000002) do
     t.boolean "vary_by_role", default: false
     t.boolean "has_mentors", default: false
     t.boolean "auto_assign_mentor", default: false
-    t.boolean "duty_based_assignment", default: false
+    t.boolean "team_members_have_duties", default: false
     t.boolean "bidding_for_reviews_enabled", default: false
-    t.boolean "enable_bidding_for_topics", default: false
-    t.boolean "enable_authors_to_review_other_topics", default: false
-    t.boolean "team_reviewing_enabled", default: false
+    t.boolean "topics_assigned_by_bidding", default: false
+    t.boolean "reviewing_is_done_by_teams", default: false
     t.index ["course_id"], name: "index_assignments_on_course_id"
     t.index ["instructor_id"], name: "index_assignments_on_instructor_id"
   end
@@ -343,7 +342,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_21_000002) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "type"
-    t.boolean "calibrate_to", default: false, null: false
+    t.boolean "for_calibration", default: false, null: false
     t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 

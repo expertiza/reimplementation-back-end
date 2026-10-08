@@ -13,9 +13,9 @@ class AssignmentSerializer < ActiveModel::Serializer
              :staggered_deadline_assignment,
              # Topics / bidding
              :allow_topic_suggestion_from_students,
-             :enable_bidding_for_topics,
+             :topics_assigned_by_bidding,
              :enable_bidding_for_reviews,
-             :enable_authors_to_review_other_topics,
+             :can_review_same_topic,
              :allow_reviewer_to_choose_topic_to_review,
              # Review strategy tab
              :review_topic_threshold, :maximum_number_of_reviews_per_submission,
