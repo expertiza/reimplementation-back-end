@@ -40,7 +40,7 @@ RSpec.describe FileUpload do
 
         expect(link_element).not_to be_nil
 
-        expect(link_element["href"]).to include("/questions/1")
+        expect(link_element["href"]).to include("/items/1")
 
       end
 
