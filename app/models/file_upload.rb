@@ -30,7 +30,7 @@ class FileUpload < Item
             type: 'textarea',
             cols: 50,
             rows: 1,
-            name: "item[#{id}][prompt]",
+            name: "item[#{id}][txt]",
             id: "question_#{id}_txt",
             placeholder: 'Edit item content here',
             value: txt
