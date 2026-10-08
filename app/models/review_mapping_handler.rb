@@ -52,34 +52,33 @@ class ReviewMappingHandler
   end
 
   # ===== CALIBRATION =====
-  # calibration for bit turned on 
-  # everyone gets assigned 2 calibration reviews along with the other reviwes
-  # assign calibration reviews done by instructor in round robin to students 
+  # Assigns calibration reviews to all student participants in round-robin order.
+  # Calibration reviews are a special case of round-robin assignment: teams are
+  # filtered to those the instructor has already reviewed with for_calibration: true,
+  # and each created mapping also carries for_calibration: true.
   def assign_calibration_reviews_round_robin
-    # Get all participants (students)
+    instructor_participant = AssignmentParticipant.find_by(
+      parent_id: @assignment.id,
+      user_id:   @assignment.instructor_id
+    )
+    return unless instructor_participant
+
+    calibration_team_ids = ReviewResponseMap.where(
+      reviewed_object_id: @assignment.id,
+      reviewer_id:        instructor_participant.id,
+      for_calibration:    true
+    ).pluck(:reviewee_id)
+    return if calibration_team_ids.empty?
+
+    teams     = AssignmentTeam.where(id: calibration_team_ids)
     reviewers = AssignmentParticipant.where(parent_id: @assignment.id)
+                                     .where.not(user_id: @assignment.instructor_id)
 
-    # Get all instructor calibration teams/submissions
-    calibration_teams = AssignmentTeam.where(parent_id: @assignment.id, is_calibration: true)
-    return if calibration_teams.empty?
-
-    # Assign in round robin: each reviewer gets 2 calibration reviews
-    reviewers.each_with_index do |reviewer, index|
-      2.times do |i|
-        team = calibration_teams[(index + i) % calibration_teams.size]
-        ReviewResponseMap.find_or_create_by!(
-          reviewer: reviewer,
-          reviewee: team,
-          reviewed_object_id: @assignment.id,
-          calibration: true
-        )
-      end
-    end
+    assign_round_robin(reviewers, teams, reviews_per_reviewer: 2, for_calibration: true)
   end
 
-
   def calibration_reviews_for(reviewer)
-    ReviewResponseMap.where(reviewer: reviewer, calibration: true)
+    ReviewResponseMap.where(reviewer_id: reviewer.id, for_calibration: true)
   end
 
   # ===== OUTSTANDING REVIEWS =====
@@ -107,6 +106,20 @@ class ReviewMappingHandler
   end
 
   private
+
+  def assign_round_robin(reviewers, teams, reviews_per_reviewer: 1, for_calibration: false)
+    reviewers.each_with_index do |reviewer, index|
+      reviews_per_reviewer.times do |i|
+        team = teams[(index + i) % teams.size]
+        ReviewResponseMap.find_or_create_by!(
+          reviewer_id:        reviewer.id,
+          reviewee_id:        team.id,
+          reviewed_object_id: @assignment.id,
+          for_calibration:    for_calibration
+        )
+      end
+    end
+  end
 
   def create_mapping(reviewer, team)
     ReviewResponseMap.create!(

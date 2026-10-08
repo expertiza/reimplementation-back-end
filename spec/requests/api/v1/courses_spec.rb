@@ -209,6 +209,18 @@ RSpec.describe 'courses', type: :request do
         end
         run_test!
       end
+
+      response(422, 'unprocessable entity when name is missing') do
+        let(:institution) { Institution.create(name: "NC State") }
+        let(:course) {
+          { institution_id: institution.id, instructor_id: prof.id, directory_path: 'samplepath', name: '' }
+        }
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+          errors = JSON.parse(response.body)
+          expect(errors).to have_key('name')
+        end
+      end
     end
   end
 
@@ -232,6 +244,15 @@ RSpec.describe 'courses', type: :request do
           }
         end
         run_test!
+      end
+
+      response(404, 'course not found') do
+        let(:id) { 999 }
+        run_test! do
+          expect(response).to have_http_status(:not_found)
+          data = JSON.parse(response.body)
+          expect(data['error']).to match(/not found/i)
+        end
       end
     end
 
@@ -266,6 +287,30 @@ RSpec.describe 'courses', type: :request do
         end
         run_test!
       end
+
+      response(404, 'course not found') do
+        let(:id) { 999 }
+        let(:course) { { name: 'Updated' } }
+        run_test! do
+          expect(response).to have_http_status(:not_found)
+          data = JSON.parse(response.body)
+          expect(data['error']).to match(/not found/i)
+        end
+      end
+
+      response(422, 'unprocessable entity when name is blank') do
+        let(:institution2) { Institution.create(name: "NC State 2") }
+        let(:existing_course) {
+          Course.create(institution_id: institution2.id, instructor_id: prof.id, directory_path: 'path2', name: 'CS101', info: '')
+        }
+        let(:id) { existing_course.id }
+        let(:course) { { name: '' } }
+        run_test! do
+          expect(response).to have_http_status(:unprocessable_entity)
+          errors = JSON.parse(response.body)
+          expect(errors).to have_key('name')
+        end
+      end
     end
 
     # PUT /courses/{id}
@@ -298,6 +343,16 @@ RSpec.describe 'courses', type: :request do
           }
         end
         run_test!
+      end
+
+      response(404, 'course not found') do
+        let(:id) { 999 }
+        let(:course) { { name: 'Updated' } }
+        run_test! do
+          expect(response).to have_http_status(:not_found)
+          data = JSON.parse(response.body)
+          expect(data['error']).to match(/not found/i)
+        end
       end
     end
 

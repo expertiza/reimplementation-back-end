@@ -6,10 +6,12 @@ class AssignmentQuestionnaire < ApplicationRecord
 
   validate :weight_must_be_zero_if_no_scored_questions
 
-  # If the linked questionnaire has no scored questions (i.e. only SectionHeaders),
-  # questionnaire_weight must be 0 — a non-zero weight would produce meaningless grades.
+  # If the linked questionnaire has scored questions (i.e. not only SectionHeaders),
+  # any weight is fine. If it has only SectionHeaders, weight must be 0.
+  # Empty questionnaires (no items yet) are exempt — the questionnaire hasn't been
+  # configured yet and blocking assignment creation at that stage is premature.
   def weight_must_be_zero_if_no_scored_questions
-    return if questionnaire.nil? || questionnaire_weight.nil? || questionnaire_weight.zero?
+    return if questionnaire.nil? || questionnaire_weight.nil? || questionnaire_weight.zero? || questionnaire.items.none?
 
     has_scored = questionnaire.items.where.not(question_type: 'SectionHeader').exists?
     unless has_scored
