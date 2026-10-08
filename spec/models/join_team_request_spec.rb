@@ -369,6 +369,5 @@ RSpec.describe JoinTeamRequest, type: :model do
       )
       expect(join_request.comments).to eq(special_comment)
     end
-
   end
 end

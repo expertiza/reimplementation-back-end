@@ -4,7 +4,10 @@ require 'rails_helper'
 
 describe BookmarkRatingQuestionnaire, type: :model do
   let(:role) { Role.create(name: 'Instructor', parent_id: nil, id: 2, default_page_id: nil) }
-  let(:instructor) { Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role_id: role.id) }
+  let(:instructor) do
+    Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456',
+                      role_id: role.id)
+  end
 
   let(:questionnaire) do
     BookmarkRatingQuestionnaire.create!(

@@ -1,4 +1,4 @@
-class ItemsController < ApplicationController
+class ItemsController < ApplicationController # rubocop:disable Metrics/ClassLength
   before_action :set_item, only: %i[show update]
 
   # GET /questions
@@ -50,20 +50,7 @@ class ItemsController < ApplicationController
       break_before: true
     )
 
-    # Set size and alternatives from structured params
-    case item.question_type
-    when 'Scale'
-      item.weight = params[:weight]
-      item.max_label = 'Strongly agree'
-      item.min_label = 'Strongly disagree'
-    when 'Dropdown'
-      item.alternatives = '0|1|2|3|4|5'
-    when 'TextArea'
-      # rows and columns stored as "columns,rows" in the size field
-      item.size = "#{params[:columns] || 60},#{params[:rows] || 5}"
-    when 'TextField'
-      item.size = (params[:columns] || 30).to_s
-    end
+    apply_type_defaults(item)
 
     if item.save
       render json: item, status: :created
@@ -106,6 +93,30 @@ class ItemsController < ApplicationController
   end
 
   private
+
+  # Set size and alternatives from structured params
+  def apply_type_defaults(item)
+    case item.question_type
+    when 'Scale'
+      item.weight = params[:weight]
+      item.max_label = 'Strongly agree'
+      item.min_label = 'Strongly disagree'
+    when 'Dropdown'
+      item.alternatives = '0|1|2|3|4|5'
+    else
+      apply_size(item)
+    end
+  end
+
+  def apply_size(item)
+    case item.question_type
+    when 'TextArea'
+      # rows and columns stored as "columns,rows" in the size field
+      item.size = "#{params[:columns] || 60},#{params[:rows] || 5}"
+    when 'TextField'
+      item.size = (params[:columns] || 30).to_s
+    end
+  end
 
   def set_item
     @item = Item.find(params[:id])

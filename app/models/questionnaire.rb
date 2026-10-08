@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Questionnaire < ApplicationRecord
+class Questionnaire < ApplicationRecord # rubocop:disable Metrics/ClassLength
   belongs_to :instructor
   # the collection of items associated with this Questionnaire
   has_many :items, class_name: 'Item', foreign_key: 'questionnaire_id', dependent: :destroy, inverse_of: :questionnaire
@@ -56,12 +56,14 @@ class Questionnaire < ApplicationRecord
 
   def as_json(options = {})
     super(options.merge({
-      only: %i[id name private min_question_score max_question_score created_at updated_at questionnaire_type instructor_id],
-      include: {
-        instructor: { only: %i[name email fullname role] },
-        items: {}
-      }
-    })).tap do |hash|
+                          only: %i[id name private min_question_score max_question_score created_at updated_at
+                                   questionnaire_type
+                                   instructor_id],
+                          include: {
+                            instructor: { only: %i[name email fullname role] },
+                            items: {}
+                          }
+                        })).tap do |hash|
       hash['instructor'] ||= { id: nil, name: nil }
       hash['items'] ||= []
     end

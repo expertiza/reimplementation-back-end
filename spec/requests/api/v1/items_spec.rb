@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # rubocop:disable Metrics/BlockLength, Layout/LineLength
 
 require 'swagger_helper'
@@ -535,3 +536,5 @@ RSpec.describe 'items', type: :request do
     end
   end
 end
+
+# rubocop:enable Metrics/BlockLength, Layout/LineLength
