@@ -33,7 +33,7 @@ class FileUpload < Item
             name: "item[#{id}][prompt]",
             id: "question_#{id}_txt",
             placeholder: 'Edit item content here',
-            value: prompt
+            value: txt
           },
           {
             type: 'input',
@@ -52,7 +52,7 @@ class FileUpload < Item
       {
         action: 'view_item_text',
         elements: [
-          { type: 'text', value: prompt },
+          { type: 'text', value: txt },
           { type: 'text', value: question_type },
           { type: 'text', value: weight.to_s },
           { type: 'text', value: id.to_s }
