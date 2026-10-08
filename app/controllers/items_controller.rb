@@ -1,7 +1,7 @@
 class ItemsController < ApplicationController # rubocop:disable Metrics/ClassLength
   before_action :set_item, only: %i[show update]
 
-  # GET /questions
+  # GET /items (instructors only)
   def action_allowed?
     current_user_has_role?('Instructor')
   end

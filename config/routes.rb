@@ -78,14 +78,6 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :questions do
-        collection do
-          get :types
-          get 'show_all/questionnaire/:id', to:'questions#show_all#questionnaire', as: 'show_all'
-          delete 'delete_all/questionnaire/:id', to:'questions#delete_all#questionnaire', as: 'delete_all'
-        end
-      end
-
       resources :items do
         collection do
           get :types

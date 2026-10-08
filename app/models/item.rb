@@ -2,7 +2,7 @@
 
 class Item < ApplicationRecord
   # All valid question types supported by the application.
-  # Used by QuestionsController#types to return the list to the front-end,
+  # Used by ItemsController#types to return the list to the front-end,
   # and can be used elsewhere for validation or display.
   QUESTION_TYPES = ['Criterion', 'Scale', 'Dropdown', 'Multiple choice', 'Text area', 'Text field', 'Grid'].freeze
 
