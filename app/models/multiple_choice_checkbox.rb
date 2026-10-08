@@ -8,7 +8,7 @@ class MultipleChoiceCheckbox < QuizItem
 
     data = {
       id: id,
-      question_text: prompt,
+      question_text: txt,
       weight: weight,
       choices: quiz_question_choices.each_with_index.map do |choice, index|
         {
@@ -28,7 +28,7 @@ class MultipleChoiceCheckbox < QuizItem
 
     data = {
       id: id,
-      question_text: prompt,
+      question_text: txt,
       choices: quiz_question_choices.map do |choice|
         { text: choice.txt }
       end
@@ -60,7 +60,7 @@ class MultipleChoiceCheckbox < QuizItem
 
   def isvalid(choice_info)
     error_message = nil
-    error_message = 'Please make sure all questions have text' if prompt.blank?
+    error_message = 'Please make sure all questions have text' if txt.blank?
 
     correct_count = choice_info.count { |_idx, value| value[:iscorrect] == '1' }
 
