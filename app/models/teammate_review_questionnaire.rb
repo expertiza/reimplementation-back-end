@@ -25,7 +25,7 @@ class TeammateReviewQuestionnaire < Questionnaire
   end
 
   # True if any items are Criterion type (rendered as percentage sliders in the UI).
-  def has_criterion_items?
+  def criterion_items?
     items.any? { |item| item.question_type == 'Criterion' }
   end
 end

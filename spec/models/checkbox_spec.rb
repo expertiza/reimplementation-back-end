@@ -10,7 +10,7 @@ RSpec.describe Checkbox do
     it 'returns the JSON' do
       json = checkbox.edit(0)
       expected_json = {
-        remove_button: { type: 'remove_button', action: 'delete', href: "/questions/10", text: 'Remove' },
+        remove_button: { type: 'remove_button', action: 'delete', href: "/items/10", text: 'Remove' },
         seq: { type: 'seq', input_size: 6, value: 1.0, name: "item[10][seq]", id: "question_10_seq" },
         item: { type: 'textarea', cols: 50, rows: 1, name: "item[10][txt]", id: "question_10_txt", placeholder: 'Edit item content here', content: 'test txt' },
         type: { type: 'text', input_size: 10, disabled: true, value: 'Checkbox', name: "item[10][type]", id: "question_10_type" },

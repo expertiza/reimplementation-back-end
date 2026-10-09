@@ -27,7 +27,7 @@ RSpec.describe MultipleChoiceCheckbox, type: :model do
   end
 
   describe '#isvalid' do
-    context 'when the item itself does not have txt' do
+    context 'when the item itself does not have prompt' do
       it 'returns a JSON with error message' do
         allow(multiple_choice_checkbox).to receive_messages(txt: '', id: 1)
         questions = { '1' => { txt: 'item text', iscorrect: '1' }, '2' => { txt: 'item text', iscorrect: '1' }, '3' => { txt: 'item text', iscorrect: '0' }, '4' => { txt: 'item text', iscorrect: '0' } }
@@ -36,7 +36,7 @@ RSpec.describe MultipleChoiceCheckbox, type: :model do
       end
     end
 
-    context 'when a choice does not have txt' do
+    context 'when a choice does not have prompt' do
       it 'returns a JSON with error message' do
         questions = { '1' => { txt: '', iscorrect: '1' }, '2' => { txt: '', iscorrect: '1' }, '3' => { txt: '', iscorrect: '0' }, '4' => { txt: '', iscorrect: '0' } }
         expected_response = { valid: true, error: nil }.to_json

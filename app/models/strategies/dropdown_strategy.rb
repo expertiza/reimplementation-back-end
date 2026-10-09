@@ -9,9 +9,9 @@ module Strategies
 
     def validate(item)
       # Validate that alternatives are non-empty
-      if item.alternatives.empty?
-        item.errors.add(:alternatives, "can't be empty for a dropdown")
-      end
+      return unless item.alternatives.empty?
+
+      item.errors.add(:alternatives, "can't be empty for a dropdown")
     end
   end
 end
