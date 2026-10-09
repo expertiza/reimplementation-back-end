@@ -6,6 +6,7 @@ x-logging: &default-logging
 
 services:
   app:
+    profiles: ["dev"]
     build: .
     environment:
       RAILS_ENV: ${RAILS_ENV}
@@ -26,7 +27,25 @@ services:
       - private
     logging: *default-logging
 
+  app-prod:
+    profiles: ["prod"]
+    build: .
+    environment:
+      RAILS_ENV: production
+      DATABASE_URL: ${PROD_DATABASE_URL:-}
+      CACHE_STORE: ${CACHE_STORE}
+    ports:
+      - "3002:3002"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - public
+      - private
+    logging: *default-logging
+
   db:
+    profiles: ["dev"]
     image: mysql:8.4
     restart: unless-stopped
     environment:
@@ -51,11 +70,11 @@ services:
   redis:
     image: redis:latest
     volumes:
-      - expertiza-redis:/var/lib/redis/data
+      - expertiza-redis:/data
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes", "--port", "6380", "--maxmemory", "100mb"]
     healthcheck:
-      test: ["CMD", "redis-cli", "-p", "6380", "--raw", "incr", "ping"]
+      test: ["CMD", "redis-cli", "-p", "6380", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5

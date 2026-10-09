@@ -25,7 +25,9 @@ RUN bundle install
 
 COPY . .
 
-RUN mv /app/setup.sh /setup.sh && chmod +x /setup.sh
+RUN mkdir -p /app/tmp/pids /app/log && \
+    mv /app/setup.sh /setup.sh && \
+    chmod +x /setup.sh
 
 EXPOSE 3002 
 
