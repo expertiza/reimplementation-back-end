@@ -1,26 +1,40 @@
 #!/bin/bash
 
-until nc -z -v -w30 db 3306 
-do
-  echo "Waiting for database connection..."
-  sleep 5
-done
+echo "=== Starting Expertiza application ==="
 
-echo "=== Running commands in the 'app' terminal ==="
-echo "Step 1: Removing existing server PID file if any..."
+echo "Removing existing server PID file if present..."
 rm -f /app/tmp/pids/server.pid
 
-echo "Step 2: Bundling dependencies..."
-bundle install
-  
-echo "Step 3: Creating the database..."
-rake db:create
- 
-echo "Step 4: Running database migrations..."
-rake db:migrate
+if [ "${RAILS_ENV:-development}" = "production" ]; then
+  echo "Production environment detected."
 
-echo "Step 5: Seeding the database..." 
-rake db:seed
+  # Production must use an external database.
+  if [ -z "${DATABASE_URL:-}" ]; then
+    echo "ERROR: DATABASE_URL must be configured for production." >&2
+    exit 1
+  fi
 
-echo "Step 6: Starting the Rails server..."
-rails s -p 3002 -b '0.0.0.0'
+  echo "Skipping automatic database creation, migration, and seeding."
+
+elif [ "${RAILS_ENV:-development}" = "development" ] || [ "${RAILS_ENV}" = "test" ]; then
+  echo "Development/test environment detected."
+
+  echo "Installing dependencies..."
+  bundle install || exit 1
+
+  echo "Creating database if necessary..."
+  rake db:create || exit 1
+
+  echo "Running database migrations..."
+  rake db:migrate || exit 1
+
+  echo "Seeding database..."
+  rake db:seed
+
+else
+  echo "ERROR: Unsupported RAILS_ENV: ${RAILS_ENV}" >&2
+  exit 1
+fi
+
+echo "Starting application: $*"
+exec "$@"
