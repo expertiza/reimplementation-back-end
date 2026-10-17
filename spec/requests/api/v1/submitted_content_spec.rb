@@ -280,8 +280,8 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         it 'returns success' do
           post '/submitted_content/submit_hyperlink',
-             params: { id: 999, submit_link: 'http://test.com' },
-             headers: auth_headers_student
+               params: { id: 999, submit_link: 'http://test.com' },
+               headers: auth_headers_student
         
           expect(response).to have_http_status(:ok)
           parsed = json
@@ -593,8 +593,8 @@ RSpec.describe 'Submitted Content API', type: :request do
 
         it 'returns success' do
           send(method, '/submitted_content/submit_file',
-              params: { id: id, uploaded_file: uploaded_file, current_folder: { name: '/' } },
-              headers: auth_headers_student.merge({ 'CONTENT_TYPE' => 'multipart/form-data' }))
+               params: { id: id, uploaded_file: uploaded_file, current_folder: { name: '/' } },
+               headers: auth_headers_student.merge({ 'CONTENT_TYPE' => 'multipart/form-data' }))
 
           expect(response).to have_http_status(:created)
           parsed = json
@@ -635,8 +635,8 @@ RSpec.describe 'Submitted Content API', type: :request do
           expect(SubmittedContentHelper).to receive(:unzip_file)
 
           send(method, '/submitted_content/submit_file',
-              params: { id: id, uploaded_file: uploaded_file, unzip: true, current_folder: { name: '/' } },
-              headers: auth_headers_student.merge({ 'CONTENT_TYPE' => 'multipart/form-data' }))
+               params: { id: id, uploaded_file: uploaded_file, unzip: true, current_folder: { name: '/' } },
+               headers: auth_headers_student.merge({ 'CONTENT_TYPE' => 'multipart/form-data' }))
           puts "RESPONSE BODY: #{response.body}" 
           expect(response).to have_http_status(:created)
         end
@@ -1053,8 +1053,8 @@ RSpec.describe 'Submitted Content API', type: :request do
       allow_any_instance_of(SubmittedContentController).to receive(:valid_file_extension?).and_return(true)
       allow_any_instance_of(SubmittedContentController).to receive(:create_submission_record_for).and_return(true)
       post '/submitted_content/submit_file',
-        params: { id: participant.id, uploaded_file: uploaded, current_folder: { name: '' } },
-        headers: auth_headers_student.merge({ 'CONTENT_TYPE' => 'multipart/form-data' })
+           params: { id: participant.id, uploaded_file: uploaded, current_folder: { name: '' } },
+           headers: auth_headers_student.merge({ 'CONTENT_TYPE' => 'multipart/form-data' })
       expect(response).to have_http_status(:created)
     ensure
       tempfile&.close!

@@ -45,9 +45,9 @@ begin
     count = 4
     count.times do |i|
         AssignmentQuestionnaire.create!(
-            assignment_id: i+1,
-            questionnaire_id: i+1,
-            used_in_round: [1,2].sample
-        )
+          assignment_id: i+1,
+          questionnaire_id: i+1,
+          used_in_round: [1,2].sample
+          )
     end
 end

@@ -76,7 +76,7 @@ class QuestionnairesController < ApplicationController
       @questionnaire.toggle!(:private)
       @access = @questionnaire.private ? 'private' : 'public'
       render json: "The questionnaire \"#{@questionnaire.name}\" has been successfully made #{@access}. ",
-        status: :ok
+             status: :ok
     rescue ActiveRecord::RecordNotFound
       render json: $ERROR_INFO.to_s, status: :not_found
     rescue ActiveRecord::RecordInvalid

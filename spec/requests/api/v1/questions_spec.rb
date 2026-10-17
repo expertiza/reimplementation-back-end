@@ -15,7 +15,7 @@ RSpec.describe 'questions', type: :request do
     full_name: "Prof A",
     email: "testuser@example.com",
     mru_directory_path: "/home/testuser",
-    ) }
+  ) }
 
   let!(:questionnaire) do
     instructor

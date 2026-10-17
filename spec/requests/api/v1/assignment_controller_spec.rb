@@ -56,7 +56,7 @@ RSpec.describe 'Assignments API', type: :request do
            name: 'ECE517',
            instructor: prof,
            institution: institution
-    )
+          )
   end
 
   let(:token) { JsonWebToken.encode({ id: prof.id }) }

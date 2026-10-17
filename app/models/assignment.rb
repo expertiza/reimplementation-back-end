@@ -124,8 +124,8 @@ class Assignment < ApplicationRecord
   # Returns the newly created assignment object, which is a copy of the original assignment.
   def copy
     copied_assignment = Assignment.new(
-        name: "Copy of #{self.name}",
-        course_id: self.course_id
+      name: "Copy of #{self.name}",
+      course_id: self.course_id
       )
 
     # Assign the correct instructor to the copied assignment

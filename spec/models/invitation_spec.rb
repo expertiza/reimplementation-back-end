@@ -103,41 +103,41 @@ RSpec.describe Invitation, type: :model do
 
   it 'is valid with valid attributes' do
     invitation = Invitation.invitation_factory(to_id: participant1.id, from_id: participant2.id, assignment_id: assignment.id,
-                                reply_status: InvitationValidator::WAITING_STATUS)
+                                               reply_status: InvitationValidator::WAITING_STATUS)
     expect(invitation).to be_valid
   end
 
   it 'is invalid with same from and to attribute' do
     invitation = Invitation.invitation_factory(to_id: participant1.id, from_id: participant1.id, assignment_id: assignment.id,
-                                reply_status: InvitationValidator::WAITING_STATUS)
+                                               reply_status: InvitationValidator::WAITING_STATUS)
     invitation.valid?                                
     expect(invitation.errors[:base]).to include(InvitationValidator::TO_FROM_SAME_ERROR_MSG)
   end
 
   it 'is invalid with invalid to user attribute' do
     invitation = Invitation.invitation_factory(to_id: 'INVALID', from_id: participant2.id, assignment_id: assignment.id,
-                                reply_status: InvitationValidator::WAITING_STATUS)
+                                               reply_status: InvitationValidator::WAITING_STATUS)
     invitation.valid?                                
     expect(invitation.errors[:base]).to include(InvitationValidator::INVALID_ATTRIBUTES_ERROR_MSG)
   end
 
   it 'is invalid with invalid from user attribute' do
     invitation = Invitation.invitation_factory(to_id: participant1.id, from_id: 'INVALID', assignment_id: assignment.id,
-                                reply_status: InvitationValidator::WAITING_STATUS)
+                                               reply_status: InvitationValidator::WAITING_STATUS)
     invitation.valid?                          
     expect(invitation.errors[:base]).to include(InvitationValidator::INVALID_ATTRIBUTES_ERROR_MSG)
   end
 
   it 'is invalid with invalid assignment attribute' do
     invitation = Invitation.invitation_factory(to_id: participant1.id, from_id: participant2.id, assignment_id: 'INVALID',
-                                reply_status: InvitationValidator::WAITING_STATUS)
+                                               reply_status: InvitationValidator::WAITING_STATUS)
     invitation.valid?                                
     expect(invitation.errors[:base]).to include(InvitationValidator::INVALID_ATTRIBUTES_ERROR_MSG)
   end
 
   it 'is invalid with invalid reply_status attribute' do
     invitation = Invitation.invitation_factory(to_id: participant1.id, from_id: participant2.id, assignment_id: assignment.id,
-                                reply_status: 'X')
+                                               reply_status: 'X')
     invitation.valid?
     expect(invitation.errors[:base]).to include(InvitationValidator::REPLY_STATUS_INCLUSION_ERROR_MSG)
   end
