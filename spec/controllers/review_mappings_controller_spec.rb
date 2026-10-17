@@ -63,9 +63,9 @@ RSpec.describe ReviewMappingsController, type: :controller do
       post :assign_round_robin, params: { assignment_id: assignment.id }, format: :json
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body)).to eq({
-        'status' => 'ok',
+                                                'status' => 'ok',
         'message' => 'Round-robin assignments created'
-      })
+                                              })
     end
   end
 
@@ -75,9 +75,9 @@ RSpec.describe ReviewMappingsController, type: :controller do
       post :assign_random, params: { assignment_id: assignment.id }, format: :json
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body)).to eq({
-        'status' => 'ok',
+                                                'status' => 'ok',
         'message' => 'Random assignments created'
-      })
+                                              })
     end
   end
 
@@ -89,9 +89,9 @@ RSpec.describe ReviewMappingsController, type: :controller do
       post :assign_from_csv, params: { assignment_id: assignment.id, csv: csv_file }, format: :json
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body)).to eq({
-        'status' => 'ok',
+                                                'status' => 'ok',
         'message' => 'CSV-based assignments created'
-      })
+                                              })
     end
   end
 
@@ -105,9 +105,9 @@ RSpec.describe ReviewMappingsController, type: :controller do
       post :request_review_fewest, params: { assignment_id: assignment.id, reviewer_id: reviewer.id }, format: :json
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body)).to eq({
-        'status' => 'ok',
+                                                'status' => 'ok',
         'mapping_id' => 42
-      })
+                                              })
     end
   end
 
@@ -118,9 +118,9 @@ RSpec.describe ReviewMappingsController, type: :controller do
       delete :destroy, params: { assignment_id: assignment.id, id: response_map.id }, format: :json
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body)).to eq({
-        'status' => 'ok',
+                                                'status' => 'ok',
         'message' => 'Mapping deleted'
-      })
+                                              })
     end
   end
 
@@ -131,9 +131,9 @@ RSpec.describe ReviewMappingsController, type: :controller do
       delete :delete_all_for_reviewer, params: { assignment_id: assignment.id, reviewer_id: reviewer.id }, format: :json
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body)).to eq({
-        'status' => 'ok',
+                                                'status' => 'ok',
         'message' => 'All mappings for reviewer deleted'
-      })
+                                              })
     end
   end
 
@@ -144,9 +144,9 @@ RSpec.describe ReviewMappingsController, type: :controller do
       patch :grade_review, params: { assignment_id: assignment.id, mapping_id: response_map.id, grade: 95, comment: 'Good work' }, format: :json
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body)).to eq({
-        'status' => 'ok',
+                                                'status' => 'ok',
         'message' => 'Review graded'
-      })
+                                              })
     end
   end
 end

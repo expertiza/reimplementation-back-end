@@ -16,7 +16,7 @@ RSpec.describe 'Account Requests API', type: :request do
       full_name: "Prof A",
       email: "testuser@example.com",
       mru_directory_path: "/home/testuser",
-      )
+    )
   }
 
   let(:token) { JsonWebToken.encode({ id: prof.id }) }
