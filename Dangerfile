@@ -48,7 +48,7 @@ end
 unless CURRENT_MAINTAINERS.include?(PR_AUTHOR)
   if PR_TITLE =~ /E[0-9]{4}/
     message(
-        <<~MARKDOWN
+      <<~MARKDOWN
           Thanks for the pull request, and welcome! The Expertiza team is excited to review your changes, and you should hear from us soon.
 
           Please make sure the PR passes all checks and you have run `rubocop -a` to autocorrect issues before requesting a review.
@@ -58,10 +58,10 @@ unless CURRENT_MAINTAINERS.include?(PR_AUTHOR)
           Also, please spend some time looking at the instructions at the top of your course project writeup.
           If you have any questions, please send email to <a href="mailto:expertiza-support@lists.ncsu.edu">expertiza-support@lists.ncsu.edu</a>.
         MARKDOWN
-      )
+    )
   else
     message(
-        <<~MARKDOWN
+      <<~MARKDOWN
           Thanks for the pull request, and welcome! The Expertiza team is excited to review your changes, and you should hear from us soon.
 
           Please make sure the PR passes all checks and you have run `rubocop -a` to autocorrect issues before requesting a review.
@@ -70,7 +70,7 @@ unless CURRENT_MAINTAINERS.include?(PR_AUTHOR)
 
           If you have any questions, please send email to <a href="mailto:expertiza-support@lists.ncsu.edu">expertiza-support@lists.ncsu.edu</a>.
         MARKDOWN
-      )
+    )
   end
 end
 
@@ -79,7 +79,7 @@ end
 # ------------------------------------------------------------------------------
 if LOC > 500
   warn(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         Your pull request is more than 500 LoC.
         Please make sure you did not commit unnecessary changes, such as `schema.rb`, `node_modules`, or changelog noise.
       MARKDOWN
@@ -92,7 +92,7 @@ end
 # ------------------------------------------------------------------------------
 if PR_TITLE =~ /E[0-9]{4}/ && LOC < 50
   warn(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         Your pull request is less than 50 LoC.
         If you are finished refactoring the code, please consider writing corresponding tests.
       MARKDOWN
@@ -105,7 +105,7 @@ end
 # ------------------------------------------------------------------------------
 if TOUCHED_FILES.size > 30
   warn(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         Your pull request touches more than 30 files.
         Please make sure you did not commit unnecessary changes, such as `node_modules`, `vendor`, or workflow churn.
       MARKDOWN
@@ -121,7 +121,7 @@ has_many_dup_commit_messages = messages.uniq.any? { |msg| messages.count(msg) >=
 
 if has_many_dup_commit_messages
   warn(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         Your pull request has many duplicated commit messages. Please try to squash similar commits
         and use meaningful commit messages later.
       MARKDOWN
@@ -134,7 +134,7 @@ end
 # ------------------------------------------------------------------------------
 if PR_TITLE.match?(/\bWIP\b/i)
   warn(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         This pull request is classed as `Work in Progress`. It cannot be merged right now.
       MARKDOWN
     sticky: true
@@ -146,7 +146,7 @@ end
 # ------------------------------------------------------------------------------
 if PR_ADDED.match?(/\b(TODO|FIXME)\b/i)
   warn(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         This pull request contains `TODO` or `FIXME` task(s); please fix them.
       MARKDOWN
     sticky: true
@@ -158,7 +158,7 @@ end
 # ------------------------------------------------------------------------------
 if ADDED_FILES.grep(/temp|tmp|cache/i).any?
   fail(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         You committed `temp`, `tmp` or `cache` files. Please remove them.
       MARKDOWN
     sticky: true
@@ -175,7 +175,7 @@ end
   next unless added_lines.match?(/\$[A-Za-z0-9_]+/) || added_lines.match?(/@@[A-Za-z0-9_]+/)
 
   warn(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         You are using global variables (`$`) or class variables (`@@`); please double-check whether this is necessary.
       MARKDOWN
     sticky: true
@@ -199,7 +199,7 @@ end
 # ------------------------------------------------------------------------------
 if TOUCHED_FILES.grep(%r{^app/}).any? && TOUCHED_FILES.grep(%r{^spec/}).empty?
   warn(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         There are code changes, but no corresponding tests.
         Please include tests if this PR introduces any modifications in behavior.
       MARKDOWN
@@ -224,7 +224,7 @@ end
      added_lines.include?('fdescribe') ||
      added_lines.include?('fit')
     warn(
-        <<~MARKDOWN,
+      <<~MARKDOWN,
           There are one or more skipped, pending, or focused test cases in your pull request. Please fix them.
         MARKDOWN
       sticky: true
@@ -243,7 +243,7 @@ end
   next unless added_lines.match?(/create\(/)
 
   warn(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         Using `create` in unit tests or integration tests may be overkill. Try to use `build` or `double` instead.
       MARKDOWN
     sticky: true
@@ -261,7 +261,7 @@ end
   next unless added_lines.include?('.should')
 
   warn(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         The `should` syntax is deprecated in RSpec 3. Please use `expect` syntax instead.
         Even in test descriptions, please avoid using `should`.
       MARKDOWN
@@ -286,7 +286,7 @@ if PR_ADDED.include?("require 'rspec'") ||
    PR_ADDED.include?("require 'factory_bot_rails'") ||
    PR_ADDED.include?('require "factory_bot_rails"')
   warn(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         You are requiring `rspec`, fixture-related gems, or helper methods in RSpec tests.
         These have already been included, so you do not need to require them again. Please remove them.
       MARKDOWN
@@ -306,7 +306,7 @@ end
 # ------------------------------------------------------------------------------
 if !CURRENT_MAINTAINERS.include?(PR_AUTHOR) && TOUCHED_FILES.grep(/\.md$/).any?
   warn(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         You changed MARKDOWN (`*.md`) documents; please double-check whether it is necessary to do so.
         Alternatively, you can insert project-related content in the description field of the pull request.
       MARKDOWN
@@ -321,7 +321,7 @@ if !CURRENT_MAINTAINERS.include?(PR_AUTHOR) &&
    TOUCHED_FILES.grep(%r{db/migrate}).empty? &&
    (MODIFIED_FILES.grep(/schema\.rb$/).any? || TOUCHED_FILES.grep(/schema\.json$/).any?)
   warn(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         You should commit changes to the DB schema (`db/schema.rb`) only if you have created new DB migrations.
         Please double check your code. If you did not aim to change the DB, please revert the DB schema changes.
       MARKDOWN
@@ -334,7 +334,7 @@ end
 # ------------------------------------------------------------------------------
 if !CURRENT_MAINTAINERS.include?(PR_AUTHOR) && TOUCHED_FILES.grep(/\.ya?ml(\.example)?$/).any?
   warn(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         You changed YAML (`*.yml`, `*.yaml`) or example config files; please double-check whether this is necessary.
       MARKDOWN
     sticky: true
@@ -347,7 +347,7 @@ end
 if !CURRENT_MAINTAINERS.include?(PR_AUTHOR) &&
    (MODIFIED_FILES.grep(/rails_helper\.rb$/).any? || MODIFIED_FILES.grep(/spec_helper\.rb$/).any?)
   warn(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         You should not change `rails_helper.rb` or `spec_helper.rb` without a strong reason; please double-check these changes.
       MARKDOWN
     sticky: true
@@ -360,7 +360,7 @@ end
 if !CURRENT_MAINTAINERS.include?(PR_AUTHOR) &&
    (MODIFIED_FILES.include?('Gemfile') || MODIFIED_FILES.include?('Gemfile.lock'))
   warn(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         You are modifying `Gemfile` or `Gemfile.lock`, please double check whether it is necessary.
         Add a new gem only if you have a very good reason, and please revert lockfile noise made by the IDE.
       MARKDOWN
@@ -396,7 +396,7 @@ warning_message_of_config_file_change('setup.sh', /(^|\/)setup\.sh$/)
 # ------------------------------------------------------------------------------
 if !CURRENT_MAINTAINERS.include?(PR_AUTHOR) && TOUCHED_FILES.grep(%r{^vendor/}).any?
   warn(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         You modified the `vendor` folder; please double-check whether it is necessary.
       MARKDOWN
     sticky: true
@@ -408,7 +408,7 @@ end
 # ------------------------------------------------------------------------------
 if !CURRENT_MAINTAINERS.include?(PR_AUTHOR) && TOUCHED_FILES.grep(%r{^spec/factories/}).any?
   warn(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         You modified `spec/factories/`; please double-check whether it is necessary.
       MARKDOWN
     sticky: true
@@ -420,7 +420,7 @@ end
 # ------------------------------------------------------------------------------
 if ADDED_FILES.grep(/\.vscode/).any?
   warn(
-      <<~MARKDOWN,
+    <<~MARKDOWN,
         You committed `.vscode` folder; please remove it.
       MARKDOWN
     sticky: true
@@ -449,7 +449,7 @@ end
 
   if num_of_wildcard_argument_matchers >= 5
     warn(
-        <<~MARKDOWN,
+      <<~MARKDOWN,
           There are many wildcard argument matchers (e.g., `anything`, `any_args`) in your tests.
           To avoid shallow tests, please avoid wildcard matchers.
         MARKDOWN
@@ -458,7 +458,7 @@ end
     break
   elsif num_of_expect_key_words < num_of_tests || num_of_commented_out_expect_key_words.positive?
     warn(
-        <<~MARKDOWN,
+      <<~MARKDOWN,
           One or more of your tests do not have expectations or you commented out some expectations.
           To avoid shallow tests, please write at least one expectation for each test and do not comment out expectations.
         MARKDOWN
@@ -467,7 +467,7 @@ end
     break
   elsif num_of_expectation_without_matchers.positive?
     warn(
-        <<~MARKDOWN,
+      <<~MARKDOWN,
           One or more of your test expectations do not have matchers.
           To avoid shallow tests, please include matchers such as comparisons, object state changes, or explicit error handling.
         MARKDOWN
@@ -476,7 +476,7 @@ end
     break
   elsif num_of_expectation_not_focus_on_real_value.positive?
     warn(
-        <<~MARKDOWN,
+      <<~MARKDOWN,
           One or more of your test expectations only focus on the return value not being `nil`, `empty`, or `0` without testing the real value.
           To avoid shallow tests, please write expectations that verify the real value.
         MARKDOWN
@@ -485,7 +485,7 @@ end
     break
   elsif num_of_expect_key_words - num_of_expectations_on_page < num_of_tests
     warn(
-        <<~MARKDOWN,
+      <<~MARKDOWN,
           In your tests, there are many expectations of elements on pages, which is good.
           To avoid shallow tests, please write more expectations to validate other things, such as database records or dynamically generated contents.
         MARKDOWN

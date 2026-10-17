@@ -239,7 +239,7 @@ RSpec.describe 'Course Reports API', type: :request do
 
         item = questionnaire.items.create!(txt: 'Q', seq: 1, question_type: 'Scale', weight: 1, break_before: true)
         AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire,
-                                         used_in_round: 1, questionnaire_weight: 100)
+                                        used_in_round: 1, questionnaire_weight: 100)
         map = ReviewResponseMap.create!(reviewed_object_id: assignment.id,
                                         reviewer_id: reviewer_ap.id, reviewee_id: team.id)
         resp = Response.create!(map_id: map.id, is_submitted: true, round: 1)
@@ -270,7 +270,7 @@ RSpec.describe 'Course Reports API', type: :request do
 
         item = questionnaire.items.create!(txt: 'Q', seq: 1, question_type: 'Scale', weight: 1, break_before: true)
         AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire,
-                                         used_in_round: 1, questionnaire_weight: 100)
+                                        used_in_round: 1, questionnaire_weight: 100)
         map = ReviewResponseMap.create!(reviewed_object_id: assignment.id,
                                         reviewer_id: reviewer_ap.id, reviewee_id: team.id)
         resp = Response.create!(map_id: map.id, is_submitted: true, round: 1)
