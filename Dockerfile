@@ -13,6 +13,10 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Create a non-root application user
+RUN groupadd --gid 1000 rails && \
+    useradd --uid 1000 --gid rails --create-home rails
+
 # Set the working directory
 WORKDIR /app
 
@@ -25,9 +29,15 @@ RUN bundle install
 
 COPY . .
 
-RUN mkdir -p /app/tmp/pids /app/log && \
+# Prepare writable application directories
+RUN mkdir -p /app/tmp/pids /app/log /app/storage && \
     mv /app/setup.sh /setup.sh && \
-    chmod +x /setup.sh
+    chmod +x /setup.sh && \
+    chown -R rails:rails \
+      /app/tmp /app/log /app/storage /usr/local/bundle
+
+# Run the Rails application as a non-root user
+USER rails
 
 EXPOSE 3002 
 

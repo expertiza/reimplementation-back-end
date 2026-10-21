@@ -5,6 +5,12 @@ echo "=== Starting Expertiza application ==="
 echo "Removing existing server PID file if present..."
 rm -f /app/tmp/pids/server.pid
 
+# Ensure test database is configured when running in test mode
+if [ "${RAILS_ENV:-development}" = "test" ] && [ -z "${TEST_DATABASE_URL:-}" ]; then
+  echo "ERROR: TEST_DATABASE_URL must be configured for test mode." >&2
+  exit 1
+fi
+
 if [ "${RAILS_ENV:-development}" = "production" ]; then
   echo "Production environment detected."
 
@@ -19,17 +25,18 @@ if [ "${RAILS_ENV:-development}" = "production" ]; then
 elif [ "${RAILS_ENV:-development}" = "development" ] || [ "${RAILS_ENV}" = "test" ]; then
   echo "Development/test environment detected."
 
-  echo "Installing dependencies..."
-  bundle install || exit 1
+  echo "Checking dependencies..."
+  bundle check || bundle install || exit 1
 
-  echo "Creating database if necessary..."
-  rake db:create || exit 1
-
-  echo "Running database migrations..."
-  rake db:migrate || exit 1
-
-  echo "Seeding database..."
-  rake db:seed
+  if [ "${RAILS_ENV:-development}" = "development" ]; then
+     echo "Preparing development database..."
+     bundle exec rails db:prepare || exit 1
+  else
+     echo "Preparing test database..."
+     bundle exec rails db:create || exit 1
+     bundle exec rails db:migrate || exit 1
+     echo "Skipping database seeding in test environment."
+  fi
 
 else
   echo "ERROR: Unsupported RAILS_ENV: ${RAILS_ENV}" >&2

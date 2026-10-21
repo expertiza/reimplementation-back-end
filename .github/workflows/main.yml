@@ -12,6 +12,7 @@ jobs:
     
     env:
       DATABASE_URL: mysql2://root:expertiza@127.0.0.1:3306/expertiza_test
+      TEST_DATABASE_URL: mysql2://root:expertiza@127.0.0.1:3306/expertiza_test
       RAILS_ENV: test
       
     services:
