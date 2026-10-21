@@ -9,7 +9,7 @@ class Criterion < ScoredItem
   
     def edit
       {
-        remove_link: "/questions/#{id}",
+        remove_link: "/items/#{id}",
         sequence_input: seq.to_s,
         question_text: txt,
         question_type: question_type,

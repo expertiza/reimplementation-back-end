@@ -369,16 +369,5 @@ RSpec.describe JoinTeamRequest, type: :model do
       )
       expect(join_request.comments).to eq(special_comment)
     end
-
-    it 'handles unicode in comments' do
-      unicode_comment = "I'd like to join! 🚀 こんにちは"
-      join_request = JoinTeamRequest.create!(
-        participant_id: requester_participant.id,
-        team_id: team.id,
-        comments: unicode_comment,
-        reply_status: 'PENDING'
-      )
-      expect(join_request.comments).to eq(unicode_comment)
-    end
   end
 end

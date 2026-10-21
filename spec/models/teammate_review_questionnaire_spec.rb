@@ -4,7 +4,10 @@ require 'rails_helper'
 
 describe TeammateReviewQuestionnaire, type: :model do
   let(:role) { Role.create(name: 'Instructor', parent_id: nil, id: 2, default_page_id: nil) }
-  let(:instructor) { Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456', role_id: role.id) }
+  let(:instructor) do
+    Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456',
+                      role_id: role.id)
+  end
 
   let(:questionnaire) do
     TeammateReviewQuestionnaire.create!(
@@ -69,11 +72,11 @@ describe TeammateReviewQuestionnaire, type: :model do
     end
   end
 
-  describe '#has_criterion_items?' do
+  describe '#criterion_items?' do
     context 'when there are no Criterion items' do
       it 'returns false' do
         allow(questionnaire).to receive(:items).and_return([])
-        expect(questionnaire.has_criterion_items?).to be false
+        expect(questionnaire.criterion_items?).to be false
       end
     end
 
@@ -81,7 +84,7 @@ describe TeammateReviewQuestionnaire, type: :model do
       it 'returns true' do
         criterion_item = double('item', question_type: 'Criterion')
         allow(questionnaire).to receive(:items).and_return([criterion_item])
-        expect(questionnaire.has_criterion_items?).to be true
+        expect(questionnaire.criterion_items?).to be true
       end
     end
 
@@ -89,7 +92,7 @@ describe TeammateReviewQuestionnaire, type: :model do
       it 'returns false' do
         text_item = double('item', question_type: 'TextArea')
         allow(questionnaire).to receive(:items).and_return([text_item])
-        expect(questionnaire.has_criterion_items?).to be false
+        expect(questionnaire.criterion_items?).to be false
       end
     end
   end

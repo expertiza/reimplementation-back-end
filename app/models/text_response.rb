@@ -10,7 +10,7 @@ class TextResponse < Item
           {
             type: 'link',
             text: 'Remove',
-            href: "/questions/#{id}",
+            href: "/items/#{id}",
             method: 'delete'
           },
           {
