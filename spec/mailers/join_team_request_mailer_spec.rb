@@ -6,7 +6,7 @@ RSpec.describe JoinTeamRequestMailer, type: :mailer do
   let(:role) { Role.create(name: 'Instructor', parent_id: nil, id: 3, default_page_id: nil) }
   let(:student_role) { Role.create(name: 'Student', parent_id: nil, id: 5, default_page_id: nil) }
   let(:instructor) { Instructor.create(name: 'testinstructor', email: 'instructor@test.com', full_name: 'Test Instructor', password: '123456', role: role) }
-  let(:requester) { create :user, name: 'requester_user', role: student_role, email: 'requester@test.com' }
+  let(:requester) { create :user, name: 'requester_user', full_name: 'Requester User', role: student_role, email: 'requester@test.com' }
   let(:team_member) { create :user, name: 'team_member_user', role: student_role, email: 'team_member@test.com' }
   let(:assignment) { create(:assignment, instructor: instructor) }
   let(:team) { AssignmentTeam.create(name: 'Test Team', parent_id: assignment.id, type: 'AssignmentTeam') }

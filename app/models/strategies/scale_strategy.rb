@@ -9,9 +9,9 @@ module Strategies
 
     def validate(item)
       # Validate that alternatives are numeric
-      unless item.alternatives.all? { |alt| alt.match?(/^\d+$/) }
-        item.errors.add(:alternatives, "must be numeric for scale items")
-      end
+      return if item.alternatives.all? { |alt| alt.match?(/^\d+$/) }
+
+      item.errors.add(:alternatives, 'must be numeric for scale items')
     end
   end
 end

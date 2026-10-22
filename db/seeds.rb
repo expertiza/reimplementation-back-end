@@ -118,15 +118,15 @@ begin
   num_students.times do |i|
     participant = AssignmentParticipant.create(
       user_id: student_user_ids[i],
-      parent_id: assignment_ids[i%num_assignments],
-      team_id: team_ids[i%num_teams],
-      handle: Faker::Internet.unique.username,
+      parent_id: assignment_ids[i % num_assignments],
+      team_id: team_ids[i % num_teams],
+      handle: Faker::Internet.unique.username
     )
     if participant.persisted?
       puts "Created AssignmentParticipant with ID: #{participant.id}"
       participant_ids << participant.id
       TeamsParticipant.create!(
-        team_id: team_ids[i%num_teams],
+        team_id: team_ids[i % num_teams],
         participant_id: participant.id,
         user_id: student_user_ids[i]
       )
@@ -135,6 +135,46 @@ begin
     end
   end
 
+  puts "creating questionnaires and items"
+  questionnaire = AuthorFeedbackQuestionnaire.create!(
+    name: "Sample Review Questionnaire",
+    instructor_id: 1,
+    private: false,
+    min_question_score: 0,
+    max_question_score: 5
+  )
+
+  Item.create!([
+                 {
+                   questionnaire: questionnaire,
+                   txt: "How clearly did the author explain the problem statement?",
+                   question_type: "Scale",
+                   seq: 1,
+                   weight: 1,
+                   break_before: true,
+                   min_label: "Strongly Disagree",
+                   max_label: "Strongly Agree"
+                 },
+                 {
+                   questionnaire: questionnaire,
+                   txt: "Provide detailed feedback on the author's solution approach.",
+                   question_type: "Textarea",
+                   seq: 2,
+                   weight: 1,
+                   break_before: true,
+                   size: "60,5"
+                 },
+                 {
+                   questionnaire: questionnaire,
+                   txt: "Rate the overall quality of the submission.",
+                   question_type: "Scale",
+                   seq: 3,
+                   weight: 2,
+                   break_before: false,
+                   min_label: "Poor",
+                   max_label: "Excellent"
+                 }
+               ])
 rescue ActiveRecord::RecordInvalid => e
   puts e, 'The db has already been seeded'
 end

@@ -103,7 +103,7 @@ class AssignmentTeam < Team
     assignment = Assignment.find(parent_id)
     raise 'The assignment cannot be found.' if assignment.nil?
 
-    ReviewResponseMap.create(reviewee_id: id, reviewer_id: reviewer.get_reviewer.id, reviewed_object_id: assignment.id, team_reviewing_enabled: assignment.team_reviewing_enabled)
+    ReviewResponseMap.create(reviewee_id: id, reviewer_id: reviewer.get_reviewer.id, reviewed_object_id: assignment.id, reviewing_is_done_by_teams: assignment.is_review_done_by_teams)
   end
 
   # Returns submitted files for this team.
@@ -198,7 +198,7 @@ class AssignmentTeam < Team
     assignment = Assignment.find(parent_id)
     raise 'The assignment cannot be found.' if assignment.nil?
 
-    ReviewResponseMap.create(reviewee_id: id, reviewer_id: reviewer.get_reviewer.id, reviewed_object_id: assignment.id, team_reviewing_enabled: assignment.team_reviewing_enabled)
+    ReviewResponseMap.create(reviewee_id: id, reviewer_id: reviewer.get_reviewer.id, reviewed_object_id: assignment.id, reviewing_is_done_by_teams: assignment.is_review_done_by_teams)
   end
 
   # Whether the team has submitted work or not

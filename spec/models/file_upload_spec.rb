@@ -40,7 +40,7 @@ RSpec.describe FileUpload do
 
         expect(link_element).not_to be_nil
 
-        expect(link_element["href"]).to include("/questions/1")
+        expect(link_element["href"]).to include("/items/1")
 
       end
 
@@ -127,7 +127,7 @@ RSpec.describe FileUpload do
 
         expect(json_response["action"]).to eq('view_item_text')
 
-        expect(json_response["elements"].map { |el| el["value"] }).to include('Sample item content', 'FileUpload', "", '1','—')
+        expect(json_response["elements"].map { |el| el["value"] }).to include('Sample item content', 'FileUpload', "", '1')
 
       end
 

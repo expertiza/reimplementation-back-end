@@ -15,7 +15,7 @@ class Checkbox < UnscoredItem
       {
         type: 'remove_button',
         action: 'delete',
-        href: "/questions/#{id}",
+        href: "/items/#{id}",
         text: 'Remove'
       }
     end

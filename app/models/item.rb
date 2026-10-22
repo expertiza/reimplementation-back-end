@@ -1,8 +1,13 @@
 # frozen_string_literal: true
 
 class Item < ApplicationRecord
+  # All valid question types supported by the application.
+  # Used by ItemsController#types to return the list to the front-end,
+  # and can be used elsewhere for validation or display.
+  QUESTION_TYPES = ['Criterion', 'Scale', 'Dropdown', 'Multiple choice', 'Text area', 'Text field', 'Grid'].freeze
+
   before_create :set_seq
-  belongs_to :questionnaire # each item belongs to a specific questionnaire
+  belongs_to :questionnaire, inverse_of: :items # each item belongs to a specific questionnaire
   has_many :answers, dependent: :destroy, foreign_key: 'item_id'
   attr_accessor :choice_strategy
 
@@ -20,17 +25,18 @@ class Item < ApplicationRecord
   end
 
   def set_seq
-    self.seq = questionnaire.items.size + 1
+    self.seq = questionnaire.items.size
   end
 
   def as_json(options = {})
-      super(options.merge({
-                            only: %i[txt weight seq question_type size alternatives break_before min_label max_label created_at updated_at],
-                            include: {
-                              questionnaire: { only: %i[name id] }
-                            }
-                          })).tap do |hash|
-      end
+    super(options.merge({
+                          only: %i[id txt weight seq question_type size alternatives break_before min_label max_label
+                                   created_at updated_at],
+                          include: {
+                            questionnaire: { only: %i[name id] }
+                          }
+                        })).tap do |hash|
+    end
   end
 
   def strategy

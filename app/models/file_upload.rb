@@ -9,7 +9,7 @@ class FileUpload < Item
           {
             type: 'link',
             text: 'Remove',
-            href: "/questions/#{id}",
+            href: "/items/#{id}",
             method: 'delete'
           },
           {
@@ -55,20 +55,8 @@ class FileUpload < Item
           { type: 'text', value: txt },
           { type: 'text', value: question_type },
           { type: 'text', value: weight.to_s },
-          { type: 'text', value: id.to_s },
-          { type: 'text', value: '—' } # Placeholder for non-applicable fields
+          { type: 'text', value: id.to_s }
         ]
       }.to_json
     end
-  
-  
-    # Implement this method for completing a item
-    def complete(count, answer = nil)
-      # Implement the logic for completing a item
-    end
-  
-    # Implement this method for viewing a completed item by a student
-    def view_completed_item(count, files)
-      # Implement the logic for viewing a completed item by a student
-    end
-  end
+end

@@ -1,4 +1,14 @@
 ---
+inherit_from: .rubocop_todo.yml
+
+inherit_mode:
+  merge:
+    - Exclude
+
+AllCops:
+  NewCops: disable
+  SuggestExtensions: false
+
 Style/ClassAndModuleChildren:
   Enabled: false
 
@@ -8,6 +18,19 @@ Style/Documentation:
   Enabled: false
 
 Style/FrozenStringLiteralComment:
+  Enabled: false
+
+# Indentation/alignment is not enforced for this project.
+Layout/ArgumentAlignment:
+  Enabled: false
+
+Layout/ClosingParenthesisIndentation:
+  Enabled: false
+
+Layout/FirstArgumentIndentation:
+  Enabled: false
+
+Layout/FirstHashElementIndentation:
   Enabled: false
 
 Metrics/BlockLength:

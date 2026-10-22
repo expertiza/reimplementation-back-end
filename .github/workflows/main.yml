@@ -16,7 +16,7 @@ jobs:
       
     services:
       mysql:
-        image: mysql:8.0
+        image: mysql:8.4
         env:
           MYSQL_ROOT_PASSWORD: expertiza
           MYSQL_DATABASE: expertiza_test
@@ -47,11 +47,6 @@ jobs:
           which ruby
           gem env
           
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18.x'
-          
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -75,29 +70,62 @@ jobs:
         run: |
           echo "SimpleCov coverage reporting is configured in spec_helper.rb"
 
-      - name: Run model tests
-        run: bundle exec rspec spec/models
-
-      - name: Run controller tests
-        run: bundle exec rspec spec/requests/
-
-      - name: Generate coverage report
+      - name: Run full RSpec suite
+        shell: bash
         run: |
-          echo "Coverage report generated in coverage/index.html"
-          ls -la coverage/ || echo "No coverage directory found"
-          if [ -f coverage/index.html ]; then
-            echo "✅ Coverage report generated successfully"
-            echo "📊 Coverage percentage:"
-            grep -o '[0-9]\+\.[0-9]\+%' coverage/index.html | head -1 || echo "Coverage percentage not found"
+          set -o pipefail
+          bundle exec rspec 2>&1 | tee rspec_results.txt
+
+      - name: Prepare RSpec summary
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          if grep -q "^Failed examples:" rspec_results.txt; then
+            {
+              echo "Failed examples:"
+              grep "^rspec " rspec_results.txt || true
+            } > rspec_summary.txt
           else
-            echo "❌ Coverage report not generated"
+            echo "All tests passed." > rspec_summary.txt
+          fi
+
+      - name: Upload RSpec summary
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rspec-summary
+          path: rspec_summary.txt
+          if-no-files-found: warn
+
+      - name: Check coverage report
+        if: always()
+        run: |
+          if [ -f coverage/coverage.json ]; then
+            echo "Coverage JSON report generated successfully"
+
+            ruby -rjson -e '
+              data = JSON.parse(File.read("coverage/coverage.json"))
+
+              lines = data.fetch("coverage").values.flat_map do |file|
+                file.fetch("lines", []).compact
+              end
+
+              total = lines.length
+              covered = lines.count { |hits| hits.to_i > 0 }
+              percentage = total.zero? ? 0.0 : (covered * 100.0 / total)
+
+              puts "Coverage: %.2f%% (%d/%d lines)" % [percentage, covered, total]
+            '
+          else
+            echo "::warning::coverage/coverage.json was not generated"
           fi
 
       - name: Upload coverage artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: code-coverage-artifacts
           path: coverage/
+          if-no-files-found: warn
           
       - name: Comment coverage on PR
         if: github.event_name == 'pull_request'

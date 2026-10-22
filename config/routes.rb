@@ -41,6 +41,9 @@ Rails.application.routes.draw do
           get '/:assignment_id/varying_rubrics_by_round', action: :varying_rubrics_by_round?
           post '/:assignment_id/create_node',action: :create_node
         end
+        member do
+          get :calibration_submissions
+        end
       end
 
       resources :bookmarks, except: [:new, :edit] do
@@ -78,11 +81,11 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :questions do
+      resources :items do
         collection do
           get :types
-          get 'show_all/questionnaire/:id', to:'questions#show_all#questionnaire', as: 'show_all'
-          delete 'delete_all/questionnaire/:id', to:'questions#delete_all#questionnaire', as: 'delete_all'
+          get 'show_all/questionnaire/:id', to:'items#show_all#questionnaire', as: 'show_all'
+          delete 'delete_all/questionnaire/:id', to:'items#delete_all#questionnaire', as: 'delete_all'
         end
       end
 
