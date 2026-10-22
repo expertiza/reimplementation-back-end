@@ -31,7 +31,7 @@ class ItemsController < ApplicationController # rubocop:disable Metrics/ClassLen
   # GET /items/show_all/questionnaire/:id
   def show_all
     questionnaire = Questionnaire.find(params[:id])
-    items = questionnaire.items.order(:id)
+    items = questionnaire.items.order(:seq, :id)
     render json: items, status: :ok
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Couldn't find Questionnaire" }, status: :not_found

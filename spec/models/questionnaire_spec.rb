@@ -183,4 +183,16 @@ describe Questionnaire, type: :model do
       expect(first_copy.question_type).to eq(question1.question_type)
     end
   end
+
+  describe '#items association order' do
+    it 'orders items by seq and id ascending' do
+      instructor.save!
+      questionnaire.save!
+      item_second = Item.create!(seq: 2, txt: 'Second', question_type: 'multiple_choice',
+                                 break_before: true, questionnaire: questionnaire)
+      item_first = Item.create!(seq: 1, txt: 'First', question_type: 'multiple_choice',
+                                break_before: true, questionnaire: questionnaire)
+      expect(questionnaire.items.reload.to_a).to eq([item_first, item_second])
+    end
+  end
 end

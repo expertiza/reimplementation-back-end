@@ -472,6 +472,22 @@ RSpec.describe 'items', type: :request do
         end
       end
 
+      context 'when items were created out of sequence order' do
+        let(:id) do
+          Item.create!(seq: 2, txt: 'Second', question_type: 'multiple_choice', break_before: true, questionnaire: questionnaire)
+          Item.create!(seq: 1, txt: 'First', question_type: 'multiple_choice', break_before: true, questionnaire: questionnaire)
+          questionnaire.id
+        end
+
+        response(200, 'returns items ordered by seq') do
+          run_test! do
+            items_json = JSON.parse(response.body)
+            seqs = items_json.map { |i| i['seq'] }
+            expect(seqs).to eq([1, 2])
+          end
+        end
+      end
+
       # get request on /items/delete_all/questionnaire/{id} returns 404 not found response when questionnaire id is not found in the database
       response(404, 'not found') do
         let(:id) { 0 }

@@ -110,4 +110,23 @@ RSpec.describe Item, type: :model do
       end
     end
   end
+
+  describe '#set_seq' do
+    it 'preserves the seq if already provided' do
+      instructor.save!
+      questionnaire.save!
+      item = Item.create!(seq: 5, txt: 'Item 5', question_type: 'multiple_choice',
+                          break_before: true, questionnaire: questionnaire)
+      expect(item.reload.seq).to eq(5)
+    end
+
+    it 'defaults seq to questionnaire.items.size + 1 when seq is nil' do
+      instructor.save!
+      questionnaire.save!
+      item = Item.new(txt: 'Item with nil seq', question_type: 'multiple_choice',
+                      break_before: true, questionnaire: questionnaire)
+      item.set_seq
+      expect(item.seq).to eq(1)
+    end
+  end
 end

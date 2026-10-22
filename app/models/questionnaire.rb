@@ -3,7 +3,11 @@
 class Questionnaire < ApplicationRecord # rubocop:disable Metrics/ClassLength
   belongs_to :instructor
   # the collection of items associated with this Questionnaire
-  has_many :items, class_name: 'Item', foreign_key: 'questionnaire_id', dependent: :destroy, inverse_of: :questionnaire
+  has_many :items, -> { order(:seq, :id) },
+           class_name: 'Item',
+           foreign_key: 'questionnaire_id',
+           dependent: :destroy,
+           inverse_of: :questionnaire
   accepts_nested_attributes_for :items, allow_destroy: true
   before_destroy :any_item_associations?
 

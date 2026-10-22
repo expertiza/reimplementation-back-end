@@ -25,7 +25,7 @@ class Item < ApplicationRecord
   end
 
   def set_seq
-    self.seq = questionnaire.items.size
+    self.seq ||= (questionnaire&.items&.reject { |i| i == self }&.size || 0) + 1
   end
 
   def as_json(options = {})
