@@ -98,6 +98,9 @@ Rails.application.routes.draw do
           post :assign_calibration
           post :assign_quiz
           delete :delete_all_for_reviewer
+          # Student-facing dynamic review
+          get  :eligible_topics
+          post :request_review
         end
 
         member do
@@ -106,6 +109,12 @@ Rails.application.routes.draw do
           patch :grade_review
           delete :delete_mapping
         end
+      end
+
+      # Student review list and review form
+      scope '/assignments/:assignment_id' do
+        get 'student_review/list', to: 'student_review#list', as: :student_review_list
+        get 'student_review/:mapping_id/form', to: 'student_review#form', as: :student_review_form
       end
 
       resources :signed_up_teams do

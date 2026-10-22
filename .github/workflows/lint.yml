@@ -30,6 +30,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install
-        run: wget -O - -q https://git.io/misspell | sh -s -- -b .
+        run: |
+          curl -L -s https://github.com/client9/misspell/releases/download/v0.3.4/misspell_0.3.4_linux_64bit.tar.gz | tar xz -C /tmp
+          mv /tmp/misspell .
       - name: Misspell
         run: git ls-files --empty-directory | xargs ./misspell -i 'aircrafts,devels,invertions' -error

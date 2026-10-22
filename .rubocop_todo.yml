@@ -904,6 +904,7 @@ Metrics/AbcSize:
     - 'db/**/*.rb'
     - 'app/controllers/assignments_controller.rb'
     - 'app/controllers/authentication_controller.rb'
+    - 'app/controllers/student_review_controller.rb'
     - 'app/controllers/concerns/authorization.rb'
     - 'app/controllers/course_reports_controller.rb'
     - 'app/controllers/duties_controller.rb'
@@ -973,6 +974,7 @@ Metrics/BlockLength:
     - 'spec/requests/api/v1/review_grade_conflicts_spec.rb'
     - 'spec/requests/api/v1/review_reports_controller_spec.rb'
     - 'spec/requests/api/v1/roles_spec.rb'
+    - 'spec/requests/api/v1/student_review_controller_spec.rb'
     - 'spec/requests/api/v1/student_tasks_controller_spec.rb'
     - 'spec/requests/api/v1/student_teams_controller_spec.rb'
     - 'spec/requests/api/v1/submitted_content_spec.rb'
@@ -985,6 +987,7 @@ Metrics/BlockLength:
 Metrics/ClassLength:
   Exclude:
     - 'app/controllers/assignments_controller.rb'
+    - 'app/controllers/student_review_controller.rb'
     - 'app/controllers/course_reports_controller.rb'
     - 'app/controllers/grades_controller.rb'
     - 'app/controllers/invitations_controller.rb'
@@ -1027,6 +1030,7 @@ Metrics/MethodLength:
   Exclude:
     - 'db/**/*.rb'
     - 'app/controllers/assignments_controller.rb'
+    - 'app/controllers/student_review_controller.rb'
     - 'app/controllers/course_reports_controller.rb'
     - 'app/controllers/grades_controller.rb'
     - 'app/controllers/invitations_controller.rb'

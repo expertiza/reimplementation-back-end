@@ -1,11 +1,17 @@
 # frozen_string_literal: true
 
 class ResponsesController < ApplicationController
-  before_action :set_response, only: [:update, :submit, :unsubmit, :destroy]
+  before_action :set_response, only: [:show, :update, :submit, :unsubmit, :destroy]
 
   # Authorization: determines if current user can perform the action
   def action_allowed?
     case action_name
+    when 'show'
+      resp = Response.find_by(id: params[:id])
+      return false unless resp&.response_map&.assignment
+      current_user_owns_response?(resp) ||
+        current_user_teaching_staff_of_assignment?(resp.response_map.assignment.id) ||
+        parent_admin_for_response?(resp)
     when 'create'
       map_id = params[:response_map_id] || params[:map_id]
       map = ResponseMap.find_by(id: map_id)
@@ -34,6 +40,20 @@ class ResponsesController < ApplicationController
     else
       false
     end
+  end
+
+  # GET /responses/:id
+  def show
+    return render json: { error: "#{response_label} not found" }, status: :not_found unless @response
+
+    render json: {
+      id: @response.id,
+      is_submitted: @response.is_submitted,
+      additional_comment: @response.additional_comment,
+      answers: @response.scores.map do |a|
+        { id: a.id, item_id: a.item_id, answer: a.answer, comments: a.comments }
+      end
+    }
   end
 
   # POST /responses
