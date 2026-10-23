@@ -20,13 +20,14 @@ RUN groupadd --gid 1000 rails && \
 # Set the working directory
 WORKDIR /app
 
-# Copy your application files from current location to WORKDIR
+# Copy dependency files first to improve Docker layer caching
 COPY Gemfile Gemfile.lock ./
 
 # Install Ruby dependencies
 RUN gem update --system && gem install bundler:2.4.14
 RUN bundle install
 
+# Copy the remaining application files
 COPY . .
 
 # Prepare writable application directories
