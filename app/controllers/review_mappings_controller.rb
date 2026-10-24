@@ -17,13 +17,11 @@ class ReviewMappingsController < ApplicationController
     render json: { status: "ok", message: "CSV-based assignments created" }
   end
 
-    # POST /assignments/:assignment_id/review_mappings/random
-    def assign_random
+  def assign_random
     handler = ReviewMappingHandler.new(@assignment)
     handler.assign_random
     render json: { status: "ok", message: "Random assignments created" }
-    end
-
+  end
 
   # ===== DYNAMIC ASSIGNMENT =====
   def request_review_fewest
@@ -63,15 +61,19 @@ class ReviewMappingsController < ApplicationController
   # topic, and the student hasn't already reviewed it or submitted to it.
   def eligible_topics
     participant = current_participant
-    return render json: { error: 'Not a participant' }, status: :forbidden unless participant
-    return render json: { error: 'This assignment does not have topics' }, status: :unprocessable_entity unless @assignment.topics?
+    unless participant
+      return render json: { error: 'You are not a participant in this assignment.' }, status: :forbidden
+    end
+    unless @assignment.topics?
+      return render json: { error: 'This assignment does not have topics' }, status: :unprocessable_entity
+    end
 
-    k               = @assignment.review_topic_threshold || 1
-    counts_by_topic = topic_review_counts
-    min_count       = counts_by_topic.values.min || 0
-    eligible        = build_eligible_topics(participant, counts_by_topic, min_count, k)
+    threshold = @assignment.review_topic_threshold || 1
+    counts    = topic_review_counts
+    min_count = counts.values.min || 0
+    eligible  = build_eligible_topics(participant, counts, min_count, threshold)
 
-    render json: { eligible_topics: eligible, threshold: k, min_review_count: min_count }
+    render json: { eligible_topics: eligible, threshold: threshold, min_review_count: min_count }
   end
 
   # POST /assignments/:assignment_id/review_mappings/request_review
@@ -79,28 +81,21 @@ class ReviewMappingsController < ApplicationController
   # can_choose_topic_to_review?, a topic_id must be provided unless i_dont_care is set.
   def request_review
     participant = current_participant
-    return render json: { error: 'Not a participant' }, status: :forbidden unless participant
-
-    reviewer_id = participant_reviewer_id(participant)
-
-    if @assignment.num_reviews_allowed.to_i.positive?
-      current_count = ReviewResponseMap.where(reviewer_id: reviewer_id, reviewed_object_id: @assignment.id).count
-      if current_count >= @assignment.num_reviews_allowed
-        return render json: {
-          error: "You cannot do more than #{@assignment.num_reviews_allowed} reviews based on assignment policy"
-        }, status: :unprocessable_entity
-      end
+    unless participant
+      return render json: { error: 'You are not a participant in this assignment.' }, status: :forbidden
     end
 
-    mapping = if @assignment.topics?
-                assign_review_with_topic(participant, reviewer_id)
-              else
-                assign_review_no_topic(participant)
-              end
+    return if check_review_limit(participant)
 
-    return unless mapping.is_a?(ReviewResponseMap)
+    new_response_map = if @assignment.topics?
+                         handle_topic_review_request(participant)
+                       else
+                         assign_review_no_topic(participant)
+                       end
 
-    render json: { status: 'ok', mapping_id: mapping.id }
+    return if new_response_map.nil?
+
+    render json: { status: 'ok', mapping_id: new_response_map.id }
   end
 
   # ===== CALIBRATION =====
@@ -148,7 +143,75 @@ class ReviewMappingsController < ApplicationController
     @assignment.is_review_done_by_teams ? participant.team&.id || participant.id : participant.id
   end
 
+  # Returns true (and renders an error) when the student has reached the review limit.
+  def check_review_limit(participant)
+    return false unless @assignment.num_reviews_allowed.to_i.positive?
+
+    reviewer_id = participant_reviewer_id(participant)
+    num_reviews_currently_assigned = ReviewResponseMap
+                                     .where(reviewer_id: reviewer_id, reviewed_object_id: @assignment.id)
+                                     .count
+    return false if num_reviews_currently_assigned < @assignment.num_reviews_allowed
+
+    render json: {
+      error: "You cannot do more than #{@assignment.num_reviews_allowed} reviews for this assignment."
+    }, status: :unprocessable_entity
+    true
+  end
+
+  def handle_topic_review_request(participant)
+    if @assignment.can_choose_topic_to_review && params[:topic_id].blank? && params[:i_dont_care].blank?
+      render json: { error: 'No topic selected. Please go back and select a topic.' },
+             status: :unprocessable_entity
+      return nil
+    end
+
+    params[:topic_id].present? ? assign_explicit_topic(participant) : assign_automatic_topic(participant)
+  end
+
+  def assign_explicit_topic(participant)
+    topic = ProjectTopic.find_by(id: params[:topic_id], assignment_id: @assignment.id)
+    unless topic
+      render json: { error: 'Topic not found.' }, status: :not_found
+      return nil
+    end
+
+    mapping = assign_review_for_topic(participant, topic)
+    unless mapping
+      render json: { error: 'No submissions available for this topic. Please try another topic.' },
+             status: :unprocessable_entity
+      return nil
+    end
+    mapping
+  end
+
+  def assign_automatic_topic(participant)
+    # threshold (k): topics with at most (min_reviews + threshold) reviews are eligible
+    threshold = @assignment.review_topic_threshold || 1
+    mapping   = ReviewMappingHandler.new(@assignment).assign_dynamic_topic_fairly(participant, k: threshold)
+    unless mapping
+      render json: { error: 'No topics available to review at this time. Please try later.' },
+             status: :unprocessable_entity
+      return nil
+    end
+    mapping
+  end
+
+  def assign_review_no_topic(participant)
+    mapping = ReviewMappingHandler.new(@assignment)
+                                  .assign_dynamically(
+                                    ReviewMappingStrategies::LeastReviewedSubmissionStrategy, participant
+                                  )
+    unless mapping
+      render json: { error: 'No artifacts available to review at this time. Please try later.' },
+             status: :unprocessable_entity
+      return nil
+    end
+    mapping
+  end
+
   # Per-topic review count across all submissions for this assignment.
+  # Note: uses signed_up_teams join, so only accurate for team-based assignments.
   def topic_review_counts
     ReviewResponseMap
       .where(reviewed_object_id: @assignment.id)
@@ -157,14 +220,12 @@ class ReviewMappingsController < ApplicationController
       .count
   end
 
-  # Returns the topic ID the participant has signed up for, or nil.
   def own_topic_id_for(participant)
     SignedUpTeam.joins(:project_topic)
                 .find_by(team_id: participant.team&.id, project_topics: { assignment_id: @assignment.id })
                 &.project_topic_id
   end
 
-  # Returns topic IDs this reviewer has already reviewed for this assignment.
   def already_reviewed_topic_ids(reviewer_id)
     ReviewResponseMap
       .where(reviewer_id: reviewer_id, reviewed_object_id: @assignment.id)
@@ -173,83 +234,48 @@ class ReviewMappingsController < ApplicationController
       .uniq
   end
 
-  # Builds the sorted list of eligible topics for dynamic review selection.
-  def build_eligible_topics(participant, counts_by_topic, min_count, k)
-    reviewer_id        = participant_reviewer_id(participant)
-    excluded_own       = own_topic_id_for(participant)
-    excluded_reviewed  = already_reviewed_topic_ids(reviewer_id)
+  def excluded_topic_ids(participant)
+    reviewer_id = participant_reviewer_id(participant)
+    own         = own_topic_id_for(participant)
+    reviewed    = already_reviewed_topic_ids(reviewer_id)
+    Set.new(reviewed) | [own].compact
+  end
 
+  def build_eligible_topics(participant, counts, min_count, threshold)
+    rejected = excluded_topic_ids(participant)
     ProjectTopic
       .where(assignment_id: @assignment.id)
-      .reject { |t| t.id == excluded_own || excluded_reviewed.include?(t.id) }
-      .select { |t| (counts_by_topic[t.id] || 0) <= min_count + k }
-      .map    { |t| { id: t.id, topic_name: t.topic_name, review_count: counts_by_topic[t.id] || 0 } }
+      .reject { |t| rejected.include?(t.id) }
+      .select { |t| (counts[t.id] || 0) <= min_count + threshold }
+      .map    { |t| { id: t.id, topic_name: t.topic_name, review_count: counts[t.id] || 0 } }
       .sort_by { |t| t[:review_count] }
   end
 
-  # Handles dynamic assignment for topic-based assignments.
-  def assign_review_with_topic(participant, reviewer_id)
-    if @assignment.can_choose_topic_to_review && params[:topic_id].blank? && params[:i_dont_care].blank?
-      render json: { error: 'No topic selected. Please go back and select a topic.' }, status: :unprocessable_entity
-      return nil
-    end
+  def eligible_teams_for_topic(topic, participant, reviewer_id)
+    member_team_ids   = TeamsParticipant.where(participant_id: participant.id).pluck(:team_id)
+    reviewed_team_ids = ReviewResponseMap
+                        .where(reviewer_id: reviewer_id, reviewed_object_id: @assignment.id)
+                        .pluck(:reviewee_id)
+    excluded_ids = (member_team_ids + reviewed_team_ids).uniq
 
-    if params[:topic_id].present?
-      topic = ProjectTopic.find_by(id: params[:topic_id], assignment_id: @assignment.id)
-      unless topic
-        render json: { error: 'Topic not found or not part of this assignment' }, status: :not_found
-        return nil
-      end
-      assign_review_for_topic(participant, reviewer_id, topic)
-    else
-      k       = @assignment.review_topic_threshold || 1
-      handler = ReviewMappingHandler.new(@assignment)
-      mapping = handler.assign_dynamic_topic_fairly(participant, k: k)
-      unless mapping
-        render json: { error: 'No topics available to review at this time. Please try later.' }, status: :unprocessable_entity
-        return nil
-      end
-      mapping
-    end
+    topic.teams
+         .joins(:signed_up_teams)
+         .where(signed_up_teams: { is_waitlisted: false })
+         .where.not(id: excluded_ids)
   end
 
-  # Finds an eligible team in the given topic and creates the mapping.
-  def assign_review_for_topic(participant, reviewer_id, topic)
-    eligible_teams = topic.teams
-                          .joins(:signed_up_teams)
-                          .where(signed_up_teams: { is_waitlisted: false })
-                          .reject { |team| team.participants.include?(participant) }
-                          .reject { |team|
-                            ReviewResponseMap.exists?(
-                              reviewer_id:        reviewer_id,
-                              reviewee_id:        team.id,
-                              reviewed_object_id: @assignment.id
-                            )
-                          }
-
-    if eligible_teams.empty?
-      render json: { error: 'No submissions available for this topic. Please try another topic.' }, status: :unprocessable_entity
-      return nil
-    end
+  # Finds an eligible team to review that has the given topic, and creates the mapping.
+  def assign_review_for_topic(participant, topic)
+    reviewer_id    = participant_reviewer_id(participant)
+    eligible_teams = eligible_teams_for_topic(topic, participant, reviewer_id)
+    return nil if eligible_teams.empty?
 
     counts = topic_review_counts
     team   = eligible_teams.min_by { |t| counts[t.id] || 0 }
-
     ReviewResponseMap.find_or_create_by!(
-      reviewer_id:        reviewer_id,
-      reviewee_id:        team.id,
+      reviewer_id: reviewer_id,
+      reviewee_id: team.id,
       reviewed_object_id: @assignment.id
     )
-  end
-
-  # Handles dynamic assignment for assignments without topics.
-  def assign_review_no_topic(participant)
-    handler = ReviewMappingHandler.new(@assignment)
-    mapping = handler.assign_dynamically(ReviewMappingStrategies::LeastReviewedSubmissionStrategy, participant)
-    unless mapping
-      render json: { error: 'No artifacts available to review at this time. Please try later.' }, status: :unprocessable_entity
-      return nil
-    end
-    mapping
   end
 end

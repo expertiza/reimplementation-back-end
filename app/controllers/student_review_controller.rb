@@ -11,6 +11,8 @@ class StudentReviewController < ApplicationController
     mappings    = ReviewResponseMap
                   .where(reviewer_id: reviewer_id, reviewed_object_id: @assignment.id)
                   .includes(:responses, :reviewee)
+    # Sort calibration reviews by id % 5 to pseudo-randomly interleave them across 5 buckets,
+    # matching the original Expertiza distribution behaviour.
     mappings    = mappings.sort_by { |m| m.id % 5 } if @assignment.is_calibrated?
     review_list = mappings.map { |map| serialize_mapping(map) }
     completed   = review_list.count { |r| r[:status] == 'completed' }
@@ -33,9 +35,12 @@ class StudentReviewController < ApplicationController
   # GET /assignments/:assignment_id/student_review/:mapping_id/form
   def form
     mapping = ReviewResponseMap.find_by(id: params[:mapping_id], reviewed_object_id: @assignment.id)
-    return render json: { error: 'Review mapping not found for this assignment' }, status: :not_found unless mapping
+    unless mapping
+      return render json: { error: 'No review found with that ID for this assignment.' },
+                    status: :not_found
+    end
     unless reviewer_for?(mapping)
-      return render json: { error: 'You are not the reviewer for this mapping' }, status: :forbidden
+      return render json: { error: 'You are not the author of this review.' }, status: :forbidden
     end
 
     reviewee        = mapping.reviewee
@@ -65,16 +70,18 @@ class StudentReviewController < ApplicationController
   end
 
   def build_questionnaire_data(assignment)
-    aq = assignment.assignment_questionnaires.find_by(used_in_round: nil) ||
-         assignment.assignment_questionnaires.first
+    current_round = DueDate.current_round_number_for(assignment)
+    aq = assignment.assignment_questionnaires.find_by(used_in_round: current_round) if current_round.positive?
+    aq ||= assignment.assignment_questionnaires.find_by(used_in_round: nil)
+    aq ||= assignment.assignment_questionnaires.first
     q = aq&.questionnaire
     return nil unless q
 
     {
       id: q.id,
       name: q.name,
-      min_question_score: q.min_question_score,
-      max_question_score: q.max_question_score,
+      min_item_score: q.min_question_score,
+      max_item_score: q.max_question_score,
       items: q.items.order(:seq).map do |item|
         { id: item.id, txt: item.txt, question_type: item.question_type,
           weight: item.weight, seq: item.seq }
@@ -98,32 +105,30 @@ class StudentReviewController < ApplicationController
   def set_assignment_and_participant
     @assignment  = Assignment.find(params[:assignment_id])
     @participant = AssignmentParticipant.find_by(parent_id: @assignment.id, user_id: current_user.id)
-    render json: { error: 'You are not a participant of this assignment' }, status: :forbidden unless @participant
+    render json: { error: 'You are not a participant in this assignment.' }, status: :forbidden unless @participant
   end
 
   def reviewer_id_for(participant)
     @assignment.is_review_done_by_teams ? participant.team&.id || participant.id : participant.id
   end
 
-  def serialize_mapping(map)
+  def review_status(map)
     last_response = map.responses.max_by(&:id)
-    status        = if last_response.nil?
-                      'not_started'
-                    elsif last_response.is_submitted
-                      'completed'
-                    else
-                      'in_progress'
-                    end
-    team  = map.reviewee
-    topic = SignedUpTeam.find_by(team_id: team&.id)&.project_topic
+    return 'not_started' unless last_response
+
+    last_response.is_submitted ? 'completed' : 'in_progress'
+  end
+
+  def serialize_mapping(map)
+    topic = SignedUpTeam.find_by(team_id: map.reviewee&.id)&.project_topic
 
     {
       mapping_id: map.id,
-      reviewee_team_id: team&.id,
-      reviewee_team_name: team&.name,
+      reviewee_team_id: map.reviewee&.id,
+      reviewee_team_name: map.reviewee&.name,
       topic_id: topic&.id,
       topic_name: topic&.topic_name,
-      status: status,
+      status: review_status(map),
       submission_updated: map.has_submission_been_updated?,
       for_calibration: map.for_calibration
     }

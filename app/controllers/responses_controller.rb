@@ -159,7 +159,7 @@ class ResponsesController < ApplicationController
       :additional_comment,
       scores_attributes: [:id, :item_id, :answer, :comments]
     )
-    (p[:scores_attributes] || []).each { |s| s[:answer] = s[:answer].to_i if s.key?(:answer) }
+    (p[:scores_attributes] || []).each { |s| s[:answer] = s[:answer].to_i if s.key?(:answer) && !s[:answer].nil? }
     p
   end
 
