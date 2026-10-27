@@ -159,9 +159,7 @@ class ResponseMap < ApplicationRecord
     candidates = []
     candidates << reviewee.updated_at
 
-    # reviewee may already be an AssignmentTeam (team-based reviews) or an
-    # AssignmentParticipant that has a team. Handle both.
-    team = reviewee.is_a?(AssignmentTeam) ? reviewee : reviewee.try(:team)
+    team = reviewee.submission_team
     if team.present?
       candidates << team.updated_at
       # Also gather timestamps from join records (teams_participants) so collaborator edits count as activity

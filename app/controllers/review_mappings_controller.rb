@@ -67,6 +67,9 @@ class ReviewMappingsController < ApplicationController
     unless @assignment.topics?
       return render json: { error: 'This assignment does not have topics' }, status: :unprocessable_entity
     end
+    unless @assignment.has_teams
+      return render json: { error: 'Topic-based review requires a team assignment.' }, status: :unprocessable_entity
+    end
 
     threshold = @assignment.review_topic_threshold || 1
     counts    = topic_review_counts
@@ -87,7 +90,7 @@ class ReviewMappingsController < ApplicationController
 
     return if check_review_limit(participant)
 
-    new_response_map = if @assignment.topics?
+    new_response_map = if @assignment.topics? && @assignment.has_teams
                          handle_topic_review_request(participant)
                        else
                          assign_review_no_topic(participant)
@@ -211,7 +214,9 @@ class ReviewMappingsController < ApplicationController
   end
 
   # Per-topic review count across all submissions for this assignment.
-  # Note: uses signed_up_teams join, so only accurate for team-based assignments.
+  # Only called for team-based assignments (callers guard on has_teams); for
+  # individual assignments reviewee_id is a participant ID, not a team ID, so
+  # the signed_up_teams join would return no rows and counts would be wrong.
   def topic_review_counts
     ReviewResponseMap
       .where(reviewed_object_id: @assignment.id)
@@ -220,6 +225,7 @@ class ReviewMappingsController < ApplicationController
       .count
   end
 
+  # Returns the topic ID the participant has signed up for, or nil.
   def own_topic_id_for(participant)
     SignedUpTeam.joins(:project_topic)
                 .find_by(team_id: participant.team&.id, project_topics: { assignment_id: @assignment.id })

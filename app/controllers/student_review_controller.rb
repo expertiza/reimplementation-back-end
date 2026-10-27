@@ -11,9 +11,9 @@ class StudentReviewController < ApplicationController
     mappings    = ReviewResponseMap
                   .where(reviewer_id: reviewer_id, reviewed_object_id: @assignment.id)
                   .includes(:responses, :reviewee)
-    # Sort calibration reviews by id % 5 to pseudo-randomly interleave them across 5 buckets,
-    # matching the original Expertiza distribution behaviour.
-    mappings    = mappings.sort_by { |m| m.id % 5 } if @assignment.is_calibrated?
+    # Shuffle calibration reviews so they appear at unpredictable positions
+    # in the list, preventing students from identifying them by position.
+    mappings = mappings.sort_by { rand } if @assignment.is_calibrated?
     review_list = mappings.map { |map| serialize_mapping(map) }
     completed   = review_list.count { |r| r[:status] == 'completed' }
     in_progress = review_list.count { |r| r[:status] == 'in_progress' }
