@@ -51,7 +51,7 @@ RSpec.describe 'ReviewMappings Request Review API', type: :request do
       end
 
       context 'assignment with topics and can_choose_topic_to_review' do
-        before { assignment.update!(can_choose_topic_to_review: true) }
+        before { assignment.update!(can_choose_topic_to_review: true, has_teams: true) }
 
         let!(:topic) do
           ProjectTopic.create!(assignment_id: assignment.id, topic_name: 'Choosable', max_choosers: 3)
@@ -98,7 +98,7 @@ RSpec.describe 'ReviewMappings Request Review API', type: :request do
 
         run_test! do |response|
           data = JSON.parse(response.body)
-          expect(data['error']).to eq('You are not a participant in this assignment.')
+          expect(data['error']).to eq('You are not a participant in this assignment')
         end
       end
 

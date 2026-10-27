@@ -2,6 +2,9 @@ name: Lint
 
 on: [workflow_dispatch, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   codespell:
     name: Check spelling all files with codespell
@@ -31,7 +34,9 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install
         run: |
-          curl -L -s https://github.com/client9/misspell/releases/download/v0.3.4/misspell_0.3.4_linux_64bit.tar.gz | tar xz -C /tmp
+          curl -fsSL -o /tmp/misspell.tar.gz https://github.com/client9/misspell/releases/download/v0.3.4/misspell_0.3.4_linux_64bit.tar.gz
+          echo "afd95caf1eecc72ff382791e00b3b11523a20b0579d95e2295c1c043688743d5  /tmp/misspell.tar.gz" | sha256sum -c -
+          tar xz -C /tmp -f /tmp/misspell.tar.gz
           mv /tmp/misspell .
       - name: Misspell
         run: git ls-files --empty-directory | xargs ./misspell -i 'aircrafts,devels,invertions' -error

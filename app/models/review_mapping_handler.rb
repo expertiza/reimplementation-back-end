@@ -83,11 +83,12 @@ class ReviewMappingHandler
 
   # ===== OUTSTANDING REVIEWS =====
   def can_accept_more_reviews?(reviewer, k: DEFAULT_OUTSTANDING_LIMIT)
-    outstanding = ReviewResponseMap.where(
-      reviewer: reviewer,
-      reviewed_object_id: @assignment.id,
-      submitted: false
-    ).count
+    latest_ids   = Response.select('MAX(id)').group(:map_id)
+    done_map_ids = Response.where(id: latest_ids, is_submitted: true).select(:map_id)
+    outstanding  = ReviewResponseMap
+                   .where(reviewer_id: effective_reviewer_id(reviewer), reviewed_object_id: @assignment.id)
+                   .where.not(id: done_map_ids)
+                   .count
     outstanding < k
   end
 
@@ -97,35 +98,43 @@ class ReviewMappingHandler
   end
 
   def delete_all_reviews_for(reviewer)
-    ReviewResponseMap.where(reviewer: reviewer).destroy_all
+    ReviewResponseMap.where(reviewer_id: effective_reviewer_id(reviewer),
+                            reviewed_object_id: @assignment.id).destroy_all
   end
 
   # ===== INSTRUCTOR GRADING =====
   def grade_review(mapping, grade:, comment:)
-    mapping.update!(instructor_grade: grade, instructor_comment: comment)
+    return if mapping.reviewing_is_done_by_teams?
+
+    ReviewGrade.find_or_create_by!(participant_id: mapping.reviewer_id)
+               .update!(grade_for_reviewer: grade, comment_for_reviewer: comment)
   end
 
   private
 
   def assign_round_robin(reviewers, teams, reviews_per_reviewer: 1, for_calibration: false)
     reviewers.each_with_index do |reviewer, index|
+      rid = effective_reviewer_id(reviewer)
       reviews_per_reviewer.times do |i|
         team = teams[(index + i) % teams.size]
         ReviewResponseMap.find_or_create_by!(
-          reviewer_id: reviewer.id,
-          reviewee_id: team.id,
-          reviewed_object_id: @assignment.id,
-          for_calibration: for_calibration
-        )
+          reviewer_id: rid, reviewee_id: team.id,
+          reviewed_object_id: @assignment.id, for_calibration: for_calibration
+        ) { |m| m.reviewing_is_done_by_teams = @assignment.is_review_done_by_teams && reviewer.team.present? }
       end
     end
   end
 
+  def effective_reviewer_id(reviewer)
+    return reviewer.id unless reviewer.is_a?(AssignmentParticipant)
+
+    @assignment.is_review_done_by_teams ? reviewer.team&.id || reviewer.id : reviewer.id
+  end
+
   def create_mapping(reviewer, team)
-    ReviewResponseMap.create!(
-      reviewer: reviewer,
-      reviewee: team,
-      reviewed_object_id: @assignment.id
-    )
+    rid = effective_reviewer_id(reviewer)
+    ReviewResponseMap.find_or_create_by!(
+      reviewer_id: rid, reviewee_id: team.id, reviewed_object_id: @assignment.id
+    ) { |m| m.reviewing_is_done_by_teams = @assignment.is_review_done_by_teams && reviewer.team.present? }
   end
 end

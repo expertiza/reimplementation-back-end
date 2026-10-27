@@ -61,7 +61,11 @@ class StudentReviewController < ApplicationController
   private
 
   def reviewer_for?(mapping)
-    mapping.reviewer_id == @participant.id || team_reviewer?(mapping)
+    if mapping.reviewing_is_done_by_teams?
+      team_reviewer?(mapping)
+    else
+      mapping.reviewer_id == @participant.id
+    end
   end
 
   def team_reviewer?(mapping)

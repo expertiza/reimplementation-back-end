@@ -167,7 +167,7 @@ RSpec.describe 'StudentReview API', type: :request do
 
         run_test! do |response|
           data = JSON.parse(response.body)
-          expect(data['error']).to eq('You are not a participant of this assignment')
+          expect(data['error']).to eq('You are not a participant in this assignment.')
         end
       end
 
@@ -291,7 +291,7 @@ RSpec.describe 'StudentReview API', type: :request do
 
         run_test! do |response|
           data = JSON.parse(response.body)
-          expect(data['error']).to eq('Review mapping not found for this assignment')
+          expect(data['error']).to eq('No review found with that ID for this assignment.')
         end
       end
 
@@ -317,7 +317,7 @@ RSpec.describe 'StudentReview API', type: :request do
 
         run_test! do |response|
           data = JSON.parse(response.body)
-          expect(data['error']).to eq('You are not the reviewer for this mapping')
+          expect(data['error']).to eq('You are not the author of this review.')
         end
       end
 
@@ -338,7 +338,7 @@ RSpec.describe 'StudentReview API', type: :request do
 
         run_test! do |response|
           data = JSON.parse(response.body)
-          expect(data['error']).to eq('You are not a participant of this assignment')
+          expect(data['error']).to eq('You are not a participant in this assignment.')
         end
       end
 

@@ -33,7 +33,8 @@ RSpec.describe 'ReviewMappings Eligible Topics API', type: :request do
       name: 'RM Assignment',
       instructor: instructor,
       review_assignment_strategy: 'Auto-Selected',
-      review_topic_threshold: 1
+      review_topic_threshold: 1,
+      has_teams: true
     )
   end
 
@@ -113,7 +114,7 @@ RSpec.describe 'ReviewMappings Eligible Topics API', type: :request do
 
         run_test! do |response|
           data = JSON.parse(response.body)
-          expect(data['error']).to eq('You are not a participant in this assignment.')
+          expect(data['error']).to eq('You are not a participant in this assignment')
         end
       end
 
