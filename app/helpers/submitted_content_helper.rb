@@ -216,26 +216,25 @@ module SubmittedContentHelper
     end
   end
 
-  # Deletes one or more selected files from the team's submission directory.
+  # Deletes selected files from the team's submission directory.
   #
-  # The request supplies bare file names only. The directory those names are
-  # resolved against is derived here from the team's own path; the request
-  # never gets to name a directory itself.
+  # The request supplies only bare file names. This method determines the
+  # directory from the team's own path, so the request cannot choose which
+  # directory to delete from.
   #
-  # That division is what makes this safe, because FileUtils.rm_rf validates
-  # nothing: it recursively deletes whatever path it is handed, and stays
-  # silent when that path does not exist. Whoever controls the path therefore
-  # controls what gets deleted. If the directory came from the request, this
-  # endpoint would delete any file the Rails process can reach rather than
-  # only the team's own submissions.
+  # This restriction matters because FileUtils.rm_rf performs no safety
+  # checks: it recursively deletes the supplied path and silently ignores
+  # paths that do not exist. Allowing the request to specify the directory
+  # could let it delete files outside the team's submissions, anywhere the
+  # Rails process has permission to delete.
   def delete_selected_files
     # Wrap the delete operation with error handling
     handle_file_operation_error('deleting') do
       # Track successfully deleted files for response
       deleted_files = []
 
-      # Build the absolute directory on disk: the team's own submission
-      # directory, plus the folder the request asked for.
+      # Build the directory to delete from by joining the team's own submission
+      # directory with the subfolder named in the request.
       directory = resolve_submission_directory
 
       # Iterate through the requested filenames
@@ -259,8 +258,8 @@ module SubmittedContentHelper
         # Remove file or directory recursively
         FileUtils.rm_rf(file_path)
 
-        # Add the file name rather than file_path, so the response does not
-        # disclose the server's directory layout to the client.
+        # Respond with the file name rather than the file_path, so the response
+        # does not disclose the server's directory layout to the client.
         deleted_files << file_name
       end
 
@@ -282,7 +281,8 @@ module SubmittedContentHelper
     folder == '/' ? base_path : File.join(base_path, folder)
   end
 
-  # True when path points to something inside base.
+  # True if the path points to a file or folder inside the base directory.
+  # The base directory itself is not inside itself, so an exact match is false.
   def path_within?(path, base)
     expanded_base = File.expand_path(base)
     File.expand_path(path).start_with?("#{expanded_base}#{File::SEPARATOR}")
