@@ -7,7 +7,7 @@ The application uses Docker Compose to simplify local setup and provide separate
 The Docker setup supports:
 
 - Separate development and production profiles
-- Local MySQL 8.4 for development and testing
+- Local MySQL for development and testing
 - External database connectivity for production
 - Automatic development database initialization
 - Redis persistence and service health checks
@@ -62,7 +62,11 @@ MYSQL_DATABASE=reimplementation_development
 
 Replace `change_me` with your chosen local credentials. The password in both database URLs must match `MYSQL_PASSWORD`. If the password contains URL-special characters, URL-encode it in the connection URLs.
 
-Configure `CACHE_STORE` using the value required by the application's cache configuration.
+
+`CACHE_STORE` is passed to the Redis cache configuration in `config/application.rb`. Within Docker Compose, the Redis connection URL is `redis://redis:6380/0`.
+
+Development currently uses `:null_store` or `:memory_store` instead of Redis caching. The existing `:redis_store` adapter could not be loaded in the current application image, so Redis-backed Rails caching requires a separate configuration fix and validation before production use.
+
 
 **Do not commit `.env` to Git.** It contains environment-specific credentials.
 
@@ -87,7 +91,7 @@ The expected services are:
 | Service | Description |
 |---|---|
 | `app` | Ruby on Rails back-end |
-| `db` | Local MySQL 8.4 |
+| `db` | Local MySQL database |
 | `redis` | Redis service |
 
 MySQL and Redis should report healthy status when their health checks have completed.
@@ -110,16 +114,17 @@ docker compose --profile dev logs -f app
 
 ### Technology Stack
 
-The Docker configuration currently uses:
+The Docker configuration uses the following components.
+Refer to the configuration files for their current versions.
 
 | Component | Version / Configuration |
 |---|---|
-| Ruby | 3.4.5 |
-| Bundler | 2.4.14 |
-| MySQL | 8.4 |
-| Redis | Redis container |
-| Application port | 3002 |
-| MySQL host port | 3307 |
+| Ruby | Defined in `Dockerfile` |
+| Bundler | Defined in `Dockerfile` and `Gemfile.lock` |
+| MySQL | Defined in `docker-compose.yml` |
+| Redis | Defined in `docker-compose.yml` |
+| Application host port | `3002` |
+| MySQL host port | `3307` (localhost only) |
 
 Application dependencies are installed into the Docker image during the build process.
 
@@ -562,7 +567,7 @@ The Rails application connects to the appropriate networks, while MySQL and Redi
 
 Redis is not published to a host port.
 
-The development MySQL service publishes host port `3307` for optional local database access.
+The development MySQL service is accessible from the host through `127.0.0.1:3307`. Binding to localhost allows local database tools to connect without exposing MySQL on all host network interfaces.
 
 These network definitions organize service communication but are not, by themselves, a complete production network-security policy.
 
@@ -605,6 +610,20 @@ docker compose --profile dev config --quiet
 ```bash
 docker compose --profile dev up -d --build
 ```
+
+### Clean Up Unused Docker Images
+
+Docker may retain unused images after rebuilding the application.
+
+To remove dangling Docker images:
+
+```bash
+docker image prune
+```
+
+This removes dangling images across Docker, not just Expertiza. It does not remove the named MySQL or Redis volumes.
+
+Avoid using `docker image prune -a` unless you understand which additional unused images will be removed.
 
 ### Database Connection Errors
 
@@ -662,11 +681,15 @@ PONG
 
 ### Port Conflicts
 
-The development and production application services both publish host port `3002`.
+The development and production application services both publish host port `3002`, so they cannot run simultaneously with their default port mappings.
 
-Do not start both application profiles simultaneously using their default port configuration.
+Two separate local checkouts of Expertiza can also cause port conflicts, even if they use different Docker Compose project names.
 
-If port `3002` or MySQL host port `3307` is already occupied, stop the conflicting service or adjust the local port mapping.
+For example, two development environments cannot both bind to `localhost:3002` or `127.0.0.1:3307`.
+
+If a port is already occupied, stop the conflicting environment or update the host-port mapping for one of the installations.
+
+Redis is not exposed through a host port and communicates internally through the Docker network.
 
 ### View Enabled Services
 
