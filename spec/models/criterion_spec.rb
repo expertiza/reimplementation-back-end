@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe Criterion, type: :model do
-  let(:questionnaire) { Questionnaire.new(min_question_score: 0, max_question_score: 5) }
+  let(:questionnaire) { Questionnaire.new(min_item_score: 0, max_item_score: 5) }
   let(:criterion) { Criterion.new(id: 1, question_type: 'Criterion', seq: 1.0, txt: 'test txt', weight: 1, questionnaire: questionnaire) }
   let(:answer_no_comments) { Answer.new(answer: 8) }
   let(:answer_comments) { Answer.new(answer: 3, comments: 'text comments') }

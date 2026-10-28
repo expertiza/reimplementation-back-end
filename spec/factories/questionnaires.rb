@@ -5,8 +5,8 @@ FactoryBot.define do
   factory :questionnaire do
     sequence(:name) { |n| "Questionnaire #{n}" }
     private { false }
-    min_question_score { 0 }
-    max_question_score { 10 }
+    min_item_score { 0 }
+    max_item_score { 10 }
     association :instructor
     association :assignment
 

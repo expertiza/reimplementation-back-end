@@ -4,7 +4,7 @@ class Criterion < ScoredItem
     validates :size, presence: true
 
     def max_score
-      questionnaire.max_question_score * weight
+      questionnaire.max_item_score * weight
     end
   
     def edit
@@ -25,7 +25,7 @@ class Criterion < ScoredItem
         text: txt,
         question_type: question_type,
         weight: weight,
-        score_range: "#{questionnaire.min_question_score} to #{questionnaire.max_question_score}"
+        score_range: "#{questionnaire.min_item_score} to #{questionnaire.max_item_score}"
       }
   
       question_data[:score_range] = "(#{min_label}) " + question_data[:score_range] + " (#{max_label})" if max_label && min_label

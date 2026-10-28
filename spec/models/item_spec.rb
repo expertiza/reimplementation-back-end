@@ -10,7 +10,7 @@ RSpec.describe Item, type: :model do
                       password: '123456', role_id:role.id)
   end
   let(:questionnaire) do
-    Questionnaire.new id: 1, name: 'abc', private: 0, min_question_score: 0, max_question_score: 10,
+    Questionnaire.new id: 1, name: 'abc', private: 0, min_item_score: 0, max_item_score: 10,
                       instructor_id: instructor.id
   end
 

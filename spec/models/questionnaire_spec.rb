@@ -17,16 +17,16 @@ describe Questionnaire, type: :model do
     Questionnaire.create!(
       name: 'abc',
       private: false,
-      min_question_score: 0,
-      max_question_score: 10,
+      min_item_score: 0,
+      max_item_score: 10,
       instructor: instructor
     )
   end
   let(:questionnaire1) do
-    Questionnaire.new(name: 'xyz', private: 0, max_question_score: 20, instructor_id: instructor.id)
+    Questionnaire.new(name: 'xyz', private: 0, max_item_score: 20, instructor_id: instructor.id)
   end
   let(:questionnaire2) do
-    Questionnaire.new(name: 'pqr', private: 0, max_question_score: 10, instructor_id: instructor.id)
+    Questionnaire.new(name: 'pqr', private: 0, max_item_score: 10, instructor_id: instructor.id)
   end
   let(:question1) do
     questionnaire.items.build(weight: 1, seq: 1, txt: 'que 1', question_type: 'scale', break_before: true)
@@ -60,29 +60,29 @@ describe Questionnaire, type: :model do
   describe '#maximum_score' do
     # Test validates the maximum score in the questionnaire
     it 'validate maximum score' do
-      expect(questionnaire.max_question_score).to eq(10)
+      expect(questionnaire.max_item_score).to eq(10)
     end
 
     # Test ensures maximum score is an integer
     it 'validate maximum score is integer' do
-      expect(questionnaire.max_question_score).to eq(10)
-      questionnaire.max_question_score = 'a'
+      expect(questionnaire.max_item_score).to eq(10)
+      questionnaire.max_item_score = 'a'
       expect(questionnaire).not_to be_valid
     end
 
     # Max score is no longer required to be positive — only min < max is enforced.
-    it 'allows max_question_score of 0 when min is negative' do
-      questionnaire.min_question_score = -5
-      questionnaire.max_question_score = 0
+    it 'allows max_item_score of 0 when min is negative' do
+      questionnaire.min_item_score = -5
+      questionnaire.max_item_score = 0
       expect(questionnaire).to be_valid
     end
 
     # Test ensures maximum score is greater than the minimum score
     it 'validate maximum score should be bigger than minimum score' do
-      expect(questionnaire.min_question_score).to eq(0)
-      questionnaire.min_question_score = 10
+      expect(questionnaire.min_item_score).to eq(0)
+      questionnaire.min_item_score = 10
       expect(questionnaire).not_to be_valid
-      questionnaire.min_question_score = 1
+      questionnaire.min_item_score = 1
       expect(questionnaire).to be_valid
     end
   end
@@ -90,28 +90,28 @@ describe Questionnaire, type: :model do
   describe '#minimum_score' do
     # Test validates minimum score of a questionnaire
     it 'validate minimum score' do
-      questionnaire.min_question_score = 5
-      expect(questionnaire.min_question_score).to eq(5)
+      questionnaire.min_item_score = 5
+      expect(questionnaire.min_item_score).to eq(5)
     end
 
     # Test ensures minimum score is smaller than maximum score
     it 'validate minimum should be smaller than maximum' do
-      expect(questionnaire.min_question_score).to eq(0)
-      questionnaire.min_question_score = 10
+      expect(questionnaire.min_item_score).to eq(0)
+      questionnaire.min_item_score = 10
       expect(questionnaire).not_to be_valid
-      questionnaire.min_question_score = 0
+      questionnaire.min_item_score = 0
     end
 
     # Test ensures minimum score is an integer
     it 'validate minimum score is integer' do
-      expect(questionnaire.min_question_score).to eq(0)
-      questionnaire.min_question_score = 'a'
+      expect(questionnaire.min_item_score).to eq(0)
+      questionnaire.min_item_score = 'a'
       expect(questionnaire).not_to be_valid
     end
 
     # Min score is not required to be positive — negative min scores are valid
-    it 'allows negative min_question_score when it is less than max' do
-      questionnaire.min_question_score = -3
+    it 'allows negative min_item_score when it is less than max' do
+      questionnaire.min_item_score = -3
       expect(questionnaire).to be_valid
     end
   end

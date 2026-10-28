@@ -140,8 +140,8 @@ begin
     name: "Sample Review Questionnaire",
     instructor_id: 1,
     private: false,
-    min_question_score: 0,
-    max_question_score: 5
+    min_item_score: 0,
+    max_item_score: 5
   )
 
   Item.create!([

@@ -16,9 +16,12 @@ class Questionnaire < ApplicationRecord # rubocop:disable Metrics/ClassLength
     attr_reader :print_name
   end
 
+  alias_attribute :min_question_score, :min_item_score
+  alias_attribute :max_question_score, :max_item_score
+
   validate :validate
   validates :name, presence: true
-  validates :max_question_score, :min_question_score, numericality: true
+  validates :max_item_score, :min_item_score, numericality: true
 
   # Subclasses must override symbol and get_assessments_for.
   def symbol
@@ -31,8 +34,8 @@ class Questionnaire < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   # Validates min < max and name uniqueness per instructor.
   def validate
-    if min_question_score >= max_question_score
-      errors.add(:min_question_score, 'The minimum item score must be less than the maximum.')
+    if min_item_score >= max_item_score
+      errors.add(:min_item_score, 'The minimum item score must be less than the maximum.')
     end
     duplicate_questionnaire = Questionnaire.where('id <> ? and name = ? and instructor_id = ?', id, name, instructor_id)
     errors.add(:name, 'Questionnaire names must be unique.') if duplicate_questionnaire.present?
@@ -60,7 +63,7 @@ class Questionnaire < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   def as_json(options = {})
     super(options.merge({
-                          only: %i[id name private min_question_score max_question_score created_at updated_at
+                          only: %i[id name private min_item_score max_item_score created_at updated_at
                                    questionnaire_type
                                    instructor_id],
                           include: {
@@ -133,11 +136,11 @@ class Questionnaire < ApplicationRecord # rubocop:disable Metrics/ClassLength
   end
 
   # Calculates the maximum raw score achievable on this questionnaire:
-  # (sum of all item weights) × max_question_score. This serves as the denominator
+  # (sum of all item weights) × max_item_score. This serves as the denominator
   # when normalizing a response's raw score to a percentage.
   def max_possible_item_score_total
     results = Questionnaire.joins('INNER JOIN items ON items.questionnaire_id = questionnaires.id')
-                           .select('SUM(items.weight) * questionnaires.max_question_score as max_score')
+                           .select('SUM(items.weight) * questionnaires.max_item_score as max_score')
                            .where('questionnaires.id = ?', id)
     results[0].max_score
   end

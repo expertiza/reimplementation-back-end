@@ -559,7 +559,7 @@ RSpec.describe 'Assignments API', type: :request do
 
       it 'includes assignment_questionnaires with nested questionnaire in the response' do
         questionnaire = Questionnaire.create!(name: 'Review Q', instructor_id: prof.id,
-                                              min_question_score: 1, max_question_score: 5)
+                                              min_item_score: 1, max_item_score: 5)
         questionnaire.items.create!(txt: 'Q1', seq: 1, question_type: 'Scale', weight: 1, break_before: true)
         AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire,
                                         used_in_round: 1, questionnaire_weight: 100)

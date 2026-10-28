@@ -49,7 +49,7 @@ module ScorableHelper
                     else
                       questionnaire_by_answer(scores.first)
                     end
-    total_weight * questionnaire.max_question_score
+    total_weight * questionnaire.max_item_score
   end
 
   def questionnaire_by_answer(answer)

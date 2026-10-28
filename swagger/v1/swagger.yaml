@@ -1087,9 +1087,9 @@ paths:
                   type: string
                 private:
                   type: boolean
-                min_question_score:
+                min_item_score:
                   type: integer
-                max_question_score:
+                max_item_score:
                   type: integer
                 instructor_id:
                   type: integer
@@ -1098,8 +1098,8 @@ paths:
               - name
               - questionnaire_type
               - private
-              - min_question_score
-              - max_question_score
+              - min_item_score
+              - max_item_score
               - instructor_id
   "/questionnaires/{id}":
     parameters:
@@ -1141,7 +1141,7 @@ paths:
             schema:
               type: object
               properties:
-                min_question_score:
+                min_item_score:
                   type: integer
     patch:
       summary: update questionnaire
@@ -1167,7 +1167,7 @@ paths:
             schema:
               type: object
               properties:
-                min_question_score:
+                min_item_score:
                   type: integer
     delete:
       summary: delete questionnaire

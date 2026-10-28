@@ -472,8 +472,8 @@ RSpec.describe 'Grades API', type: :request do
         name: 'Section Header Test Rubric',
         instructor_id: instructor.id,
         private: false,
-        min_question_score: 0,
-        max_question_score: 5,
+        min_item_score: 0,
+        max_item_score: 5,
         questionnaire_type: 'ReviewQuestionnaire'
       )
     end

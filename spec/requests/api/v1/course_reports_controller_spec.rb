@@ -226,7 +226,7 @@ RSpec.describe 'Course Reports API', type: :request do
     # ------------------------------------------------------------------
 
     context 'peer_score with unweighted reviewers (no ReviewGrade)' do
-      let(:questionnaire) { Questionnaire.create!(name: 'Q1', instructor_id: instructor.id, min_question_score: 0, max_question_score: 5) }
+      let(:questionnaire) { Questionnaire.create!(name: 'Q1', instructor_id: instructor.id, min_item_score: 0, max_item_score: 5) }
 
       before do
         create_participant(student1, assignment)
@@ -256,7 +256,7 @@ RSpec.describe 'Course Reports API', type: :request do
     end
 
     context 'peer_score with a weighted reviewer (ReviewGrade present)' do
-      let(:questionnaire) { Questionnaire.create!(name: 'Q2', instructor_id: instructor.id, min_question_score: 0, max_question_score: 5) }
+      let(:questionnaire) { Questionnaire.create!(name: 'Q2', instructor_id: instructor.id, min_item_score: 0, max_item_score: 5) }
 
       before do
         create_participant(student1, assignment)
