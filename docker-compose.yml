@@ -50,7 +50,7 @@ services:
     image: mysql:8.4
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE:?Set MYSQL_DATABASE in .env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-reimplementation_development}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -60,7 +60,13 @@ services:
       - expertiza-mysql:/var/lib/mysql
       - ./db:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      test:
+        - CMD-SHELL
+        - >-
+          MYSQL_PWD="$$MYSQL_PASSWORD"
+          mysql --protocol=tcp -h 127.0.0.1
+          -u"$$MYSQL_USER" -D"$$MYSQL_DATABASE"
+          -Nse "SELECT 1" >/dev/null 2>&1
       interval: 10s
       timeout: 5s
       retries: 20
