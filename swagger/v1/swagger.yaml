@@ -1244,14 +1244,14 @@ paths:
                   type: boolean
                 txt:
                   type: string
-                question_type:
+                item_type:
                   type: string
               required:
               - weight
               - questionnaire_id
               - break_before
               - txt
-              - question_type
+              - item_type
   "/questions/{id}":
     parameters:
     - name: id

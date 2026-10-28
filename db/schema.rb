@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_10_28_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_10_28_000002) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -221,7 +221,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_28_000001) do
     t.text "txt"
     t.integer "weight"
     t.decimal "seq", precision: 10
-    t.string "question_type"
+    t.string "item_type"
     t.string "size"
     t.string "alternatives"
     t.boolean "break_before"

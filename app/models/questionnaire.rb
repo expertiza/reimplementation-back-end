@@ -132,7 +132,7 @@ class Questionnaire < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   # Sum of weights for scored items, excluding SectionHeaders.
   def total_item_weight
-    items.reject { |i| i.question_type == 'SectionHeader' }.sum(&:weight)
+    items.reject { |i| i.item_type == 'SectionHeader' }.sum(&:weight)
   end
 
   # Calculates the maximum raw score achievable on this questionnaire:

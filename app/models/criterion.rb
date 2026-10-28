@@ -12,7 +12,8 @@ class Criterion < ScoredItem
         remove_link: "/items/#{id}",
         sequence_input: seq.to_s,
         question_text: txt,
-        question_type: question_type,
+        item_type: item_type,
+        question_type: item_type,
         weight: weight.to_s,
         size: size.to_s,
         max_label: max_label,
@@ -23,7 +24,7 @@ class Criterion < ScoredItem
     def view_item_text
       question_data = {
         text: txt,
-        question_type: question_type,
+        question_type: item_type,
         weight: weight,
         score_range: "#{questionnaire.min_item_score} to #{questionnaire.max_item_score}"
       }

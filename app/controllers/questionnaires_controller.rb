@@ -96,7 +96,7 @@ class QuestionnairesController < ApplicationController
     permitted = params.require(:questionnaire).permit(
       :name, :questionnaire_type, :private, :min_item_score, :max_item_score,
       :min_question_score, :max_question_score, :instructor_id,
-      items_attributes: %i[id txt question_type weight seq min_label max_label
+      items_attributes: %i[id txt item_type question_type weight seq min_label max_label
                            alternatives size break_before _destroy]
     )
     if permitted[:min_item_score].nil? && permitted[:min_question_score].present?

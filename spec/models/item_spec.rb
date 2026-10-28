@@ -17,48 +17,56 @@ RSpec.describe Item, type: :model do
   describe 'validations' do
     # Test validates that item has valid attributes
     it 'is valid with valid attributes' do
-      item = Item.new(seq: 1, txt: 'Sample item', question_type: 'multiple_choice', break_before: true,
+      item = Item.new(seq: 1, txt: 'Sample item', item_type: 'multiple_choice', break_before: true,
                               questionnaire:)
       expect(item).to be_valid
     end
 
     # Test ensures that a item is not valid without seq field
     it 'is not valid without a seq' do
-      item = Item.new(txt: 'Sample item', question_type: 'multiple_choice', break_before: true,
+      item = Item.new(txt: 'Sample item', item_type: 'multiple_choice', break_before: true,
                               questionnaire:)
       expect(item).to_not be_valid
     end
 
     # Test ensures that seq field is numeric
     it 'is not valid with a non-numeric seq' do
-      item = Item.new(seq: 'one', txt: 'Sample item', question_type: 'multiple_choice',
+      item = Item.new(seq: 'one', txt: 'Sample item', item_type: 'multiple_choice',
                               break_before: true, questionnaire:)
       expect(item).to_not be_valid
     end
 
     # Test ensures that a item is not valid without txt field
     it 'is not valid without a txt' do
-      item = Item.new(seq: 1, question_type: 'multiple_choice', break_before: true,
+      item = Item.new(seq: 1, item_type: 'multiple_choice', break_before: true,
                               questionnaire:)
       expect(item).to_not be_valid
     end
 
-    # Test ensures that a item is not valid without question_type field
-    it 'is not valid without a question_type' do
+    # Test ensures that a item is not valid without item_type field
+    it 'is not valid without an item_type' do
       item = Item.new(seq: 1, txt: 'Sample item', break_before: true, questionnaire:)
       expect(item).to_not be_valid
     end
 
+    # Test ensures backward compatibility with question_type alias
+    it 'is valid when using question_type alias' do
+      item = Item.new(seq: 1, txt: 'Sample item', question_type: 'multiple_choice', break_before: true,
+                              questionnaire:)
+      expect(item).to be_valid
+      expect(item.item_type).to eq('multiple_choice')
+    end
+
     # Test ensures that a item is not valid without break_before field
     it 'is not valid without a break_before value' do
-      item = Item.new(seq: 1, txt: 'Sample item', question_type: 'multiple_choice',
+      item = Item.new(seq: 1, txt: 'Sample item', item_type: 'multiple_choice',
                               questionnaire:)
       expect(item).to_not be_valid
     end
 
     # Test ensures that a item does not exist without a questionnaire
     it 'is not valid without a questionnaire' do
-      item = Item.new(seq: 1, txt: 'Sample item', question_type: 'multiple_choice', break_before: true)
+      item = Item.new(seq: 1, txt: 'Sample item', item_type: 'multiple_choice', break_before: true)
       expect(item).to_not be_valid
     end
   end
@@ -68,7 +76,7 @@ RSpec.describe Item, type: :model do
     it 'destroys the item object' do
       instructor.save!
       questionnaire.save!
-      item = Item.create(seq: 1, txt: 'Sample item', question_type: 'multiple_choice',
+      item = Item.create(seq: 1, txt: 'Sample item', item_type: 'multiple_choice',
                                  break_before: true, questionnaire:)
       expect { item.delete }.to change { Item.count }.by(-1)
     end
@@ -76,7 +84,7 @@ RSpec.describe Item, type: :model do
 
   describe '#set_choice_strategy' do
     context 'when the item type is Dropdown' do
-      let(:item) { create(:item, questionnaire: questionnaire, question_type: 'dropdown') }
+      let(:item) { create(:item, questionnaire: questionnaire, item_type: 'dropdown') }
 
       it 'assigns the correct strategy' do
         item.strategy
@@ -85,7 +93,7 @@ RSpec.describe Item, type: :model do
     end
 
     context 'when the item type is MultipleChoice' do
-      let(:item) { create(:item, questionnaire: questionnaire, question_type: 'multiple_choice') }
+      let(:item) { create(:item, questionnaire: questionnaire, item_type: 'multiple_choice') }
 
       it 'assigns the correct strategy' do
         item.strategy
@@ -94,7 +102,7 @@ RSpec.describe Item, type: :model do
     end
 
     context 'when the item type is Scale' do
-      let(:item) { create(:item, questionnaire: questionnaire, question_type: 'scale') }
+      let(:item) { create(:item, questionnaire: questionnaire, item_type: 'scale') }
 
       it 'assigns the correct strategy' do
         item.strategy
@@ -103,7 +111,7 @@ RSpec.describe Item, type: :model do
     end
 
     context 'when the item type is unknown' do
-      let(:item) { create(:item, questionnaire: questionnaire, question_type: 'Unknown') }
+      let(:item) { create(:item, questionnaire: questionnaire, item_type: 'Unknown') }
 
       it 'raises an error' do
         expect { item.strategy }.to raise_error("Unknown item type: Unknown")

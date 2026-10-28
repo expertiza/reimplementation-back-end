@@ -13,8 +13,8 @@ FactoryBot.define do
     # Trait for questionnaire with questions
     trait :with_questions do
       after(:create) do |questionnaire|
-        create(:item, questionnaire: questionnaire, weight: 1, seq: 1, txt: "que 1", question_type: "Scale")
-        create(:item, questionnaire: questionnaire, weight: 10, seq: 2, txt: "que 2", question_type: "Checkbox")
+        create(:item, questionnaire: questionnaire, weight: 1, seq: 1, txt: "que 1", item_type: "Scale")
+        create(:item, questionnaire: questionnaire, weight: 10, seq: 2, txt: "que 2", item_type: "Checkbox")
       end
     end
   end
@@ -26,7 +26,7 @@ FactoryBot.define do
     sequence(:txt) { |n| "Question #{n}" }
     sequence(:seq) { |n| n }
     weight { 1 }
-    question_type { "Scale" }
+    item_type { "Scale" }
     break_before { true }
     association :questionnaire
   end

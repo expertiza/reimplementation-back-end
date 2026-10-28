@@ -148,7 +148,7 @@ begin
                  {
                    questionnaire: questionnaire,
                    txt: "How clearly did the author explain the problem statement?",
-                   question_type: "Scale",
+                   item_type: "Scale",
                    seq: 1,
                    weight: 1,
                    break_before: true,
@@ -158,7 +158,7 @@ begin
                  {
                    questionnaire: questionnaire,
                    txt: "Provide detailed feedback on the author's solution approach.",
-                   question_type: "Textarea",
+                   item_type: "Textarea",
                    seq: 2,
                    weight: 1,
                    break_before: true,
@@ -167,7 +167,7 @@ begin
                  {
                    questionnaire: questionnaire,
                    txt: "Rate the overall quality of the submission.",
-                   question_type: "Scale",
+                   item_type: "Scale",
                    seq: 3,
                    weight: 2,
                    break_before: false,

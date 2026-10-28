@@ -13,7 +13,7 @@ class AssignmentQuestionnaire < ApplicationRecord
   def weight_must_be_zero_if_no_scored_questions
     return if questionnaire.nil? || questionnaire_weight.nil? || questionnaire_weight.zero? || questionnaire.items.none?
 
-    has_scored = questionnaire.items.where.not(question_type: 'SectionHeader').exists?
+    has_scored = questionnaire.items.where.not(item_type: 'SectionHeader').exists?
     unless has_scored
       errors.add(:questionnaire_weight, 'must be 0 when the rubric contains no scored questions')
     end

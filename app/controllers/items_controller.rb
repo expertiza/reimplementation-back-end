@@ -45,7 +45,7 @@ class ItemsController < ApplicationController # rubocop:disable Metrics/ClassLen
     # Build the new Item using the frontend-facing param names
     item = questionnaire.items.build(
       txt: params[:prompt], # prompt maps to the txt DB column
-      question_type: params[:question_type],
+      item_type: params[:item_type] || params[:question_type],
       seq: params[:seq],
       break_before: true
     )
@@ -80,7 +80,7 @@ class ItemsController < ApplicationController # rubocop:disable Metrics/ClassLen
   def delete_all
     questionnaire = Questionnaire.find(params[:id])
     if questionnaire.items.delete_all
-      render json: { message: 'All questions deleted' }, status: :ok
+      render json: { message: 'All items deleted' }, status: :ok
     else
       render json: { error: 'Deletion failed' }, status: :unprocessable_entity
     end
@@ -89,14 +89,14 @@ class ItemsController < ApplicationController # rubocop:disable Metrics/ClassLen
   end
 
   def types
-    render json: Item::QUESTION_TYPES, status: :ok
+    render json: Item::ITEM_TYPES, status: :ok
   end
 
   private
 
   # Set size and alternatives from structured params
   def apply_type_defaults(item)
-    case item.question_type
+    case item.item_type
     when 'Scale'
       item.weight = params[:weight]
       item.max_label = 'Strongly agree'
@@ -109,7 +109,7 @@ class ItemsController < ApplicationController # rubocop:disable Metrics/ClassLen
   end
 
   def apply_size(item)
-    case item.question_type
+    case item.item_type
     when 'TextArea'
       # rows and columns stored as "columns,rows" in the size field
       item.size = "#{params[:columns] || 60},#{params[:rows] || 5}"
@@ -124,15 +124,18 @@ class ItemsController < ApplicationController # rubocop:disable Metrics/ClassLen
 
   def item_params
     # The frontend sends :prompt, which maps to the txt column.
-    permitted = params.require(:item).permit(:prompt, :txt, :question_type, :seq, :weight, :alternatives,
+    permitted = params.require(:item).permit(:prompt, :txt, :item_type, :question_type, :seq, :weight, :alternatives,
                                              :size, :break_before, :min_label, :max_label)
     prompt = permitted.delete(:prompt)
     permitted[:txt] = prompt if prompt
+    if permitted[:item_type].nil? && permitted[:question_type].present?
+      permitted[:item_type] = permitted.delete(:question_type)
+    end
     permitted
   end
 
   def get_strategy_for_item(item)
-    case item.question_type
+    case item.item_type
     when 'Dropdown'
       Strategies::DropdownStrategy.new
     when 'Scale'

@@ -82,7 +82,7 @@ describe TeammateReviewQuestionnaire, type: :model do
 
     context 'when there is at least one Criterion item' do
       it 'returns true' do
-        criterion_item = double('item', question_type: 'Criterion')
+        criterion_item = double('item', item_type: 'Criterion', question_type: 'Criterion')
         allow(questionnaire).to receive(:items).and_return([criterion_item])
         expect(questionnaire.criterion_items?).to be true
       end
@@ -90,7 +90,7 @@ describe TeammateReviewQuestionnaire, type: :model do
 
     context 'when items exist but none are Criterion' do
       it 'returns false' do
-        text_item = double('item', question_type: 'TextArea')
+        text_item = double('item', item_type: 'TextArea', question_type: 'TextArea')
         allow(questionnaire).to receive(:items).and_return([text_item])
         expect(questionnaire.criterion_items?).to be false
       end

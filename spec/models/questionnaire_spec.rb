@@ -29,10 +29,10 @@ describe Questionnaire, type: :model do
     Questionnaire.new(name: 'pqr', private: 0, max_item_score: 10, instructor_id: instructor.id)
   end
   let(:question1) do
-    questionnaire.items.build(weight: 1, seq: 1, txt: 'que 1', question_type: 'scale', break_before: true)
+    questionnaire.items.build(weight: 1, seq: 1, txt: 'que 1', item_type: 'scale', break_before: true)
   end
   let(:question2) do
-    questionnaire.items.build(weight: 10, seq: 2, txt: 'que 2', question_type: 'multiple_choice', break_before: true)
+    questionnaire.items.build(weight: 10, seq: 2, txt: 'que 2', item_type: 'multiple_choice', break_before: true)
   end
 
   describe '#name' do
@@ -180,6 +180,7 @@ describe Questionnaire, type: :model do
       first_copy = copied.items.first
       expect(first_copy.txt).to eq(question1.txt)
       expect(first_copy.weight).to eq(question1.weight)
+      expect(first_copy.item_type).to eq(question1.item_type)
       expect(first_copy.question_type).to eq(question1.question_type)
     end
   end

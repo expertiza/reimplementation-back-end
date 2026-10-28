@@ -41,7 +41,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 1,
         txt: 'test item 1',
-        question_type: 'multiple_choice',
+        item_type: 'multiple_choice',
         break_before: true,
         weight: 5,
         questionnaire: questionnaire
@@ -53,7 +53,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 2,
         txt: 'test item 2',
-        question_type: 'multiple_choice',
+        item_type: 'multiple_choice',
         break_before: false,
         weight: 10,
         questionnaire: questionnaire
@@ -80,7 +80,7 @@ RSpec.describe 'items', type: :request do
         {
           questionnaire_id: questionnaire.id,
           prompt: 'test item',
-          question_type: 'multiple_choice',
+          item_type: 'multiple_choice',
           break_before: false,
           seq: 1,
           weight: 10
@@ -91,7 +91,7 @@ RSpec.describe 'items', type: :request do
         {
           questionnaire_id: nil,
           prompt: 'test item',
-          question_type: 'multiple_choice',
+          item_type: 'multiple_choice',
           break_before: false,
           weight: 10
         }
@@ -101,7 +101,7 @@ RSpec.describe 'items', type: :request do
         {
           questionnaire_id: questionnaire.id,
           prompt: 'test item',
-          question_type: nil,
+          item_type: nil,
           break_before: false,
           weight: 10
         }
@@ -114,10 +114,10 @@ RSpec.describe 'items', type: :request do
           questionnaire_id: { type: :integer },
           break_before: { type: :boolean },
           prompt: { type: :string },
-          question_type: { type: :string },
+          item_type: { type: :string },
           seq: { type: :number }
         },
-        required: %w[weight questionnaire_id break_before prompt question_type seq]
+        required: %w[weight questionnaire_id break_before prompt item_type seq]
       }
 
       # post request on /items returns 201 created response and creates a item with given valid parameters
@@ -151,7 +151,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 1,
         txt: 'test item 1',
-        question_type: 'Scale',
+        item_type: 'Scale',
         break_before: true,
         weight: 5,
         questionnaire: questionnaire
@@ -163,7 +163,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 2,
         txt: 'test item 2',
-        question_type: 'Scale',
+        item_type: 'Scale',
         break_before: false,
         weight: 10,
         questionnaire: questionnaire
@@ -341,7 +341,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 1,
         txt: 'test item 1',
-        question_type: 'multiple_choice',
+        item_type: 'multiple_choice',
         break_before: true,
         weight: 5,
         questionnaire: questionnaire
@@ -353,7 +353,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 2,
         txt: 'test item 2',
-        question_type: 'multiple_choice',
+        item_type: 'multiple_choice',
         break_before: false,
         weight: 10,
         questionnaire: questionnaire
@@ -408,7 +408,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 1,
         txt: 'test item 1',
-        question_type: 'multiple_choice',
+        item_type: 'multiple_choice',
         break_before: true,
         weight: 5,
         questionnaire: questionnaire
@@ -432,7 +432,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 2,
         txt: 'test item 2',
-        question_type: 'multiple_choice',
+        item_type: 'multiple_choice',
         break_before: true,
         weight: 5,
         questionnaire: questionnaire2
@@ -444,7 +444,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 3,
         txt: 'test item 3',
-        question_type: 'multiple_choice',
+        item_type: 'multiple_choice',
         break_before: false,
         weight: 10,
         questionnaire: questionnaire2
@@ -516,7 +516,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 1,
         txt: 'test item 1',
-        question_type: 'multiple_choice',
+        item_type: 'multiple_choice',
         break_before: true,
         weight: 5,
         questionnaire: questionnaire
@@ -528,7 +528,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 2,
         txt: 'test item 2',
-        question_type: 'multiple_choice',
+        item_type: 'multiple_choice',
         break_before: false,
         weight: 10,
         questionnaire: questionnaire
