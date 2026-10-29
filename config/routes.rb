@@ -95,6 +95,7 @@ Rails.application.routes.draw do
           post :assign_random
           post :assign_from_csv
           post :request_review_fewest
+          post :request_review_topic_balance
           post :assign_calibration
           post :assign_quiz
           delete :delete_all_for_reviewer
@@ -106,7 +107,7 @@ Rails.application.routes.draw do
         member do
           patch :submit_review
           patch :unsubmit_review
-          patch :grade_review
+          patch :assign_review_grade
           delete :delete_mapping
         end
       end

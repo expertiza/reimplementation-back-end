@@ -33,6 +33,12 @@ Layout/FirstArgumentIndentation:
 Layout/FirstHashElementIndentation:
   Enabled: false
 
+Metrics/ClassLength:
+  Max: 140
+  Exclude:
+    - 'db/**/*.rb'
+    - 'spec/**/*.rb'
+
 Metrics/BlockLength:
   Max: 120
   Exclude:

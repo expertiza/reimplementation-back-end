@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Questionnaire < ApplicationRecord # rubocop:disable Metrics/ClassLength
+class Questionnaire < ApplicationRecord
   belongs_to :instructor
   # the collection of items associated with this Questionnaire
   has_many :items, class_name: 'Item', foreign_key: 'questionnaire_id', dependent: :destroy, inverse_of: :questionnaire

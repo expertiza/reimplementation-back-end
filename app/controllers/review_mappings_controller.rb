@@ -41,7 +41,7 @@ class ReviewMappingsController < ApplicationController
 
   def request_review_topic_balance
     reviewer = AssignmentParticipant.find(params[:reviewer_id])
-    mapping  = ReviewMappingHandler.new(@assignment).assign_dynamic_topic_fairly(reviewer, k: params[:k].to_i)
+    mapping  = ReviewMappingHandler.new(@assignment).assign_topic(reviewer)
     return render json: { status: 'error', message: 'No eligible topic' }, status: :unprocessable_entity unless mapping
 
     render json: { status: 'ok', mapping_id: mapping.id }
@@ -58,7 +58,7 @@ class ReviewMappingsController < ApplicationController
     end
 
     threshold = @assignment.review_topic_threshold || 1
-    eligible, min_count = TopicReviewAssigner.new(@assignment).eligible_topics(participant, threshold: threshold)
+    eligible, min_count = ReviewMappingHandler.new(@assignment).eligible_topics(participant)
     render json: { eligible_topics: eligible, threshold: threshold, min_review_count: min_count }
   end
 
@@ -66,27 +66,20 @@ class ReviewMappingsController < ApplicationController
   def request_review
     participant = current_participant
     return render json: { error: 'You are not a participant in this assignment' }, status: :forbidden unless participant
-    return if check_review_limit(participant)
 
-    if @assignment.topics?
-      result = TopicReviewAssigner.new(@assignment)
-                                  .assign(participant, topic_id: params[:topic_id],
-                                                       must_choose: @assignment.can_choose_topic_to_review,
-                                                       i_dont_care: params[:i_dont_care].present?)
-      return render json: { error: result.error }, status: result.http_status unless result.ok?
-
-      render json: { status: 'ok', mapping_id: result.mapping.id }
-    else
-      if params[:topic_id].present?
-        return render json: { error: 'Topic selection not supported.' }, status: :unprocessable_entity
-      end
-
-      strategy = ReviewMappingStrategies::LeastReviewedSubmissionStrategy
-      mapping  = ReviewMappingHandler.new(@assignment).assign_dynamically(strategy, participant)
-      return render json: { error: 'No submissions available.' }, status: :unprocessable_entity unless mapping
-
-      render json: { status: 'ok', mapping_id: mapping.id }
+    handler = ReviewMappingHandler.new(@assignment)
+    unless handler.can_accept_more_reviews?(participant)
+      max = @assignment.num_reviews_allowed
+      return render json: { error: "You cannot do more than #{max} reviews for this assignment." },
+                    status: :unprocessable_entity
     end
+
+    mapping = @assignment.topics? ? assign_topic_review(participant) : assign_submission_review(participant)
+    return if performed?
+
+    return render json: { error: 'No submissions available.' }, status: :unprocessable_entity unless mapping
+
+    render json: { status: 'ok', mapping_id: mapping.id }
   end
 
   # ===== CALIBRATION =====
@@ -104,15 +97,15 @@ class ReviewMappingsController < ApplicationController
   end
 
   def delete_all_for_reviewer
-    ReviewMappingHandler.new(@assignment).delete_all_reviews_for(AssignmentParticipant.find(params[:reviewer_id]))
+    ReviewMappingHandler.new(@assignment).delete_all_reviews_by(AssignmentParticipant.find(params[:reviewer_id]))
     render json: { status: 'ok', message: 'All mappings for reviewer deleted' }
   end
 
   # ===== INSTRUCTOR GRADING =====
 
-  def grade_review
-    mapping = ReviewResponseMap.find(params[:mapping_id])
-    ReviewMappingHandler.new(@assignment).grade_review(mapping, grade: params[:grade], comment: params[:comment])
+  def assign_review_grade
+    mapping = ReviewResponseMap.find(params[:id])
+    ReviewMappingHandler.new(@assignment).assign_review_grade(mapping, grade: params[:grade], comment: params[:comment])
     render json: { status: 'ok', message: 'Review graded' }
   end
 
@@ -126,16 +119,29 @@ class ReviewMappingsController < ApplicationController
     AssignmentParticipant.find_by(parent_id: @assignment.id, user_id: current_user.id)
   end
 
-  # Returns true (and renders an error) when the student has reached the review limit.
-  def check_review_limit(participant)
-    return false unless @assignment.num_reviews_allowed.to_i.positive?
+  def assign_topic_review(participant)
+    handler = ReviewMappingHandler.new(@assignment)
+    if @assignment.can_choose_topic_to_review && params[:topic_id].blank? && !params[:i_dont_care].present?
+      return render json: { error: 'No topic selected.' }, status: :unprocessable_entity
+    end
 
-    reviewer_id = @assignment.is_review_done_by_teams ? participant.team&.id || participant.id : participant.id
-    count = ReviewResponseMap.where(reviewer_id: reviewer_id, reviewed_object_id: @assignment.id).count
-    return false if count < @assignment.num_reviews_allowed
+    return handler.assign_topic(participant) unless params[:topic_id].present?
 
-    msg = "You cannot do more than #{@assignment.num_reviews_allowed} reviews for this assignment."
-    render json: { error: msg }, status: :unprocessable_entity
-    true
+    topic = ProjectTopic.find_by(id: params[:topic_id].to_i, assignment_id: @assignment.id)
+    return render json: { error: 'Topic not found.' }, status: :not_found unless topic
+
+    unless handler.topic_eligible_for?(participant, topic)
+      return render json: { error: 'This topic is not available for review at this time.' },
+                    status: :unprocessable_entity
+    end
+
+    handler.assign_topic(participant, topic: topic)
+  end
+
+  def assign_submission_review(participant)
+    return render json: { error: 'Invalid topic.' }, status: :unprocessable_entity if params[:topic_id].present?
+
+    ReviewMappingHandler.new(@assignment)
+                        .assign_dynamically(ReviewMappingStrategies::LeastReviewedSubmissionStrategy, participant)
   end
 end

@@ -20,9 +20,11 @@ RSpec.describe ReviewMappingsController, type: :controller do
             post 'assign_random'
             post 'assign_from_csv'
             post 'request_review_fewest'
-            post 'set_calibration_artifact'
-            delete 'delete_all_for_reviewer/:reviewer_id', action: :delete_all_for_reviewer
-            patch 'grade_review/:mapping_id', action: :grade_review
+            post 'assign_calibration_artifacts'
+            delete 'delete_all_for_reviewer', action: :delete_all_for_reviewer
+          end
+          member do
+            patch 'assign_review_grade'
           end
         end
       end
@@ -127,7 +129,7 @@ RSpec.describe ReviewMappingsController, type: :controller do
   describe 'DELETE #delete_all_for_reviewer' do
     it 'deletes all mappings for a reviewer' do
       allow_any_instance_of(Authorization).to receive(:authorize).and_return(true)
-      expect(handler).to receive(:delete_all_reviews_for).with(reviewer)
+      expect(handler).to receive(:delete_all_reviews_by).with(reviewer)
       delete :delete_all_for_reviewer, params: { assignment_id: assignment.id, reviewer_id: reviewer.id }, format: :json
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body)).to eq({
@@ -137,11 +139,11 @@ RSpec.describe ReviewMappingsController, type: :controller do
     end
   end
 
-  describe 'PATCH #grade_review' do
+  describe 'PATCH #assign_review_grade' do
     it 'grades a review' do
       allow_any_instance_of(Authorization).to receive(:authorize).and_return(true)
-      expect(handler).to receive(:grade_review).with(response_map, grade: '95', comment: 'Good work')
-      patch :grade_review, params: { assignment_id: assignment.id, mapping_id: response_map.id, grade: 95, comment: 'Good work' }, format: :json
+      expect(handler).to receive(:assign_review_grade).with(response_map, grade: '95', comment: 'Good work')
+      patch :assign_review_grade, params: { assignment_id: assignment.id, id: response_map.id, grade: 95, comment: 'Good work' }, format: :json
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body)).to eq({
         'status' => 'ok',
