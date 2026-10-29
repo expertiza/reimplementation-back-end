@@ -56,7 +56,7 @@ gem 'lingua'
 gem 'find_with_order'
 
 # For handling zip file uploads and extraction
-# The gem's entrypoint is lib/zip.rb, and
+# The gem's entrypoint is in lib/zip.rb, and
 # Zip would not be defined without the explicit 'require'.
 gem 'rubyzip', require: 'zip'
 
