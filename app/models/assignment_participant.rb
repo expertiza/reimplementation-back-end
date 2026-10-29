@@ -20,6 +20,10 @@ class AssignmentParticipant < Participant
     AssignmentTeam.team(self)
   end
 
+  def submission_team
+    team
+  end
+
   # Fetches Assignment Directory.
   def dir_path
     assignment.try :directory_path
