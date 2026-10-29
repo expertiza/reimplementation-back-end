@@ -17,7 +17,7 @@ class TextField < Item
     end
   
     def view_completed_item(count, files)
-      if question_type == 'TextField' && break_before
+      if item_type == 'TextField' && break_before
         {
           action: 'view_completed_item',
           data: {

@@ -138,14 +138,15 @@ class GradesController < ApplicationController
   def get_items_from_questionnaire(questionnaire_id)
     questionnaire = Questionnaire.find_by(id: questionnaire_id)
     item_data = {
-      min_answer_value: questionnaire[:min_question_score],
-      max_answer_value: questionnaire[:max_question_score],
+      min_answer_value: questionnaire[:min_item_score] || questionnaire[:min_question_score],
+      max_answer_value: questionnaire[:max_item_score] || questionnaire[:max_question_score],
       items: {}
     }
     Item.where("questionnaire_id = " + questionnaire_id.to_s).find_each do |item|
       item_data[:items][item[:id]] = {
         description: item[:txt],
-        question_type: item[:question_type],
+        item_type: item[:item_type] || item[:question_type],
+        question_type: item[:item_type] || item[:question_type],
         answers: {
           values: [],
           comments: []
@@ -414,7 +415,7 @@ class GradesController < ApplicationController
 
       # Filter SectionHeader answers in Ruby — scores and items are already preloaded
       # via .includes(responses: { scores: :item }) on the maps query, so no extra DB hit.
-      scored_answers = submitted_response.scores.reject { |s| s.item.question_type == 'SectionHeader' }
+      scored_answers = submitted_response.scores.reject { |s| s.item.item_type == 'SectionHeader' }
 
       scored_answers.each_with_index do |score, idx|
         reviewee_scores[round_symbol][idx] ||= []
@@ -444,7 +445,7 @@ class GradesController < ApplicationController
     headers_to_insert = {}   # scored_position => header_txt
 
     all_items.each do |item|
-      if item.question_type == 'SectionHeader'
+      if item.item_type == 'SectionHeader'
         headers_to_insert[scored_count] = item.txt
       else
         scored_count += 1

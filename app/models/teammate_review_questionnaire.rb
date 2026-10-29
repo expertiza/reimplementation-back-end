@@ -26,6 +26,9 @@ class TeammateReviewQuestionnaire < Questionnaire
 
   # True if any items are Criterion type (rendered as percentage sliders in the UI).
   def criterion_items?
-    items.any? { |item| item.question_type == 'Criterion' }
+    items.any? do |item|
+      val = item.respond_to?(:item_type) ? item.item_type : item.try(:question_type)
+      val == 'Criterion'
+    end
   end
 end

@@ -27,8 +27,8 @@ RSpec.describe 'items', type: :request do
       name: 'Questionnaire 1',
       questionnaire_type: 'AuthorFeedbackReview',
       private: true,
-      min_question_score: 0,
-      max_question_score: 10,
+      min_item_score: 0,
+      max_item_score: 10,
       instructor_id: instructor.id
     )
   end
@@ -41,7 +41,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 1,
         txt: 'test item 1',
-        question_type: 'multiple_choice',
+        item_type: 'multiple_choice',
         break_before: true,
         weight: 5,
         questionnaire: questionnaire
@@ -53,7 +53,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 2,
         txt: 'test item 2',
-        question_type: 'multiple_choice',
+        item_type: 'multiple_choice',
         break_before: false,
         weight: 10,
         questionnaire: questionnaire
@@ -80,7 +80,7 @@ RSpec.describe 'items', type: :request do
         {
           questionnaire_id: questionnaire.id,
           prompt: 'test item',
-          question_type: 'multiple_choice',
+          item_type: 'multiple_choice',
           break_before: false,
           seq: 1,
           weight: 10
@@ -91,7 +91,7 @@ RSpec.describe 'items', type: :request do
         {
           questionnaire_id: nil,
           prompt: 'test item',
-          question_type: 'multiple_choice',
+          item_type: 'multiple_choice',
           break_before: false,
           weight: 10
         }
@@ -101,7 +101,7 @@ RSpec.describe 'items', type: :request do
         {
           questionnaire_id: questionnaire.id,
           prompt: 'test item',
-          question_type: nil,
+          item_type: nil,
           break_before: false,
           weight: 10
         }
@@ -114,10 +114,10 @@ RSpec.describe 'items', type: :request do
           questionnaire_id: { type: :integer },
           break_before: { type: :boolean },
           prompt: { type: :string },
-          question_type: { type: :string },
+          item_type: { type: :string },
           seq: { type: :number }
         },
-        required: %w[weight questionnaire_id break_before prompt question_type seq]
+        required: %w[weight questionnaire_id break_before prompt item_type seq]
       }
 
       # post request on /items returns 201 created response and creates a item with given valid parameters
@@ -151,7 +151,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 1,
         txt: 'test item 1',
-        question_type: 'Scale',
+        item_type: 'Scale',
         break_before: true,
         weight: 5,
         questionnaire: questionnaire
@@ -163,7 +163,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 2,
         txt: 'test item 2',
-        question_type: 'Scale',
+        item_type: 'Scale',
         break_before: false,
         weight: 10,
         questionnaire: questionnaire
@@ -330,8 +330,8 @@ RSpec.describe 'items', type: :request do
         name: 'Questionnaire 1',
         questionnaire_type: 'AuthorFeedbackReview',
         private: true,
-        min_question_score: 0,
-        max_question_score: 10,
+        min_item_score: 0,
+        max_item_score: 10,
         instructor_id: instructor.id
       )
     end
@@ -341,7 +341,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 1,
         txt: 'test item 1',
-        question_type: 'multiple_choice',
+        item_type: 'multiple_choice',
         break_before: true,
         weight: 5,
         questionnaire: questionnaire
@@ -353,7 +353,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 2,
         txt: 'test item 2',
-        question_type: 'multiple_choice',
+        item_type: 'multiple_choice',
         break_before: false,
         weight: 10,
         questionnaire: questionnaire
@@ -397,8 +397,8 @@ RSpec.describe 'items', type: :request do
         name: 'Questionnaire 1',
         questionnaire_type: 'AuthorFeedbackReview',
         private: true,
-        min_question_score: 0,
-        max_question_score: 10,
+        min_item_score: 0,
+        max_item_score: 10,
         instructor_id: instructor.id
       )
     end
@@ -408,7 +408,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 1,
         txt: 'test item 1',
-        question_type: 'multiple_choice',
+        item_type: 'multiple_choice',
         break_before: true,
         weight: 5,
         questionnaire: questionnaire
@@ -421,8 +421,8 @@ RSpec.describe 'items', type: :request do
         name: 'Questionnaire 2',
         questionnaire_type: 'AuthorFeedbackReview',
         private: true,
-        min_question_score: 0,
-        max_question_score: 10,
+        min_item_score: 0,
+        max_item_score: 10,
         instructor_id: instructor.id
       )
     end
@@ -432,7 +432,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 2,
         txt: 'test item 2',
-        question_type: 'multiple_choice',
+        item_type: 'multiple_choice',
         break_before: true,
         weight: 5,
         questionnaire: questionnaire2
@@ -444,7 +444,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 3,
         txt: 'test item 3',
-        question_type: 'multiple_choice',
+        item_type: 'multiple_choice',
         break_before: false,
         weight: 10,
         questionnaire: questionnaire2
@@ -472,6 +472,22 @@ RSpec.describe 'items', type: :request do
         end
       end
 
+      context 'when items were created out of sequence order' do
+        let(:id) do
+          Item.create!(seq: 2, txt: 'Second', question_type: 'multiple_choice', break_before: true, questionnaire: questionnaire)
+          Item.create!(seq: 1, txt: 'First', question_type: 'multiple_choice', break_before: true, questionnaire: questionnaire)
+          questionnaire.id
+        end
+
+        response(200, 'returns items ordered by seq') do
+          run_test! do
+            items_json = JSON.parse(response.body)
+            seqs = items_json.map { |i| i['seq'] }
+            expect(seqs).to eq([1, 2])
+          end
+        end
+      end
+
       # get request on /items/delete_all/questionnaire/{id} returns 404 not found response when questionnaire id is not found in the database
       response(404, 'not found') do
         let(:id) { 0 }
@@ -489,8 +505,8 @@ RSpec.describe 'items', type: :request do
         name: 'Questionnaire 1',
         questionnaire_type: 'AuthorFeedbackReview',
         private: true,
-        min_question_score: 0,
-        max_question_score: 10,
+        min_item_score: 0,
+        max_item_score: 10,
         instructor_id: instructor.id
       )
     end
@@ -500,7 +516,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 1,
         txt: 'test item 1',
-        question_type: 'multiple_choice',
+        item_type: 'multiple_choice',
         break_before: true,
         weight: 5,
         questionnaire: questionnaire
@@ -512,7 +528,7 @@ RSpec.describe 'items', type: :request do
       Item.create(
         seq: 2,
         txt: 'test item 2',
-        question_type: 'multiple_choice',
+        item_type: 'multiple_choice',
         break_before: false,
         weight: 10,
         questionnaire: questionnaire

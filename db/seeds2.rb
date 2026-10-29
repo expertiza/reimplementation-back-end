@@ -7,8 +7,8 @@
 #         name: "#{Faker::Lorem.words(number: 5).join(' ').titleize}",
 #         instructor_id: rand(1..5), # assuming some instructor IDs exist in range 1–5
 #         private: false,
-#         min_question_score: 0,
-#         max_question_score: 5,
+#         min_item_score: 0,
+#         max_item_score: 5,
 #         questionnaire_type: "ReviewQuestionnaire",
 #         display_type: "Review",
 #         created_at: Time.now,

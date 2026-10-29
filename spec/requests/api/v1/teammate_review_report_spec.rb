@@ -236,7 +236,7 @@ RSpec.describe 'Teammate Review Report', type: :request do
 
   describe 'nested responses in review row' do
     let(:questionnaire) do
-      Questionnaire.create!(name: 'TRQ', instructor_id: instructor.id, min_question_score: 0, max_question_score: 5)
+      Questionnaire.create!(name: 'TRQ', instructor_id: instructor.id, min_item_score: 0, max_item_score: 5)
     end
 
     before do

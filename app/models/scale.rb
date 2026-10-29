@@ -3,10 +3,14 @@
 class Scale < ScoredItem
     include QuestionHelper
   
-    attr_accessor :txt, :type, :weight, :min_label, :max_label, :answer, :min_question_score, :max_question_score
+    attr_accessor :txt, :type, :weight, :min_label, :max_label, :answer, :min_item_score, :max_item_score
+    alias min_question_score min_item_score
+    alias min_question_score= min_item_score=
+    alias max_question_score max_item_score
+    alias max_question_score= max_item_score=
   
     def edit
-      edit_common('Item:', min_question_score, max_question_score , txt, weight, type).to_json
+      edit_common('Item:', min_item_score, max_item_score , txt, weight, type).to_json
     end
   
     def view_item_text
@@ -14,7 +18,7 @@ class Scale < ScoredItem
     end
   
     def complete
-      options = (@min_question_score..@max_question_score).map do |option|
+      options = (@min_item_score..@max_item_score).map do |option|
         { value: option, selected: (option == answer) }
       end
       { scale_options: options }.to_json
@@ -29,12 +33,12 @@ class Scale < ScoredItem
     end
 
     def max_score
-      questionnaire.max_question_score * weight
+      questionnaire.max_item_score * weight
     end
   
     private
   
     def score_range
-      @min_question_score..@max_question_score
+      @min_item_score..@max_item_score
     end
   end

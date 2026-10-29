@@ -12,7 +12,7 @@ describe Response do
   let(:participant2) { AssignmentParticipant.create!(assignment: assignment, user: user2, handle: user2.name) }
   let(:item) { ScoredItem.new(weight: 2) }
   let(:answer) { Answer.new(answer: 1, comments: 'Answer text', item:item) }
-  let(:questionnaire) { Questionnaire.new(items: [item], min_question_score: 0, max_question_score: 5) }
+  let(:questionnaire) { Questionnaire.new(items: [item], min_item_score: 0, max_item_score: 5) }
   let(:assignment_questionnaire) { AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire, used_in_round: 1, notification_limit: 5.0)}
   let(:review_response_map) { ReviewResponseMap.new(assignment: assignment, reviewee: team, reviewer: participant2) }
   let(:response_map) { ResponseMap.new(assignment: assignment, reviewee: participant, reviewer: participant2) }
@@ -80,8 +80,8 @@ describe Response do
         .and_return(assignment_questionnaire)
     end
     context 'when answers are present and scorable' do
-      it 'returns weight * max_question_score' do
-        # item.weight = 2, max_question_score = 5 → 10        
+      it 'returns weight * max_item_score' do
+        # item.weight = 2, max_item_score = 5 → 10        
         expect(response.maximum_score).to eq(10)
       end
     end

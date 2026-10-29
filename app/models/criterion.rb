@@ -4,7 +4,7 @@ class Criterion < ScoredItem
     validates :size, presence: true
 
     def max_score
-      questionnaire.max_question_score * weight
+      questionnaire.max_item_score * weight
     end
   
     def edit
@@ -12,7 +12,8 @@ class Criterion < ScoredItem
         remove_link: "/items/#{id}",
         sequence_input: seq.to_s,
         question_text: txt,
-        question_type: question_type,
+        item_type: item_type,
+        question_type: item_type,
         weight: weight.to_s,
         size: size.to_s,
         max_label: max_label,
@@ -23,9 +24,9 @@ class Criterion < ScoredItem
     def view_item_text
       question_data = {
         text: txt,
-        question_type: question_type,
+        question_type: item_type,
         weight: weight,
-        score_range: "#{questionnaire.min_question_score} to #{questionnaire.max_question_score}"
+        score_range: "#{questionnaire.min_item_score} to #{questionnaire.max_item_score}"
       }
   
       question_data[:score_range] = "(#{min_label}) " + question_data[:score_range] + " (#{max_label})" if max_label && min_label

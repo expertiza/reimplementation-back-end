@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
 class Item < ApplicationRecord
-  # All valid question types supported by the application.
+  # All valid item types supported by the application.
   # Used by ItemsController#types to return the list to the front-end,
   # and can be used elsewhere for validation or display.
-  QUESTION_TYPES = ['Criterion', 'Scale', 'Dropdown', 'Multiple choice', 'Text area', 'Text field', 'Grid'].freeze
+  ITEM_TYPES = ['Criterion', 'Scale', 'Dropdown', 'Multiple choice', 'Text area', 'Text field', 'Grid'].freeze
+  QUESTION_TYPES = ITEM_TYPES
+
+  alias_attribute :question_type, :item_type
 
   before_create :set_seq
   belongs_to :questionnaire, inverse_of: :items # each item belongs to a specific questionnaire
@@ -13,7 +16,7 @@ class Item < ApplicationRecord
 
   validates :seq, presence: true, numericality: true # sequence must be numeric
   validates :txt, length: { minimum: 0, allow_nil: false, message: "can't be nil" } # text content must be provided
-  validates :question_type, presence: true # user must define the item type
+  validates :item_type, presence: true # user must define the item type
   validates :break_before, presence: true
 
   def scorable?
@@ -21,17 +24,20 @@ class Item < ApplicationRecord
   end
 
   def scored?
-    question_type.in?(%w[ScaleItem CriterionItem])
+    item_type.in?(%w[ScaleItem CriterionItem])
   end
 
+  # Sets the sequence number for a new item if not already provided.
+  # Defaults to the next sequential position based on existing items in the questionnaire.
   def set_seq
-    self.seq = questionnaire.items.size
+    self.seq ||= (questionnaire&.items&.reject { |i| i == self }&.size || 0) + 1
   end
 
   def as_json(options = {})
     super(options.merge({
-                          only: %i[id txt weight seq question_type size alternatives break_before min_label max_label
+                          only: %i[id txt weight seq item_type size alternatives break_before min_label max_label
                                    created_at updated_at],
+                          methods: %i[question_type],
                           include: {
                             questionnaire: { only: %i[name id] }
                           }
@@ -40,7 +46,7 @@ class Item < ApplicationRecord
   end
 
   def strategy
-    case question_type
+    case item_type
     when 'dropdown'
       self.choice_strategy = Strategies::DropdownStrategy.new
     when 'multiple_choice'
@@ -48,7 +54,7 @@ class Item < ApplicationRecord
     when 'scale'
       self.choice_strategy = Strategies::ScaleStrategy.new
     else
-      raise "Unknown item type: #{question_type}"
+      raise "Unknown item type: #{item_type}"
     end
   end
 
@@ -68,7 +74,7 @@ class Item < ApplicationRecord
 
   # Sum of weights for all scored items (excludes SectionHeaders).
   def self.total_item_weight(questionnaire)
-    questionnaire.items.reject { |i| i.question_type == 'SectionHeader' }.sum(&:weight)
+    questionnaire.items.reject { |i| i.item_type == 'SectionHeader' }.sum(&:weight)
   end
 
   # Duplicates this item into the given questionnaire, including its advice records.
@@ -86,7 +92,7 @@ class Item < ApplicationRecord
   end
 
   def self.for(record)
-    klass = case record.question_type
+    klass = case record.item_type
             when 'Criterion'
               Criterion
             when 'Scale'
