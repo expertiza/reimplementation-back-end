@@ -14,6 +14,8 @@ module ReviewMappingStrategies
 
     private
 
+    # Returns the id to use when querying ReviewResponseMap for this reviewer:
+    # the reviewer's team id when reviews are done by teams, otherwise their own id.
     def effective_reviewer_id(reviewer)
       return reviewer.id unless @assignment.is_review_done_by_teams && reviewer.is_a?(AssignmentParticipant)
 

@@ -2,7 +2,10 @@ require_relative 'base_strategy'
 
 module ReviewMappingStrategies
   class LeastReviewedTopicStrategy < BaseStrategy
-    # Assign reviewer to a team in the least-reviewed topic within the k threshold.
+    # Assign reviewer to review a team in the least-reviewed topic within the k threshold.
+    # Picks the eligible topic with the fewest reviews (within k of the minimum),
+    # then selects the team in that topic with the fewest reviews.
+    # Returns nil if no eligible topic or team is available.
     def assign_one(reviewer, k: 1)
       counts = topic_review_counts
       topic  = eligible_topic(counts, k)

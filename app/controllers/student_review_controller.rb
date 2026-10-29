@@ -5,6 +5,7 @@ class StudentReviewController < ApplicationController
     current_user_has_student_privileges?
   end
 
+  # List the reviews assigned to a student or a team.
   # GET /assignments/:assignment_id/student_review/list
   def list
     reviewer_id = reviewer_id_for(@participant)
@@ -32,6 +33,7 @@ class StudentReviewController < ApplicationController
     }
   end
 
+  # Return the questionnaire and any answers that have been saved for this review.
   # GET /assignments/:assignment_id/student_review/:mapping_id/form
   def form
     mapping = ReviewResponseMap.find_by(id: params[:mapping_id], reviewed_object_id: @assignment.id)
@@ -53,13 +55,15 @@ class StudentReviewController < ApplicationController
       mapping_id: mapping.id,
       reviewee_team_name: reviewee.try(:name),
       topic_name: topic&.topic_name,
-      questionnaire: build_questionnaire_data(@assignment),
+      questionnaire: serialize_questionnaire(@assignment),
       response: serialize_response(latest_response)
     }
   end
 
   private
 
+  # Returns true if the current participant is the reviewer for this mapping,
+  # accounting for team-based review where the reviewer is a team rather than an individual.
   def reviewer_for?(mapping)
     if mapping.reviewing_is_done_by_teams?
       team_reviewer?(mapping)
@@ -73,7 +77,9 @@ class StudentReviewController < ApplicationController
       mapping.reviewer.participants.exists?(user_id: current_user.id)
   end
 
-  def build_questionnaire_data(assignment)
+  # Finds the active questionnaire for the assignment (current round first,
+  # then unscoped, then first) and returns a serialized hash for the API response.
+  def serialize_questionnaire(assignment)
     current_round = DueDate.current_round_number_for(assignment)
     aq = assignment.assignment_questionnaires.find_by(used_in_round: current_round) if current_round.positive?
     aq ||= assignment.assignment_questionnaires.find_by(used_in_round: nil)
@@ -93,6 +99,8 @@ class StudentReviewController < ApplicationController
     }
   end
 
+  # Serializes a Response record into a hash for the API response, including its answers.
+  # Returns nil if no response exists yet.
   def serialize_response(response)
     return nil unless response
 
@@ -106,16 +114,21 @@ class StudentReviewController < ApplicationController
     }
   end
 
+  # Called before every action to load the assignment and verify the current user
+  # is a participant; renders 403 and halts the action if they are not.
   def set_assignment_and_participant
     @assignment  = Assignment.find(params[:assignment_id])
     @participant = AssignmentParticipant.find_by(parent_id: @assignment.id, user_id: current_user.id)
     render json: { error: 'You are not a participant in this assignment.' }, status: :forbidden unless @participant
   end
 
+  # Returns the reviewer id to use for query lookups: the participant's team id
+  # when reviews are done by teams, otherwise the participant's own id.
   def reviewer_id_for(participant)
     @assignment.is_review_done_by_teams ? participant.team&.id || participant.id : participant.id
   end
 
+  # Returns 'completed', 'in_progress', or 'not_started' based on the most recent response for the mapping.
   def review_status(map)
     last_response = map.responses.max_by(&:id)
     return 'not_started' unless last_response

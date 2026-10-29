@@ -66,7 +66,7 @@ class ReviewMappingsController < ApplicationController
   def request_review
     participant = current_participant
     return render json: { error: 'You are not a participant in this assignment' }, status: :forbidden unless participant
-    return if check_review_limit(participant)
+    return unless can_review_additional_submissions?(participant)
 
     if @assignment.topics?
       result = TopicReviewAssigner.new(@assignment)
@@ -77,9 +77,7 @@ class ReviewMappingsController < ApplicationController
 
       render json: { status: 'ok', mapping_id: result.mapping.id }
     else
-      if params[:topic_id].present?
-        return render json: { error: 'Topic selection not supported.' }, status: :unprocessable_entity
-      end
+      return render json: { error: 'Invalid topic.' }, status: :unprocessable_entity if params[:topic_id].present?
 
       strategy = ReviewMappingStrategies::LeastReviewedSubmissionStrategy
       mapping  = ReviewMappingHandler.new(@assignment).assign_dynamically(strategy, participant)
@@ -126,16 +124,17 @@ class ReviewMappingsController < ApplicationController
     AssignmentParticipant.find_by(parent_id: @assignment.id, user_id: current_user.id)
   end
 
-  # Returns true (and renders an error) when the student has reached the review limit.
-  def check_review_limit(participant)
-    return false unless @assignment.num_reviews_allowed.to_i.positive?
+  # Returns true when the student is allowed to submit another review,
+  # false (and renders a 422) when they have reached the assignment's review limit.
+  def can_review_additional_submissions?(participant)
+    return true unless @assignment.num_reviews_allowed.to_i.positive?
 
     reviewer_id = @assignment.is_review_done_by_teams ? participant.team&.id || participant.id : participant.id
     count = ReviewResponseMap.where(reviewer_id: reviewer_id, reviewed_object_id: @assignment.id).count
-    return false if count < @assignment.num_reviews_allowed
+    return true if count < @assignment.num_reviews_allowed
 
     msg = "You cannot do more than #{@assignment.num_reviews_allowed} reviews for this assignment."
     render json: { error: msg }, status: :unprocessable_entity
-    true
+    false
   end
 end
