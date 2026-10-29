@@ -27,6 +27,8 @@ class Item < ApplicationRecord
     item_type.in?(%w[ScaleItem CriterionItem])
   end
 
+  # Sets the sequence number for a new item if not already provided.
+  # Defaults to the next sequential position based on existing items in the questionnaire.
   def set_seq
     self.seq ||= (questionnaire&.items&.reject { |i| i == self }&.size || 0) + 1
   end
