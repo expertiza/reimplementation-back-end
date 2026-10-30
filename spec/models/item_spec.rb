@@ -22,6 +22,14 @@ RSpec.describe Item, type: :model do
       expect(item).to be_valid
     end
 
+    # Regression test for the validation fix required during fresh Docker database seeding.
+    # Ensures break_before: false is accepted as a valid Boolean value.
+    it 'is valid when break_before is false' do
+      item = Item.new(seq: 1, txt: 'Sample item', question_type: 'multiple_choice', break_before: false,
+                              questionnaire:)
+      expect(item).to be_valid
+    end
+
     # Test ensures that a item is not valid without seq field
     it 'is not valid without a seq' do
       item = Item.new(txt: 'Sample item', question_type: 'multiple_choice', break_before: true,
