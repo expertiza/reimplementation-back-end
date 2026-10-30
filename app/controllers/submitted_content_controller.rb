@@ -127,7 +127,7 @@ class SubmittedContentController < ApplicationController
 
     # Validate file extension against allowed types
     unless valid_file_extension?(uploaded_file_name(uploaded))
-      return render_error('File extension not allowed. Supported extensions: pdf, png, jpeg, jpg, zip, tar, gz, 7z, odt, docx, md, rb, mp4, txt.', :bad_request)
+      return render_error("File extension not allowed. Supported extensions: #{ALLOWED_EXTENSIONS.join(', ')}.", :bad_request)
     end
 
     # Read the file contents into memory
@@ -152,14 +152,18 @@ class SubmittedContentController < ApplicationController
     # Build the full file path (use basename to prevent directory traversal)
     full_path = File.join(current_directory, File.basename(safe_filename))
 
+    # Refuse to replace a submission that is already there. The write below
+    # would otherwise overwrite the earlier file of the same name, and nothing
+    # would tell the submitter it had happened.
+    if File.exist?(full_path)
+      return render_error("A file named '#{File.basename(full_path)}' already exists in this folder. Please delete it first or upload under a different name.", :conflict)
+    end
+
     # Write the file to disk in binary mode
     File.open(full_path, 'wb') { |f| f.write(file_bytes) }
 
-    # If unzip flag is set and file is a zip, extract contents using rubyzip library
-    # In controller, replace the inline Zip::File.open block with:
     if params[:unzip] && file_type(safe_filename) == 'zip'
       SubmittedContentHelper.unzip_file(full_path, current_directory, true)
-      File.delete(full_path)
     end
 
     # Create submission record for audit trail
