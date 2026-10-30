@@ -17,6 +17,9 @@ services:
       - "3002:3002"
     volumes:
       - .:/app
+      - expertiza-dev-pids:/app/tmp/pids
+      - expertiza-dev-logs:/app/log
+      - expertiza-dev-storage:/app/storage
     depends_on:
       db:
         condition: service_healthy
@@ -93,6 +96,9 @@ services:
 volumes:
   expertiza-mysql:
   expertiza-redis:
+  expertiza-dev-pids:
+  expertiza-dev-logs:
+  expertiza-dev-storage:
 
 networks:
   public:

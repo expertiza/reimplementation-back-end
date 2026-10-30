@@ -63,6 +63,9 @@ MYSQL_DATABASE=reimplementation_development
 Replace `change_me` with your chosen local credentials. The password in both database URLs must match `MYSQL_PASSWORD`. If the password contains URL-special characters, URL-encode it in the connection URLs.
 
 
+**Database name consistency:** `MYSQL_DATABASE` must match the database name specified in `DATABASE_URL`. If you change the development database name, update both values before initializing a fresh MySQL volume. `TEST_DATABASE_URL` specifies the separate test database.
+
+
 `CACHE_STORE` is passed to the Redis cache configuration in `config/application.rb`. Within Docker Compose, the Redis connection URL is `redis://redis:6380/0`.
 
 Development currently uses `:null_store` or `:memory_store` instead of Redis caching. The existing `:redis_store` adapter could not be loaded in the current application image, so Redis-backed Rails caching requires a separate configuration fix and validation before production use.
@@ -611,19 +614,23 @@ docker compose --profile dev config --quiet
 docker compose --profile dev up -d --build
 ```
 
-### Clean Up Unused Docker Images
+### Clean Up Docker Compose Images
 
-Docker may retain unused images after rebuilding the application.
+Docker may retain images after rebuilding or updating the application.
 
-To remove dangling Docker images:
+To stop the development stack and remove the images used by its services:
 
 ```bash
-docker image prune
+docker compose --profile dev down --rmi all
 ```
 
-This removes dangling images across Docker, not just Expertiza. It does not remove the named MySQL or Redis volumes.
+This removes the stack's containers and attempts to remove the associated application, MySQL, and Redis images.
 
-Avoid using `docker image prune -a` unless you understand which additional unused images will be removed.
+The named MySQL and Redis volumes are preserved because the command does not use `-v`. Images will need to be rebuilt or pulled again when the stack is restarted.
+
+**Important:** This command stops the running development stack. Images shared with other Docker projects may also be affected, although Docker will prevent removing images that are still in use by other containers.
+
+Avoid using `docker compose down -v` unless you intentionally want to remove the database and Redis volumes, which may result in data loss.
 
 ### Database Connection Errors
 
