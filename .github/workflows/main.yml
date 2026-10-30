@@ -76,19 +76,59 @@ jobs:
           set -o pipefail
           bundle exec rspec 2>&1 | tee rspec_results.txt
 
-      - name: Prepare RSpec summary
+      - name: Prepare CI report
         if: always() && github.event_name == 'pull_request'
+        shell: bash
         run: |
-          if grep -q "^Failed examples:" rspec_results.txt; then
-            {
-              echo "Failed examples:"
-              grep "^rspec " rspec_results.txt || true
-            } > rspec_summary.txt
-          else
-            echo "All tests passed." > rspec_summary.txt
-          fi
+          {
+            echo "## CI Test & Coverage Report"
+            echo ""
+            echo "### RSpec Results"
 
-      - name: Upload RSpec summary
+            if [ ! -f rspec_results.txt ]; then
+              echo "RSpec did not run or produce a results file. Check the CI logs."
+            else
+              result=$(grep -E '^[0-9]+ examples?, [0-9]+ failures?' rspec_results.txt | tail -1 || true)
+
+              if [ -n "$result" ]; then
+                echo "$result"
+              else
+                echo "RSpec did not complete successfully. Check the CI logs."
+              fi
+
+              if grep -q "^Failed examples:" rspec_results.txt; then
+                echo ""
+                echo "#### Failing examples"
+                echo '```text'
+                grep "^rspec " rspec_results.txt | head -20 || true
+                echo '```'
+              fi
+            fi
+
+            echo ""
+            echo "### Coverage"
+
+            if [ -f coverage/coverage.json ]; then
+              if coverage=$(ruby -rjson -e '
+                data = JSON.parse(File.read("coverage/coverage.json"))
+                lines = data.fetch("coverage").values.flat_map do |file|
+                  file.fetch("lines", []).compact
+                end
+                total = lines.length
+                covered = lines.count { |hits| hits.to_i > 0 }
+                percentage = total.zero? ? 0.0 : covered * 100.0 / total
+                puts format("%.2f%% (%d/%d lines)", percentage, covered, total)
+              ' 2>/dev/null); then
+                echo "Line coverage: $coverage"
+              else
+                echo "Coverage data could not be summarized. See coverage artifacts."
+              fi
+            else
+              echo "Coverage report unavailable."
+            fi
+          } | tee rspec_summary.txt >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload CI report
         if: always() && github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
@@ -127,50 +167,6 @@ jobs:
           path: coverage/
           if-no-files-found: warn
           
-      - name: Comment coverage on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-            
-            try {
-              // Read coverage data
-              const coveragePath = 'coverage/coverage.json';
-              if (fs.existsSync(coveragePath)) {
-                const coverage = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
-                const percentage = coverage.metrics.covered_percent.toFixed(2);
-                
-                const comment = `## 📊 Code Coverage Report
-                
-                **Coverage: ${percentage}%**
-                
-                - **Lines covered:** ${coverage.metrics.covered_lines}/${coverage.metrics.total_lines}
-                - **Branches covered:** ${coverage.metrics.covered_branches}/${coverage.metrics.total_branches}
-                
-                📈 Coverage report generated with SimpleCov and Ruby 3.4.5
-                
-                <details>
-                <summary>View detailed coverage report</summary>
-                
-                Coverage artifacts are available in the workflow run.
-                </details>`;
-                
-                github.rest.issues.createComment({
-                  issue_number: context.issue.number,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  body: comment
-                });
-              } else {
-                console.log('Coverage file not found');
-              }
-            } catch (error) {
-              console.log('Error creating coverage comment:', error.message);
-            }
-
-
   publish_code_coverage:
     needs: test  # Ensures this job runs after the test job
     runs-on: ubuntu-latest
