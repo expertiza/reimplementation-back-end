@@ -100,11 +100,13 @@ class QuestionnairesController < ApplicationController
                            alternatives size break_before _destroy]
     )
     if permitted[:min_item_score].nil? && permitted[:min_question_score].present?
-      permitted[:min_item_score] = permitted.delete(:min_question_score)
+      permitted[:min_item_score] = permitted[:min_question_score]
     end
+    permitted.delete(:min_question_score)
     if permitted[:max_item_score].nil? && permitted[:max_question_score].present?
-      permitted[:max_item_score] = permitted.delete(:max_question_score)
+      permitted[:max_item_score] = permitted[:max_question_score]
     end
+    permitted.delete(:max_question_score)
     permitted
   end
 

@@ -9,7 +9,7 @@ class Item < ApplicationRecord
 
   alias_attribute :question_type, :item_type
 
-  before_create :set_seq
+  before_validation :set_seq, on: :create
   belongs_to :questionnaire, inverse_of: :items # each item belongs to a specific questionnaire
   has_many :answers, dependent: :destroy, foreign_key: 'item_id'
   attr_accessor :choice_strategy

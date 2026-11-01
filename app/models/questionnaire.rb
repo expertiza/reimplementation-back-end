@@ -34,8 +34,8 @@ class Questionnaire < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   # Validates min < max and name uniqueness per instructor.
   def validate
-    if min_item_score >= max_item_score
-      errors.add(:min_item_score, 'The minimum item score must be less than the maximum.')
+    if max_item_score <= min_item_score
+      errors.add(:max_item_score, 'The maximum item score must be greater than the minimum.')
     end
     duplicate_questionnaire = Questionnaire.where('id <> ? and name = ? and instructor_id = ?', id, name, instructor_id)
     errors.add(:name, 'Questionnaire names must be unique.') if duplicate_questionnaire.present?

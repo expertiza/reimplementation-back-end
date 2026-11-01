@@ -24,6 +24,34 @@ RSpec.describe 'questionnaires', type: :request do
   let(:token) { JsonWebToken.encode({id: prof.id}) }
   let(:Authorization) { "Bearer #{token}" }
 
+  describe 'score parameter compatibility' do
+    it 'preserves preferred bounds regardless of legacy key order' do
+      questionnaire = Questionnaire.create!(name: 'Bounds', questionnaire_type: 'ReviewQuestionnaire',
+                                            min_item_score: 0, max_item_score: 5, instructor_id: prof.id)
+      [{ min_item_score: 1, max_item_score: 8, min_question_score: 2, max_question_score: 4 },
+       { min_question_score: 2, max_question_score: 4, min_item_score: 1, max_item_score: 8 }].each do |bounds|
+        put "/questionnaires/#{questionnaire.id}", params: { questionnaire: bounds },
+                                                   headers: { 'Authorization' => "Bearer #{token}" }, as: :json
+
+        expect(response).to have_http_status(:ok)
+        expect(questionnaire.reload.min_item_score).to eq(1)
+        expect(questionnaire.max_item_score).to eq(8)
+      end
+    end
+
+    it 'accepts legacy bounds when preferred bounds are absent' do
+      questionnaire = Questionnaire.create!(name: 'Legacy bounds', questionnaire_type: 'ReviewQuestionnaire',
+                                            min_item_score: 0, max_item_score: 5, instructor_id: prof.id)
+      put "/questionnaires/#{questionnaire.id}",
+          params: { questionnaire: { min_question_score: 1, max_question_score: 7 } },
+          headers: { 'Authorization' => "Bearer #{token}" }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(questionnaire.reload.min_item_score).to eq(1)
+      expect(questionnaire.max_item_score).to eq(7)
+    end
+  end
+
   path '/questionnaires' do
     let(:questionnaire1) do
       instructor

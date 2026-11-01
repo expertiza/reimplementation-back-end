@@ -110,15 +110,7 @@ class AssignmentsController < ApplicationController
         for_calibration: true
       )
 
-      review_status = if calibration_map.nil?
-                        'not_started'
-                      elsif calibration_map.responses.exists?(is_submitted: true)
-                        'completed'
-                      elsif calibration_map.responses.exists?
-                        'in_progress'
-                      else
-                        'not_started'
-                      end
+      review_status = calibration_review_status(calibration_map)
 
       hyperlinks = begin
         team.hyperlinks
@@ -335,6 +327,15 @@ class AssignmentsController < ApplicationController
   end
 
   private
+
+  # Reports whether the instructor has started or submitted the calibration review.
+  def calibration_review_status(calibration_map)
+    return 'not_started' unless calibration_map
+    return 'completed' if calibration_map.responses.exists?(is_submitted: true)
+    return 'in_progress' if calibration_map.responses.exists?
+
+    'not_started'
+  end
 
   # Only allow a list of trusted parameters through.
   def assignment_params

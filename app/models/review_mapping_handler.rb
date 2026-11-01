@@ -59,14 +59,14 @@ class ReviewMappingHandler
   def assign_calibration_reviews_round_robin
     instructor_participant = AssignmentParticipant.find_by(
       parent_id: @assignment.id,
-      user_id:   @assignment.instructor_id
+      user_id: @assignment.instructor_id
     )
     return unless instructor_participant
 
     calibration_team_ids = ReviewResponseMap.where(
       reviewed_object_id: @assignment.id,
-      reviewer_id:        instructor_participant.id,
-      for_calibration:    true
+      reviewer_id: instructor_participant.id,
+      for_calibration: true
     ).pluck(:reviewee_id)
     return if calibration_team_ids.empty?
 
@@ -112,10 +112,10 @@ class ReviewMappingHandler
       reviews_per_reviewer.times do |i|
         team = teams[(index + i) % teams.size]
         ReviewResponseMap.find_or_create_by!(
-          reviewer_id:        reviewer.id,
-          reviewee_id:        team.id,
+          reviewer_id: reviewer.id,
+          reviewee_id: team.id,
           reviewed_object_id: @assignment.id,
-          for_calibration:    for_calibration
+          for_calibration: for_calibration
         )
       end
     end

@@ -22,11 +22,12 @@ RSpec.describe Item, type: :model do
       expect(item).to be_valid
     end
 
-    # Test ensures that a item is not valid without seq field
-    it 'is not valid without a seq' do
+    # Test ensures that seq is auto-assigned via set_seq when omitted on create
+    it 'auto-assigns seq via set_seq when seq is omitted on create' do
       item = Item.new(txt: 'Sample item', item_type: 'multiple_choice', break_before: true,
                               questionnaire:)
-      expect(item).to_not be_valid
+      expect(item).to be_valid
+      expect(item.seq).to eq(1)
     end
 
     # Test ensures that seq field is numeric
@@ -128,13 +129,13 @@ RSpec.describe Item, type: :model do
       expect(item.reload.seq).to eq(5)
     end
 
-    it 'defaults seq to questionnaire.items.size + 1 when seq is nil' do
+    it 'persists a default sequence when seq is omitted' do
       instructor.save!
       questionnaire.save!
       item = Item.new(txt: 'Item with nil seq', question_type: 'multiple_choice',
                       break_before: true, questionnaire: questionnaire)
-      item.set_seq
-      expect(item.seq).to eq(1)
+      item.save!
+      expect(item.reload.seq).to eq(1)
     end
   end
 end
