@@ -11,12 +11,12 @@ class AssignmentTeam < Team
   # Delegation to avoid Law of Demeter violations
   delegate :path, to: :assignment, prefix: true
 
-  # MentoredTeam inherits the same assignment capacity policy.
+  # AssignmentTeam subclasses inherit the assignment's capacity policy.
   def max_size
     assignment&.max_team_size
   end
 
-  def registered_participants
+  def assigned_participants
     assignment ? assignment.participants : AssignmentParticipant.none
   end
 
@@ -91,8 +91,8 @@ class AssignmentTeam < Team
     )
     if course_team.save
       participants.each do |participant|
-        # Membership in the source assignment is not registration in the destination course.
-        course_participant = course_team.registered_participants.find_by(user_id: participant.user_id)
+        # Find the participant assigned to the destination course before copying membership.
+        course_participant = course_team.assigned_participants.find_by(user_id: participant.user_id)
         course_team.add_member(course_participant)
       end
     end

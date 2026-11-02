@@ -36,9 +36,9 @@ class Team < ApplicationRecord
     raise NotImplementedError, "#{self.class} must define max_size"
   end
 
-  # Public so callers can resolve a User before requesting participant admission.
-  def registered_participants
-    raise NotImplementedError, "#{self.class} must define registered_participants"
+  # Returns participants assigned to this team's assignment or course.
+  def assigned_participants
+    raise NotImplementedError, "#{self.class} must define assigned_participants"
   end
   
   def full?
@@ -51,16 +51,16 @@ class Team < ApplicationRecord
 
   # Checks if the given participant is already on any team for the associated assignment or course.
   def participant_on_team?(participant)
-    return false unless participant.is_a?(Participant) && participant.persisted?
+    return false unless participant.is_a?(Participant) && participant.valid?
 
     # Include this team and its siblings without loading every team's members.
     TeamsParticipant.exists?(team_id: teams_in_parent.select(:id), participant_id: participant.id)
   end
 
-  # Admission accepts a registration, not a User; callers resolve destination registrations.
+  # Adds a participant; callers must find the appropriate participant before admission.
   def add_member(participant)
-    unless registered_participant?(participant)
-      return { success: false, error: 'Participant is not registered for this team' }
+    unless assigned_participant?(participant)
+      return { success: false, error: 'Participant is not assigned to this team' }
     end
 
     # Sibling membership is checked by eligibility, not here: transfers add before removing.
@@ -92,6 +92,7 @@ class Team < ApplicationRecord
     participant.retract_sent_invitations
 
     # Participant#team reads this join; this method no longer maintains legacy team_id.
+    # This membership record links the participant to this team.
     team_membership = teams_participants.find_by(participant_id: participant.id)
     team_membership&.destroy
     
@@ -101,13 +102,13 @@ class Team < ApplicationRecord
 
   # Determines whether a given participant is eligible to join the team.
   def can_participant_join_team?(participant)
-    unless registered_participant?(participant)
-      return { success: false, error: 'Participant is not registered for this team' }
+    unless assigned_participant?(participant)
+      return { success: false, error: 'Participant is not assigned to this team' }
     end
 
     # Check if the user is already part of any team for this assignment or course
     if participant_on_team?(participant)
-      return { success: false, error: 'Participant already belongs to a team under this parent' }
+      return { success: false, error: 'Participant already belongs to a team.' }
     end
 
     # All checks passed; participant is eligible to join the team
@@ -117,14 +118,14 @@ class Team < ApplicationRecord
 
   private
 
+  # Returns teams in the same assignment or course, including this team.
   def teams_in_parent
     raise NotImplementedError, "#{self.class} must define teams_in_parent"
   end
 
-  def registered_participant?(participant)
-    # Parent associations constrain both registration subtype and parent identity.
-    participant.is_a?(Participant) && participant.persisted? &&
-      registered_participants.exists?(id: participant.id)
+  def assigned_participant?(participant)
+    participant.is_a?(Participant) && participant.valid? &&
+      assigned_participants.exists?(id: participant.id)
   end
 
   def release_topics_if_empty

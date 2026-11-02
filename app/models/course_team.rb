@@ -9,7 +9,7 @@ class CourseTeam < Team
     nil
   end
 
-  def registered_participants
+  def assigned_participants
     course ? course.participants : CourseParticipant.none
   end
 
@@ -23,8 +23,8 @@ class CourseTeam < Team
     )
     if assignment_team.save
       participants.each do |participant|
-        # Use the destination registration; capacity comes from the destination assignment.
-        assignment_participant = assignment_team.registered_participants.find_by(user_id: participant.user_id)
+        # Use the destination participant; capacity comes from the destination assignment.
+        assignment_participant = assignment_team.assigned_participants.find_by(user_id: participant.user_id)
         assignment_team.add_member(assignment_participant)
       end
     end

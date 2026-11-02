@@ -14,8 +14,8 @@ module TeamOperationsHelper
   # Copies all members from the source team to the target team
   def self.copy_team_members(source_team, target_team)
     source_team.users.each do |user|
-      # Resolve against the destination, since a user can have several registrations.
-      participant = target_team.registered_participants.find_by(user_id: user.id)
+      # Find the user's participant record for the destination assignment or course.
+      participant = target_team.assigned_participants.find_by(user_id: user.id)
       target_team.add_member(participant)
     end
   end

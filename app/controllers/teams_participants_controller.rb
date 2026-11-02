@@ -90,8 +90,8 @@ class TeamsParticipantsController < ApplicationController
       render json: { error: "Couldn't find Team" }, status: :not_found and return
     end
 
-    # Resolve the registration for this team's parent, not the user's first registration.
-    participant = current_team.registered_participants.find_by(user_id: user.id) || (render(json: { error: "Couldn't find Participant" }, status: :not_found) and return)
+    # Find the user's participant record for this team's assignment or course.
+    participant = current_team.assigned_participants.find_by(user_id: user.id) || (render(json: { error: "Couldn't find Participant" }, status: :not_found) and return)
 
     # Validate if participant can join a team
     validation_result = current_team.can_participant_join_team?(participant)

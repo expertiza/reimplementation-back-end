@@ -298,14 +298,14 @@ RSpec.describe 'teams_participants', type: :request do
 
         before do
           allow_any_instance_of(Team).to receive(:full?).and_return(false)
-          # The user's first registration must not determine the destination membership.
+          # The user's first participant record must not determine the destination membership.
           AssignmentParticipant.create!(parent_id: assignment2.id, user: new_user, handle: new_user.name)
           AssignmentParticipant.create!(parent_id: assignment.id, user: new_user, handle: new_user.name)
         end
 
         run_test! do
-          registration = AssignmentParticipant.find_by!(parent_id: assignment.id, user_id: new_user.id)
-          expect(TeamsParticipant.exists?(team_id: team_with_assignment.id, participant_id: registration.id)).to be(true)
+          assigned_participant = AssignmentParticipant.find_by!(parent_id: assignment.id, user_id: new_user.id)
+          expect(TeamsParticipant.exists?(team_id: team_with_assignment.id, participant_id: assigned_participant.id)).to be(true)
         end
       end
 
@@ -321,8 +321,8 @@ RSpec.describe 'teams_participants', type: :request do
         end
 
         run_test! do
-          registration = CourseParticipant.find_by!(parent_id: course.id, user_id: new_user.id)
-          expect(TeamsParticipant.exists?(team_id: team_with_course.id, participant_id: registration.id)).to be(true)
+          assigned_participant = CourseParticipant.find_by!(parent_id: course.id, user_id: new_user.id)
+          expect(TeamsParticipant.exists?(team_id: team_with_course.id, participant_id: assigned_participant.id)).to be(true)
         end
       end
 

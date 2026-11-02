@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# Existing Team regression suite, retained for comparison with team_model_spec.rb.
+# Assertions have been updated where the Team interface or error messages changed.
+
 require 'rails_helper'
 
 # This spec exercises the Team model, covering:
@@ -176,7 +179,7 @@ RSpec.describe Team, type: :model do
   #
   # Ensures a participant:
   #  - Cannot join if already on any team in the same context
-  #  - Cannot join if not registered in that assignment/course
+  #  - Cannot join if not assigned to that assignment/course
   #  - Can join otherwise
   # ------------------------------------------------------------------------
   describe '#can_participant_join_team?' do
@@ -192,19 +195,19 @@ RSpec.describe Team, type: :model do
 
         result = assignment_team.can_participant_join_team?(participant)
         expect(result[:success]).to be false
-        expect(result[:error]).to eq('Participant already belongs to a team under this parent')
+        expect(result[:error]).to eq('Participant already belongs to a team.')
       end
 
-      it 'rejects a participant registered under a different assignment' do
+      it 'rejects a participant assigned to a different assignment' do
         user        = create_student("wrong_assignment")
         participant = AssignmentParticipant.create!(parent_id: assignment2.id, user: user, handle: user.name)
 
         result = assignment_team.can_participant_join_team?(participant)
         expect(result[:success]).to be false
-        expect(result[:error]).to eq('Participant is not registered for this team')
+        expect(result[:error]).to eq('Participant is not assigned to this team')
       end
 
-      it 'allows a properly registered, not-yet-teamed participant' do
+      it 'allows an assigned participant without a team' do
         user        = create_student("eligible")
         participant = AssignmentParticipant.create!(parent_id: assignment.id, user: user, handle: user.name)
 
@@ -225,19 +228,19 @@ RSpec.describe Team, type: :model do
 
         result = course_team.can_participant_join_team?(participant)
         expect(result[:success]).to be false
-        expect(result[:error]).to eq('Participant already belongs to a team under this parent')
+        expect(result[:error]).to eq('Participant already belongs to a team.')
       end
 
-      it 'rejects a participant registered under a different course' do
+      it 'rejects a participant assigned to a different course' do
         user        = create_student("wrong_course")
         participant = CourseParticipant.create!(parent_id: course2.id, user: user, handle: user.name)
 
         result = course_team.can_participant_join_team?(participant)
         expect(result[:success]).to be false
-        expect(result[:error]).to eq('Participant is not registered for this team')
+        expect(result[:error]).to eq('Participant is not assigned to this team')
       end
 
-      it 'allows a properly registered, not-yet-teamed course participant' do
+      it 'allows an assigned course participant without a team' do
         user        = create_student("c_eligible")
         participant = CourseParticipant.create!(parent_id: course.id, user: user, handle: user.name)
 

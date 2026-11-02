@@ -1,5 +1,9 @@
 ﻿# frozen_string_literal: true
 
+# Revised Team regression suite developed during the independent study.
+# Compared with team_spec.rb using line coverage and mutation testing.
+# Overlapping scenarios are retained for that comparison pending consolidation.
+
 require 'rails_helper'
 require 'securerandom'
 
@@ -88,6 +92,16 @@ RSpec.describe Team, type: :model do
   end
 
   shared_examples 'parent-scoped membership' do
+    it 'returns false when a saved member has invalid participant attributes' do
+      member = participant
+      create_membership(team, member)
+      member.handle = nil
+
+      expect(member).not_to be_valid
+      expect(team.participant_on_team?(member)).to be(false)
+      expect(team.teams_participants.exists?(participant_id: member.id)).to be(true)
+    end
+
     %i[current sibling].each do |location|
       # Verifies membership detection across this parent's current and sibling teams.
       it "finds the participant on the #{location} team" do
@@ -98,7 +112,7 @@ RSpec.describe Team, type: :model do
       end
     end
 
-    # Verifies a registered participant without membership is not reported as assigned.
+    # Verifies a participant without team membership is not reported as a team member.
     it 'returns false for an unassigned participant' do
       expect(team.participant_on_team?(participant)).to be(false)
     end
@@ -115,7 +129,7 @@ RSpec.describe Team, type: :model do
 
   shared_examples 'direct participant admission' do
     # Verifies admission persists exactly the supplied team, participant and user relationship.
-    it 'adds a registered participant with the correct membership' do
+    it 'adds a participant with the correct membership' do
       candidate = participant
       target = team
       existing_member = create_participant(parent)
@@ -145,23 +159,36 @@ RSpec.describe Team, type: :model do
   end
 
   shared_examples 'admission input handling' do
+    it 'rejects an invalid saved participant without creating membership' do
+      candidate = participant
+      target = team
+      candidate.handle = nil
+      result = nil
+
+      expect(candidate).not_to be_valid
+      expect { result = target.add_member(candidate) }.not_to change(TeamsParticipant, :count)
+      expect(result).to eq(success: false, error: 'Participant is not assigned to this team')
+      expect(target.can_participant_join_team?(candidate)).to eq(result)
+      expect(target.participants).to be_empty
+    end
+
     it 'rejects admission when the team has no parent' do
       target = team_class.new(name: unique_name('orphan'))
       candidate = participant
       result = nil
 
       expect { result = target.add_member(candidate) }.not_to change(TeamsParticipant, :count)
-      expect(result).to eq(success: false, error: 'Participant is not registered for this team')
+      expect(result).to eq(success: false, error: 'Participant is not assigned to this team')
     end
 
-    it 'rejects a User even when that user has a registration' do
+    it 'rejects a User object instead of a Participant' do
       candidate = participant
       target = team
       result = nil
 
       expect { result = target.add_member(candidate.user) }.not_to change(TeamsParticipant, :count)
 
-      expect(result).to eq(success: false, error: 'Participant is not registered for this team')
+      expect(result).to eq(success: false, error: 'Participant is not assigned to this team')
       expect(target.participants).to be_empty
     end
 
@@ -173,7 +200,7 @@ RSpec.describe Team, type: :model do
       expect { result = target.add_member(candidate) }.not_to change(TeamsParticipant, :count)
 
       expect(result.fetch(:success)).to be(false)
-      expect(result.fetch(:error)).to eq('Participant is not registered for this team')
+      expect(result.fetch(:error)).to eq('Participant is not assigned to this team')
       expect(target.participants).to be_empty
     end
 
@@ -183,10 +210,12 @@ RSpec.describe Team, type: :model do
       result = nil
       original_participant_count = Participant.count
 
+      # A valid object is not necessarily saved or assigned to the destination.
+      expect(candidate).to be_valid
       expect { result = target.add_member(candidate) }.not_to change(TeamsParticipant, :count)
 
       expect(result.fetch(:success)).to be(false)
-      expect(result.fetch(:error)).to eq('Participant is not registered for this team')
+      expect(result.fetch(:error)).to eq('Participant is not assigned to this team')
       expect(candidate).to be_new_record
       expect(Participant.count).to eq(original_participant_count)
       expect(target.participants).to be_empty
@@ -201,7 +230,7 @@ RSpec.describe Team, type: :model do
       expect { result = target.add_member(candidate) }.not_to change(TeamsParticipant, :count)
 
       expect(result.fetch(:success)).to be(false)
-      expect(result.fetch(:error)).to eq('Participant is not registered for this team')
+      expect(result.fetch(:error)).to eq('Participant is not assigned to this team')
       expect(target.participants).to be_empty
     end
 
@@ -212,29 +241,29 @@ RSpec.describe Team, type: :model do
       expect { result = target.add_member(nil) }.not_to change(TeamsParticipant, :count)
 
       expect(result.fetch(:success)).to be(false)
-      expect(result.fetch(:error)).to eq('Participant is not registered for this team')
+      expect(result.fetch(:error)).to eq('Participant is not assigned to this team')
       expect(target.participants).to be_empty
     end
   end
 
-  shared_examples 'destination registration lookup' do
-    it 'copies the intended user through their destination registration' do
+  shared_examples 'destination participant lookup' do
+    it 'copies the intended user using the destination participant record' do
       source_parent = create_parent(parent_kind == :assignment ? :course : :assignment)
       source_team = create_team(source_parent)
       user = create_user
       source_participant = create_participant(source_parent, user: user)
       create_membership(source_team, source_participant)
-      unrelated_registration = create_participant(parent)
+      unrelated_participant = create_participant(parent)
       destination_participant = create_participant(parent, user: user)
 
       TeamOperationsHelper.copy_team_members(source_team, team)
 
       expect(team.reload.participants).to contain_exactly(destination_participant)
       expect(team.teams_participants.pluck(:user_id)).to eq([user.id])
-      expect(team.participants).not_to include(source_participant, unrelated_registration)
+      expect(team.participants).not_to include(source_participant, unrelated_participant)
     end
 
-    it 'does not copy a user who is not registered under the destination parent' do
+    it 'does not copy a user without a participant record in the destination assignment or course' do
       source_parent = create_parent(parent_kind == :assignment ? :course : :assignment)
       source_team = create_team(source_parent)
       source_participant = create_participant(source_parent)
@@ -248,9 +277,9 @@ RSpec.describe Team, type: :model do
     end
   end
 
-  shared_examples 'registration eligibility' do
-    # Verifies registration without conflicting membership satisfies eligibility.
-    it 'accepts a registered unassigned participant' do
+  shared_examples 'participant eligibility' do
+    # Verifies a participant without conflicting team membership is eligible.
+    it 'accepts a participant without a team' do
       expect(team.can_participant_join_team?(participant)).to eq(success: true)
     end
 
@@ -264,10 +293,10 @@ RSpec.describe Team, type: :model do
       expect(team.participants).to be_empty
     end
 
-    # Verifies registration elsewhere does not satisfy the target parent's enrollment rule.
-    it 'rejects a participant registered only under another parent' do
+    # Verifies a participant assigned elsewhere does not satisfy the target parent's enrollment rule.
+    it 'rejects a participant assigned only to another assignment or course' do
       other_participant = create_participant(create_parent(parent_kind))
-      create_participant(parent) # Someone else's registration must not establish eligibility.
+      create_participant(parent) # Another participant's assignment must not establish eligibility.
 
       expect(team.can_participant_join_team?(other_participant).fetch(:success)).to be(false)
       expect(team.participants).to be_empty
@@ -315,8 +344,8 @@ RSpec.describe Team, type: :model do
       include_examples 'parent-scoped membership'
       include_examples 'direct participant admission'
       include_examples 'admission input handling'
-      include_examples 'destination registration lookup'
-      include_examples 'registration eligibility'
+      include_examples 'destination participant lookup'
+      include_examples 'participant eligibility'
       include_examples 'ordinary member removal'
     end
   end
@@ -329,7 +358,7 @@ RSpec.describe Team, type: :model do
     let(:participant) { create_participant(parent) }
 
     include_examples 'a supported team subtype'
-    include_examples 'registration eligibility'
+    include_examples 'participant eligibility'
     include_examples 'direct participant admission'
   end
 
@@ -454,8 +483,8 @@ RSpec.describe Team, type: :model do
       expect(team.participants).to contain_exactly(member)
     end
 
-    # Verifies registration eligibility remains distinct from capacity enforcement during admission.
-    it 'considers a registered unassigned participant eligible even when the team is full' do
+    # Verifies participant eligibility remains distinct from capacity enforcement during admission.
+    it 'considers a participant without a team eligible even when the team is full' do
       parent = create_parent(:assignment, max_team_size: 1)
       team = create_team(parent)
       create_membership(team, create_participant(parent))
