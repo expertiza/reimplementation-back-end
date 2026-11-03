@@ -145,7 +145,65 @@ RSpec.describe 'Student Teams API', type: :request do
             student_id: participant1.id
           }
         }
-        run_test!
+        run_test! do
+          created_team = AssignmentTeam.find_by!(name: "NewTeam", parent_id: assignment.id)
+
+          expect(JSON.parse(response.body).fetch('success')).to be(true)
+          expect(created_team.teams_participants.pluck(:participant_id, :user_id)).to eq(
+            [[participant1.id, student_user.id]]
+          )
+        end
+      end
+
+      response(422, "Participant belongs to another assignment") do
+        let(:other_assignment) { Assignment.create!(name: "A2", instructor_id: student_user.id) }
+        let(:team) {
+          {
+            team: { name: "WrongAssignmentTeam" },
+            assignment_id: other_assignment.id,
+            student_id: participant1.id
+          }
+        }
+
+        before do
+          other_assignment
+          @team_count_before_request = Team.count
+          @membership_count_before_request = TeamsParticipant.count
+        end
+
+        run_test! do
+          expect(JSON.parse(response.body)).to eq('error' => 'Participant is not assigned to this assignment')
+          expect(Team.count).to eq(@team_count_before_request)
+          expect(TeamsParticipant.count).to eq(@membership_count_before_request)
+          expect(team1.reload.participants).to contain_exactly(participant1)
+        end
+      end
+
+      response(422, "Initial membership cannot be saved") do
+        let(:team) {
+          {
+            team: { name: "FailedAdmissionTeam" },
+            assignment_id: assignment.id,
+            student_id: participant1.id
+          }
+        }
+
+        before do
+          @team_count_before_request = Team.count
+          @membership_count_before_request = TeamsParticipant.count
+          # Exercise add_member's database-failure result after the new team is saved.
+          allow(TeamsParticipant).to receive(:create).and_raise(
+            ActiveRecord::StatementInvalid.new('Membership insert unavailable')
+          )
+        end
+
+        run_test! do
+          expect(JSON.parse(response.body)).to eq('error' => 'Membership insert unavailable')
+          expect(Team.count).to eq(@team_count_before_request)
+          expect(TeamsParticipant.count).to eq(@membership_count_before_request)
+          expect(AssignmentTeam.exists?(name: "FailedAdmissionTeam", parent_id: assignment.id)).to be(false)
+          expect(team1.reload.participants).to contain_exactly(participant1)
+        end
       end
 
       #
