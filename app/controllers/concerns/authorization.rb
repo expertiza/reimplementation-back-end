@@ -78,7 +78,7 @@ module Authorization
         current_user_instructs_assignment?(assignment) ||
         current_user_TAs_assignment?(assignment)
         # TODO: include a check to allow admins or superadmins access to assignments their child instructors can access
-    )
+      )
   end
 
   # Determine if the currently logged-in user IS of the given role name

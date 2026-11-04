@@ -18,28 +18,28 @@ RSpec.describe Item, type: :model do
     # Test validates that item has valid attributes
     it 'is valid with valid attributes' do
       item = Item.new(seq: 1, txt: 'Sample item', question_type: 'multiple_choice', break_before: true,
-                              questionnaire:)
+                      questionnaire:)
       expect(item).to be_valid
     end
 
     # Test ensures that a item is not valid without seq field
     it 'is not valid without a seq' do
       item = Item.new(txt: 'Sample item', question_type: 'multiple_choice', break_before: true,
-                              questionnaire:)
+                      questionnaire:)
       expect(item).to_not be_valid
     end
 
     # Test ensures that seq field is numeric
     it 'is not valid with a non-numeric seq' do
       item = Item.new(seq: 'one', txt: 'Sample item', question_type: 'multiple_choice',
-                              break_before: true, questionnaire:)
+                      break_before: true, questionnaire:)
       expect(item).to_not be_valid
     end
 
     # Test ensures that a item is not valid without txt field
     it 'is not valid without a txt' do
       item = Item.new(seq: 1, question_type: 'multiple_choice', break_before: true,
-                              questionnaire:)
+                      questionnaire:)
       expect(item).to_not be_valid
     end
 
@@ -52,7 +52,7 @@ RSpec.describe Item, type: :model do
     # Test ensures that a item is not valid without break_before field
     it 'is not valid without a break_before value' do
       item = Item.new(seq: 1, txt: 'Sample item', question_type: 'multiple_choice',
-                              questionnaire:)
+                      questionnaire:)
       expect(item).to_not be_valid
     end
 
@@ -69,7 +69,7 @@ RSpec.describe Item, type: :model do
       instructor.save!
       questionnaire.save!
       item = Item.create(seq: 1, txt: 'Sample item', question_type: 'multiple_choice',
-                                 break_before: true, questionnaire:)
+                         break_before: true, questionnaire:)
       expect { item.delete }.to change { Item.count }.by(-1)
     end
   end

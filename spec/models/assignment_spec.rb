@@ -91,12 +91,12 @@ RSpec.describe Assignment, type: :model do
 
       # Update only the allowed_ids — no due_at in the nested attributes
       a.update!(due_dates_attributes: [{
-        id: dd.id,
+                  id: dd.id,
         deadline_type_id: ExpertizaConstants::DeadlineTypes::DROP_TOPIC,
         submission_allowed_id: 1,
         review_allowed_id: 2,
         teammate_review_allowed_id: 1
-      }])
+                }])
 
       dd.reload
       expect(dd.due_at.to_i).to be_within(1).of(original_due_at.to_i)
