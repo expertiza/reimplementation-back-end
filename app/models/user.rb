@@ -122,22 +122,10 @@ class User < ApplicationRecord
     user
   end
 
-  # This will override the default as_json method in the ApplicationRecord class and specify
-  # that only the id, name, and email attributes should be included when a User object is serialized.
-  def as_json(options = {})
-    super(options.merge({
-                          only: %i[id name email full_name email_on_review email_on_submission
-                                   email_on_review_of_review],
-                          include:
-                          {
-                            role: { only: %i[id name] },
-                            parent: { only: %i[id name] },
-                            institution: { only: %i[id name] }
-                          }
-                        })).tap do |hash|
-      hash['parent'] ||= { id: nil, name: nil }
-      hash['institution'] ||= { id: nil, name: nil }
-    end
+  # Serialize users the same way everywhere (e.g. a user placed inside a hash passed to
+  # `render json:`) so the API never exposes raw columns. See UserSerializer for the shape.
+  def as_json(_options = {})
+    UserSerializer.new(self).as_json
   end
 
   def set_defaults

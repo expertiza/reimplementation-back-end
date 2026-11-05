@@ -92,17 +92,17 @@ class Invitation < ApplicationRecord
                             from_participant: { 
                               only: %i[id],
                               include: {
-                                user: { only: %i[id name full_name email] },
                                 team: {only: %i[id name]}
                               }},
                             # from_team: { only: %i[id name] },
                             to_participant: {    
-                              only: [:id],
-                              include: {
-                                user: { only: %i[id name full_name email] }
-                              }}
+                              only: [:id]
+                            }
                           }
                         })).tap do |hash|
+      # Users go through UserSummarySerializer so they follow the username/name contract
+      hash['from_participant']&.merge!('user' => from_participant.user && UserSummarySerializer.new(from_participant.user).as_json)
+      hash['to_participant']&.merge!('user' => to_participant.user && UserSummarySerializer.new(to_participant.user).as_json)
     end
   end
 end

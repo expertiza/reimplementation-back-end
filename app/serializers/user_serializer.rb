@@ -1,13 +1,20 @@
 # frozen_string_literal: true
 
-class UserSerializer < ActiveModel::Serializer
-  attributes :id, :username, :email, :fullName
+# Full user shape, used wherever a user is rendered on its own (`render json: user`).
+# Inherits the `username` / `name` contract from UserSummarySerializer.
+class UserSerializer < UserSummarySerializer
+  attributes :email_on_review, :email_on_submission, :email_on_review_of_review,
+             :role, :parent, :institution
 
-  def username
-    object.name
+  def role
+    object.role&.slice(:id, :name)
   end
 
-  def fullName
-    object.full_name
+  def parent
+    { id: object.parent&.id, name: object.parent && UserSummarySerializer.new(object.parent).name }
   end
-end 
+
+  def institution
+    { id: object.institution&.id, name: object.institution&.name }
+  end
+end

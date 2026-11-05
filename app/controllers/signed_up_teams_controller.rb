@@ -13,7 +13,12 @@ class SignedUpTeamsController < ApplicationController
       # Get signed up teams for a specific topic with their participants
       @signed_up_teams = SignedUpTeam.where(project_topic_id: params[:topic_id])
                                       .includes(team: :users, project_topic: :assignment)
-      render json: @signed_up_teams, include: { team: { include: :users, methods: [:team_size, :max_size] }, project_topic: {} }
+      # Team users go through UserSummarySerializer rather than `include: :users`, which dumps every user column
+      render json: @signed_up_teams.map { |signed_up_team|
+        signed_up_team.as_json(include: { team: { methods: [:team_size, :max_size] }, project_topic: {} }).tap do |hash|
+          hash['team']&.merge!('users' => signed_up_team.team.users.map { |user| UserSummarySerializer.new(user).as_json })
+        end
+      }
     else
       render json: { error: 'Either assignment_id or topic_id parameter is required' }, status: :bad_request
     end

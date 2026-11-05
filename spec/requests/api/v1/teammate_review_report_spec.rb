@@ -108,18 +108,20 @@ RSpec.describe 'Teammate Review Report', type: :request do
       expect(body['reviews'].size).to eq(1)
     end
 
-    it 'includes reviewer id and user name' do
+    it 'includes reviewer id, username and full name' do
       generate_report
       review = JSON.parse(response.body)['reviews'].first
       expect(review['reviewer']['id']).to eq(ap1.id)
-      expect(review['reviewer']['user']['name']).to eq(student1.name)
+      expect(review['reviewer']['user']['username']).to eq(student1.name)
+      expect(review['reviewer']['user']['name']).to eq(student1.full_name)
     end
 
-    it 'includes reviewee id and user name' do
+    it 'includes reviewee id, username and full name' do
       generate_report
       review = JSON.parse(response.body)['reviews'].first
       expect(review['reviewee']['id']).to eq(ap2.id)
-      expect(review['reviewee']['user']['name']).to eq(student2.name)
+      expect(review['reviewee']['user']['username']).to eq(student2.name)
+      expect(review['reviewee']['user']['name']).to eq(student2.full_name)
     end
 
     it 'marks submitted as true when a submitted response exists' do
