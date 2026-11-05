@@ -42,10 +42,10 @@ RSpec.describe ReviewMappingsController, type: :controller do
     )
   end
 
-  let(:handler) { instance_double(ReviewMappingHandler) }
+  let(:handler) { instance_double(ReviewAllocator) }
 
   before do
-    allow(ReviewMappingHandler).to receive(:new).and_return(handler)
+    allow(ReviewAllocator).to receive(:new).and_return(handler)
     allow_any_instance_of(Authorization).to receive(:authorize).and_return(true)
     # Stub current_user and auth_token
     allow(controller).to receive(:authenticate_request!).and_return(true)
@@ -142,7 +142,8 @@ RSpec.describe ReviewMappingsController, type: :controller do
   describe 'PATCH #assign_review_grade' do
     it 'grades a review' do
       allow_any_instance_of(Authorization).to receive(:authorize).and_return(true)
-      expect(handler).to receive(:assign_review_grade).with(response_map, grade: '95', comment: 'Good work')
+      expect(response_map).to receive(:assign_grade).with(grade: '95', comment: 'Good work')
+      allow(ReviewResponseMap).to receive(:find).with(response_map.id.to_s).and_return(response_map)
       patch :assign_review_grade, params: { assignment_id: assignment.id, id: response_map.id, grade: 95, comment: 'Good work' }, format: :json
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body)).to eq({

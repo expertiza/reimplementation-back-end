@@ -13,35 +13,40 @@ class ReviewMappingsController < ApplicationController
 
   # ===== STATIC ASSIGNMENT =====
 
+  # Assigns reviewers to submissions in round-robin order using RoundRobinStrategy.
   def assign_round_robin
-    ReviewMappingHandler.new(@assignment).assign_statically(ReviewMappingStrategies::RoundRobinStrategy)
+    ReviewAllocator.new(@assignment).assign_statically(ReviewMappingStrategies::RoundRobinStrategy)
     render json: { status: 'ok', message: 'Round-robin assignments created' }
   end
 
+  # Assigns reviewers to submissions from a CSV upload.
   def assign_from_csv
-    ReviewMappingHandler.new(@assignment).assign_from_csv(params[:csv].read)
+    ReviewAllocator.new(@assignment).assign_from_csv(params[:csv].read)
     render json: { status: 'ok', message: 'CSV-based assignments created' }
   end
 
+  # Assigns reviewers to submissions randomly.
   def assign_random
-    ReviewMappingHandler.new(@assignment).assign_random
+    ReviewAllocator.new(@assignment).assign_random
     render json: { status: 'ok', message: 'Random assignments created' }
   end
 
   # ===== DYNAMIC ASSIGNMENT =====
 
+  # Assigns a reviewer to the submission with the fewest reviews (instructor-facing).
   def request_review_fewest
     strategy = ReviewMappingStrategies::LeastReviewedSubmissionStrategy
     reviewer = AssignmentParticipant.find(params[:reviewer_id])
-    mapping  = ReviewMappingHandler.new(@assignment).assign_dynamically(strategy, reviewer)
+    mapping  = ReviewAllocator.new(@assignment).assign_dynamically(strategy, reviewer)
     return render json: { status: 'error', message: 'No team available' }, status: :unprocessable_entity unless mapping
 
     render json: { status: 'ok', mapping_id: mapping.id }
   end
 
+  # Assigns a reviewer to an eligible submission balanced across topics (instructor-facing).
   def request_review_topic_balance
     reviewer = AssignmentParticipant.find(params[:reviewer_id])
-    mapping  = ReviewMappingHandler.new(@assignment).assign_topic(reviewer)
+    mapping  = ReviewAllocator.new(@assignment).assign_eligible_review(reviewer)
     return render json: { status: 'error', message: 'No eligible topic' }, status: :unprocessable_entity unless mapping
 
     render json: { status: 'ok', mapping_id: mapping.id }
@@ -58,7 +63,7 @@ class ReviewMappingsController < ApplicationController
     end
 
     threshold = @assignment.review_topic_threshold || 1
-    eligible, min_count = ReviewMappingHandler.new(@assignment).eligible_topics(participant)
+    eligible, min_count = ReviewAllocator.new(@assignment).eligible_topics(participant)
     render json: { eligible_topics: eligible, threshold: threshold, min_review_count: min_count }
   end
 
@@ -67,10 +72,10 @@ class ReviewMappingsController < ApplicationController
     participant = current_participant
     return render json: { error: 'You are not a participant in this assignment' }, status: :forbidden unless participant
 
-    handler = ReviewMappingHandler.new(@assignment)
+    handler = ReviewAllocator.new(@assignment)
     unless handler.can_accept_more_reviews?(participant)
       max = @assignment.num_reviews_allowed
-      return render json: { error: "You cannot do more than #{max} reviews for this assignment." },
+      return render json: { error: "You cannot review more than #{max} submissions for this assignment." },
                     status: :unprocessable_entity
     end
 
@@ -84,28 +89,32 @@ class ReviewMappingsController < ApplicationController
 
   # ===== CALIBRATION =====
 
+  # Assigns calibration reviews to all student participants in round-robin order.
   def assign_calibration_artifacts
-    ReviewMappingHandler.new(@assignment).assign_calibration_reviews_round_robin
+    ReviewAllocator.new(@assignment).assign_calibration_reviews_round_robin
     render json: { status: 'ok', message: 'Calibration reviews assigned to all reviewers' }
   end
 
-  # ===== DELETE =====
+  # ===== DELETION =====
 
+  # Deletes a single review mapping by id.
   def destroy
-    ReviewMappingHandler.new(@assignment).delete_review_mapping(params[:id])
+    ReviewAllocator.new(@assignment).delete_review_mapping(params[:id])
     render json: { status: 'ok', message: 'Mapping deleted' }
   end
 
+  # Deletes all review mappings for a given reviewer on this assignment.
   def delete_all_for_reviewer
-    ReviewMappingHandler.new(@assignment).delete_all_reviews_by(AssignmentParticipant.find(params[:reviewer_id]))
+    ReviewAllocator.new(@assignment).delete_all_reviews_by(AssignmentParticipant.find(params[:reviewer_id]))
     render json: { status: 'ok', message: 'All mappings for reviewer deleted' }
   end
 
   # ===== INSTRUCTOR GRADING =====
 
+  # Records the instructor's grade and comment for a completed review mapping.
   def assign_review_grade
     mapping = ReviewResponseMap.find(params[:id])
-    ReviewMappingHandler.new(@assignment).assign_review_grade(mapping, grade: params[:grade], comment: params[:comment])
+    mapping.assign_grade(grade: params[:grade], comment: params[:comment])
     render json: { status: 'ok', message: 'Review graded' }
   end
 
@@ -120,28 +129,31 @@ class ReviewMappingsController < ApplicationController
   end
 
   def assign_topic_review(participant)
-    handler = ReviewMappingHandler.new(@assignment)
+    handler = ReviewAllocator.new(@assignment)
     if @assignment.can_choose_topic_to_review && params[:topic_id].blank? && !params[:i_dont_care].present?
       return render json: { error: 'No topic selected.' }, status: :unprocessable_entity
     end
 
-    return handler.assign_topic(participant) unless params[:topic_id].present?
+    return handler.assign_eligible_review(participant) unless params[:topic_id].present?
 
     topic = ProjectTopic.find_by(id: params[:topic_id].to_i, assignment_id: @assignment.id)
     return render json: { error: 'Topic not found.' }, status: :not_found unless topic
 
+    # Guard kept even though the UI shows only eligible topics: API clients can POST
+    # any topic_id directly, and a topic can become ineligible in the time between
+    # the student fetching the eligible-topics list and submitting this request.
     unless handler.topic_eligible_for?(participant, topic)
       return render json: { error: 'This topic is not available for review at this time.' },
                     status: :unprocessable_entity
     end
 
-    handler.assign_topic(participant, topic: topic)
+    handler.assign_eligible_review(participant, topic: topic)
   end
 
   def assign_submission_review(participant)
     return render json: { error: 'Invalid topic.' }, status: :unprocessable_entity if params[:topic_id].present?
 
-    ReviewMappingHandler.new(@assignment)
-                        .assign_dynamically(ReviewMappingStrategies::LeastReviewedSubmissionStrategy, participant)
+    ReviewAllocator.new(@assignment)
+                   .assign_dynamically(ReviewMappingStrategies::LeastReviewedSubmissionStrategy, participant)
   end
 end

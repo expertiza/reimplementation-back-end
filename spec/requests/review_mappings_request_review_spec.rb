@@ -39,7 +39,7 @@ RSpec.describe 'ReviewMappings Request Review API', type: :request do
               reviewee_id: reviewee_team.id,
               reviewed_object_id: assignment.id
             )
-            allow_any_instance_of(ReviewMappingHandler).to receive(:assign_dynamically).and_return(mapping)
+            allow_any_instance_of(ReviewAllocator).to receive(:assign_dynamically).and_return(mapping)
           end
 
           run_test! do |response|
@@ -81,7 +81,7 @@ RSpec.describe 'ReviewMappings Request Review API', type: :request do
 
         run_test! do |response|
           data = JSON.parse(response.body)
-          expect(data['error']).to include('cannot do more than')
+          expect(data['error']).to include('cannot review more than')
         end
       end
 

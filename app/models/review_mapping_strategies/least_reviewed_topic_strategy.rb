@@ -18,11 +18,12 @@ module ReviewMappingStrategies
 
     private
 
-    # Returns a hash of { topic_id => review_count } for all teams in this assignment,
-    # by joining ReviewResponseMap through signed_up_teams to group at the topic level.
+    # Returns the number of submitted reviews per topic for this assignment,
+    # keyed by project_topic_id. Only counts mappings that have a submitted response.
     def topic_review_counts
       ReviewResponseMap
         .where(reviewed_object_id: @assignment.id)
+        .joins(:responses).where(responses: { is_submitted: true })
         .joins('INNER JOIN signed_up_teams ON signed_up_teams.team_id = response_maps.reviewee_id')
         .group('signed_up_teams.project_topic_id')
         .count
@@ -45,11 +46,14 @@ module ReviewMappingStrategies
       counts[id] || 0
     end
 
-    # Returns a hash of { team_id => review_count } for all reviews on this assignment,
-    # memoized so assign_one only issues this query once per strategy invocation.
+    # Returns the number of submitted reviews per team for this assignment,
+    # keyed by reviewee_id. Only counts mappings that have a submitted response.
+    # Result is cached on first call so repeated use within one strategy instance
+    # does not issue additional queries.
     def team_review_counts
       @team_review_counts ||= ReviewResponseMap
                               .where(reviewed_object_id: @assignment.id)
+                              .joins(:responses).where(responses: { is_submitted: true })
                               .group(:reviewee_id)
                               .count
     end
@@ -75,9 +79,13 @@ module ReviewMappingStrategies
       end
     end
 
-    # Pass 2: keep only teams whose review count is within global_min + review_topic_threshold.
-    # global_min is the fewest reviews any team in the assignment has (across all topics),
-    # so the fairness window is consistent with the least-reviewed submission assignment-wide.
+    # Pass 2: keep only teams whose submitted-review count is within the fairness window.
+    # The window upper bound is global_min + review_topic_threshold, where global_min is
+    # the minimum review count across ALL teams in the assignment, not just the teams on
+    # this particular topic. Using the assignment-wide minimum prevents a topic where every
+    # team already has many reviews from continuing to generate new assignments just because
+    # its local minimum is high; the window stays anchored to the least-reviewed team
+    # anywhere in the assignment.
     def apply_threshold_window(teams, team_counts)
       threshold  = @assignment.review_topic_threshold || 0
       global_min = @assignment.teams.map { |t| team_counts[t.id] || 0 }.min || 0

@@ -32,4 +32,14 @@ class ReviewResponseMap < ResponseMap
   def review_map_type
     'ReviewResponseMap'
   end
+
+  # Records the instructor's (or TA's) grade and comment for this review.
+  # Does nothing when the assignment uses team-based reviews, since ReviewGrade is
+  # keyed on an individual participant_id and teams cannot receive it.
+  def assign_grade(grade:, comment:)
+    return if reviewing_is_done_by_teams?
+
+    ReviewGrade.find_or_create_by!(participant_id: reviewer_id)
+               .update!(grade_for_reviewer: grade, comment_for_reviewer: comment)
+  end
 end

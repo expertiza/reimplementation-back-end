@@ -5,7 +5,7 @@ class StudentReviewController < ApplicationController
     current_user_has_student_privileges?
   end
 
-  # List the reviews assigned to a student or a team.
+  # List the reviews assigned to a student (or, in the future, a team).
   # GET /assignments/:assignment_id/student_review/list
   def list
     reviewer_id = reviewer_id_for(@participant)
@@ -72,6 +72,8 @@ class StudentReviewController < ApplicationController
     end
   end
 
+  # Returns true if the current user belongs to the team that is the reviewer for this mapping.
+  # Invoked when the assignment uses team-based reviews (reviewing_is_done_by_teams?).
   def team_reviewer?(mapping)
     mapping.reviewer.is_a?(AssignmentTeam) &&
       mapping.reviewer.participants.exists?(user_id: current_user.id)
@@ -136,6 +138,7 @@ class StudentReviewController < ApplicationController
     last_response.is_submitted ? 'completed' : 'in_progress'
   end
 
+  # Serializes a ReviewResponseMap into the shape returned by the list endpoint.
   def serialize_mapping(map)
     topic = SignedUpTeam.find_by(team_id: map.reviewee&.id)&.project_topic
 
