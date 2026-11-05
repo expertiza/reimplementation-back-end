@@ -10,7 +10,7 @@ module Reports
   #         id: Integer,                         # ReviewResponseMap id
   #         reviewer: {
   #           id: Integer,                       # AssignmentParticipant id
-  #           user: { id: Integer, name: String }
+  #           user: { id: Integer, username: String, name: String }  # name = full name
   #         },
   #         reviewee: { id: Integer },           # AssignmentTeam id
   #         responses: [
@@ -48,14 +48,8 @@ module Reports
     MAP_JSON_OPTIONS = {
       only: [:id],
       include: {
-        reviewer: {
-          only: [:id],
-          include: { user: { only: %i[id name] } }
-        },
-        reviewee: {
-          only: [:id],
-          include: { user: { only: %i[id name] } }
-        },
+        reviewer: { only: [:id] },
+        reviewee: { only: [:id] },
         responses: {
           only: %i[id round additional_comment is_submitted],
           include: {
@@ -95,7 +89,7 @@ module Reports
       reviewer_scores, team_averages, reviewer_volumes = compute_all_metrics(maps, max_q_score_by_round)
 
       {
-        reviews:                      maps.as_json(MAP_JSON_OPTIONS),
+        reviews:                      maps.map { |map| map_json(map) },
         reviewer_scores:              reviewer_scores,
         reviewer_volumes:             reviewer_volumes,
         team_averages:                team_averages,
@@ -107,6 +101,19 @@ module Reports
     end
 
     private
+
+    # Reviewer/reviewee users go through UserSummarySerializer so they follow the
+    # username/name contract (users are already eager-loaded by the caller).
+    def map_json(map)
+      map.as_json(MAP_JSON_OPTIONS).tap do |hash|
+        hash['reviewer']&.merge!('user' => user_json(map.reviewer&.user))
+        hash['reviewee']&.merge!('user' => user_json(map.reviewee&.user))
+      end
+    end
+
+    def user_json(user)
+      user && UserSummarySerializer.new(user).as_json.slice(:id, :username, :name)
+    end
 
     # Single pass over the pre-loaded maps that produces all three metrics:
     #   reviewer_scores  — { reviewer_id => { reviewee_id => { round => pct } } }

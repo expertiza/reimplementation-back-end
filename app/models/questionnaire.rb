@@ -60,11 +60,10 @@ class Questionnaire < ApplicationRecord # rubocop:disable Metrics/ClassLength
                                    questionnaire_type
                                    instructor_id],
                           include: {
-                            instructor: { only: %i[name email fullname role] },
                             items: {}
                           }
                         })).tap do |hash|
-      hash['instructor'] ||= { id: nil, name: nil }
+      hash['instructor'] = instructor ? UserSummarySerializer.new(instructor).as_json : { id: nil, name: nil }
       hash['items'] ||= []
     end
   end

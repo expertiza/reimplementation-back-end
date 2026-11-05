@@ -11,11 +11,11 @@ module Reports
   #         id: Integer,                        # TeammateReviewResponseMap id
   #         reviewer: {
   #           id: Integer,                      # AssignmentParticipant id
-  #           user: { id: Integer, name: String }
+  #           user: { id: Integer, username: String, name: String }  # name = full name
   #         },
   #         reviewee: {
   #           id: Integer,                      # AssignmentParticipant id
-  #           user: { id: Integer, name: String }
+  #           user: { id: Integer, username: String, name: String }  # name = full name
   #         },
   #         submitted: Boolean,
   #         last_reviewed_at: String | nil      # ISO8601 timestamp or nil
@@ -26,14 +26,8 @@ module Reports
     MAP_JSON_OPTIONS = {
       only: [:id],
       include: {
-        reviewer: {
-          only: [:id],
-          include: { user: { only: %i[id name] } }
-        },
-        reviewee: {
-          only: [:id],
-          include: { user: { only: %i[id name] } }
-        },
+        reviewer: { only: [:id] },
+        reviewee: { only: [:id] },
         responses: {
           only: %i[id is_submitted additional_comment],
           include: {
@@ -68,7 +62,7 @@ module Reports
 
       reviews = maps.map do |map|
         latest = map.responses.select(&:is_submitted).max_by(&:updated_at)
-        map.as_json(MAP_JSON_OPTIONS).merge(
+        map_json(map).merge(
           team_name:        team_by_participant[map.reviewer_id],
           submitted:        latest.present?,
           last_reviewed_at: latest&.updated_at&.iso8601
@@ -76,6 +70,21 @@ module Reports
       end
 
       { reviews: reviews }
+    end
+
+    private
+
+    # Reviewer/reviewee users go through UserSummarySerializer so they follow the
+    # username/name contract (users are already eager-loaded by the caller).
+    def map_json(map)
+      map.as_json(MAP_JSON_OPTIONS).tap do |hash|
+        hash['reviewer']&.merge!('user' => user_json(map.reviewer&.user))
+        hash['reviewee']&.merge!('user' => user_json(map.reviewee&.user))
+      end
+    end
+
+    def user_json(user)
+      user && UserSummarySerializer.new(user).as_json.slice(:id, :username, :name)
     end
   end
 end

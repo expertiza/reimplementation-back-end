@@ -29,7 +29,8 @@ class ParticipantsController < ApplicationController
     if participants.nil?
       render json: participants.errors, status: :unprocessable_entity
     else
-      render json: participants.as_json(include: { user: { include: %i[role parent] } }), status: :ok
+      participants = participants.includes(user: %i[role parent institution])
+      render json: participants.map { |p| p.as_json.merge('user' => UserSerializer.new(p.user).as_json) }, status: :ok
     end
   end
 
