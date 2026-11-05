@@ -5,7 +5,7 @@ class Role < ApplicationRecord
   belongs_to :parent, class_name: 'Role', optional: true
   has_many :users, dependent: :nullify
 
-  # Role IDs (must match seeds.rb order)
+  # Role IDs
   STUDENT = 1
   TEACHING_ASSISTANT = 2
   INSTRUCTOR = 3
