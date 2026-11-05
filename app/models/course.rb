@@ -38,12 +38,12 @@ class Course < ApplicationRecord
 
   # Removes Teaching Assistant from the course
   def remove_ta(user_id)
-    ta_mapping = ta_mappings.find_by(user_id: user_id, course_id: :id)
+    ta_mapping = ta_mappings.find_by(user_id: user_id)
     return { success: false, message: "No TA mapping found for the specified course and TA" } if ta_mapping.nil?
     ta = User.find(ta_mapping.user_id)
     ta_count = TaMapping.where(user_id: user_id).size - 1
     if ta_count.zero?
-      ta.update(role: Role::STUDENT)
+      ta.update(role_id: Role::STUDENT)
     end
     ta_mapping.destroy
     { success: true, ta_name: ta.name }
