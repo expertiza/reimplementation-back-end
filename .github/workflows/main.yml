@@ -117,9 +117,10 @@ jobs:
                 total = lines.length
                 covered = lines.count { |hits| hits.to_i > 0 }
                 percentage = total.zero? ? 0.0 : covered * 100.0 / total
-                puts format("%.2f%% (%d/%d lines)", percentage, covered, total)
-              ' 2>/dev/null); then
-                echo "Line coverage: $coverage"
+                puts format("**Line coverage: %.2f%%** (%d/%d lines)",
+                            percentage, covered, total)
+                ' 2>/dev/null); then
+                echo "$coverage"
               else
                 echo "Coverage data could not be summarized. See coverage artifacts."
               fi
