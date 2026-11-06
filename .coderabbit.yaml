@@ -117,8 +117,10 @@ reviews:
 
     - path: "Dangerfile"
       instructions: |
-        Preserve the legacy Expertiza Danger policy. If replacing or changing a Danger rule,
-        verify the equivalent behavior exists in CodeRabbit, GitHub Actions, or another documented enforcement path.
+        Review changes to Danger rules for correctness and unintended
+        policy regressions. Danger remains responsible for deterministic
+        PR policy enforcement. Flag changes that weaken existing checks
+        without a documented justification.
 
     - path: "Gemfile"
       instructions: |
@@ -169,7 +171,8 @@ reviews:
   auto_review:
     enabled: true
     drafts: false
-    auto_incremental_review: false
+    auto_incremental_review: true
+    auto_pause_after_reviewed_commits: 3
     ignore_title_keywords:
       - "WIP"
       - "DRAFT"
@@ -181,59 +184,27 @@ reviews:
       mode: "warning"
       requirements: "Use a concise, imperative title that names the subsystem changed."
     custom_checks:
-      - name: "schema-without-migration"
-        mode: "warning"
-        instructions: |
-          Warn if db/schema.rb changes but no file under db/migrate/ changes in the same pull request.
-
       - name: "behavior-change-needs-tests"
         mode: "warning"
         instructions: |
-          Warn when files under app/controllers/, app/models/, config/routes.rb, or db/migrate/ change
-          without meaningful updates under spec/models/ or spec/requests/.
+          Review whether behavioral changes have meaningful tests
+          covering the intended functionality and important edge cases.
+          Focus on test effectiveness rather than simply checking
+          whether test files were modified.
 
       - name: "workflow-security"
         mode: "warning"
         instructions: |
-          Warn on GitHub Actions changes that use pull_request_target with PR-head checkout,
-          overbroad write permissions, or token and secrets exposure patterns.
+          Warn on GitHub Actions changes that use pull_request_target
+          with PR-head checkout, overbroad write permissions,
+          or token and secrets exposure patterns.
 
       - name: "config-and-setup-scrutiny"
         mode: "warning"
         instructions: |
-          Warn when config/database.yml, config/storage.yml, config/credentials.yml.enc, config.ru, setup.sh,
-          or workflow files change without a clear explanation in the pull request summary.
-
-      - name: "todo-temp-debug-artifacts"
-        mode: "warning"
-        instructions: |
-          Warn when the pull request introduces TODO or FIXME markers, debug print statements,
-          temp or cache artifacts, or generated local-state files such as results.txt or safe.log.
-
-      - name: "legacy-pr-scope-and-title"
-        mode: "warning"
-        instructions: |
-          Warn on pull requests larger than roughly 500 LoC, touching more than 30 files,
-          course-project PRs under roughly 50 LoC, duplicated commit messages, or WIP titles.
-
-      - name: "legacy-config-file-guardrails"
-        mode: "warning"
-        instructions: |
-          For non-maintainers, warn on changes to Gemfile, Gemfile.lock, .gitignore, .rspec, Dangerfile,
-          Rakefile, config.ru, setup.sh, YAML files, Markdown files, vendor/**, and spec/factories/** unless clearly justified.
-
-      - name: "legacy-rspec-hygiene"
-        mode: "warning"
-        instructions: |
-          Warn on skipped, pending, or focused specs; `.should`; unnecessary helper requires;
-          text fixtures under spec; and weak/shallow expectations such as wildcard matcher overuse,
-          no expectations, commented-out expectations, matcher-less expectations, or non-real-value assertions.
-
-      - name: "legacy-global-debug-code"
-        mode: "warning"
-        instructions: |
-          Warn on newly introduced global variables, class variables, or debugging statements such as puts, print,
-          binding.pry, debugger, or console.log.
+          Review configuration and setup changes for security risks,
+          compatibility issues, and unintended behavioral changes.
+          Avoid repeating Danger's file-change notifications.
 
   tools:
     github-checks:

@@ -7,7 +7,8 @@ This repository uses CodeRabbit as an AI pull request reviewer for the Expertiza
 - Review pull requests automatically and re-review on new commits.
 - Leave useful inline comments on Rails, API, database, workflow, and test changes.
 - Summarize the impact of a pull request clearly for human reviewers.
-- Surface policy issues that used to live in Danger-like rules, but start in warning mode instead of blocking merges.
+- Focus on contextual code review, including correctness, security, maintainability, performance, and test effectiveness.
+- Avoid repeating deterministic PR policy checks already performed by Danger or GitHub Actions.
 - Read GitHub check results and use them as context when tests or workflows fail.
 
 ## What CodeRabbit Should Not Replace Here
@@ -57,7 +58,6 @@ This repository uses CodeRabbit as an AI pull request reviewer for the Expertiza
 
 - Prefer reversible migrations.
 - Check for missing indexes, foreign keys, null constraints, and destructive data changes.
-- If `db/schema.rb` changes, expect a matching migration.
 - Schema changes should usually have corresponding model and test updates.
 
 ### Tests
@@ -65,13 +65,10 @@ This repository uses CodeRabbit as an AI pull request reviewer for the Expertiza
 - Prefer meaningful request and model specs over shallow examples.
 - Check authentication, authorization, invalid input, and failure paths.
 - Flag behavior changes in `app/` or `config/routes.rb` that are not reflected in `spec/models` or `spec/requests`.
-- Apply the legacy Expertiza Danger RSpec rules:
-  - avoid skipped, pending, or focused tests
-  - avoid `.should`
-  - avoid redundant helper `require` lines
-  - avoid overusing `create(` in unit-style specs when lighter setup would work
-  - flag shallow expectations such as wildcard matcher overuse, missing expectations, commented-out expectations,
-    matcher-less expectations, and assertions that only prove values are not nil, empty, or zero
+- Evaluate whether tests meaningfully verify the intended behavior.
+- Review important edge cases, failure scenarios, and assertion quality.
+- Check that tests remain aligned with application changes.
+- Leave mechanical RSpec policy checks to Danger.
 
 ### Workflows And Bot Files
 
@@ -79,53 +76,46 @@ This repository uses CodeRabbit as an AI pull request reviewer for the Expertiza
 - Flag `pull_request_target` combined with checkout of PR-head code, broad write permissions, unsafe token handling, brittle artifact passing, and comment spam patterns.
 - If a Danger rule is removed, the replacement enforcement path must be explicit.
 
-## Legacy Danger Policy To Preserve
+## Responsibility Separation: Danger, CodeRabbit, and CI
 
-The repository now carries a larger Expertiza-style Danger policy. CodeRabbit should mirror that policy in spirit even when the rule is heuristic rather than executable.
+### Danger
 
-### Pull Request Hygiene
+Danger remains responsible for deterministic PR policies, including:
 
-- Welcome first-time or non-maintainer contributors politely.
-- Flag PRs over roughly 500 LoC.
-- Flag course-project PRs under roughly 50 LoC.
-- Flag PRs touching more than 30 files.
-- Flag many duplicated commit messages.
-- Flag WIP titles.
+- PR size and changed file count.
+- WIP titles and duplicate commit messages.
+- TODO/FIXME markers and debugging statements.
+- Temporary files and sensitive configuration changes.
+- Mechanical RSpec checks, such as skipped or focused tests,
+  deprecated syntax, and basic assertion patterns.
+- Schema changes without corresponding migrations.
 
-### Change Content Rules
+Danger intentionally runs on pull requests created from
+branches within the main repository.
 
-- Flag newly added TODO or FIXME markers.
-- Fail or strongly warn on temp, tmp, or cache artifacts committed into the PR.
-- Flag newly introduced global variables, class variables, and obvious debug code.
-- Flag application changes without corresponding test changes.
+### CodeRabbit
 
-### Spec Rules
+CodeRabbit focuses on contextual code review, including:
 
-- Flag skipped, pending, or focused tests.
-- Discourage `create(` inside model and controller specs when lighter setup would work.
-- Reject `.should`.
-- Reject redundant `require 'rspec'`, `spec_helper`, `rails_helper`, `test_helper`, or factory helper lines in specs.
-- Warn on committed `.txt` or `.csv` files under spec paths unless clearly justified.
+- Application correctness and maintainability.
+- Authentication, authorization, and security vulnerabilities.
+- Database integrity, migration safety, and query efficiency.
+- Test effectiveness and meaningful assertion coverage.
+- API compatibility and Swagger documentation consistency.
+- GitHub Actions security and deployment risks.
+- Dockerfile security, image efficiency, and dependency management.
+- Setup-script safety, idempotence, and environment compatibility.
 
-### Sensitive Files
+CodeRabbit should avoid duplicating mechanical warnings
+already reported by Danger or other CI tools.
 
-- Non-maintainer changes to Markdown, YAML, helper files, Gemfile, Gemfile.lock, `.gitignore`, `.rspec`,
-  `Dangerfile`, `Rakefile`, `config.ru`, `setup.sh`, `vendor/**`, and `spec/factories/**` should be scrutinized closely.
-- Schema changes should normally come with migrations.
+### GitHub Actions
 
-### Shallow Test Detection
+GitHub Actions remains responsible for running RSpec,
+RuboCop, spellchecking, coverage reporting, and other CI checks.
 
-- Flag excessive wildcard argument matchers.
-- Flag tests with no expectations.
-- Flag commented-out expectations.
-- Flag expectations without matchers.
-- Flag expectations that only verify non-nil, non-empty, or non-zero conditions instead of real values.
-- In page-oriented tests, encourage assertions beyond simple page content when deeper validation is possible.
-
-### Developer Scripts And Docker
-
-- `bin/*` and `setup.sh` should be idempotent and safe for repeated local use.
-- `Dockerfile` changes should minimize layers, avoid unnecessary packages, and avoid leaving unsafe defaults behind.
+CodeRabbit provides supplementary review feedback and must
+not be required for core CI validation.
 
 ## How The `.coderabbit.yaml` Is Structured
 
@@ -142,7 +132,7 @@ The repository now carries a larger Expertiza-style Danger policy. CodeRabbit sh
 - CodeRabbit reviews PRs automatically.
 - It skips drafts.
 - It re-reviews new commits incrementally.
-- It pauses after a few reviewed commits so a very active PR does not get spammy.
+- It pauses after a few reviewed commits to avoid excessive review activity.
 
 ### Labels
 
@@ -174,19 +164,17 @@ The config teaches CodeRabbit that different parts of the repository need differ
 
 ### Pre-Merge Checks
 
-These checks are configured as warnings first. They are meant to preserve policy signal from the current Danger setup without creating accidental merge blockers.
+The following contextual pre-merge checks remain configured
+as warnings:
 
-- `schema-without-migration`
-- `behavior-change-needs-tests`
-- `workflow-security`
-- `config-and-setup-scrutiny`
-- `todo-temp-debug-artifacts`
-- `legacy-pr-scope-and-title`
-- `legacy-config-file-guardrails`
-- `legacy-rspec-hygiene`
-- `legacy-global-debug-code`
+- `behavior-change-needs-tests`: Reviews whether behavior changes
+  are meaningfully tested.
+- `workflow-security`: Identifies security risks in GitHub Actions.
+- `config-and-setup-scrutiny`: Reviews configuration changes for
+  security, compatibility, and unintended behavior.
 
-These checks should only move from `warning` to `error` after the team is happy with the signal quality.
+Mechanical PR policy checks remain with Danger to prevent
+duplicated automated feedback.
 
 ### Tool Integrations
 
@@ -219,26 +207,45 @@ If the current CodeRabbit plan does not include tool integrations, the YAML can 
 
 These are execution workflows and should remain the source of truth for running tests, linting, coverage, and build logic.
 
-### Keep For Comparison During Rollout
+### Danger
 
-- `Dangerfile`
-- `.github/workflows/danger.yml`
-- `.github/workflows/danger_target.yml`
+The existing Dangerfile and Danger workflow will be retained.
 
-Keep them temporarily while comparing CodeRabbit output against current customized review behavior.
+Danger enforces deterministic PR policies, while CodeRabbit
+provides contextual review and analysis.
+
+The two tools serve complementary purposes rather than
+replacing one another.
+
+### Validation
+
+To evaluate this separation:
+
+1. Compare Danger and CodeRabbit feedback on representative PRs.
+2. Check whether duplicate warnings have been reduced.
+3. Verify that Danger continues to run for same-repository PRs.
+4. Confirm that CodeRabbit reviews focus on application behavior,
+   test quality, security, and maintainability.
+5. Monitor CodeRabbit review availability and rate limits.
 
 ### Possible Future Cleanup
 
-Once CodeRabbit proves it is consistently covering the intended review policy, the repository can decide whether parts of the Danger setup are redundant. That should happen only after side-by-side comparison on real PRs.
+Future cleanup should focus on reducing duplicate feedback,
+improving the accuracy of existing checks, and removing obsolete
+configuration.
+
+Danger will remain responsible for deterministic PR policies,
+while CodeRabbit will provide contextual analysis.
 
 ## Rollout Plan
 
 1. Commit `.coderabbit.yaml` and this document on a feature branch.
-2. Open a small PR that touches one Rails file and, ideally, one spec or workflow file.
-3. Confirm CodeRabbit posts an automatic review and walkthrough.
-4. Compare its comments with Danger and CI output.
-5. Tune noisy path instructions or checks before expanding enforcement.
-6. Only after a few successful PRs, decide whether any Danger logic should be retired.
+2. Open a PR for the CodeRabbit and Danger overlap cleanup.
+3. Validate the CodeRabbit configuration and verify that existing Danger checks remain unchanged.
+4. Compare Danger, CodeRabbit, and CI feedback on representative PRs.
+5. Confirm that CodeRabbit focuses on correctness, security, maintainability, and meaningful test coverage.
+6. Monitor CodeRabbit rate limits while retaining automatic incremental reviews.
+7. Refine noisy instructions without weakening deterministic PR checks.
 
 ## Practical Commands
 
