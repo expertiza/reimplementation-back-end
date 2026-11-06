@@ -110,6 +110,7 @@ class StudentReviewController < ApplicationController
       id: response.id,
       is_submitted: response.is_submitted,
       additional_comment: response.additional_comment,
+      updated_at: response.updated_at,
       answers: response.scores.map do |a|
         { id: a.id, item_id: a.item_id, answer: a.answer, comments: a.comments }
       end

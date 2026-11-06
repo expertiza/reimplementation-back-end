@@ -277,6 +277,7 @@ RSpec.describe 'StudentReview API', type: :request do
           expect(data['response']).not_to be_nil
           expect(data['response']['is_submitted']).to be true
           expect(data['response']['additional_comment']).to eq('Solid work overall.')
+          expect(data['response']['updated_at']).not_to be_nil
           answers = data['response']['answers']
           expect(answers.size).to eq(1)
           expect(answers.first['item_id']).to eq(criterion_item.id)

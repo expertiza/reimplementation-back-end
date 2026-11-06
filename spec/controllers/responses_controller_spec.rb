@@ -67,11 +67,13 @@ RSpec.describe ResponsesController, type: :controller do
 
   describe 'GET #show' do
     let(:answer_double) { double('Answer', id: 10, item_id: 2, answer: 3, comments: 'Good effort') }
+    let(:response_ts) { Time.zone.parse('2024-01-15T10:00:00Z') }
     let(:response_double) do
       double('Response',
              id: 5,
              is_submitted: false,
              additional_comment: 'Overall good.',
+             updated_at: response_ts,
              scores: [],
              rubric_label: 'Response')
     end
@@ -103,6 +105,13 @@ RSpec.describe ResponsesController, type: :controller do
         expect(body['additional_comment']).to eq('Overall good.')
         expect(body['answers']).to eq([])
       end
+
+      it 'includes updated_at in the response' do
+        get :show, params: { id: 5 }
+        body = JSON.parse(response.body)
+        expect(body['updated_at']).not_to be_nil
+        expect(Time.zone.parse(body['updated_at']).to_i).to eq(response_ts.to_i)
+      end
     end
 
     context 'when response has answers' do
@@ -129,6 +138,7 @@ RSpec.describe ResponsesController, type: :controller do
                id: 7,
                is_submitted: true,
                additional_comment: nil,
+               updated_at: response_ts,
                scores: [],
                rubric_label: 'Response')
       end
@@ -291,7 +301,8 @@ RSpec.describe ResponsesController, type: :controller do
   end
 
   describe 'PATCH #submit' do
-    let(:response_double) { double('Response') }
+    let(:server_ts)         { Time.zone.parse('2024-01-15T10:00:00Z') }
+    let(:response_double)   { double('Response') }
     let(:response_map_double) { double('ResponseMap') }
     let(:assignment_double) { double('Assignment') }
 
@@ -301,6 +312,7 @@ RSpec.describe ResponsesController, type: :controller do
       allow(response_double).to receive(:response_map).and_return(response_map_double)
       allow(response_map_double).to receive(:assignment).and_return(assignment_double)
       allow(controller).to receive(:reviewee_topic_for).with(response_map_double).and_return(nil)
+      allow(response_double).to receive(:updated_at).and_return(server_ts)
     end
 
     context 'when response not found' do
@@ -324,6 +336,40 @@ RSpec.describe ResponsesController, type: :controller do
         expect(response).to have_http_status(:unprocessable_entity)
         body = JSON.parse(response.body)
         expect(body['error']).to eq('Response has already been submitted')
+      end
+    end
+
+    context 'optimistic concurrency check' do
+      before do
+        allow(response_double).to receive(:is_submitted?).and_return(false)
+      end
+
+      it 'returns 409 when client timestamp is older than server timestamp' do
+        stale_ts = (server_ts - 60).iso8601
+        patch :submit, params: { id: 1, updated_at: stale_ts }
+        expect(response).to have_http_status(:conflict)
+        body = JSON.parse(response.body)
+        expect(body['error']).to eq('Your review is out of date. Please refresh and try again.')
+      end
+
+      it 'proceeds when client timestamp matches server timestamp' do
+        allow(DueDate).to receive(:assignment_open_for?).and_return(true)
+        allow(response_double).to receive(:aggregate_questionnaire_score).and_return(0)
+        allow(response_double).to receive(:is_submitted=).with(true)
+        allow(response_double).to receive(:save).and_return(true)
+
+        patch :submit, params: { id: 1, updated_at: server_ts.iso8601 }
+        expect(response).to have_http_status(:ok)
+      end
+
+      it 'proceeds without a concurrency check when no updated_at param is sent' do
+        allow(DueDate).to receive(:assignment_open_for?).and_return(true)
+        allow(response_double).to receive(:aggregate_questionnaire_score).and_return(0)
+        allow(response_double).to receive(:is_submitted=).with(true)
+        allow(response_double).to receive(:save).and_return(true)
+
+        patch :submit, params: { id: 1 }
+        expect(response).to have_http_status(:ok)
       end
     end
 

@@ -50,6 +50,7 @@ class ResponsesController < ApplicationController
       id: @response.id,
       is_submitted: @response.is_submitted,
       additional_comment: @response.additional_comment,
+      updated_at: @response.updated_at,
       answers: @response.scores.map do |a|
         { id: a.id, item_id: a.item_id, answer: a.answer, comments: a.comments }
       end
@@ -93,6 +94,19 @@ class ResponsesController < ApplicationController
     return render json: { error: "#{response_label} not found" }, status: :not_found unless @response
     if @response.is_submitted?
       return render json: { error: "#{response_label} has already been submitted" }, status: :unprocessable_entity
+    end
+
+    # Optimistic concurrency: reject if another window saved a draft since the client last loaded.
+    if params[:updated_at].present?
+      client_ts = begin
+        Time.zone.parse(params[:updated_at].to_s)
+      rescue ArgumentError, TypeError
+        nil
+      end
+      if client_ts && @response.updated_at.to_i != client_ts.to_i
+        return render json: { error: 'Your review is out of date. Please refresh and try again.' },
+                      status: :conflict
+      end
     end
     response_map = @response.response_map
     # Check deadline

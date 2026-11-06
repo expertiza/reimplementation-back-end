@@ -28,7 +28,7 @@ module ReviewMappingStrategies
     # Second-pass filter: from the candidate teams, keeps only those whose submitted
     # review count is within the fairness window (≤ min_count + review_topic_threshold).
     # Teams that have already received more than min_count + threshold submitted reviews
-    # are excluded so that review load stays balanced.
+    # are excluded so that review distribution stays balanced.
     def teams_in_review_window(base_teams)
       counts    = submission_review_counts
       threshold = @assignment.review_topic_threshold || 0
