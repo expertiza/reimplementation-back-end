@@ -45,7 +45,17 @@ class CleanupAndTransformations < ActiveRecord::Migration[8.0]
     # -------------------------
     # PARTICIPANTS TABLE
     # -------------------------
-    change_column :participants, :user_id, :bigint if column_exists?(:participants, :user_id)
+    # Widen participants.user_id to BIGINT to match users.id. On a legacy
+    # database users.id is still INT (and participants.user_id carries a
+    # matching INT foreign key), so skip the change there.
+    users_pk =
+      select_value(
+        "SELECT COLUMN_TYPE FROM information_schema.columns " \
+        "WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'id'"
+      ).to_s
+    if column_exists?(:participants, :user_id) && users_pk.start_with?("bigint")
+      change_column :participants, :user_id, :bigint
+    end
 
     remove_column :participants, :submitted_at if column_exists?(:participants, :submitted_at)
     remove_column :participants, :penalty_accumulated if column_exists?(:participants, :penalty_accumulated)
@@ -109,9 +119,9 @@ class CleanupAndTransformations < ActiveRecord::Migration[8.0]
     # ASSIGNMENT_QUESTIONNAIRES
     # -------------------------
     rename_column :assignment_questionnaires, :notification_limit, :notification_threshold if column_exists?(:assignment_questionnaires, :notification_limit)
-    add_column :assignment_questionnaires, :dropdown, :boolean unless column_exists?(:survey_deployments, :dropdown)
-    add_column :assignment_questionnaires, :topic_id, :bigint unless column_exists?(:survey_deployments, :topic_id)
-    add_column :assignment_questionnaires, :duty_id, :bigint unless column_exists?(:survey_deployments, :duty_id)
+    add_column :assignment_questionnaires, :dropdown, :boolean unless column_exists?(:assignment_questionnaires, :dropdown)
+    add_column :assignment_questionnaires, :topic_id, :bigint unless column_exists?(:assignment_questionnaires, :topic_id)
+    add_column :assignment_questionnaires, :duty_id, :bigint unless column_exists?(:assignment_questionnaires, :duty_id)
     
     # -------------------------
     # SURVEY_DEPLOYMENTS
@@ -136,7 +146,11 @@ class CleanupAndTransformations < ActiveRecord::Migration[8.0]
     # -------------------------
     # ITEMS
     # -------------------------
-    add_column :items, :type, :text unless column_exists?(:items, :type)
+    # NOTE: `items` does not exist yet on a legacy-migrated database (it is
+    # still `questions` until 20261023000000 renames it, and the legacy
+    # `questions` table already carries a `type` column). column_exists?
+    # raises on a missing table, so guard with table_exists? first.
+    add_column :items, :type, :text if table_exists?(:items) && !column_exists?(:items, :type)
 
     # -------------------------
     # QUESTIONNAIRES
@@ -191,15 +205,18 @@ class CleanupAndTransformations < ActiveRecord::Migration[8.0]
 
     # -------------------------
     # CLEANUP TABLES
+    # (child tables are dropped before the parents they reference, because
+    # MySQL refuses to drop a table that still targets a foreign key)
     # -------------------------
+    drop_table :assignment_badges, if_exists: true
     drop_table :awarded_badges, if_exists: true
     drop_table :badges, if_exists: true
     drop_table :calculated_penalties, if_exists: true
     drop_table :delayed_jobs, if_exists: true
     drop_table :locks, if_exists: true
     drop_table :menu_items, if_exists: true
-    drop_table :plagiarism_checker_assignment_submissions, if_exists: true
     drop_table :plagiarism_checker_comparisons, if_exists: true
+    drop_table :plagiarism_checker_assignment_submissions, if_exists: true
     drop_table :sections, if_exists: true
     drop_table :system_settings, if_exists: true
     drop_table :content_pages, if_exists: true

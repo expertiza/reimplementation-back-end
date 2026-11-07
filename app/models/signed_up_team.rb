@@ -7,13 +7,18 @@ class SignedUpTeam < ApplicationRecord
   # Scope to return waitlisted signups
   scope :waitlisted, -> { where(is_waitlisted: true) }
 
+  # Rails 8 defaults to belongs_to_required_validates_foreign_key = false,
+  # which only fires the "must exist" check for a nil foreign key. Legacy
+  # databases ship these FKs with DEFAULT 0, so new records carry 0 and the
+  # check is bypassed. Validate presence explicitly with the same "must
+  # exist" message so the behavior is identical on clean and legacy databases.
   belongs_to :project_topic
   belongs_to :team
+  validates_presence_of :project_topic, message: :required
+  validates_presence_of :team, message: :required
 
-  # Validations for presence and uniqueness of team-topic pairing
-  validates :project_topic, presence: true
-  validates :team, presence: true,
-                   uniqueness: { scope: :project_topic }
+  # Validations for uniqueness of team-topic pairing
+  validates :team, uniqueness: { scope: :project_topic }
 
   # Calls ProjectTopic's signup_team method to initiate signup
   def self.signup_for_topic(team, topic)

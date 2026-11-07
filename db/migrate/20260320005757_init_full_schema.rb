@@ -178,27 +178,27 @@ class InitFullSchema < ActiveRecord::Migration[8.0]
     # ----------------------------
     # FOREIGN KEYS
     # ----------------------------
-    add_foreign_key :tag_prompt_deployments, :tag_prompts if table_exists?(:tag_prompt_deployments)
-    add_foreign_key :tag_prompt_deployments, :assignments if table_exists?(:assignments)
-    add_foreign_key :tag_prompt_deployments, :questionnaires if table_exists?(:questionnaires)
+    add_foreign_key :tag_prompt_deployments, :tag_prompts if table_exists?(:tag_prompt_deployments) && !foreign_key_exists?(:tag_prompt_deployments, :tag_prompts)
+    add_foreign_key :tag_prompt_deployments, :assignments if table_exists?(:assignments) && !foreign_key_exists?(:tag_prompt_deployments, :assignments)
+    add_foreign_key :tag_prompt_deployments, :questionnaires if table_exists?(:questionnaires) && !foreign_key_exists?(:tag_prompt_deployments, :questionnaires)
 
-    add_foreign_key :answer_tags, :answers if table_exists?(:answers)
-    add_foreign_key :answer_tags, :users if table_exists?(:users)
-    add_foreign_key :answer_tags, :tag_prompt_deployments if table_exists?(:tag_prompt_deployments)
+    add_foreign_key :answer_tags, :answers if table_exists?(:answers) && !foreign_key_exists?(:answer_tags, :answers)
+    add_foreign_key :answer_tags, :users if table_exists?(:users) && !foreign_key_exists?(:answer_tags, :users)
+    add_foreign_key :answer_tags, :tag_prompt_deployments if table_exists?(:tag_prompt_deployments) && !foreign_key_exists?(:answer_tags, :tag_prompt_deployments)
 
-    add_foreign_key :late_policies, :users, column: :instructor_id if table_exists?(:users)
+    add_foreign_key :late_policies, :users, column: :instructor_id if table_exists?(:users) && !foreign_key_exists?(:late_policies, :users, column: :instructor_id)
 
-    add_foreign_key :resubmission_times, :participants if table_exists?(:participants)
+    add_foreign_key :resubmission_times, :participants if table_exists?(:participants) && !foreign_key_exists?(:resubmission_times, :participants)
 
-    add_foreign_key :review_bids, :participants if table_exists?(:participants)
-    add_foreign_key :review_bids, :users if table_exists?(:users)
-    add_foreign_key :review_bids, :assignments if table_exists?(:assignments)
+    add_foreign_key :review_bids, :participants if table_exists?(:participants) && !foreign_key_exists?(:review_bids, :participants)
+    add_foreign_key :review_bids, :users if table_exists?(:users) && !foreign_key_exists?(:review_bids, :users)
+    add_foreign_key :review_bids, :assignments if table_exists?(:assignments) && !foreign_key_exists?(:review_bids, :assignments)
 
-    add_foreign_key :review_grades, :participants if table_exists?(:participants)
+    add_foreign_key :review_grades, :participants if table_exists?(:participants) && !foreign_key_exists?(:review_grades, :participants)
 
-    add_foreign_key :review_comment_paste_bins, :review_grades if table_exists?(:review_grades)
+    add_foreign_key :review_comment_paste_bins, :review_grades if table_exists?(:review_grades) && !foreign_key_exists?(:review_comment_paste_bins, :review_grades)
 
-    add_foreign_key :survey_deployments, :questionnaires if table_exists?(:questionnaires)
+    add_foreign_key :survey_deployments, :questionnaires if table_exists?(:questionnaires) && !foreign_key_exists?(:survey_deployments, :questionnaires)
 
   end
 end
