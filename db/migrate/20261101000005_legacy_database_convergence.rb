@@ -26,6 +26,21 @@ class LegacyDatabaseConvergence < ActiveRecord::Migration[8.0]
   DDL_FILE = File.expand_path("../legacy_convergence.sql", __dir__)
 
   def up
+    # The canonical schema includes a small `cakes` table that no clean-chain
+    # migration creates (it appears only because the convergence DDL adds it on
+    # a legacy source). Ensure it on every path, before the legacy check below,
+    # so a from-scratch clean chain matches the canonical schema too. It is
+    # idempotent and the legacy DDL below also issues CREATE TABLE IF NOT EXISTS
+    # for it, so a legacy source is unaffected.
+    connection.execute(
+      "CREATE TABLE IF NOT EXISTS `cakes` (\n" \
+      "  `id` BIGINT NOT NULL AUTO_INCREMENT,\n" \
+      "  `created_at` DATETIME NULL,\n" \
+      "  `updated_at` DATETIME NULL,\n" \
+      "  PRIMARY KEY (`id`)\n" \
+      ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
+    )
+
     @was_legacy = legacy_source?
     ActiveRecord.dump_schema_after_migration = false if @was_legacy
     return unless @was_legacy
@@ -76,13 +91,27 @@ class LegacyDatabaseConvergence < ActiveRecord::Migration[8.0]
   ].freeze
 
   # A legacy Expertiza DB still has tables the canonical chain never creates
-  # (goldberg RBAC, sessions, versions, legacy review tables). The clean
-  # chain has none of them, so any one present marks a legacy source.
-  # After a *partially completed* convergence removed those markers, the
-  # absence of a canonical-only table (cakes) marks it instead, so a
-  # re-run of db:migrate resumes instead of no-oping a half-converted DB.
+  # (goldberg RBAC, sessions, versions, legacy review tables), so any one
+  # present marks a legacy source; the clean 2023-2026 chain has none of them.
+  #
+  # Positive legacy evidence is used on purpose (not "absence of a canonical
+  # table"): a from-scratch clean chain and a partially-converted legacy DB can
+  # both be missing the same canonical tables, so a negative check would misfire
+  # and run the legacy DDL on a clean database. The fallback additionally tests
+  # a legacy-only column the DDL drops (account_requests.self_introduction,
+  # which the clean chain's account_requests never has), so a re-run of
+  # db:migrate resumes a half-converted DB instead of no-oping it once the
+  # marker tables above have already been dropped by the DDL.
   def legacy_source?
-    LEGACY_MARKERS.any? { |t| table_exists?(t) } || !table_exists?(:cakes)
+    LEGACY_MARKERS.any? { |t| table_exists?(t) } || legacy_shape?
+  end
+
+  # Legacy Expertiza stored the account request's bio in `self_introduction`
+  # (the canonical schema uses `introduction`). The bridge backfills introduction
+  # but does not drop it, so it persists until the convergence DDL removes it --
+  # a clean positive marker that a database the rewrite has not finished.
+  def legacy_shape?
+    table_exists?(:account_requests) && column_exists?(:account_requests, :self_introduction)
   end
 
   # `rake db:migrate` dumps db/schema.rb from the live database afterwards

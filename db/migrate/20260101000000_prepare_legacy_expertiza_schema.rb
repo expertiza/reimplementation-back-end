@@ -36,6 +36,8 @@ class PrepareLegacyExpertizaSchema < ActiveRecord::Migration[8.0]
   # has_secure_password requires password_digest; the legacy Expertiza users
   # table only carries crypted_password/password_salt (kept for reference).
   def prepare_users
+    return unless table_exists?(:users)
+
     add_column :users, :password_digest, :string unless column_exists?(:users, :password_digest)
 
     # The legacy table stores the timezone preference in a lowercase column.
@@ -48,6 +50,12 @@ class PrepareLegacyExpertizaSchema < ActiveRecord::Migration[8.0]
   # duties.instructor_id -> users.id; the legacy duties table has neither
   # instructor_id nor the `private` flag used by the reimplementation.
   def prepare_duties
+    # `duties` does not exist on a database built from the original 2023-2025
+    # chain until 20260209004302 creates it, and this migration runs before
+    # that; guard on table existence (column_exists? is false for a missing
+    # table, which would otherwise let add_column hit "table doesn't exist").
+    return unless table_exists?(:duties)
+
     add_column :duties, :instructor_id, :integer unless column_exists?(:duties, :instructor_id)
     add_column :duties, :private, :boolean, default: false unless column_exists?(:duties, :private)
   end
@@ -55,6 +63,8 @@ class PrepareLegacyExpertizaSchema < ActiveRecord::Migration[8.0]
   # Legacy signed_up_teams.topic_id becomes project_topic_id
   # (20250321222753), and the advertisement fields come from 20251029071649.
   def prepare_signed_up_teams
+    return unless table_exists?(:signed_up_teams)
+
     if column_exists?(:signed_up_teams, :topic_id) && !column_exists?(:signed_up_teams, :project_topic_id)
       rename_column :signed_up_teams, :topic_id, :project_topic_id
     end
@@ -70,6 +80,8 @@ class PrepareLegacyExpertizaSchema < ActiveRecord::Migration[8.0]
   # Columns the reimplementation expects on participants that the legacy table
   # does not carry (team membership, topic, stage tracking, ...).
   def prepare_participants
+    return unless table_exists?(:participants)
+
     add_column :participants, :team_id, :bigint unless column_exists?(:participants, :team_id)
     add_column :participants, :topic, :string unless column_exists?(:participants, :topic)
     add_column :participants, :authorization, :string unless column_exists?(:participants, :authorization)
@@ -83,11 +95,15 @@ class PrepareLegacyExpertizaSchema < ActiveRecord::Migration[8.0]
   # The app works with reply_status (20250805174104 renamed status ->
   # reply_status in the original chain); the legacy table still has `status`.
   def prepare_join_team_requests
+    return unless table_exists?(:join_team_requests)
+
     add_column :join_team_requests, :reply_status, :string unless column_exists?(:join_team_requests, :reply_status)
   end
 
   # 20250621180527 renamed answers.question_id -> answers.item_id.
   def prepare_answers
+    return unless table_exists?(:answers)
+
     if column_exists?(:answers, :question_id) && !column_exists?(:answers, :item_id)
       rename_column :answers, :question_id, :item_id
     end
