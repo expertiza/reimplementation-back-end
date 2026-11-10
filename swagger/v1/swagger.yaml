@@ -1214,14 +1214,14 @@ paths:
     get:
       summary: list items
       tags:
-      - Questions
+      - Items
       responses:
         '200':
           description: successful
     post:
       summary: create item
       tags:
-      - Questions
+      - Items
       parameters: []
       responses:
         '201':
@@ -1262,7 +1262,7 @@ paths:
     get:
       summary: show item
       tags:
-      - Questions
+      - Items
       responses:
         '200':
           description: successful
@@ -1271,7 +1271,7 @@ paths:
     put:
       summary: update item
       tags:
-      - Questions
+      - Items
       parameters: []
       responses:
         '200':
@@ -1297,7 +1297,7 @@ paths:
     patch:
       summary: update item
       tags:
-      - Questions
+      - Items
       parameters: []
       responses:
         '200':
@@ -1323,7 +1323,7 @@ paths:
     delete:
       summary: delete item
       tags:
-      - Questions
+      - Items
       responses:
         '204':
           description: successful
@@ -1339,7 +1339,7 @@ paths:
     delete:
       summary: delete all items
       tags:
-      - Questions
+      - Items
       responses:
         '200':
           description: successful
@@ -1355,7 +1355,7 @@ paths:
     get:
       summary: show all items
       tags:
-      - Questions
+      - Items
       responses:
         '200':
           description: successful
@@ -1365,7 +1365,7 @@ paths:
     get:
       summary: item types
       tags:
-      - Questions
+      - Items
       responses:
         '200':
           description: successful
