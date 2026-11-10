@@ -114,8 +114,8 @@ RSpec.describe CourseTeam, type: :model do
       @participant = create(:course_participant, user: enrolled_user, course: course)
     end
 
-    it 'can add enrolled user' do
-      result = course_team.add_member(enrolled_user)
+    it 'can add a participant' do
+      result = course_team.add_member(@participant)
       
       expect(result[:success]).to be true
       expect(course_team.has_member?(enrolled_user)).to be true
@@ -125,7 +125,7 @@ RSpec.describe CourseTeam, type: :model do
       result = course_team.add_member(unenrolled_user)
 
       expect(result[:success]).to be false
-      expect(result[:error]).to eq("#{unenrolled_user.name} is not a participant in this course")
+      expect(result[:error]).to eq('Participant is not assigned to this team')
     end
   end
 end 

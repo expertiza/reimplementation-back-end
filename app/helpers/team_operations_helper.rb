@@ -14,7 +14,9 @@ module TeamOperationsHelper
   # Copies all members from the source team to the target team
   def self.copy_team_members(source_team, target_team)
     source_team.users.each do |user|
-      target_team.add_member(user)
+      # Find the user's participant record for the destination assignment or course.
+      participant = target_team.assigned_participants.find_by(user_id: user.id)
+      target_team.add_member(participant)
     end
   end
 
@@ -22,7 +24,7 @@ module TeamOperationsHelper
   def self.team_stats(team)
     {
       size: team.participants.size,
-      max_size: team.max_team_size,
+      max_size: team.max_size,
       is_full: team.full?,
       is_empty: team.participants.empty?
     }

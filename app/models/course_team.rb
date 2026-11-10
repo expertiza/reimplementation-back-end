@@ -4,10 +4,13 @@ class CourseTeam < Team
   #Each course team must belong to a course
   belongs_to :course, class_name: 'Course', foreign_key: 'parent_id'
 
-  #adds members to the course team post validation
-  def add_member(user)
-    # return false unless validate_membership(user)
-    super(user)
+  # Preserve the existing policy: courses do not configure a team capacity.
+  def max_size
+    nil
+  end
+
+  def assigned_participants
+    course ? course.participants : CourseParticipant.none
   end
 
   # Copies the current course team to an assignment team
@@ -16,12 +19,13 @@ class CourseTeam < Team
   def copy_to_assignment_team(assignment)
     assignment_team = AssignmentTeam.new(
       name: "#{name} (Assignment)",             # Appends "(Assignment)" to the team name
-      max_team_size: max_team_size,             # Preserves original max team size
       assignment: assignment                    # Associates the course team with an assignment
     )
     if assignment_team.save
-      team_members.each do |member|
-        assignment_team.add_member(member.user) # Copies each member to the new assignment team
+      participants.each do |participant|
+        # Use the destination participant; capacity comes from the destination assignment.
+        assignment_participant = assignment_team.assigned_participants.find_by(user_id: participant.user_id)
+        assignment_team.add_member(assignment_participant)
       end
     end
     assignment_team       # Returns the newly created assignment team object
@@ -35,6 +39,10 @@ class CourseTeam < Team
   end
 
   private
+
+  def teams_in_parent
+    course ? course.teams : CourseTeam.none
+  end
 
   # Custom validation method for team type
   # - Ensures the type is 'CourseTeam'

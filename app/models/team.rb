@@ -31,61 +31,31 @@ class Team < ApplicationRecord
     users.count
   end
   
-  # Returns the maximum allowed team size
+  # Concrete team types supply their parent collections and capacity policy.
   def max_size
-    if is_a?(AssignmentTeam) && assignment&.max_team_size
-      assignment.max_team_size
-    elsif is_a?(CourseTeam) && course&.max_team_size
-      course.max_team_size
-    else
-      nil
-    end
+    raise NotImplementedError, "#{self.class} must define max_size"
+  end
+
+  # Returns participants assigned to this team's assignment or course.
+  def assigned_participants
+    raise NotImplementedError, "#{self.class} must define assigned_participants"
   end
   
   def full?
-    current_size = participants.count
+    # Use the same limit for reporting and admission; nil means uncapped.
+    maximum_team_size = max_size
+    return false if maximum_team_size.nil?
 
-    # assignment teams use the column max_team_size
-    if is_a?(AssignmentTeam) && assignment&.max_team_size
-      return current_size >= assignment.max_team_size
+    participants.count >= maximum_team_size
+  end
+
+  # Adds a participant; callers must find the appropriate participant before admission.
+  def add_member(participant)
+    unless assigned_participant?(participant)
+      return { success: false, error: 'Participant is not assigned to this team' }
     end
 
-    # course teams never fill up by default
-    false
-  end
-
-  # Checks if the given participant is already on any team for the associated assignment or course.
-  def participant_on_team?(participant)
-    # pick the correct “scope” (assignment or course) based on this team’s class
-    scope =
-      if is_a?(AssignmentTeam)
-        assignment
-      elsif is_a?(CourseTeam)
-        course
-      end
-
-    return false unless scope
-
-    # “scope.teams” includes this team itself plus any sibling teams;
-    # check whether any of those teams already has this participant
-    scope.teams.any? { |team| team.participants.include?(participant) }
-  end
-
-  # Adds participant in the team
-  def add_member(participant_or_user)
-    participant =
-      if participant_or_user.is_a?(AssignmentParticipant) || participant_or_user.is_a?(CourseParticipant)
-        participant_or_user
-      elsif participant_or_user.is_a?(User)
-        participant_type = is_a?(AssignmentTeam) ? AssignmentParticipant : CourseParticipant
-        participant_type.find_by(user_id: participant_or_user.id, parent_id: parent_id)
-      else
-        nil
-      end
-
-    # If participant wasn't found or built correctly
-    return { success: false, error: "#{participant_or_user.name} is not a participant in this #{is_a?(AssignmentTeam) ? 'assignment' : 'course'}" } if participant.nil?
-
+    # Sibling membership is checked by eligibility, not here: transfers add before removing.
     return { success: false, error: "Participant already on the team" } if participants.exists?(id: participant.id)
     return { success: false, error: "Unable to add participant: team is at full capacity." } if full?
 
@@ -100,7 +70,8 @@ class Team < ApplicationRecord
     else
       { success: false, error: team_participant.errors.full_messages.join(', ') }
     end
-  rescue StandardError => e
+  # Return database failures to callers while allowing programming errors to surface.
+  rescue ActiveRecord::ActiveRecordError => e
     { success: false, error: e.message }
   end
 
@@ -112,45 +83,27 @@ class Team < ApplicationRecord
     # retract all the invitations the participant sent (if any) while being on the this team
     participant.retract_sent_invitations
 
-    # Remove the join record if it exists
-    tp = TeamsParticipant.find_by(team_id: id, participant_id: participant.id)
-    tp&.destroy
+    # Participant#team reads this join; this method no longer maintains legacy team_id.
+    # This membership record links the participant to this team.
+    team_membership = teams_participants.find_by(participant_id: participant.id)
+    team_membership&.destroy
     
-    # Update the participant's team_id column - will remove the team reference inside participants table later. keeping it for now
-    # this will remove the reference only if the participant's current team is the same team removing the participant
-    if participant.team_id==id
-      participant.update!(team_id: nil)
-    end
-
     # If no participants remain after removal, delete the team
     destroy if participants.empty?
   end
 
   # Determines whether a given participant is eligible to join the team.
   def can_participant_join_team?(participant)
-    # figure out whether we’re in an Assignment or a Course context
-    scope, participant_type, label =
-      if is_a?(AssignmentTeam)
-        [assignment, AssignmentParticipant, "assignment"]
-      elsif is_a?(CourseTeam)
-        [course, CourseParticipant, "course"]
-      else
-        return { success: false, error: "Team must belong to Assignment or Course" }
-      end
-
-    # Check if the user is already part of any team for this assignment or course
-    if participant_on_team?(participant)
-      return { success: false, error: "This user is already assigned to a team for this #{label}" }
+    unless assigned_participant?(participant)
+      return { success: false, error: 'Participant is not assigned to this team' }
     end
 
-    # Check if the user is a registered participant for this assignment or course
-    registered = participant_type.find_by(
-      user_id: participant.user_id,
-      parent_id: scope.id
+    # Check this team and other teams in the same assignment or course.
+    if TeamsParticipant.exists?(
+      team_id: teams_in_parent.select(:id),
+      participant_id: participant.id
     )
-
-    unless registered
-      return { success: false, error: "#{participant.user.name} is not a participant in this #{label}" }
+      return { success: false, error: 'Participant already belongs to a team.' }
     end
 
     # All checks passed; participant is eligible to join the team
@@ -159,6 +112,16 @@ class Team < ApplicationRecord
   end
 
   private
+
+  # Returns teams in the same assignment or course, including this team.
+  def teams_in_parent
+    raise NotImplementedError, "#{self.class} must define teams_in_parent"
+  end
+
+  def assigned_participant?(participant)
+    participant.is_a?(Participant) && participant.valid? &&
+      assigned_participants.exists?(id: participant.id)
+  end
 
   def release_topics_if_empty
     return unless participants.empty?

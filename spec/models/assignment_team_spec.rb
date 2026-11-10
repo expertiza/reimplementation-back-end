@@ -103,7 +103,7 @@ RSpec.describe AssignmentTeam, type: :model do
         
         result = assignment_team.add_member(unenrolled_user)
         expect(result[:success]).to be false
-        expect(result[:error]).to eq("#{unenrolled_user.name} is not a participant in this assignment")
+        expect(result[:error]).to eq('Participant is not assigned to this team')
       end
     end
   end
@@ -126,7 +126,7 @@ RSpec.describe AssignmentTeam, type: :model do
       result = assignment_team.add_member(unenrolled_user)
 
       expect(result[:success]).to be false
-      expect(result[:error]).to eq("#{unenrolled_user.name} is not a participant in this assignment")
+      expect(result[:error]).to eq('Participant is not assigned to this team')
     end
   end
 end 

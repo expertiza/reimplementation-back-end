@@ -84,14 +84,14 @@ class TeamsParticipantsController < ApplicationController
     # First Check if Participant exists
     # Look up the User record based on the provided name parameter.
     user = User.find_by(name: params[:name].strip) || (render(json: { error: "User not found" }, status: :not_found) and return)
-    # Find the Participant associated with the user, or return not found error
-    participant = Participant.find_by(user_id: user.id) || (render(json: { error: "Couldn't find Participant" }, status: :not_found) and return)
-
     # Check if Team exists
     current_team = Team.find(params[:id])
     unless current_team
       render json: { error: "Couldn't find Team" }, status: :not_found and return
     end
+
+    # Find the user's participant record for this team's assignment or course.
+    participant = current_team.assigned_participants.find_by(user_id: user.id) || (render(json: { error: "Couldn't find Participant" }, status: :not_found) and return)
 
     # Validate if participant can join a team
     validation_result = current_team.can_participant_join_team?(participant)

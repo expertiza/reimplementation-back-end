@@ -6,9 +6,13 @@ class MentoredTeam < AssignmentTeam
   validate :type_must_be_mentored_team
 
   # adds members to the team who are not mentors
-  def add_member(user)
-    return false if user == mentor
-    super(user)
+  def add_member(participant)
+    # This schema has no mentor association; honor one when exposed, comparing users.
+    if respond_to?(:mentor) && participant.is_a?(Participant) && participant.user == mentor
+      return { success: false, error: 'The mentor cannot be added as a team member' }
+    end
+
+    super(participant)
   end
 
   # Assigning a user as mentor of the team 
