@@ -49,14 +49,6 @@ class Team < ApplicationRecord
     participants.count >= maximum_team_size
   end
 
-  # Checks if the given participant is already on any team for the associated assignment or course.
-  def participant_on_team?(participant)
-    return false unless participant.is_a?(Participant) && participant.valid?
-
-    # Include this team and its siblings without loading every team's members.
-    TeamsParticipant.exists?(team_id: teams_in_parent.select(:id), participant_id: participant.id)
-  end
-
   # Adds a participant; callers must find the appropriate participant before admission.
   def add_member(participant)
     unless assigned_participant?(participant)
@@ -106,8 +98,11 @@ class Team < ApplicationRecord
       return { success: false, error: 'Participant is not assigned to this team' }
     end
 
-    # Check if the user is already part of any team for this assignment or course
-    if participant_on_team?(participant)
+    # Check this team and other teams in the same assignment or course.
+    if TeamsParticipant.exists?(
+      team_id: teams_in_parent.select(:id),
+      participant_id: participant.id
+    )
       return { success: false, error: 'Participant already belongs to a team.' }
     end
 

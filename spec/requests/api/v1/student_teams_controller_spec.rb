@@ -172,7 +172,7 @@ RSpec.describe 'Student Teams API', type: :request do
         end
 
         run_test! do
-          expect(JSON.parse(response.body)).to eq('error' => 'Participant is not assigned to this assignment')
+          expect(JSON.parse(response.body)).to eq('error' => 'Participant is not assigned to this team')
           expect(Team.count).to eq(@team_count_before_request)
           expect(TeamsParticipant.count).to eq(@membership_count_before_request)
           expect(team1.reload.participants).to contain_exactly(participant1)

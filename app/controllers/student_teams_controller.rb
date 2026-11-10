@@ -41,43 +41,35 @@ class StudentTeamsController < ApplicationController
 
     # POST /student_teams/`
     def create
-        unless student && student.parent_id.to_s == params[:assignment_id].to_s
-            render json: { error: 'Participant is not assigned to this assignment' }, status: :unprocessable_entity
+        # Check for duplicate names within the destination assignment.
+        if AssignmentTeam.exists?(name: params[:team][:name], parent_id: params[:assignment_id])
+            render json: { error: "#{params[:team][:name]} is already in use." }, status: :unprocessable_entity
             return
         end
 
-        # Checks for duplicate team names within the same assignment (by parent_id).
-        matching_teams = AssignmentTeam.where(name: params[:team][:name], parent_id: params[:assignment_id])
-
-        # no team with that name found - goes ahead and creates the team
-        if matching_teams.empty?
-            team = AssignmentTeam.new({ name: params[:team][:name], parent_id: params[:assignment_id]})
-            team_creation_error = nil
-            # Creating the team and its initial membership must succeed together.
-            AssignmentTeam.transaction(requires_new: true) do
-                unless team.save
-                    team_creation_error = team.errors.full_messages
-                    raise ActiveRecord::Rollback
-                end
-
-                membership_result = team.add_member(student)
-                unless membership_result[:success]
-                    team_creation_error = membership_result[:error]
-                    raise ActiveRecord::Rollback
-                end
+        team = AssignmentTeam.new(name: params[:team][:name], parent_id: params[:assignment_id])
+        team_creation_error = nil
+        # Creating the team and its initial membership must succeed together.
+        AssignmentTeam.transaction(requires_new: true) do
+            unless team.save
+                team_creation_error = team.errors.full_messages
+                raise ActiveRecord::Rollback
             end
 
-            if team_creation_error
-                render json: { error: team_creation_error }, status: :unprocessable_entity
-            else
-                serialized_team = ActiveModelSerializers::SerializableResource.new(team, serializer: TeamSerializer).as_json
-                render json: serialized_team.merge({ message: "Team created successfully", success: true }), status: :ok
+            membership_result = team.add_member(student)
+            unless membership_result[:success]
+                team_creation_error = membership_result[:error]
+                raise ActiveRecord::Rollback
             end
-
-        else
-            # Returns an error if another team with the same name already exists.
-            render json: { error: "#{params[:team][:name]} is already in use." }, status: :unprocessable_entity
         end
+
+        if team_creation_error
+            render json: { error: team_creation_error }, status: :unprocessable_entity
+            return
+        end
+
+        serialized_team = ActiveModelSerializers::SerializableResource.new(team, serializer: TeamSerializer).as_json
+        render json: serialized_team.merge({ message: "Team created successfully", success: true }), status: :ok
     end
 
     # Updates the name of the student's team.

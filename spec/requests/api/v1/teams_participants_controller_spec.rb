@@ -326,6 +326,23 @@ RSpec.describe 'teams_participants', type: :request do
         end
       end
 
+      response(404, 'participant belongs only to another assignment') do
+        let(:id) { team_with_assignment.id }
+        let(:payload) { { name: new_user.name } }
+
+        before do
+          team_with_assignment
+          AssignmentParticipant.create!(parent_id: assignment2.id, user: new_user, handle: new_user.name)
+          @membership_count_before_request = TeamsParticipant.count
+        end
+
+        run_test! do
+          expect(response.body).to include("Couldn't find Participant")
+          expect(TeamsParticipant.count).to eq(@membership_count_before_request)
+          expect(TeamsParticipant.exists?(team_id: team_with_assignment.id, user_id: new_user.id)).to be(false)
+        end
+      end
+
       # -- NOT FOUND: Participant record missing for given name --
       response(404, 'participant not found') do
         let(:id)                                     { team_with_assignment.id }
