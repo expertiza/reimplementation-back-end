@@ -14,7 +14,7 @@ class Item < ApplicationRecord
   validates :seq, presence: true, numericality: true # sequence must be numeric
   validates :txt, length: { minimum: 0, allow_nil: false, message: "can't be nil" } # text content must be provided
   validates :question_type, presence: true # user must define the item type
-  validates :break_before, presence: true
+  validates :break_before, inclusion: { in: [true, false] }
 
   def scorable?
     false
