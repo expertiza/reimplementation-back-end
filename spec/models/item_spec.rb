@@ -50,14 +50,6 @@ RSpec.describe Item, type: :model do
       expect(item).to_not be_valid
     end
 
-    # Test ensures backward compatibility with question_type alias
-    it 'is valid when using question_type alias' do
-      item = Item.new(seq: 1, txt: 'Sample item', question_type: 'multiple_choice', break_before: true,
-                              questionnaire:)
-      expect(item).to be_valid
-      expect(item.item_type).to eq('multiple_choice')
-    end
-
     # Test ensures that a item is not valid without break_before field
     it 'is not valid without a break_before value' do
       item = Item.new(seq: 1, txt: 'Sample item', item_type: 'multiple_choice',
@@ -124,7 +116,7 @@ RSpec.describe Item, type: :model do
     it 'preserves the seq if already provided' do
       instructor.save!
       questionnaire.save!
-      item = Item.create!(seq: 5, txt: 'Item 5', question_type: 'multiple_choice',
+      item = Item.create!(seq: 5, txt: 'Item 5', item_type: 'multiple_choice',
                           break_before: true, questionnaire: questionnaire)
       expect(item.reload.seq).to eq(5)
     end
@@ -132,7 +124,7 @@ RSpec.describe Item, type: :model do
     it 'persists a default sequence when seq is omitted' do
       instructor.save!
       questionnaire.save!
-      item = Item.new(txt: 'Item with nil seq', question_type: 'multiple_choice',
+      item = Item.new(txt: 'Item with nil seq', item_type: 'multiple_choice',
                       break_before: true, questionnaire: questionnaire)
       item.save!
       expect(item.reload.seq).to eq(1)

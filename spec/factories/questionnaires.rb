@@ -10,8 +10,8 @@ FactoryBot.define do
     association :instructor
     association :assignment
 
-    # Trait for questionnaire with questions
-    trait :with_questions do
+    # Trait for questionnaire with items
+    trait :with_items do
       after(:create) do |questionnaire|
         create(:item, questionnaire: questionnaire, weight: 1, seq: 1, txt: "que 1", item_type: "Scale")
         create(:item, questionnaire: questionnaire, weight: 10, seq: 2, txt: "que 2", item_type: "Checkbox")

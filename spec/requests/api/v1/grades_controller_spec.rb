@@ -481,12 +481,12 @@ RSpec.describe 'Grades API', type: :request do
     before do
       # SectionHeader before the first group
       Item.create!(questionnaire_id: questionnaire.id, txt: 'Code Quality', weight: 0,
-                   seq: 1, question_type: 'SectionHeader', break_before: true)
+                   seq: 1, item_type: 'SectionHeader', break_before: true)
       # Two scoreable CriterionItems
       Item.create!(questionnaire_id: questionnaire.id, txt: 'Is the code readable?', weight: 1,
-                   seq: 2, question_type: 'CriterionItem', break_before: true)
+                   seq: 2, item_type: 'CriterionItem', break_before: true)
       Item.create!(questionnaire_id: questionnaire.id, txt: 'Is the code tested?', weight: 1,
-                   seq: 3, question_type: 'CriterionItem', break_before: true)
+                   seq: 3, item_type: 'CriterionItem', break_before: true)
 
       AssignmentQuestionnaire.create!(
         assignment_id: assignment.id,
@@ -505,7 +505,7 @@ RSpec.describe 'Grades API', type: :request do
         reviewee_id: team.id
       )
       resp = Response.create!(map_id: map.id, is_submitted: true, round: 1)
-      scored_items = Item.where(questionnaire_id: questionnaire.id, question_type: 'CriterionItem').order(:seq)
+      scored_items = Item.where(questionnaire_id: questionnaire.id, item_type: 'CriterionItem').order(:seq)
       scored_items.each do |item|
         Answer.create!(response_id: resp.id, item_id: item.id, answer: 4, comments: 'Good')
       end
@@ -544,7 +544,7 @@ RSpec.describe 'Grades API', type: :request do
 
     it 'does not inject headers when the questionnaire has none' do
       # Remove the SectionHeader item
-      Item.where(questionnaire_id: questionnaire.id, question_type: 'SectionHeader').destroy_all
+      Item.where(questionnaire_id: questionnaire.id, item_type: 'SectionHeader').destroy_all
 
       get "/grades/#{assignment.id}/view_our_scores",
           headers: { 'Authorization' => "Bearer #{student_token}" }

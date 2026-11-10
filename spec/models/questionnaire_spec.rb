@@ -181,7 +181,7 @@ describe Questionnaire, type: :model do
       expect(first_copy.txt).to eq(question1.txt)
       expect(first_copy.weight).to eq(question1.weight)
       expect(first_copy.item_type).to eq(question1.item_type)
-      expect(first_copy.question_type).to eq(question1.question_type)
+      expect(first_copy.item_type).to eq(question1.item_type)
     end
   end
 

@@ -40,7 +40,7 @@ class ItemsController < ApplicationController # rubocop:disable Metrics/ClassLen
   # POST /items
   def create
     questionnaire = Questionnaire.find(params[:questionnaire_id])
-    item = build_item(questionnaire)
+    item = new_item_for(questionnaire)
     apply_type_defaults(item)
 
     if item.save
@@ -113,10 +113,12 @@ class ItemsController < ApplicationController # rubocop:disable Metrics/ClassLen
     @item = Item.find(params[:id])
   end
 
-  def build_item(questionnaire)
+  # Instantiates (without saving) a new Item attached to the given questionnaire,
+  # using the request's prompt, item_type and seq parameters.
+  def new_item_for(questionnaire)
     questionnaire.items.build(
       txt: params[:prompt],
-      item_type: params[:item_type] || params[:question_type],
+      item_type: params[:item_type],
       seq: params[:seq],
       break_before: true
     )
@@ -124,15 +126,10 @@ class ItemsController < ApplicationController # rubocop:disable Metrics/ClassLen
 
   def item_params
     # The frontend sends :prompt, which maps to the txt column.
-    permitted = params.require(:item).permit(:prompt, :txt, :item_type, :question_type, :seq, :weight, :alternatives,
+    permitted = params.require(:item).permit(:prompt, :txt, :item_type, :seq, :weight, :alternatives,
                                              :size, :break_before, :min_label, :max_label)
     prompt = permitted.delete(:prompt)
     permitted[:txt] = prompt if prompt
-    # Always prefer item_type; fall back to question_type if item_type absent, then remove the legacy key
-    if permitted.key?(:question_type)
-      permitted[:item_type] ||= permitted[:question_type]
-      permitted.delete(:question_type)
-    end
     permitted
   end
 

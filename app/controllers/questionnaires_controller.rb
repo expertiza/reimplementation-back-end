@@ -93,21 +93,11 @@ class QuestionnairesController < ApplicationController
   private
 
   def questionnaire_params
-    permitted = params.require(:questionnaire).permit(
-      :name, :questionnaire_type, :private, :min_item_score, :max_item_score,
-      :min_question_score, :max_question_score, :instructor_id,
-      items_attributes: %i[id txt item_type question_type weight seq min_label max_label
+    params.require(:questionnaire).permit(
+      :name, :questionnaire_type, :private, :min_item_score, :max_item_score, :instructor_id,
+      items_attributes: %i[id txt item_type weight seq min_label max_label
                            alternatives size break_before _destroy]
     )
-    if permitted[:min_item_score].nil? && permitted[:min_question_score].present?
-      permitted[:min_item_score] = permitted[:min_question_score]
-    end
-    permitted.delete(:min_question_score)
-    if permitted[:max_item_score].nil? && permitted[:max_question_score].present?
-      permitted[:max_item_score] = permitted[:max_question_score]
-    end
-    permitted.delete(:max_question_score)
-    permitted
   end
 
   def sanitize_display_type(type)

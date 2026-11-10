@@ -4,10 +4,6 @@ class Scale < ScoredItem
     include QuestionHelper
   
     attr_accessor :txt, :type, :weight, :min_label, :max_label, :answer, :min_item_score, :max_item_score
-    alias min_question_score min_item_score
-    alias min_question_score= min_item_score=
-    alias max_question_score max_item_score
-    alias max_question_score= max_item_score=
   
     def edit
       edit_common('Item:', min_item_score, max_item_score , txt, weight, type).to_json

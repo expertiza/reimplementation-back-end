@@ -13,7 +13,7 @@ RSpec.describe Criterion, type: :model do
       json = criterion.view_item_text
       expected_json = {
         text: 'test txt',
-        question_type: 'Criterion',
+        item_type: 'Criterion',
         weight: 1,
         score_range: '0 to 5'
       }

@@ -40,33 +40,12 @@ RSpec.describe 'items', type: :request do
 
     it 'creates an item without seq and preserves the preferred type' do
       post '/items', params: { questionnaire_id: questionnaire.id, prompt: 'New item',
-                               item_type: 'multiple_choice', question_type: 'scale' }, headers: headers, as: :json
+                               item_type: 'multiple_choice' }, headers: headers, as: :json
 
       expect(response).to have_http_status(:created)
       item = Item.find(JSON.parse(response.body).fetch('id'))
       expect(item.seq).to eq(1)
       expect(item.item_type).to eq('multiple_choice')
-    end
-
-    it 'prefers item_type over question_type on update regardless of key order' do
-      item = Item.create!(txt: 'Existing', item_type: 'multiple_choice', break_before: true,
-                          questionnaire: questionnaire)
-      [{ item_type: 'scale', question_type: 'dropdown' },
-       { question_type: 'dropdown', item_type: 'scale' }].each do |types|
-        put "/items/#{item.id}", params: { item: types }, headers: headers, as: :json
-
-        expect(response).to have_http_status(:ok)
-        expect(item.reload.item_type).to eq('scale')
-      end
-    end
-
-    it 'accepts the legacy type on update' do
-      item = Item.create!(txt: 'Existing', item_type: 'multiple_choice', break_before: true,
-                          questionnaire: questionnaire)
-      put "/items/#{item.id}", params: { item: { question_type: 'dropdown' } }, headers: headers, as: :json
-
-      expect(response).to have_http_status(:ok)
-      expect(item.reload.item_type).to eq('dropdown')
     end
   end
 
@@ -509,8 +488,8 @@ RSpec.describe 'items', type: :request do
 
       context 'when items were created out of sequence order' do
         let(:id) do
-          Item.create!(seq: 2, txt: 'Second', question_type: 'multiple_choice', break_before: true, questionnaire: questionnaire)
-          Item.create!(seq: 1, txt: 'First', question_type: 'multiple_choice', break_before: true, questionnaire: questionnaire)
+          Item.create!(seq: 2, txt: 'Second', item_type: 'multiple_choice', break_before: true, questionnaire: questionnaire)
+          Item.create!(seq: 1, txt: 'First', item_type: 'multiple_choice', break_before: true, questionnaire: questionnaire)
           questionnaire.id
         end
 

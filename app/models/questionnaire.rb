@@ -16,9 +16,6 @@ class Questionnaire < ApplicationRecord # rubocop:disable Metrics/ClassLength
     attr_reader :print_name
   end
 
-  alias_attribute :min_question_score, :min_item_score
-  alias_attribute :max_question_score, :max_item_score
-
   validate :validate
   validates :name, presence: true
   validates :max_item_score, :min_item_score, numericality: true

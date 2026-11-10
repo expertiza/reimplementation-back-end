@@ -29,10 +29,10 @@ RSpec.describe GradesController, type: :controller do
 
   # Fake Item
   let(:fake_item) do
-    double("Item", id: 1, txt: "Criterion 1", question_type: "Scale").tap do |item|
+    double("Item", id: 1, txt: "Criterion 1", item_type: "Scale").tap do |item|
       allow(item).to receive(:[]).with(:id).and_return(item.id)
       allow(item).to receive(:[]).with(:txt).and_return(item.txt)
-      allow(item).to receive(:[]).with(:question_type).and_return(item.question_type)
+      allow(item).to receive(:[]).with(:item_type).and_return(item.item_type)
     end
   end
 
@@ -68,7 +68,7 @@ RSpec.describe GradesController, type: :controller do
     # Use simple hashes instead of instance_double for hash-style access
     fake_response_map = { id: 555 }
     fake_response     = { id: 777, round: 1 }
-    fake_item         = { id: 1, txt: "Criterion 1", question_type: "Scale" }
+    fake_item         = { id: 1, txt: "Criterion 1", item_type: "Scale" }
     fake_answer       = { answer: 4, comments: "Good work" }
 
     # Stub ReviewResponseMap.where(...).find_each

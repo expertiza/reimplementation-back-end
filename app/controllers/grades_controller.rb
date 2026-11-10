@@ -138,15 +138,14 @@ class GradesController < ApplicationController
   def get_items_from_questionnaire(questionnaire_id)
     questionnaire = Questionnaire.find_by(id: questionnaire_id)
     item_data = {
-      min_answer_value: questionnaire[:min_item_score] || questionnaire[:min_question_score],
-      max_answer_value: questionnaire[:max_item_score] || questionnaire[:max_question_score],
+      min_answer_value: questionnaire[:min_item_score],
+      max_answer_value: questionnaire[:max_item_score],
       items: {}
     }
     Item.where("questionnaire_id = " + questionnaire_id.to_s).find_each do |item|
       item_data[:items][item[:id]] = {
         description: item[:txt],
-        item_type: item[:item_type] || item[:question_type],
-        question_type: item[:item_type] || item[:question_type],
+        item_type: item[:item_type],
         answers: {
           values: [],
           comments: []

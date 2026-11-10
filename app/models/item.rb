@@ -5,9 +5,6 @@ class Item < ApplicationRecord
   # Used by ItemsController#types to return the list to the front-end,
   # and can be used elsewhere for validation or display.
   ITEM_TYPES = ['Criterion', 'Scale', 'Dropdown', 'Multiple choice', 'Text area', 'Text field', 'Grid'].freeze
-  QUESTION_TYPES = ITEM_TYPES
-
-  alias_attribute :question_type, :item_type
 
   before_validation :set_seq, on: :create
   belongs_to :questionnaire, inverse_of: :items # each item belongs to a specific questionnaire
@@ -37,7 +34,6 @@ class Item < ApplicationRecord
     super(options.merge({
                           only: %i[id txt weight seq item_type size alternatives break_before min_label max_label
                                    created_at updated_at],
-                          methods: %i[question_type],
                           include: {
                             questionnaire: { only: %i[name id] }
                           }

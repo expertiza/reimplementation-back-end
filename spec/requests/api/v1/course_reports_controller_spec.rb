@@ -237,7 +237,7 @@ RSpec.describe 'Course Reports API', type: :request do
                                      email: 'r1@example.com')
         reviewer_ap = AssignmentParticipant.create!(user: reviewer_user, parent_id: assignment.id, handle: 'r1')
 
-        item = questionnaire.items.create!(txt: 'Q', seq: 1, question_type: 'Scale', weight: 1, break_before: true)
+        item = questionnaire.items.create!(txt: 'Q', seq: 1, item_type: 'Scale', weight: 1, break_before: true)
         AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire,
                                          used_in_round: 1, questionnaire_weight: 100)
         map = ReviewResponseMap.create!(reviewed_object_id: assignment.id,
@@ -268,7 +268,7 @@ RSpec.describe 'Course Reports API', type: :request do
         reviewer_ap = AssignmentParticipant.create!(user: reviewer_user, parent_id: assignment.id, handle: 'r2')
         ReviewGrade.create!(participant: reviewer_ap, grade_for_reviewer: 2.0, grader_id: instructor.id)
 
-        item = questionnaire.items.create!(txt: 'Q', seq: 1, question_type: 'Scale', weight: 1, break_before: true)
+        item = questionnaire.items.create!(txt: 'Q', seq: 1, item_type: 'Scale', weight: 1, break_before: true)
         AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire,
                                          used_in_round: 1, questionnaire_weight: 100)
         map = ReviewResponseMap.create!(reviewed_object_id: assignment.id,
