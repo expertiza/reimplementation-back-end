@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_11_10_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_10_28_000002) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -471,6 +471,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_10_000001) do
     t.index ["role_id"], name: "index_users_on_role_id"
   end
 
+  add_foreign_key "account_requests", "institutions"
+  add_foreign_key "account_requests", "roles"
   add_foreign_key "assignments", "courses"
   add_foreign_key "assignments", "users", column: "instructor_id"
   add_foreign_key "assignments_duties", "assignments"
