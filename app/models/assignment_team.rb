@@ -11,6 +11,10 @@ class AssignmentTeam < Team
   # Delegation to avoid Law of Demeter violations
   delegate :path, to: :assignment, prefix: true
 
+  def submission_team
+    self
+  end
+
   def hyperlinks
     submitted_hyperlinks.blank? ? [] : YAML.safe_load(submitted_hyperlinks)
   end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'rails_helper'
 
-RSpec.describe Assignment, type: :model do # rubocop:disable Metrics/BlockLength
+RSpec.describe Assignment, type: :model do
 
   let(:team) {Team.new}
   let(:assignment) { Assignment.new(id: 1, name: 'Test Assignment') }

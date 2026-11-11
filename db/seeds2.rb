@@ -26,7 +26,7 @@
 #             txt: Faker::Lorem.sentence(word_count: 8),
 #             weight: rand(1..5),
 #             seq: i + 1,
-#             question_type: ['Criterion', 'Scale', 'TextArea', 'Dropdown'].sample,
+#             item_type: ['Criterion', 'Scale', 'TextArea', 'Dropdown'].sample,
 #             size: ['50x3', '60x4', '40x2'].sample,
 #             alternatives: ['Yes|No', 'Strongly Agree|Agree|Neutral|Disagree|Strongly Disagree'],
 #             break_before: true,

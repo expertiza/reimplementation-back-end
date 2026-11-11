@@ -1,11 +1,17 @@
 # frozen_string_literal: true
 
 class ResponsesController < ApplicationController
-  before_action :set_response, only: [:update, :submit, :unsubmit, :destroy]
+  before_action :set_response, only: [:show, :update, :submit, :unsubmit, :destroy]
 
   # Authorization: determines if current user can perform the action
   def action_allowed?
     case action_name
+    when 'show'
+      resp = Response.find_by(id: params[:id])
+      return false unless resp&.response_map&.assignment
+      current_user_owns_response?(resp) ||
+        current_user_teaching_staff_of_assignment?(resp.response_map.assignment.id) ||
+        parent_admin_for_response?(resp)
     when 'create'
       map_id = params[:response_map_id] || params[:map_id]
       map = ResponseMap.find_by(id: map_id)
@@ -34,6 +40,21 @@ class ResponsesController < ApplicationController
     else
       false
     end
+  end
+
+  # GET /responses/:id
+  def show
+    return render json: { error: "#{response_label} not found" }, status: :not_found unless @response
+
+    render json: {
+      id: @response.id,
+      is_submitted: @response.is_submitted,
+      additional_comment: @response.additional_comment,
+      updated_at: @response.updated_at,
+      answers: @response.scores.map do |a|
+        { id: a.id, item_id: a.item_id, answer: a.answer, comments: a.comments }
+      end
+    }
   end
 
   # POST /responses
@@ -73,6 +94,19 @@ class ResponsesController < ApplicationController
     return render json: { error: "#{response_label} not found" }, status: :not_found unless @response
     if @response.is_submitted?
       return render json: { error: "#{response_label} has already been submitted" }, status: :unprocessable_entity
+    end
+
+    # Optimistic concurrency: reject if another window saved a draft since the client last loaded.
+    if params[:updated_at].present?
+      client_ts = begin
+        Time.zone.parse(params[:updated_at].to_s)
+      rescue ArgumentError, TypeError
+        nil
+      end
+      if client_ts && @response.updated_at.to_i != client_ts.to_i
+        return render json: { error: 'Your review is out of date. Please refresh and try again.' },
+                      status: :conflict
+      end
     end
     response_map = @response.response_map
     # Check deadline
@@ -139,7 +173,7 @@ class ResponsesController < ApplicationController
       :additional_comment,
       scores_attributes: [:id, :item_id, :answer, :comments]
     )
-    (p[:scores_attributes] || []).each { |s| s[:answer] = s[:answer].to_i if s.key?(:answer) }
+    (p[:scores_attributes] || []).each { |s| s[:answer] = s[:answer].to_i if s.key?(:answer) && !s[:answer].nil? }
     p
   end
 

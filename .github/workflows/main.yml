@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     
     env:
       DATABASE_URL: mysql2://root:expertiza@127.0.0.1:3306/expertiza_test

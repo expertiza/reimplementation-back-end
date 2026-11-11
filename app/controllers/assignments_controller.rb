@@ -102,7 +102,6 @@ class AssignmentsController < ApplicationController
         "#{user.name} (#{user.full_name})"
       end.join(', ')
 
-      # Resolve calibration review map and its status
       calibration_map = instructor_participant && ReviewResponseMap.find_by(
         reviewed_object_id: assignment.id,
         reviewer_id: instructor_participant.id,
@@ -111,12 +110,7 @@ class AssignmentsController < ApplicationController
       )
 
       review_status = calibration_review_status(calibration_map)
-
-      hyperlinks = begin
-        team.hyperlinks
-      rescue StandardError
-        []
-      end
+      hyperlinks    = safe_hyperlinks(team)
       files = SubmissionRecord.where(assignment_id: assignment.id, team_id: team.id, record_type: 'file')
                               .pluck(:content)
 
@@ -328,15 +322,6 @@ class AssignmentsController < ApplicationController
 
   private
 
-  # Reports whether the instructor has started or submitted the calibration review.
-  def calibration_review_status(calibration_map)
-    return 'not_started' unless calibration_map
-    return 'completed' if calibration_map.responses.exists?(is_submitted: true)
-    return 'in_progress' if calibration_map.responses.exists?
-
-    'not_started'
-  end
-
   # Only allow a list of trusted parameters through.
   def assignment_params
     params.require(:assignment).permit(
@@ -406,5 +391,19 @@ class AssignmentsController < ApplicationController
                .first
 
     assignment.staggered_and_no_topic?(topic_id)
+  end
+
+  def calibration_review_status(calibration_map)
+    return 'not_started' if calibration_map.nil?
+    return 'completed'   if calibration_map.responses.exists?(is_submitted: true)
+    return 'in_progress' if calibration_map.responses.exists?
+
+    'not_started'
+  end
+
+  def safe_hyperlinks(team)
+    team.hyperlinks
+  rescue StandardError
+    []
   end
 end
