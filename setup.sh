@@ -19,7 +19,7 @@ rake db:create
 echo "Step 4: Running database migrations..."
 rake db:migrate
 
-echo "Step 5: Seeding the database..." 
+echo "Step 5: Seeding the database (Idempotent: creates only records that are not yet in the db)."
 rake db:seed
 
 echo "Step 6: Starting the Rails server..."
