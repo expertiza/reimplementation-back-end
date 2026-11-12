@@ -227,7 +227,7 @@ class AssignmentTeam < Team
 
   private
 
-  def teams_in_parent
+  def teams_of_parent
     assignment ? assignment.teams : AssignmentTeam.none
   end
 

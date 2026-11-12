@@ -41,7 +41,7 @@ class StudentTeamsController < ApplicationController
 
     # POST /student_teams/`
     def create
-        # Check for duplicate names within the destination assignment.
+        # Check whether the requested new team name already exists within the destination assignment.
         if AssignmentTeam.exists?(name: params[:team][:name], parent_id: params[:assignment_id])
             render json: { error: "#{params[:team][:name]} is already in use." }, status: :unprocessable_entity
             return
@@ -49,7 +49,7 @@ class StudentTeamsController < ApplicationController
 
         team = AssignmentTeam.new(name: params[:team][:name], parent_id: params[:assignment_id])
         team_creation_error = nil
-        # Creating the team and its initial membership must succeed together.
+        # When creating a team, we must be able to add the initial member.
         AssignmentTeam.transaction(requires_new: true) do
             unless team.save
                 team_creation_error = team.errors.full_messages

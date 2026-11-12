@@ -4,7 +4,7 @@ class CourseTeam < Team
   #Each course team must belong to a course
   belongs_to :course, class_name: 'Course', foreign_key: 'parent_id'
 
-  # Preserve the existing policy: courses do not configure a team capacity.
+  # A course does not define a maximum team size.
   def max_size
     nil
   end
@@ -23,7 +23,7 @@ class CourseTeam < Team
     )
     if assignment_team.save
       participants.each do |participant|
-        # Use the destination participant; capacity comes from the destination assignment.
+        # Use the destination participant; maximum team size comes from the destination assignment.
         assignment_participant = assignment_team.assigned_participants.find_by(user_id: participant.user_id)
         assignment_team.add_member(assignment_participant)
       end
@@ -40,7 +40,7 @@ class CourseTeam < Team
 
   private
 
-  def teams_in_parent
+  def teams_of_parent
     course ? course.teams : CourseTeam.none
   end
 

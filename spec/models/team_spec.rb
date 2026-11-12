@@ -424,6 +424,9 @@ RSpec.describe Team, type: :model do
       team.reload
 
       expect(team.full?).to be(true)
+      expect(team.can_participant_join_team?(candidate)).to eq(
+        success: false, error: 'The team has reached its maximum size.'
+      )
       expect(team.add_member(candidate).fetch(:success)).to be(false)
       expect(team.participants).to match_array(members)
     end
@@ -464,15 +467,19 @@ RSpec.describe Team, type: :model do
       expect(team.participants).to contain_exactly(member)
     end
 
-    # Verifies participant eligibility remains distinct from capacity enforcement during admission.
-    it 'considers a participant without a team eligible even when the team is full' do
+    # Verifies eligibility rejects a participant when the team has no room.
+    it 'rejects an otherwise eligible participant when the team is full' do
       parent = create_parent(:assignment, max_team_size: 1)
       team = create_team(parent)
-      create_membership(team, create_participant(parent))
+      member = create_participant(parent)
+      create_membership(team, member)
       candidate = create_participant(parent)
 
       expect(team.full?).to be(true)
-      expect(team.can_participant_join_team?(candidate)).to eq(success: true)
+      expect(team.can_participant_join_team?(candidate)).to eq(
+        success: false, error: 'The team has reached its maximum size.'
+      )
+      expect(team.reload.participants).to contain_exactly(member)
     end
   end
 

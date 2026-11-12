@@ -49,7 +49,7 @@ class Team < ApplicationRecord
     participants.count >= maximum_team_size
   end
 
-  # Adds a participant; callers must find the appropriate participant before admission.
+  # Add the specified participant to the team.
   def add_member(participant)
     unless assigned_participant?(participant)
       return { success: false, error: 'Participant is not assigned to this team' }
@@ -83,8 +83,7 @@ class Team < ApplicationRecord
     # retract all the invitations the participant sent (if any) while being on the this team
     participant.retract_sent_invitations
 
-    # Participant#team reads this join; this method no longer maintains legacy team_id.
-    # This membership record links the participant to this team.
+    # Find the teams_participants record that identifies the user as belonging to this team.
     team_membership = teams_participants.find_by(participant_id: participant.id)
     team_membership&.destroy
     
@@ -100,11 +99,13 @@ class Team < ApplicationRecord
 
     # Check this team and other teams in the same assignment or course.
     if TeamsParticipant.exists?(
-      team_id: teams_in_parent.select(:id),
+      team_id: teams_of_parent.select(:id),
       participant_id: participant.id
     )
       return { success: false, error: 'Participant already belongs to a team.' }
     end
+
+    return { success: false, error: 'The team has reached its maximum size.' } if full?
 
     # All checks passed; participant is eligible to join the team
     { success: true }
@@ -114,8 +115,8 @@ class Team < ApplicationRecord
   private
 
   # Returns teams in the same assignment or course, including this team.
-  def teams_in_parent
-    raise NotImplementedError, "#{self.class} must define teams_in_parent"
+  def teams_of_parent
+    raise NotImplementedError, "#{self.class} must define teams_of_parent"
   end
 
   def assigned_participant?(participant)
