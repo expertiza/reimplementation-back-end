@@ -11,13 +11,18 @@ permissions:
   contents: read
   pull-requests: write
 
+concurrency:
+  group: ci-report-${{ github.event.workflow_run.head_repository.id }}-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
 jobs:
   comment:
+    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion != 'cancelled'
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.event == 'pull_request'
 
     steps:
-      - name: Download RSpec summary
+
+      - name: Download CI report
         uses: actions/download-artifact@v4
         with:
           name: rspec-summary
@@ -25,30 +30,135 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
-      - name: Post RSpec summary
+      - name: Create or update PR report
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
+            const run = context.payload.workflow_run;
+            const { owner, repo } = context.repo;
 
-            const prNumber =
-              context.payload.workflow_run.pull_requests?.[0]?.number;
+            const headOwner = run.head_repository?.owner?.login;
+            const headBranch = run.head_branch;
 
-            if (!prNumber) {
-              core.info('No pull request associated with this workflow run.');
+            if (!headOwner || !headBranch) {
+              core.info('Could not identify the source branch.');
               return;
             }
 
-            const summary =
-              fs.readFileSync('rspec-summary/rspec_summary.txt', 'utf8');
+            // Resolve the PR using its source branch.
+            // This also supports pull requests from forks.
+            const pulls = await github.paginate(
+              github.rest.pulls.list,
+              {
+                owner,
+                repo,
+                state: 'open',
+                base: 'main',
+                head: `${headOwner}:${headBranch}`,
+                per_page: 100
+              }
+            );
 
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              body: `## RSpec Tests Report
+            const pr = pulls.find(candidate => {
+              const sameRepo =
+                candidate.head.repo?.id === run.head_repository.id;
+              const sameBranch =
+                candidate.head.ref === headBranch;
+              const sameRevision =
+                candidate.head.sha === run.head_sha ||
+                candidate.merge_commit_sha === run.head_sha ||
+                candidate.head.sha === run.head_commit?.id;
 
-            \`\`\`
-            ${summary}
-            \`\`\``
+              return sameRepo && sameBranch && sameRevision;
             });
+
+            if (!pr) {
+              core.info('No matching current PR revision found. Skipping stale or unrelated run.');
+              return;
+            }
+
+            const reportPath = 'rspec-summary/rspec_summary.txt';
+            if (!fs.existsSync(reportPath)) {
+              core.warning('CI report artifact is missing.');
+              return;
+            }
+
+            // Read report as text only; never execute artifact content.
+            const report = fs.readFileSync(reportPath, 'utf8')
+              .slice(0, 16000)
+              .replace(/@/g, '&#64;');
+
+            const marker = '<!-- expertiza-ci-report -->';
+            const attempt = run.run_attempt || 1;
+            const runMarker =
+              `<!-- expertiza-ci-run:${run.id}:${attempt} -->`;
+
+            const body = [
+              marker,
+              runMarker,
+              report,
+              '',
+              `**CI workflow status:** ${run.conclusion}`,
+              `[View full workflow run](${run.html_url})`,
+              '',
+              '_This comment is updated after subsequent CI runs._'
+            ].join('\n');
+
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              {
+                owner,
+                repo,
+                issue_number: pr.number,
+                per_page: 100
+              }
+            );
+
+            const botComments = comments.filter(
+              c => c.user?.login === 'github-actions[bot]'
+            );
+
+            // Reuse an existing report comment where possible.
+            // Also recognize the old RSpec comment during migration.
+            const existing =
+              botComments.filter(c => c.body?.includes(marker)).at(-1) ||
+              botComments.filter(c =>
+                c.body?.startsWith('## RSpec Tests Report')
+              ).at(-1);
+
+            if (existing) {
+              const previous = existing.body?.match(
+                /<!-- expertiza-ci-run:(\d+):(\d+) -->/
+              );
+
+              if (previous) {
+                const previousId = Number(previous[1]);
+                const previousAttempt = Number(previous[2]);
+
+                if (previousId > run.id ||
+                    (previousId === run.id &&
+                     previousAttempt > attempt)) {
+                  core.info('A newer CI report already exists.');
+                  return;
+                }
+              }
+
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body
+              });
+
+              core.info(`Updated CI report on PR #${pr.number}.`);
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: pr.number,
+                body
+              });
+
+              core.info(`Created CI report on PR #${pr.number}.`);
+            }
