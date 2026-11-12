@@ -3,6 +3,11 @@ class ReviewResponseMap < ResponseMap
   include ExpertizaConstants::ResponseMapTitles
   belongs_to :reviewee, class_name: 'Team', foreign_key: 'reviewee_id', inverse_of: false
 
+  # When reviewing_is_done_by_teams, reviewer_id holds an AssignmentTeam id.
+  def reviewer
+    reviewing_is_done_by_teams? ? AssignmentTeam.find_by(id: reviewer_id) : super
+  end
+
   scope :for_assignment, ->(assignment_id) { where(reviewed_object_id: assignment_id) }
 
   # Returns the assignment associated with this review map.
@@ -26,5 +31,15 @@ class ReviewResponseMap < ResponseMap
   # Get the review response map
   def review_map_type
     'ReviewResponseMap'
+  end
+
+  # Records the instructor's (or TA's) grade and comment for this review.
+  # Does nothing when the assignment uses team-based reviews, since ReviewGrade is
+  # keyed on an individual participant_id and teams cannot receive it.
+  def assign_grade(grade:, comment:)
+    return if reviewing_is_done_by_teams?
+
+    ReviewGrade.find_or_create_by!(participant_id: reviewer_id)
+               .update!(grade_for_reviewer: grade, comment_for_reviewer: comment)
   end
 end
