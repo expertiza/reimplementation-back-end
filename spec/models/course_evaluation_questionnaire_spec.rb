@@ -13,8 +13,8 @@ describe CourseEvaluationQuestionnaire, type: :model do
     CourseEvaluationQuestionnaire.create!(
       name: 'Course Evaluation Test',
       private: false,
-      min_question_score: 0,
-      max_question_score: 5,
+      min_item_score: 0,
+      max_item_score: 5,
       instructor: instructor
     )
   end

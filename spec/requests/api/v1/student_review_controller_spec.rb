@@ -199,8 +199,8 @@ RSpec.describe 'StudentReview API', type: :request do
           name: 'Peer Review Rubric',
           instructor_id: instructor.id,
           private: false,
-          min_question_score: 0,
-          max_question_score: 5
+          min_item_score: 0,
+          max_item_score: 5
         )
       end
 
@@ -208,7 +208,7 @@ RSpec.describe 'StudentReview API', type: :request do
         Item.create!(
           questionnaire: questionnaire,
           txt: 'Is the problem statement clear?',
-          question_type: 'Criterion',
+          item_type: 'Criterion',
           seq: 0,
           weight: 1,
           break_before: true

@@ -31,7 +31,7 @@ class ItemsController < ApplicationController
   # GET /items/show_all/questionnaire/:id
   def show_all
     questionnaire = Questionnaire.find(params[:id])
-    items = questionnaire.items.order(:id)
+    items = questionnaire.items.order(:seq, :id)
     render json: items, status: :ok
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Couldn't find Questionnaire" }, status: :not_found
@@ -39,17 +39,8 @@ class ItemsController < ApplicationController
 
   # POST /items
   def create
-    questionnaire_id = params[:questionnaire_id]
-    questionnaire = Questionnaire.find(questionnaire_id)
-
-    # Build the new Item using the frontend-facing param names
-    item = questionnaire.items.build(
-      txt: params[:prompt], # prompt maps to the txt DB column
-      question_type: params[:question_type],
-      seq: params[:seq],
-      break_before: true
-    )
-
+    questionnaire = Questionnaire.find(params[:questionnaire_id])
+    item = new_item_for(questionnaire)
     apply_type_defaults(item)
 
     if item.save
@@ -80,7 +71,7 @@ class ItemsController < ApplicationController
   def delete_all
     questionnaire = Questionnaire.find(params[:id])
     if questionnaire.items.delete_all
-      render json: { message: 'All questions deleted' }, status: :ok
+      render json: { message: 'All items deleted' }, status: :ok
     else
       render json: { error: 'Deletion failed' }, status: :unprocessable_entity
     end
@@ -89,14 +80,14 @@ class ItemsController < ApplicationController
   end
 
   def types
-    render json: Item::QUESTION_TYPES, status: :ok
+    render json: Item::ITEM_TYPES, status: :ok
   end
 
   private
 
   # Set size and alternatives from structured params
   def apply_type_defaults(item)
-    case item.question_type
+    case item.item_type
     when 'Scale'
       item.weight = params[:weight]
       item.max_label = 'Strongly agree'
@@ -109,7 +100,7 @@ class ItemsController < ApplicationController
   end
 
   def apply_size(item)
-    case item.question_type
+    case item.item_type
     when 'TextArea'
       # rows and columns stored as "columns,rows" in the size field
       item.size = "#{params[:columns] || 60},#{params[:rows] || 5}"
@@ -122,9 +113,20 @@ class ItemsController < ApplicationController
     @item = Item.find(params[:id])
   end
 
+  # Instantiates (without saving) a new Item attached to the given questionnaire,
+  # using the request's prompt, item_type and seq parameters.
+  def new_item_for(questionnaire)
+    questionnaire.items.build(
+      txt: params[:prompt],
+      item_type: params[:item_type],
+      seq: params[:seq],
+      break_before: true
+    )
+  end
+
   def item_params
     # The frontend sends :prompt, which maps to the txt column.
-    permitted = params.require(:item).permit(:prompt, :txt, :question_type, :seq, :weight, :alternatives,
+    permitted = params.require(:item).permit(:prompt, :txt, :item_type, :seq, :weight, :alternatives,
                                              :size, :break_before, :min_label, :max_label)
     prompt = permitted.delete(:prompt)
     permitted[:txt] = prompt if prompt
@@ -132,7 +134,7 @@ class ItemsController < ApplicationController
   end
 
   def get_strategy_for_item(item)
-    case item.question_type
+    case item.item_type
     when 'Dropdown'
       Strategies::DropdownStrategy.new
     when 'Scale'

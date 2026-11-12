@@ -15,8 +15,8 @@ RSpec.describe Dropdown, type: :model do
           input_type: "text",
           input_name: "item",
           input_value: "Some Text",
-          min_question_score: nil,
-          max_question_score: nil,
+          min_item_score: nil,
+          max_item_score: nil,
           weight: 1,
           type: 'dropdown'
         }.to_json

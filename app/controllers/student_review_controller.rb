@@ -92,10 +92,10 @@ class StudentReviewController < ApplicationController
     {
       id: q.id,
       name: q.name,
-      min_item_score: q.min_question_score,
-      max_item_score: q.max_question_score,
+      min_item_score: q.min_item_score,
+      max_item_score: q.max_item_score,
       items: q.items.order(:seq).map do |item|
-        { id: item.id, txt: item.txt, question_type: item.question_type,
+        { id: item.id, txt: item.txt, item_type: item.item_type,
           weight: item.weight, seq: item.seq }
       end
     }

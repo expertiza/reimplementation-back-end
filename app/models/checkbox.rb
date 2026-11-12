@@ -47,7 +47,7 @@ class Checkbox < UnscoredItem
         type: 'text',
         input_size: 10,
         disabled: true,
-        value: question_type,
+        value: item_type,
         name: "item[#{id}][type]",
         id: "question_#{id}_type"
       }
@@ -64,7 +64,7 @@ class Checkbox < UnscoredItem
     def view_item_text
       {
         content: txt,
-        type: question_type,
+        type: item_type,
         weight: weight.to_s,
         checked_state: 'Checked/Unchecked'
       }
@@ -126,7 +126,7 @@ class Checkbox < UnscoredItem
     def complete_if_column_header
       next_question = Item.where('seq > ?', seq).order(:seq).first
       if next_question
-        case next_question.question_type
+        case next_question.item_type
         when 'ColumnHeader'
           'end_of_column_header'
         when 'SectionHeader', 'TableHeader'
@@ -159,7 +159,7 @@ class Checkbox < UnscoredItem
     def view_completed_item_if_column_header
       next_question = Item.where('seq > ?', seq).order(:seq).first
       if next_question
-        case next_question.question_type
+        case next_question.item_type
         when 'ColumnHeader'
           'end_of_column_header'
         when 'TableHeader'
