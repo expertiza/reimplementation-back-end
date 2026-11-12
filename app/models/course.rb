@@ -38,6 +38,7 @@ class Course < ApplicationRecord
 
   # Removes Teaching Assistant from the course
   def remove_ta(user_id)
+    # ta_mappings only contains this course's TA mappings (has_many :ta_mappings above),
     ta_mapping = ta_mappings.find_by(user_id: user_id)
     return { success: false, message: "No TA mapping found for the specified course and TA" } if ta_mapping.nil?
     ta = User.find(ta_mapping.user_id)
