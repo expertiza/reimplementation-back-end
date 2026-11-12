@@ -109,6 +109,8 @@ CodeRabbit focuses on contextual code review, including:
 CodeRabbit should avoid duplicating mechanical warnings
 already reported by Danger or other CI tools.
 
+For fork-origin pull requests, Danger does not execute. CodeRabbit therefore retains a targeted debug-code warning for these PRs. This check is not applicable to same-repository PRs, where Danger already provides coverage.
+
 ### GitHub Actions
 
 GitHub Actions remains responsible for running RSpec,
@@ -172,6 +174,8 @@ as warnings:
 - `workflow-security`: Identifies security risks in GitHub Actions.
 - `config-and-setup-scrutiny`: Reviews configuration changes for
   security, compatibility, and unintended behavior.
+- `fork-pr-debug-code`: This is the sole deliberate exception to
+  avoiding duplicate mechanical checks.
 
 Mechanical PR policy checks remain with Danger to prevent
 duplicated automated feedback.

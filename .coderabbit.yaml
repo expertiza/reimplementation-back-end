@@ -11,7 +11,9 @@ reviews:
     security, performance, and maintainability concerns.
     Focus on issues that require understanding application behavior.
     Avoid repeating mechanical PR checks already handled by
-    Danger, RuboCop, and CI.
+    Danger, RuboCop, and CI where those checks run.
+    For fork PRs, where Danger is skipped, preserve warnings
+    for newly introduced debugging statements.
   review_status: true
   review_details: true
   commit_status: true
@@ -205,6 +207,22 @@ reviews:
           Review configuration and setup changes for security risks,
           compatibility issues, and unintended behavioral changes.
           Avoid repeating Danger's file-change notifications.
+
+      - name: "fork-pr-debug-code"
+        mode: "warning"
+        instructions: |
+          Apply only when the PR head repository differs from
+          the base repository (fork PR).
+          For same-repository PRs, pass as not applicable because
+          Danger already checks for debugging statements.
+
+          For fork PRs, warn when newly added executable code
+          contains leftover debugging statements such as puts,
+          print, binding.pry, debugger, or console.log.
+
+          Ignore intentional application output, production
+          logging, documentation, and quoted examples.
+          Pass when no new debugging statements are introduced.
 
   tools:
     github-checks:
