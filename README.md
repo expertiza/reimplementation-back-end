@@ -111,6 +111,26 @@ If the application is not responding, inspect its logs:
 docker compose --profile dev logs -f app
 ```
 
+### Development Login Credentials
+
+For local development and UI testing, a default administrator account
+is created when the database is initialized with seed data.
+
+To find the current login credentials, refer to [`db/seeds.rb`](db/seeds.rb),
+which defines the seeded administrator account, including its username
+and password.
+
+These credentials are intended only for local development and testing
+and must not be used in production.
+
+The backend runs at `http://localhost:3002`. To test the application
+through its web interface, run the
+[Expertiza frontend](https://github.com/expertiza/reimplementation-front-end)
+and connect it to the local backend.
+
+**Note:** Existing database volumes may contain different credentials
+or may not have the seeded administrator account.
+
 ---
 
 ## 2. Development Environment
