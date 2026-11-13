@@ -32,3 +32,4 @@
 coverage/
 rsa_keys.yml
 pg_data/
+.env

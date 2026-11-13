@@ -176,5 +176,6 @@ begin
                  }
                ])
 rescue ActiveRecord::RecordInvalid => e
-  puts e, 'The db has already been seeded'
+  warn "Database seeding failed: #{e.message}"
+  raise
 end

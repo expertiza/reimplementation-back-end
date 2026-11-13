@@ -1,0 +1,30 @@
+# Git files
+.git/
+.gitignore
+
+# Local environment configuration
+.env
+.env.*
+!.env.example
+
+# Credentials and private keys
+rsa_keys.yml
+config/master.key
+config/credentials/*.key
+*.pem
+
+# Runtime and generated files
+log/
+tmp/
+coverage/
+
+# Local dependencies
+node_modules/
+.bundle/
+
+# Operating system files
+.DS_Store
+
+# Editor settings
+.vscode/
+.idea/
