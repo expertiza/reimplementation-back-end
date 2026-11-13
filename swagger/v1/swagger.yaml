@@ -1087,9 +1087,9 @@ paths:
                   type: string
                 private:
                   type: boolean
-                min_question_score:
+                min_item_score:
                   type: integer
-                max_question_score:
+                max_item_score:
                   type: integer
                 instructor_id:
                   type: integer
@@ -1098,8 +1098,8 @@ paths:
               - name
               - questionnaire_type
               - private
-              - min_question_score
-              - max_question_score
+              - min_item_score
+              - max_item_score
               - instructor_id
   "/questionnaires/{id}":
     parameters:
@@ -1141,7 +1141,7 @@ paths:
             schema:
               type: object
               properties:
-                min_question_score:
+                min_item_score:
                   type: integer
     patch:
       summary: update questionnaire
@@ -1167,7 +1167,7 @@ paths:
             schema:
               type: object
               properties:
-                min_question_score:
+                min_item_score:
                   type: integer
     delete:
       summary: delete questionnaire
@@ -1210,18 +1210,18 @@ paths:
           description: successful
         '404':
           description: not found
-  "/questions":
+  "/items":
     get:
-      summary: list questions
+      summary: list items
       tags:
-      - Questions
+      - Items
       responses:
         '200':
           description: successful
     post:
       summary: create item
       tags:
-      - Questions
+      - Items
       parameters: []
       responses:
         '201':
@@ -1244,15 +1244,15 @@ paths:
                   type: boolean
                 txt:
                   type: string
-                question_type:
+                item_type:
                   type: string
               required:
               - weight
               - questionnaire_id
               - break_before
               - txt
-              - question_type
-  "/questions/{id}":
+              - item_type
+  "/items/{id}":
     parameters:
     - name: id
       in: path
@@ -1262,7 +1262,7 @@ paths:
     get:
       summary: show item
       tags:
-      - Questions
+      - Items
       responses:
         '200':
           description: successful
@@ -1271,7 +1271,7 @@ paths:
     put:
       summary: update item
       tags:
-      - Questions
+      - Items
       parameters: []
       responses:
         '200':
@@ -1297,7 +1297,7 @@ paths:
     patch:
       summary: update item
       tags:
-      - Questions
+      - Items
       parameters: []
       responses:
         '200':
@@ -1323,13 +1323,13 @@ paths:
     delete:
       summary: delete item
       tags:
-      - Questions
+      - Items
       responses:
         '204':
           description: successful
         '404':
           description: not found
-  "/questions/delete_all/questionnaire/{id}":
+  "/items/delete_all/questionnaire/{id}":
     parameters:
     - name: id
       in: path
@@ -1337,15 +1337,15 @@ paths:
       schema:
         type: integer
     delete:
-      summary: delete all questions
+      summary: delete all items
       tags:
-      - Questions
+      - Items
       responses:
         '200':
           description: successful
         '404':
           description: not found
-  "/questions/show_all/questionnaire/{id}":
+  "/items/show_all/questionnaire/{id}":
     parameters:
     - name: id
       in: path
@@ -1353,19 +1353,19 @@ paths:
       schema:
         type: integer
     get:
-      summary: show all questions
+      summary: show all items
       tags:
-      - Questions
+      - Items
       responses:
         '200':
           description: successful
         '404':
           description: not found
-  "/questions/types":
+  "/items/types":
     get:
       summary: item types
       tags:
-      - Questions
+      - Items
       responses:
         '200':
           description: successful

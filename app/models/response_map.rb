@@ -159,11 +159,9 @@ class ResponseMap < ApplicationRecord
     candidates = []
     candidates << reviewee.updated_at
 
-    # Check team-related timestamps if the reviewee has a team
-    if reviewee.team.present?
-      team = reviewee.team
+    team = reviewee.submission_team
+    if team.present?
       candidates << team.updated_at
-
       # Also gather timestamps from join records (teams_participants) so collaborator edits count as activity
       team.teams_participants.each do |tp|
         candidates << tp.updated_at

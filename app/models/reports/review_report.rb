@@ -88,7 +88,7 @@ module Reports
                .for_assignment(@reportable.id)
                .includes(reviewer: :user, reviewee: :user, responses: { scores: :item })
 
-      # Precompute max_question_score per round once to avoid N+1 inside
+      # Precompute max_item_score per round once to avoid N+1 inside
       # maximum_score → questionnaire → assignment_questionnaires.find_by.
       max_q_score_by_round = questionnaire_max_score_by_round
 
@@ -164,7 +164,7 @@ module Reports
       [scores, team_averages, reviewer_volumes]
     end
 
-    # Returns max_question_score per round using a single query.
+    # Returns max_item_score per round using a single query.
     # Eliminates the N+1 from Response#questionnaire being called per response.
     # Output: { round => Integer }
     def questionnaire_max_score_by_round
@@ -173,7 +173,7 @@ module Reports
         .includes(:questionnaire)
         .each_with_object({}) do |aq, h|
           round = aq.used_in_round || 1
-          h[round] = aq.questionnaire&.max_question_score.to_i
+          h[round] = aq.questionnaire&.max_item_score.to_i
         end
     end
 
@@ -188,7 +188,7 @@ module Reports
         .each_with_object({}) do |aq, hash|
           round = aq.used_in_round || 1
           q     = aq.questionnaire
-          hash[round] = { min: q.min_question_score, max: q.max_question_score }
+          hash[round] = { min: q.min_item_score, max: q.max_item_score }
         end
     end
 

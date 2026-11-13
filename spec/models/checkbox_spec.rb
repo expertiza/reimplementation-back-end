@@ -3,7 +3,7 @@
 require 'rails_helper'
 
 RSpec.describe Checkbox do
-  let!(:checkbox) { Checkbox.new(id: 10, question_type: 'Checkbox', seq: 1.0, txt: 'test txt', weight: 11) }
+  let!(:checkbox) { Checkbox.new(id: 10, item_type: 'Checkbox', seq: 1.0, txt: 'test txt', weight: 11) }
   let!(:answer) { Answer.new(answer: 1) }
 
   describe '#edit' do
@@ -21,7 +21,7 @@ RSpec.describe Checkbox do
   end
 
   describe '#complete' do
-    let(:checkbox) { Checkbox.new(id: 10, question_type: 'Checkbox', seq: 1.0, txt: 'test txt', weight: 11) }
+    let(:checkbox) { Checkbox.new(id: 10, item_type: 'Checkbox', seq: 1.0, txt: 'test txt', weight: 11) }
     let(:count) { 1 }
     let(:answer) { OpenStruct.new(answer: 1) } # Mocking Answer object
 
