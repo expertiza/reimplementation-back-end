@@ -293,14 +293,13 @@ RSpec.describe 'Participants API', type: :request do
         User.find(user_id).username
       end
 
-      response '500', 'Participant already exist' do
+      response '422', 'Participant already exist' do
         let(:authorization) { 'mentor' }
         let(:participant) { { user_id: studenta.id, assignment_id: assignment1.id } }
         let(:name) { User.find(participant[:user_id]).username }
 
         run_test! do |response|
-
-          expect(JSON.parse(response.body)['exception']).to eq("#<RuntimeError: The user #{name} is already a participant.>")
+          expect(JSON.parse(response.body)['error']).to eq("The user #{name} is already a participant.")
         end
       end
 
