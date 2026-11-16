@@ -559,8 +559,8 @@ RSpec.describe 'Assignments API', type: :request do
 
       it 'includes assignment_questionnaires with nested questionnaire in the response' do
         questionnaire = Questionnaire.create!(name: 'Review Q', instructor_id: prof.id,
-                                              min_question_score: 1, max_question_score: 5)
-        questionnaire.items.create!(txt: 'Q1', seq: 1, question_type: 'Scale', weight: 1, break_before: true)
+                                              min_item_score: 1, max_item_score: 5)
+        questionnaire.items.create!(txt: 'Q1', seq: 1, item_type: 'Scale', weight: 1, break_before: true)
         AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire,
                                         used_in_round: 1, questionnaire_weight: 100)
         get "/assignments/#{assignment.id}", headers: { 'Authorization' => Authorization() }
@@ -796,6 +796,35 @@ RSpec.describe 'Assignments API', type: :request do
         expect(data.first['submitted_content']).to include('hyperlinks', 'files')
       end
 
+      context 'when the instructor has a calibration review map for a team' do
+        let!(:team) { AssignmentTeam.create!(name: 'Team Gamma', parent_id: assignment.id) }
+        let!(:instructor_participant) do
+          AssignmentParticipant.create!(parent_id: assignment.id, user_id: prof.id,
+                                        type: 'AssignmentParticipant', handle: 'prof_handle')
+        end
+        let!(:calibration_map) do
+          ReviewResponseMap.create!(reviewed_object_id: assignment.id, reviewer_id: instructor_participant.id,
+                                    reviewee_id: team.id, for_calibration: true)
+        end
+
+        it 'returns not_started when the map has no responses' do
+          get_calibration(assignment.id)
+          expect(JSON.parse(response.body).first['review_status']).to eq('not_started')
+        end
+
+        it 'returns in_progress when the map only has unsubmitted responses' do
+          Response.create!(map_id: calibration_map.id, is_submitted: false)
+          get_calibration(assignment.id)
+          expect(JSON.parse(response.body).first['review_status']).to eq('in_progress')
+        end
+
+        it 'returns completed when the map has a submitted response' do
+          Response.create!(map_id: calibration_map.id, is_submitted: true)
+          get_calibration(assignment.id)
+          expect(JSON.parse(response.body).first['review_status']).to eq('completed')
+        end
+      end
+
       it 'includes participant names for team members' do
         team = AssignmentTeam.create!(name: 'Team Beta', parent_id: assignment.id)
         TeamsUser.create!(team: team, user: prof)
@@ -841,7 +870,7 @@ RSpec.describe 'Assignments API', type: :request do
     context 'when a questionnaire exists' do
       let!(:questionnaire) do
         Questionnaire.create!(name: 'Review Rubric', instructor_id: prof.id,
-                              min_question_score: 0, max_question_score: 5)
+                              min_item_score: 0, max_item_score: 5)
       end
 
       it 'returns false when vary_by_round is false' do

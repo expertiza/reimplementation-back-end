@@ -99,15 +99,15 @@ puts "creating questionnaires and items"
 questionnaire = AuthorFeedbackQuestionnaire.find_or_create_by!(name: "Sample Review Questionnaire") do |q|
   q.instructor_id = 1
   q.private = false
-  q.min_question_score = 0
-  q.max_question_score = 5
+  q.min_item_score = 0
+  q.max_item_score = 5
 end
 
-# Items are keyed by their text (Item#set_seq overwrites seq on create)
+# Items are keyed by their text
 [
   {
     txt: "How clearly did the author explain the problem statement?",
-    question_type: "Scale",
+    item_type: "Scale",
     weight: 1,
     break_before: true,
     min_label: "Strongly Disagree",
@@ -115,14 +115,14 @@ end
   },
   {
     txt: "Provide detailed feedback on the author's solution approach.",
-    question_type: "Textarea",
+    item_type: "Textarea",
     weight: 1,
     break_before: true,
     size: "60,5"
   },
   {
     txt: "Rate the overall quality of the submission.",
-    question_type: "Scale",
+    item_type: "Scale",
     weight: 2,
     break_before: true,
     min_label: "Poor",

@@ -113,6 +113,6 @@ class Response < ApplicationRecord
       total_weight += s.item.weight unless s.answer.nil? #|| !s.item.is_a(ScoredItem)?
     end
     return 0 if questionnaire.nil?
-    total_weight * questionnaire.max_question_score
+    total_weight * questionnaire.max_item_score
   end
 end

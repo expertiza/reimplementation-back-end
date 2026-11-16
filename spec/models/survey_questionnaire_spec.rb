@@ -13,8 +13,8 @@ describe SurveyQuestionnaire, type: :model do
     SurveyQuestionnaire.create!(
       name: 'Survey Test',
       private: false,
-      min_question_score: 0,
-      max_question_score: 5,
+      min_item_score: 0,
+      max_item_score: 5,
       instructor: instructor
     )
   end
@@ -42,8 +42,8 @@ describe SurveyQuestionnaire, type: :model do
       GlobalSurveyQuestionnaire.create!(
         name: 'Global Survey Test',
         private: false,
-        min_question_score: 0,
-        max_question_score: 5,
+        min_item_score: 0,
+        max_item_score: 5,
         instructor: instructor
       )
     end

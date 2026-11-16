@@ -9,7 +9,7 @@ RSpec.describe FileUpload do
 
   # Adjust the let statement to not include 'type' and 'weight' if they are not recognized attributes.
 
-  let(:upload_file) { FileUpload.new(id: 1, seq: '1', txt: 'Sample item content', question_type: 'FileUpload') }
+  let(:upload_file) { FileUpload.new(id: 1, seq: '1', txt: 'Sample item content', item_type: 'FileUpload') }
 
 
 
@@ -88,7 +88,7 @@ RSpec.describe FileUpload do
 
       it 'includes an input field for the item type, disabled' do
 
-        type_element = json_response["elements"].find { |el| el["name"]&.include?("question_type") }
+        type_element = json_response["elements"].find { |el| el["name"]&.include?("item_type") }
 
         expect(type_element).not_to be_nil
 

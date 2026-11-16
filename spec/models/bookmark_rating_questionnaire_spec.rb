@@ -13,8 +13,8 @@ describe BookmarkRatingQuestionnaire, type: :model do
     BookmarkRatingQuestionnaire.create!(
       name: 'Bookmark Rating Rubric Test',
       private: false,
-      min_question_score: 0,
-      max_question_score: 5,
+      min_item_score: 0,
+      max_item_score: 5,
       instructor: instructor
     )
   end

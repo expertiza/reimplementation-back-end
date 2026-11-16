@@ -34,9 +34,9 @@ class TextResponse < Item
             type: 'input',
             input_type: 'text',
             size: 10,
-            name: "item[#{id}][question_type]",
-            id: "question_#{id}_question_type",
-            value: question_type,
+            name: "item[#{id}][item_type]",
+            id: "question_#{id}_item_type",
+            value: item_type,
             disabled: true
           },
           {
@@ -57,7 +57,7 @@ class TextResponse < Item
         action: 'view_item_text',
         elements: [
           { type: 'text', value: txt },
-          { type: 'text', value: question_type },
+          { type: 'text', value: item_type },
           { type: 'text', value: weight.to_s },
           { type: 'text', value: '—' }
         ]

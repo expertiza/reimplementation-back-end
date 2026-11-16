@@ -221,7 +221,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_12_000001) do
     t.text "txt"
     t.integer "weight"
     t.decimal "seq", precision: 10
-    t.string "question_type"
+    t.string "item_type"
     t.string "size"
     t.string "alternatives"
     t.boolean "break_before"
@@ -318,8 +318,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_12_000001) do
     t.string "name"
     t.integer "instructor_id"
     t.boolean "private"
-    t.integer "min_question_score"
-    t.integer "max_question_score"
+    t.integer "min_item_score"
+    t.integer "max_item_score"
     t.string "questionnaire_type"
     t.string "display_type"
     t.text "instruction_loc"
@@ -343,6 +343,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_12_000001) do
     t.datetime "updated_at", null: false
     t.string "type"
     t.boolean "for_calibration", default: false, null: false
+    t.boolean "reviewing_is_done_by_teams", default: false, null: false
     t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 

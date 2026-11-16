@@ -31,8 +31,8 @@ RSpec.describe 'questionnaires', type: :request do
         name: 'Questionnaire 1',
         questionnaire_type: 'AuthorFeedbackReview',
         private: true,
-        min_question_score: 0,
-        max_question_score: 10,
+        min_item_score: 0,
+        max_item_score: 10,
         instructor_id: prof.id
       )
     end
@@ -43,8 +43,8 @@ RSpec.describe 'questionnaires', type: :request do
         name: 'Questionnaire 2',
         questionnaire_type: 'AuthorFeedbackReview',
         private: false,
-        min_question_score: 0,
-        max_question_score: 5,
+        min_item_score: 0,
+        max_item_score: 5,
         instructor_id: prof.id
       )
     end
@@ -73,16 +73,16 @@ RSpec.describe 'questionnaires', type: :request do
           ReviewQuestionnaire.create!(
             name: 'Review Q',
             private: false,
-            min_question_score: 0,
-            max_question_score: 5,
+            min_item_score: 0,
+            max_item_score: 5,
             instructor_id: prof.id
           )
           Questionnaire.create!(
             name: 'Survey Q',
             questionnaire_type: 'SurveyQuestionnaire',
             private: false,
-            min_question_score: 0,
-            max_question_score: 5,
+            min_item_score: 0,
+            max_item_score: 5,
             instructor_id: prof.id
           )
         end
@@ -110,8 +110,8 @@ RSpec.describe 'questionnaires', type: :request do
           name: 'Test Questionnaire',
           questionnaire_type: 'ReviewQuestionnaire',
           private: false,
-          min_question_score: 0,
-          max_question_score: 5,
+          min_item_score: 0,
+          max_item_score: 5,
           instructor_id: prof.id
         }
       end
@@ -121,8 +121,8 @@ RSpec.describe 'questionnaires', type: :request do
           name: nil, # invalid name
           questionnaire_type: 'ReviewQuestionnaire',
           private: false,
-          min_question_score: 0,
-          max_question_score: 5,
+          min_item_score: 0,
+          max_item_score: 5,
           instructor_id: prof.id
         }
       end
@@ -132,8 +132,8 @@ RSpec.describe 'questionnaires', type: :request do
           name: 'Bad Type Q',
           questionnaire_type: 'BogusQuestionnaire',
           private: false,
-          min_question_score: 0,
-          max_question_score: 5,
+          min_item_score: 0,
+          max_item_score: 5,
           instructor_id: prof.id
         }
       end
@@ -146,11 +146,11 @@ RSpec.describe 'questionnaires', type: :request do
           name: { type: :string },
           questionnaire_type: { type: :string },
           private: { type: :boolean },
-          min_question_score: { type: :integer },
-          max_question_score: { type: :integer },
+          min_item_score: { type: :integer },
+          max_item_score: { type: :integer },
           instructor_id: { type: :integer}
         },
-        required: %w[id name questionnaire_type private min_question_score max_question_score instructor_id]
+        required: %w[id name questionnaire_type private min_item_score max_item_score instructor_id]
       }
 
       # post request on /questionnaires creates questionnaire with response 201 when correct params are passed
@@ -198,8 +198,8 @@ RSpec.describe 'questionnaires', type: :request do
         name: 'Test Questionnaire',
         questionnaire_type: 'AuthorFeedbackReview',
         private: false,
-        min_question_score: 0,
-        max_question_score: 5,
+        min_item_score: 0,
+        max_item_score: 5,
         instructor_id: prof.id
       }
     end
@@ -241,7 +241,7 @@ RSpec.describe 'questionnaires', type: :request do
       parameter name: :body_params, in: :body, schema: {
         type: :object,
         properties: {
-          min_question_score: { type: :integer }
+          min_item_score: { type: :integer }
         }
       }
 
@@ -249,11 +249,11 @@ RSpec.describe 'questionnaires', type: :request do
       response(200, 'successful') do
         let(:body_params) do
           {
-            min_question_score: 1
+            min_item_score: 1
           }
         end
         run_test! do
-          expect(response.body).to include('"min_question_score":1')
+          expect(response.body).to include('"min_item_score":1')
         end
       end
 
@@ -262,7 +262,7 @@ RSpec.describe 'questionnaires', type: :request do
         let(:id) { 0 }
         let(:body_params) do
           {
-            min_question_score: 0
+            min_item_score: 0
           }
         end
         run_test! do
@@ -274,12 +274,12 @@ RSpec.describe 'questionnaires', type: :request do
       response(422, 'unprocessable entity') do
         let(:body_params) do
           {
-            min_question_score: 10
+            min_item_score: 10
           }
         end
         schema type: :array, items: { type: :string }
         run_test! do
-          expect(response.body).to_not include('"min_question_score":10')
+          expect(response.body).to_not include('"min_item_score":10')
         end
       end
     end
@@ -292,7 +292,7 @@ RSpec.describe 'questionnaires', type: :request do
       parameter name: :body_params, in: :body, schema: {
         type: :object,
         properties: {
-          min_question_score: { type: :integer }
+          min_item_score: { type: :integer }
         }
       }
 
@@ -300,11 +300,11 @@ RSpec.describe 'questionnaires', type: :request do
       response(200, 'successful') do
         let(:body_params) do
           {
-            min_question_score: 1
+            min_item_score: 1
           }
         end
         run_test! do
-          expect(response.body).to include('"min_question_score":1')
+          expect(response.body).to include('"min_item_score":1')
         end
       end
 
@@ -313,7 +313,7 @@ RSpec.describe 'questionnaires', type: :request do
         let(:id) { 0 }
         let(:body_params) do
           {
-            min_question_score: 0
+            min_item_score: 0
           }
         end
         run_test! do
@@ -325,12 +325,12 @@ RSpec.describe 'questionnaires', type: :request do
       response(422, 'unprocessable entity') do
         let(:body_params) do
           {
-            min_question_score: 10
+            min_item_score: 10
           }
         end
         schema type: :array, items: { type: :string }
         run_test! do
-          expect(response.body).to_not include('"min_question_score":10')
+          expect(response.body).to_not include('"min_item_score":10')
         end
       end
     end
@@ -362,8 +362,8 @@ RSpec.describe 'questionnaires', type: :request do
         name: 'Test Questionnaire',
         questionnaire_type: 'AuthorFeedbackReview',
         private: false,
-        min_question_score: 0,
-        max_question_score: 5,
+        min_item_score: 0,
+        max_item_score: 5,
         instructor_id: prof.id
       }
     end
@@ -408,8 +408,8 @@ RSpec.describe 'questionnaires', type: :request do
         name: { type: :string },
         questionnaire_type: { type: :string },
         private: { type: :boolean },
-        min_question_score: { type: :integer },
-        max_question_score: { type: :integer },
+        min_item_score: { type: :integer },
+        max_item_score: { type: :integer },
         instructor_id: { type: :integer }
       },
       required: ['name', 'questionnaire_type', 'instructor_id']
@@ -422,8 +422,8 @@ RSpec.describe 'questionnaires', type: :request do
         name: 'Test Questionnaire',
         questionnaire_type: 'AuthorFeedbackReview',
         private: false,
-        min_question_score: 0,
-        max_question_score: 5,
+        min_item_score: 0,
+        max_item_score: 5,
         instructor_id: prof.id
       }      
     end

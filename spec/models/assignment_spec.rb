@@ -133,7 +133,7 @@ RSpec.describe Assignment, type: :model do
 
   describe '#varying_rubrics_by_round?' do
     let(:questionnaire) { Questionnaire.create!(name: 'Review Q', instructor_id: instructor.id, questionnaire_type: 'ReviewQuestionnaire',
-                                                display_type: 'Review', min_question_score: 0, max_question_score: 5) }
+                                                display_type: 'Review', min_item_score: 0, max_item_score: 5) }
 
     it 'returns false when vary_by_round is disabled even if rounds exist' do
       assignment = Assignment.create!(name: 'No Vary', instructor: instructor, vary_by_round: false)

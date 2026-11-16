@@ -13,8 +13,8 @@ describe AuthorFeedbackQuestionnaire, type: :model do
     AuthorFeedbackQuestionnaire.create!(
       name: 'Author Feedback Rubric Test',
       private: false,
-      min_question_score: 0,
-      max_question_score: 5,
+      min_item_score: 0,
+      max_item_score: 5,
       instructor: instructor
     )
   end
