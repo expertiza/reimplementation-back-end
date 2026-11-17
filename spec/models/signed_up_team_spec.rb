@@ -8,8 +8,8 @@ RSpec.describe SignedUpTeam, type: :model do
 
   let!(:instructor) do
     User.create!(
-      name: "test_instructor",
-      full_name: "Test Instructor",
+      username: "test_instructor",
+      name: "Test Instructor",
       password: "password",
       email: "instructor@example.com",
       role: role
@@ -102,8 +102,8 @@ RSpec.describe SignedUpTeam, type: :model do
     # Create test users to populate team
     let!(:user1) do
       User.create!(
-        name: "Alice",
-        full_name: "Alice Wonderland",
+        username: "Alice",
+        name: "Alice Wonderland",
         password: "password",
         email: "alice@example.com",
         role: student_role
@@ -112,8 +112,8 @@ RSpec.describe SignedUpTeam, type: :model do
 
     let!(:user2) do
       User.create!(
-        name: "Bob",
-        full_name: "Bob Builder",
+        username: "Bob",
+        name: "Bob Builder",
         password: "password",
         email: "bob@example.com",
         role: student_role

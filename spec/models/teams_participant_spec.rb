@@ -15,9 +15,9 @@ RSpec.describe TeamsParticipant, type: :model do
   # ------------------------------------------------------------------------
   def create_student(suffix)
     User.create!(
-      name:            suffix,
+      username:            suffix,
       email:           "#{suffix}@example.com",
-      full_name:       suffix.split('_').map(&:capitalize).join(' '),
+      name:       suffix.split('_').map(&:capitalize).join(' '),
       password_digest: "password",
       role_id:         @roles[:student].id,
       institution_id:  institution.id
@@ -33,8 +33,8 @@ RSpec.describe TeamsParticipant, type: :model do
 
   let(:instructor) do
     User.create!(
-      name:            "instructor",
-      full_name:       "Instructor User",
+      username:            "instructor",
+      name:       "Instructor User",
       email:           "instructor@example.com",
       password_digest: "password",
       role_id:         @roles[:instructor].id,

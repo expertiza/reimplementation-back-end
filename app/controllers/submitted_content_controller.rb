@@ -375,7 +375,7 @@ class SubmittedContentController < ApplicationController
     SubmissionRecord.create!(
       record_type: record_type,           # 'file' or 'hyperlink'
       content: content,                    # File path or URL
-      user: @participant.user_name,        # Username from participant
+      user: @participant.username,        # Username from participant
       team_id: @participant.team_id,       # Team ID from participant
       assignment_id: @participant.assignment_id,  # Assignment ID from participant
       operation: operation                 # Operation description (e.g., 'Submit File')

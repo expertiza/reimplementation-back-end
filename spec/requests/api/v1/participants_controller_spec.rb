@@ -10,38 +10,38 @@ RSpec.describe 'Participants API', type: :request do
 
   let(:studenta) do
     User.create!(
-      name: "studenta",
+      username: "studenta",
       password_digest: "password",
       role_id: @roles[:student].id,
-      full_name: "Student A",
+      name: "Student A",
       email: "testuser@example.com"
     )
   end
 
   let(:studentb) do
     User.create!(
-      name: "studentb",
+      username: "studentb",
       password_digest: "password",
       role_id: @roles[:student].id,
-      full_name: "Student B",
+      name: "Student B",
       email: "testuser@example.com"
     )
   end
 
   let!(:instructor) do
     User.create!(
-      name: "Instructor",
+      username: "Instructor",
       password_digest: "password",
       role_id: @roles[:instructor].id,
-      full_name: "Instructor Name",
+      name: "Instructor Name",
       email: "instructor@example.com"
     )
   end
 
   let!(:assignment1) { Assignment.create!(name: 'Test Assignment 1', instructor_id: instructor.id) }
   let!(:assignment2) { Assignment.create!(name: 'Test Assignment 2', instructor_id: instructor.id) }
-  let!(:participant1) { AssignmentParticipant.create!(id: 1, user_id: studenta.id, parent_id: assignment1.id, handle: studenta.name) }
-  let!(:participant2) { AssignmentParticipant.create!(id: 2, user_id: studenta.id, parent_id: assignment2.id, handle: studenta.name) }
+  let!(:participant1) { AssignmentParticipant.create!(id: 1, user_id: studenta.id, parent_id: assignment1.id, handle: studenta.username) }
+  let!(:participant2) { AssignmentParticipant.create!(id: 2, user_id: studenta.id, parent_id: assignment2.id, handle: studenta.username) }
 
   let(:token) { JsonWebToken.encode({id: studenta.id}) }
   let(:Authorization) { "Bearer #{token}" }
@@ -290,13 +290,13 @@ RSpec.describe 'Participants API', type: :request do
       end
 
       def fetch_username(user_id)
-        User.find(user_id).name
+        User.find(user_id).username
       end
 
       response '500', 'Participant already exist' do
         let(:authorization) { 'mentor' }
         let(:participant) { { user_id: studenta.id, assignment_id: assignment1.id } }
-        let(:name) { User.find(participant[:user_id]).name }
+        let(:name) { User.find(participant[:user_id]).username }
 
         run_test! do |response|
 
@@ -358,14 +358,14 @@ RSpec.describe 'Participants API', type: :request do
           assignment  = Assignment.create!(name: 'Team Assignment', instructor: instructor, course: course)
 
           teammate = User.create!(
-            name: 'teammate1', password_digest: 'password',
-            role_id: @roles[:student].id, full_name: 'Team Mate One',
+            username: 'teammate1', password_digest: 'password',
+            role_id: @roles[:student].id, name: 'Team Mate One',
             email: 'teammate1@example.com'
           )
 
           team = AssignmentTeam.create!(name: 'Team Alpha', parent_id: assignment.id)
-          participant_a = AssignmentParticipant.create!(user_id: studenta.id, parent_id: assignment.id, handle: studenta.name)
-          participant_b = AssignmentParticipant.create!(user_id: teammate.id, parent_id: assignment.id, handle: teammate.name)
+          participant_a = AssignmentParticipant.create!(user_id: studenta.id, parent_id: assignment.id, handle: studenta.username)
+          participant_b = AssignmentParticipant.create!(user_id: teammate.id, parent_id: assignment.id, handle: teammate.username)
 
           # user.teams traverses teams_users; team.users traverses teams_participants.
           # all_teammates calls both, so both join tables must have rows.

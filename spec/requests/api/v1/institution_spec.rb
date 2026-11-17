@@ -8,10 +8,10 @@ RSpec.describe 'Institutions API', type: :request do
     end
 
     let(:prof) { User.create(
-      name: "profa",
+      username: "profa",
       password_digest: "password",
       role_id: @roles[:instructor].id,
-      full_name: "Prof A",
+      name: "Prof A",
       email: "testuser@example.com",
       mru_directory_path: "/home/testuser",
       ) }

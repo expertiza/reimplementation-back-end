@@ -147,7 +147,7 @@ RSpec.describe AssignmentParticipant, type: :model do
 
       result = AssignmentParticipant.all_teammates(user)
       expect(result).to have_key(assignment.course.name)
-      expect(result[assignment.course.name]).to include(teammate.full_name)
+      expect(result[assignment.course.name]).to include(teammate.name)
     end
 
     it "excludes calibrated assignments" do
@@ -158,7 +158,7 @@ RSpec.describe AssignmentParticipant, type: :model do
       add_to_team(team, teammate, calibrated)
 
       result = AssignmentParticipant.all_teammates(user)
-      expect(result.values.flatten).not_to include(teammate.full_name)
+      expect(result.values.flatten).not_to include(teammate.name)
     end
 
     it "excludes the user themselves from teammates" do

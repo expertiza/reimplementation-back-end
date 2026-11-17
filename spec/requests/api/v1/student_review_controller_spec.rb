@@ -10,20 +10,20 @@ RSpec.describe 'StudentReview API', type: :request do
 
   let!(:instructor) do
     User.create!(
-      name: 'sr_instructor',
+      username: 'sr_instructor',
       password_digest: 'password',
       role_id: @roles[:instructor].id,
-      full_name: 'SR Instructor',
+      name: 'SR Instructor',
       email: 'sr_instructor@example.com'
     )
   end
 
   let!(:student) do
     User.create!(
-      name: 'sr_student',
+      username: 'sr_student',
       password_digest: 'password',
       role_id: @roles[:student].id,
-      full_name: 'SR Student',
+      name: 'SR Student',
       email: 'sr_student@example.com'
     )
   end
@@ -40,7 +40,7 @@ RSpec.describe 'StudentReview API', type: :request do
     AssignmentParticipant.create!(
       user_id: student.id,
       parent_id: assignment.id,
-      handle: student.name
+      handle: student.username
     )
   end
 
@@ -154,10 +154,10 @@ RSpec.describe 'StudentReview API', type: :request do
       response '403', 'non-participant cannot list reviews' do
         let!(:other_student) do
           User.create!(
-            name: 'sr_other',
+            username: 'sr_other',
             password_digest: 'password',
             role_id: @roles[:student].id,
-            full_name: 'Other Student',
+            name: 'Other Student',
             email: 'sr_other@example.com'
           )
         end
@@ -299,16 +299,16 @@ RSpec.describe 'StudentReview API', type: :request do
       response '403', 'student who is not the reviewer cannot access the form' do
         let!(:other_student) do
           User.create!(
-            name: 'sr_form_other',
+            username: 'sr_form_other',
             password_digest: 'password',
             role_id: @roles[:student].id,
-            full_name: 'Other Student',
+            name: 'Other Student',
             email: 'sr_form_other@example.com'
           )
         end
         let!(:other_participant) do
           AssignmentParticipant.create!(
-            user_id: other_student.id, parent_id: assignment.id, handle: other_student.name
+            user_id: other_student.id, parent_id: assignment.id, handle: other_student.username
           )
         end
         let(:token)         { JsonWebToken.encode({ id: other_student.id }) }
@@ -325,10 +325,10 @@ RSpec.describe 'StudentReview API', type: :request do
       response '403', 'non-participant cannot access the form' do
         let!(:outsider) do
           User.create!(
-            name: 'sr_outsider',
+            username: 'sr_outsider',
             password_digest: 'password',
             role_id: @roles[:student].id,
-            full_name: 'Outsider',
+            name: 'Outsider',
             email: 'sr_outsider@example.com'
           )
         end

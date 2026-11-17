@@ -20,7 +20,7 @@ class InvitationMailer < ApplicationMailer
     # Get all team members' emails
     team_member_emails = @inviter_team.participants.map { |p| p.user.email }
     
-    mail(to: team_member_emails, subject: "#{@invitee.user.full_name} has accepted the team invitation")
+    mail(to: team_member_emails, subject: "#{@invitee.user.name} has accepted the team invitation")
   end
   
   def send_invitation_email

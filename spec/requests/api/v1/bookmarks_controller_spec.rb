@@ -11,10 +11,10 @@ RSpec.describe 'bookmarks', type: :request do
 
   let(:student) {
     User.create(
-      name: "studenta",
+      username: "studenta",
       password_digest: "password",
       role_id: @roles[:student].id,
-      full_name: "student A",
+      name: "student A",
       email: "testuser@example.com",
       mru_directory_path: "/home/testuser",
     )

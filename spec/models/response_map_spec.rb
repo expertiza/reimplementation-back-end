@@ -10,10 +10,10 @@ RSpec.describe ResponseMap, type: :model do
 
     def create_user(prefix, role, institution)
       User.create!(
-        name: "#{prefix}_#{SecureRandom.hex(4)}",
+        username: "#{prefix}_#{SecureRandom.hex(4)}",
         email: "#{prefix}_#{SecureRandom.hex(4)}@example.com",
         password: 'password',
-        full_name: "#{prefix.capitalize} User",
+        name: "#{prefix.capitalize} User",
         role: role,
         institution: institution
       )
@@ -49,7 +49,7 @@ RSpec.describe ResponseMap, type: :model do
         user: reviewer_user,
         assignment: assignment,
         parent_id: assignment.id,
-        handle: reviewer_user.name
+        handle: reviewer_user.username
       )
     end
 
@@ -58,7 +58,7 @@ RSpec.describe ResponseMap, type: :model do
         user: reviewee_user,
         assignment: assignment,
         parent_id: assignment.id,
-        handle: reviewee_user.name
+        handle: reviewee_user.username
       )
     end
 

@@ -10,13 +10,13 @@ FactoryBot.define do
     association :user
     association :assignment, factory: :assignment
     parent_id { assignment.id }
-    handle { user.name }
+    handle { user.username }
   end
 
   factory :course_participant, class: 'CourseParticipant' do
     association :user
     association :course, factory: :course
     parent_id { course.id }
-    handle { user.name }
+    handle { user.username }
   end
 end 

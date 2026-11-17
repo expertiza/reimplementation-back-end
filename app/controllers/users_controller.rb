@@ -39,7 +39,7 @@ class UsersController < ApplicationController
   def destroy
     user = User.find(params[:id])
     user.destroy
-    render json: { message: "User #{user.name} with id #{params[:id]} deleted successfully!" }, status: :no_content
+    render json: { message: "User #{user.username} with id #{params[:id]} deleted successfully!" }, status: :no_content
   end
 
   # GET /users/institution/:id
@@ -80,7 +80,7 @@ class UsersController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def user_params
-    params.require(:user).permit(:id, :name, :role_id, :full_name, :email, :parent_id, :institution_id,
+    params.require(:user).permit(:id, :username, :role_id, :name, :email, :parent_id, :institution_id,
                                  :email_on_review, :email_on_submission, :email_on_review_of_review,
                                  :handle, :copy_of_emails, :password, :password_confirmation)
   end

@@ -16,10 +16,10 @@ Role.find_or_create_by!(id: 4, name: 'Administrator')
 Role.find_or_create_by!(id: 5, name: 'Super Administrator')
 
 # Admin user
-User.find_or_create_by!(name: 'admin') do |u|
+User.find_or_create_by!(username: 'admin') do |u|
   u.email = 'admin2@example.com'
   u.password = 'password123'
-  u.full_name = 'admin admin'
+  u.name = 'admin admin'
   u.institution_id = inst_id
   u.role_id = 5
 end
@@ -33,10 +33,10 @@ num_instructors = 2
 
 puts "creating instructors"
 instructor_user_ids = (1..num_instructors).map do |i|
-  User.find_or_create_by!(name: "instructor#{i}") do |u|
+  User.find_or_create_by!(username: "instructor#{i}") do |u|
     u.email = "instructor#{i}@example.com"
     u.password = "password"
-    u.full_name = Faker::Name.name
+    u.name = Faker::Name.name
     u.institution_id = inst_id
     u.role_id = 3
   end.id
@@ -68,10 +68,10 @@ end
 
 puts "creating students"
 student_user_ids = (1..num_students).map do |i|
-  User.find_or_create_by!(name: "student#{i}") do |u|
+  User.find_or_create_by!(username: "student#{i}") do |u|
     u.email = "student#{i}@example.com"
     u.password = "password"
-    u.full_name = Faker::Name.name
+    u.name = Faker::Name.name
     u.institution_id = inst_id
     u.role_id = 1
     u.parent_id = instructor_user_ids[i % num_instructors]

@@ -6,7 +6,7 @@ RSpec.describe Item, type: :model do
   # Creating dummy objects for the test with the help of let statement
   let(:role) { Role.create(name: 'Instructor', parent_id: nil, id: 2, default_page_id: nil) }
   let(:instructor) do
-    Instructor.create(id: 1234, name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor',
+    Instructor.create(id: 1234, username: 'testinstructor', email: 'test@test.com', name: 'Test Instructor',
                       password: '123456', role_id:role.id)
   end
   let(:questionnaire) do

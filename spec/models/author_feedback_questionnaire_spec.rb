@@ -5,7 +5,7 @@ require 'rails_helper'
 describe AuthorFeedbackQuestionnaire, type: :model do
   let(:role) { Role.create(name: 'Instructor', parent_id: nil, id: 2, default_page_id: nil) }
   let(:instructor) do
-    Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456',
+    Instructor.create(username: 'testinstructor', email: 'test@test.com', name: 'Test Instructor', password: '123456',
                       role_id: role.id)
   end
 

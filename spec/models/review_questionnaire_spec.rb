@@ -5,7 +5,7 @@ require 'rails_helper'
 describe ReviewQuestionnaire, type: :model do
   let(:role) { Role.create(name: 'Instructor', parent_id: nil, id: 2, default_page_id: nil) }
   let(:instructor) do
-    Instructor.create(name: 'testinstructor', email: 'test@test.com', full_name: 'Test Instructor', password: '123456',
+    Instructor.create(username: 'testinstructor', email: 'test@test.com', name: 'Test Instructor', password: '123456',
                       role_id: role.id)
   end
 
@@ -59,7 +59,7 @@ describe ReviewQuestionnaire, type: :model do
       allow(AssignmentTeam).to receive(:team).with(participant).and_return(team)
 
       # Build two fake responses: one matching round + submitted, one not submitted
-      user          = double('user', full_name: 'Alice Tester')
+      user          = double('user', name: 'Alice Tester')
       reviewer      = double('reviewer', user: user)
       submitted_res = double('response', round: 1, is_submitted: true, map: double(reviewer: reviewer))
       unsubmitted   = double('response', round: 1, is_submitted: false)

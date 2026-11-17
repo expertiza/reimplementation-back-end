@@ -4,12 +4,12 @@ class User < ApplicationRecord
   has_secure_password
   after_initialize :set_defaults
 
-  # name must be lowercase and unique
-  validates :name, presence: true, uniqueness: true, allow_blank: false
+  # username must be lowercase and unique
+  validates :username, presence: true, uniqueness: true, allow_blank: false
                    # format: { with: /\A[a-z]+\z/, message: 'must be in lowercase' }
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :password, length: { minimum: 6 }, presence: true, allow_nil: true
-  validates :full_name, presence: true, length: { maximum: 50 }
+  validates :name, presence: true, length: { maximum: 50 }
 
   belongs_to :role
   belongs_to :institution, optional: true
@@ -51,12 +51,12 @@ class User < ApplicationRecord
   # Welcome email to be sent to the user after they sign up
   def welcome_email; end
 
-  # Return a user object if the user is found in the database, the input can be either email or name
+  # Return a user object if the user is found in the database, the input can be either email or username
   def self.login_user(login)
     user = User.find_by(email: login)
     if user.nil?
       short_name = login.split('@').first
-      user_list = User.where(name: short_name)
+      user_list = User.where(username: short_name)
       user = user_list.first if user_list.one?
     end
     user
@@ -116,26 +116,26 @@ class User < ApplicationRecord
   end
 
   def self.from_params(params)
-    user = params[:user_id] ? User.find(params[:user_id]) : User.find_by(name: params[:user][:name])
-    raise "User #{params[:user_id] || params[:user][:name]} not found" if user.nil?
+    user = params[:user_id] ? User.find(params[:user_id]) : User.find_by(username: params[:user][:username])
+    raise "User #{params[:user_id] || params[:user][:username]} not found" if user.nil?
 
     user
   end
 
   # This will override the default as_json method in the ApplicationRecord class and specify
-  # that only the id, name, and email attributes should be included when a User object is serialized.
+  # that only the id, username, name, and email attributes should be included when a User object is serialized.
   def as_json(options = {})
     super(options.merge({
-                          only: %i[id name email full_name email_on_review email_on_submission
+                          only: %i[id username name email email_on_review email_on_submission
                                    email_on_review_of_review],
                           include:
                           {
                             role: { only: %i[id name] },
-                            parent: { only: %i[id name] },
+                            parent: { only: %i[id username] },
                             institution: { only: %i[id name] }
                           }
                         })).tap do |hash|
-      hash['parent'] ||= { id: nil, name: nil }
+      hash['parent'] ||= { id: nil, username: nil }
       hash['institution'] ||= { id: nil, name: nil }
     end
   end

@@ -63,10 +63,10 @@ RSpec.describe 'Submitted Content API', type: :request do
 
   let(:instructor) do
     User.create!(
-      name: 'profa',
+      username: 'profa',
       password_digest: 'password',
       role_id: @roles[:instructor].id,
-      full_name: 'Prof A',
+      name: 'Prof A',
       email: 'testuser@example.com',
       mru_directory_path: '/home/testuser',
       institution_id: institution.id
@@ -75,8 +75,8 @@ RSpec.describe 'Submitted Content API', type: :request do
 
   let(:student) do
     User.create!(
-      full_name: 'Student Member',
-      name: 'student_member',
+      name: 'Student Member',
+      username: 'student_member',
       email: 'studentmember@example.com',
       password_digest: 'password',
       role_id: @roles[:student].id,
@@ -97,7 +97,7 @@ RSpec.describe 'Submitted Content API', type: :request do
     assignment_participant_class.create!(
       user_id: student.id,
       parent_id: assignment.id,
-      handle: student.name
+      handle: student.username
     )
   end
 

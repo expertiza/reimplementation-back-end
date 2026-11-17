@@ -19,7 +19,7 @@ class Participant < ApplicationRecord
 
   # Methods
   def fullname
-    user.full_name
+    user.name
   end
 
   def team

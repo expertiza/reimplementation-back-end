@@ -4,9 +4,9 @@ RSpec.describe ProjectTopic, type: :model do
   let!(:role) { Role.find_or_create_by!(name: "Instructor") }
   let!(:instructor) do
     Instructor.create!(
-      name: "test_instructor",
+      username: "test_instructor",
       password: "password",
-      full_name: "Test Instructor",
+      name: "Test Instructor",
       email: "instructor@example.com",
       role: role
     )

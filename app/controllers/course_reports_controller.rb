@@ -65,7 +65,7 @@ class CourseReportsController < ApplicationController
 
       {
         user_id:     user.id,
-        user_name:   user.name,
+        username:    user.username,
         assignments: cells,
         final_grade: graded_cells.empty? ? nil : graded_cells.sum { |c| c[:instructor_grade] }.round(2)
       }
@@ -118,7 +118,7 @@ class CourseReportsController < ApplicationController
 
       {
         user_id:        user.id,
-        user_name:      user.name,
+        username:       user.username,
         teammate_count: reviewer_teammate_counts[user.id] || 0,
         assignments:    cells,
         aggregate:      pcts.empty? ? nil : "#{(pcts.sum.to_f / pcts.size).round}%"

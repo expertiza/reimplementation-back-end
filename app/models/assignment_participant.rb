@@ -10,7 +10,7 @@ class AssignmentParticipant < Participant
   validates :handle, presence: true
 
   # Delegation methods to avoid Law of Demeter violations
-  delegate :name, to: :user, prefix: true, allow_nil: true
+  delegate :username, to: :user, allow_nil: true
   delegate :id, to: :team, prefix: true, allow_nil: true
   delegate :id, to: :assignment, prefix: true, allow_nil: true
   delegate :path, to: :team, prefix: true, allow_nil: true
@@ -40,9 +40,9 @@ class AssignmentParticipant < Participant
 
   def set_handle
     self.handle = if user.handle.nil? || (user.handle == '')
-                    user.name
+                    user.username
                   elsif Participant.exists?(assignment_id: assignment.id, handle: user.handle)
-                    user.name
+                    user.username
                   else
                     user.handle
                   end
@@ -67,7 +67,7 @@ class AssignmentParticipant < Participant
       next if assignment.nil? || assignment[:is_calibrated]
 
       course_name = assignment.course&.name || 'Unknown Course'
-      teammates = team.users.where.not(id: user.id).map(&:full_name)
+      teammates = team.users.where.not(id: user.id).map(&:name)
       next if teammates.empty?
 
       result[course_name] ||= []

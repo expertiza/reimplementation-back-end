@@ -18,9 +18,9 @@ RSpec.describe CourseTeam, type: :model do
   # ------------------------------------------------------------------------
   def create_student(suffix)
     User.create!(
-      name:            suffix,
+      username:            suffix,
       email:           "#{suffix}@example.com",
-      full_name:       suffix.split('_').map(&:capitalize).join(' '),
+      name:       suffix.split('_').map(&:capitalize).join(' '),
       password_digest: "password",
       role_id:          @roles[:student].id,
       institution_id:  institution.id
@@ -38,8 +38,8 @@ RSpec.describe CourseTeam, type: :model do
   let(:instructor) do
     # The instructor will own assignments and courses in subsequent tests.
     User.create!(
-      name:            "instructor",
-      full_name:       "Instructor User",
+      username:            "instructor",
+      name:       "Instructor User",
       email:           "instructor@example.com",
       password_digest: "password",
       role_id:          @roles[:instructor].id,
@@ -49,8 +49,8 @@ RSpec.describe CourseTeam, type: :model do
 
   let(:team_owner) do
     User.create!(
-      name:            "team_owner",
-      full_name:       "Team Owner",
+      username:            "team_owner",
+      name:       "Team Owner",
       email:           "team_owner@example.com",
       password_digest: "password",
       role_id:          @roles[:student].id,
@@ -125,7 +125,7 @@ RSpec.describe CourseTeam, type: :model do
       result = course_team.add_member(unenrolled_user)
 
       expect(result[:success]).to be false
-      expect(result[:error]).to eq("#{unenrolled_user.name} is not a participant in this course")
+      expect(result[:error]).to eq("#{unenrolled_user.username} is not a participant in this course")
     end
   end
 end 

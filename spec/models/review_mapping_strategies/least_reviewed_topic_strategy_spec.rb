@@ -8,20 +8,20 @@ RSpec.describe ReviewMappingStrategies::LeastReviewedTopicStrategy, type: :model
   before(:all) { @roles = create_roles_hierarchy }
 
   let(:instructor_user) do
-    User.create!(name: 'lrt_instructor', password_digest: 'x',
-                 role_id: @roles[:instructor].id, full_name: 'LRT Instructor',
+    User.create!(username: 'lrt_instructor', password_digest: 'x',
+                 role_id: @roles[:instructor].id, name: 'LRT Instructor',
                  email: 'lrt_instructor@example.com')
   end
 
   let(:student_a) do
-    User.create!(name: 'lrt_student_a', password_digest: 'x',
-                 role_id: @roles[:student].id, full_name: 'LRT Student A',
+    User.create!(username: 'lrt_student_a', password_digest: 'x',
+                 role_id: @roles[:student].id, name: 'LRT Student A',
                  email: 'lrt_a@example.com')
   end
 
   let(:student_b) do
-    User.create!(name: 'lrt_student_b', password_digest: 'x',
-                 role_id: @roles[:student].id, full_name: 'LRT Student B',
+    User.create!(username: 'lrt_student_b', password_digest: 'x',
+                 role_id: @roles[:student].id, name: 'LRT Student B',
                  email: 'lrt_b@example.com')
   end
 
@@ -32,7 +32,7 @@ RSpec.describe ReviewMappingStrategies::LeastReviewedTopicStrategy, type: :model
 
   let(:reviewer) do
     AssignmentParticipant.create!(user: student_a, parent_id: assignment.id,
-                                  handle: student_a.name)
+                                  handle: student_a.username)
   end
 
   let(:topic_a) { ProjectTopic.create!(assignment_id: assignment.id, topic_name: 'LRT Topic A') }
@@ -64,7 +64,7 @@ RSpec.describe ReviewMappingStrategies::LeastReviewedTopicStrategy, type: :model
   describe '#assign_one with automatic topic selection' do
     it 'returns a team on the topic with the fewest submitted reviews' do
       other = AssignmentParticipant.create!(user: student_b, parent_id: assignment.id,
-                                            handle: student_b.name)
+                                            handle: student_b.username)
       submit_review(reviewer_id: other.id, reviewee_id: team_a.id)
       # topic_a: 1 submitted review; topic_b: 0 — should pick topic_b's team
       expect(strategy.assign_one(reviewer)).to eq(team_b)
@@ -107,7 +107,7 @@ RSpec.describe ReviewMappingStrategies::LeastReviewedTopicStrategy, type: :model
     it 'excludes a team whose submitted count exceeds global_min + threshold' do
       assignment.update!(review_topic_threshold: 0)
       other = AssignmentParticipant.create!(user: student_b, parent_id: assignment.id,
-                                            handle: student_b.name)
+                                            handle: student_b.username)
       submit_review(reviewer_id: other.id, reviewee_id: team_a.id)
       # team_a count=1 > global_min(0, from team_b) + threshold(0) → excluded
       expect(strategy.assign_one(reviewer, topic: topic_a)).to be_nil
@@ -116,7 +116,7 @@ RSpec.describe ReviewMappingStrategies::LeastReviewedTopicStrategy, type: :model
     it 'includes a team within the threshold window' do
       assignment.update!(review_topic_threshold: 2)
       other = AssignmentParticipant.create!(user: student_b, parent_id: assignment.id,
-                                            handle: student_b.name)
+                                            handle: student_b.username)
       submit_review(reviewer_id: other.id, reviewee_id: team_a.id)
       # team_a count=1 <= global_min(0) + threshold(2) → still eligible
       expect(strategy.assign_one(reviewer, topic: topic_a)).to eq(team_a)
@@ -125,7 +125,7 @@ RSpec.describe ReviewMappingStrategies::LeastReviewedTopicStrategy, type: :model
     it 'uses the assignment-wide minimum, not the topic-local minimum' do
       assignment.update!(review_topic_threshold: 0)
       other = AssignmentParticipant.create!(user: student_b, parent_id: assignment.id,
-                                            handle: student_b.name)
+                                            handle: student_b.username)
       # Give team_b a submitted review so global_min rises to 1
       submit_review(reviewer_id: other.id, reviewee_id: team_b.id)
       # team_a count=0, global_min=0 (team_a itself), threshold=0 → 0 <= 0+0 → eligible
