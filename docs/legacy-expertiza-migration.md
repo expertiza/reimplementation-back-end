@@ -1,7 +1,9 @@
 # Legacy Expertiza Data Migration
 
 The project keeps the historical Expertiza data set available as
-`anon_db/expertiza_anonymized_2026-10-20.sql` (~700 MB, 85 legacy tables).
+`anon_db/expertiza_anonymized_2026-10-20.sql` (~700 MB; 97 tables: the 85
+legacy application tables, the 10 `goldberg_*` RBAC tables, and the two
+Rails framework tables `schema_migrations` and `ar_internal_metadata`).
 That dump uses the **old Expertiza schema** (tables such as `questions`,
 `sign_up_topics`, `question_advices`, `teams_users`, a legacy
 `schema_migrations` table, and legacy MySQL views like `score_views`).
@@ -103,9 +105,15 @@ Properties:
   `2026_11_01_000005`) is never clobbered by a legacy-shaped dump.
 
 **Expected end state:** the canonical 55 tables plus the framework
-`schema_migrations` and `ar_internal_metadata` (57 base tables total) and the
-single `score_views` view — the same shape as a database built from the clean
-migration chain.
+`schema_migrations` and `ar_internal_metadata` — 57 base tables in steady
+state (a snapshot taken immediately after `rake db:migrate` shows 56, because
+the bridge drops `ar_internal_metadata` and Rails recreates it on the next
+connection) — and the single `score_views` view. "Canonical" means the
+converged legacy shape the procedure produces, i.e. the committed
+`db/schema.rb` (version `2026_11_01_000005`); the clean 2023-2026 chain
+matches it except for cosmetic details (FK constraint names, DATETIME
+precision) — see
+[ADR-0001](adr/0001-canonical-schema-is-converged-legacy-shape.md).
 
 ## How to run
 
@@ -167,8 +175,10 @@ docker compose exec app sh -c "cd /app && bin/rails runner db/smoke_test_legacy.
 A full no-seed model smoke test is provided at `db/smoke_test_legacy.rb`
 (loads ~25 core models against the migrated data and prints row counts).
 
-Expected after a successful run: **57 base tables** (the canonical 55 plus
-`schema_migrations` and `ar_internal_metadata`) and **1 MySQL view**
+Expected after a successful run: **57 base tables** in steady state (the
+canonical 55 plus `schema_migrations` and `ar_internal_metadata`; a snapshot
+taken immediately after `rake db:migrate` shows 56 until Rails recreates
+`ar_internal_metadata`) and **1 MySQL view**
 (`score_views`; the legacy `view1`/`view2` scratch views are dropped by the
 convergence), the legacy row counts
 (≈10,751 users, ≈955 assignments, ≈2,003,824 answers, ≈50,151 participants,
