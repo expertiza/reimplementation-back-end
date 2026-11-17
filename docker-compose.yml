@@ -24,7 +24,7 @@ services:
     ports:
       - "3307:3306"
     volumes:
-      - expertiza-mysql:/var/lib/mysql2/data
+      - expertiza-mysql:/var/lib/mysql
       - ./db:/docker-entrypoint-initdb.d
 
   redis:
