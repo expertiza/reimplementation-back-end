@@ -17,8 +17,28 @@ RSpec.describe Item, type: :model do
   describe 'validations' do
     # Test validates that item has valid attributes
     it 'is valid with valid attributes' do
-      item = Item.new(seq: 1, txt: 'Sample item', item_type: 'multiple_choice', break_before: true,
-                              questionnaire:)
+      item = Item.new(
+        seq: 1,
+        txt: 'Sample item',
+        item_type: 'multiple_choice',
+        break_before: true,
+        questionnaire: questionnaire
+      )
+
+      expect(item).to be_valid
+    end
+
+    # Regression test for the validation fix required during
+    # fresh Docker database seeding.
+    it 'is valid when break_before is false' do
+      item = Item.new(
+        seq: 1,
+        txt: 'Sample item',
+        item_type: 'multiple_choice',
+        break_before: false,
+        questionnaire: questionnaire
+      )
+
       expect(item).to be_valid
     end
 

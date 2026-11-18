@@ -85,7 +85,10 @@ num_students.times do |i|
 
   TeamsUser.find_or_create_by!(team_id: team_id, user_id: user_id)
 
-  participant = AssignmentParticipant.find_or_create_by!(user_id: user_id, parent_id: assignment_ids[i % num_assignments]) do |p|
+  participant = AssignmentParticipant.find_or_create_by!(
+    user_id: user_id,
+    parent_id: assignment_ids[i % num_assignments]
+    ) do |p|
     p.team_id = team_id
     p.handle = "student#{i + 1}"
   end
