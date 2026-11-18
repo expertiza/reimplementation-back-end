@@ -14,7 +14,6 @@ RSpec.describe Item, type: :model do
                       instructor_id: instructor.id
   end
 
-
   describe 'validations' do
     # Test validates that item has valid attributes
     it 'is valid with valid attributes' do
@@ -42,7 +41,6 @@ RSpec.describe Item, type: :model do
 
       expect(item).to be_valid
     end
-
 
     # Test ensures that seq is auto-assigned via set_seq when omitted on create
     it 'auto-assigns seq via set_seq when seq is omitted on create' do
