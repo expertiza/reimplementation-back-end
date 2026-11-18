@@ -120,9 +120,9 @@ class Assignment < ApplicationRecord
     end
 
     path_text = if !course_id.nil? && course_id.positive?
-                  "#{Rails.root}/pg_data/#{FileHelper.clean_path(instructor.name)}/#{FileHelper.clean_path(course.directory_path)}/"
+                  "#{Rails.root}/pg_data/#{FileHelper.clean_path(instructor.username)}/#{FileHelper.clean_path(course.directory_path)}/"
                 else
-                  "#{Rails.root}/pg_data/#{FileHelper.clean_path(instructor.name)}/"
+                  "#{Rails.root}/pg_data/#{FileHelper.clean_path(instructor.username)}/"
                 end
     path_text + FileHelper.clean_path(directory_path)
   end
@@ -144,7 +144,7 @@ class Assignment < ApplicationRecord
     participant = AssignmentParticipant.find_by(parent_id: id, user_id: user.id)
     if participant
       # Raises error if the user is already a participant
-      raise "The user #{user.name} is already a participant."
+      raise "The user #{user.username} is already a participant."
     end
 
     # Create a new AssignmentParticipant associated with the assignment and user

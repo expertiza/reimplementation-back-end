@@ -30,7 +30,7 @@ class ReviewQuestionnaire < Questionnaire
 
     # Step 3: Filter to submitted responses for the given round, then sort by reviewer full name.
     responses = filter_submitted_responses_for_round(maps, round)
-    responses.sort! { |a, b| a.map.reviewer.user.full_name <=> b.map.reviewer.user.full_name }
+    responses.sort! { |a, b| a.map.reviewer.user.name <=> b.map.reviewer.user.name }
     responses
   end
 end

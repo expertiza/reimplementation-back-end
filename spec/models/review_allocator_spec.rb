@@ -8,20 +8,20 @@ RSpec.describe ReviewAllocator, type: :model do
   before(:all) { @roles = create_roles_hierarchy }
 
   let(:instructor_user) do
-    User.create!(name: 'alloc_instructor', password_digest: 'x',
-                 role_id: @roles[:instructor].id, full_name: 'Alloc Instructor',
+    User.create!(username: 'alloc_instructor', password_digest: 'x',
+                 role_id: @roles[:instructor].id, name: 'Alloc Instructor',
                  email: 'alloc_instructor@example.com')
   end
 
   let(:student_a) do
-    User.create!(name: 'alloc_student_a', password_digest: 'x',
-                 role_id: @roles[:student].id, full_name: 'Alloc Student A',
+    User.create!(username: 'alloc_student_a', password_digest: 'x',
+                 role_id: @roles[:student].id, name: 'Alloc Student A',
                  email: 'alloc_a@example.com')
   end
 
   let(:student_b) do
-    User.create!(name: 'alloc_student_b', password_digest: 'x',
-                 role_id: @roles[:student].id, full_name: 'Alloc Student B',
+    User.create!(username: 'alloc_student_b', password_digest: 'x',
+                 role_id: @roles[:student].id, name: 'Alloc Student B',
                  email: 'alloc_b@example.com')
   end
 
@@ -32,7 +32,7 @@ RSpec.describe ReviewAllocator, type: :model do
 
   let(:reviewer) do
     AssignmentParticipant.create!(user: student_a, parent_id: assignment.id,
-                                  handle: student_a.name)
+                                  handle: student_a.username)
   end
 
   let(:team_a) { AssignmentTeam.create!(name: 'Alloc Team A', parent_id: assignment.id) }
@@ -116,7 +116,7 @@ RSpec.describe ReviewAllocator, type: :model do
 
     it 'does not delete mappings belonging to other reviewers' do
       other = AssignmentParticipant.create!(user: student_b, parent_id: assignment.id,
-                                            handle: student_b.name)
+                                            handle: student_b.username)
       ReviewResponseMap.create!(reviewer_id: reviewer.id, reviewee_id: team_a.id,
                                 reviewed_object_id: assignment.id)
       ReviewResponseMap.create!(reviewer_id: other.id, reviewee_id: team_b.id,
@@ -141,7 +141,7 @@ RSpec.describe ReviewAllocator, type: :model do
   describe '#eligible_topics' do
     let(:other_reviewer) do
       AssignmentParticipant.create!(user: student_b, parent_id: assignment.id,
-                                    handle: student_b.name)
+                                    handle: student_b.username)
     end
     let(:topic_a) { ProjectTopic.create!(assignment_id: assignment.id, topic_name: 'Alloc Topic A') }
     let(:topic_b) { ProjectTopic.create!(assignment_id: assignment.id, topic_name: 'Alloc Topic B') }

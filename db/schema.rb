@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_10_28_000002) do
+ActiveRecord::Schema[8.0].define(version: 2026_11_12_000001) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -445,9 +445,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_10_28_000002) do
   end
 
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.string "name"
+    t.string "username"
     t.string "password_digest"
-    t.string "full_name"
+    t.string "name"
     t.string "email"
     t.string "mru_directory_path"
     t.boolean "email_on_review", default: false

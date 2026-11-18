@@ -7,16 +7,16 @@ RSpec.shared_context 'request review student setup' do
 
   let!(:instructor) do
     User.create!(
-      name: 'rrv_instructor', password_digest: 'password',
-      role_id: @roles[:instructor].id, full_name: 'RRV Instructor',
+      username: 'rrv_instructor', password_digest: 'password',
+      role_id: @roles[:instructor].id, name: 'RRV Instructor',
       email: 'rrv_instructor@example.com'
     )
   end
 
   let!(:student) do
     User.create!(
-      name: 'rrv_student', password_digest: 'password',
-      role_id: @roles[:student].id, full_name: 'RRV Student',
+      username: 'rrv_student', password_digest: 'password',
+      role_id: @roles[:student].id, name: 'RRV Student',
       email: 'rrv_student@example.com'
     )
   end
@@ -30,7 +30,7 @@ RSpec.shared_context 'request review student setup' do
 
   let!(:participant) do
     AssignmentParticipant.create!(
-      user_id: student.id, parent_id: assignment.id, handle: student.name
+      user_id: student.id, parent_id: assignment.id, handle: student.username
     )
   end
 

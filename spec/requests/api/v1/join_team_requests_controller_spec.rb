@@ -9,50 +9,50 @@ RSpec.describe 'JoinTeamRequests API', type: :request do
 
   let(:admin) {
     User.create!(
-      name: "admin_user",
+      username: "admin_user",
       password_digest: BCrypt::Password.create("password"),
       role_id: @roles[:admin].id,
-      full_name: "Admin User",
+      name: "Admin User",
       email: "admin@example.com"
     )
   }
 
   let(:instructor) {
     User.create!(
-      name: "instructor_user",
+      username: "instructor_user",
       password_digest: BCrypt::Password.create("password"),
       role_id: @roles[:instructor].id,
-      full_name: "Instructor User",
+      name: "Instructor User",
       email: "instructor@example.com"
     )
   }
 
   let(:student1) {
     User.create!(
-      name: "student1",
+      username: "student1",
       password_digest: BCrypt::Password.create("password"),
       role_id: @roles[:student].id,
-      full_name: "Student One",
+      name: "Student One",
       email: "student1@example.com"
     )
   }
 
   let(:student2) {
     User.create!(
-      name: "student2",
+      username: "student2",
       password_digest: BCrypt::Password.create("password"),
       role_id: @roles[:student].id,
-      full_name: "Student Two",
+      name: "Student Two",
       email: "student2@example.com"
     )
   }
 
   let(:student3) {
     User.create!(
-      name: "student3",
+      username: "student3",
       password_digest: BCrypt::Password.create("password"),
       role_id: @roles[:student].id,
-      full_name: "Student Three",
+      name: "Student Three",
       email: "student3@example.com"
     )
   }

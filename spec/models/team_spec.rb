@@ -22,9 +22,9 @@ RSpec.describe Team, type: :model do
   # ------------------------------------------------------------------------
   def create_student(suffix)
     User.create!(
-      name:            suffix,
+      username:            suffix,
       email:           "#{suffix}@example.com",
-      full_name:       suffix.split('_').map(&:capitalize).join(' '),
+      name:       suffix.split('_').map(&:capitalize).join(' '),
       password_digest: "password",
       role_id:          @roles[:student].id,
       institution_id:  institution.id
@@ -42,8 +42,8 @@ RSpec.describe Team, type: :model do
   let(:instructor) do
     # The instructor will own assignments and courses in subsequent tests.
     User.create!(
-      name:            "instructor",
-      full_name:       "Instructor User",
+      username:            "instructor",
+      name:       "Instructor User",
       email:           "instructor@example.com",
       password_digest: "password",
       role_id:          @roles[:instructor].id,
@@ -53,8 +53,8 @@ RSpec.describe Team, type: :model do
 
   let(:team_owner) do
     User.create!(
-      name:            "team_owner",
-      full_name:       "Team Owner",
+      username:            "team_owner",
+      name:       "Team Owner",
       email:           "team_owner@example.com",
       password_digest: "password",
       role_id:          @roles[:student].id,
@@ -136,7 +136,7 @@ RSpec.describe Team, type: :model do
       # Seed exactly max_team_size participants into the assignment_team.
       3.times do |i|
         user        = create_student("student#{i}")
-        participant = AssignmentParticipant.create!(parent_id: assignment.id, user: user, handle: user.name)
+        participant = AssignmentParticipant.create!(parent_id: assignment.id, user: user, handle: user.username)
         TeamsParticipant.create!(
           participant_id: participant.id,
           team_id:        assignment_team.id,
@@ -158,7 +158,7 @@ RSpec.describe Team, type: :model do
       # Seed multiple participants into the course_team.
       5.times do |i|
         user        = create_student("cstudent#{i}")
-        participant = CourseParticipant.create!(parent_id: course.id, user: user, handle: user.name)
+        participant = CourseParticipant.create!(parent_id: course.id, user: user, handle: user.username)
         TeamsParticipant.create!(
           participant_id: participant.id,
           team_id:        course_team.id,
@@ -183,7 +183,7 @@ RSpec.describe Team, type: :model do
     context 'AssignmentTeam context' do
       it 'rejects a participant already on a team' do
         user        = create_student("student_team")
-        participant = AssignmentParticipant.create!(parent_id: assignment.id, user: user, handle: user.name)
+        participant = AssignmentParticipant.create!(parent_id: assignment.id, user: user, handle: user.username)
         TeamsParticipant.create!(
           participant_id: participant.id,
           team_id:        assignment_team.id,
@@ -197,7 +197,7 @@ RSpec.describe Team, type: :model do
 
       it 'rejects a participant registered under a different assignment' do
         user        = create_student("wrong_assignment")
-        participant = AssignmentParticipant.create!(parent_id: assignment2.id, user: user, handle: user.name)
+        participant = AssignmentParticipant.create!(parent_id: assignment2.id, user: user, handle: user.username)
 
         result = assignment_team.can_participant_join_team?(participant)
         expect(result[:success]).to be false
@@ -206,7 +206,7 @@ RSpec.describe Team, type: :model do
 
       it 'allows a properly registered, not-yet-teamed participant' do
         user        = create_student("eligible")
-        participant = AssignmentParticipant.create!(parent_id: assignment.id, user: user, handle: user.name)
+        participant = AssignmentParticipant.create!(parent_id: assignment.id, user: user, handle: user.username)
 
         result = assignment_team.can_participant_join_team?(participant)
         expect(result[:success]).to be true
@@ -216,7 +216,7 @@ RSpec.describe Team, type: :model do
     context 'CourseTeam context' do
       it 'rejects a participant already on a course team' do
         user        = create_student("course_user")
-        participant = CourseParticipant.create!(parent_id: course.id, user: user, handle: user.name)
+        participant = CourseParticipant.create!(parent_id: course.id, user: user, handle: user.username)
         TeamsParticipant.create!(
           participant_id: participant.id,
           team_id:        course_team.id,
@@ -230,7 +230,7 @@ RSpec.describe Team, type: :model do
 
       it 'rejects a participant registered under a different course' do
         user        = create_student("wrong_course")
-        participant = CourseParticipant.create!(parent_id: course2.id, user: user, handle: user.name)
+        participant = CourseParticipant.create!(parent_id: course2.id, user: user, handle: user.username)
 
         result = course_team.can_participant_join_team?(participant)
         expect(result[:success]).to be false
@@ -239,7 +239,7 @@ RSpec.describe Team, type: :model do
 
       it 'allows a properly registered, not-yet-teamed course participant' do
         user        = create_student("c_eligible")
-        participant = CourseParticipant.create!(parent_id: course.id, user: user, handle: user.name)
+        participant = CourseParticipant.create!(parent_id: course.id, user: user, handle: user.username)
 
         result = course_team.can_participant_join_team?(participant)
         expect(result[:success]).to be true
@@ -260,7 +260,7 @@ RSpec.describe Team, type: :model do
     context 'AssignmentTeam' do
       it 'creates a TeamsParticipant record on success' do
         user        = create_student("add_user")
-        participant = AssignmentParticipant.create!(parent_id: assignment.id, user: user, handle: user.name)
+        participant = AssignmentParticipant.create!(parent_id: assignment.id, user: user, handle: user.username)
 
         expect {
           assignment_team.add_member(participant)
@@ -271,12 +271,12 @@ RSpec.describe Team, type: :model do
         # Fill up to assignment.max_team_size (3)
         3.times do |i|
           user_i   = create_student("f#{i}")
-          part_i   = AssignmentParticipant.create!(parent_id: assignment.id, user: user_i, handle: user_i.name)
+          part_i   = AssignmentParticipant.create!(parent_id: assignment.id, user: user_i, handle: user_i.username)
           assignment_team.add_member(part_i)
         end
 
         extra_user = create_student("f_extra")
-        extra_part = AssignmentParticipant.create!(parent_id: assignment.id, user: extra_user, handle: extra_user.name)
+        extra_part = AssignmentParticipant.create!(parent_id: assignment.id, user: extra_user, handle: extra_user.username)
         result     = assignment_team.add_member(extra_part)
 
         expect(result[:error]).to include("team is at full capacity")
@@ -286,7 +286,7 @@ RSpec.describe Team, type: :model do
     context 'CourseTeam' do
       it 'creates a TeamsParticipant record on success' do
         user        = create_student("cadd")
-        participant = CourseParticipant.create!(parent_id: course.id, user: user, handle: user.name)
+        participant = CourseParticipant.create!(parent_id: course.id, user: user, handle: user.username)
         
         expect {
           course_team.add_member(participant)
@@ -298,11 +298,11 @@ RSpec.describe Team, type: :model do
         course_team.max_participants = 1
 
         first_user = create_student("cf1")
-        first_part = CourseParticipant.create!(parent_id: course.id, user: first_user, handle: first_user.name)
+        first_part = CourseParticipant.create!(parent_id: course.id, user: first_user, handle: first_user.username)
         course_team.add_member(first_part)
 
         second_user = create_student("cf2")
-        second_part = CourseParticipant.create!(parent_id: course.id, user: second_user, handle: second_user.name)
+        second_part = CourseParticipant.create!(parent_id: course.id, user: second_user, handle: second_user.username)
         result      = course_team.add_member(second_part)
 
         # CourseTeam.full? is false, so add_member should succeed

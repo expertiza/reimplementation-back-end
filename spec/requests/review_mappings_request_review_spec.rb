@@ -87,8 +87,8 @@ RSpec.describe 'ReviewMappings Request Review API', type: :request do
 
       response '403', 'non-participant cannot request review' do
         let!(:other_student) do
-          User.create!(name: 'rrv_other', password_digest: 'password',
-                       role_id: @roles[:student].id, full_name: 'Other RRV Student',
+          User.create!(username: 'rrv_other', password_digest: 'password',
+                       role_id: @roles[:student].id, name: 'Other RRV Student',
                        email: 'rrv_other@example.com')
         end
         let(:token)         { JsonWebToken.encode({ id: other_student.id }) }

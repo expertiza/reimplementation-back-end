@@ -28,15 +28,15 @@ RSpec.describe AuthenticationController, type: :request do
                required: ['token']
         let(:user) do
           User.create!(
-            name: "studenta",
+            username: "studenta",
             password: "password",
             role_id: @roles[:student].id,
-            full_name: "Student A",
+            name: "Student A",
             email: "testuser@example.com",
             institution: @institution
           )
         end
-        let(:credentials) { { user_name: user.name, password: 'password' } }
+        let(:credentials) { { user_name: user.username, password: 'password' } }
 
         let(:token) { JsonWebToken.encode({id: user.id}) }
         let(:Authorization) { "Bearer #{token}" }
@@ -49,8 +49,8 @@ RSpec.describe AuthenticationController, type: :request do
           decoded_token = JsonWebToken.decode(token)
 
           expect(decoded_token['id']).to eq(user.id)
+          expect(decoded_token['username']).to eq(user.username)
           expect(decoded_token['name']).to eq(user.name)
-          expect(decoded_token['full_name']).to eq(user.full_name)
           expect(decoded_token['role']).to eq(user.role.name)
           expect(decoded_token['institution_id']).to eq(user.institution.id)
         end
@@ -62,15 +62,15 @@ RSpec.describe AuthenticationController, type: :request do
                required: ['error']
         let(:user) do
           User.create!(
-            name: "studenta",
+            username: "studenta",
             password: "password",
             role_id: @roles[:student].id,
-            full_name: "Student A",
+            name: "Student A",
             email: "testuser@example.com",
             institution: @institution
           )
         end
-        let(:credentials) { { user_name: user.name, password: 'wrongpassword' } }
+        let(:credentials) { { user_name: user.username, password: 'wrongpassword' } }
         let(:token) { JsonWebToken.encode({id: user.id}) }
         let(:Authorization) { "Bearer #{token}" }
         let(:headers) { { "Authorization" => "Bearer #{token}" } }

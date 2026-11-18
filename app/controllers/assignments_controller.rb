@@ -99,7 +99,7 @@ class AssignmentsController < ApplicationController
         user = User.find_by(id: tu.user_id)
         next unless user
 
-        "#{user.name} (#{user.full_name})"
+        "#{user.username} (#{user.name})"
       end.join(', ')
 
       calibration_map = instructor_participant && ReviewResponseMap.find_by(

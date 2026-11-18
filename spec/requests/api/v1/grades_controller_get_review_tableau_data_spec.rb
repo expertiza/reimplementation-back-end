@@ -5,7 +5,7 @@ RSpec.describe GradesController, type: :controller do
   let(:participant_id) { "20" }
 
   # Fake User
-  let(:user) { instance_double(User, id: 99, name: "ReviewerUser", full_name: "Reviewer User") }
+  let(:user) { instance_double(User, id: 99, username: "ReviewerUser", name: "Reviewer User") }
 
   # Fake AssignmentParticipant
   let(:fake_participant) do
@@ -149,8 +149,8 @@ RSpec.describe GradesController, type: :controller do
       participant_json = json["participant"]
       expect(participant_json["id"]).to eq(fake_participant.id)
       expect(participant_json["user_id"]).to eq(fake_participant.user_id)
-      expect(participant_json["user_name"]).to eq(fake_participant.user.name)
-      expect(participant_json["full_name"]).to eq(fake_participant.user.full_name)
+      expect(participant_json["username"]).to eq(fake_participant.user.username)
+      expect(participant_json["name"]).to eq(fake_participant.user.name)
       expect(participant_json["handle"]).to eq(fake_participant.handle)
     end
 
@@ -164,7 +164,7 @@ RSpec.describe GradesController, type: :controller do
     end
 
     context "when user is a student (forbidden)" do
-      let(:student_user) { instance_double(User, id: 50, name: "StudentUser", full_name: "Student User", role_id: 1) }
+      let(:student_user) { instance_double(User, id: 50, username: "StudentUser", name: "Student User", role_id: 1) }
 
       before do
         allow(controller).to receive(:current_user).and_return(student_user)

@@ -10,20 +10,20 @@ RSpec.describe 'ReviewMappings Eligible Topics API', type: :request do
 
   let!(:instructor) do
     User.create!(
-      name: 'rm_instructor',
+      username: 'rm_instructor',
       password_digest: 'password',
       role_id: @roles[:instructor].id,
-      full_name: 'RM Instructor',
+      name: 'RM Instructor',
       email: 'rm_instructor@example.com'
     )
   end
 
   let!(:student) do
     User.create!(
-      name: 'rm_student',
+      username: 'rm_student',
       password_digest: 'password',
       role_id: @roles[:student].id,
-      full_name: 'RM Student',
+      name: 'RM Student',
       email: 'rm_student@example.com'
     )
   end
@@ -42,7 +42,7 @@ RSpec.describe 'ReviewMappings Eligible Topics API', type: :request do
     AssignmentParticipant.create!(
       user_id: student.id,
       parent_id: assignment.id,
-      handle: student.name
+      handle: student.username
     )
   end
 
@@ -101,10 +101,10 @@ RSpec.describe 'ReviewMappings Eligible Topics API', type: :request do
       response '403', 'non-participant cannot access eligible topics' do
         let!(:other_student) do
           User.create!(
-            name: 'rm_other',
+            username: 'rm_other',
             password_digest: 'password',
             role_id: @roles[:student].id,
-            full_name: 'Other RM Student',
+            name: 'Other RM Student',
             email: 'rm_other@example.com'
           )
         end

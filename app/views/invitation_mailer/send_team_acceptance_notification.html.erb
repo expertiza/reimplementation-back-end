@@ -21,10 +21,10 @@
     <div class="content">
       <p>Hello Team Members,</p>
       
-      <p><strong><%= @invitee.user.full_name %></strong> has accepted the team invitation and has been successfully added to your team!</p>
+      <p><strong><%= @invitee.user.name %></strong> has accepted the team invitation and has been successfully added to your team!</p>
       
       <div class="detail-row">
-        <span class="label">New Team Member:</span> <%= @invitee.user.full_name %> (<%= @invitee.user.email %>)
+        <span class="label">New Team Member:</span> <%= @invitee.user.name %> (<%= @invitee.user.email %>)
       </div>
       
       <div class="detail-row">

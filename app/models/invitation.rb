@@ -92,14 +92,14 @@ class Invitation < ApplicationRecord
                             from_participant: { 
                               only: %i[id],
                               include: {
-                                user: { only: %i[id name full_name email] },
+                                user: { only: %i[id username name email] },
                                 team: {only: %i[id name]}
                               }},
                             # from_team: { only: %i[id name] },
                             to_participant: {    
                               only: [:id],
                               include: {
-                                user: { only: %i[id name full_name email] }
+                                user: { only: %i[id username name email] }
                               }}
                           }
                         })).tap do |hash|

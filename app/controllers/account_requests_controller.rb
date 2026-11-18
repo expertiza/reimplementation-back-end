@@ -85,7 +85,7 @@ class AccountRequestsController < ApplicationController
       render json: { error: 'A user with this email already exists. Cannot approve the account request.' }, status: :unprocessable_entity
       return
     end
-    @new_user = User.new(name: @account_request.username, role_id: @account_request.role_id, institution_id: @account_request.institution_id, full_name: @account_request.full_name, email: @account_request.email, password: 'password')
+    @new_user = User.new(username: @account_request.username, role_id: @account_request.role_id, institution_id: @account_request.institution_id, name: @account_request.full_name, email: @account_request.email, password: 'password')
     if @new_user.save
       render json: { success: 'Account Request Approved and User successfully created.', user: @new_user}, status: :ok
     else

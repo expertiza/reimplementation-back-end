@@ -9,7 +9,7 @@ RSpec.describe AssignmentSerializer, type: :serializer do
 
   let(:institution) { Institution.create!(name: 'NCSU Serializer Test') }
   let(:instructor) do
-    User.create!(name: 'serializer_instructor', full_name: 'Serializer Instructor',
+    User.create!(username: 'serializer_instructor', name: 'Serializer Instructor',
                  email: 'serializer@example.com', password_digest: 'password',
                  role_id: @roles[:instructor].id, institution_id: institution.id)
   end

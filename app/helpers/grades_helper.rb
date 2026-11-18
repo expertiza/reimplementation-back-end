@@ -224,8 +224,8 @@ module GradesHelper
 
   # Generates a message based on whether the participant's grade is present or computed.
   def grade_message(participant)
-    participant.grade.nil? ? "The computed score will be used for #{participant.user.name}." :
-                             "A score of #{participant.grade}% has been saved for #{participant.user.name}."
+    participant.grade.nil? ? "The computed score will be used for #{participant.user.username}." :
+                             "A score of #{participant.grade}% has been saved for #{participant.user.username}."
   end
 
 

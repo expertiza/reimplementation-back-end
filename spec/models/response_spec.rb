@@ -8,8 +8,8 @@ describe Response do
   let(:user2) { create(:user, :student) }
   let(:assignment) { create(:assignment, name: 'Test Assignment') }
   let(:team) {create(:team, :with_assignment, name: 'Test Team')}
-  let(:participant) { AssignmentParticipant.create!(assignment: assignment, user: user, handle: user.name) }
-  let(:participant2) { AssignmentParticipant.create!(assignment: assignment, user: user2, handle: user2.name) }
+  let(:participant) { AssignmentParticipant.create!(assignment: assignment, user: user, handle: user.username) }
+  let(:participant2) { AssignmentParticipant.create!(assignment: assignment, user: user2, handle: user2.username) }
   let(:item) { ScoredItem.new(weight: 2) }
   let(:answer) { Answer.new(answer: 1, comments: 'Answer text', item:item) }
   let(:questionnaire) { Questionnaire.new(items: [item], min_item_score: 0, max_item_score: 5) }

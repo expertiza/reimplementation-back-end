@@ -8,20 +8,20 @@ RSpec.describe ReviewMappingStrategies::LeastReviewedSubmissionStrategy, type: :
   before(:all) { @roles = create_roles_hierarchy }
 
   let(:instructor_user) do
-    User.create!(name: 'lrs_instructor', password_digest: 'x',
-                 role_id: @roles[:instructor].id, full_name: 'LRS Instructor',
+    User.create!(username: 'lrs_instructor', password_digest: 'x',
+                 role_id: @roles[:instructor].id, name: 'LRS Instructor',
                  email: 'lrs_instructor@example.com')
   end
 
   let(:student_a) do
-    User.create!(name: 'lrs_student_a', password_digest: 'x',
-                 role_id: @roles[:student].id, full_name: 'LRS Student A',
+    User.create!(username: 'lrs_student_a', password_digest: 'x',
+                 role_id: @roles[:student].id, name: 'LRS Student A',
                  email: 'lrs_a@example.com')
   end
 
   let(:student_b) do
-    User.create!(name: 'lrs_student_b', password_digest: 'x',
-                 role_id: @roles[:student].id, full_name: 'LRS Student B',
+    User.create!(username: 'lrs_student_b', password_digest: 'x',
+                 role_id: @roles[:student].id, name: 'LRS Student B',
                  email: 'lrs_b@example.com')
   end
 
@@ -32,7 +32,7 @@ RSpec.describe ReviewMappingStrategies::LeastReviewedSubmissionStrategy, type: :
 
   let(:reviewer) do
     AssignmentParticipant.create!(user: student_a, parent_id: assignment.id,
-                                  handle: student_a.name)
+                                  handle: student_a.username)
   end
 
   let(:team_a) { AssignmentTeam.create!(name: 'LRS Team A', parent_id: assignment.id) }
@@ -59,7 +59,7 @@ RSpec.describe ReviewMappingStrategies::LeastReviewedSubmissionStrategy, type: :
   describe '#assign_one' do
     it 'returns the team with the fewest submitted reviews' do
       other = AssignmentParticipant.create!(user: student_b, parent_id: assignment.id,
-                                            handle: student_b.name)
+                                            handle: student_b.username)
       submit_review(reviewer_id: other.id, reviewee_id: team_a.id)
       # team_a: 1 submitted review; team_b: 0 — expect team_b
       expect(strategy.assign_one(reviewer)).to eq(team_b)
@@ -90,7 +90,7 @@ RSpec.describe ReviewMappingStrategies::LeastReviewedSubmissionStrategy, type: :
 
     it 'counts only submitted reviews, not in-progress ones' do
       other = AssignmentParticipant.create!(user: student_b, parent_id: assignment.id,
-                                            handle: student_b.name)
+                                            handle: student_b.username)
       # In-progress review for team_a — should not count
       map = ReviewResponseMap.create!(reviewer_id: other.id, reviewee_id: team_a.id,
                                       reviewed_object_id: assignment.id)
@@ -104,7 +104,7 @@ RSpec.describe ReviewMappingStrategies::LeastReviewedSubmissionStrategy, type: :
     it 'respects the fairness threshold window' do
       assignment.update!(review_topic_threshold: 0)
       other = AssignmentParticipant.create!(user: student_b, parent_id: assignment.id,
-                                            handle: student_b.name)
+                                            handle: student_b.username)
       submit_review(reviewer_id: other.id, reviewee_id: team_a.id)
       # team_a count=1, min=0 (team_b), threshold=0 → team_a is outside the window
       expect(strategy.assign_one(reviewer)).to eq(team_b)

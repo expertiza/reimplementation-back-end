@@ -18,10 +18,10 @@ RSpec.describe TeamsController, type: :request do
   # An instructor user who will own assignments and courses.
   let(:instructor) do
     User.create!(
-      name:                "profa",
+      username:                "profa",
       password_digest:     "password",
       role_id:              @roles[:instructor].id,
-      full_name:           "Prof A",
+      name:           "Prof A",
       email:               "testuser@example.com",
       mru_directory_path:  "/home/testuser",
       institution_id:      institution.id
@@ -31,8 +31,8 @@ RSpec.describe TeamsController, type: :request do
   # A generic "new participant" used when adding to teams
   let(:user) do
     User.create!(
-      full_name:       "New Participant",
-      name:            "NewParticipant",
+      name:       "New Participant",
+      username:            "NewParticipant",
       email:           "newparticipant@example.com",
       password_digest: "password",
       role_id:          @roles[:student].id,
@@ -43,8 +43,8 @@ RSpec.describe TeamsController, type: :request do
   # A student user used for ownership checks in update_duty, list, etc.
   let(:other_user) do
     User.create!(
-      full_name:       "Student Member",
-      name:            "student_member",
+      name:       "Student Member",
+      username:            "student_member",
       email:           "studentmember@example.com",
       password_digest: "password",
       role_id:          @roles[:student].id,
@@ -69,8 +69,8 @@ RSpec.describe TeamsController, type: :request do
 
   let(:team_owner) do
     User.create!(
-      name:            "team_owner",
-      full_name:       "Team Owner",
+      username:            "team_owner",
+      name:       "Team Owner",
       email:           "team_owner@example.com",
       password_digest: "password",
       role_id:          @roles[:student].id,
@@ -96,14 +96,14 @@ RSpec.describe TeamsController, type: :request do
     AssignmentParticipant.create!(
       parent_id: assignment.id,
       user:      other_user,
-      handle:    other_user.name
+      handle:    other_user.username
     )
   end
   let!(:participant_for_course) do
     CourseParticipant.create!(
       parent_id: course.id,
       user:      other_user,
-      handle:    other_user.name
+      handle:    other_user.username
     )
   end
 

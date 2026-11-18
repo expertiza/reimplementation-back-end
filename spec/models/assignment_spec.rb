@@ -12,7 +12,7 @@ RSpec.describe Assignment, type: :model do
   include RolesHelper
   before(:each) { @roles = create_roles_hierarchy }
   let(:institution) { Institution.create!(name: "NC State") } # All users belong to the same institution to satisfy foreign key constraints.
-  let(:instructor) { User.create!(name: "instructor", full_name: "Instructor User", email: "instructor@example.com", password_digest: "password", role_id: @roles[:instructor].id, institution_id: institution.id) }
+  let(:instructor) { User.create!(username: "instructor", name: "Instructor User", email: "instructor@example.com", password_digest: "password", role_id: @roles[:instructor].id, institution_id: institution.id) }
 
   # -----------------------------------------------------------------------
   # Virtual attributes (attr_writer only — no DB column)

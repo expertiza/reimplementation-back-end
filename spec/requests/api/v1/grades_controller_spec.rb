@@ -8,40 +8,40 @@ RSpec.describe 'Grades API', type: :request do
 
   let(:instructor) do
     User.create!(
-      name: "instructor",
+      username: "instructor",
       password_digest: "password",
       role_id: @roles[:instructor].id,
-      full_name: "Instructor Name",
+      name: "Instructor Name",
       email: "instructor@example.com"
     )
   end
 
   let(:ta) do
     User.create!(
-      name: "ta",
+      username: "ta",
       password_digest: "password",
       role_id: @roles[:ta].id,
-      full_name: "Teaching Assistant",
+      name: "Teaching Assistant",
       email: "ta@example.com"
     )
   end
 
   let(:student) do
     User.create!(
-      name: "student",
+      username: "student",
       password_digest: "password",
       role_id: @roles[:student].id,
-      full_name: "Student Name",
+      name: "Student Name",
       email: "student@example.com"
     )
   end
 
   let(:student2) do
     User.create!(
-      name: "student2",
+      username: "student2",
       password_digest: "password",
       role_id: @roles[:student].id,
-      full_name: "Student Two",
+      name: "Student Two",
       email: "student2@example.com"
     )
   end
@@ -50,8 +50,8 @@ RSpec.describe 'Grades API', type: :request do
 
   let!(:assignment) { Assignment.create!(name: 'Test Assignment', instructor_id: instructor.id, course_id: course.id) }
   let!(:team) { AssignmentTeam.create!(name: 'Team 1', parent_id: assignment.id) }
-  let!(:participant) { AssignmentParticipant.create!(user_id: student.id, parent_id: assignment.id, handle: student.name) }
-  let!(:participant2) { AssignmentParticipant.create!(user_id: student2.id, parent_id: assignment.id, handle: student2.name) }
+  let!(:participant) { AssignmentParticipant.create!(user_id: student.id, parent_id: assignment.id, handle: student.username) }
+  let!(:participant2) { AssignmentParticipant.create!(user_id: student2.id, parent_id: assignment.id, handle: student2.username) }
   
   before do
     # assign participants to teams
@@ -363,7 +363,7 @@ RSpec.describe 'Grades API', type: :request do
         let(:participant_id) { participant.id }
 
         before do
-          reviewer = AssignmentParticipant.create!(user_id: instructor.id, parent_id: assignment.id, handle: instructor.name)
+          reviewer = AssignmentParticipant.create!(user_id: instructor.id, parent_id: assignment.id, handle: instructor.username)
           mapping = ReviewResponseMap.create!(
             reviewed_object_id: assignment.id,
             reviewer_id: reviewer.id,
@@ -385,7 +385,7 @@ RSpec.describe 'Grades API', type: :request do
         let(:participant_id) { participant.id }
 
         before do
-          reviewer = AssignmentParticipant.create!(user_id: instructor.id, parent_id: assignment.id, handle: instructor.name)
+          reviewer = AssignmentParticipant.create!(user_id: instructor.id, parent_id: assignment.id, handle: instructor.username)
           mapping = ReviewResponseMap.create!(
             reviewed_object_id: assignment.id,
             reviewer_id: reviewer.id,
@@ -497,7 +497,7 @@ RSpec.describe 'Grades API', type: :request do
 
       # Reviewer submits a response covering the two scored items
       reviewer_participant = AssignmentParticipant.create!(
-        user_id: student2.id, parent_id: assignment.id, handle: student2.name
+        user_id: student2.id, parent_id: assignment.id, handle: student2.username
       )
       map = ReviewResponseMap.create!(
         reviewed_object_id: assignment.id,

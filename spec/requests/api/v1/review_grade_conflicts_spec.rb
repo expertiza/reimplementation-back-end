@@ -10,20 +10,20 @@ RSpec.describe 'Review Grade Conflicts API', type: :request do
 
   let(:instructor) do
     User.create!(
-      name: 'instructor', password_digest: 'pw', full_name: 'Instructor',
+      username: 'instructor', password_digest: 'pw', name: 'Instructor',
       email: 'instructor@example.com', role_id: @roles[:instructor].id,
       institution_id: institution.id
     )
   end
 
   let(:student1) do
-    User.create!(name: 'student1', password_digest: 'pw', role_id: @roles[:student].id,
-                 full_name: 'Student One', email: 's1@example.com', institution_id: institution.id)
+    User.create!(username: 'student1', password_digest: 'pw', role_id: @roles[:student].id,
+                 name: 'Student One', email: 's1@example.com', institution_id: institution.id)
   end
 
   let(:student2) do
-    User.create!(name: 'student2', password_digest: 'pw', role_id: @roles[:student].id,
-                 full_name: 'Student Two', email: 's2@example.com', institution_id: institution.id)
+    User.create!(username: 'student2', password_digest: 'pw', role_id: @roles[:student].id,
+                 name: 'Student Two', email: 's2@example.com', institution_id: institution.id)
   end
 
   let(:assignment) { Assignment.create!(name: 'Test Assignment', instructor_id: instructor.id) }
@@ -32,7 +32,7 @@ RSpec.describe 'Review Grade Conflicts API', type: :request do
   let(:headers) { { 'Authorization' => "Bearer #{token}" } }
 
   def create_participant(user, asgn)
-    AssignmentParticipant.create!(user: user, parent_id: asgn.id, handle: user.name)
+    AssignmentParticipant.create!(user: user, parent_id: asgn.id, handle: user.username)
   end
 
   def create_review_grade(participant, grade)

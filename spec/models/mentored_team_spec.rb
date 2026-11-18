@@ -16,9 +16,9 @@
 #   # ------------------------------------------------------------------------
 #   def create_student(suffix)
 #     User.create!(
-#       name:            suffix,
+#       username:            suffix,
 #       email:           "#{suffix}@example.com",
-#       full_name:       suffix.split('_').map(&:capitalize).join(' '),
+#       name:       suffix.split('_').map(&:capitalize).join(' '),
 #       password_digest: "password",
 #       role_id:          roles[:student].id,
 #       institution_id:  institution.id
@@ -36,8 +36,8 @@
 #   let(:instructor) do
 #     # The instructor will own assignments and courses in subsequent tests.
 #     User.create!(
-#       name:            "instructor",
-#       full_name:       "Instructor User",
+#       username:            "instructor",
+#       name:       "Instructor User",
 #       email:           "instructor@example.com",
 #       password_digest: "password",
 #       role_id:          roles[:instructor].id,
@@ -47,8 +47,8 @@
 
 #   let(:team_owner) do
 #     User.create!(
-#       name:            "team_owner",
-#       full_name:       "Team Owner",
+#       username:            "team_owner",
+#       name:       "Team Owner",
 #       email:           "team_owner@example.com",
 #       password_digest: "password",
 #       role_id:          roles[:student].id,
@@ -63,8 +63,8 @@
 
 #   let(:mentor) do
 #     User.create!(
-#       name: "mentor_user",
-#       full_name: "Mentor User",
+#       username: "mentor_user",
+#       name: "Mentor User",
 #       email: "mentor@example.com",
 #       password_digest: "password",
 #       role_id: mentor_role.id,
@@ -82,8 +82,8 @@
 
 #   let(:user) do
 #     User.create!(
-#       name: "student_user",
-#       full_name: "Student User",
+#       username: "student_user",
+#       name: "Student User",
 #       email: "student@example.com",
 #       password_digest: "password",
 #       role_id: roles[:student].id,

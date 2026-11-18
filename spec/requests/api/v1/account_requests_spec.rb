@@ -10,10 +10,10 @@ RSpec.describe 'Account Requests API', type: :request do
 
   let(:prof) {
     User.create(
-      name: "profa",
+      username: "profa",
       password_digest: "password",
       role_id: @roles[:instructor].id,
-      full_name: "Prof A",
+      name: "Prof A",
       email: "testuser@example.com",
       mru_directory_path: "/home/testuser",
       )
@@ -129,11 +129,11 @@ RSpec.describe 'Account Requests API', type: :request do
       # Attempt to Create an Account Request whose username already exists in Users table
       response(422, 'Attempt to Create an Account Request whose username already exists in Users table') do
         let(:user) do
-          User.create(name: 'useracc', full_name: 'User One', email: 'userone@gmail.com', role_id: @roles[:student].id,
+          User.create(username: 'useracc', name: 'User One', email: 'userone@gmail.com', role_id: @roles[:student].id,
                       password: 'password')
         end
         let(:account_request) do
-          { username: user.name, full_name: 'User Account 1', email: 'useracc1@gmail.com', introduction: 'User 1 Intro',
+          { username: user.username, full_name: 'User Account 1', email: 'useracc1@gmail.com', introduction: 'User 1 Intro',
             role_id: @roles[:student].id, institution_id: institution.id }
         end
 
@@ -150,7 +150,7 @@ RSpec.describe 'Account Requests API', type: :request do
       # Create an Account Request whose email already exists in Users table
       response(201, 'Create an Account Request whose email already exists in Users table') do
         let(:user) do
-          User.create(name: 'userone', full_name: 'User One', email: 'userone@gmail.com', role_id: @roles[:student].id,
+          User.create(username: 'userone', name: 'User One', email: 'userone@gmail.com', role_id: @roles[:student].id,
                       password: 'password')
         end
         let(:account_request) do
@@ -224,13 +224,13 @@ RSpec.describe 'Account Requests API', type: :request do
         # Attempt to Approve account request but user with same name already exists
         response(422, 'Attempt to Approve account request but user with same name already exists') do
           let(:user) do
-            User.create(name: 'user', full_name: 'User One', email: 'userone@gmail.com', role_id: @roles[:student].id,
+            User.create(username: 'user', name: 'User One', email: 'userone@gmail.com', role_id: @roles[:student].id,
                         password: 'password')
           end
 
           before do
             account_request.status = 'Approved'
-            account_request.username = user.name
+            account_request.username = user.username
           end
 
           after do |example|
@@ -306,13 +306,13 @@ RSpec.describe 'Account Requests API', type: :request do
         # Attempt to Approve account request but user with same username already exists
         response(422, 'Attempt to Approve account request but user with same username already exists') do
           let(:user) do
-            User.create(name: 'user', full_name: 'User One', email: 'userone@gmail.com', role_id: @roles[:student].id,
+            User.create(username: 'user', name: 'User One', email: 'userone@gmail.com', role_id: @roles[:student].id,
                         password: 'password')
           end
 
           before do
             account_request.status = 'Approved'
-            account_request.username = user.name
+            account_request.username = user.username
           end
 
           after do |example|
@@ -328,7 +328,7 @@ RSpec.describe 'Account Requests API', type: :request do
         # Reject account request if user with same email already exists
         response(422, 'Attempt to Approve account request but user with same email already exists') do
           let(:user) do
-            User.create(name: 'user', full_name: 'User One', email: 'userone@gmail.com', role_id: @roles[:student].id,
+            User.create(username: 'user', name: 'User One', email: 'userone@gmail.com', role_id: @roles[:student].id,
                         password: 'password')
           end
 

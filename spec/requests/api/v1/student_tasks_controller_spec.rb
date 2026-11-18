@@ -10,20 +10,20 @@ RSpec.describe 'StudentTasks API', type: :request do
 
   let!(:instructor) do
     User.create!(
-      name: "Instructor",
+      username: "Instructor",
       password_digest: "password",
       role_id: @roles[:instructor].id,
-      full_name: "Instructor Name",
+      name: "Instructor Name",
       email: "instructor@example.com"
     )
   end
 
   let(:studenta) do
     User.create!(
-      name: "studenta",
+      username: "studenta",
       password_digest: "password",
       role_id: @roles[:student].id,
-      full_name: "Student A",
+      name: "Student A",
       email: "testuser@example.com"
     )
   end
@@ -116,7 +116,7 @@ RSpec.describe 'StudentTasks API', type: :request do
           course = Course.create!(name: 'CSC 517 Show', directory_path: 'csc517_show', instructor: instructor, institution: institution)
           assignment = Assignment.create!(name: 'Timeline Assignment', instructor: instructor, course: course)
           DueDate.create!(parent: assignment, due_at: 7.days.from_now, deadline_name: 'Submission', deadline_type_id: 1, submission_allowed_id: 3, review_allowed_id: 3)
-          AssignmentParticipant.create!(user_id: studenta.id, parent_id: assignment.id, handle: studenta.name, permission_granted: true)
+          AssignmentParticipant.create!(user_id: studenta.id, parent_id: assignment.id, handle: studenta.username, permission_granted: true)
         end
         let(:id) { show_participant.id }
 
@@ -140,10 +140,10 @@ RSpec.describe 'StudentTasks API', type: :request do
       response '403', 'student accessing another participant task — returns error message' do
         let!(:other_user) do
           User.create!(
-            name: 'otherstudent',
+            username: 'otherstudent',
             password_digest: 'password',
             role_id: @roles[:student].id,
-            full_name: 'Other Student',
+            name: 'Other Student',
             email: 'other@example.com'
           )
         end
@@ -152,7 +152,7 @@ RSpec.describe 'StudentTasks API', type: :request do
           AssignmentParticipant.create!(
             user_id: other_user.id,
             parent_id: other_assignment.id,
-            handle: other_user.name
+            handle: other_user.username
           )
         end
         let(:id) { other_participant.id }

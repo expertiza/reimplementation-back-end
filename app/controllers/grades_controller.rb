@@ -117,8 +117,8 @@ class GradesController < ApplicationController
         participant: {
           id: participant.id,
           user_id: participant.user_id,
-          user_name: participant.user.name,
-          full_name: participant.user.full_name,
+          username: participant.user.username,
+          name: participant.user.name,
           handle: participant.handle
         },
         assignment: {
@@ -202,7 +202,7 @@ class GradesController < ApplicationController
   # any specific front-end routing while still exposing enough information for
   # the client to continue or start a review.
   def instructor_review
-    reviewer = AssignmentParticipant.find_or_create_by!(user_id: current_user.id, parent_id: @assignment.id, handle: current_user.name)
+    reviewer = AssignmentParticipant.find_or_create_by!(user_id: current_user.id, parent_id: @assignment.id, handle: current_user.username)
 
     mapping = ReviewResponseMap.find_or_create_by!(
       reviewed_object_id: @assignment.id,
@@ -289,7 +289,7 @@ class GradesController < ApplicationController
       grade:            team.grade_for_submission,
       comment:          team.comment_for_submission,
       submission_links: team.hyperlinks,
-      members:          team.users.map { |u| { name: u.full_name, username: u.name } }
+      members:          team.users.map { |u| { name: u.name, username: u.username } }
     }
 
     {

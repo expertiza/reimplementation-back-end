@@ -10,24 +10,24 @@ RSpec.describe 'Teammate Review Report', type: :request do
 
   let(:instructor) do
     User.create!(
-      name: 'instructor', password_digest: 'pw', full_name: 'Instructor',
+      username: 'instructor', password_digest: 'pw', name: 'Instructor',
       email: 'instructor@example.com', role_id: @roles[:instructor].id,
       institution_id: institution.id
     )
   end
 
   let(:student1) do
-    User.create!(name: 'student1', password_digest: 'pw', full_name: 'Student One',
+    User.create!(username: 'student1', password_digest: 'pw', name: 'Student One',
                  email: 's1@example.com', role_id: @roles[:student].id, institution_id: institution.id)
   end
 
   let(:student2) do
-    User.create!(name: 'student2', password_digest: 'pw', full_name: 'Student Two',
+    User.create!(username: 'student2', password_digest: 'pw', name: 'Student Two',
                  email: 's2@example.com', role_id: @roles[:student].id, institution_id: institution.id)
   end
 
   let(:student3) do
-    User.create!(name: 'student3', password_digest: 'pw', full_name: 'Student Three',
+    User.create!(username: 'student3', password_digest: 'pw', name: 'Student Three',
                  email: 's3@example.com', role_id: @roles[:student].id, institution_id: institution.id)
   end
 
@@ -112,14 +112,14 @@ RSpec.describe 'Teammate Review Report', type: :request do
       generate_report
       review = JSON.parse(response.body)['reviews'].first
       expect(review['reviewer']['id']).to eq(ap1.id)
-      expect(review['reviewer']['user']['name']).to eq(student1.name)
+      expect(review['reviewer']['user']['username']).to eq(student1.username)
     end
 
     it 'includes reviewee id and user name' do
       generate_report
       review = JSON.parse(response.body)['reviews'].first
       expect(review['reviewee']['id']).to eq(ap2.id)
-      expect(review['reviewee']['user']['name']).to eq(student2.name)
+      expect(review['reviewee']['user']['username']).to eq(student2.username)
     end
 
     it 'marks submitted as true when a submitted response exists' do

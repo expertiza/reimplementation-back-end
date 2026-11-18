@@ -28,11 +28,11 @@ module Reports
       include: {
         reviewer: {
           only: [:id],
-          include: { user: { only: %i[id name] } }
+          include: { user: { only: %i[id username] } }
         },
         reviewee: {
           only: [:id],
-          include: { user: { only: %i[id name] } }
+          include: { user: { only: %i[id username] } }
         },
         responses: {
           only: %i[id is_submitted additional_comment],

@@ -29,13 +29,16 @@ elif [ "${RAILS_ENV:-development}" = "development" ] || [ "${RAILS_ENV}" = "test
   bundle check || bundle install || exit 1
 
   if [ "${RAILS_ENV:-development}" = "development" ]; then
-     echo "Preparing development database..."
-     bundle exec rails db:prepare || exit 1
+    echo "Preparing development database..."
+    bundle exec rails db:prepare || exit 1
+
+    echo "Seeding development database (idempotent)..."
+    bundle exec rails db:seed || exit 1
   else
-     echo "Preparing test database..."
-     bundle exec rails db:create || exit 1
-     bundle exec rails db:migrate || exit 1
-     echo "Skipping database seeding in test environment."
+    echo "Preparing test database..."
+    bundle exec rails db:create || exit 1
+    bundle exec rails db:migrate || exit 1
+    echo "Skipping database seeding in test environment."
   fi
 
 else
