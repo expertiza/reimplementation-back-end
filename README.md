@@ -7,7 +7,7 @@ The application uses Docker Compose to simplify local setup and provide separate
 The Docker setup supports:
 
 - Separate development and production profiles
-- Local MySQL for development and testing
+- Local MariaDB for development and testing
 - External database connectivity for production
 - Automatic development database initialization
 - Redis persistence and service health checks
@@ -27,7 +27,7 @@ Make sure the following are installed:
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (running)
 - Git
 
-Ruby, Bundler, and MySQL do not need to be installed separately on your computer for Docker-based development.
+Ruby, Bundler, and MariaDB do not need to be installed separately on your computer for Docker-based development.
 
 ### Clone the Repository
 
@@ -54,16 +54,16 @@ RAILS_ENV=development
 DATABASE_URL=mysql2://dev:change_me@db:3306/reimplementation_development
 TEST_DATABASE_URL=mysql2://dev:change_me@db:3306/reimplementation_test
 
-MYSQL_USER=dev
-MYSQL_PASSWORD=change_me
-MYSQL_ROOT_PASSWORD=change_me
-MYSQL_DATABASE=reimplementation_development
+MARIADB_USER=dev
+MARIADB_PASSWORD=change_me
+MARIADB_ROOT_PASSWORD=change_me
+MARIADB_DATABASE=reimplementation_development
 ```
 
-Replace `change_me` with your chosen local credentials. The password in both database URLs must match `MYSQL_PASSWORD`. If the password contains URL-special characters, URL-encode it in the connection URLs.
+Replace `change_me` with your chosen local credentials. The password in both database URLs must match `MARIADB_PASSWORD`. If the password contains URL-special characters, URL-encode it in the connection URLs.
 
 
-**Database name consistency:** `MYSQL_DATABASE` must match the database name specified in `DATABASE_URL`. If you change the development database name, update both values before initializing a fresh MySQL volume. `TEST_DATABASE_URL` specifies the separate test database.
+**Database name consistency:** `MARIADB_DATABASE` must match the database name specified in `DATABASE_URL`. If you change the development database name, update both values before initializing a fresh MariaDB volume. `TEST_DATABASE_URL` specifies the separate test database.
 
 
 `CACHE_STORE` is passed to the Redis cache configuration in `config/application.rb`. Within Docker Compose, the Redis connection URL is `redis://redis:6380/0`.
@@ -81,7 +81,7 @@ docker compose --profile dev up -d --build
 
 This builds the application image and starts the development services.
 
-On a fresh MySQL volume, the database initialization process creates the required development and test databases.
+On a fresh MariaDB volume, the database initialization process creates the required development and test databases.
 
 ### Verify the Services
 
@@ -94,10 +94,10 @@ The expected services are:
 | Service | Description |
 |---|---|
 | `app` | Ruby on Rails back-end |
-| `db` | Local MySQL database |
+| `db` | Local MariaDB database |
 | `redis` | Redis service |
 
-MySQL and Redis should report healthy status when their health checks have completed.
+MariaDB and Redis should report healthy status when their health checks have completed.
 
 ### Access the Application
 
@@ -144,10 +144,10 @@ Refer to the configuration files for their current versions.
 |---|---|
 | Ruby | Defined in `Dockerfile` |
 | Bundler | Defined in `Dockerfile` and `Gemfile.lock` |
-| MySQL | Defined in `docker-compose.yml` |
+| MariaDB | `10.11.15` (defined in `docker-compose.yml`) |
 | Redis | Defined in `docker-compose.yml` |
 | Application host port | `3002` |
-| MySQL host port | `3307` (localhost only) |
+| MariaDB host port | `3307` (localhost only) |
 
 Application dependencies are installed into the Docker image during the build process.
 
@@ -156,10 +156,10 @@ Application dependencies are installed into the Docker image during the build pr
 The development profile starts three services:
 
 - `app` — Rails application
-- `db` — MySQL database
+- `db` — MariaDB database
 - `redis` — Redis service
 
-Docker Compose uses health checks to wait for MySQL and Redis to become ready before starting the application.
+Docker Compose uses health checks to wait for MariaDB and Redis to become ready before starting the application.
 
 The startup script first checks the installed Ruby dependencies:
 
@@ -169,15 +169,16 @@ bundle check || bundle install || exit 1
 
 This avoids reinstalling dependencies unnecessarily.
 
-It then prepares the development database using:
+It then prepares and seeds the development database using:
 
 ```bash
 bundle exec rails db:prepare
+bundle exec rails db:seed
 ```
 
-`db:prepare` handles the initial database setup and pending migrations. On a fresh database, it also loads the configured seed data.
+`db:prepare` initializes the database, applies pending migrations, and loads seed data when creating a fresh database. The startup script also runs `db:seed` explicitly **on every development startup**, including restarts, to pick up newly added seed records. The seed logic is designed to be idempotent, so repeated runs do not duplicate records with matching stable keys. Existing databases with incompatible legacy role IDs may still need a fresh development volume or a separate data migration.
 
-On subsequent starts, an already prepared database is not unnecessarily reseeded.
+Production startup does not automatically create, migrate, or seed the database, and the test startup skips development-data seeding.
 
 ### Useful Development Commands
 
@@ -211,7 +212,7 @@ docker compose --profile dev exec app bash
 docker compose --profile dev down
 ```
 
-A normal `down` preserves the named MySQL and Redis volumes.
+A normal `down` preserves the named MariaDB and Redis volumes.
 
 **Important:** Do not use `docker compose down -v` unless you intentionally want to remove the development database and Redis volumes. Removing volumes can permanently delete local data.
 
@@ -231,13 +232,13 @@ The project follows the `reimplementation_<environment>` naming convention.
 
 ### How Development Databases Are Created
 
-The development Docker Compose configuration passes `MYSQL_DATABASE` to the official MySQL container.
+The development Docker Compose configuration passes `MARIADB_DATABASE` to the official MariaDB container.
 
 ```dotenv
-MYSQL_DATABASE=reimplementation_development
+MARIADB_DATABASE=reimplementation_development
 ```
 
-On the initial startup of a fresh MySQL volume, the MySQL image automatically creates this development database and grants the configured `MYSQL_USER` access to it.
+On the initial startup of a fresh MariaDB volume, the MariaDB image automatically creates this development database and grants the configured `MARIADB_USER` access to it.
 
 The additional file:
 
@@ -249,7 +250,7 @@ creates `reimplementation_test`, if necessary, and grants the configured applica
 
 The initialization script replaces the earlier `db/init_databases.sql` file.
 
-**These MySQL initialization operations run when a fresh database volume is initialized.** Changing `MYSQL_DATABASE` later does not automatically rename databases in an existing volume.
+**These MariaDB initialization operations run when a fresh database volume is initialized.** Changing `MARIADB_DATABASE` later does not automatically rename databases in an existing volume.
 
 ### Rails Database Connections
 
@@ -271,14 +272,20 @@ The Rails database configuration reads these URLs directly instead of modifying 
 
 This makes the environment-specific database connections easier to understand and configure.
 
+### Character Set and Collation
+
+Rails uses the `mysql2` adapter with `utf8mb4` encoding and the MariaDB-compatible `utf8mb4_unicode_ci` collation, configured in `config/database.yml`. The schema and historical migrations use this compatible collation instead of MySQL 8-specific collations that MariaDB 10.11 does not support.
+
+Keep `mysql2://` in `DATABASE_URL`, `TEST_DATABASE_URL`, and external production connection examples; it remains the correct adapter scheme for MariaDB.
+
 ### Database Hostnames and Ports
 
 When the application runs inside Docker:
 
-- MySQL hostname: `db`
-- MySQL internal port: `3306`
+- MariaDB hostname: `db`
+- MariaDB internal port: `3306`
 
-When accessing MySQL from the host computer:
+When accessing MariaDB from the host computer:
 
 - Hostname: `localhost`
 - Port: `3307`
@@ -287,11 +294,24 @@ The application containers should use `db:3306`, not `localhost:3307`.
 
 ### Database Persistence
 
-MySQL stores its data in a named Docker volume.
+MariaDB stores its data in the named Docker volume `expertiza-mariadb`, mounted at `/var/lib/mysql` inside the container (MariaDB retains this data-directory path).
 
 This preserves the database across ordinary container restarts and recreation.
 
 The development database can also support database migration and anonymization testing, which should never be performed directly against the production database without appropriate safeguards.
+
+### Switching from MySQL 8.4 to MariaDB 10.11.15
+
+The MariaDB configuration uses a **new** volume, `expertiza-mariadb`. The previous MySQL volume (`expertiza-mysql`) is not reused, overwritten, or automatically migrated. Existing local MySQL data will not appear in the new MariaDB database unless it is migrated separately using an appropriate export/import process.
+
+After updating `.env` with the `MARIADB_*` variables, initialize the new development environment with:
+
+```bash
+docker compose --profile dev down
+docker compose --profile dev up -d --build
+```
+
+The new MariaDB volume is initialized and seeded on its first startup. A normal `down` preserves both data volumes. **Do not run `docker compose down -v` to switch database engines**, and do not mount a MySQL 8.4 data directory directly into MariaDB. Back up any existing data before attempting a migration.
 
 ---
 
@@ -333,18 +353,18 @@ Replace the example spec path with the desired test file.
 
 ### Test Configuration in GitHub Actions
 
-The CI workflow configures a dedicated MySQL test database and supplies `TEST_DATABASE_URL` for RSpec execution.
+The CI workflow configures a dedicated MariaDB test database and supplies `TEST_DATABASE_URL` for RSpec execution.
 
 Changes should pass the applicable automated tests before being merged.
 
 ### Previously Verified Test Results
 
-During validation of the Docker improvements after incorporating upstream changes, the RSpec suite completed with:
+During local validation of MariaDB 10.11.15 for issue #393, the RSpec suite completed with:
 
-- 951 examples
+- 1,027 examples
 - 0 failures
 - 2 pending
-- 69.57% code coverage
+- 71.76% line coverage
 
 These are recorded validation results, not a guarantee of results for future commits.
 
@@ -363,7 +383,7 @@ The production profile defines:
 | `app-prod` | Rails application configured for production |
 | `redis` | Redis service |
 
-**The production profile does not start a local MySQL database.**
+**The production profile does not start a local database container.**
 
 This follows the deployment architecture in which the production database is hosted separately.
 
@@ -496,15 +516,15 @@ Production credentials should not be embedded directly into the Docker image or 
 
 Docker Compose defines health checks to determine whether services are responsive.
 
-### MySQL
+### MariaDB
 
-The MySQL service uses:
+The MariaDB 10.11.15 service uses the official image's health check:
 
 ```bash
-mysqladmin ping
+healthcheck.sh --connect --innodb_initialized
 ```
 
-The development application waits for MySQL to become healthy before starting.
+Docker Compose waits for MariaDB (and Redis) to become healthy before starting the development application.
 
 ### Redis
 
@@ -563,7 +583,7 @@ View logs using:
 docker compose --profile dev logs -f app
 ```
 
-To view MySQL logs:
+To view MariaDB logs:
 
 ```bash
 docker compose --profile dev logs db
@@ -586,11 +606,11 @@ The Docker Compose configuration defines two networks:
 | `public` | Application-facing communication |
 | `private` | Communication between application services |
 
-The Rails application connects to the appropriate networks, while MySQL and Redis communicate through the private network.
+The Rails application connects to the appropriate networks, while MariaDB and Redis communicate through the private network.
 
 Redis is not published to a host port.
 
-The development MySQL service is accessible from the host through `127.0.0.1:3307`. Binding to localhost allows local database tools to connect without exposing MySQL on all host network interfaces.
+The development MariaDB service is accessible from the host through `127.0.0.1:3307`. Binding to localhost allows local database tools to connect without exposing MariaDB on all host network interfaces.
 
 These network definitions organize service communication but are not, by themselves, a complete production network-security policy.
 
@@ -644,9 +664,9 @@ To stop the development stack and remove the images used by its services:
 docker compose --profile dev down --rmi all
 ```
 
-This removes the stack's containers and attempts to remove the associated application, MySQL, and Redis images.
+This removes the stack's containers and attempts to remove the associated application, MariaDB, and Redis images.
 
-The named MySQL and Redis volumes are preserved because the command does not use `-v`. Images will need to be rebuilt or pulled again when the stack is restarted.
+The named MariaDB and Redis volumes are preserved because the command does not use `-v`. Images will need to be rebuilt or pulled again when the stack is restarted.
 
 **Important:** This command stops the running development stack. Images shared with other Docker projects may also be affected, although Docker will prevent removing images that are still in use by other containers.
 
@@ -654,13 +674,13 @@ Avoid using `docker compose down -v` unless you intentionally want to remove the
 
 ### Database Connection Errors
 
-If Rails cannot connect to MySQL:
+If Rails cannot connect to MariaDB:
 
-1. Confirm that the MySQL container is running and healthy.
-2. Verify `MYSQL_USER`, `MYSQL_PASSWORD`, and `MYSQL_DATABASE` in `.env`.
+1. Confirm that the MariaDB container is running and healthy.
+2. Verify `MARIADB_USER`, `MARIADB_PASSWORD`, and `MARIADB_DATABASE` in `.env`.
 3. Ensure `DATABASE_URL` uses `db:3306`.
-4. Ensure the password in `DATABASE_URL` matches `MYSQL_PASSWORD`.
-5. Check the MySQL logs for authentication or permission errors.
+4. Ensure the password in `DATABASE_URL` matches `MARIADB_PASSWORD`.
+5. Check the MariaDB logs for authentication or permission errors.
 
 For test database errors, check `TEST_DATABASE_URL` separately.
 
@@ -673,7 +693,7 @@ reimplementation_development
 reimplementation_test
 ```
 
-If MYSQL_DATABASE is changed after the MySQL volume has already been initialized, Docker will not automatically create the renamed database or update the existing user's permissions.
+If MARIADB_DATABASE is changed after the MariaDB volume has already been initialized, Docker will not automatically create the renamed database or update the existing user's permissions.
 
 For existing development environments, the new database may need to be created manually and the application user granted access. Fresh installations using the updated configuration will initialize the databases automatically.
 

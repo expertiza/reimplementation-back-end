@@ -14,16 +14,21 @@ jobs:
       DATABASE_URL: mysql2://root:expertiza@127.0.0.1:3306/expertiza_test
       TEST_DATABASE_URL: mysql2://root:expertiza@127.0.0.1:3306/expertiza_test
       RAILS_ENV: test
-      
+
     services:
-      mysql:
-        image: mysql:8.4
+      mariadb:
+        image: mariadb:10.11.15
         env:
-          MYSQL_ROOT_PASSWORD: expertiza
-          MYSQL_DATABASE: expertiza_test
+          MARIADB_ROOT_PASSWORD: expertiza
+          MARIADB_DATABASE: expertiza_test
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+          --health-start-period=30s
 
     steps:
       - uses: actions/checkout@v3
