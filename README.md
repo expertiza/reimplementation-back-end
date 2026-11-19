@@ -313,6 +313,39 @@ docker compose --profile dev up -d --build
 
 The new MariaDB volume is initialized and seeded on its first startup. A normal `down` preserves both data volumes. **Do not run `docker compose down -v` to switch database engines**, and do not mount a MySQL 8.4 data directory directly into MariaDB. Back up any existing data before attempting a migration.
 
+#### Cleaning Up the Old MySQL Volume
+
+After successfully switching to MariaDB, developers can optionally remove their old MySQL Docker volume if it is no longer needed.
+
+First, list the existing MySQL volumes:
+
+```bash
+docker volume ls --filter name=expertiza-mysql
+```
+
+Docker Compose typically prefixes named volumes with the Compose project name, so the actual volume may be named something like `reimplementation-back-end_expertiza-mysql`.
+
+Before removing the volume, ensure that:
+
+- No existing containers or development environments require it.
+- Any important database data has been backed up or migrated.
+
+Check whether any containers still reference the volume:
+
+```bash
+docker ps -a --filter volume=<old-volume-name>
+```
+
+Once the volume is no longer needed and no containers reference it, remove it explicitly:
+
+```bash
+docker volume rm <old-volume-name>
+```
+
+Replace `<old-volume-name>` with the exact name returned by `docker volume ls`.
+
+**Warning:** Removing a Docker volume permanently deletes its stored data. This cleanup is optional and should only be performed after confirming that the previous MySQL data is no longer required. Do not use `docker compose down -v` for this cleanup, as it may also remove the current MariaDB and Redis volumes.
+
 ---
 
 ## 4. Running RSpec Tests
