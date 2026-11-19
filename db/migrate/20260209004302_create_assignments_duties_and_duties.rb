@@ -3,7 +3,7 @@ class CreateAssignmentsDutiesAndDuties < ActiveRecord::Migration[8.0]
     unless table_exists?(:assignments_duties)
       create_table :assignments_duties,
                    charset: "utf8mb4",
-                   collation: "utf8mb4_0900_ai_ci" do |t|
+                   collation: "utf8mb4_unicode_ci" do |t|
         t.bigint :assignment_id, null: false
         t.bigint :duty_id, null: false
         t.timestamps
@@ -16,7 +16,7 @@ class CreateAssignmentsDutiesAndDuties < ActiveRecord::Migration[8.0]
     unless table_exists?(:duties)
       create_table :duties,
                    charset: "utf8mb4",
-                   collation: "utf8mb4_0900_ai_ci" do |t|
+                   collation: "utf8mb4_unicode_ci" do |t|
         t.string  :name
         t.boolean :private, default: false
         t.bigint  :instructor_id, null: false

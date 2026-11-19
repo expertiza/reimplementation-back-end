@@ -49,27 +49,21 @@ services:
 
   db:
     profiles: ["dev"]
-    # Keep this version aligned with MySQL in .github/workflows/main.yml
-    image: mysql:8.4
+    # Keep this version aligned with MariaDB in .github/workflows/main.yml
+    image: mariadb:10.11.15
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-reimplementation_development}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-reimplementation_development}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
     ports:
       - "127.0.0.1:3307:3306"
     volumes:
-      - expertiza-mysql:/var/lib/mysql
+      - expertiza-mariadb:/var/lib/mysql
       - ./db:/docker-entrypoint-initdb.d
     healthcheck:
-      test:
-        - CMD-SHELL
-        - >-
-          MYSQL_PWD="$$MYSQL_PASSWORD"
-          mysql --protocol=tcp -h 127.0.0.1
-          -u"$$MYSQL_USER" -D"$$MYSQL_DATABASE"
-          -Nse "SELECT 1" >/dev/null 2>&1
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -94,7 +88,7 @@ services:
     logging: *default-logging
 
 volumes:
-  expertiza-mysql:
+  expertiza-mariadb:
   expertiza-redis:
   expertiza-dev-pids:
   expertiza-dev-logs:
