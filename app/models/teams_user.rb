@@ -4,7 +4,7 @@ class TeamsUser < ApplicationRecord
   belongs_to :user
   belongs_to :team
 
-  def name(ip_address = nil)
+  def name(_ip_address = nil)
     name = user.username
   end
 
