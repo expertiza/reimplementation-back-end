@@ -1,6 +1,15 @@
 module SubmittedContentHelper
   include FileHelper
 
+  # The only list of accepted upload extensions. The controller builds its
+  # error message from this.
+  ALLOWED_EXTENSIONS = %w[
+    pdf png jpeg jpg
+    zip tar gz 7z
+    odt doc docx xls xlsx ppt pptx
+    md rb mp4 txt
+  ].freeze
+
   # Unzips a file to the specified directory with error handling
   # @param file_name [String] Path to the ZIP file to extract
   # @param unzip_dir [String] Directory where contents will be extracted
@@ -47,14 +56,14 @@ module SubmittedContentHelper
     just_filename = File.basename(e.name)
     safe_name = just_filename.gsub(%r{[^\w\.\_/]}, '_').tr("'", '_')
 
-    # Build the full path where the entry will be extracted
-    file_path = File.join(unzip_dir, safe_name)
+    # Make sure the target directory exists before extracting into it
+    FileUtils.mkdir_p(unzip_dir)
 
-    # Create parent directories if they don't exist
-    FileUtils.mkdir_p(File.dirname(file_path))
-
-    # Extract the entry, overwriting if file already exists (true = overwrite)
-    e.extract(file_path) { true }
+    # Extract the entry, overwriting if file already exists (true = overwrite).
+    # rubyzip 3.x takes a path relative to destination_directory, so passing an
+    # absolute path here would be joined onto the current working directory
+    # and fail with ENOENT.
+    e.extract(safe_name, destination_directory: unzip_dir) { true }
   end
 
   # Constructs the full file path from params for file operations
@@ -97,14 +106,11 @@ module SubmittedContentHelper
   # @param original_filename [String] The filename to check
   # @return [Boolean] true if extension is allowed, false otherwise
   def valid_file_extension?(original_filename)
-    # Define list of allowed file extensions
-    allowed_extensions = %w[pdf png jpeg jpg zip tar gz 7z odt docx md rb mp4 txt]
-
     # Extract the file extension (last part after final dot) and convert to lowercase
     file_extension = original_filename&.split('.')&.last&.downcase
 
     # Check if the extension is in the allowed list
-    allowed_extensions.include?(file_extension)
+    ALLOWED_EXTENSIONS.include?(file_extension)
   end
 
   # Validates if a file size is within the specified limit
@@ -210,38 +216,76 @@ module SubmittedContentHelper
     end
   end
 
-  # Deletes one or more selected files
+  # Deletes selected files from the team's submission directory.
+  #
+  # The request supplies only bare file names. This method determines the
+  # directory from the team's own path, so the request cannot choose which
+  # directory to delete from.
+  #
+  # This restriction matters because FileUtils.rm_rf performs no safety
+  # checks: it recursively deletes the supplied path and silently ignores
+  # paths that do not exist. Allowing the request to specify the directory
+  # could let it delete files outside the team's submissions, anywhere the
+  # Rails process has permission to delete.
   def delete_selected_files
     # Wrap the delete operation with error handling
     handle_file_operation_error('deleting') do
       # Track successfully deleted files for response
       deleted_files = []
 
-      # Iterate through each file index in the chk_files param
-      Array(params[:chk_files]).each do |idx|
-        # Build the full file path for this index
-        file_path = File.join(params[:directories][idx], params[:filenames][idx])
+      # Build the directory to delete from by joining the team's own submission
+      # directory with the subfolder named in the request.
+      directory = resolve_submission_directory
 
-        # Check if file exists before attempting deletion
-        if File.exist?(file_path)
-          # Remove file or directory recursively
-          FileUtils.rm_rf(file_path)
+      # Iterate through the requested filenames
+      Array(params[:filenames]).each do |name|
+        # basename strips any directory component a caller tried to smuggle in
+        file_name = File.basename(name.to_s)
+        file_path = File.join(directory, file_name)
 
-          # Add to deleted files list
-          deleted_files << file_path
-        else
-          # File doesn't exist, return error
-          render json: { error: "Cannot delete '#{params[:filenames][idx]}': File does not exist. It may have already been deleted." }, status: :not_found
+        # Refuse anything that resolves outside the team's own directory
+        unless path_within?(file_path, submission_base_path)
+          render json: { error: "Cannot delete '#{file_name}': the path is outside your submission directory." }, status: :forbidden
           return
         end
+
+        # Check file exists before attempting deletion
+        unless File.exist?(file_path)
+          render json: { error: "Cannot delete '#{file_name}': File does not exist. It may have already been deleted." }, status: :not_found
+          return
+        end
+
+        # Remove file or directory recursively
+        FileUtils.rm_rf(file_path)
+
+        # Respond with the file name rather than the file_path, so the response
+        # does not disclose the server's directory layout to the client.
+        deleted_files << file_name
       end
 
-      # Count total deleted files
-      file_count = deleted_files.size
-
-      # Render success response with deleted file list
-      render json: { message: "Successfully deleted #{file_count} file(s).", files: deleted_files }, status: :no_content
+      # Render success response with the deleted file list. This is a 200 and
+      # not a 204: a 204 carries no body, so the message would be discarded.
+      render json: { message: "Successfully deleted #{deleted_files.size} file(s).", files: deleted_files }, status: :ok
     end
+  end
+
+  # The team's submission directory, which every file operation is scoped to
+  def submission_base_path
+    @participant.team.path.to_s
+  end
+
+  # Resolves the folder in view to an absolute path under the team directory
+  def resolve_submission_directory
+    base_path = submission_base_path
+    folder = clean_folder(params.dig(:current_folder, :name) || '/')
+    folder == '/' ? base_path : File.join(base_path, folder)
+  end
+
+  # True if the path points to a file or folder inside the base directory.
+  # The base directory itself is not inside itself, so an exact match is false.
+  def path_within?(path, base)
+    expanded_base = File.expand_path(base)
+    File.expand_path(path).start_with?("#{expanded_base}#{File::SEPARATOR}")
   end
 
   # Creates a new folder in the participant's directory

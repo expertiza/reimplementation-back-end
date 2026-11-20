@@ -9,7 +9,7 @@ module ExpertizaConstants
     SIGNUP           = 8
     TEAM_FORMATION   = 9
 
-    # Maps deadline_type_id to stage name, mirroring the old DeadlineType table
+    # Maps deadline_type_id to its stage name string.
     NAMES = {
       SUBMISSION => 'submission',
       REVIEW => 'review',

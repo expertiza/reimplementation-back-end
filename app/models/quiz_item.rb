@@ -18,7 +18,7 @@ class QuizItem < Item
 
     {
       question_text: txt,
-      question_type: type,
+      item_type: type,
       question_weight: weight,
       choices: choices
     }.to_json

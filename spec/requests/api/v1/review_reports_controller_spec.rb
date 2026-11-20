@@ -10,7 +10,7 @@ RSpec.describe 'Review Reports API', type: :request do
 
   let(:instructor) do
     User.create!(
-      name: 'instructor', password_digest: 'pw', full_name: 'Instructor',
+      username: 'instructor', password_digest: 'pw', name: 'Instructor',
       email: 'instructor@example.com', role_id: @roles[:instructor].id,
       institution_id: institution.id
     )
@@ -18,7 +18,7 @@ RSpec.describe 'Review Reports API', type: :request do
 
   let(:reviewer_user) do
     User.create!(
-      name: 'reviewer', password_digest: 'pw', full_name: 'Reviewer',
+      username: 'reviewer', password_digest: 'pw', name: 'Reviewer',
       email: 'reviewer@example.com', role_id: @roles[:student].id,
       institution_id: institution.id
     )
@@ -26,7 +26,7 @@ RSpec.describe 'Review Reports API', type: :request do
 
   let(:reviewee_user) do
     User.create!(
-      name: 'reviewee', password_digest: 'pw', full_name: 'Reviewee',
+      username: 'reviewee', password_digest: 'pw', name: 'Reviewee',
       email: 'reviewee@example.com', role_id: @roles[:student].id,
       institution_id: institution.id
     )

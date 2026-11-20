@@ -8,22 +8,22 @@ RSpec.describe 'Course Reports API', type: :request do
 
   let(:instructor) do
     User.create!(
-      name: 'instructor',
+      username: 'instructor',
       password_digest: 'password',
       role_id: @roles[:instructor].id,
-      full_name: 'Instructor Name',
+      name: 'Instructor Name',
       email: 'instructor@example.com'
     )
   end
 
   let(:student1) do
-    User.create!(name: 'student1', password_digest: 'pw', role_id: @roles[:student].id,
-                 full_name: 'Student One', email: 's1@example.com')
+    User.create!(username: 'student1', password_digest: 'pw', role_id: @roles[:student].id,
+                 name: 'Student One', email: 's1@example.com')
   end
 
   let(:student2) do
-    User.create!(name: 'student2', password_digest: 'pw', role_id: @roles[:student].id,
-                 full_name: 'Student Two', email: 's2@example.com')
+    User.create!(username: 'student2', password_digest: 'pw', role_id: @roles[:student].id,
+                 name: 'Student Two', email: 's2@example.com')
   end
 
   let(:institution) { Institution.create!(name: 'NCSU') }
@@ -48,7 +48,7 @@ RSpec.describe 'Course Reports API', type: :request do
   # -----------------------------------------------------------------------
 
   def create_participant(user, asgn)
-    AssignmentParticipant.create!(user: user, parent_id: asgn.id, handle: user.name)
+    AssignmentParticipant.create!(user: user, parent_id: asgn.id, handle: user.username)
   end
 
   def create_team_for(user, asgn, grade: nil)
@@ -226,18 +226,18 @@ RSpec.describe 'Course Reports API', type: :request do
     # ------------------------------------------------------------------
 
     context 'peer_score with unweighted reviewers (no ReviewGrade)' do
-      let(:questionnaire) { Questionnaire.create!(name: 'Q1', instructor_id: instructor.id, min_question_score: 0, max_question_score: 5) }
+      let(:questionnaire) { Questionnaire.create!(name: 'Q1', instructor_id: instructor.id, min_item_score: 0, max_item_score: 5) }
 
       before do
         create_participant(student1, assignment)
         team = create_team_for(student1, assignment)
 
-        reviewer_user = User.create!(name: 'reviewer1', password_digest: 'pw',
-                                     role_id: @roles[:student].id, full_name: 'R1',
+        reviewer_user = User.create!(username: 'reviewer1', password_digest: 'pw',
+                                     role_id: @roles[:student].id, name: 'R1',
                                      email: 'r1@example.com')
         reviewer_ap = AssignmentParticipant.create!(user: reviewer_user, parent_id: assignment.id, handle: 'r1')
 
-        item = questionnaire.items.create!(txt: 'Q', seq: 1, question_type: 'Scale', weight: 1, break_before: true)
+        item = questionnaire.items.create!(txt: 'Q', seq: 1, item_type: 'Scale', weight: 1, break_before: true)
         AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire,
                                          used_in_round: 1, questionnaire_weight: 100)
         map = ReviewResponseMap.create!(reviewed_object_id: assignment.id,
@@ -256,19 +256,19 @@ RSpec.describe 'Course Reports API', type: :request do
     end
 
     context 'peer_score with a weighted reviewer (ReviewGrade present)' do
-      let(:questionnaire) { Questionnaire.create!(name: 'Q2', instructor_id: instructor.id, min_question_score: 0, max_question_score: 5) }
+      let(:questionnaire) { Questionnaire.create!(name: 'Q2', instructor_id: instructor.id, min_item_score: 0, max_item_score: 5) }
 
       before do
         create_participant(student1, assignment)
         team = create_team_for(student1, assignment)
 
-        reviewer_user = User.create!(name: 'reviewer2', password_digest: 'pw',
-                                     role_id: @roles[:student].id, full_name: 'R2',
+        reviewer_user = User.create!(username: 'reviewer2', password_digest: 'pw',
+                                     role_id: @roles[:student].id, name: 'R2',
                                      email: 'r2@example.com')
         reviewer_ap = AssignmentParticipant.create!(user: reviewer_user, parent_id: assignment.id, handle: 'r2')
         ReviewGrade.create!(participant: reviewer_ap, grade_for_reviewer: 2.0, grader_id: instructor.id)
 
-        item = questionnaire.items.create!(txt: 'Q', seq: 1, question_type: 'Scale', weight: 1, break_before: true)
+        item = questionnaire.items.create!(txt: 'Q', seq: 1, item_type: 'Scale', weight: 1, break_before: true)
         AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire,
                                          used_in_round: 1, questionnaire_weight: 100)
         map = ReviewResponseMap.create!(reviewed_object_id: assignment.id,

@@ -9,9 +9,9 @@ RSpec.describe 'Institutions API', type: :request do
 
     let(:prof) { User.create(
       username: "profa",
-      password: "password",
+      password_digest: "password",
       role_id: @roles[:instructor].id,
-      full_name: "Prof A",
+      name: "Prof A",
       email: "testuser@example.com",
       ) }
 

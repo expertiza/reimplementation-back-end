@@ -5,7 +5,7 @@ RSpec.describe GradesController, type: :controller do
   let(:participant_id) { "20" }
 
   # Fake User
-  let(:user) { instance_double(User, id: 99, name: "ReviewerUser", full_name: "Reviewer User") }
+  let(:user) { instance_double(User, id: 99, username: "ReviewerUser", name: "Reviewer User") }
 
   # Fake AssignmentParticipant
   let(:fake_participant) do
@@ -29,10 +29,10 @@ RSpec.describe GradesController, type: :controller do
 
   # Fake Item
   let(:fake_item) do
-    double("Item", id: 1, txt: "Criterion 1", question_type: "Scale").tap do |item|
+    double("Item", id: 1, txt: "Criterion 1", item_type: "Scale").tap do |item|
       allow(item).to receive(:[]).with(:id).and_return(item.id)
       allow(item).to receive(:[]).with(:txt).and_return(item.txt)
-      allow(item).to receive(:[]).with(:question_type).and_return(item.question_type)
+      allow(item).to receive(:[]).with(:item_type).and_return(item.item_type)
     end
   end
 
@@ -68,7 +68,7 @@ RSpec.describe GradesController, type: :controller do
     # Use simple hashes instead of instance_double for hash-style access
     fake_response_map = { id: 555 }
     fake_response     = { id: 777, round: 1 }
-    fake_item         = { id: 1, txt: "Criterion 1", question_type: "Scale" }
+    fake_item         = { id: 1, txt: "Criterion 1", item_type: "Scale" }
     fake_answer       = { answer: 4, comments: "Good work" }
 
     # Stub ReviewResponseMap.where(...).find_each
@@ -149,8 +149,8 @@ RSpec.describe GradesController, type: :controller do
       participant_json = json["participant"]
       expect(participant_json["id"]).to eq(fake_participant.id)
       expect(participant_json["user_id"]).to eq(fake_participant.user_id)
-      expect(participant_json["user_name"]).to eq(fake_participant.user.name)
-      expect(participant_json["full_name"]).to eq(fake_participant.user.full_name)
+      expect(participant_json["username"]).to eq(fake_participant.user.username)
+      expect(participant_json["name"]).to eq(fake_participant.user.name)
       expect(participant_json["handle"]).to eq(fake_participant.handle)
     end
 
@@ -164,7 +164,7 @@ RSpec.describe GradesController, type: :controller do
     end
 
     context "when user is a student (forbidden)" do
-      let(:student_user) { instance_double(User, id: 50, name: "StudentUser", full_name: "Student User", role_id: 1) }
+      let(:student_user) { instance_double(User, id: 50, username: "StudentUser", name: "Student User", role_id: 1) }
 
       before do
         allow(controller).to receive(:current_user).and_return(student_user)

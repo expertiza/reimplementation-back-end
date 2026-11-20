@@ -9,9 +9,9 @@ RSpec.describe 'Grades API', type: :request do
   let(:instructor) do
     User.create!(
       username: "instructor",
-      password: "password",
+      password_digest: "password",
       role_id: @roles[:instructor].id,
-      full_name: "Instructor Name",
+      name: "Instructor Name",
       email: "instructor@example.com"
     )
   end
@@ -19,9 +19,9 @@ RSpec.describe 'Grades API', type: :request do
   let(:ta) do
     User.create!(
       username: "ta",
-      password: "password",
+      password_digest: "password",
       role_id: @roles[:ta].id,
-      full_name: "Teaching Assistant",
+      name: "Teaching Assistant",
       email: "ta@example.com"
     )
   end
@@ -29,9 +29,9 @@ RSpec.describe 'Grades API', type: :request do
   let(:student) do
     User.create!(
       username: "student",
-      password: "password",
+      password_digest: "password",
       role_id: @roles[:student].id,
-      full_name: "Student Name",
+      name: "Student Name",
       email: "student@example.com"
     )
   end
@@ -39,9 +39,9 @@ RSpec.describe 'Grades API', type: :request do
   let(:student2) do
     User.create!(
       username: "student2",
-      password: "password",
+      password_digest: "password",
       role_id: @roles[:student].id,
-      full_name: "Student Two",
+      name: "Student Two",
       email: "student2@example.com"
     )
   end
@@ -50,8 +50,8 @@ RSpec.describe 'Grades API', type: :request do
 
   let!(:assignment) { Assignment.create!(name: 'Test Assignment', instructor_id: instructor.id, course_id: course.id) }
   let!(:team) { AssignmentTeam.create!(name: 'Team 1', parent_id: assignment.id) }
-  let!(:participant) { AssignmentParticipant.create!(user_id: student.id, parent_id: assignment.id, handle: student.name) }
-  let!(:participant2) { AssignmentParticipant.create!(user_id: student2.id, parent_id: assignment.id, handle: student2.name) }
+  let!(:participant) { AssignmentParticipant.create!(user_id: student.id, parent_id: assignment.id, handle: student.username) }
+  let!(:participant2) { AssignmentParticipant.create!(user_id: student2.id, parent_id: assignment.id, handle: student2.username) }
   
   before do
     # assign participants to teams
@@ -363,7 +363,7 @@ RSpec.describe 'Grades API', type: :request do
         let(:participant_id) { participant.id }
 
         before do
-          reviewer = AssignmentParticipant.create!(user_id: instructor.id, parent_id: assignment.id, handle: instructor.name)
+          reviewer = AssignmentParticipant.create!(user_id: instructor.id, parent_id: assignment.id, handle: instructor.username)
           mapping = ReviewResponseMap.create!(
             reviewed_object_id: assignment.id,
             reviewer_id: reviewer.id,
@@ -385,7 +385,7 @@ RSpec.describe 'Grades API', type: :request do
         let(:participant_id) { participant.id }
 
         before do
-          reviewer = AssignmentParticipant.create!(user_id: instructor.id, parent_id: assignment.id, handle: instructor.name)
+          reviewer = AssignmentParticipant.create!(user_id: instructor.id, parent_id: assignment.id, handle: instructor.username)
           mapping = ReviewResponseMap.create!(
             reviewed_object_id: assignment.id,
             reviewer_id: reviewer.id,
@@ -472,8 +472,8 @@ RSpec.describe 'Grades API', type: :request do
         name: 'Section Header Test Rubric',
         instructor_id: instructor.id,
         private: false,
-        min_question_score: 0,
-        max_question_score: 5,
+        min_item_score: 0,
+        max_item_score: 5,
         questionnaire_type: 'ReviewQuestionnaire'
       )
     end
@@ -481,12 +481,12 @@ RSpec.describe 'Grades API', type: :request do
     before do
       # SectionHeader before the first group
       Item.create!(questionnaire_id: questionnaire.id, txt: 'Code Quality', weight: 0,
-                   seq: 1, question_type: 'SectionHeader', break_before: true)
+                   seq: 1, item_type: 'SectionHeader', break_before: true)
       # Two scoreable CriterionItems
       Item.create!(questionnaire_id: questionnaire.id, txt: 'Is the code readable?', weight: 1,
-                   seq: 2, question_type: 'CriterionItem', break_before: true)
+                   seq: 2, item_type: 'CriterionItem', break_before: true)
       Item.create!(questionnaire_id: questionnaire.id, txt: 'Is the code tested?', weight: 1,
-                   seq: 3, question_type: 'CriterionItem', break_before: true)
+                   seq: 3, item_type: 'CriterionItem', break_before: true)
 
       AssignmentQuestionnaire.create!(
         assignment_id: assignment.id,
@@ -497,7 +497,7 @@ RSpec.describe 'Grades API', type: :request do
 
       # Reviewer submits a response covering the two scored items
       reviewer_participant = AssignmentParticipant.create!(
-        user_id: student2.id, parent_id: assignment.id, handle: student2.name
+        user_id: student2.id, parent_id: assignment.id, handle: student2.username
       )
       map = ReviewResponseMap.create!(
         reviewed_object_id: assignment.id,
@@ -505,7 +505,7 @@ RSpec.describe 'Grades API', type: :request do
         reviewee_id: team.id
       )
       resp = Response.create!(response_map_id: map.id, is_submitted: true, round: 1)
-      scored_items = Item.where(questionnaire_id: questionnaire.id, question_type: 'CriterionItem').order(:seq)
+      scored_items = Item.where(questionnaire_id: questionnaire.id, item_type: 'CriterionItem').order(:seq)
       scored_items.each do |item|
         Answer.create!(response_id: resp.id, item_id: item.id, answer: 4, comments: 'Good')
       end
@@ -544,7 +544,7 @@ RSpec.describe 'Grades API', type: :request do
 
     it 'does not inject headers when the questionnaire has none' do
       # Remove the SectionHeader item
-      Item.where(questionnaire_id: questionnaire.id, question_type: 'SectionHeader').destroy_all
+      Item.where(questionnaire_id: questionnaire.id, item_type: 'SectionHeader').destroy_all
 
       get "/grades/#{assignment.id}/view_our_scores",
           headers: { 'Authorization' => "Bearer #{student_token}" }

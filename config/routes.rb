@@ -41,6 +41,9 @@ Rails.application.routes.draw do
           get '/:assignment_id/varying_rubrics_by_round', action: :varying_rubrics_by_round?
           post '/:assignment_id/create_node',action: :create_node
         end
+        member do
+          get :calibration_submissions
+        end
       end
 
       resources :bookmarks, except: [:new, :edit] do
@@ -78,11 +81,11 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :questions do
+      resources :items do
         collection do
           get :types
-          get 'show_all/questionnaire/:id', to:'questions#show_all#questionnaire', as: 'show_all'
-          delete 'delete_all/questionnaire/:id', to:'questions#delete_all#questionnaire', as: 'delete_all'
+          get 'show_all/questionnaire/:id', to:'items#show_all#questionnaire', as: 'show_all'
+          delete 'delete_all/questionnaire/:id', to:'items#delete_all#questionnaire', as: 'delete_all'
         end
       end
 
@@ -92,17 +95,27 @@ Rails.application.routes.draw do
           post :assign_random
           post :assign_from_csv
           post :request_review_fewest
+          post :request_review_topic_balance
           post :assign_calibration
           post :assign_quiz
           delete :delete_all_for_reviewer
+          # Student-facing dynamic review
+          get  :eligible_topics
+          post :request_review
         end
 
         member do
           patch :submit_review
           patch :unsubmit_review
-          patch :grade_review
+          patch :assign_review_grade
           delete :delete_mapping
         end
+      end
+
+      # Student review list and review form
+      scope '/assignments/:assignment_id' do
+        get 'student_review/list', to: 'student_review#list', as: :student_review_list
+        get 'student_review/:mapping_id/form', to: 'student_review#form', as: :student_review_form
       end
 
       resources :signed_up_teams do

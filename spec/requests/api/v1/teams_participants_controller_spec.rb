@@ -21,10 +21,10 @@ RSpec.describe 'teams_participants', type: :request do
   # An instructor user who will own assignments and courses.
   let(:instructor) do
     User.create!(
-      name:                "profa",
-      password:     "password",
+      username:                "profa",
+      password_digest:     "password",
       role_id:              @roles[:instructor].id,
-      full_name:           "Prof A",
+      name:           "Prof A",
       email:               "testuser@example.com",
       institution_id:      institution.id
     )
@@ -33,8 +33,8 @@ RSpec.describe 'teams_participants', type: :request do
   # A generic "new participant" used when adding to teams
   let(:new_user) do
     User.create!(
-      full_name:       "New Participant",
-      name:            "NewParticipant",
+      name:       "New Participant",
+      username:            "NewParticipant",
       email:           "newparticipant@example.com",
       password: "password",
       role_id:          @roles[:student].id,
@@ -45,8 +45,8 @@ RSpec.describe 'teams_participants', type: :request do
   # A student user used for ownership checks in update_duty, list, etc.
   let(:student_user) do
     User.create!(
-      full_name:       "Student Member",
-      name:            "student_member",
+      name:       "Student Member",
+      username:            "student_member",
       email:           "studentmember@example.com",
       password: "password",
       role_id:          @roles[:student].id,
@@ -73,8 +73,8 @@ RSpec.describe 'teams_participants', type: :request do
 
   let(:team_owner) do
     User.create!(
-      name:            "team_owner",
-      full_name:       "Team Owner",
+      username:            "team_owner",
+      name:       "Team Owner",
       email:           "team_owner@example.com",
       password: "password",
       role_id:          @roles[:student].id,
@@ -104,14 +104,14 @@ RSpec.describe 'teams_participants', type: :request do
     AssignmentParticipant.create!(
       parent_id: assignment.id,
       user:      student_user,
-      handle:    student_user.name
+      handle:    student_user.username
     )
   end
   let!(:participant_for_course) do
     CourseParticipant.create!(
       parent_id: course.id,
       user:      student_user,
-      handle:    student_user.name
+      handle:    student_user.username
     )
   end
 
@@ -161,7 +161,7 @@ RSpec.describe 'teams_participants', type: :request do
           AssignmentParticipant.create!(
             parent_id: assignment.id,
             user:      student_user,
-            handle:    student_user.name
+            handle:    student_user.username
           )
         end
         let(:teams_participant) do
@@ -186,8 +186,8 @@ RSpec.describe 'teams_participants', type: :request do
       response(403, 'forbidden: user not authorized') do
         let(:other_user) do
           User.create!(
-            full_name:       "Other",
-            name:            "other",
+            name:       "Other",
+            username:            "other",
             email:           "other@example.com",
             password: "password",
             role_id:          @roles[:student].id,
@@ -198,7 +198,7 @@ RSpec.describe 'teams_participants', type: :request do
           AssignmentParticipant.create!(
             parent_id: assignment.id,
             user:      student_user,
-            handle:    student_user.name
+            handle:    student_user.username
           )
         end
         let!(:teams_participant) do
@@ -286,18 +286,18 @@ RSpec.describe 'teams_participants', type: :request do
       parameter name: 'id', in: :path, type: :integer, description: "Team ID"
       parameter name: :payload, in: :body, schema: {
         type: :object,
-        properties: { name: { type: :string } },
-        required: ['name']
+        properties: { username: { type: :string } },
+        required: ['username']
       }
 
       # -- SUCCESS: Add to AssignmentTeam when space available and participant exists --
       response(200, 'added to assignment') do
         let(:id)      { team_with_assignment.id }
-        let(:payload) { { name: new_user.name } }
+        let(:payload) { { username: new_user.username } }
 
         before do
           allow_any_instance_of(Team).to receive(:full?).and_return(false)
-          AssignmentParticipant.create!(parent_id: assignment.id, user: new_user, handle: new_user.name)
+          AssignmentParticipant.create!(parent_id: assignment.id, user: new_user, handle: new_user.username)
         end
 
         run_test! do
@@ -308,11 +308,11 @@ RSpec.describe 'teams_participants', type: :request do
       # -- SUCCESS: Add to CourseTeam when space available and participant exists --
       response(200, 'added to course') do
         let(:id)      { team_with_course.id }
-        let(:payload) { { name: new_user.name } }
+        let(:payload) { { username: new_user.username } }
 
         before do
           allow_any_instance_of(Team).to receive(:full?).and_return(false)
-          CourseParticipant.create!(parent_id: course.id, user: new_user, handle: new_user.name)
+          CourseParticipant.create!(parent_id: course.id, user: new_user, handle: new_user.username)
         end
 
         run_test! do
@@ -323,8 +323,8 @@ RSpec.describe 'teams_participants', type: :request do
       # -- NOT FOUND: Participant record missing for given name --
       response(404, 'participant not found') do
         let(:id)                                     { team_with_assignment.id }
-        let!(:user_without_participant)              { User.create!(full_name: "User Without Participant", name: "no_part", email: "no@example.com", password: "password", role_id: @roles[:student].id, institution_id: institution.id) }
-        let(:payload)                                { { name: user_without_participant.name } }
+        let!(:user_without_participant)              { User.create!(name: "User Without Participant", username: "no_part", email: "no@example.com", password_digest: "pw", role_id: @roles[:student].id, institution_id: institution.id) }
+        let(:payload)                                { { username: user_without_participant.username } }
 
         run_test! do
           expect(response.body).to include("Couldn't find Participant")
@@ -355,8 +355,8 @@ RSpec.describe 'teams_participants', type: :request do
           name:           'team 1',
         )
       end
-      let(:assignment_participant1) { AssignmentParticipant.create!(parent_id: assignment.id, user: student_user, handle: student_user.name) }
-      let(:assignment_participant2) { AssignmentParticipant.create!(parent_id: assignment.id, user: new_user,       handle: new_user.name) }
+      let(:assignment_participant1) { AssignmentParticipant.create!(parent_id: assignment.id, user: student_user, handle: student_user.username) }
+      let(:assignment_participant2) { AssignmentParticipant.create!(parent_id: assignment.id, user: new_user,       handle: new_user.username) }
       let!(:assignment_tp1)         { TeamsParticipant.create!(team_id: assignment_team.id, participant_id: assignment_participant1.id, user_id: assignment_participant1.user_id) }
       let!(:assignment_tp2)         { TeamsParticipant.create!(team_id: assignment_team.id, participant_id: assignment_participant2.id, user_id: assignment_participant2.user_id) }
 
@@ -367,8 +367,8 @@ RSpec.describe 'teams_participants', type: :request do
           name:           'team 2',
         )
       end
-      let(:course_participant1) { CourseParticipant.create!(parent_id: course.id, user: student_user, handle: student_user.name) }
-      let(:course_participant2) { CourseParticipant.create!(parent_id: course.id, user: new_user,       handle: new_user.name) }
+      let(:course_participant1) { CourseParticipant.create!(parent_id: course.id, user: student_user, handle: student_user.username) }
+      let(:course_participant2) { CourseParticipant.create!(parent_id: course.id, user: new_user,       handle: new_user.username) }
       let!(:course_tp1)         { TeamsParticipant.create!(team_id: course_team.id, participant_id: course_participant1.id, user_id: course_participant1.user_id) }
       let!(:course_tp2)         { TeamsParticipant.create!(team_id: course_team.id, participant_id: course_participant2.id, user_id: course_participant2.user_id) }
 

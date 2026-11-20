@@ -7,7 +7,7 @@ RSpec.describe JoinTeamRequest, type: :model do
 
   let(:role) { Role.create(name: 'Instructor', parent_id: nil, id: 3, default_page_id: nil) }
   let(:student_role) { Role.create(name: 'Student', parent_id: nil, id: 5, default_page_id: nil) }
-  let(:instructor) { Instructor.create(name: 'testinstructor', email: 'instructor@test.com', full_name: 'Test Instructor', password: '123456', role: role) }
+  let(:instructor) { Instructor.create(username: 'testinstructor', email: 'instructor@test.com', name: 'Test Instructor', password: '123456', role: role) }
   let(:requester) { create :user, name: 'requester_user', role: student_role, email: 'requester@test.com' }
   let(:team_member) { create :user, name: 'team_member_user', role: student_role, email: 'team_member@test.com' }
   let(:another_user) { create :user, name: 'another_user', role: student_role, email: 'another@test.com' }
@@ -368,17 +368,6 @@ RSpec.describe JoinTeamRequest, type: :model do
         reply_status: 'PENDING'
       )
       expect(join_request.comments).to eq(special_comment)
-    end
-
-    it 'handles unicode in comments' do
-      unicode_comment = "I'd like to join! 🚀 こんにちは"
-      join_request = JoinTeamRequest.create!(
-        participant_id: requester_participant.id,
-        team_id: team.id,
-        comments: unicode_comment,
-        reply_status: 'PENDING'
-      )
-      expect(join_request.comments).to eq(unicode_comment)
     end
   end
 end

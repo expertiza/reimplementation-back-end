@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_11_01_000005) do
+ActiveRecord::Schema[8.0].define(version: 2026_11_12_000001) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "role_id"
     t.bigint "institution_id"
@@ -55,7 +55,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_01_000005) do
     t.integer "notification_threshold", default: 15
     t.integer "questionnaire_weight"
     t.integer "used_in_round"
-    t.boolean "dropdown"
+    t.boolean "dropdown", default: false, null: false
     t.bigint "topic_id"
     t.bigint "duty_id"
     t.datetime "created_at", precision: nil
@@ -125,6 +125,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_01_000005) do
     t.boolean "has_teams", default: false
     t.boolean "vary_by_round", default: false
     t.boolean "has_topics", default: false
+    t.boolean "vary_by_topic", default: false
+    t.boolean "vary_by_role", default: false
+    t.boolean "has_mentors", default: false
+    t.boolean "team_members_have_duties", default: false
+    t.boolean "topics_assigned_by_bidding", default: false
+    t.boolean "reviewing_is_done_by_teams", default: false
     t.index ["course_id"], name: "fk_assignments_courses"
     t.index ["instructor_id"], name: "fk_assignments_instructors"
     t.index ["late_policy_id"], name: "fk_late_policy_id"
@@ -250,6 +256,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_01_000005) do
     t.bigint "questionnaire_id"
     t.decimal "seq", precision: 10
     t.text "type"
+    t.string "item_type"
     t.string "size"
     t.string "alternatives"
     t.boolean "break_before"
@@ -373,6 +380,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_01_000005) do
     t.boolean "private"
     t.integer "min_question_score"
     t.integer "max_question_score"
+    t.integer "min_item_score"
+    t.integer "max_item_score"
     t.datetime "created_at", precision: nil
     t.datetime "updated_at", precision: nil
     t.text "type"
@@ -396,7 +405,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_01_000005) do
     t.string "type"
     t.datetime "created_at", precision: nil
     t.datetime "updated_at", precision: nil
-    t.boolean "for_calibration"
+    t.boolean "for_calibration", default: false, null: false
+    t.boolean "reviewing_is_done_by_teams", default: false, null: false
     t.index ["reviewer_id"], name: "fk_response_map_reviewer"
   end
 

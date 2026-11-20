@@ -11,9 +11,9 @@ RSpec.describe 'Roles API', type: :request do
   let(:adm) {
     User.create(
       username: "adma",
-      password: "password",
+      password_digest: "password",
       role_id: @roles[:admin].id,
-      full_name: "Admin A",
+      name: "Admin A",
       email: "testuser@example.com",
       )
   }

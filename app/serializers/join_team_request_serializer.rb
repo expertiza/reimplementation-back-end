@@ -6,7 +6,7 @@ class JoinTeamRequestSerializer < ActiveModel::Serializer
     {
       id: object.participant.id,
       user_id: object.participant.user_id,
-      user_name: object.participant.user.name,
+      username: object.participant.user.username,
       user_email: object.participant.user.email,
       handle: object.participant.handle
     }

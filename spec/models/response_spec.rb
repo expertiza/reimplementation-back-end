@@ -8,12 +8,12 @@ describe Response do
   let(:user2) { create(:user, :student) }
   let(:assignment) { create(:assignment, name: 'Test Assignment') }
   let(:team) {create(:team, :with_assignment, name: 'Test Team')}
-  let(:participant) { AssignmentParticipant.create!(assignment: assignment, user: user, handle: user.name) }
-  let(:participant2) { AssignmentParticipant.create!(assignment: assignment, user: user2, handle: user2.name) }
+  let(:participant) { AssignmentParticipant.create!(assignment: assignment, user: user, handle: user.username) }
+  let(:participant2) { AssignmentParticipant.create!(assignment: assignment, user: user2, handle: user2.username) }
   let(:item) { ScoredItem.new(weight: 2) }
   let(:answer) { Answer.new(answer: 1, comments: 'Answer text', item:item) }
-  let(:questionnaire) { Questionnaire.new(items: [item], min_question_score: 0, max_question_score: 5) }
-  let(:assignment_questionnaire) { AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire, used_in_round: 1, notification_threshold: 5.0)}
+  let(:questionnaire) { Questionnaire.new(items: [item], min_item_score: 0, max_item_score: 5) }
+  let(:assignment_questionnaire) { AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire, used_in_round: 1, notification_limit: 5.0)}
   let(:review_response_map) { ReviewResponseMap.new(assignment: assignment, reviewee: team, reviewer: participant2) }
   let(:response_map) { ResponseMap.new(assignment: assignment, reviewee: participant, reviewer: participant2) }
   let(:response) { Response.new(response_map_id: review_response_map.id, response_map: review_response_map, round:1, scores: [answer]) }
@@ -80,8 +80,8 @@ describe Response do
         .and_return(assignment_questionnaire)
     end
     context 'when answers are present and scorable' do
-      it 'returns weight * max_question_score' do
-        # item.weight = 2, max_question_score = 5 → 10        
+      it 'returns weight * max_item_score' do
+        # item.weight = 2, max_item_score = 5 → 10        
         expect(response.maximum_score).to eq(10)
       end
     end

@@ -7,7 +7,7 @@
 
 #   let(:role) { Role.create(name: 'Instructor', parent_id: nil, id: 3, default_page_id: nil) }
 #   let(:student_role) { Role.create(name: 'Student', parent_id: nil, id: 5, default_page_id: nil) }
-#   let(:instructor) { Instructor.create(name: 'testinstructor', email: 'instructor@test.com', full_name: 'Test Instructor', password: '123456', role_id: role.id) }
+#   let(:instructor) { Instructor.create(username: 'testinstructor', email: 'instructor@test.com', name: 'Test Instructor', password: '123456', role_id: role.id) }
 #   let(:user1) { create :user, name: 'invitee_user', role: student_role, email: 'invitee@test.com' }
 #   let(:user2) { create :user, name: 'inviter_user', role: student_role, email: 'inviter@test.com' }
 #   let(:assignment) { create(:assignment, instructor: instructor) }
@@ -46,7 +46,7 @@
       
 #       email = InvitationMailer.with(invitation: invitation).send_acceptance_email
       
-#       expect(email.body.encoded).to include(user1.full_name)
+#       expect(email.body.encoded).to include(user1.name)
 #     end
 
 #     it 'includes team name in email body' do
@@ -90,7 +90,7 @@
       
 #       email = InvitationMailer.with(invitation: invitation).send_team_acceptance_notification
       
-#       expect(email.body.encoded).to include(user1.full_name)
+#       expect(email.body.encoded).to include(user1.name)
 #     end
 
 #     it 'includes team name in team notification body' do

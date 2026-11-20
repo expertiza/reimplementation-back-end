@@ -4,9 +4,9 @@ class ParticipantSerializer < ActiveModel::Serializer
     def user
         {
             id: object.user.id,
-            username: object.user.name,
+            username: object.user.username,
             email: object.user.email,
-            fullName: object.user.full_name
+            name: object.user.name
         }
     end
 end

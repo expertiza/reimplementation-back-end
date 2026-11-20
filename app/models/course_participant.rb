@@ -11,10 +11,10 @@ class CourseParticipant < Participant
     self.handle =
       if desired.empty?
         # no handle on the user, fall back to their name
-        user.name
+        user.username
       elsif CourseParticipant.exists?(parent_id: course.id, handle: desired)
         # someone else in this course already has that handle
-        user.name
+        user.username
       else
         # it’s unique, so use it
         desired

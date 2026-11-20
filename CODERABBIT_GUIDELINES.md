@@ -13,7 +13,7 @@ This repository uses CodeRabbit as an AI pull request reviewer for the Expertiza
 ## What CodeRabbit Should Not Replace Here
 
 - GitHub Actions still runs the real work.
-- `main.yml` and `TestPR.yml` still execute RSpec, database setup, coverage generation, and Docker-related jobs.
+- `main.yml` executes the full RSpec suite, database setup, coverage reporting, and Docker-related jobs.
 - `lint.yml` still remains the source of truth for runnable spellcheck and lint workflows unless those checks are intentionally retired.
 - CodeRabbit is a reviewer and explainer, not the test runner or deployment engine.
 
@@ -215,7 +215,6 @@ If the current CodeRabbit plan does not include tool integrations, the YAML can 
 ### Keep
 
 - `.github/workflows/main.yml`
-- `.github/workflows/TestPR.yml`
 - `.github/workflows/lint.yml`
 
 These are execution workflows and should remain the source of truth for running tests, linting, coverage, and build logic.

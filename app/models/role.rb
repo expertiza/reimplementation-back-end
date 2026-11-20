@@ -6,11 +6,11 @@ class Role < ApplicationRecord
   has_many :users, dependent: :nullify
 
   # Role IDs
-  STUDENT_ID = 1
-  TEACHING_ASSISTANT_ID = 2
-  INSTRUCTOR_ID = 3
-  ADMINISTRATOR_ID = 4
-  SUPER_ADMINISTRATOR_ID = 5
+  STUDENT = 1
+  TEACHING_ASSISTANT = 2
+  INSTRUCTOR = 3
+  ADMINISTRATOR = 4
+  SUPER_ADMINISTRATOR = 5
 
   def super_administrator?
     name['Super Administrator']

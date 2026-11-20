@@ -119,7 +119,7 @@ class CleanupAndTransformations < ActiveRecord::Migration[8.0]
     # ASSIGNMENT_QUESTIONNAIRES
     # -------------------------
     rename_column :assignment_questionnaires, :notification_limit, :notification_threshold if column_exists?(:assignment_questionnaires, :notification_limit)
-    add_column :assignment_questionnaires, :dropdown, :boolean unless column_exists?(:assignment_questionnaires, :dropdown)
+    add_column :assignment_questionnaires, :dropdown, :boolean, default: false, null: false unless column_exists?(:assignment_questionnaires, :dropdown)
     add_column :assignment_questionnaires, :topic_id, :bigint unless column_exists?(:assignment_questionnaires, :topic_id)
     add_column :assignment_questionnaires, :duty_id, :bigint unless column_exists?(:assignment_questionnaires, :duty_id)
     
@@ -141,7 +141,7 @@ class CleanupAndTransformations < ActiveRecord::Migration[8.0]
     # -------------------------
     # RESPONSES
     # -------------------------
-    add_column :response_maps, :for_calibration, :boolean unless column_exists?(:response_maps, :for_calibration)
+    add_column :response_maps, :for_calibration, :boolean, default: false, null: false unless column_exists?(:response_maps, :for_calibration)
     
     # -------------------------
     # ITEMS

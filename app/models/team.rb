@@ -84,7 +84,7 @@ class Team < ApplicationRecord
       end
 
     # If participant wasn't found or built correctly
-    return { success: false, error: "#{participant_or_user.name} is not a participant in this #{is_a?(AssignmentTeam) ? 'assignment' : 'course'}" } if participant.nil?
+    return { success: false, error: "#{participant_or_user.username} is not a participant in this #{is_a?(AssignmentTeam) ? 'assignment' : 'course'}" } if participant.nil?
 
     return { success: false, error: "Participant already on the team" } if participants.exists?(id: participant.id)
     return { success: false, error: "Unable to add participant: team is at full capacity." } if full?
@@ -150,7 +150,7 @@ class Team < ApplicationRecord
     )
 
     unless registered
-      return { success: false, error: "#{participant.user.name} is not a participant in this #{label}" }
+      return { success: false, error: "#{participant.user.username} is not a participant in this #{label}" }
     end
 
     # All checks passed; participant is eligible to join the team

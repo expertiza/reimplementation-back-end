@@ -11,40 +11,40 @@
 
 #   let(:instructor) {
 #     User.create!(
-#       name: "instructor_user",
+#       username: "instructor_user",
 #       password_digest: BCrypt::Password.create("password"),
 #       role_id: @roles[:instructor].id,
-#       full_name: "Instructor User",
+#       name: "Instructor User",
 #       email: "instructor@example.com"
 #     )
 #   }
 
 #   let(:student1) {
 #     User.create!(
-#       name: "student1",
+#       username: "student1",
 #       password_digest: BCrypt::Password.create("password"),
 #       role_id: @roles[:student].id,
-#       full_name: "Student One",
+#       name: "Student One",
 #       email: "student1@example.com"
 #     )
 #   }
 
 #   let(:student2) {
 #     User.create!(
-#       name: "student2",
+#       username: "student2",
 #       password_digest: BCrypt::Password.create("password"),
 #       role_id: @roles[:student].id,
-#       full_name: "Student Two",
+#       name: "Student Two",
 #       email: "student2@example.com"
 #     )
 #   }
 
 #   let(:student3) {
 #     User.create!(
-#       name: "student3",
+#       username: "student3",
 #       password_digest: BCrypt::Password.create("password"),
 #       role_id: @roles[:student].id,
-#       full_name: "Student Three",
+#       name: "Student Three",
 #       email: "student3@example.com"
 #     )
 #   }
@@ -252,7 +252,7 @@
 
 #       # Verify content
 #       body = email.body.encoded
-#       expect(body).to include(student2.full_name)
+#       expect(body).to include(student2.name)
 #       expect(body).to include(team1.name)
 #       expect(body).to include(assignment.name)
 #       expect(body).to include('Good news')
@@ -274,7 +274,7 @@
 
 #     #   # Verify content
 #     #   body = email.body.encoded
-#     #   expect(body).to include(student2.full_name)
+#     #   expect(body).to include(student2.name)
 #     #   expect(body).to include(team1.name)
 #     #   expect(body).to include(assignment.name)
 #     #   expect(body).to include('accepted')
@@ -295,7 +295,7 @@
 
 #     #   # Verify content
 #     #   body = email.body.encoded
-#     #   expect(body).to include(student2.full_name)
+#     #   expect(body).to include(student2.name)
 #     #   expect(body).to include(team1.name)
 #     #   expect(body).to include(assignment.name)
 #     #   expect(body).to include('joined')

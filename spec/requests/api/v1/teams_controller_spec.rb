@@ -19,9 +19,9 @@ RSpec.describe TeamsController, type: :request do
   let(:instructor) do
     User.create!(
       username:                "profa",
-      password:     "password",
+      password_digest:     "password",
       role_id:              @roles[:instructor].id,
-      full_name:           "Prof A",
+      name:           "Prof A",
       email:               "testuser@example.com",
       institution_id:      institution.id
     )
@@ -30,7 +30,7 @@ RSpec.describe TeamsController, type: :request do
   # A generic "new participant" used when adding to teams
   let(:user) do
     User.create!(
-      full_name:       "New Participant",
+      name:       "New Participant",
       username:            "NewParticipant",
       email:           "newparticipant@example.com",
       password: "password",
@@ -42,7 +42,7 @@ RSpec.describe TeamsController, type: :request do
   # A student user used for ownership checks in update_duty, list, etc.
   let(:other_user) do
     User.create!(
-      full_name:       "Student Member",
+      name:       "Student Member",
       username:            "student_member",
       email:           "studentmember@example.com",
       password: "password",
@@ -69,7 +69,7 @@ RSpec.describe TeamsController, type: :request do
   let(:team_owner) do
     User.create!(
       username:            "team_owner",
-      full_name:       "Team Owner",
+      name:       "Team Owner",
       email:           "team_owner@example.com",
       password: "password",
       role_id:          @roles[:student].id,
@@ -95,14 +95,14 @@ RSpec.describe TeamsController, type: :request do
     AssignmentParticipant.create!(
       parent_id: assignment.id,
       user:      other_user,
-      handle:    other_user.name
+      handle:    other_user.username
     )
   end
   let!(:participant_for_course) do
     CourseParticipant.create!(
       parent_id: course.id,
       user:      other_user,
-      handle:    other_user.name
+      handle:    other_user.username
     )
   end
 

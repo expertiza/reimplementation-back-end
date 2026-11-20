@@ -9,7 +9,7 @@ class FileUpload < Item
           {
             type: 'link',
             text: 'Remove',
-            href: "/questions/#{id}",
+            href: "/items/#{id}",
             method: 'delete'
           },
           {
@@ -39,9 +39,9 @@ class FileUpload < Item
             type: 'input',
             input_type: 'text',
             size: 10,
-            name: "item[#{id}][question_type]",
-            id: "question_#{id}_question_type",
-            value: question_type,
+            name: "item[#{id}][item_type]",
+            id: "question_#{id}_item_type",
+            value: item_type,
             disabled: true
           }
         ]
@@ -53,22 +53,10 @@ class FileUpload < Item
         action: 'view_item_text',
         elements: [
           { type: 'text', value: txt },
-          { type: 'text', value: question_type },
+          { type: 'text', value: item_type },
           { type: 'text', value: weight.to_s },
-          { type: 'text', value: id.to_s },
-          { type: 'text', value: '—' } # Placeholder for non-applicable fields
+          { type: 'text', value: id.to_s }
         ]
       }.to_json
     end
-  
-  
-    # Implement this method for completing a item
-    def complete(count, answer = nil)
-      # Implement the logic for completing a item
-    end
-  
-    # Implement this method for viewing a completed item by a student
-    def view_completed_item(count, files)
-      # Implement the logic for viewing a completed item by a student
-    end
-  end
+end

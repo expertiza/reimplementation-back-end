@@ -32,12 +32,13 @@
 coverage/
 rsa_keys.yml
 pg_data/
-
+ 
 # --- Legacy Expertiza migration ------------------------------------------
 # The anonymized production dump is local-only (hundreds of MB); never commit it.
 /anon_db/
 # Local development credentials.
 /.env.development
+.env
 # Schema snapshots + parity diffs produced while reconciling the legacy and
 # canonical databases (regeneratable investigation artifacts).
 /db/*.txt
@@ -49,4 +50,3 @@ pg_data/
 /db/*.bak
 # Python bytecode caches from the db/*.py tooling scripts.
 __pycache__/
-
