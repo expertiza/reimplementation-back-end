@@ -26,6 +26,13 @@ class Participant < ApplicationRecord
     user.name
   end
 
+  # The branch-side SubmittedContentController records submissions as
+  # `submitted_by: @participant.user_name`; expose the username the same way
+  # the legacy AssignmentParticipant did.
+  def user_name
+    user&.username
+  end
+
   def team
     TeamsParticipant.where(participant: self).first&.team
   end

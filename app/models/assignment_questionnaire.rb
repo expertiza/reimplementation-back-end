@@ -3,6 +3,10 @@
 class AssignmentQuestionnaire < ApplicationRecord
   belongs_to :assignment
   belongs_to :questionnaire
+  # The merged app (main) reads/writes `notification_limit`; the canonical
+  # schema column is `notification_threshold` (03-20 renames the legacy
+  # `notification_limit` onto it).
+  alias_attribute :notification_limit, :notification_threshold
 
   validate :weight_must_be_zero_if_no_scored_items
 
