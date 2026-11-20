@@ -34,7 +34,7 @@ RSpec.describe AssignmentParticipant, type: :model do
       ordered_scope = double('ordered_scope')
       allow(ordered_scope).to receive(:each).and_yield(submitted_response)
       allow(ordered_scope).to receive(:order).with(updated_at: :desc).and_return(ordered_scope)
-      allow(Response).to receive(:where).with(map_id: 1, is_submitted: true).and_return(ordered_scope)
+      allow(Response).to receive(:where).with(response_map_id: 1, is_submitted: true).and_return(ordered_scope)
 
       feedback_relation = double('feedback_relation')
       allow(feedback_relation).to receive(:find_each)
@@ -56,7 +56,7 @@ RSpec.describe AssignmentParticipant, type: :model do
       empty_ordered = double('empty_ordered')
       allow(empty_ordered).to receive(:each)
       allow(empty_ordered).to receive(:order).with(updated_at: :desc).and_return(empty_ordered)
-      allow(Response).to receive(:where).with(map_id: 1, is_submitted: true).and_return(empty_ordered)
+      allow(Response).to receive(:where).with(response_map_id: 1, is_submitted: true).and_return(empty_ordered)
 
       feedback_relation = double('feedback_relation')
       allow(feedback_relation).to receive(:find_each)
@@ -78,7 +78,7 @@ RSpec.describe AssignmentParticipant, type: :model do
       ordered_scope = double('ordered_scope')
       allow(ordered_scope).to receive(:each).and_yield(r1).and_yield(r2)
       allow(ordered_scope).to receive(:order).with(updated_at: :desc).and_return(ordered_scope)
-      allow(Response).to receive(:where).with(map_id: 1, is_submitted: true).and_return(ordered_scope)
+      allow(Response).to receive(:where).with(response_map_id: 1, is_submitted: true).and_return(ordered_scope)
 
       feedback_relation = double('feedback_relation')
       allow(feedback_relation).to receive(:find_each)
@@ -102,7 +102,7 @@ RSpec.describe AssignmentParticipant, type: :model do
 
       ordered = double('ordered')
       allow(ordered).to receive(:first).and_return(nil)
-      allow(Response).to receive(:where).with(map_id: 2, is_submitted: true).and_return(double(order: ordered))
+      allow(Response).to receive(:where).with(response_map_id: 2, is_submitted: true).and_return(double(order: ordered))
 
       timeline = participant.timeline_events
       expect(timeline.any? { |t| t['name'] == 'Author feedback' }).to be false

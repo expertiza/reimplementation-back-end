@@ -8,7 +8,7 @@ RSpec.describe Scale, type: :model do
 
   before do
     subject.txt = "Rate your experience"
-    subject.type = "Scale"
+    subject.question_type = "Scale"
     subject.weight = 1
     subject.min_label = "Poor"
     subject.max_label = "Excellent"

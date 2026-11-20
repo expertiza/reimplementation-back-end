@@ -3,6 +3,18 @@
 class User < ApplicationRecord
   has_secure_password
   after_initialize :set_defaults
+  alias_attribute :full_name, :name
+
+  # Legacy Expertiza databases keep a `password_salt` column next to
+  # password_digest. has_secure_password's generated salt reader would run
+  # BCrypt::Password.new on the (possibly non-bcrypt) digest during
+  # serialization and raise BCrypt::Errors::InvalidHash. Nothing in the app
+  # reads the salt, so pin it to nil to keep serialization safe on both the
+  # canonical and legacy-converged schemas.
+  def password_salt
+    nil
+  end
+
 
   # username must be lowercase and unique
   validates :username, presence: true, uniqueness: true, allow_blank: false
@@ -126,7 +138,7 @@ class User < ApplicationRecord
   # that only the id, username, name, and email attributes should be included when a User object is serialized.
   def as_json(options = {})
     super(options.merge({
-                          only: %i[id username name email email_on_review email_on_submission
+                          only: %i[id username name email full_name email_on_review email_on_submission
                                    email_on_review_of_review],
                           include:
                           {
@@ -143,9 +155,6 @@ class User < ApplicationRecord
   def set_defaults
     self.is_new_user = true
     self.copy_of_emails ||= false
-    self.email_on_review ||= false
-    self.email_on_submission ||= false
-    self.email_on_review_of_review ||= false
     self.etc_icons_on_homepage ||= true
   end
 

@@ -80,9 +80,8 @@ class GradesController < ApplicationController
 
       response_mapping_condition = "reviewed_object_id = " + params[:assignment_id] + " AND reviewer_id = " + params[:participant_id]
       ReviewResponseMap.where(response_mapping_condition).find_each do |mapping|
-        Response.where("map_id = " + mapping[:id].to_s).find_each do |response|
+        Response.where(response_map_id: mapping[:id]).find_each do |response|
 
-          # response = Response.find_by(map_id: mapping[:id])
 
           if response == nil
             # If, for some reason, there is no response with this mapping id, move on to the next mapping id.
@@ -210,7 +209,7 @@ class GradesController < ApplicationController
       reviewee_id: @team.id
     )
 
-    existing_response = Response.find_by(map_id: mapping.id)
+    existing_response = Response.find_by(response_map_id: mapping.id)
     request_contract =
       if existing_response.present? && !existing_response.is_submitted?
         {
@@ -408,7 +407,7 @@ class GradesController < ApplicationController
 
     maps.each_with_index do |map, index|
       submitted_response = map.responses.select { |r|
-        r.round == round && r.is_submitted && r.map_id == map.id
+        r.round == round && r.is_submitted && r.response_map_id == map.id
       }.last
       next if submitted_response.nil?
 

@@ -21,7 +21,7 @@ RSpec.describe 'Invitations API', type: :request do
     )
   end
 
-  let(:user1) do
+  let!(:user1) do
     User.create!(
       username: "student",
       password_digest: "password",
@@ -31,7 +31,7 @@ RSpec.describe 'Invitations API', type: :request do
     )
   end
 
-  let(:user2) do
+  let!(:user2) do
     User.create!(
       username: "student2",
       password_digest: "password",

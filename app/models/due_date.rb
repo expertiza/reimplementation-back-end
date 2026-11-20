@@ -15,7 +15,8 @@ class DueDate < ApplicationRecord
     ExpertizaConstants::DeadlineTypes::TEAM_FORMATION
   ].freeze
 
-  belongs_to :parent, polymorphic: true
+  belongs_to :parent, polymorphic: true, foreign_key: 'assignment_id'
+  belongs_to :assignment, foreign_key: 'assignment_id', optional: true
   validate :due_at_is_valid_datetime
   validates :due_at, presence: true
   before_save :set_deadline_name
@@ -59,7 +60,7 @@ class DueDate < ApplicationRecord
 
   def set(deadline, assignment_id, max_round)
     self.deadline_type_id = deadline
-    self.parent_id = assignment_id
+    self.assignment_id = assignment_id
     self.round = max_round
     save
   end
@@ -125,7 +126,11 @@ class DueDate < ApplicationRecord
   # Creates duplicate due dates and assigns them to a new assignment
   def copy(new_assignment_id)
     new_due_date = dup
-    new_due_date.parent_id = new_assignment_id
+    new_due_date.assignment_id = new_assignment_id
     new_due_date.save
+  end
+
+  def parent_id
+    assignment_id
   end
 end

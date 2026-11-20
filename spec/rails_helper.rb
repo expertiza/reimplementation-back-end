@@ -13,7 +13,22 @@ require 'database_cleaner/active_record'
 
 # Override DATABASE_URL for tests to prevent remote DB errors
 if Rails.env.test?
- ENV['DATABASE_URL'] = 'mysql2://root:expertiza@127.0.0.1/reimplementation_test'
+ ENV['DATABASE_URL'] = 'mysql2://root:expertiza@db:3306/reimplementation_test'
+end
+
+# frozen_string_literal: true
+
+# Tracks which spec file is currently running so rails_helper can detect
+# file boundaries (each example is a fresh object, so a plain instance
+# variable would not survive between examples).
+module RSpecFileIsolation
+  class << self
+    attr_writer :current_file
+
+    def current_file
+      @current_file
+    end
+  end
 end
 
 RSpec.configure do |config|
@@ -30,6 +45,50 @@ RSpec.configure do |config|
     else
       DatabaseCleaner.clean_with(:truncation)
     end
+
+    # The suite-start clean above removes the legacy reference/lookup rows
+    # (deadline_types, deadline_rights) that specs reference by their fixed
+    # legacy ids; seed them back before any example runs. (The file-boundary
+    # hook below re-seeds after each wipe as well.)
+    SpecReferenceData.seed! if defined?(SpecReferenceData)
+  end
+  # Runs before every example group's own before(:all) hooks (hooks run in
+  # registration order and rails_helper loads first), so it detects file
+  # boundaries before the file's own setup commits anything.
+  config.before(:all) do |example_group|
+    file = example_group.class.metadata[:file_path]
+    next if RSpecFileIsolation.current_file == file
+
+    RSpecFileIsolation.current_file = file
+    # Data committed by the previous file (most specs set up shared records
+    # in before(:all), which runs outside the per-test transaction and
+    # therefore survives its rollback) would otherwise leak into this file
+    # and break its assumptions about ids, names and emptiness. Wipe it on
+    # a separate connection so the removal is not part of - and cannot be
+    # undone by - this test's transaction.
+    connection = if ActiveRecord::Base.connection_pool.respond_to?(:checkout_with_new_connection)
+                   ActiveRecord::Base.connection_pool.checkout_with_new_connection
+                 else
+                   ActiveRecord::Base.connection_pool.new_connection
+                 end
+    begin
+      connection.execute('SET FOREIGN_KEY_CHECKS = 0')
+      connection.tables.each do |table|
+        next if %w[ar_internal_metadata schema_migrations].include?(table)
+
+        connection.execute("DELETE FROM #{connection.quote_table_name(table)}")
+      end
+      connection.tables.each do |table|
+        next if %w[ar_internal_metadata schema_migrations].include?(table)
+
+        connection.execute("ALTER TABLE #{connection.quote_table_name(table)} AUTO_INCREMENT = 1")
+      end
+      connection.execute('SET FOREIGN_KEY_CHECKS = 1')
+    ensure
+      connection.disconnect! if connection.connected?
+    end
+    # The wipe above also removed the reference rows, so restore them.
+    SpecReferenceData.seed! if defined?(SpecReferenceData)
   end
   config.before(:each) do
     DatabaseCleaner.strategy = :transaction

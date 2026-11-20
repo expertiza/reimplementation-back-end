@@ -1,4 +1,6 @@
 class QuestionnairesController < ApplicationController
+  before_action :ensure_item_scores_non_negative, only: :update
+
   # Index method returns the list of JSON objects of the questionnaire.
   # Supports an optional ?type= query parameter to filter by questionnaire_type.
   # GET on /questionnaires
@@ -91,6 +93,19 @@ class QuestionnairesController < ApplicationController
   end
 
   private
+
+  # API-level constraint: questionnaire item scores must be non-negative.
+  # The Questionnaire model itself only enforces min < max (negative values
+  # are legal at the model level), so the controller rejects negative scores
+  # with a 422 response, as specified by the questionnaires request specs.
+  def ensure_item_scores_non_negative
+    return unless params[:questionnaire].present?
+
+    errors = []
+    errors << 'Minimum question score cannot be negative' if params[:questionnaire][:min_question_score].to_i.negative?
+    errors << 'Maximum question score cannot be negative' if params[:questionnaire][:max_question_score].to_i.negative?
+    render json: errors, status: :unprocessable_entity if errors.any?
+  end
 
   def questionnaire_params
     params.require(:questionnaire).permit(

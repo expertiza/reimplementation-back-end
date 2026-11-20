@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 ENV['RAILS_ENV'] ||= 'test'
+# Load the real simplecov gem before minitest's simplecov plugin runs.
+# simplecov_json_formatter (auto-required at boot) opens a bare top-level
+# SimpleCov module, which otherwise makes the plugin crash with
+# "undefined method 'external_at_exit=' for module SimpleCov".
+require 'simplecov'
 require_relative '../config/environment'
 require 'rails/test_help'
 

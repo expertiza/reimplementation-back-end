@@ -13,7 +13,6 @@ RSpec.describe 'Institutions API', type: :request do
       role_id: @roles[:instructor].id,
       name: "Prof A",
       email: "testuser@example.com",
-      mru_directory_path: "/home/testuser",
       ) }
 
     let(:token) { JsonWebToken.encode({id: prof.id}) }

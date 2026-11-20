@@ -68,6 +68,21 @@ Replace `change_me` with your chosen local credentials. The password in both dat
 
 `CACHE_STORE` is passed to the Redis cache configuration in `config/application.rb`. Within Docker Compose, the Redis connection URL is `redis://redis:6380/0`.
 
+
+## Legacy Expertiza Data Migration
+
+The repository includes a repeatable procedure for loading the historical
+anonymized Expertiza data set (the ~700 MB dump in `anon_db/`, old Expertiza
+schema) into the development database. It translates the dump onto the
+reimplementation schema through the guarded 2026 bridge + convergence
+migrations, so the development database ends up in the canonical schema shape.
+
+> WARNING: The procedure **deletes the current development database contents**
+> (Docker volume reset) and replaces them with the legacy data.
+
+The full runbook (script usage, manual steps, verification, caveats) lives in
+[docs/legacy-expertiza-migration.md](docs/legacy-expertiza-migration.md).
+
 Development currently uses `:null_store` or `:memory_store` instead of Redis caching. The existing `:redis_store` adapter could not be loaded in the current application image, so Redis-backed Rails caching requires a separate configuration fix and validation before production use.
 
 
