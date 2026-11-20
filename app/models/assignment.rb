@@ -94,7 +94,7 @@ class Assignment < ApplicationRecord
   alias_attribute :allow_topic_suggestion_from_students,     :allow_suggestions
   alias_attribute :allow_reviewer_to_choose_topic_to_review, :can_choose_topic_to_review
   alias_attribute :staggered_deadline_assignment,            :staggered_deadline
-
+  alias_attribute :spec_location,                                :URL  # schema keeps legacy URL
   # Purely virtual flags — no DB column, not persisted
   attr_writer :show_template_review, :has_max_review_limit,
               :calibration_for_training, :apply_late_policy

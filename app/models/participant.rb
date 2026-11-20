@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class Participant < ApplicationRecord
+  # Legacy databases (and branch code paths, e.g. StudentTask) read
+  # participants.OK_to_show; the merged schema uses :permission_granted.
+  alias_attribute :OK_to_show, :permission_granted
+
   # Associations
   belongs_to :user
   has_many   :join_team_requests, dependent: :destroy

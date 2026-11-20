@@ -80,6 +80,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_12_000001) do
     t.boolean "reviews_visible_to_all"
     t.integer "num_reviewers"
     t.text "URL"
+    t.boolean "has_badge"
     t.integer "max_team_size"
     t.boolean "staggered_deadline"
     t.boolean "allow_suggestions"
@@ -93,13 +94,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_12_000001) do
     t.boolean "require_quiz"
     t.integer "num_quiz_questions"
     t.boolean "is_coding_assignment"
-    t.boolean "topics_assigned_by_bidding"
     t.boolean "calculate_penalty"
     t.integer "late_policy_id"
     t.boolean "is_penalty_calculated"
     t.boolean "show_teammate_reviews"
-    t.boolean "available_to_students"
-    t.boolean "can_bookmark_topics"
+    t.boolean "availability_flag"
+    t.boolean "use_bookmark"
     t.boolean "can_review_same_topic"
     t.boolean "can_choose_topic_to_review"
     t.boolean "is_calibrated"
@@ -177,7 +177,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_12_000001) do
     t.text "info"
     t.datetime "created_at", precision: nil
     t.datetime "updated_at", precision: nil
-    t.boolean "is_private", default: false
+    t.boolean "private", default: false
     t.bigint "institution_id"
     t.text "language"
     t.index ["institution_id"], name: "fk_canon_courses_institution_id"
@@ -306,7 +306,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_12_000001) do
     t.boolean "can_review", default: true
     t.bigint "user_id"
     t.integer "parent_id"
-    t.boolean "OK_to_show", default: false
+    t.boolean "permission_granted", default: false
     t.float "grade"
     t.string "type"
     t.string "handle"
@@ -507,6 +507,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_12_000001) do
     t.string "operation"
     t.integer "team_id"
     t.string "submitted_by"
+    t.integer "assignment_id"
   end
 
   create_table "suggestion_comments", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
@@ -655,6 +656,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_12_000001) do
     t.string "password_digest"
     t.string "mru_directory_path"
     t.boolean "email_on_review", default: false
+    t.boolean "email_on_review_of_review", default: false
+    t.boolean "master_permission_granted", default: false
+    t.string "persistence_token"
     t.datetime "created_at", precision: nil
     t.datetime "updated_at", precision: nil
     t.index ["institution_id"], name: "fk_canon_users_institution_id"

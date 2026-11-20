@@ -11,12 +11,15 @@ class CleanupAndTransformations < ActiveRecord::Migration[8.0]
       # This will print in your terminal during migrate so you know what happened
       say "WARNING: timeZonePref not found in users table!", true 
     end
-    remove_column :users, :mru_directory_path if column_exists?(:users, :mru_directory_path)
-    remove_column :users, :email_on_review if column_exists?(:users, :email_on_review)
-    remove_column :users, :email_on_review_of_review if column_exists?(:users, :email_on_review_of_review)
-    remove_column :users, :master_permission_granted if column_exists?(:users, :master_permission_granted)
-    remove_column :users, :digital_certificate if column_exists?(:users, :digital_certificate)
-    remove_column :users, :persistence_token if column_exists?(:users, :persistence_token)
+    # The merged app (main) still reads/writes these columns, so they must
+    # survive on a converged database. The true legacy DB has all of them;
+    # on a from-scratch chain (which never created them) add the missing ones.
+    add_column :users, :mru_directory_path, :string unless column_exists?(:users, :mru_directory_path)
+    add_column :users, :email_on_review, :boolean, default: false unless column_exists?(:users, :email_on_review)
+    add_column :users, :email_on_review_of_review, :boolean, default: false unless column_exists?(:users, :email_on_review_of_review)
+    add_column :users, :master_permission_granted, :boolean, default: false unless column_exists?(:users, :master_permission_granted)
+    add_column :users, :digital_certificate, :text unless column_exists?(:users, :digital_certificate)
+    add_column :users, :persistence_token, :string unless column_exists?(:users, :persistence_token)
     add_column :users, :public_key, :text unless column_exists?(:users, :public_key)
     add_column :users, :private_by_default, :boolean unless column_exists?(:users, :private_by_default)
     add_column :users, :password_salt, :text unless column_exists?(:users, :password_salt)
@@ -25,16 +28,24 @@ class CleanupAndTransformations < ActiveRecord::Migration[8.0]
     # -------------------------
     rename_column :assignments, :spec_location, :URL if column_exists?(:assignments, :spec_location)
     rename_column :assignments, :is_intelligent, :topics_assigned_by_bidding if column_exists?(:assignments, :is_intelligent)
-    rename_column :assignments, :availability_flag, :available_to_students if column_exists?(:assignments, :availability_flag)
-    rename_column :assignments, :use_bookmark, :can_bookmark_topics if column_exists?(:assignments, :use_bookmark)
+  # The app (merged with main) aliases assignments.availability_flag, so the
+  # column stays named :availability_flag. Older branch builds renamed it to
+  # :available_to_students; rename it back on those databases (no-op on the
+  # true legacy DB, which already has :availability_flag).
+  rename_column :assignments, :available_to_students, :availability_flag if column_exists?(:assignments, :available_to_students) && !column_exists?(:assignments, :availability_flag)
+  # The app (merged with main) reads assignments.use_bookmark, so the column
+  # stays named :use_bookmark. Older branch builds renamed it to
+  # :can_bookmark_topics; rename it back on those databases (no-op on the
+  # true legacy DB, which already has :use_bookmark).
+  rename_column :assignments, :can_bookmark_topics, :use_bookmark if column_exists?(:assignments, :can_bookmark_topics) && !column_exists?(:assignments, :use_bookmark)
 
     remove_column :assignments, :max_bids if column_exists?(:assignments, :max_bids)
     remove_column :assignments, :reputation_algorithm if column_exists?(:assignments, :reputation_algorithm)
     remove_column :assignments, :simicheck if column_exists?(:assignments, :simicheck)
     remove_column :assignments, :simicheck_threshold if column_exists?(:assignments, :simicheck_threshold)
-    remove_column :assignments, :has_badge if column_exists?(:assignments, :has_badge)
-    remove_column :assignments, :is_conference_assignment if column_exists?(:assignments, :is_conference_assignment)
-    add_column :assignments, :vary_by_topic?, :boolean unless column_exists?(:assignments, :vary_by_topic?)
+    # The merged app (main) reads assignments.has_badge, so the column
+    # must survive on a converged database (add it where a from-scratch chain lacks it).
+    add_column :assignments, :has_badge, :boolean unless column_exists?(:assignments, :has_badge)
     add_column :assignments, :vary_by_round?, :boolean unless column_exists?(:assignments, :vary_by_round?)
     add_column :assignments, :team_reviewing_enabled, :boolean unless column_exists?(:assignments, :team_reviewing_enabled)
     add_column :assignments, :bidding_for_reviews_enabled, :boolean unless column_exists?(:assignments, :bidding_for_reviews_enabled)
@@ -64,7 +75,10 @@ class CleanupAndTransformations < ActiveRecord::Migration[8.0]
     remove_column :participants, :duty if column_exists?(:participants, :duty)
     remove_column :participants, :duty_id if column_exists?(:participants, :duty_id)
 
-    rename_column :participants, :permission_granted, :OK_to_show if column_exists?(:participants, :permission_granted)
+  # The app (merged with main) uses participants.permission_granted; the
+  # branch code path reads OK_to_show (aliased in the model). Keep the app's
+  # name: rename legacy OK_to_show -> permission_granted.
+  rename_column :participants, :OK_to_show, :permission_granted if column_exists?(:participants, :OK_to_show) && !column_exists?(:participants, :permission_granted)
 
     add_column :participants, :can_mentor, :boolean unless column_exists?(:participants, :can_mentor)
 
@@ -74,10 +88,10 @@ class CleanupAndTransformations < ActiveRecord::Migration[8.0]
     rename_column :submission_records, :type, :record_type if column_exists?(:submission_records, :type)
     rename_column :submission_records, :user, :submitted_by if column_exists?(:submission_records, :user)
 
-    remove_column :submission_records, :assignment_id if column_exists?(:submission_records, :assignment_id)
-
-    # -------------------------
-    # SUGGESTIONS
+    # The merged app queries submission_records.assignment_id, so it must
+    # survive on a converged database (add it where a from-scratch chain lacks it).
+    add_column :submission_records, :assignment_id, :integer unless column_exists?(:submission_records, :assignment_id)
+    remove_column :submission_records, :team_id if column_exists?(:submission_records, :team_id)
     # -------------------------
     rename_column :suggestions, :unityID, :username if column_exists?(:suggestions, :unityID)
 
@@ -96,7 +110,11 @@ class CleanupAndTransformations < ActiveRecord::Migration[8.0]
     # -------------------------
     # COURSES
     # -------------------------
-    rename_column :courses, :private, :is_private if column_exists?(:courses, :private)
+    # The app (merged with main) reads/writes courses.private, so the column
+  # stays named :private. Older branch builds renamed it to :is_private;
+  # rename it back on those databases (no-op on the true legacy DB, which
+  # already has :private).
+  rename_column :courses, :is_private, :private if column_exists?(:courses, :is_private) && !column_exists?(:courses, :private)
     rename_column :courses, :institutions_id, :institution_id if column_exists?(:courses, :institutions_id)
     add_column :courses, :language, :text unless column_exists?(:courses, :language)
 

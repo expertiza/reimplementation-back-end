@@ -5,6 +5,7 @@ class Response < ApplicationRecord
   include MetricHelper
 
   belongs_to :response_map, class_name: 'ResponseMap', foreign_key: 'response_map_id', inverse_of: false
+  alias_attribute :map_id, :response_map_id
   has_many :scores, class_name: 'Answer', foreign_key: 'response_id', dependent: :destroy, inverse_of: false
   accepts_nested_attributes_for :scores
 
