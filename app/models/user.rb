@@ -5,6 +5,17 @@ class User < ApplicationRecord
   after_initialize :set_defaults
   alias_attribute :full_name, :name
 
+  # Legacy Expertiza databases keep a `password_salt` column next to
+  # password_digest. has_secure_password's generated salt reader would run
+  # BCrypt::Password.new on the (possibly non-bcrypt) digest during
+  # serialization and raise BCrypt::Errors::InvalidHash. Nothing in the app
+  # reads the salt, so pin it to nil to keep serialization safe on both the
+  # canonical and legacy-converged schemas.
+  def password_salt
+    nil
+  end
+
+
   # username must be lowercase and unique
   validates :username, presence: true, uniqueness: true, allow_blank: false
                    # format: { with: /\A[a-z]+\z/, message: 'must be in lowercase' }
