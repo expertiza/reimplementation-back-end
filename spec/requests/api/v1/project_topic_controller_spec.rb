@@ -317,3 +317,39 @@ RSpec.describe 'ProjectTopicController API', type: :request do
       end
     end
   end
+
+  # Bypasses the model validation (which already has its own coverage in
+  # project_topic_spec.rb) to force the database's unique index on
+  # (assignment_id, topic_identifier) to raise directly, proving the controller
+  # maps that race condition to a 422 rather than falling into the generic
+  # rescue => e / 500.
+  describe 'RecordNotUnique handling' do
+    let!(:race_roles) { create_roles_hierarchy }
+    let!(:race_instructor) do
+      User.create!(username: 'RaceInstructor', password_digest: 'password',
+                   role_id: race_roles[:instructor].id, name: 'Race Instructor',
+                   email: 'race_instructor@example.com')
+    end
+    let!(:race_assignment) { Assignment.create!(name: 'Race Assignment', instructor_id: race_instructor.id) }
+    let(:race_token) { JsonWebToken.encode({ id: race_instructor.id }) }
+
+    it 'returns 422 when create hits the database unique constraint directly' do
+      ProjectTopic.create!(topic_name: 'First', assignment: race_assignment,
+                           max_choosers: 1, topic_identifier: 'RACE1')
+      colliding = ProjectTopic.new(topic_name: 'Second', assignment: race_assignment,
+                                   max_choosers: 1, topic_identifier: 'RACE1')
+      colliding.define_singleton_method(:valid?) { |*| true } # skip the model check
+
+      allow(ProjectTopic).to receive(:new).and_return(colliding)
+
+      post '/project_topics', params: {
+        project_topic: {
+          topic_name: 'Second', topic_identifier: 'RACE1', assignment_id: race_assignment.id
+        }
+      }, headers: { Authorization: "Bearer #{race_token}" }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      body = JSON.parse(response.body, symbolize_names: true)
+      expect(body[:message][:topic_identifier]).to include('has already been taken')
+    end
+  end

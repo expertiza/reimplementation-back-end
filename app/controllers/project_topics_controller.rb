@@ -7,10 +7,12 @@ class ProjectTopicsController < ApplicationController
     if params[:assignment_id].nil?
       render json: { message: 'Assignment ID is required!' }, status: :unprocessable_entity
     elsif params[:topic_ids].nil?
-      @project_topics = ProjectTopic.where(assignment_id: params[:assignment_id])
+      # Ordered explicitly: the unique index on (assignment_id, topic_identifier)
+      # makes database return rows in index order rather than insertion order.
+      @project_topics = ProjectTopic.where(assignment_id: params[:assignment_id]).order(:id)
       render json: @project_topics, status: :ok
     else
-      @project_topics = ProjectTopic.where(assignment_id: params[:assignment_id], topic_identifier: params[:topic_ids])
+      @project_topics = ProjectTopic.where(assignment_id: params[:assignment_id], topic_identifier: params[:topic_ids]).order(:id)
       render json: @project_topics, status: :ok
     end
     # render json: {message: 'All selected topics have been loaded successfully.', project_topics: @stopics}, status: 200
@@ -33,6 +35,12 @@ class ProjectTopicsController < ApplicationController
     else
       render json: { message: project_topic.errors }, status: :unprocessable_entity
     end
+  # A race on the (assignment_id, topic_identifier) unique index: the model
+  # validation already ran a SELECT and passed, but a concurrent request won
+  # the INSERT first. Map it to the same 422 the validation itself would give,
+  # instead of letting it fall into the generic 500 below.
+  rescue ActiveRecord::RecordNotUnique
+    render json: { message: { topic_identifier: ["has already been taken"] } }, status: :unprocessable_entity
   rescue => e
       render json: { error: "Unexpected error: #{e.message}" }, status: :internal_server_error
   end
@@ -51,6 +59,8 @@ class ProjectTopicsController < ApplicationController
     else
       render json:{ message: @project_topic.errors }, status: :unprocessable_entity
     end
+  rescue ActiveRecord::RecordNotUnique
+    render json: { message: { topic_identifier: ["has already been taken"] } }, status: :unprocessable_entity
   end
 
   # Show a ProjectTopic by ID

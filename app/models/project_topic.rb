@@ -12,6 +12,15 @@ class ProjectTopic < ApplicationRecord
   # Ensures topic name is present
   validates :topic_name, presence: true
 
+  # topic_identifier is a varchar(10). Without these the database raises and the
+  # controller's rescue turns it into a 500 instead of a 422 the client can show.
+  # Uniqueness is scoped to the assignment because topics are selected and
+  # deleted by identifier, which is ambiguous when two share one.
+  validates :topic_identifier,
+            length: { maximum: 10 },
+            uniqueness: { scope: :assignment_id },
+            allow_nil: true
+
   # Attempts to sign up a team for this topic.
   # If slots are available, it's confirmed; otherwise, waitlisted.
   # Also removes any previous waitlist entries for the same team on other topics.
