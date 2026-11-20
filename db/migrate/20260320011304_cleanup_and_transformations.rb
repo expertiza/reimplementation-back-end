@@ -22,9 +22,9 @@ class CleanupAndTransformations < ActiveRecord::Migration[8.0]
     add_column :users, :persistence_token, :string unless column_exists?(:users, :persistence_token)
     add_column :users, :public_key, :text unless column_exists?(:users, :public_key)
     add_column :users, :private_by_default, :boolean unless column_exists?(:users, :private_by_default)
-    add_column :users, :password_salt, :text unless column_exists?(:users, :password_salt)
-    # -------------------------
-    # ASSIGNMENTS TABLE
+    # users.password_salt is intentionally NOT added: the merged app authenticates via
+    # password_digest only, and the legacy password_salt column makes has_secure_password
+    # serialize a BCrypt salt for non-bcrypt digests (BCrypt::Errors::InvalidHash).
     # -------------------------
     rename_column :assignments, :spec_location, :URL if column_exists?(:assignments, :spec_location)
     rename_column :assignments, :is_intelligent, :topics_assigned_by_bidding if column_exists?(:assignments, :is_intelligent)

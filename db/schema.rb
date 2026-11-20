@@ -639,7 +639,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_12_000001) do
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.string "username"
     t.bigint "role_id"
-    t.text "password_salt", size: :medium
     t.string "name"
     t.string "email"
     t.bigint "parent_id"
