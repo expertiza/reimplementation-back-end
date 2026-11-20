@@ -68,9 +68,6 @@ Replace `change_me` with your chosen local credentials. The password in both dat
 
 `CACHE_STORE` is passed to the Redis cache configuration in `config/application.rb`. Within Docker Compose, the Redis connection URL is `redis://redis:6380/0`.
 
-### Database Credentials
-- username: root
-- password: expertiza
 
 ## Legacy Expertiza Data Migration
 
