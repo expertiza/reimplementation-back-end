@@ -84,10 +84,61 @@ jobs:
               return;
             }
 
-            // Read report as text only; never execute artifact content.
-            const report = fs.readFileSync(reportPath, 'utf8')
+
+            const lines = fs.readFileSync(reportPath, 'utf8')
               .slice(0, 16000)
-              .replace(/@/g, '&#64;');
+              .split(/\r?\n/)
+              .map(line => line.trim());
+
+            // Accept only an RSpec summary with numeric counts.
+            const rspecResult = lines.find(line =>
+              /^\d+ examples?, \d+ failures?(?:, \d+ pending)?$/.test(line)
+            );
+
+            const safeResult = rspecResult ||
+              'RSpec results unavailable. Check workflow logs.';
+
+            // Accept only numeric coverage data.
+            const coverageMatch = lines
+              .map(line => line.match(
+                /^\*\*Line coverage: (\d+(?:\.\d+)?)%\*\* \((\d+)\/(\d+) lines\)$/
+              ))
+              .find(Boolean);
+
+            const safeCoverage = coverageMatch
+              ? `**Line coverage: ${coverageMatch[1]}%** ` +
+                `(${coverageMatch[2]}/${coverageMatch[3]} lines)`
+              : 'Coverage report unavailable.';
+
+            // Keep only safe spec paths and line numbers.
+            const safeFailures = lines.flatMap(line => {
+              const match = line.match(
+                /^rspec\s+((?:\.\/)?spec\/[A-Za-z0-9_./-]+\.rb):(\d+)(?:\s+#.*)?$/
+              );
+
+              return match
+                ? [`rspec ${match[1]}:${match[2]}`]
+                : [];
+            }).slice(0, 20);
+
+            // Rebuild the report using trusted Markdown.
+            const safeReport = [
+              '## CI Test & Coverage Report',
+              '',
+              '### RSpec Results',
+              safeResult,
+              ...(safeFailures.length ? [
+                '',
+                '#### Failing examples',
+                '```text',
+                ...safeFailures,
+                '```'
+              ] : []),
+              '',
+              '### Coverage',
+              safeCoverage
+            ].join('\n');
+
 
             const marker = '<!-- expertiza-ci-report -->';
             const attempt = run.run_attempt || 1;
@@ -97,7 +148,7 @@ jobs:
             const body = [
               marker,
               runMarker,
-              report,
+              safeReport,
               '',
               `**CI workflow status:** ${run.conclusion}`,
               `[View full workflow run](${run.html_url})`,
