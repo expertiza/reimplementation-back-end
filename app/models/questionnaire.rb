@@ -9,7 +9,7 @@ class Questionnaire < ApplicationRecord
            dependent: :destroy,
            inverse_of: :questionnaire
   accepts_nested_attributes_for :items, allow_destroy: true
-  before_destroy :any_item_associations?
+  before_destroy :any_item_associations?, prepend: true
 
   # Subclasses declare @print_name = '...' and inherit this reader automatically.
   class << self
@@ -50,9 +50,9 @@ class Questionnaire < ApplicationRecord
     questionnaire
   end
 
-  # Raises an error if the questionnaire has associated items.
+  # Raises an error if an assignment uses this questionnaire.
   def any_item_associations?
-    return unless items.any?
+    return unless AssignmentQuestionnaire.exists?(questionnaire_id: id)
 
     raise ActiveRecord::DeleteRestrictionError,
           'Cannot delete questionnaire because at least one assignment uses it.'
