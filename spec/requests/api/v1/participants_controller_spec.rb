@@ -293,7 +293,7 @@ RSpec.describe 'Participants API', type: :request do
         User.find(user_id).username
       end
 
-      response '422', 'Participant already exist' do
+      response '422', 'Participant already exists' do
         let(:authorization) { 'mentor' }
         let(:participant) { { user_id: studenta.id, assignment_id: assignment1.id } }
         let(:name) { User.find(participant[:user_id]).username }

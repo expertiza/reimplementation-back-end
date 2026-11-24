@@ -60,7 +60,7 @@ class ParticipantsController < ApplicationController
 
     permissions = retrieve_participant_permissions(authorization)
 
-    # add_participant raises if the user is already a participant
+    # add_participant raises an error if the user is already a participant
     begin
       participant = assignment.add_participant(user)
     rescue StandardError => e
