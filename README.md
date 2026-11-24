@@ -336,7 +336,8 @@ Check whether any containers still reference the volume:
 docker ps -a --filter volume=<old-volume-name>
 ```
 
-**Note:** Replace `<old-volume-name>` with the exact name returned by `docker volume ls` in both the container check and removal commands.
+> [!NOTE]
+> Replace `<old-volume-name>` with the exact name returned by `docker volume ls` in both the container check and removal commands.
 
 Once the volume is no longer needed and no containers reference it, remove it explicitly:
 
