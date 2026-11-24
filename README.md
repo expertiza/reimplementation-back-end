@@ -336,13 +336,13 @@ Check whether any containers still reference the volume:
 docker ps -a --filter volume=<old-volume-name>
 ```
 
+**Note:** Replace `<old-volume-name>` with the exact name returned by `docker volume ls` in both the container check and removal commands.
+
 Once the volume is no longer needed and no containers reference it, remove it explicitly:
 
 ```bash
 docker volume rm <old-volume-name>
 ```
-
-Replace `<old-volume-name>` with the exact name returned by `docker volume ls`.
 
 **Warning:** Removing a Docker volume permanently deletes its stored data. This cleanup is optional and should only be performed after confirming that the previous MySQL data is no longer required. Do not use `docker compose down -v` for this cleanup, as it may also remove the current MariaDB and Redis volumes.
 
@@ -551,7 +551,7 @@ Docker Compose defines health checks to determine whether services are responsiv
 
 ### MariaDB
 
-The MariaDB 10.11.15 service uses the official image's health check:
+The MariaDB service uses the official image's health check:
 
 ```bash
 healthcheck.sh --connect --innodb_initialized
