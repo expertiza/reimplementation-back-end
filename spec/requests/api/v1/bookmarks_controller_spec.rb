@@ -9,19 +9,18 @@ RSpec.describe 'bookmarks', type: :request do
     @roles = create_roles_hierarchy
   end
 
-  let(:student) {
+  let!(:student) {
     User.create(
       username: "studenta",
       password_digest: "password",
       role_id: @roles[:student].id,
       name: "student A",
       email: "testuser@example.com",
-      mru_directory_path: "/home/testuser",
     )
   }
 
-  let(:token) { JsonWebToken.encode({ id: student.id }) }
-  let(:Authorization) { "Bearer #{token}" }
+  let!(:token) { JsonWebToken.encode({ id: student.id }) }
+  let!(:Authorization) { "Bearer #{token}" }
 
   path '/bookmarks' do
     # Creation of dummy objects for the test with the help of let statements
@@ -220,7 +219,7 @@ RSpec.describe 'bookmarks', type: :request do
   path '/bookmarks/{id}/bookmarkratings' do
     parameter name: 'id', in: :path, type: :integer
     
-    let(:bookmark) do
+    let!(:bookmark) do
       student
       Bookmark.create(
         url: 'http://example.com',
@@ -260,7 +259,7 @@ RSpec.describe 'bookmarks', type: :request do
 
       response(200, 'successful') do
         before do
-          BookmarkRating.create(bookmark_id: bookmark.id, user_id: student.id, rating: 5)
+          BookmarkRating.create!(artifact_id: bookmark.id, rater_id: student.id, rating: 5)
         end
         run_test! do
           expect(response.body).to include('"rating":5')

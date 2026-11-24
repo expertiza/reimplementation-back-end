@@ -45,7 +45,7 @@ RSpec.describe Team, type: :model do
       username:            "instructor",
       name:       "Instructor User",
       email:           "instructor@example.com",
-      password_digest: "password",
+      password: "password",
       role_id:          @roles[:instructor].id,
       institution_id:  institution.id
     )
@@ -56,7 +56,7 @@ RSpec.describe Team, type: :model do
       username:            "team_owner",
       name:       "Team Owner",
       email:           "team_owner@example.com",
-      password_digest: "password",
+      password: "password",
       role_id:          @roles[:student].id,
       institution_id:  institution.id
     )

@@ -23,7 +23,6 @@ RSpec.describe TeamsController, type: :request do
       role_id:              @roles[:instructor].id,
       name:           "Prof A",
       email:               "testuser@example.com",
-      mru_directory_path:  "/home/testuser",
       institution_id:      institution.id
     )
   end
@@ -34,7 +33,7 @@ RSpec.describe TeamsController, type: :request do
       name:       "New Participant",
       username:            "NewParticipant",
       email:           "newparticipant@example.com",
-      password_digest: "password",
+      password: "password",
       role_id:          @roles[:student].id,
       institution_id:  institution.id
     )
@@ -46,7 +45,7 @@ RSpec.describe TeamsController, type: :request do
       name:       "Student Member",
       username:            "student_member",
       email:           "studentmember@example.com",
-      password_digest: "password",
+      password: "password",
       role_id:          @roles[:student].id,
       institution_id:  institution.id
     )
@@ -72,7 +71,7 @@ RSpec.describe TeamsController, type: :request do
       username:            "team_owner",
       name:       "Team Owner",
       email:           "team_owner@example.com",
-      password_digest: "password",
+      password: "password",
       role_id:          @roles[:student].id,
       institution_id:  institution.id
     )

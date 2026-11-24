@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
 class Item < ApplicationRecord
+  # The canonical `items` table types rows through `item_type` (see
+  # validates :item_type below); the legacy `type` column (kept for legacy
+  # databases) is plain data, not single-table inheritance. Without this,
+  # assigning `type` (e.g. Scale.new(type: 'scale')) makes Active Record
+  # look up a constant named 'scale' and raise ActiveRecord::SubclassNotFound.
+  self.inheritance_column = nil
+
   # All valid item types supported by the application.
   # Used by ItemsController#types to return the list to the front-end,
   # and can be used elsewhere for validation or display.

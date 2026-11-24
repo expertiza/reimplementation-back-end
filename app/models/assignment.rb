@@ -10,10 +10,9 @@ class Assignment < ApplicationRecord
   accepts_nested_attributes_for :assignment_questionnaires, allow_destroy: true
   has_many :questionnaires, through: :assignment_questionnaires
   has_many :response_maps, foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
-  has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewed_object_id', dependent: :destroy,
-                             inverse_of: :assignment
+  has_many :review_mappings, class_name: 'ReviewResponseMap', foreign_key: 'reviewed_object_id', dependent: :destroy, inverse_of: :assignment
   has_many :project_topics, class_name: 'ProjectTopic', foreign_key: 'assignment_id', dependent: :destroy
-  has_many :due_dates, as: :parent, class_name: 'DueDate', dependent: :destroy
+  has_many :due_dates, as: :parent, class_name: 'DueDate', foreign_key: 'assignment_id', dependent: :destroy
   accepts_nested_attributes_for :due_dates, allow_destroy: true
   has_many :assignments_duties, dependent: :destroy
   has_many :duties, through: :assignments_duties
@@ -95,7 +94,7 @@ class Assignment < ApplicationRecord
   alias_attribute :allow_topic_suggestion_from_students,     :allow_suggestions
   alias_attribute :allow_reviewer_to_choose_topic_to_review, :can_choose_topic_to_review
   alias_attribute :staggered_deadline_assignment,            :staggered_deadline
-
+  alias_attribute :spec_location,                                :URL  # schema keeps legacy URL
   # Purely virtual flags — no DB column, not persisted
   attr_writer :show_template_review, :has_max_review_limit,
               :calibration_for_training, :apply_late_policy

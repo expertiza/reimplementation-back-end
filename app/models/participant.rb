@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class Participant < ApplicationRecord
+  # Legacy databases (and branch code paths, e.g. StudentTask) read
+  # participants.OK_to_show; the merged schema uses :permission_granted.
+  alias_attribute :OK_to_show, :permission_granted
+
   # Associations
   belongs_to :user
   has_many   :join_team_requests, dependent: :destroy
@@ -20,6 +24,13 @@ class Participant < ApplicationRecord
   # Methods
   def fullname
     user.name
+  end
+
+  # The branch-side SubmittedContentController records submissions as
+  # `submitted_by: @participant.user_name`; expose the username the same way
+  # the legacy AssignmentParticipant did.
+  def user_name
+    user&.username
   end
 
   def team

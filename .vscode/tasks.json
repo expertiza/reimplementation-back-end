@@ -1,0 +1,79 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Prepare Test Database",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "exec",
+        "reimplementation-back-end-app-1",
+        "bash",
+        "-lc",
+        "cd /app && RAILS_ENV=test bundle exec rails db:test:prepare"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true,
+        "echo": true
+      },
+      "problemMatcher": [],
+      "detail": "Create/load the test database (reimplementation_test) so Rails' pending-migrations check passes; run when 'Migrations are pending' errors appear"
+    },
+    {
+      "label": "Run RSpec Tests",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "exec",
+        "-e",
+        "RAILS_ENV=test",
+        "reimplementation-back-end-app-1",
+        "bash",
+        "-lc",
+        "cd /app && bundle exec rspec spec"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true,
+        "echo": true
+      },
+      "problemMatcher": [],
+      "detail": "Run the RSpec test suite in /app/spec inside the reimplementation-back-end-app-1 container"
+    },
+    {
+      "label": "Run Minitest Tests",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "exec",
+        "-e",
+        "RAILS_ENV=test",
+        "reimplementation-back-end-app-1",
+        "bash",
+        "-lc",
+        "cd /app && bundle exec rails test"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true,
+        "echo": true
+      },
+      "problemMatcher": [],
+      "detail": "Run the Minitest suite in /app/test inside the reimplementation-back-end-app-1 container"
+    },
+    {
+      "label": "Run All Tests (RSpec + Minitest)",
+      "dependsOn": [
+        "Run RSpec Tests",
+        "Run Minitest Tests"
+      ],
+      "dependsOrder": "sequence",
+      "detail": "Run RSpec (spec/) then Minitest (test/) in the reimplementation-back-end-app-1 container"
+    }
+  ]
+}
+

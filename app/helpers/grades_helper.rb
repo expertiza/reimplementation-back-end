@@ -247,7 +247,7 @@ module GradesHelper
     if review_mapping.new_record?
       redirect_to controller: 'response', action: 'new', id: review_mapping.map_id, return: 'instructor'
     else
-      review = Response.find_by(map_id: review_mapping.map_id)
+      review = Response.find_by(response_map_id: review_mapping.map_id)
       redirect_to controller: 'response', action: 'edit', id: review.id, return: 'instructor'
     end
   end

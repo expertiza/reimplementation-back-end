@@ -73,7 +73,7 @@ RSpec.describe 'StudentTasks API', type: :request do
               user_id: studenta.id,
               parent_id: assignment.id,
               handle: "#{studenta.name}_#{i}",
-              permission_granted: [true, false].sample
+              OK_to_show: [true, false].sample
             )
           end
         end
