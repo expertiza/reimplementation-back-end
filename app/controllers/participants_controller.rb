@@ -60,7 +60,13 @@ class ParticipantsController < ApplicationController
 
     permissions = retrieve_participant_permissions(authorization)
 
-    participant = assignment.add_participant(user)
+    # add_participant raises an error if the user is already a participant
+    begin
+      participant = assignment.add_participant(user)
+    rescue StandardError => e
+      render json: { error: e.message }, status: :unprocessable_entity
+      return
+    end
     participant.authorization = authorization
     participant.can_submit = permissions[:can_submit]
     participant.can_review = permissions[:can_review]
