@@ -12,10 +12,11 @@ class ProjectTopic < ApplicationRecord
   # Ensures topic name is present
   validates :topic_name, presence: true
 
-  # topic_identifier is a varchar(10). Without these the database raises and the
-  # controller's rescue turns it into a 500 instead of a 422 the client can show.
-  # Uniqueness is scoped to the assignment because topics are selected and
-  # deleted by identifier, which is ambiguous when two share one.
+  # topic_identifier is a varchar(10). This length check keeps an oversized
+  # value from reaching the database, where it would fail with a raw SQL
+  # error and surface to the client as a generic 500 instead of this
+  # validation's 422. Uniqueness is scoped to :assignment_id because
+  # identifiers only need to be unique within one assignment, not globally.
   validates :topic_identifier,
             length: { maximum: 10 },
             uniqueness: { scope: :assignment_id },

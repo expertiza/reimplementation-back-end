@@ -8,7 +8,7 @@ class ProjectTopicsController < ApplicationController
       render json: { message: 'Assignment ID is required!' }, status: :unprocessable_entity
     elsif params[:topic_ids].nil?
       # Ordered explicitly: the unique index on (assignment_id, topic_identifier)
-      # makes database return rows in index order rather than insertion order.
+      # makes database return rows in topic_identifier order rather than insertion order.
       @project_topics = ProjectTopic.where(assignment_id: params[:assignment_id]).order(:id)
       render json: @project_topics, status: :ok
     else
@@ -35,10 +35,10 @@ class ProjectTopicsController < ApplicationController
     else
       render json: { message: project_topic.errors }, status: :unprocessable_entity
     end
-  # A race on the (assignment_id, topic_identifier) unique index: the model
-  # validation already ran a SELECT and passed, but a concurrent request won
-  # the INSERT first. Map it to the same 422 the validation itself would give,
-  # instead of letting it fall into the generic 500 below.
+  # Catches a race: two requests can both pass the model's uniqueness check
+  # before either one's INSERT runs, so the database's unique index rejects
+  # the second INSERT. Respond with the same 422 "already taken" error the
+  # validation would give, instead of letting that DB error become a 500.
   rescue ActiveRecord::RecordNotUnique
     render json: { message: { topic_identifier: ["has already been taken"] } }, status: :unprocessable_entity
   rescue => e
