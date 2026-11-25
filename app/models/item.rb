@@ -9,6 +9,7 @@ class Item < ApplicationRecord
   before_validation :set_seq, on: :create
   belongs_to :questionnaire, inverse_of: :items # each item belongs to a specific questionnaire
   has_many :answers, dependent: :destroy, foreign_key: 'item_id'
+  has_many :question_advices, class_name: 'QuestionAdvice', foreign_key: 'question_id', dependent: :destroy
   attr_accessor :choice_strategy
 
   validates :seq, presence: true, numericality: true # sequence must be numeric

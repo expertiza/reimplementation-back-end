@@ -47,9 +47,12 @@ class QuestionnairesController < ApplicationController
   # DELETE on /questionnaires/:id
   def destroy
     @questionnaire = Questionnaire.find(params[:id])
-    @questionnaire.delete
+    @questionnaire.destroy!
+    head :no_content
   rescue ActiveRecord::RecordNotFound
     render json: $ERROR_INFO.to_s, status: :not_found and return
+  rescue ActiveRecord::DeleteRestrictionError
+    render json: { error: $ERROR_INFO.message }, status: :unprocessable_entity
   end
 
   # Update method updates the questionnaire object with id - {:id} and returns the updated questionnaire JSON object

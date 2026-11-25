@@ -352,6 +352,21 @@ RSpec.describe 'questionnaires', type: :request do
           expect(response.body).to include("Couldn't find Questionnaire")
         end
       end
+
+      # delete request on /questionnaires/{id} returns 422 when an assignment uses the questionnaire
+      response(422, 'unprocessable entity') do
+        schema type: :object,
+               properties: { error: { type: :string } },
+               required: ['error']
+        before do
+          assignment = Assignment.create!(name: 'Used Assignment', instructor: prof)
+          AssignmentQuestionnaire.create!(assignment: assignment, questionnaire: questionnaire, used_in_round: 1)
+        end
+        run_test! do
+          expect(Questionnaire.exists?(id)).to eq(true)
+          expect(JSON.parse(response.body)['error']).to include('at least one assignment uses it')
+        end
+      end
     end
   end
 
