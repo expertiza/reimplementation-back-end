@@ -23,8 +23,9 @@ RSpec.describe 'ProjectTopic CSV import', type: :request do
     file.binmode
     file.write(content)
     file.rewind
+    csv_file = Rack::Test::UploadedFile.new(file.path, 'text/csv')
     post '/import/ProjectTopic',
-         params: { assignment_id: assignment.id, csv_file: Rack::Test::UploadedFile.new(file.path, 'text/csv'), **extra },
+         params: { assignment_id: assignment.id, csv_file: csv_file, **extra },
          headers: headers_for(user)
   end
 
@@ -41,7 +42,8 @@ RSpec.describe 'ProjectTopic CSV import', type: :request do
   end
 
   it 'matches headers by name in any order, with BOM, quotes and blank lines' do
-    upload("﻿Topic Name,TopicIdentifier,max_choosers,Description\n\"Design, build\",T1,2,\"two\nlines\"\n\nPlain,T2,1,\n")
+    upload("\uFEFFTopic Name,TopicIdentifier,max_choosers,Description\n" \
+           "\"Design, build\",T1,2,\"two\nlines\"\n\nPlain,T2,1,\n")
 
     expect(response).to have_http_status(:created)
     expect(body['message']).to eq('Topics imported: 2 created, 0 updated.')
@@ -67,7 +69,8 @@ RSpec.describe 'ProjectTopic CSV import', type: :request do
   end
 
   it 'saves nothing and reports every bad row' do
-    upload("topic_identifier,topic_name,max_choosers,link\nT1,Good,1,\nWAYTOOLONGID,Long,1,\nT3,,1,\nT4,Slots,abc,\nT1,Dup,1,\nT5,Url,1,#{'x' * 256}\n")
+    upload("topic_identifier,topic_name,max_choosers,link\nT1,Good,1,\nWAYTOOLONGID,Long,1,\n" \
+           "T3,,1,\nT4,Slots,abc,\nT1,Dup,1,\nT5,Url,1,#{'x' * 256}\n")
 
     expect(response).to have_http_status(:unprocessable_entity)
     [3, 4, 5, 6, 7].each { |row| expect(body['error']).to include("Row #{row}:") }

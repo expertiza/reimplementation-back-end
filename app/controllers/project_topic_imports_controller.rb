@@ -13,8 +13,8 @@ class ProjectTopicImportsController < ApplicationController
   # GET /import/ProjectTopic
   def show
     render json: {
-      mandatory_fields: ProjectTopicCsvImport::MANDATORY_FIELDS,
-      optional_fields: ProjectTopicCsvImport::OPTIONAL_FIELDS,
+      mandatory_fields: ProjectTopicCsvImportHelper::Importer::MANDATORY_FIELDS,
+      optional_fields: ProjectTopicCsvImportHelper::Importer::OPTIONAL_FIELDS,
       external_fields: [],
       available_actions_on_dup: []
     }
@@ -22,26 +22,35 @@ class ProjectTopicImportsController < ApplicationController
 
   # POST /import/ProjectTopic (multipart: assignment_id, csv_file, use_headers, ordered_fields)
   def create
-    file = params[:csv_file]
-    return render_error('Choose a CSV file.') unless file.respond_to?(:read)
-    return render_error('The file is larger than 1 MB.') if file.size > MAX_FILE_BYTES
+    problem = file_problem(params[:csv_file])
+    return render_error(problem) if problem
 
-    counts = ProjectTopicCsvImport.new(
-      assignment: assignment,
-      content: file.read,
-      use_headers: ActiveModel::Type::Boolean.new.cast(params.fetch(:use_headers, true)),
-      ordered_fields: params[:ordered_fields] && JSON.parse(params[:ordered_fields])
-    ).call
+    counts = ProjectTopicCsvImportHelper::Importer.new(**import_arguments).call
 
     render json: { message: "Topics imported: #{counts[:created]} created, #{counts[:updated]} updated.", **counts },
            status: :created
-  rescue ProjectTopicCsvImport::Error => e
+  rescue ProjectTopicCsvImportHelper::Importer::Error => e
     render_error(e.message)
   rescue JSON::ParserError
     render_error('ordered_fields must be a JSON array.')
   end
 
   private
+
+  def file_problem(file)
+    return 'Choose a CSV file.' unless file.respond_to?(:read)
+
+    'The file is larger than 1 MB.' if file.size > MAX_FILE_BYTES
+  end
+
+  def import_arguments
+    {
+      assignment: assignment,
+      content: params[:csv_file].read,
+      use_headers: ActiveModel::Type::Boolean.new.cast(params.fetch(:use_headers, true)),
+      ordered_fields: params[:ordered_fields] && JSON.parse(params[:ordered_fields])
+    }
+  end
 
   def assignment
     @assignment ||= Assignment.find_by(id: params[:assignment_id])

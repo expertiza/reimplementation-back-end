@@ -24,8 +24,8 @@ RSpec.describe 'ProjectTopic authorization', type: :request do
   end
 
   def create_topic(user)
-    post '/project_topics', headers: headers_for(user), as: :json,
-                            params: { project_topic: { assignment_id: assignment.id, topic_name: 'New', max_choosers: 1 } }
+    attributes = { assignment_id: assignment.id, topic_name: 'New', max_choosers: 1 }
+    post '/project_topics', headers: headers_for(user), as: :json, params: { project_topic: attributes }
   end
 
   def update_topic(user, attributes)
