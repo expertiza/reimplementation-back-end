@@ -1,16 +1,32 @@
 class ProjectTopicsController < ApplicationController
   before_action :set_project_topic, only: %i[ show update ]
 
+  # Anyone signed in may view topics; changing them requires managing the assignment.
+  def action_allowed?
+    case action_name
+    when 'create'
+      may_change_topics_of?(params.dig(:project_topic, :assignment_id))
+    when 'destroy'
+      may_change_topics_of?(params[:assignment_id])
+    when 'update'
+      may_update_topic?
+    else
+      true
+    end
+  end
+
   # GET /project_topics?assignment_id=&topic_ids[]=
   # Retrieve ProjectTopics by two query parameters - assignment_id (compulsory) and an array of topic_ids (optional)
   def index
     if params[:assignment_id].nil?
       render json: { message: 'Assignment ID is required!' }, status: :unprocessable_entity
     elsif params[:topic_ids].nil?
-      @project_topics = ProjectTopic.where(assignment_id: params[:assignment_id])
+      # Ordered explicitly: the unique index on (assignment_id, topic_identifier)
+      # makes database return rows in topic_identifier order rather than insertion order.
+      @project_topics = ProjectTopic.where(assignment_id: params[:assignment_id]).order(:id)
       render json: @project_topics, status: :ok
     else
-      @project_topics = ProjectTopic.where(assignment_id: params[:assignment_id], topic_identifier: params[:topic_ids])
+      @project_topics = ProjectTopic.where(assignment_id: params[:assignment_id], topic_identifier: params[:topic_ids]).order(:id)
       render json: @project_topics, status: :ok
     end
     # render json: {message: 'All selected topics have been loaded successfully.', project_topics: @stopics}, status: 200
@@ -33,6 +49,12 @@ class ProjectTopicsController < ApplicationController
     else
       render json: { message: project_topic.errors }, status: :unprocessable_entity
     end
+  # Catches a race: two requests can both pass the model's uniqueness check
+  # before either one's INSERT runs, so the database's unique index rejects
+  # the second INSERT. Respond with the same 422 "already taken" error the
+  # validation would give, instead of letting that DB error become a 500.
+  rescue ActiveRecord::RecordNotUnique
+    render json: { message: { topic_identifier: ["has already been taken"] } }, status: :unprocessable_entity
   rescue => e
       render json: { error: "Unexpected error: #{e.message}" }, status: :internal_server_error
   end
@@ -51,6 +73,8 @@ class ProjectTopicsController < ApplicationController
     else
       render json:{ message: @project_topic.errors }, status: :unprocessable_entity
     end
+  rescue ActiveRecord::RecordNotUnique
+    render json: { message: { topic_identifier: ["has already been taken"] } }, status: :unprocessable_entity
   end
 
   # Show a ProjectTopic by ID
@@ -83,6 +107,30 @@ class ProjectTopicsController < ApplicationController
 
   private
 
+  # A topic being moved needs rights on both the current and the destination assignment.
+  def may_update_topic?
+    return false unless current_user_has_ta_privileges?
+
+    topic = ProjectTopic.find_by(id: params[:id])
+    return true unless topic # set_project_topic answers 404
+    return false unless current_user_can_manage?(topic.assignment)
+
+    destination = params[:project_topic].is_a?(ActionController::Parameters) && params[:project_topic][:assignment_id]
+    !destination || may_change_topics_of?(destination)
+  end
+
+  # A blank or unknown id passes for teaching staff because the action itself
+  # rejects it (422) or matches no topics. A list is refused: it could pair a
+  # managed assignment with someone else's in the same delete.
+  def may_change_topics_of?(assignment_id)
+    return false unless current_user_has_ta_privileges?
+    return true if assignment_id.blank?
+    return false unless assignment_id.is_a?(String) || assignment_id.is_a?(Integer)
+
+    assignment = Assignment.find_by(id: assignment_id)
+    assignment.nil? || current_user_can_manage?(assignment)
+  end
+
   # Use callbacks to share common setup or constraints between actions.
   def set_project_topic
     @project_topic = ProjectTopic.find(params[:id])
@@ -90,6 +138,6 @@ class ProjectTopicsController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def project_topic_params
-    params.require(:project_topic).permit(:topic_identifier, :category, :topic_name, :max_choosers, :assignment_id)
+    params.require(:project_topic).permit(:topic_identifier, :category, :topic_name, :max_choosers, :assignment_id, :description, :link)
   end
 end

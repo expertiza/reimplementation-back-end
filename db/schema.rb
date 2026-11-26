@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_11_12_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_11_19_000001) do
   create_table "account_requests", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.string "username"
     t.string "full_name"
@@ -290,6 +290,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_12_000001) do
     t.string "link"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["assignment_id", "topic_identifier"], name: "idx_project_topics_assignment_identifier", unique: true
     t.index ["assignment_id"], name: "index_project_topics_on_assignment_id"
   end
 

@@ -260,4 +260,92 @@ RSpec.describe ProjectTopic, type: :model do
       expect(project_topic.available_slots).to eq(0)
     end
   end
+
+  describe 'topic_identifier validations' do
+    # topic_identifier is a varchar(10). Without the length validation an
+    # over-long value reaches MySQL and the controller's rescue turns the
+    # Mysql2::Error into a 500 instead of a 422 the client can show.
+    it 'accepts an identifier of exactly 10 characters' do
+      topic = ProjectTopic.new(topic_name: "Ten", assignment: assignment,
+                               max_choosers: 1, topic_identifier: "A" * 10)
+      expect(topic).to be_valid
+    end
+
+    it 'rejects an identifier of 11 characters' do
+      topic = ProjectTopic.new(topic_name: "Eleven", assignment: assignment,
+                               max_choosers: 1, topic_identifier: "A" * 11)
+      expect(topic).not_to be_valid
+      # Assert the reason and the limit, not just that some error exists, and without
+      # depending on the translated message.
+      expect(topic.errors.details[:topic_identifier]).to include(error: :too_long, count: 10)
+    end
+
+    it 'skips both validators when the identifier is nil' do
+      first = ProjectTopic.create!(topic_name: "No id one", assignment: assignment, max_choosers: 1)
+      second = ProjectTopic.new(topic_name: "No id two", assignment: assignment, max_choosers: 1)
+
+      expect(first.topic_identifier).to be_nil
+      # Two nil identifiers in one assignment must not collide.
+      expect(second).to be_valid
+    end
+
+    # Topics are selected and deleted by identifier, so duplicates within an
+    # assignment make those operations ambiguous.
+    it 'rejects a duplicate identifier within the same assignment' do
+      ProjectTopic.create!(topic_name: "First", assignment: assignment,
+                           max_choosers: 1, topic_identifier: "DUP1")
+      duplicate = ProjectTopic.new(topic_name: "Second", assignment: assignment,
+                                   max_choosers: 1, topic_identifier: "DUP1")
+
+      expect(duplicate).not_to be_valid
+      expect(duplicate.errors[:topic_identifier]).to include("has already been taken")
+    end
+
+    it 'allows the same identifier under a different assignment' do
+      other_assignment = Assignment.create!(name: "Other Assignment", instructor: instructor)
+      ProjectTopic.create!(topic_name: "Here", assignment: assignment,
+                           max_choosers: 1, topic_identifier: "SHARED")
+      elsewhere = ProjectTopic.new(topic_name: "There", assignment: other_assignment,
+                                   max_choosers: 1, topic_identifier: "SHARED")
+
+      expect(elsewhere).to be_valid
+    end
+
+    it 'allows a record to keep its own identifier on update' do
+      topic = ProjectTopic.create!(topic_name: "Keeps id", assignment: assignment,
+                                   max_choosers: 1, topic_identifier: "KEEP")
+
+      topic.topic_name = "Renamed, same identifier"
+
+      expect(topic).to be_valid
+      expect(topic.save).to be true
+    end
+
+    # The create examples never exercise the update path, where the validation has to
+    # exclude the record itself without letting it collide with a sibling.
+    it 'rejects an update that takes a sibling topic\'s identifier' do
+      ProjectTopic.create!(topic_name: "Holder", assignment: assignment,
+                           max_choosers: 1, topic_identifier: "TAKEN")
+      mover = ProjectTopic.create!(topic_name: "Mover", assignment: assignment,
+                                   max_choosers: 1, topic_identifier: "MINE")
+
+      mover.topic_identifier = "TAKEN"
+
+      expect(mover).not_to be_valid
+      expect(mover.errors[:topic_identifier]).to include("has already been taken")
+    end
+
+    it 'rejects moving a topic into an assignment that already holds its identifier' do
+      other_assignment = Assignment.create!(name: "Destination", instructor: instructor)
+      ProjectTopic.create!(topic_name: "Already there", assignment: other_assignment,
+                           max_choosers: 1, topic_identifier: "CLASH")
+      mover = ProjectTopic.create!(topic_name: "Moving in", assignment: assignment,
+                                   max_choosers: 1, topic_identifier: "CLASH")
+
+      mover.assignment = other_assignment
+
+      expect(mover).not_to be_valid
+      expect(mover.errors[:topic_identifier]).to include("has already been taken")
+    end
+  end
 end

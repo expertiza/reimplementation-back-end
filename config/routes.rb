@@ -160,6 +160,9 @@ Rails.application.routes.draw do
         end
       end
 
+      get 'import/ProjectTopic', to: 'project_topic_imports#show'
+      post 'import/ProjectTopic', to: 'project_topic_imports#create'
+
       resources :invitations do
         collection do
           get '/sent_by/team/:team_id', to: 'invitations_sent_by_team'
