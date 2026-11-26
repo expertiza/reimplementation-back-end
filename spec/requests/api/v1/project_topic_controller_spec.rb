@@ -229,7 +229,7 @@ RSpec.describe 'ProjectTopicController API', type: :request do
           required: %w[topic_identifier topic_name category assignment_id]
         }
 
-        let!(:existing_topic) { create(:project_topic) }
+        let!(:existing_topic) { create(:project_topic, assignment: assignment1) }
         let!(:project_topic_2) { create(:project_topic, assignment_id: assignment2.id) }
         let(:id) { existing_topic.id }
 

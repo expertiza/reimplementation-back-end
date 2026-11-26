@@ -1,6 +1,20 @@
 class ProjectTopicsController < ApplicationController
   before_action :set_project_topic, only: %i[ show update ]
 
+  # Anyone signed in may view topics; changing them requires managing the assignment.
+  def action_allowed?
+    case action_name
+    when 'create'
+      may_change_topics_of?(params.dig(:project_topic, :assignment_id))
+    when 'destroy'
+      may_change_topics_of?(params[:assignment_id])
+    when 'update'
+      may_update_topic?
+    else
+      true
+    end
+  end
+
   # GET /project_topics?assignment_id=&topic_ids[]=
   # Retrieve ProjectTopics by two query parameters - assignment_id (compulsory) and an array of topic_ids (optional)
   def index
@@ -92,6 +106,30 @@ class ProjectTopicsController < ApplicationController
   end
 
   private
+
+  # A topic being moved needs rights on both the current and the destination assignment.
+  def may_update_topic?
+    return false unless current_user_has_ta_privileges?
+
+    topic = ProjectTopic.find_by(id: params[:id])
+    return true unless topic # set_project_topic answers 404
+    return false unless current_user_can_manage?(topic.assignment)
+
+    destination = params[:project_topic].is_a?(ActionController::Parameters) && params[:project_topic][:assignment_id]
+    !destination || may_change_topics_of?(destination)
+  end
+
+  # A blank or unknown id passes for teaching staff because the action itself
+  # rejects it (422) or matches no topics. A list is refused: it could pair a
+  # managed assignment with someone else's in the same delete.
+  def may_change_topics_of?(assignment_id)
+    return false unless current_user_has_ta_privileges?
+    return true if assignment_id.blank?
+    return false unless assignment_id.is_a?(String) || assignment_id.is_a?(Integer)
+
+    assignment = Assignment.find_by(id: assignment_id)
+    assignment.nil? || current_user_can_manage?(assignment)
+  end
 
   # Use callbacks to share common setup or constraints between actions.
   def set_project_topic
