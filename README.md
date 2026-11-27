@@ -496,6 +496,87 @@ A real production deployment additionally requires the correct external database
 
 ---
 
+## Backend Docker Image Publishing
+
+The backend Docker image is published to GitHub Container Registry
+(GHCR) after the CI/CD RSpec test job succeeds.
+
+Image repository:
+`ghcr.io/expertiza/reimplementation-back-end`
+
+### Image Tags
+
+- `latest`: the latest successfully published commit on `main`
+- `sha-<short-sha>`: an image associated with a specific commit
+- `vMAJOR.MINOR.PATCH`: a versioned release
+- `vMAJOR.MINOR.PATCH-rc.N`: a prerelease
+
+### Release Process
+
+The backend version is maintained in the root `VERSION` file.
+
+Release branches follow `release/vMAJOR.MINOR.PATCH`.
+
+After creating the release branch, a version change is submitted
+through a PR targeting that release branch.
+
+When the approved version change is merged, GitHub Actions runs
+RSpec and, if successful, publishes the versioned image, creates
+the Git tag, and creates a GitHub Release.
+
+Versioned release builds do not overwrite `latest`.
+
+The first push creating a new release branch publishes a SHA-tagged
+build but does not automatically create a release.
+
+### Production Deployment
+
+Configure a specific image:
+
+```dotenv
+BACKEND_IMAGE=ghcr.io/expertiza/reimplementation-back-end
+BACKEND_IMAGE_TAG=v0.2.0
+```
+
+Pull and start the application:
+
+```bash
+docker compose --profile prod pull app-prod
+docker compose --profile prod up -d --no-build
+```
+
+Production credentials, Rails secrets, and the external database
+must be configured through the deployment environment.
+
+### Removing Old Images
+
+List locally stored backend images:
+
+```bash
+docker image ls ghcr.io/expertiza/reimplementation-back-end
+```
+
+After verifying that an older image is no longer used by running
+containers or required for rollback, remove that specific tag:
+
+```bash
+docker image rm ghcr.io/expertiza/reimplementation-back-end:v0.1.0
+```
+
+Optionally clean dangling images:
+
+```bash
+docker image prune
+```
+
+Keep the current deployed image and at least one known-good
+rollback version.
+
+Removing images from a deployment host does not delete images
+stored in GHCR. Registry cleanup must be managed separately.
+
+---
+
 ## 6. Docker Security
 
 ### Non-Root Application Execution

@@ -2,9 +2,13 @@ name: CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - 'release/v*'
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+      - 'release/v*'
 
 jobs:
   test:
@@ -31,7 +35,7 @@ jobs:
           --health-start-period=30s
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
       - name: Clear Ruby cache
         run: |
@@ -180,7 +184,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # Only run when there's a push to main branch
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: code-coverage-artifacts
@@ -193,19 +197,41 @@ jobs:
           files: coverage/coverage.json
 
   docker:
+    name: Validate Docker build
     needs: test
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    
+
     steps:
-      - uses: actions/checkout@v3
-      
+      - uses: actions/checkout@v4
+
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        
+        uses: docker/setup-buildx-action@v3
+
       - name: Build Docker image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: false
-          tags: expertiza-backend:latest
+          tags: expertiza-backend:pr
+
+  ghcr_workflow_tests:
+    name: Test GHCR publishing decisions
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Test release/version and latest-promotion decisions
+        run: bash tests/ci/test-ghcr-workflow.sh
+
+  publish_backend_image:
+    name: Publish backend image to GHCR
+    needs: [test, ghcr_workflow_tests]
+    if: github.event_name == 'push'
+    permissions:
+      contents: write
+      packages: write
+    uses: ./.github/workflows/publish-image.yml

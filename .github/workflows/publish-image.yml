@@ -1,0 +1,221 @@
+name: Publish backend container image
+
+on:
+  workflow_call:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  prepare:
+    name: Prepare image publication
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      image_name: ${{ steps.version.outputs.image_name }}
+      sha_tag: ${{ steps.version.outputs.sha_tag }}
+      release_tag: ${{ steps.version.outputs.release_tag }}
+      is_release: ${{ steps.version.outputs.is_release }}
+      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
+    steps:
+      - name: Check out source and history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine image and release versions
+        id: version
+        shell: bash
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: bash scripts/ci/ghcr-prepare.sh >> "$GITHUB_OUTPUT"
+
+  publish:
+    name: Build and publish image
+    needs: prepare
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      packages: write
+    concurrency:
+      group: backend-publish-${{ needs.prepare.outputs.is_release == 'true' && needs.prepare.outputs.release_tag || needs.prepare.outputs.sha_tag }}
+      cancel-in-progress: false
+    outputs:
+      image_name: ${{ needs.prepare.outputs.image_name }}
+      sha_tag: ${{ needs.prepare.outputs.sha_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check release tag availability
+        if: needs.prepare.outputs.is_release == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+          existing=$(git ls-remote --tags origin "refs/tags/${RELEASE_TAG}" "refs/tags/${RELEASE_TAG}^{}" |
+            awk '$2 ~ /\^\{\}$/ { peeled=$1 } $2 !~ /\^\{\}$/ { direct=$1 } END { print peeled != "" ? peeled : direct }')
+          if [[ -n "$existing" && "$existing" != "$GITHUB_SHA" ]]; then
+            echo "::error::${RELEASE_TAG} already points to another commit ($existing)"
+            exit 1
+          fi
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create image tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ needs.prepare.outputs.image_name }}
+          flavor: latest=false
+          tags: |
+            type=raw,value=${{ needs.prepare.outputs.sha_tag }}
+            type=raw,value=${{ needs.prepare.outputs.release_tag }},enable=${{ needs.prepare.outputs.is_release == 'true' }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+
+      - name: Publish multi-platform Docker image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          annotations: |
+            index:org.opencontainers.image.revision=${{ github.sha }}
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Create Git tag after successful image publishing
+        if: needs.prepare.outputs.is_release == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+
+          existing=$(git ls-remote --tags origin "refs/tags/${RELEASE_TAG}" "refs/tags/${RELEASE_TAG}^{}" |
+            awk '$2 ~ /\^\{\}$/ { peeled=$1 } $2 !~ /\^\{\}$/ { direct=$1 } END { print peeled != "" ? peeled : direct }')
+
+          if [[ -n "$existing" && "$existing" != "$GITHUB_SHA" ]]; then
+            echo "::error::Release tag already points to another commit."
+            exit 1
+          fi
+
+          if [[ -z "$existing" ]]; then
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+              -f ref="refs/tags/${RELEASE_TAG}" \
+              -f sha="$GITHUB_SHA" >/dev/null
+          fi
+
+      - name: Create GitHub release
+        if: needs.prepare.outputs.is_release == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.release_tag }}
+          IS_PRERELEASE: ${{ needs.prepare.outputs.is_prerelease }}
+        run: |
+          set -euo pipefail
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            flags=(--verify-tag --generate-notes --title "Backend $RELEASE_TAG")
+            if [[ "$IS_PRERELEASE" == true ]]; then
+              flags+=(--prerelease)
+            fi
+            gh release create "$RELEASE_TAG" "${flags[@]}"
+          fi
+
+      - name: Publish summary
+        env:
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          {
+            echo '## Published backend image'
+            echo '```text'
+            echo "$IMAGE_TAGS"
+            echo '```'
+            echo "Digest: \`$IMAGE_DIGEST\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  promote-latest:
+    name: Promote newest successful main image to latest
+    needs: [prepare, publish]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    concurrency:
+      group: backend-publish-latest-${{ github.repository }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+
+      - name: Promote newest successfully published main image
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_NAME: ${{ needs.prepare.outputs.image_name }}
+          SHA_TAG: ${{ needs.prepare.outputs.sha_tag }}
+        run: |
+          set -euo pipefail
+
+          latest_ref="ghcr.io/${IMAGE_NAME}:latest"
+          candidate_ref="ghcr.io/${IMAGE_NAME}:${SHA_TAG}"
+          previous_sha=''
+          comparison_status=''
+
+          if docker buildx imagetools inspect --raw "$latest_ref" > latest.json 2> inspect.err; then
+            previous_sha=$(jq -r '.annotations["org.opencontainers.image.revision"] // empty' latest.json)
+            if [[ -z "$previous_sha" ]]; then
+              echo '::error::Existing latest image has no revision annotation.' >&2
+              exit 1
+            fi
+            if [[ "$previous_sha" =~ ^[0-9a-f]{40}$ && "$previous_sha" != "$GITHUB_SHA" ]]; then
+              comparison_status=$(gh api \
+                "repos/${GITHUB_REPOSITORY}/compare/${previous_sha}...${GITHUB_SHA}" \
+                --jq '.status')
+            fi
+          elif grep -Eiq 'not found|manifest unknown|404' inspect.err; then
+            echo 'No existing latest image; first successful image can be promoted.'
+          else
+            cat inspect.err >&2
+            exit 1
+          fi
+
+          decision=$(bash scripts/ci/ghcr-promotion-decision.sh \
+            "$previous_sha" "$GITHUB_SHA" "$comparison_status")
+          if [[ "$decision" == skip ]]; then
+            echo "Skipping latest: existing image is this commit or newer." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          docker buildx imagetools create \
+            --annotation "index:org.opencontainers.image.revision=${GITHUB_SHA}" \
+            --tag "$latest_ref" \
+            "$candidate_ref"
+          echo "Published ${latest_ref} from ${GITHUB_SHA}" >> "$GITHUB_STEP_SUMMARY"

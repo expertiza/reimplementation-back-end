@@ -32,7 +32,7 @@ services:
 
   app-prod:
     profiles: ["prod"]
-    build: .
+    image: ${BACKEND_IMAGE:-ghcr.io/expertiza/reimplementation-back-end}:${BACKEND_IMAGE_TAG:-latest}
     environment:
       RAILS_ENV: production
       DATABASE_URL: ${PROD_DATABASE_URL:-}
