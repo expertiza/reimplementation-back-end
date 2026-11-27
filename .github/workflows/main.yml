@@ -215,9 +215,21 @@ jobs:
           push: false
           tags: expertiza-backend:pr
 
+  ghcr_workflow_tests:
+    name: Test GHCR publishing decisions
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Test release/version and latest-promotion decisions
+        run: bash tests/ci/test-ghcr-workflow.sh
+
   publish_backend_image:
     name: Publish backend image to GHCR
-    needs: test
+    needs: [test, ghcr_workflow_tests]
     if: github.event_name == 'push'
     permissions:
       contents: write
