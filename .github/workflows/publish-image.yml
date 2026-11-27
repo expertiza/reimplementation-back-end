@@ -3,17 +3,15 @@ name: Publish backend container image
 on:
   workflow_call:
 
-permissions:
-  contents: write
-  packages: write
-
 env:
   REGISTRY: ghcr.io
 
 jobs:
   prepare:
     name: Prepare image publication
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     outputs:
       image_name: ${{ steps.version.outputs.image_name }}
       sha_tag: ${{ steps.version.outputs.sha_tag }}
@@ -82,7 +80,10 @@ jobs:
   publish:
     name: Build and publish image
     needs: prepare
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      packages: write
     concurrency:
       group: backend-publish-${{ needs.prepare.outputs.is_release == 'true' && needs.prepare.outputs.release_tag || needs.prepare.outputs.sha_tag }}
       cancel-in-progress: false
@@ -135,6 +136,8 @@ jobs:
         id: build
         uses: docker/build-push-action@v6
         with:
+          annotations: |
+            index:org.opencontainers.image.revision=${{ github.sha }}
           context: .
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
@@ -201,7 +204,10 @@ jobs:
     name: Promote current main image to latest
     needs: [prepare, publish]
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
     concurrency:
       group: backend-publish-latest-${{ github.repository }}
       cancel-in-progress: false
@@ -213,7 +219,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Promote only current main HEAD
+
+      - name: Promote newest successfully published main image
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -221,13 +228,64 @@ jobs:
           SHA_TAG: ${{ needs.prepare.outputs.sha_tag }}
         run: |
           set -euo pipefail
-          current_main_sha=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')
-          if [[ "$current_main_sha" != "$GITHUB_SHA" ]]; then
-            echo 'Skipping latest: newer main commit exists.' >> "$GITHUB_STEP_SUMMARY"
-            exit 0
+
+          latest_ref="ghcr.io/${IMAGE_NAME}:latest"
+          candidate_ref="ghcr.io/${IMAGE_NAME}:${SHA_TAG}"
+
+          # Read the commit currently represented by latest.
+          if docker buildx imagetools inspect \
+            --raw "$latest_ref" > latest.json 2> inspect.err; then
+
+            previous_sha=$(jq -r \
+              '.annotations["org.opencontainers.image.revision"] // empty' \
+              latest.json)
+
+            if [[ ! "$previous_sha" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "::error::Existing latest image has no valid revision annotation."
+              exit 1
+            fi
+
+            if [[ "$previous_sha" == "$GITHUB_SHA" ]]; then
+              echo "latest already points to this commit."
+              exit 0
+            fi
+
+            # Compare current latest with this successful candidate.
+            status=$(gh api \
+              "repos/${GITHUB_REPOSITORY}/compare/${previous_sha}...${GITHUB_SHA}" \
+              --jq '.status')
+
+            case "$status" in
+              ahead)
+                echo "Candidate advances the published latest image."
+                ;;
+              identical|behind)
+                echo "Skipping: latest already represents this or a newer commit."
+                exit 0
+                ;;
+              diverged)
+                echo "::error::Candidate and latest have diverged."
+                exit 1
+                ;;
+              *)
+                echo "::error::Unexpected comparison status: $status"
+                exit 1
+                ;;
+            esac
+
+          else
+            if grep -Eiq 'not found|manifest unknown|404' inspect.err; then
+              echo "No existing latest image; performing initial promotion."
+            else
+              cat inspect.err >&2
+              exit 1
+            fi
           fi
 
           docker buildx imagetools create \
-            --tag "ghcr.io/${IMAGE_NAME}:latest" \
-            "ghcr.io/${IMAGE_NAME}:${SHA_TAG}"
-          echo "Published ghcr.io/${IMAGE_NAME}:latest" >> "$GITHUB_STEP_SUMMARY"
+            --annotation "index:org.opencontainers.image.revision=${GITHUB_SHA}" \
+            --tag "$latest_ref" \
+            "$candidate_ref"
+
+          echo "Published ${latest_ref} from ${GITHUB_SHA}" \
+            >> "$GITHUB_STEP_SUMMARY"
